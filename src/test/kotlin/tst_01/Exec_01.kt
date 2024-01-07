@@ -1017,7 +1017,7 @@ class Exec_01 {
             """
             var x
             do [1,2,3]
-            do (a) {
+            do { a =>
                 set x = a
             }
             println(x)
@@ -2288,12 +2288,12 @@ class Exec_01 {
     fun mm_00_err() {
         val out = test("""
             val x
-            do (x) {
+            do { x =>
                 nil
             }
         """
         )
-        assert(out == "anon : (lin 3, col 17) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == "anon : (lin 3, col 18) : declaration error : variable \"x\" is already declared\n") { out }
     }
     @Test
     fun mm_01_tmp_err() {
@@ -2301,7 +2301,7 @@ class Exec_01 {
             """
             var x
             do [1,2,3]
-            do (a) {
+            do { a =>
                 set x = drop(a)
             }
             println(x)
@@ -2315,8 +2315,8 @@ class Exec_01 {
         val out = test(
             """
             val x = do {
-                do [1,2,3]
-                do (a) {
+                do ([1,2,3])
+                do { a =>
                     a
                 }
             }
@@ -2330,8 +2330,8 @@ class Exec_01 {
     fun mm_02_thus_err() {
         val out = test("""
             var x
-            do nil
-            do (it) {
+            do (nil)
+            do { it =>
                 set x = 10  ;; err
             }
             println(x)
@@ -2344,7 +2344,7 @@ class Exec_01 {
         val out = test("""
             var x
             do nil
-            do (it) {
+            do { it =>
                 set x = it  ;; err
                 println(x)
             }
@@ -2357,7 +2357,7 @@ class Exec_01 {
         val out = test(
             """
             do [0]
-            do (x) {
+            do { x =>
                 set x[0] = []
                 println(x)
             }
@@ -2370,7 +2370,7 @@ class Exec_01 {
         val out = test("""
             val v = do {
                 do []
-                do (x) {
+                do { x =>
                     if x { x } else { [] }
                 }
             }
@@ -2384,7 +2384,7 @@ class Exec_01 {
         val out = test("""
             val v = do {
                 do []
-                do (x) {
+                do { x =>
                     if x { drop(x) } else { [] }
                 }
             }
@@ -2581,8 +2581,8 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 2, col 2) : call error : \"(\" in the next line") { out }
-        //assert(out == "") { out }
-        assert(out == "anon : (lin 3, col 17) : expected identifier : have \"1\"\n") { out }
+        assert(out == "") { out }
+        //assert(out == "anon : (lin 3, col 17) : expected identifier : have \"1\"\n") { out }
     }
     @Test
     fun func9() {

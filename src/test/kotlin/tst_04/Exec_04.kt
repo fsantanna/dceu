@@ -334,7 +334,7 @@ class Exec_04 {
         val out = test("""
             spawn (task () :void {
                 (do yield(nil))
-                do (it) {
+                do { it =>
                     yield(nil)
                 }
             }) (nil)

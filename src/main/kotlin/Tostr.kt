@@ -36,10 +36,10 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Do     -> {
             val x = this.arg.cond {
                 val (id,tag) = it
-                "(${(if (pre) id.pos.pre() else "")}${id.str}${tag.cond { " "+it.str }}) "
+                " ${(if (pre) id.pos.pre() else "")}${id.str}${tag.cond { " "+it.str }} =>"
             }
             when (this.tk.str) {
-                "do" -> "do $x{\n" + this.es.tostr(pre) + "}"
+                "do" -> "do {$x\n" + this.es.tostr(pre) + "}"
                 else -> "{\n" + this.es.tostr(pre) + "}"
             }
         }

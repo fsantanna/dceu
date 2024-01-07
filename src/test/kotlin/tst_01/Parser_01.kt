@@ -325,7 +325,7 @@ class Parser_01 {
     }
     @Test
     fun exprs_seq2a() {
-        val l = lexer("; f () \n do 1 ; h()\ni() ;\n;")
+        val l = lexer("; f () \n do (1) ; h()\ni() ;\n;")
         val parser = Parser(l)
         // TODO: ambiguous
         val es = parser.exprs()
@@ -471,11 +471,11 @@ class Parser_01 {
     }
     @Test
     fun expr_do3() {
-        val l = lexer("do (a) { print(a) }")
+        val l = lexer("do { a => print(a) }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Do && e.arg!=null)
-        assert(e.tostr() == "do (a) {\nprint(a)\n}") { e.tostr() }
+        assert(e.tostr() == "do { a =>\nprint(a)\n}") { e.tostr() }
     }
 
     // FUNC

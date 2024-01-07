@@ -86,7 +86,7 @@ class Parser_99 {
             } else {
             true
             })
-            do (ceu_27) {
+            do { ceu_27 =>
             if ceu_27 {
             false
             } else {
@@ -94,7 +94,7 @@ class Parser_99 {
             }
             }
             })
-            do (ceu_124) {
+            do { ceu_124 =>
             if ceu_124 {
             ceu_124
             } else {
@@ -122,14 +122,14 @@ class Parser_99 {
         assert(e.tostr() == """
             do {
             (do ```a```)
-            do (ceu_5) {
+            do { ceu_5 =>
             if ceu_5 {
             ceu_5
             } else {
             do {
             (do do {
             (do ```b```)
-            do (ceu_10) {
+            do { ceu_10 =>
             if ceu_10 {
             ceu_10
             } else {
@@ -137,7 +137,7 @@ class Parser_99 {
             }
             }
             })
-            do (ceu_79) {
+            do { ceu_79 =>
             if ceu_79 {
             ceu_79
             } else {
@@ -204,7 +204,7 @@ class Parser_99 {
         val e = parser.exprs()
         assert(e.tostr() == "do {\n" +
                 "(do 1)\n" +
-                "do (x) {\n" +
+                "do { x =>\n" +
                 "if x {\n" +
                 "x\n" +
                 "} else {\n" +
@@ -220,7 +220,7 @@ class Parser_99 {
         val e = parser.exprs()
         assert(e.tostr() == "do {\n" +
                 "(do 1)\n" +
-                "do (x :X) {\n" +
+                "do { x :X =>\n" +
                 "if x {\n" +
                 "x\n" +
                 "} else {\n" +
@@ -282,7 +282,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
                 "(do nil)\n" +
-                "do (ceu_5) {\n" +
+                "do { ceu_5 =>\n" +
                 "if a {\n" +
                 "1\n" +
                 "} else {\n" +
@@ -302,7 +302,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
                 "(do nil)\n" +
-                "do (ceu_5) {\n" +
+                "do { ceu_5 =>\n" +
                 "nil\n" +
                 "}\n" +
                 "}") { e.tostr() }
@@ -315,7 +315,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
                 "(do nil)\n" +
-                "do (it) {\n" +
+                "do { it =>\n" +
                 "if true {\n" +
                 "it\n" +
                 "} else {\n" +
@@ -338,7 +338,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
                 "(do v)\n" +
-                "do (it) {\n" +
+                "do { it =>\n" +
                 "if a {\n" +
                 "it\n" +
                 "} else {\n" +
@@ -354,7 +354,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
                 "(do v)\n" +
-                "do (it) {\n" +
+                "do { it =>\n" +
                 "if a {\n" +
                 "1\n" +
                 "} else {\n" +
@@ -378,7 +378,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
                 "(do nil)\n" +
-                "do (ceu_5) {\n" +
+                "do { ceu_5 =>\n" +
                 "if f() {\n" +
                 "nil\n" +
                 "} else {\n" +
@@ -425,7 +425,7 @@ class Parser_99 {
         //assert(trap { parser.expr() } == "anon : (lin 2, col 22) : expected identifier : have \"1\"")
         assert(e.tostr() == "do {\n" +
                 "(do 1)\n" +
-                "do (it) {\n" +
+                "do { it =>\n" +
                 "1\n" +
                 "}\n" +
                 "}") { e.tostr() }
@@ -442,7 +442,7 @@ class Parser_99 {
         //assert(trap { parser.expr() } == "anon : (lin 2, col 24) : expected \"=>\" : have \"}\"")
         assert(e.tostr() == "do {\n" +
                 "(do 1)\n" +
-                "do (it) {\n" +
+                "do { it =>\n" +
                 "x\n" +
                 "}\n" +
                 "}") { e.tostr() }
@@ -459,7 +459,7 @@ class Parser_99 {
         //assert(trap { parser.expr() } == "anon : (lin 2, col 27) : expected expression : have \"}\"")
         assert(e.tostr() == "do {\n" +
                 "(do 1)\n" +
-                "do (x) {\n" +
+                "do { x =>\n" +
                 "nil\n" +
                 "}\n" +
                 "}") { e.tostr() }
@@ -475,7 +475,7 @@ class Parser_99 {
         //assert(e.tostr() == "((1) thus { it =>\nnil\n})\n") { e.tostr() }
         assert(e.tostr() == "do {\n" +
                 "(do 1)\n" +
-                "do (it) {\n" +
+                "do { it =>\n" +
                 "nil\n" +
                 "}\n" +
                 "}\n") { e.tostr() }
@@ -501,11 +501,11 @@ class Parser_99 {
         assert(e.tostr() == "do {\n" +
                 "(do do {\n" +
                 "(do 1)\n" +
-                "do (it) {\n" +
+                "do { it =>\n" +
                 "2\n" +
                 "}\n" +
                 "})\n" +
-                "do (it) {\n" +
+                "do { it =>\n" +
                 "3\n" +
                 "}\n" +
                 "}\n") { e.tostr() }
@@ -537,7 +537,7 @@ class Parser_99 {
         //assert(e.tostr() == "((yield(1)) thus { it =>\nnil\n})") { e.tostr() }
         assert(e.tostr() == "do {\n" +
                 "(do yield(1))\n" +
-                "do (it) {\n" +
+                "do { it =>\n" +
                 "nil\n" +
                 "}\n" +
                 "}") { e.tostr() }
@@ -561,7 +561,7 @@ class Parser_99 {
                 "(set v = yield(1))\n" +
                 "do {\n" +
                 "(do yield(2))\n" +
-                "do (it) {\n" +
+                "do { it =>\n" +
                 "nil\n" +
                 "}\n" +
                 "}\n" +
@@ -667,7 +667,7 @@ class Parser_99 {
         //        "})") { e.tostr() }
         assert(e.tostr() == "do {\n" +
                 "(do yield(nil))\n" +
-                "do (ceu_11) {\n" +
+                "do { ceu_11 =>\n" +
                 "nil\n" +
                 "}\n" +
                 "}") { e.tostr() }
@@ -688,7 +688,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
                 "(do f())\n" +
-                "do (it) {\n" +
+                "do { it =>\n" +
                 "it\n" +
                 "}\n" +
                 "}") { e.tostr() }
@@ -743,7 +743,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "catch (x :X => do {\n" +
                 "(do is'(x,:X))\n" +
-                "do (ceu_49) {\n" +
+                "do { ceu_49 =>\n" +
                 "if ceu_49 {\n" +
                 "x\n" +
                 "} else {\n" +
@@ -776,7 +776,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "catch (it :X => do {\n" +
                 "(do is'(it,:X))\n" +
-                "do (ceu_48) {\n" +
+                "do { ceu_48 =>\n" +
                 "if ceu_48 {\n" +
                 "z\n" +
                 "} else {\n" +
@@ -842,7 +842,7 @@ class Parser_99 {
             (val ceu_v_10 = (resume (ceu_co_10)(ceu_arg_10)))
             if do {
             (do {{/=}}(status(ceu_co_10),:terminated))
-            do (ceu_56) {
+            do { ceu_56 =>
             if ceu_56 {
             ceu_56
             } else {
@@ -941,11 +941,11 @@ class Parser_99 {
             (break if do {
             (do do {
             (do {{==}}(status(ceu_0_9),:terminated))
-            do (ceu_107) {
+            do { ceu_107 =>
             if ceu_107 {
             do {
             (do pub(ceu_0_9))
-            do (ceu_116) {
+            do { ceu_116 =>
             if ceu_116 {
             ceu_116
             } else {
@@ -958,18 +958,18 @@ class Parser_99 {
             }
             }
             })
-            do (ceu_359) {
+            do { ceu_359 =>
             if ceu_359 {
             ceu_359
             } else {
             do {
             (do do {
             (do {{==}}(status(ceu_1_9),:terminated))
-            do (ceu_378) {
+            do { ceu_378 =>
             if ceu_378 {
             do {
             (do pub(ceu_1_9))
-            do (ceu_387) {
+            do { ceu_387 =>
             if ceu_387 {
             ceu_387
             } else {
@@ -982,7 +982,7 @@ class Parser_99 {
             }
             }
             })
-            do (ceu_630) {
+            do { ceu_630 =>
             if ceu_630 {
             ceu_630
             } else {
@@ -1014,11 +1014,11 @@ class Parser_99 {
                 "loop {\n" +
                 "(break(nil) if do {\n" +
                 "(do {{==}}(status(ceu_0_9),:terminated))\n" +
-                "do (ceu_110) {\n" +
+                "do { ceu_110 =>\n" +
                 "if ceu_110 {\n" +
                 "do {\n" +
                 "(do {{==}}(status(ceu_1_9),:terminated))\n" +
-                "do (ceu_127) {\n" +
+                "do { ceu_127 =>\n" +
                 "if ceu_127 {\n" +
                 "true\n" +
                 "} else {\n" +
@@ -1061,7 +1061,7 @@ class Parser_99 {
                 "loop {\n" +
                 "(break if do {\n" +
                 "(do yield(nil))\n" +
-                "do (ceu_5) {\n" +
+                "do { ceu_5 =>\n" +
                 "if ceu_5 {\n" +
                 "ceu_5\n" +
                 "} else {\n" +
@@ -1081,7 +1081,7 @@ class Parser_99 {
         val out = e.tostr()
         //println(out)
         assert(!out.contains("await-chk"))
-        assert(out.contains("do (it) {"))
+        assert(out.contains("do { it =>"))
         assert(out.contains("do {\n:a\n}"))
     }
     @Test
@@ -1093,7 +1093,7 @@ class Parser_99 {
         //println(out)
         assert(out.contains("(break if do {"))
         assert(out.contains("(do yield(nil))"))
-        assert(out.contains("do (x :X) {"))
+        assert(out.contains("do { x :X =>"))
         assert(out.contains("await-chk(__x,:X)")) { out }
         assert(out.contains("if ceu_58 {\nz\n}"))
     }
@@ -1144,7 +1144,7 @@ class Parser_99 {
         //println(out)
         assert(out.contains("(break if do {")) { out }
         assert(out.contains("(do yield(nil))")) { out }
-        assert(out.contains("do (it :X) {")) { out }
+        assert(out.contains("do { it :X =>")) { out }
         assert(out.contains("await-chk(__it,:X)"))
         assert(out.contains("do {\n:a\n}"))
     }
@@ -1157,7 +1157,7 @@ class Parser_99 {
         //println(out)
         assert(out.contains("(break if do {\n" +
                 "(do yield(nil))\n" +
-                "do (it) {")) { out }
+                "do { it =>")) { out }
         assert(out.contains("await-chk(__it,x)"))
         assert(out.contains("do {\n:a\n}"))
     }
@@ -1170,7 +1170,7 @@ class Parser_99 {
         //println(out)
         assert(out.contains("(break if do {\n" +
                 "(do yield(nil))\n" +
-                "do (it) {")) { out }
+                "do { it =>")) { out }
         assert(!out.contains("await-chk"))
         assert(out.contains("{{>}}(it,1)"))
         assert(out.contains("do {\n:a\n}"))
@@ -1190,7 +1190,7 @@ class Parser_99 {
         //println(out)
         assert(out.contains("(break if do {\n" +
                 "(do yield(nil))\n" +
-                "do (ceu_5) {")) { out }
+                "do { ceu_5 =>")) { out }
         assert(out.contains("await-chk(__ceu_5,x)")) { out }
         assert(out.contains("if ceu_289 {\nawait-ret(ceu_5)\n} else {\nceu_289\n}")) { out }
     }
@@ -1227,10 +1227,10 @@ class Parser_99 {
                 "loop {\n" +
                 "(break if do {\n" +
                 "(do yield(nil))\n" +
-                "do (it :X) {\n" +
+                "do { it :X =>\n" +
                 "do {\n" +
                 "(do await-chk(__it,:X))\n" +
-                "do (ceu_56) {\n" +
+                "do { ceu_56 =>\n" +
                 "if ceu_56 {\n" +
                 "loop {\n" +
                 "nil\n" +
@@ -1258,10 +1258,10 @@ class Parser_99 {
                 "loop {\n" +
                 "(break if do {\n" +
                 "(do yield(nil))\n" +
-                "do (x :X) {\n" +
+                "do { x :X =>\n" +
                 "do {\n" +
                 "(do await-chk(__x,:X))\n" +
-                "do (ceu_64) {\n" +
+                "do { ceu_64 =>\n" +
                 "if ceu_64 {\n" +
                 "loop {\n" +
                 "println(x)\n" +
@@ -1289,10 +1289,10 @@ class Parser_99 {
                 "loop {\n" +
                 "(break if do {\n" +
                 "(do yield(nil))\n" +
-                "do (it :X) {\n" +
+                "do { it :X =>\n" +
                 "do {\n" +
                 "(do await-chk(__it,:X))\n" +
-                "do (ceu_58) {\n" +
+                "do { ceu_58 =>\n" +
                 "if ceu_58 {\n" +
                 "loop {\n" +
                 "(break if true)\n" +
@@ -1333,7 +1333,7 @@ class Parser_99 {
         //println(out)
         assert(!out.contains("await-chk"))
         assert(out.contains("(do yield(nil))\n" +
-                "do (ceu_5) {")) { out }
+                "do { ceu_5 =>")) { out }
         assert(out.contains("if ceu_5 {\nceu_5\n} else {\ntrue\n}"))
     }
     @Test
@@ -1351,7 +1351,7 @@ class Parser_99 {
         //println(out)
         assert(!out.contains("await-chk"))
         assert(out.contains("(do yield(nil))\n" +
-                "do (ceu_5) {")) { out }
+                "do { ceu_5 =>")) { out }
         assert(out.contains("if ceu_5 {\nceu_5\n} else {\ntrue\n}"))
     }
     @Test
@@ -1364,7 +1364,7 @@ class Parser_99 {
         assert(!out.contains("await-chk"))
         assert(e.tostr().contains("(break if do {\n" +
                 "(do yield(nil))\n" +
-                "do (x) {")) { e.tostr() }
+                "do { x =>")) { e.tostr() }
     }
     @Test
     fun jc_07_watching() {
@@ -1395,7 +1395,7 @@ class Parser_99 {
         val out = e.tostr()
         println(out)
         assert(out.contains("var ceu_clk_5 = {{+}}({{*}}(1,3600000),{{+}}({{*}}(10,60000),{{+}}({{*}}(30,1000),{{*}}(239,1000)))))"))
-        assert(out.contains("do (ceu_5 :Clock) {"))
+        assert(out.contains("do { ceu_5 :Clock =>"))
         assert(out.contains("await-chk(__ceu_5,:Clock)"))
         assert(out.contains("{{>}}(ceu_clk_5,0)")) { out }
     }
@@ -1547,7 +1547,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
                 "(pass v)\n" +
-                "do (ceu_8 :X) {\n" +
+                "do { ceu_8 :X =>\n" +
                 "ceu_8[:x]\n" +
                 "}\n" +
                 "}") { e.tostr() }
@@ -1631,7 +1631,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
                 "(pass x[0])\n" +
-                "do (ceu_12) {\n" +
+                "do { ceu_12 =>\n" +
                 "```/* = */```\n" +
                 "ceu_12[{{-}}({{#}}(ceu_12),1)]\n" +
                 "}\n" +
@@ -1644,7 +1644,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
                 "(pass x[:y])\n" +
-                "do (ceu_14) {\n" +
+                "do { ceu_14 =>\n" +
                 "(set ceu_14[{{-}}({{#}}(ceu_14),1)] = 10)\n" +
                 "}\n" +
                 "}") { e.tostr() }
@@ -1656,11 +1656,11 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
                 "(pass x())\n" +
-                "do (ceu_x_11) {\n" +
+                "do { ceu_x_11 =>\n" +
                 "```/* - */```\n" +
                 "do {\n" +
                 "(pass ceu_x_11[{{-}}({{#}}(ceu_x_11),1)])\n" +
-                "do (ceu_y_11) {\n" +
+                "do { ceu_y_11 =>\n" +
                 "(set ceu_x_11[{{-}}({{#}}(ceu_x_11),1)] = nil)\n" +
                 "ceu_y_11\n" +
                 "}\n" +
@@ -1681,7 +1681,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
                 "(pass t)\n" +
-                "do (ceu_8) {\n" +
+                "do { ceu_8 =>\n" +
                 "```/* + */```\n" +
                 "ceu_8[{{#}}(ceu_8)]\n" +
                 "}\n" +
@@ -1694,7 +1694,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
                 "(pass t[:x])\n" +
-                "do (ceu_14) {\n" +
+                "do { ceu_14 =>\n" +
                 "(set ceu_14[{{#}}(ceu_14)] = 1)\n" +
                 "}\n" +
                 "}") { e.tostr() }
