@@ -1141,11 +1141,27 @@ class Exec_04 {
                 println(it)
             }
             spawn T(10)
+            ;;func () {
+                broadcast ([])
+            ;;}()
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun gg_02_scope_err() {
+        val out = test("""
+            val T = task (v) {
+                val it = yield(nil)
+                println(it)
+            }
+            spawn T(10)
             func () {
                 broadcast ([])
             }()
         """)
-        assert(out == "[]\n") { out }
+        assert(out == " |  anon : (lin 7, col 13) : (func () { broadcast'([],:task) })()\n" +
+                " |  anon : (lin 8, col 17) : broadcast'([],:task)\n" +
+                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
     fun gg_02_bcast() {

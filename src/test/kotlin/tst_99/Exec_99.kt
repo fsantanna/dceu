@@ -1106,7 +1106,7 @@ class Exec_99 {
     // TASKS / ITER / DROP
 
     @Test
-    fun fj_01_iter() {
+    fun fj_01_iter_err() {
         val out = test("""
             task T () {
                 yield()
@@ -1115,6 +1115,22 @@ class Exec_99 {
             spawn T() in ts
             val x = loop t in ts {
                 break(drop(t)) if true
+            }
+            println(x)
+        """, true)
+        //assert(out == (" v  anon : (lin 7, col 13) : declaration error : cannot copy reference out\n")) { out }
+        assert(out.contains(" v  anon : (lin 8, col 28) : drop error : value contains multiple references\n")) { out }
+    }
+    @Test
+    fun fj_01_iter_ok() {
+        val out = test("""
+            task T () {
+                yield()
+            }
+            val ts = tasks()
+            spawn T() in ts
+            val x = loop t in ts {
+                break(copy(t)) if true
             }
             println(x)
         """, true)

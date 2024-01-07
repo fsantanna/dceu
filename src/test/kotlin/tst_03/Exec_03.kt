@@ -386,7 +386,7 @@ class Exec_03 {
                 println(v1, v2)
                 yield(nil) ;;thus { it => nil }
                 ```
-                printf("%f\t%f\n", ceu_mem->id_v1_129.Number, ceu_mem->id_v2_17.Number);
+                printf("%f\t%f\n", ceu_mem->id_v1_132.Number, ceu_mem->id_v2_17.Number);
                 ```
             }
             val co = coroutine(CO)
@@ -658,7 +658,10 @@ class Exec_03 {
     fun gg_03_scope() {
         val out = test("""
             val T = coro () {
-                val v = func (x) { x } (yield(nil))
+                val v =
+                    func (x) {
+                        x
+                    } (yield(nil))
                 yield(nil) ;;thus { it => nil }
                 println(v)                
             }
@@ -680,9 +683,9 @@ class Exec_03 {
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
         //        " v  anon : (lin 3, col 34) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
-                " |  anon : (lin 3, col 25) : (func (x) { x })(yield(nil))\n" +
-                " v  anon : (lin 3, col 34) : block escape error : cannot copy reference out\n") { out }
+        assert(out == " |  anon : (lin 16, col 25) : (resume (t)(v))\n" +
+                " |  anon : (lin 4, col 21) : (func (x) { x })(yield(nil))\n" +
+                " v  anon : (lin 4, col 30) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun gg_04_scope() {

@@ -585,10 +585,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         } while (0);
                         assert(ceu_acc.type!=CEU_VALUE_THROW && "TODO: throw in catch condition");
                         if (!ceu_as_bool(ceu_acc)) {
-                            {
-                                CEU_Value ret = ceu_hold_set_rec(ceu_err, CEU_HOLD_FLEET);
-                                assert(ret.type==CEU_VALUE_NIL && "impossible case");
-                            }
+                            ceu_hold_set_rec(ceu_err, CEU_HOLD_FLEET);
                             ceu_acc = ceu_err;
                             continue; // uncaught, rethrow
                         }

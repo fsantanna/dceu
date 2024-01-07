@@ -1211,7 +1211,7 @@ fun Coder.main (tags: Tags): String {
             }
             
             // change block
-            if (dst_blk != src_blk) {
+            if (dst_blk!=src_blk && src_type<CEU_HOLD_MUTAB) {
                 ceu_hold_chg(src.Dyn, dst_blk CEU5(COMMA &dst_blk->dn.dyns));
             }
             
@@ -1625,11 +1625,12 @@ fun Coder.main (tags: Tags): String {
             
             CEU_Value evt = args[0];
             if (evt.type > CEU_VALUE_DYNAMIC) {
-                if (evt.Dyn->Any.hld.type < CEU_HOLD_MUTAB) {
-                    // do not permit that tasks drop/capture object
-                    // b/c they are passed to other tasks regardless
-                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error="invalid event : must not fleet"} };
-                }
+                //if (evt.Dyn->Any.hld.type < CEU_HOLD_MUTAB) {
+                //    // do not permit that tasks drop/capture object
+                //    // b/c they are passed to other tasks regardless
+                //    return (CEU_Value) { CEU_VALUE_ERROR, {.Error="invalid event : must not fleet"} };
+                //}
+                ceu_hold_set_rec(evt, CEU_HOLD_MUTAB);  // hold(evt)
                 ceu_gc_inc(evt); // save from nested gc_chk
             }
             

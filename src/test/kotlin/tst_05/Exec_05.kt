@@ -706,8 +706,10 @@ class Exec_05 {
             }
             println(v)
         """)
-        assert(out.contains("exe-task: 0x")) { out }
+        //assert(out.contains("exe-task: 0x")) { out }
         //assert(out == " v  anon : (lin 6, col 22) : drop error : value is not movable\n") { out }
+        assert(out.contains(" |  anon : (lin 5, col 32) : (func (it) { if it { ```                     ...)\n" +
+                " v  anon : (lin 6, col 22) : drop error : value contains multiple references")) { out }
     }
     @Test
     fun dd_07_detrack_nested() {
