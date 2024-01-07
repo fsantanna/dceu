@@ -1181,7 +1181,10 @@ fun Coder.main (tags: Tags): String {
             } else {
                 // dst is parent of src | assigning to outer scope | "unsafe"
                 // dst and src are par  | assigning to alien scope | "unsafe"
-                if (src.Dyn->Any.hld.type <= CEU_HOLD_FLEET) {
+                if (dst_type == CEU_HOLD_UNDEF) {
+                    // OK: passing argument forward to func/thus
+                    // not a problem to violate scope bc cannot yield
+                } else if (src_type <= CEU_HOLD_FLEET) {
                     // SAFE if dropped or unassigned reference
                     // can move out and be reassigned by outer scope
                     // EXCEPT if TRACK leaving its TASK scope
