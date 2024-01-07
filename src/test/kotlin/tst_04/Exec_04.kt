@@ -1141,9 +1141,9 @@ class Exec_04 {
                 println(it)
             }
             spawn T(10)
-            ;;func () {
+            func () {
                 broadcast ([])
-            ;;}()
+            }()
         """)
         assert(out == "[]\n") { out }
     }

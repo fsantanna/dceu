@@ -236,7 +236,7 @@ class Exec_01 {
             val t = [[nil]]
             dump(t[0])
         """)
-        assert(out.contains("hold  = 1")) { out }
+        assert(out.contains("hold  = 2")) { out }
     }
 
     // SET
@@ -308,8 +308,7 @@ class Exec_01 {
     }
     @Test
     fun cc_index23() {
-        val out = test(
-            """
+        val out = test("""
             println([[1]][[0][0]])
         """.trimIndent()
         )
@@ -791,8 +790,8 @@ class Exec_01 {
             }                   ;; not a problem b/c gc_dec does not chk current block
             println(x)
         """)
-        //assert(out == "anon : (lin 5, col 22) : drop error : multiple references\n") { out }
-        assert(out == "[1,2,3]\n") { out }
+        assert(out == "anon : (lin 5, col 22) : drop error : value contains multiple references\n") { out }
+        //assert(out == "[1,2,3]\n") { out }
     }
     @Test
     fun cc_10_drop_multi_err_why() {
@@ -809,8 +808,8 @@ class Exec_01 {
             println("-=-=-=-=-=-=-=-=-")
             println(t)
         """)
-        //assert(out == "anon : (lin 5, col 22) : drop error : multiple references\n") { out }
-        assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
+        assert(out == "anon : (lin 6, col 26) : drop error : value contains multiple references\n") { out }
+        //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
     }
     @Test
     fun cc_11_drop_deep() {
@@ -839,10 +838,13 @@ class Exec_01 {
                 println(t1)
             }
         """)
-        assert(out == "anon : (lin 6, col 21) : declaration error : cannot move pending reference in\n") { out }
+        assert(out == "anon : (lin 6, col 35) : drop error : value contains multiple references\n") { out }
+        //assert(out == "[1]\nnil\n") { out }
     }
     @Test
-    fun cc_13_drop_cycle() {
+    fun todo_cc_13_drop_cycle() {
+        // TODO: makes sense to drop a cycle wo external refs
+        // TODO: what about `drop_cycle`?
         val out = test(
             """
             val z = do {
@@ -854,7 +856,8 @@ class Exec_01 {
             println(z[0][0] == z)
         """
         )
-        assert(out == "true\n") { out }
+        //assert(out == "true\n") { out }
+        assert(out == "anon : (lin 6, col 22) : drop error : value contains multiple references\n") { out }
     }
     @Test
     fun cc_13a_drop_cycle() {
@@ -867,7 +870,7 @@ class Exec_01 {
         assert(out == "true\n") { out }
     }
     @Test
-    fun cc_14_drop_cycle() {
+    fun todo_cc_14_drop_cycle() {   // TODO: see todo_cc_13_drop_cycle
         val out = test(
             """
             val z = do {
@@ -880,7 +883,8 @@ class Exec_01 {
             println(z[0][0] == z)
         """
         )
-        assert(out == "true\n") { out }
+        //assert(out == "true\n") { out }
+        assert(out == "anon : (lin 6, col 22) : drop error : value contains multiple references\n") { out }
     }
     @Test
     fun cc_15_drop_passd() {
@@ -896,23 +900,51 @@ class Exec_01 {
         assert(out == "[1]\n") { out }
     }
 
-    // PASSD
+    // PASSD / UNDEF / FLEET
 
     @Test
-    fun cd_01_passd() {
+    fun cd_01_passd_err() {
         val out = test("""
-            val f = func (v) {
-                val g = func (v') {
-                    val x = v'
-                }
-                g(v)
-                println(v)
+            val g = func (v) {
+                nil
             }
-            println(f([1]))
+            val f = func (v) {
+                g(v)        ;; must drop or hold
+            }
+            f([])
         """)
-        //assert(out == "anon : (lin 3, col 22) : drop error : fleeting argument\n") { out }
-        assert(out == "[1]\n") { out }
+        assert(out == "anon : (lin 2, col 27) : argument error : must drop or hold when passing fleeting reference\n") { out }
+        //assert(out == "[1]\n") { out }
     }
+    @Test
+    fun cd_01_passd_drop() {
+        val out = test("""
+            val g = func (v) {
+                println(:in, v)
+            }
+            val f = func (v) {
+                g(drop(v))        ;; must drop or hold
+                println(:out, v)
+            }
+            f([])
+        """)
+        assert(out == ":in\t[]\n:out\tnil\n") { out }
+    }
+    @Test
+    fun cd_01_passd_hold() {
+        val out = test("""
+            val g = func (v) {
+                println(:in, v)
+            }
+            val f = func (v) {
+                g(hold(v))        ;; must drop or hold
+                println(:out, v)
+            }
+            f([])
+        """)
+        assert(out == ":in\t[]\n:out\t[]\n") { out }
+    }
+
     @Test
     fun cd_02_nest() {
         val out = test("""
@@ -972,7 +1004,7 @@ class Exec_01 {
                 println(v)
             }
             val f = func (v) {
-                g(v)
+                g(hold(v))
                 println(v)
             }
             f([1])
@@ -991,8 +1023,8 @@ class Exec_01 {
             println(x)
         """
         )
-        //assert(out == "[1,2,3]\n") { out }
-        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference out\n") { out }
+        assert(out == "[1,2,3]\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun cd_08_func_err() {
@@ -2174,7 +2206,7 @@ class Exec_01 {
         assert(out == "[[2]]\n") { out }
     }
     @Test
-    fun scope30() {
+    fun scope30() {     // TODO: see todo_cc_13_drop_cycle
         val out = test("""
             val cycle = func (v) {
                 set v[3] = v
@@ -2189,7 +2221,8 @@ class Exec_01 {
             ;;println(d)  ;; OK: [[1],[2],[3],*]
             println(:ok)
         """)
-        assert(out == ":ok\n") { out }
+        //assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 10, col 22) : drop error : value contains multiple references\n") { out }
     }
 
     // SCOPE / INNER
@@ -2226,7 +2259,7 @@ class Exec_01 {
             }
             val f = func (v) {
                 ;;dump(v)
-                g(v)
+                g(drop(v))
             }
             f([1])
         """)
@@ -2240,9 +2273,9 @@ class Exec_01 {
             }
             val f = func (v) {
                 ;;dump(v)
-                g(v)
+                g(hold(v))
                 ;;dump(v)
-                g(v)
+                g(hold(v))
             }
             f([1])
         """)

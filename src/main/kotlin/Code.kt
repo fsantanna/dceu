@@ -295,15 +295,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 ceu_gc_inc(ceu_acc);
                                 $idc = ceu_acc;
                                 if ($idc.type > CEU_VALUE_DYNAMIC) {
-                                    int ceu_type_$n = ${ylds.cond2({ "CEU_HOLD_MUTAB" }, { "CEU_HOLD_FLEET" })};
-                                    if (ceu_type_$n != CEU_HOLD_FLEET) {
-                                        CEU_ASSERT(
-                                            $blkc,
-                                            ceu_hold_chk_set($blkc, ceu_type_$n, $idc, 1, "argument error"),
-                                            "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
-                                        );
-                                    }
-                                }
+                                    CEU_ASSERT(
+                                        $blkc,
+                                        ceu_hold_chk_set_rec($blkc, ${if (ylds) "CEU_HOLD_MUTAB" else "CEU_HOLD_UNDEF" }, $idc, 1, "argument error"),
+                                        "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
+                                    );
+                                }                                    
                                 """
                             }
                             (f_b is Expr.Proto) -> {
@@ -324,17 +321,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         if (ceu_n > $i) {
                                             $idc = ceu_args[$i];
                                             if ($idc.type > CEU_VALUE_DYNAMIC) {
-                                                int ceu_type_$n = CEU_HOLD_FLEET;
                                                 // must check CEU_HOLD_FLEET for parallel scopes, but only for exes:
                                                 // [gg_02_scope] v -> coro/task
-                                                ${(inexe).cond {"""
-                                                    CEU_ASSERT(
-                                                        $blkc,
-                                                        ceu_hold_chk_set($blkc, ceu_type_$n, $idc, 1, "argument error"),
-                                                        "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
-                                                    );
-                                                """} 
-                                            }
+                                                CEU_ASSERT(
+                                                    $blkc,
+                                                    ceu_hold_chk_set_rec($blkc, ${if (inexe) "CEU_HOLD_FLEET" else "CEU_HOLD_UNDEF" }, $idc, 1, "argument error"),
+                                                    "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
+                                                );
+                                            }                                    
                                         }
                                         """
                                     }.joinToString("")}
@@ -415,7 +409,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc
                     """
                         //ceu_dump_value(ceu_acc);
-                        CEU_Value ceu_err_$n = ceu_hold_chk_set($up1, CEU_HOLD_FLEET, ceu_acc, 0, "block escape error");
+                        CEU_Value ceu_err_$n = ceu_hold_chk_set_rec($up1, CEU_HOLD_FLEET, ceu_acc, 0, "block escape error");
                         if (ceu_err_$n.type == CEU_VALUE_ERROR) {
                         #if CEU <= 1
                             // free from this block
@@ -506,7 +500,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     this.src!!.code() + """ 
                         CEU_ASSERT(
                             $bupc,
-                            ceu_hold_chk_set($bupc, CEU_HOLD_MUTAB, ceu_acc, 0, "declaration error"),
+                            ceu_hold_chk_set_rec($bupc, CEU_HOLD_MUTAB, ceu_acc, 0, "declaration error"),
                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                         );
                     """
@@ -583,7 +577,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     if (ceu_acc.type == CEU_VALUE_THROW) {
                         CEU_Value ceu_err = ceu_acc;
                         {
-                            CEU_Value ret = ceu_hold_chk_set($bupc, CEU_HOLD_MUTAB, ceu_err, 0, "TODO");
+                            CEU_Value ret = ceu_hold_chk_set_rec($bupc, CEU_HOLD_MUTAB, ceu_err, 0, "TODO");
                             assert(ret.type==CEU_VALUE_NIL && "impossible case");
                         }
                         do {
@@ -592,7 +586,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         assert(ceu_acc.type!=CEU_VALUE_THROW && "TODO: throw in catch condition");
                         if (!ceu_as_bool(ceu_acc)) {
                             {
-                                CEU_Value ret = _ceu_drop_(ceu_err);
+                                CEU_Value ret = ceu_hold_set_rec(ceu_err, CEU_HOLD_FLEET);
                                 assert(ret.type==CEU_VALUE_NIL && "impossible case");
                             }
                             ceu_acc = ceu_err;
@@ -677,7 +671,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${this.arg.code()}
                     ceu_frame->exe->status = CEU_EXE_STATUS_YIELDED;
                     ceu_frame->exe->pc = $n;      // next resume
-                    if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
+                    if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type>=CEU_HOLD_MUTAB) {
                         CEU_Value err = { CEU_VALUE_ERROR, {.Error="yield error : cannot receive assigned reference"} };
                         CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                     }
@@ -799,7 +793,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         { // PUB - SET | ${this.dump()}
                             CEU_ASSERT(
                                 $bupc,
-                                ceu_hold_chk_set(ceu_block_up_block($bupc), CEU_HOLD_MUTAB, $src, 0, "set error"),
+                                ceu_hold_chk_set_rec(ceu_block_up_block($bupc), CEU_HOLD_MUTAB, $src, 0, "set error"),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                             ceu_gc_inc($src);
@@ -860,6 +854,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
             }
             is Expr.Acc -> {
+                val blkc = ups.first_block(this)!!.idc("block")
                 val (vblk,dcl) = vars.get(this)
                 val nst = ups
                     .all_until(this) { it==vblk }  // go up until find dcl blk
@@ -877,7 +872,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         { // ACC - SET
                             CEU_ASSERT(
                                 $bupc,
-                                ceu_hold_chk_set(${vblk.idc("block",nst)}, CEU_HOLD_MUTAB, $src, 0, "set error"),
+                                ceu_hold_chk_set_rec(${vblk.idc("block",nst)}, CEU_HOLD_MUTAB, $src, 0, "set error"),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                             ceu_gc_inc($src);
@@ -886,20 +881,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         """
                     }
-                    this.isdrop() -> {
-                        val bupc = ups.first_block(this)!!.idc("block")
-                        """
+                    this.isdrop() -> """
                         { // ACC - DROP
                             CEU_Value ceu_$n = $idc;
-                            CEU_Frame ceu_frame_$n = { $bupc, NULL CEU3(COMMA {.exe=NULL}) };
-                            CEU_ASSERT($bupc, ceu_drop_f(CEU5(ceu_dstk COMMA) CEU4(ceu_bstk COMMA) &ceu_frame_$n, 1, &ceu_$n), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                            ceu_gc_dec(ceu_$n, 0);
+                            ceu_acc = ceu_drop(ceu_$n);
+                            CEU_ASSERT($blkc, ceu_drop(ceu_$n),
+                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                            );
                             $idc = (CEU_Value) { CEU_VALUE_NIL };
                             ceu_acc = ceu_$n;
                         }
-                        """
-                    }
-                    else -> "ceu_acc = $idc;\n"
+                    """
+                    else -> "ceu_acc = $idc;"
                 }
             }
             is Expr.Nil  -> "ceu_acc = ((CEU_Value) { CEU_VALUE_NIL });"
@@ -988,7 +981,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             }
             is Expr.Index -> {
                 val blk = ups.first_block(this)!!
-                val bupc = blk.idc("block")
+                val blkc = blk.idc("block")
                 val idx = vars.data(this).let { if (it == null) -1 else it.first!! }
                 val idxc = this.idc("idx")
                 """
@@ -1010,7 +1003,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     // COL
                     ${this.col.code()}
                     CEU_Value ceu_col_$n = ceu_acc;
-                    CEU_ASSERT($bupc, ceu_col_check(ceu_col_$n, $idxc), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                    CEU_ASSERT($blkc, ceu_col_check(ceu_col_$n, $idxc), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                 """ + when {
                     this.isdst() -> {
                         val src = ups.pub[this]!!.idc("src")
@@ -1031,7 +1024,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             default:
                                 assert(0 && "bug found");
                         }
-                        CEU_ASSERT($bupc, ok, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                        CEU_ASSERT($blkc, ok, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         """
                     }
                     this.isdrop() -> {
@@ -1055,9 +1048,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             }
                             
                             CEU_Value ceu_val_$n = ceu_acc;
-                            CEU_Frame ceu_frame_$n = { $bupc, NULL CEU3(COMMA NULL) };
-                            CEU_ASSERT($bupc, ceu_drop_f(CEU4(NULL COMMA) &ceu_frame_$n, 1, &ceu_val_$n), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                            ceu_gc_dec(ceu_val_$n, 0);
+                            CEU_ASSERT($bupc, ceu_drop(ceu_val_$n),
+                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                            );
                             
                             switch (ceu_col_$n.type) {
                                 case CEU_VALUE_TUPLE:
@@ -1089,7 +1082,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 ceu_acc = ceu_col_$n.Dyn->Tuple.buf[(int) $idxc.Number];
                                 break;
                             case CEU_VALUE_VECTOR:
-                                ceu_acc = CEU_ASSERT($bupc, ceu_vector_get(&ceu_col_$n.Dyn->Vector, $idxc.Number), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                ceu_acc = CEU_ASSERT($blkc, ceu_vector_get(&ceu_col_$n.Dyn->Vector, $idxc.Number), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                 break;
                             case CEU_VALUE_DICT:
                                 ceu_acc = ceu_dict_get(&ceu_col_$n.Dyn->Dict, $idxc);
