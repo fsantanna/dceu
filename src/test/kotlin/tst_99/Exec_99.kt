@@ -772,7 +772,7 @@ class Exec_99 {
         val out = test("""
             coro () {
                 catch ( it => do {
-                    pass it
+                    do it
                     yield(nil) thus { it => nil }
                 } )
                 {
@@ -2645,7 +2645,7 @@ class Exec_99 {
             val ts = tasks()
             loop in {1=>10} {
                 ;;dump(ts)
-                pass [ts]
+                do [ts]
             }
             println(:ok)
         """, true)

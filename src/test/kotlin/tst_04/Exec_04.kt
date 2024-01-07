@@ -315,7 +315,7 @@ class Exec_04 {
         val out = test("""
             val T = task (t1) {
                 val t2 = []
-                pass [t1,[],t2]
+                do [t1,[],t2]
                 yield(nil) ;;thus { it => nil }
             }
             do {
@@ -333,7 +333,7 @@ class Exec_04 {
     fun cd_01_every() {
         val out = test("""
             spawn (task () :void {
-                (pass yield(nil))
+                (do yield(nil))
                 do (it) {
                     yield(nil)
                 }

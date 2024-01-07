@@ -272,7 +272,7 @@ class Exec_03 {
     fun cc_13_tuple_leak() {
         val out = test("""
             val T = coro () {
-                pass [1,2,3]
+                do [1,2,3]
                 func(it) { nil } (yield(nil))
             }
             resume (coroutine(T)) ()

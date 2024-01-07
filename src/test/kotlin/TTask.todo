@@ -442,7 +442,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                pass [1,2,3]
+                do [1,2,3]
                 yield(nil)
             }
             var ts
@@ -535,7 +535,7 @@ class TTask {
     fun ff_pool8a_err() {
         val out = all("""
             loop in :tasks nil, x {
-                pass nil
+                do nil
             }
         """)
         assert(out == "anon : (lin 2, col 28) : loop error : expected tasks\n:error\n") { out }
@@ -704,10 +704,10 @@ class TTask {
             loop in :tasks ts, xxx {
                 var yyy
                 loop in :tasks ts, zzz {
-                    pass nil
+                    do nil
                 }
                 set yyy = xxx
-                ;;pass nil ;; otherwise scope err for yyy/xxx
+                ;;do nil ;; otherwise scope err for yyy/xxx
             }
             println(1)
         """
@@ -724,7 +724,7 @@ class TTask {
             set ts = tasks()
             spawn in ts, T()
             loop in :tasks ts, xxx {
-                pass xxx
+                do xxx
             }
             println(1)
         """
@@ -1427,7 +1427,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                pass task.pub ;; useless test
+                do task.pub ;; useless test
                 nil
             }
             spawn T()
@@ -2300,7 +2300,7 @@ class TTask {
                 var ts
                 set ts = tasks()
                 do {
-                    spawn in ts, T([])  ;; pass [] to ts
+                    spawn in ts, T([])  ;; do [] to ts
                 }
                 yield(nil)
                 yield(nil)

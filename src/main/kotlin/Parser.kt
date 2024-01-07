@@ -518,11 +518,17 @@ class Parser (lexer_: Lexer)
     fun expr_prim (): Expr {
         return when {
             this.acceptFix("do") -> {
-                val tk0 = this.tk0
-                val arg = if (!this.acceptFix("(")) null else {
-                    val ret = this.id_tag()
-                    this.acceptFix_err(")")
-                    ret
+                val tk0 = this.tk0 as Tk.Fix
+                val arg = when {
+                    this.acceptFix("(") -> {
+                        val ret = this.id_tag()
+                        this.acceptFix_err(")")
+                        ret
+                    }
+                    !this.checkFix("{") -> {
+                        return Expr.Pass(tk0, this.expr())
+                    }
+                    else -> null
                 }
                 Expr.Do(tk0, arg, this.block().es)
             }
@@ -563,7 +569,7 @@ class Parser (lexer_: Lexer)
                     when (c.tk.str) {
                         "/* = */" -> this.nest("""
                             do {
-                                pass ${arg.e.tostr()}
+                                do ${arg.e.tostr()}
                                 do (${dcl.str}) {
                                     set ${dcl.str}[#${dcl.str}-1] = ${src.tostr(true)}
                                 }
@@ -571,7 +577,7 @@ class Parser (lexer_: Lexer)
                         """)
                         "/* + */" -> this.nest("""
                             do {
-                                pass ${arg.e.tostr()}
+                                do ${arg.e.tostr()}
                                 do (${dcl.str}) {
                                     set ${dcl.str}[#${dcl.str}] = ${src.tostr(true)}
                                 }
@@ -796,7 +802,6 @@ class Parser (lexer_: Lexer)
                     Expr.Do(Tk.Fix("do",tpl.pos), null, l)
                 }
             }
-            this.acceptFix("pass") -> Expr.Pass(this.tk0 as Tk.Fix, this.expr())
             this.acceptFix("drop") -> Expr.Drop(this.tk0 as Tk.Fix, this.expr_in_parens()!!)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
@@ -841,7 +846,7 @@ class Parser (lexer_: Lexer)
 
                 val xxcnd = this.nest("""
                     do {
-                        pass `:ceu ceu_acc.Dyn->Throw.val`
+                        do `:ceu ceu_acc.Dyn->Throw.val`
                         do (${xid.pos.pre()+xid.str} ${xtag.cond{it.pos.pre()+it.str}}) {
                             $xcnd
                         }
@@ -1340,7 +1345,7 @@ class Parser (lexer_: Lexer)
                     val (id_tag,es) = lambda(N)
                     this.nest( """
                         do {
-                            pass (${e.tostr(true)})
+                            do (${e.tostr(true)})
                             ${tk1.pos.pre()}do (${id_tag.tostr(true)}) {
                                 ${es.tostr(true)}
                             }

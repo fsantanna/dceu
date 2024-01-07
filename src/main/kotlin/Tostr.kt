@@ -54,7 +54,7 @@ fun Expr.tostr (pre: Boolean = false): String {
             (tag,e) -> tag.str + e.cond { " = " + "`" + it.str + "`" }
         }.joinToString(",\n") + "\n}"
         is Expr.Data   -> "(data " + this.tk.str + " = [" + this.ids.map { it.tostr() }.joinToString(",") + "])"
-        is Expr.Pass   -> "(pass " + this.e.tostr(pre) + ")"
+        is Expr.Pass   -> "(do " + this.e.tostr(pre) + ")"
         is Expr.Drop   -> "drop(" + this.e.tostr(pre) + ")"
 
         is Expr.Catch  -> {

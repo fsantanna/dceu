@@ -40,7 +40,7 @@ val KEYWORDS: SortedSet<String> = (
     setOf (
         "break", "data", "do", "drop", "else",
         "enum", "false", "func", "if",
-        "loop", "nil", "pass", "set",
+        "loop", "nil", "set",
         "true", "val", "var",
     ) + (if (CEU < 2) setOf() else setOf (
         "catch", "defer",
