@@ -45,7 +45,7 @@ class Parser_99 {
         val l = lexer("do { :a }")
         val parser = Parser(l)
         val e = parser.expr_prim()
-        assert(e.tostr() == "do {\n:a\n}\n") { e.tostr() }
+        assert(e.tostr() == "do {\n:a\n}") { e.tostr() }
     }
 
     // OPS: not, and, or

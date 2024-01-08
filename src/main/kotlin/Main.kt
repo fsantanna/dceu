@@ -95,7 +95,9 @@ val TAGS = listOf (
 ))
 
 val GLOBALS = setOf (
-    "detrack'", "dump", "error", "hold", "next-dict", "print", "println",   // bc of detrack'' in prelude
+    // bc of detrack'' in prelude
+    "detrack'", "dump", "error", "hold", "next-dict",
+    "pass", "print", "println",
     "string-to-tag", "sup?", "tags",
     "tuple", "type", "{{#}}", "{{==}}", "{{/=}}", "..."
 ) + (if (CEU < 2) setOf() else setOf(

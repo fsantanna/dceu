@@ -1405,6 +1405,16 @@ fun Coder.main (tags: Tags): String {
             ceu_hold_set_rec(args[0], CEU_HOLD_MUTAB);
             return args[0];
         }
+        CEU_Value ceu_pass_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n, CEU_Value args[]) {
+            assert(n == 1);
+            CEU_Value v = args[0];
+            if (v.type > CEU_VALUE_DYNAMIC) {
+                if (v.Dyn->Any.hld.type == CEU_VALUE_UNDEF) {
+                    ceu_hold_set_rec(args[0], CEU_HOLD_FLEET);
+                }
+            }
+            return v;
+        }
     """ +
     """ // BCAST
     #if CEU >= 4
@@ -2516,6 +2526,10 @@ fun Coder.main (tags: Tags): String {
         CEU_Clo ceu_next_dict = { 
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &CEU_BLOCK, NULL, NULL },
             &CEU_FRAME, ceu_next_dict_f, {0,NULL}
+        };
+        CEU_Clo ceu_pass = { 
+            CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &CEU_BLOCK, NULL, NULL },
+            &CEU_FRAME, ceu_pass_f, {0,NULL}
         };
         CEU_Clo ceu_print = { 
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &CEU_BLOCK, NULL, NULL },
