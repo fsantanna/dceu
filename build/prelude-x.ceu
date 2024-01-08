@@ -4,6 +4,11 @@ func detrack'' (trk) {
     not not detrack'(trk)
 }
 
+func debug (v) {
+    println(v)
+    v
+}
+
 ;; is', is-not'
 
 func to-bool (v) {
@@ -367,10 +372,10 @@ func to-tracks (...) {
     val args = ...
     loop v in iter(args) {
         ifs v {
-            is? :x-task {
+            is? :exe-task {
                 set ret[+] = track(v)
             }
-            is? :x-tasks {
+            is? :tasks {
                 loop i in v {
                     set ret[+] = drop(i)
                 }
