@@ -266,8 +266,8 @@ class Parser (lexer_: Lexer)
                 val (es,id_tag) = when {
                     !isarr -> {
                         val xes = if (this.checkFix("}")) emptyList() else this.exprs()
-                        val etag = if (istag) listOf(Expr.Tag(tag as Tk.Tag)) else emptyList()
-                        Pair(listOf(e)+etag+xes, Pair(Tk.Id("it", tk0.pos, 0), null))
+                        //val etag = if (istag) listOf(Expr.Tag(tag as Tk.Tag)) else emptyList()
+                        Pair(listOf(e)+xes, Pair(Tk.Id("it", tk0.pos, 0), null))
                     }
                     (isacc && istag)  -> Pair(this.exprs(), Pair(e.tk as Tk.Id, tag as Tk.Tag))
                     (isacc && !istag) -> Pair(this.exprs(), Pair(e.tk as Tk.Id, null))
@@ -1248,7 +1248,6 @@ class Parser (lexer_: Lexer)
         val ok = this.tk0.pos.isSameLine(this.tk1.pos) && (
                 (CEU>=99 && this.acceptFix("thus")) || this.acceptFix("[") || this.acceptFix(".") || this.acceptFix("(")
                  )
-        val op = this.tk0
         if (!ok) {
             return e
         }

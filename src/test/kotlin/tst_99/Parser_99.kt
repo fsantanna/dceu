@@ -38,6 +38,16 @@ class Parser_99 {
         assert(e.tostr() == "loop {\nnil\n}") { e.tostr() }
     }
 
+    // DO
+
+    @Test
+    fun ab_01_do() {
+        val l = lexer("do { :a }")
+        val parser = Parser(l)
+        val e = parser.expr_prim()
+        assert(e.tostr() == "do {\n:a\n}\n") { e.tostr() }
+    }
+
     // OPS: not, and, or
 
     @Test
@@ -1546,7 +1556,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(pass v)\n" +
+                "(do v)\n" +
                 "do { ceu_8 :X =>\n" +
                 "ceu_8[:x]\n" +
                 "}\n" +
@@ -1630,7 +1640,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(pass x[0])\n" +
+                "(do x[0])\n" +
                 "do { ceu_12 =>\n" +
                 "```/* = */```\n" +
                 "ceu_12[{{-}}({{#}}(ceu_12),1)]\n" +
@@ -1643,7 +1653,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(pass x[:y])\n" +
+                "(do x[:y])\n" +
                 "do { ceu_14 =>\n" +
                 "(set ceu_14[{{-}}({{#}}(ceu_14),1)] = 10)\n" +
                 "}\n" +
@@ -1655,11 +1665,11 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(pass x())\n" +
+                "(do x())\n" +
                 "do { ceu_x_11 =>\n" +
                 "```/* - */```\n" +
                 "do {\n" +
-                "(pass ceu_x_11[{{-}}({{#}}(ceu_x_11),1)])\n" +
+                "(do ceu_x_11[{{-}}({{#}}(ceu_x_11),1)])\n" +
                 "do { ceu_y_11 =>\n" +
                 "(set ceu_x_11[{{-}}({{#}}(ceu_x_11),1)] = nil)\n" +
                 "ceu_y_11\n" +
@@ -1680,7 +1690,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(pass t)\n" +
+                "(do t)\n" +
                 "do { ceu_8 =>\n" +
                 "```/* + */```\n" +
                 "ceu_8[{{#}}(ceu_8)]\n" +
@@ -1693,7 +1703,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(pass t[:x])\n" +
+                "(do t[:x])\n" +
                 "do { ceu_14 =>\n" +
                 "(set ceu_14[{{#}}(ceu_14)] = 1)\n" +
                 "}\n" +
