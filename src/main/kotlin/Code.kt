@@ -289,29 +289,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 }
                             """
                             (this.arg != null) -> {
-                                val idc = vars.get(this, this.arg.first.str).idc(0)
-                                val ylds = sta.ythus.contains(this)
-                                """
-                                ceu_gc_inc(ceu_acc);
-                                $idc = ceu_acc;
-                                if ($idc.type > CEU_VALUE_DYNAMIC) {
-                                    int ceu_type_$n =
-                                        ${ylds.cond2({ """
-                                            CEU_HOLD_MUTAB
-                                        """ }, { """
-                                            ($idc.Dyn->Any.hld.type > CEU_HOLD_FLEET) ? CEU_HOLD_FLEET :
-                                                ($idc.Dyn->Any.hld.type-1)
-                                        """ })}
-                                    ;
-                                    if (ceu_type_$n != CEU_HOLD_FLEET) {
-                                        CEU_ASSERT(
-                                            $blkc,
-                                            ceu_hold_chk_set($blkc, ceu_type_$n, $idc, 1, "argument error"),
-                                            "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
-                                        );
-                                    }
-                                }
-                                """
+                                error("remove blk arg")
                             }
                             (f_b is Expr.Proto) -> {
                                 val dots = (f_b.args.lastOrNull()?.first?.str == "...")
@@ -330,20 +308,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         """
                                         if (ceu_n > $i) {
                                             $idc = ceu_args[$i];
-                                            if ($idc.type > CEU_VALUE_DYNAMIC) {
-                                                int ceu_type_$n = ($idc.Dyn->Any.hld.type > CEU_HOLD_FLEET) ? CEU_HOLD_FLEET :
-                                                                    ($idc.Dyn->Any.hld.type-1);
-                                                // must check CEU_HOLD_FLEET for parallel scopes, but only for exes:
-                                                // [gg_02_scope] v -> coro/task
-                                                ${(!inexe).cond {"if (ceu_type_$n != CEU_HOLD_FLEET)"}} 
-                                                {
-                                                    CEU_ASSERT(
-                                                        $blkc,
-                                                        ceu_hold_chk_set($blkc, ceu_type_$n, $idc, 1, "argument error"),
-                                                        "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
-                                                    );
-                                                }
-                                            }
+
+                                            // must check CEU_HOLD_FLEET for parallel scopes, but only for exes:
+                                            // [gg_02_scope] v -> coro/task
+                                            CEU_ASSERT(
+                                                $blkc,
+                                                ceu_hold_chk($idc, CEU_HOLD_MUTAB, $blkc, "argument error"),
+                                                "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
+                                            );
+                                            
+                                            ceu_hold_set_rec($idc, CEU_HOLD_MUTAB, $blkc, 1);
                                         }
                                         """
                                     }.joinToString("")}
@@ -390,11 +364,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         val idc = vars.get(this, id.str).idc(0)
                         """
                         if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
-                            // do not check if they are returned back (this is not the case with locals created here)
-                            if ($idc.Dyn->Any.hld.type <= CEU_HOLD_PASSD) {
-                                CEU_Value ceu_err_$n = ceu_hold_chk_set($blkc, $idc.Dyn->Any.hld.type+1, $idc, 1, "TODO");
-                                assert(ceu_err_$n.type==CEU_VALUE_NIL && "impossible case");
-                            }
                             ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
                         }                    
                         """
@@ -407,10 +376,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             """
                             if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
                                 // do not check if they are returned back (this is not the case with locals created here)
-                                if ($idc.Dyn->Any.hld.type <= CEU_HOLD_PASSD) {
-                                    CEU_Value ceu_err_$n = ceu_hold_chk_set($blkc, $idc.Dyn->Any.hld.type+1, $idc, 1, "TODO");
-                                    assert(ceu_err_$n.type==CEU_VALUE_NIL && "impossible case");
-                                }
                                 ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
                             }
                             """
@@ -429,23 +394,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     // move up dynamic ceu_acc (return or error)
                     // after gc-dec b/c of PASSD -> FLEET
                     ${(f_b!=null && !isvoid).cond {
-                    val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc
-                    """
-                        //ceu_dump_value(ceu_acc);
-                        CEU_Value ceu_err_$n = ceu_hold_chk_set($up1, CEU_HOLD_FLEET, ceu_acc, 0, "block escape error");
-                        if (ceu_err_$n.type == CEU_VALUE_ERROR) {
-                        #if CEU <= 1
-                            // free from this block
-                            CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
-                        #else
-                            do {
-                                // allocate throw on up
-                                CEU_ERROR($up1, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
-                            } while (0);    // catch continue in CEU_ERROR
-                        #endif
-                        }
+                        val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc
                         """
-                }}
+                        ceu_hold_set_rec(ceu_acc, CEU_HOLD_MUTAB, $up1, -1);
+                        """
+                    }}
                     
                     // unlink task.dn_block = me
                     // unlink up.dn.block = me
@@ -523,9 +476,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     this.src!!.code() + """ 
                         CEU_ASSERT(
                             $bupc,
-                            ceu_hold_chk_set($bupc, CEU_HOLD_MUTAB, ceu_acc, 0, "declaration error"),
+                            ceu_hold_chk(ceu_acc, CEU_HOLD_MUTAB, $bupc, "declaration error"),
                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                         );
+                        ceu_hold_set_rec(ceu_acc, CEU_HOLD_MUTAB, $bupc, 1),
                     """
                 }}
                 ${when {
@@ -599,10 +553,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                     if (ceu_acc.type == CEU_VALUE_THROW) {
                         CEU_Value ceu_err = ceu_acc;
-                        {
-                            CEU_Value ret = ceu_hold_chk_set($bupc, CEU_HOLD_MUTAB, ceu_err, 0, "TODO");
-                            assert(ret.type==CEU_VALUE_NIL && "impossible case");
-                        }
+                        ceu_hold_set_rec(ceu_err, CEU_HOLD_MUTAB, $bupc, -1);
                         do {
                             ${this.cnd.code()}
                         } while (0);
@@ -816,13 +767,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         { // PUB - SET | ${this.dump()}
                             CEU_ASSERT(
                                 $bupc,
-                                ceu_hold_chk_set(ceu_block_up_block($bupc), CEU_HOLD_MUTAB, $src, 0, "set error"),
+                                ceu_hold_chk($src, CEU_HOLD_MUTAB, ceu_block_up_block($bupc), "set error"),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                             ceu_gc_inc($src);
                             ceu_gc_dec(ceu_acc.Dyn->Exe_Task.pub, 1);
                             ceu_acc.Dyn->Exe_Task.pub = $src;
                         }                        
+                        ceu_hold_set_rec($src, CEU_HOLD_MUTAB, ceu_block_up_block($bupc), 1),
                         """
                     }
                     this.isdrop() -> "assert(0 && \"TODO: drop pub\");"
@@ -894,9 +846,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         { // ACC - SET
                             CEU_ASSERT(
                                 $bupc,
-                                ceu_hold_chk_set(${vblk.idc("block",nst)}, CEU_HOLD_MUTAB, $src, 0, "set error"),
+                                ceu_hold_chk($src, CEU_HOLD_MUTAB, ${vblk.idc("block",nst)}, "swt error"),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
+                            ceu_hold_set_rec($src, CEU_HOLD_MUTAB, ${vblk.idc("block",nst)}, 1),
                             ceu_gc_inc($src);
                             ceu_gc_dec($idc, 1);
                             $idc = $src;
