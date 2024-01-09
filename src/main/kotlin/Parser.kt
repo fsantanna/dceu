@@ -517,7 +517,13 @@ class Parser (lexer_: Lexer)
 
     fun expr_prim (): Expr {
         return when {
-            this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
+            this.acceptFix("do") -> {
+                if (this.checkFix("{")) {
+                    Expr.Do(this.tk0, this.block().es)
+                } else {
+                    Expr.Pass(this.tk0 as Tk.Fix, this.expr())
+                }
+            }
             (CEU>=6 && this.acceptFix("export")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val ids = if (CEU>=99 && this.checkFix("{")) emptyList() else {
@@ -788,7 +794,6 @@ class Parser (lexer_: Lexer)
                     Expr.Do(Tk.Fix("do",tpl.pos), l)
                 }
             }
-            this.acceptFix("pass") -> Expr.Pass(this.tk0 as Tk.Fix, this.expr())
             this.acceptFix("drop") -> Expr.Drop(this.tk0 as Tk.Fix, this.expr_in_parens()!!)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
