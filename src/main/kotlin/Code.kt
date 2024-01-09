@@ -559,10 +559,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         } while (0);
                         assert(ceu_acc.type!=CEU_VALUE_THROW && "TODO: throw in catch condition");
                         if (!ceu_as_bool(ceu_acc)) {
-                            {
-                                CEU_Value ret = _ceu_drop_(ceu_err);
-                                assert(ret.type==CEU_VALUE_NIL && "impossible case");
-                            }
+                            CEU_Value ceu_ret = ceu_drop(ceu_err);
+                            assert(ceu_ret.type==CEU_VALUE_NIL && "impossible case");
                             ceu_acc = ceu_err;
                             continue; // uncaught, rethrow
                         }
@@ -862,7 +860,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         { // ACC - DROP
                             CEU_Value ceu_$n = $idc;
                             CEU_Frame ceu_frame_$n = { $bupc, NULL CEU3(COMMA {.exe=NULL}) };
-                            CEU_ASSERT($bupc, ceu_drop_f(CEU5(ceu_dstk COMMA) CEU4(ceu_bstk COMMA) &ceu_frame_$n, 1, &ceu_$n), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                            CEU_ASSERT (
+                                $bupc,
+                                ceu_drop(ceu_$n),
+                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                            );
                             ceu_gc_dec(ceu_$n, 0);
                             $idc = (CEU_Value) { CEU_VALUE_NIL };
                             ceu_acc = ceu_$n;
@@ -1026,7 +1028,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             
                             CEU_Value ceu_val_$n = ceu_acc;
                             CEU_Frame ceu_frame_$n = { $bupc, NULL CEU3(COMMA NULL) };
-                            CEU_ASSERT($bupc, ceu_drop_f(CEU4(NULL COMMA) &ceu_frame_$n, 1, &ceu_val_$n), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                            CEU_ASSERT (
+                                $bupc,
+                                ceu_drop(ceu_val_$n),
+                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                            );
                             ceu_gc_dec(ceu_val_$n, 0);
                             
                             switch (ceu_col_$n.type) {

@@ -450,7 +450,8 @@ class Exec_01 {
             println(f(3))
         """, true
         )
-        assert(out == "anon : (lin 3, col 30) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 3, col 30) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[[[0]]]\n") { out }
     }
     @Test
     fun cc_tuple8_hold_err() {
@@ -468,7 +469,8 @@ class Exec_01 {
             println(f(3))
         """, true
         )
-        assert(out == "anon : (lin 4, col 26) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 4, col 26) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[[[0]]]\n") { out }
     }
     @Test
     fun cc_tuple9_hold_err() {
@@ -482,8 +484,8 @@ class Exec_01 {
             println(1)
         """
         )
-        //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 2, col 13) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun cc_tuple10_hold_err() {
@@ -499,7 +501,8 @@ class Exec_01 {
         //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[0]\n") { out }
     }
     @Test
     fun cc_tuple14_drop_out() {
@@ -805,8 +808,8 @@ class Exec_01 {
             }                   ;; not a problem b/c gc_dec does not chk current block
             println(x)
         """)
-        //assert(out == "anon : (lin 5, col 22) : drop error : multiple references\n") { out }
-        assert(out == "[1,2,3]\n") { out }
+        assert(out == "anon : (lin 5, col 22) : drop error : multiple references\n") { out }
+        //assert(out == "[1,2,3]\n") { out }
     }
     @Test
     fun cc_10_drop_multi_err_why() {
@@ -823,8 +826,8 @@ class Exec_01 {
             println("-=-=-=-=-=-=-=-=-")
             println(t)
         """)
-        //assert(out == "anon : (lin 5, col 22) : drop error : multiple references\n") { out }
-        assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
+        assert(out == "anon : (lin 6, col 26) : drop error : value contains multiple references\n") { out }
+        //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
     }
     @Test
     fun cc_11_drop_deep() {
@@ -853,7 +856,8 @@ class Exec_01 {
                 println(t1)
             }
         """)
-        assert(out == "anon : (lin 6, col 21) : declaration error : cannot move pending reference in\n") { out }
+        //assert(out == "anon : (lin 6, col 21) : declaration error : cannot move pending reference in\n") { out }
+        assert(out == "anon : (lin 6, col 35) : drop error : value contains multiple references\n") { out }
     }
     @Test
     fun cc_13_drop_cycle() {
@@ -4085,8 +4089,8 @@ class Exec_01 {
             println(g())
         """
         )
-        assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference out\n" +
-                "") { out }
+        //assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[1]\n") { out }
     }
     @Test
     fun tup22_err() {
@@ -4099,8 +4103,7 @@ class Exec_01 {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 2, col 13) : block escape error : cannot copy reference out\n" +
-                "") { out }
+        assert(out == "anon : (lin 2, col 13) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun clo23_err() {
@@ -4388,8 +4391,8 @@ class Exec_01 {
             println(out)
         """
         )
-        assert(out == "anon : (lin 3, col 23) : block escape error : cannot copy reference out\n" +
-                "") { out }
+        //assert(out == "anon : (lin 3, col 23) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[1,2,3]\n") { out }
     }
     @Test
     fun gc10() {
