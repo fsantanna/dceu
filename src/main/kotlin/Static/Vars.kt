@@ -178,26 +178,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 blk_to_dcls[this] = mutableListOf()
                 val size = dcls.size    // restore this size after nested block
 
-                if (this.arg != null) {
-                    val (id,tag) = this.arg
-                    val prv = dcls.firstOrNull { id.str==it.id.str }
-                    if (prv==null || (CEU>=99 && prv.id.str=="it" && it_uses[prv]==null)) {
-                        // ok
-                        if (CEU>=99 && prv!=null) {
-                            it_uses[prv] = this // found new dcl w/o uses of prv dcl
-                        }
-                    } else {
-                        err(id, "declaration error : variable \"${id.str}\" is already declared")
-                    }
-                    val dcl = Expr.Dcl(
-                        Tk.Fix("val", this.tk.pos),
-                        id, /*false,*/  tag, true, null
-                    )
-                    dcls.add(dcl)
-                    dcl_to_blk[dcl] = this
-                    blk_to_dcls[this]!!.add(dcl)
-                }
-
                 // func (a,b,...) { ... }
                 val proto = ups.pub[this]
                 if (proto is Expr.Proto) {

@@ -193,8 +193,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
                 val dcls = vars.blk_to_dcls[this]!!.filter { it.init }
                     .filter { !GLOBALS.contains(it.id.str) }
-                    .filter { !(this.arg!=null && this.arg.first.str==it.id.str) }
-                    .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
                     .map    { it.idc(0) }
 
                 val ismem  = this.ismem(sta,clos)
@@ -244,11 +242,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // main block varargs (...)
                             CEU_Value id__dot__dot__dot_;
                         """
-                        (this.arg != null) -> {
-                            (!ismem).cond {
-                                "CEU_Value ${this.arg.first.str.idc()};"
-                            }
-                        }
                         (f_b is Expr.Proto) -> {
                             (!ismem).cond {
                                 f_b.args.map { (id,_) ->
@@ -288,9 +281,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     assert(ceu_tuple_set(&id__dot__dot__dot_.Dyn->Tuple, i, vec).type != CEU_VALUE_ERROR);
                                 }
                             """
-                            (this.arg != null) -> {
-                                error("remove blk arg")
-                            }
                             (f_b is Expr.Proto) -> {
                                 val dots = (f_b.args.lastOrNull()?.first?.str == "...")
                                 val args_n = f_b.args.size - 1
@@ -359,15 +349,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }.joinToString("")}
                     
                     // args gc-dec (cannot call ceu_gc_dec_args b/c of copy to ids)
-                    
-                    ${this.arg.cond { (id,_) ->
-                        val idc = vars.get(this, id.str).idc(0)
-                        """
-                        if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
-                            ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
-                        }                    
-                        """
-                    }}
                     
                     ${(f_b is Expr.Proto).cond {
                         f_b as Expr.Proto

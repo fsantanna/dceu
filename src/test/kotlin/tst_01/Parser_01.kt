@@ -471,11 +471,12 @@ class Parser_01 {
     }
     @Test
     fun expr_do3() {
-        val l = lexer("do (a) { print(a) }")
+        val l = lexer("do ;;;(a);;; { print(a) }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Do && e.arg!=null)
-        assert(e.tostr() == "do (a) {\nprint(a)\n}") { e.tostr() }
+        assert(e is Expr.Do /*&& e.arg!=null*/)
+        //assert(e.tostr() == "do (a) {\nprint(a)\n}") { e.tostr() }
+        assert(e.tostr() == "do {\nprint(a)\n}") { e.tostr() }
     }
 
     // FUNC

@@ -5,7 +5,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     val spws:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 spawn
     val ylds:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 yield (including subs) or nested coro/task
     val exes:   MutableSet<Expr.Do>  = mutableSetOf() // TODO: all blocks in exes
-    val ythus:  MutableSet<Expr.Do>  = mutableSetOf() // thus'es with yields
 
     init {
         outer.traverse()
@@ -116,9 +115,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 ups.all_until(this) { it is Expr.Proto }
                     .filter  { it is Expr.Do }              // all blocks up to proto
                     .forEach { ylds.add(it as Expr.Do) }
-                ups.all(this)
-                    .filter  { it is Expr.Do && it.arg!=null }
-                    .forEach { ythus.add(it as Expr.Do) }
             }
             is Expr.Resume -> {
                 this.co.traverse()
