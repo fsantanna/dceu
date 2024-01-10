@@ -1122,174 +1122,6 @@ fun Coder.main (tags: Tags): String {
             ceu_hold_add(dyn, blk CEU5(COMMA dyns));
         }
 
-        CEU_Value ceu_hold_chk (CEU_Value src, CEU_HOLD dst_type, CEU_Block* dst_blk, char* err) {
-            if (src.type < CEU_VALUE_DYNAMIC) {
-                return (CEU_Value) { CEU_VALUE_NIL };
-            }
-                        
-        #if CEU >= 4
-            assert((!ceu_istask_val(src) || src.Dyn->Exe.status!=CEU_EXE_STATUS_RESUMED) && "TODO: moving running task?");
-        #endif
-
-            static char msg[256];
-            CEU_Block* src_blk  = CEU_HLD_BLOCK(src.Dyn);
-            CEU_HOLD   src_type = src.Dyn->Any.hld.type;
-            
-        #if CEU >= 5
-            if (src.type==CEU_VALUE_EXE_TASK_IN && dst_type>CEU_HOLD_FLEET) {
-                // unsafe to assign task-in to any variable of any scope
-                // (unless nested scope as FLEET in func/thus)
-                // b/c it is self-reclaimed which would generate dangling pointers:
-                // set "safe" x -> self-reclaim -> x is dangling
-                strncpy(msg, err, 256);
-                strcat(msg, " : cannot expose task-in-pool reference");
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} }; // OK with CEU_HOLD_EVENT b/c never assigned
-            }
-        #endif
-
-            if (dst_blk == src_blk) {
-                if (dst_type == src_type) {
-                    return (CEU_Value) { CEU_VALUE_NIL };   // nothing is supposed to change
-                }
-            } else if (ceu_block_is_up_dn(src_blk, dst_blk)) {
-                // src is parent of dst | assigning to nested scope | "safe"
-                if (src_type == CEU_HOLD_FLEET) {
-                    // safe
-                } else {
-                    // nothing is supposed to change
-                    // assigning non-fleeting reference to nested scope
-                    return (CEU_Value) { CEU_VALUE_NIL };
-                }
-            } else {
-                // dst is parent of src | assigning to outer scope | "unsafe"
-                // dst and src are par  | assigning to alien scope | "unsafe"
-    #if 1
-                if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                    // SAFE if dropped or unassigned reference
-                    // can move out and be reassigned by outer scope
-                    // EXCEPT if TRACK leaving its TASK scope
-        #if CEU >= 5
-                    if (
-                        src.Dyn->Any.type   == CEU_VALUE_TRACK  &&
-                        src.Dyn->Track.task != NULL             &&
-                        !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)src.Dyn->Track.task), dst_blk)
-                    ) {
-                        strncpy(msg, err, 256);
-                        strcat(msg, " : cannot move track outside its task scope");
-                        return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
-                    } 
-        #endif
-                } else
-    #endif
-                {
-                    strncpy(msg, err, 256);
-                    strcat(msg, " : cannot copy reference out");
-                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
-                }
-            }
-            
-            return (CEU_Value) { CEU_VALUE_NIL };   // nothing is supposed to change
-        }
-        
-        void ceu_hold_set_rec (CEU_Value src, CEU_HOLD dst_type, CEU_Block* dst_blk, int dir) {
-            // No changes:
-            //  - dst_type = CEU_HOLD_NONE
-            //  - dst_blk  = NULL
-            // Dir:
-            //  -1 = upwards
-            //  +1 = dnwards
-            
-            if (src.type < CEU_VALUE_DYNAMIC) {
-                return;       // current is not dyn : no need to recurse
-            }
-            
-            CEU_Dyn*   src_dyn  = src.Dyn;
-            CEU_HOLD   src_type = src_dyn->Any.hld.type;
-            CEU_Block* src_blk  = CEU_HLD_BLOCK(src_dyn);
-            
-            int done_type = (dst_type==CEU_HOLD_NONE || src_type>=dst_type);
-
-            int todo_blk_1 = (src_type==CEU_HOLD_FLEET && src_blk!=dst_blk);
-            int done_blk  = (dst_blk==NULL || (dir==1 && !todo_blk_1) || (dir==-1 && ceu_block_is_up_dn(src_blk,dst_blk)));
-                // dir=+1 must recurse while FLEET, no matter the dst_blk
-                // dir=-1 may stop on first parent of dst_blk bc leaves must be even more upwards
-
-            if (done_type && done_blk) {
-                return;
-            }
-            
-            if (!done_type) {
-                assert(src_type!=CEU_HOLD_IMMUT && "TODO - bug found - cannot move from immut");
-                src_dyn->Any.hld.type = dst_type;
-            }
-            if (!done_blk) {
-                ceu_hold_chg(src_dyn, dst_blk CEU5(COMMA &dst_blk->dn.dyns));
-            }
-
-            switch (src.type) {
-        #if CEU >= 2
-                case CEU_VALUE_THROW:
-                    ceu_hold_set_rec(src_dyn->Throw.val, dst_type, dst_blk, dir);
-                    ceu_hold_set_rec(src_dyn->Throw.stk, dst_type, dst_blk, dir);
-                    break;
-        #endif
-                case CEU_VALUE_CLO_FUNC:
-        #if CEU >= 3
-                case CEU_VALUE_CLO_CORO:
-        #endif
-        #if CEU >= 4
-                case CEU_VALUE_CLO_TASK:
-        #endif
-                    for (int i=0; i<src_dyn->Clo.upvs.its; i++) {
-                        ceu_hold_set_rec(src_dyn->Clo.upvs.buf[i], dst_type, dst_blk, dir);
-                    }
-                    break;
-                case CEU_VALUE_TUPLE: {
-                    for (int i=0; i<src_dyn->Tuple.its; i++) {
-                        ceu_hold_set_rec(src_dyn->Tuple.buf[i], dst_type, dst_blk, dir);
-                    }
-                    break;
-                }
-                case CEU_VALUE_VECTOR: {
-                    for (int i=0; i<src_dyn->Vector.its; i++) {
-                        CEU_Value ret = ceu_vector_get(&src_dyn->Vector, i);
-                        assert(ret.type != CEU_VALUE_ERROR);
-                        ceu_hold_set_rec(ret, dst_type, dst_blk, dir);
-                    }
-                    break;
-                }
-                case CEU_VALUE_DICT: {
-                    for (int i=0; i<src_dyn->Dict.max; i++) {
-                        ceu_hold_set_rec((*src_dyn->Dict.buf)[i][0], dst_type, dst_blk, dir);
-                        ceu_hold_set_rec((*src_dyn->Dict.buf)[i][1], dst_type, dst_blk, dir);
-                    }
-                    break;
-                }
-        #if CEU >= 3
-                case CEU_VALUE_EXE_CORO:
-        #if CEU >= 4
-                case CEU_VALUE_EXE_TASK:
-        #endif
-        #if CEU >= 5
-                case CEU_VALUE_EXE_TASK_IN:
-        #endif
-                {
-                    CEU_Value arg = ceu_dyn_to_val((CEU_Dyn*)src_dyn->Exe.frame.clo);
-                    ceu_hold_set_rec(arg, dst_type, dst_blk, dir);
-                }
-        #endif
-        #if CEU >= 5
-                case CEU_VALUE_TRACK:
-                    // do not drop task (and chk_set ensures that track>=task)
-                    break;
-        #endif
-                default:
-                    //printf(">>> %d\n", src.type);
-                    assert(0 && "TODO: drop");
-                    break;
-            }
-        }
-
         void ceu_hold_set_from_fleet (CEU_Value src, CEU_HOLD dst_type, CEU_Block* dst_blk) {
             if (src.type < CEU_VALUE_DYNAMIC) {
                 return;
@@ -1375,7 +1207,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Block* src_blk = CEU_HLD_BLOCK(src_dyn);
 
             if (ceu_block_is_up_dn(src_blk, up_blk)) {
-                return;
+                return;     // breaks cycle
             }
 
             ceu_hold_chg(src_dyn, up_blk CEU5(COMMA &up_blk->dn.dyns));
@@ -1443,33 +1275,125 @@ fun Coder.main (tags: Tags): String {
                     break;
             }
         }
+        
+        void ceu_hold_set_to_fleet (CEU_Value src) {
+            if (src.type < CEU_VALUE_DYNAMIC) {
+                return;
+            }
+            
+            CEU_Dyn* src_dyn = src.Dyn;
+
+            if (src.Dyn->Any.hld.type != CEU_HOLD_FLEET) {
+                return;     // breaks cycle
+            }
+            assert(src.Dyn->Any.hld.type == CEU_HOLD_MUTAB);
+
+            src.Dyn->Any.hld.type = CEU_HOLD_FLEET;
+
+            switch (src.type) {
+        #if CEU >= 2
+                case CEU_VALUE_THROW:
+                    ceu_hold_set_to_fleet(src_dyn->Throw.val);
+                    ceu_hold_set_to_fleet(src_dyn->Throw.stk);
+                    break;
+        #endif
+                case CEU_VALUE_CLO_FUNC:
+        #if CEU >= 3
+                case CEU_VALUE_CLO_CORO:
+        #endif
+        #if CEU >= 4
+                case CEU_VALUE_CLO_TASK:
+        #endif
+                    for (int i=0; i<src_dyn->Clo.upvs.its; i++) {
+                        ceu_hold_set_to_fleet(src_dyn->Clo.upvs.buf[i]);
+                    }
+                    break;
+                case CEU_VALUE_TUPLE: {
+                    for (int i=0; i<src_dyn->Tuple.its; i++) {
+                        ceu_hold_set_to_fleet(src_dyn->Tuple.buf[i]);
+                    }
+                    break;
+                }
+                case CEU_VALUE_VECTOR: {
+                    for (int i=0; i<src_dyn->Vector.its; i++) {
+                        CEU_Value ret = ceu_vector_get(&src_dyn->Vector, i);
+                        assert(ret.type != CEU_VALUE_ERROR);
+                        ceu_hold_set_to_fleet(ret);
+                    }
+                    break;
+                }
+                case CEU_VALUE_DICT: {
+                    for (int i=0; i<src_dyn->Dict.max; i++) {
+                        ceu_hold_set_to_fleet((*src_dyn->Dict.buf)[i][0]);
+                        ceu_hold_set_to_fleet((*src_dyn->Dict.buf)[i][1]);
+                    }
+                    break;
+                }
+        #if CEU >= 3
+                case CEU_VALUE_EXE_CORO:
+        #if CEU >= 4
+                case CEU_VALUE_EXE_TASK:
+        #endif
+        #if CEU >= 5
+                case CEU_VALUE_EXE_TASK_IN:
+        #endif
+                {
+                    CEU_Value arg = ceu_dyn_to_val((CEU_Dyn*)src_dyn->Exe.frame.clo);
+                    ceu_hold_set_to_fleet(arg);
+                }
+        #endif
+        #if CEU >= 5
+                case CEU_VALUE_TRACK:
+                    // do not drop task (and chk_set ensures that track>=task)
+                    break;
+        #endif
+                default:
+                    //printf(">>> %d\n", src.type);
+                    assert(0 && "TODO: drop");
+                    break;
+            }
+        }
 
         CEU_Value ceu_hold_chk_set_col (CEU_Dyn* col, CEU_Value v) {
             if (v.type < CEU_VALUE_DYNAMIC) {
                 return (CEU_Value) { CEU_VALUE_NIL };
             }
             
-            // col affects v:
-            // [x,[1]] <-- moves v=[1] to v
-            if (col->Any.hld.type != CEU_HOLD_FLEET) {
-                CEU_Value err = ceu_hold_chk(v, col->Any.hld.type, CEU_HLD_BLOCK(col), "set error");
-                if (err.type == CEU_VALUE_ERROR) {
-                    // must be second b/c chk_set above may modify v
-                    return err;
-                }
-                ceu_hold_set_rec(v, col->Any.hld.type, CEU_HLD_BLOCK(col), 1);
-            }
+            // col[...]   = []  ;; MUTAB <- FLEET
+            // [...][...] = []  ;; FLEET <- FLEET
+            // col[...]   = v   ;; MUTAB <- MUTAB
+            // [...][...] = v   ;; FLEET <- MUTAB
+            
+            // col=FLEET / v=FLEET
+            // col=MUTAB / v=FLEET
+            //  - set blk(v) = blk(col)
+            // col=FLEET / v=MUTAB
+            //  - set blk(col) = blk(v)
+            // MUTAB/MUTAB | IMMUT/IMMUT
+            //  - assert that blk(v) > blk(col)
+            //  - no changes
+            
+            CEU_HOLD c_type = col->Any.hld.type;
+            CEU_HOLD v_type = v.Dyn->Any.hld.type;
 
-            // v affects fleeting col with innermost scope
-            if (col->Any.hld.type == CEU_HOLD_FLEET) {
-                assert(ceu_block_is_up_dn(CEU_HLD_BLOCK(v.Dyn), CEU_HLD_BLOCK(col)));
-                ceu_hold_set_rec(ceu_dyn_to_val(col), v.Dyn->Any.hld.type, NULL, 1);
+            if (v_type == CEU_HOLD_FLEET) {
+                ceu_hold_set_to_up(v, CEU_HLD_BLOCK(col));
+            } else if (c_type == CEU_HOLD_FLEET) {
+                ceu_hold_set_to_up(ceu_dyn_to_val(col), CEU_HLD_BLOCK(v.Dyn));
             } else {
-                return (CEU_Value) { CEU_VALUE_NIL };
+                assert(c_type == v_type);   // TODO: either mutab/mutab or immut/immut
+                // v becomes part of col, so it must be in same/outer scope
+                if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(v.Dyn), CEU_HLD_BLOCK(col))) {
+                    return { CEU_VALUE_ERROR, {.Error="store error : cannot assign reference to outer scope"} };
+                }
             }
+            return (CEU_Value) { CEU_VALUE_NIL };
         }
-
+        
         CEU_Value ceu_drop (CEU_Value v) {
+            // Only IMMUT values fail:
+            // drop(x)  ;; change to FLEET type ;; keep blk
+        
             if (v.type < CEU_VALUE_DYNAMIC) {
                 return (CEU_Value) { CEU_VALUE_NIL };
             } else if (v.Dyn->Any.hld.type == CEU_HOLD_IMMUT) {
@@ -1477,7 +1401,7 @@ fun Coder.main (tags: Tags): String {
             } else if (v.Dyn->Any.refs > 1) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : value contains multiple references"} };
             }
-            ceu_hold_set_rec(v, CEU_HOLD_FLEET, NULL, 0);
+            ceu_hold_set_to_fleet(v);
             ceu_gc_dec(v, 0);
             return (CEU_Value) { CEU_VALUE_NIL };
         }        
