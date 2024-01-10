@@ -824,24 +824,22 @@ class Parser (lexer_: Lexer)
                 val xit = Tk.Id("it",tk0.pos,0)
                 val xno = Tk.Id("ceu_$N",tk0.pos,0)
                 val scnd = cnd?.tostr(true)
-                val (xid,xtag,xcnd) = when {
-                    (CEU < 99)       -> Triple(id!!, tag, scnd)
-                    (!a && !b && !c) -> Triple(xno, null, "true")
-                    ( a &&  b &&  c) -> Triple(id!!, tag, "((${id.str} is? ${tag!!.str}) and $scnd)")
-                    ( a && !b &&  c) -> Triple(id!!, null, scnd)
-                    (!a &&  b &&  c) -> Triple(xit, tag, "((${xit.str} is? ${tag!!.str}) and $scnd)")
-                    (!a &&  b && !c) -> Triple(xno, tag, "(${xno.str} is? ${tag!!.str})")
-                    (!a && !b && cnd is Expr.Acc) -> Triple(xno, null, "(${xno.str} is? $scnd)")
-                    (!a && !b && c) -> Triple(xit, null, scnd)
+                val (xidtag,xcnd) = when {
+                    (CEU < 99)       -> Pair(Pair(id!!, tag), scnd)
+                    (!a && !b && !c) -> Pair(Pair(xno, null), "true")
+                    ( a &&  b &&  c) -> Pair(Pair(id!!, tag), "((${id.str} is? ${tag!!.str}) and $scnd)")
+                    ( a && !b &&  c) -> Pair(Pair(id!!, null), scnd)
+                    (!a &&  b &&  c) -> Pair(Pair(xit, tag), "((${xit.str} is? ${tag!!.str}) and $scnd)")
+                    (!a &&  b && !c) -> Pair(Pair(xno, tag), "(${xno.str} is? ${tag!!.str})")
+                    (!a && !b && cnd is Expr.Acc) -> Pair(Pair(xno, null), "(${xno.str} is? $scnd)")
+                    (!a && !b && c) -> Pair(Pair(xit, null), scnd)
                     else -> error("impossible case")
                 }
 
                 val xxcnd = this.nest("""
                     do {
-                        pass `:ceu ceu_acc.Dyn->Throw.val`
-                        do (${xid.pos.pre()+xid.str} ${xtag.cond{it.pos.pre()+it.str}}) {
-                            $xcnd
-                        }
+                        val ${xidtag.tostr(true)} = `:ceu ceu_acc.Dyn->Throw.val`
+                        $xcnd
                     }
                 """)
 

@@ -54,9 +54,10 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Drop   -> "drop(" + this.e.tostr(pre) + ")"
 
         is Expr.Catch  -> {
-            val xdo = this.cnd.es[1] as Expr.Do
-            val id_tag = Pair(null as Tk.Id, null as Tk.Tag?)
-            val cnd = id_tag.tostr() + " => " + xdo.es[0].tostr(pre)
+            assert(this.cnd.es.size >= 1)
+            val dcl = this.cnd.es[0] as Expr.Dcl
+            val id_tag = Pair(dcl.id, dcl.tag)
+            val cnd = id_tag.tostr(pre) + " => " + this.cnd.es.drop(1).tostr(pre)
             "catch (" + cnd + ") " + this.blk.tostr(pre)
         }
         is Expr.Defer  -> "defer " + this.blk.tostr(pre)

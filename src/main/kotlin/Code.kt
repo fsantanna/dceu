@@ -390,8 +390,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             //      - blk = MIN(up, src)
                             //      - stop when src<=up
                             if (ceu_acc.Dyn->Any.hld.type == CEU_HOLD_IMMUT) {
-                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="block escape error : reference has immutable scope"} };
-                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                CEU_Value ceu_err_$n = { CEU_VALUE_ERROR, {.Error="block escape error : reference has immutable scope"} };
+                        #if CEU <= 1
+                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
+                        #else
+                                do {
+                                    // allocate throw on up
+                                    CEU_ERROR($up1, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
+                                } while (0);    // catch continue in CEU_ERROR
+                        #endif
                             } else {
                                 ceu_hold_set_to_up(ceu_acc, $up1);
                             }
@@ -554,7 +561,22 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                     if (ceu_acc.type == CEU_VALUE_THROW) {
                         CEU_Value ceu_err = ceu_acc;
-                        ceu_hold_set_rec(ceu_err, CEU_HOLD_MUTAB, $bupc, -1);
+                        if (ceu_err.type == CEU_VALUE_THROW) {
+                            // Always possible to throw up:
+                            //  - EXCEPT if IMMUT *and* DST<SRC:
+                            // throw [] ;; FLEET ;; keep type ;; up block
+                            // throw x  ;; ELSE  ;; keep type ;; up block
+                            //  - Move block to least bw src and up:
+                            //      - blk = MIN(up, src)
+                            //      - stop when src<=up
+                            assert(ceu_err.Dyn->Any.hld.type!=CEU_HOLD_IMMUT && "TODO: not tested");
+                            if (ceu_err.Dyn->Any.hld.type == CEU_HOLD_IMMUT) {
+                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="throw error : reference has immutable scope"} };
+                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                            } else {
+                                ceu_hold_set_to_up(ceu_err, $bupc);
+                            }
+                        }
                         do {
                             ${this.cnd.code()}
                         } while (0);
