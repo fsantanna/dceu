@@ -833,17 +833,24 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             err(tk, "set error : cannot reassign an upval")
                         }
                         """
-                        { // ACC - SET
-                            CEU_ASSERT(
-                                $bupc,
-                                ceu_hold_chk($src, CEU_HOLD_MUTAB, ${vblk.idc("block",nst)}, "set error"),
-                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
-                            );
-                            ceu_hold_set_rec($src, CEU_HOLD_MUTAB, ${vblk.idc("block",nst)}, 1),
+                        // ACC - SET | ${this.dump()}
+                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                            // set dst = []   ;; FLEET ;; change to MUTAB type ;; change to dst blk
+                            // set dst = src  ;; ELSE  ;; keep ELSE type       ;; keep block
+                            //  - Check for type=ELSE:
+                            //      - blk(dst) >= blk(src) (deeper)
+                            if (ceu_acc.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
+                                ceu_hold_set_from_fleet($src, CEU_HOLD_MUTAB, ${vblk.idc("block",nst)});
+                            } else {
+                                if (!ceu_block_is_up_dn(CEU_HLD_BLOCK($src.Dyn), ${vblk.idc("block",nst)})) {
+                                    CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot assign reference to outer scope"} };
+                                    CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                }
+                            }
                             ceu_gc_inc($src);
-                            ceu_gc_dec($idc, 1);
-                            $idc = $src;
                         }
+                        ceu_gc_dec($idc, 1);
+                        $idc = $src;
                         """
                     }
                     this.isdrop() -> {

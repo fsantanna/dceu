@@ -435,8 +435,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple7_hold_err() {
-        val out = test(
-            """
+        val out = test("""
             var f
             set f = func (v) {
                 var x
@@ -448,8 +447,7 @@ class Exec_01 {
                 }
             }
             println(f(3))
-        """, true
-        )
+        """, true)
         //assert(out == "anon : (lin 3, col 30) : block escape error : cannot copy reference out\n") { out }
         assert(out == "[[[0]]]\n") { out }
     }
@@ -1545,7 +1543,7 @@ class Exec_01 {
         )
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope4() {
@@ -1636,7 +1634,7 @@ class Exec_01 {
             }
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope10x() {
@@ -1653,7 +1651,7 @@ class Exec_01 {
             println(1)
         """
         )
-        assert(out == "anon : (lin 7, col 21) : set error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 7, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope10_err() {
@@ -1666,7 +1664,7 @@ class Exec_01 {
             }
             println(1)
         """)
-        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope11_err() {
@@ -1681,7 +1679,7 @@ class Exec_01 {
             println(1)
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope12_err() {
@@ -1696,7 +1694,7 @@ class Exec_01 {
             println(1)
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope13_tuple_err() {
