@@ -299,7 +299,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         """
                                         if (ceu_n > $i) {
                                             $idc = ceu_args[$i];
-
                                             if ($idc.type > CEU_VALUE_DYNAMIC) {
                                                 ${inexe.cond { """
                                                     // must check CEU_HOLD_FLEET for parallel scopes, but only for exes:
@@ -382,11 +381,21 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${(f_b!=null && !isvoid).cond {
                         val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc
                         """
-                        if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type==CEU_HOLD_IMMUT) {
-                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="block escape error : value is immutable"} };
-                            CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                            // Always possible to return:
+                            //  - EXCEPT if IMMUT *and* DST<SRC:
+                            // return [] ;; FLEET ;; keep type ;; up block
+                            // return x  ;; ELSE  ;; keep type ;; up block
+                            //  - Move block to least bw src and up:
+                            //      - blk = MIN(up, src)
+                            //      - stop when src<=up
+                            if (ceu_acc.Dyn->Any.hld.type == CEU_HOLD_IMMUT) {
+                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="block escape error : reference has immutable scope"} };
+                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                            } else {
+                                ceu_hold_set_to_up(ceu_acc, $up1);
+                            }
                         }
-                        ceu_hold_set_rec(ceu_acc, CEU_HOLD_MUTAB, $up1, -1);
                         """
                     }}
                     

@@ -3975,7 +3975,7 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 3, col 21) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "anon : (lin 3, col 21) : block escape error : value is immutable\n") { out }
+        assert(out == "anon : (lin 3, col 21) : block escape error : reference has immutable scope\n") { out }
     }
     @Test
     fun clo12_err() {
@@ -3991,7 +3991,7 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 3, col 30) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "anon : (lin 3, col 30) : block escape error : value is immutable\n") { out }
+        assert(out == "anon : (lin 3, col 30) : block escape error : reference has immutable scope\n") { out }
     }
     @Test
     fun clo13_err() {
