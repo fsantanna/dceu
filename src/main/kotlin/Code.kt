@@ -378,6 +378,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${(f_b!=null && !isvoid).cond {
                         val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc
                         """
+                        if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type==CEU_HOLD_IMMUT) {
+                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="block escape error : value is immutable"} };
+                            CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                        }
                         ceu_hold_set_rec(ceu_acc, CEU_HOLD_MUTAB, $up1, -1);
                         """
                     }}
@@ -826,7 +830,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         { // ACC - SET
                             CEU_ASSERT(
                                 $bupc,
-                                ceu_hold_chk($src, CEU_HOLD_MUTAB, ${vblk.idc("block",nst)}, "swt error"),
+                                ceu_hold_chk($src, CEU_HOLD_MUTAB, ${vblk.idc("block",nst)}, "set error"),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                             ceu_hold_set_rec($src, CEU_HOLD_MUTAB, ${vblk.idc("block",nst)}, 1),

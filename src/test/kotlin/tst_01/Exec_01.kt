@@ -236,7 +236,7 @@ class Exec_01 {
             val t = [[nil]]
             dump(t[0])
         """)
-        assert(out.contains("hold  = 1")) { out }
+        assert(out.contains("hold  = 2")) { out }
     }
 
     // SET
@@ -808,7 +808,7 @@ class Exec_01 {
             }                   ;; not a problem b/c gc_dec does not chk current block
             println(x)
         """)
-        assert(out == "anon : (lin 5, col 22) : drop error : multiple references\n") { out }
+        assert(out == "anon : (lin 5, col 22) : drop error : value contains multiple references\n") { out }
         //assert(out == "[1,2,3]\n") { out }
     }
     @Test
@@ -872,6 +872,21 @@ class Exec_01 {
             println(z[0][0] == z)
         """
         )
+        assert(out == "anon : (lin 6, col 22) : drop error : value contains multiple references\n") { out }
+    }
+    @Test
+    fun cc_13_drop_cycle_x() {
+        val out = test(
+            """
+            val z = do {
+                var x = [nil]
+                var y = [x]
+                set x[0] = y
+                ;;;drop;;;(x)
+            }
+            println(z[0][0] == z)
+        """
+        )
         assert(out == "true\n") { out }
     }
     @Test
@@ -892,7 +907,7 @@ class Exec_01 {
                 var x = [nil]
                 var y = [x]
                 set x[0] = y
-                drop(x)
+                do ;;;drop;;;(x)
                 y
             }
             println(z[0][0] == z)
@@ -1567,8 +1582,7 @@ class Exec_01 {
     }
     @Test
     fun scope5_err() {
-        val out = test(
-            """
+        val out = test("""
             var x
             do {
                 set x = [1,2,3]
@@ -1577,8 +1591,7 @@ class Exec_01 {
                 set x[2] = y
             }
             println(x)
-        """
-        )
+        """)
         //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n") { out }
         assert(out == "anon : (lin 7, col 21) : set error : cannot copy reference out\n") { out }
     }
@@ -1626,9 +1639,25 @@ class Exec_01 {
         assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
-    fun scope10_err() {
+    fun scope10x() {
+        DEBUG = true
         val out = test(
             """
+            var out
+            do {
+                var x
+                set x = []
+                ;;dump(x)
+                set out = [x]   ;; err
+            }
+            println(1)
+        """
+        )
+        assert(out == "anon : (lin 7, col 21) : set error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun scope10_err() {
+        val out = test("""
             var out
             do {
                 var x
@@ -1636,8 +1665,7 @@ class Exec_01 {
                 set out = [x]   ;; err
             }
             println(1)
-        """
-        )
+        """)
         assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
@@ -1681,8 +1709,8 @@ class Exec_01 {
             println(v)
         """
         )
-        assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n" +
-                "") { out }
+        //assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[[]]\n") { out }
     }
     @Test
     fun scope15_global_func() {
@@ -1785,7 +1813,8 @@ class Exec_01 {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 4, col 17) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : block escape error : cannot copy reference out\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun scope19_leak() {
@@ -2008,12 +2037,12 @@ class Exec_01 {
             println(y)
         """
         )
-        assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[[1],[2]]\n") { out }
     }
     @Test
     fun scope27_glb_vs_tup_err() {
-        val out = test(
-            """
+        val out = test("""
             val f = func (t) {
                 val x = []
                 ;;dump(x)
@@ -2022,9 +2051,9 @@ class Exec_01 {
                 t
             }
             println(f([nil]))
-        """
-        )
-        assert(out == "anon : (lin 2, col 30) : block escape error : cannot copy reference out\n") { out }
+        """)
+        //assert(out == "anon : (lin 2, col 30) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[[]]\n") { out }
     }
     @Test
     fun scope28_err() {
@@ -2040,7 +2069,8 @@ class Exec_01 {
             println(g)
         """
         )
-        assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[[1]]\n") { out }
     }
     @Test
     fun scope29() {
@@ -2080,6 +2110,25 @@ class Exec_01 {
                 var b = [2]
                 var c = cycle([a,b,[3],nil])
                 drop(c)
+            }
+            ;;println(d)  ;; OK: [[1],[2],[3],*]
+            println(:ok)
+        """)
+        //assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 10, col 22) : drop error : value contains multiple references\n") { out }
+    }
+    @Test
+    fun scope30x() {
+        val out = test("""
+            val cycle = func (v) {
+                set v[3] = v
+                v
+            }
+            var a = [1]
+            var d = do {
+                var b = [2]
+                var c = cycle([a,b,[3],nil])
+                ;;;drop;;;(c)
             }
             ;;println(d)  ;; OK: [[1],[2],[3],*]
             println(:ok)
@@ -2159,9 +2208,10 @@ class Exec_01 {
                 ;;println(x)      ;; x will be freed and v would contain dangling pointer
                 v
             }
-            f([[1]])
+            println(f([[1]]))
         """)
-        assert(out == "anon : (lin 2, col 30) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 2, col 30) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[[1]]\n") { out }
     }
 
     @Test
@@ -2211,8 +2261,9 @@ class Exec_01 {
         assert(out == "[1]\n[1]\n") { out }
     }
 
-    // THUS / SCOPE / :FLEET / :fleet
+    // REMOVED: THUS / SCOPE / :FLEET / :fleet
 
+    /*
     @Test
     fun mm_00_err() {
         val out = test("""
@@ -2337,6 +2388,8 @@ class Exec_01 {
         assert(out == "[]\n") { out }
         //assert(out == "anon : (lin 4, col 33) : drop error : value is not movable\n") { out }
     }
+    */
+
     @Test
     fun mm_06_tmp_err() {
         val out = test("""
@@ -2346,7 +2399,8 @@ class Exec_01 {
             }
             println(v)
         """)
-        assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[]\n") { out }
     }
     @Test
     fun mm_07_and_or() {
@@ -2680,15 +2734,18 @@ class Exec_01 {
     }
     @Test
     fun nn_20_func_err() {
+        DEBUG = true
         val out = test("""
             val f = func (v) {
+                ;;dump(v)
                 val x = v
                 nil
             }
             println(f([[nil]][0]))  ;; err
             ;;`ceu_gc_collect();`
         """)
-        assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n") { out }
+        //assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun nn_21_func() {
@@ -2700,7 +2757,8 @@ class Exec_01 {
             println(f(t[0]))        ;; 1
             println(f([[nil]][0]))  ;; err
         """)
-        assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n1\n") { out }
+        //assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n1\n") { out }
+        assert(out == "1\n1\n") { out }
     }
 
     // FUNC / ARGS / DOTS / ...
@@ -3902,8 +3960,7 @@ class Exec_01 {
     }
     @Test
     fun clo11_err() {
-        val out = test(
-            """
+        val out = test("""
             var f
             set f = do {
                 var x = []
@@ -3914,8 +3971,8 @@ class Exec_01 {
             println(f(10))
         """
         )
-        assert(out == "anon : (lin 3, col 21) : block escape error : cannot copy reference out\n" +
-                "") { out }
+        //assert(out == "anon : (lin 3, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 3, col 21) : block escape error : value is immutable\n") { out }
     }
     @Test
     fun clo12_err() {
@@ -3930,7 +3987,8 @@ class Exec_01 {
             println(f(10)())
         """
         )
-        assert(out == "anon : (lin 3, col 30) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 3, col 30) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 3, col 30) : block escape error : value is immutable\n") { out }
     }
     @Test
     fun clo13_err() {
@@ -4103,7 +4161,8 @@ class Exec_01 {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 2, col 13) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : block escape error : cannot copy reference out\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun clo23_err() {
@@ -4116,7 +4175,7 @@ class Exec_01 {
             }
             var g = do {
                 var t = [1]
-                drop(f(t))
+                ;;;drop;;;(f(t))
             }
             println(g())
         """
@@ -4135,7 +4194,7 @@ class Exec_01 {
             }
             var g = do {
                 var t = [1]
-                drop(f(drop(t)))
+                ;;;drop;;;(f(drop(t)))
             }
             println(g())
         """
@@ -4457,7 +4516,9 @@ class Exec_01 {
         val out = test("""
             val t = []
             do {
+                ;;dump(t)
                 val x = [t]
+                ;;dump(t)
                 nil
             }
             do {

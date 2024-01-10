@@ -1163,6 +1163,7 @@ fun Coder.main (tags: Tags): String {
             } else {
                 // dst is parent of src | assigning to outer scope | "unsafe"
                 // dst and src are par  | assigning to alien scope | "unsafe"
+    #if 1
                 if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                     // SAFE if dropped or unassigned reference
                     // can move out and be reassigned by outer scope
@@ -1178,7 +1179,9 @@ fun Coder.main (tags: Tags): String {
                         return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
                     } 
         #endif
-                } else {
+                } else
+    #endif
+                {
                     strncpy(msg, err, 256);
                     strcat(msg, " : cannot copy reference out");
                     return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
@@ -1206,7 +1209,7 @@ fun Coder.main (tags: Tags): String {
             
             int done_type = (dst_type==CEU_HOLD_NONE || src_type>=dst_type);
 
-            int todo_blk_1 = (dst_type==CEU_HOLD_FLEET && src_blk!=dst_blk);
+            int todo_blk_1 = (src_type==CEU_HOLD_FLEET && src_blk!=dst_blk);
             int done_blk  = (dst_blk==NULL || (dir==1 && !todo_blk_1) || (dir==-1 && ceu_block_is_up_dn(src_blk,dst_blk)));
                 // dir=+1 must recurse while FLEET, no matter the dst_blk
                 // dir=-1 may stop on first parent of dst_blk bc leaves must be even more upwards
@@ -1294,25 +1297,19 @@ fun Coder.main (tags: Tags): String {
             
             // col affects v:
             // [x,[1]] <-- moves v=[1] to v
-
-            CEU_Value err = ceu_hold_chk(v, col->Any.hld.type, CEU_HLD_BLOCK(col), "set error");
-            if (err.type == CEU_VALUE_ERROR) {
-                // must be second b/c chk_set above may modify v
-                return err;
+            if (col->Any.hld.type != CEU_HOLD_FLEET) {
+                CEU_Value err = ceu_hold_chk(v, col->Any.hld.type, CEU_HLD_BLOCK(col), "set error");
+                if (err.type == CEU_VALUE_ERROR) {
+                    // must be second b/c chk_set above may modify v
+                    return err;
+                }
+                ceu_hold_set_rec(v, col->Any.hld.type, CEU_HLD_BLOCK(col), 1);
             }
-            ceu_hold_set_rec(v, col->Any.hld.type, CEU_HLD_BLOCK(col), 1);
 
             // v affects fleeting col with innermost scope
             if (col->Any.hld.type == CEU_HOLD_FLEET) {
-                if (ceu_block_is_up_dn(CEU_HLD_BLOCK(v.Dyn), CEU_HLD_BLOCK(col))) {
-                    return (CEU_Value) { CEU_VALUE_NIL };
-                } else {
-                    col->Any.hld.type = MAX(col->Any.hld.type, MIN(CEU_HOLD_FLEET,v.Dyn->Any.hld.type));
-                    if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(v.Dyn),CEU_HLD_BLOCK(col))) {
-                        ceu_hold_chg(col, CEU_HLD_BLOCK(v.Dyn) CEU5(COMMA CEU_HLD_DYNS(v.Dyn)));
-                    }
-                    return (CEU_Value) { CEU_VALUE_NIL };
-                }
+                assert(ceu_block_is_up_dn(CEU_HLD_BLOCK(v.Dyn), CEU_HLD_BLOCK(col)));
+                ceu_hold_set_rec(ceu_dyn_to_val(col), v.Dyn->Any.hld.type, NULL, 1);
             } else {
                 return (CEU_Value) { CEU_VALUE_NIL };
             }
