@@ -400,7 +400,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 } while (0);    // catch continue in CEU_ERROR
                         #endif
                             } else {
-                                ceu_hold_set_to_up(ceu_acc, $up1);
+                                ceu_hold_set_to_up(ceu_acc, $up1, CEU_HOLD_FLEET);
                             }
                         }
                         """
@@ -574,7 +574,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="throw error : reference has immutable scope"} };
                                 CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                             } else {
-                                ceu_hold_set_to_up(ceu_err, $bupc);
+                                ceu_hold_set_to_up(ceu_err, $bupc, CEU_HOLD_NONE);
                             }
                         }
                         do {

@@ -1198,7 +1198,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
 
-        void ceu_hold_set_to_up (CEU_Value src, CEU_Block* up_blk) {
+        void ceu_hold_set_to_up (CEU_Value src, CEU_Block* up_blk, CEU_HOLD up_type) {
             if (src.type < CEU_VALUE_DYNAMIC) {
                 return;
             }
@@ -1210,13 +1210,16 @@ fun Coder.main (tags: Tags): String {
                 return;     // breaks cycle
             }
 
+            if (up_type != CEU_HOLD_NONE) {
+                src.Dyn->Any.hld.type = up_type;
+            }
             ceu_hold_chg(src_dyn, up_blk CEU5(COMMA &up_blk->dn.dyns));
 
             switch (src.type) {
         #if CEU >= 2
                 case CEU_VALUE_THROW:
-                    ceu_hold_set_to_up(src_dyn->Throw.val, up_blk);
-                    ceu_hold_set_to_up(src_dyn->Throw.stk, up_blk);
+                    ceu_hold_set_to_up(src_dyn->Throw.val, up_blk, up_type);
+                    ceu_hold_set_to_up(src_dyn->Throw.stk, up_blk, up_type);
                     break;
         #endif
                 case CEU_VALUE_CLO_FUNC:
@@ -1227,12 +1230,12 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_CLO_TASK:
         #endif
                     for (int i=0; i<src_dyn->Clo.upvs.its; i++) {
-                        ceu_hold_set_to_up(src_dyn->Clo.upvs.buf[i], up_blk);
+                        ceu_hold_set_to_up(src_dyn->Clo.upvs.buf[i], up_blk, up_type);
                     }
                     break;
                 case CEU_VALUE_TUPLE: {
                     for (int i=0; i<src_dyn->Tuple.its; i++) {
-                        ceu_hold_set_to_up(src_dyn->Tuple.buf[i], up_blk);
+                        ceu_hold_set_to_up(src_dyn->Tuple.buf[i], up_blk, up_type);
                     }
                     break;
                 }
@@ -1240,14 +1243,14 @@ fun Coder.main (tags: Tags): String {
                     for (int i=0; i<src_dyn->Vector.its; i++) {
                         CEU_Value ret = ceu_vector_get(&src_dyn->Vector, i);
                         assert(ret.type != CEU_VALUE_ERROR);
-                        ceu_hold_set_to_up(ret, up_blk);
+                        ceu_hold_set_to_up(ret, up_blk, up_type);
                     }
                     break;
                 }
                 case CEU_VALUE_DICT: {
                     for (int i=0; i<src_dyn->Dict.max; i++) {
-                        ceu_hold_set_to_up((*src_dyn->Dict.buf)[i][0], up_blk);
-                        ceu_hold_set_to_up((*src_dyn->Dict.buf)[i][1], up_blk);
+                        ceu_hold_set_to_up((*src_dyn->Dict.buf)[i][0], up_blk, up_type);
+                        ceu_hold_set_to_up((*src_dyn->Dict.buf)[i][1], up_blk, up_type);
                     }
                     break;
                 }
@@ -1261,7 +1264,7 @@ fun Coder.main (tags: Tags): String {
         #endif
                 {
                     CEU_Value arg = ceu_dyn_to_val((CEU_Dyn*)src_dyn->Exe.frame.clo);
-                    ceu_hold_set_to_up(arg, up_blk);
+                    ceu_hold_set_to_up(arg, up_blk, up_type);
                 }
         #endif
         #if CEU >= 5
@@ -1283,7 +1286,7 @@ fun Coder.main (tags: Tags): String {
             
             CEU_Dyn* src_dyn = src.Dyn;
 
-            if (src.Dyn->Any.hld.type != CEU_HOLD_FLEET) {
+            if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                 return;     // breaks cycle
             }
             assert(src.Dyn->Any.hld.type == CEU_HOLD_MUTAB);
@@ -1377,14 +1380,15 @@ fun Coder.main (tags: Tags): String {
             CEU_HOLD v_type = v.Dyn->Any.hld.type;
 
             if (v_type == CEU_HOLD_FLEET) {
-                ceu_hold_set_to_up(v, CEU_HLD_BLOCK(col));
+                ceu_hold_set_to_up(v, CEU_HLD_BLOCK(col), col->Any.hld.type);
             } else if (c_type == CEU_HOLD_FLEET) {
-                ceu_hold_set_to_up(ceu_dyn_to_val(col), CEU_HLD_BLOCK(v.Dyn));
+                ceu_hold_set_to_up(ceu_dyn_to_val(col), CEU_HLD_BLOCK(v.Dyn), v.Dyn->Any.hld.type);
+                //ceu_dump_value(ceu_dyn_to_val(col));
             } else {
                 assert(c_type == v_type);   // TODO: either mutab/mutab or immut/immut
                 // v becomes part of col, so it must be in same/outer scope
                 if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(v.Dyn), CEU_HLD_BLOCK(col))) {
-                    return { CEU_VALUE_ERROR, {.Error="store error : cannot assign reference to outer scope"} };
+                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error="store error : cannot assign reference to outer scope"} };
                 }
             }
             return (CEU_Value) { CEU_VALUE_NIL };

@@ -736,8 +736,10 @@ class Exec_01 {
     }
     @Test
     fun cc_07_global() {
+        //DEBUG = true
         val out = test("""
             val e = func () {nil}
+            ;;dump(e)
             val g = func () {
                 val co = [e]
                 drop(co)
