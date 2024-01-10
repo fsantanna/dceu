@@ -2249,11 +2249,16 @@ class Exec_01 {
     fun ll_08_xxx() {
         val out = test("""
             val g = func (v) {
+                ;;dump(v)
                 val k = v
+                ;;dump(v)
                 println(v)
+                ;;dump(v)
             }
             val f = func (v) {
+                ;;dump(v)
                 g(v)
+                ;;dump(v)
                 println(v)
             }
             f([1])

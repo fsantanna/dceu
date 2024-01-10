@@ -19,8 +19,8 @@ var CEU = 1
 //  - definitely lost
 //  - Invalid read of size
 //  - uninitialised value
-val VALGRIND = ""
-//val VALGRIND = "valgrind "
+//val VALGRIND = ""
+val VALGRIND = "valgrind "
 val THROW = false
 //val THROW = true
 

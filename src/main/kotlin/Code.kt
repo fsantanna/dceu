@@ -300,15 +300,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         if (ceu_n > $i) {
                                             $idc = ceu_args[$i];
 
-                                            // must check CEU_HOLD_FLEET for parallel scopes, but only for exes:
-                                            // [gg_02_scope] v -> coro/task
-                                            CEU_ASSERT(
-                                                $blkc,
-                                                ceu_hold_chk($idc, CEU_HOLD_MUTAB, $blkc, "argument error"),
-                                                "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
-                                            );
-                                            
-                                            ceu_hold_set_rec($idc, CEU_HOLD_MUTAB, $blkc, 1);
+                                            if ($idc.type > CEU_VALUE_DYNAMIC) {
+                                                ${inexe.cond { """
+                                                    // must check CEU_HOLD_FLEET for parallel scopes, but only for exes:
+                                                    // [gg_02_scope] v -> coro/task
+                                                    TODO    
+                                                """ }}
+                                                // Always possible to pass to tight func:
+                                                // f([...]) ;; FLEET ;; change type and block
+                                                // f(t)     ;; ELSE  ;; keep   type and block
+                                                if ($idc.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
+                                                    ceu_hold_set_from_fleet($idc, CEU_HOLD_MUTAB, $blkc); 
+                                                }
+                                            }
                                         }
                                         """
                                     }.joinToString("")}
@@ -460,12 +464,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 // DCL | ${this.dump()}
                 ${(this.init && this.src !=null && !unused).cond {
                     this.src!!.code() + """ 
-                        CEU_ASSERT(
-                            $bupc,
-                            ceu_hold_chk(ceu_acc, CEU_HOLD_MUTAB, $bupc, "declaration error"),
-                            "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
-                        );
-                        ceu_hold_set_rec(ceu_acc, CEU_HOLD_MUTAB, $bupc, 1),
+                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                            // Always possible to assign in new declaration:
+                            // val x = []   ;; FLEET ;; change to MUTAB type ;; change to dst blk
+                            // val x = y    ;; ELSE  ;; keep ELSE type       ;; keep block
+                            if (ceu_acc.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
+                                ceu_hold_set_from_fleet(ceu_acc, CEU_HOLD_MUTAB, $bupc); 
+                            }
+                        }
                     """
                 }}
                 ${when {
