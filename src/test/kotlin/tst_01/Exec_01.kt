@@ -4213,7 +4213,25 @@ class Exec_01 {
             println(g())
         """
         )
-        assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun clo23x_err() {
+        val out = test(
+            """
+            var f = func (v) {
+                [v]
+            }
+            var g = do {
+                var t = [1]
+                ;;;drop;;;(f(t))
+            }
+            println(g)
+        """
+        )
+        //assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[[1]]\n") { out }
     }
     @Test
     fun clo23x() {
