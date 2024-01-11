@@ -1240,7 +1240,7 @@ fun Coder.main (tags: Tags): String {
                 ceu_hold_set_rec(v, col->Any.hld.type, 0, CEU_HLD_BLOCK(col));
             } else if (c_type == CEU_HOLD_FLEET) {
                 //ceu_hold_set_to_up(ceu_dyn_to_val(col), CEU_HLD_BLOCK(v.Dyn), v.Dyn->Any.hld.type);
-                ceu_hold_set_rec(ceu_dyn_to_val(col), v.Dyn->Any.hld.type, 0, CEU_HLD_BLOCK(v.Dyn));
+                ceu_hold_set_rec(ceu_dyn_to_val(col), v.Dyn->Any.hld.type, 0, NULL);
                 //ceu_dump_value(ceu_dyn_to_val(col));
             } else {
                 assert(c_type == v_type);   // TODO: either mutab/mutab or immut/immut

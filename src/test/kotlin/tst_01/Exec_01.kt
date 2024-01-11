@@ -1594,7 +1594,7 @@ class Exec_01 {
             println(x)
         """)
         //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 7, col 21) : set error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 7, col 21) : store error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope6() {
@@ -1666,7 +1666,7 @@ class Exec_01 {
             }
             println(1)
         """)
-        assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        assert(out == "anon : (lin 5, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope11_err() {
@@ -1800,6 +1800,19 @@ class Exec_01 {
         assert(out == ":ok\n") { out }
     }
     @Test
+    fun scope19x_tup() {
+        val out = test("""
+            val t1 = []
+            do {
+                val t2 = []
+                do [t1,t2]
+                nil
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
     fun scope19x_tup_err() {
         val out = test(
             """
@@ -1875,7 +1888,7 @@ class Exec_01 {
             }
         """
         )
-        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 5, col 21) : store error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22b_vec() {
@@ -1889,7 +1902,7 @@ class Exec_01 {
             }
         """
         )
-        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 5, col 21) : store error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22c_dic() {
@@ -1903,7 +1916,7 @@ class Exec_01 {
             }
         """
         )
-        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 5, col 21) : store error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22d_dic() {
@@ -1917,7 +1930,7 @@ class Exec_01 {
             }
         """
         )
-        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 5, col 21) : store error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22x_dict() {
@@ -1935,7 +1948,7 @@ class Exec_01 {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 7, col 25) : set error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 7, col 25) : store error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22y_dict() {
@@ -1951,7 +1964,7 @@ class Exec_01 {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 6, col 21) : store error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22z_dict() {
