@@ -917,6 +917,7 @@ class Exec_01 {
     }
     @Test
     fun cc_15_drop_passd() {
+        DEBUG = true
         val out = test(
             """
             val f = func (v) {

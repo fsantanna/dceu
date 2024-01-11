@@ -309,7 +309,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                                 // f([...]) ;; FLEET ;; change type and block
                                                 // f(t)     ;; ELSE  ;; keep   type and block
                                                 if ($idc.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                                                    ceu_hold_set_from_fleet($idc, CEU_HOLD_MUTAB, $blkc); 
+                                                    //ceu_hold_set_from_fleet($idc, CEU_HOLD_MUTAB, $blkc); 
+                                                    ceu_hold_set_rec($idc, CEU_HOLD_MUTAB, 0, $blkc); 
                                                 }
                                             }
                                         }
@@ -400,7 +401,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 } while (0);    // catch continue in CEU_ERROR
                         #endif
                             } else {
-                                ceu_hold_set_to_up(ceu_acc, $up1, CEU_HOLD_FLEET);
+                                ceu_hold_set_rec(ceu_acc, CEU_HOLD_NONE, 1, $up1);
                             }
                         }
                         """
@@ -485,7 +486,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // val x = []   ;; FLEET ;; change to MUTAB type ;; change to dst blk
                             // val x = y    ;; ELSE  ;; keep ELSE type       ;; keep block
                             if (ceu_acc.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                                ceu_hold_set_from_fleet(ceu_acc, CEU_HOLD_MUTAB, $bupc); 
+                                //ceu_hold_set_from_fleet(ceu_acc, CEU_HOLD_MUTAB, $bupc); 
+                                ceu_hold_set_rec(ceu_acc, CEU_HOLD_MUTAB, 0, $bupc); 
                             }
                         }
                     """
@@ -574,7 +576,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="throw error : reference has immutable scope"} };
                                 CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                             } else {
-                                ceu_hold_set_to_up(ceu_err, $bupc, CEU_HOLD_NONE);
+                                //ceu_hold_set_to_up(ceu_err, $bupc, CEU_HOLD_NONE);
+                                ceu_hold_set_rec(ceu_err, CEU_HOLD_NONE, $bupc, 1);
                             }
                         }
                         do {
@@ -871,7 +874,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             //  - Check for type=ELSE:
                             //      - blk(dst) >= blk(src) (deeper)
                             if (ceu_acc.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                                ceu_hold_set_from_fleet($src, CEU_HOLD_MUTAB, ${vblk.idc("block",nst)});
+                                //ceu_hold_set_from_fleet($src, CEU_HOLD_MUTAB, ${vblk.idc("block",nst)});
+                                ceu_hold_set_rec($src, CEU_HOLD_MUTAB, 0, ${vblk.idc("block",nst)});
                             } else {
                                 if (!ceu_block_is_up_dn(CEU_HLD_BLOCK($src.Dyn), ${vblk.idc("block",nst)})) {
                                     CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot assign reference to outer scope"} };
