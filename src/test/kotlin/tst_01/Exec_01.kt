@@ -1027,7 +1027,7 @@ class Exec_01 {
             println(v)
         """
         )
-        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference out\n" +
+        assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n" +
                 "") { out }
     }
     @Test
@@ -1594,7 +1594,7 @@ class Exec_01 {
             println(x)
         """)
         //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 7, col 21) : store error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 7, col 21) : store error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope6() {
@@ -1888,7 +1888,7 @@ class Exec_01 {
             }
         """
         )
-        assert(out == "anon : (lin 5, col 21) : store error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope22b_vec() {
@@ -1902,7 +1902,7 @@ class Exec_01 {
             }
         """
         )
-        assert(out == "anon : (lin 5, col 21) : store error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope22c_dic() {
@@ -1916,7 +1916,7 @@ class Exec_01 {
             }
         """
         )
-        assert(out == "anon : (lin 5, col 21) : store error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope22d_dic() {
@@ -1930,7 +1930,7 @@ class Exec_01 {
             }
         """
         )
-        assert(out == "anon : (lin 5, col 21) : store error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope22x_dict() {
@@ -1948,7 +1948,7 @@ class Exec_01 {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 7, col 25) : store error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 7, col 25) : store error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope22y_dict() {
@@ -1964,7 +1964,7 @@ class Exec_01 {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 6, col 21) : store error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 6, col 21) : store error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope22z_dict() {
@@ -2762,8 +2762,23 @@ class Exec_01 {
             println(f([[nil]][0]))  ;; err
             ;;`ceu_gc_collect();`
         """)
-        //assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n") { out }
-        assert(out == "nil\n") { out }
+        assert(out == "anon : (lin 2, col 27) : argument error : cannot receive pending reference\n") { out }
+        //assert(out == "nil\n") { out }
+    }
+    @Test
+    fun nn_20x_func_err() {
+        DEBUG = true
+        val out = test("""
+            val f = func (v) {
+                ;;dump(v)
+                val x = v
+                nil
+            }
+            println(f([[nil]][0]))  ;; err
+            ;;`ceu_gc_collect();`
+        """)
+        assert(out == "anon : (lin 2, col 27) : argument error : cannot receive pending reference\n") { out }
+        //assert(out == "nil\n") { out }
     }
     @Test
     fun nn_21_func() {
@@ -2775,8 +2790,8 @@ class Exec_01 {
             println(f(t[0]))        ;; 1
             println(f([[nil]][0]))  ;; err
         """)
-        //assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n1\n") { out }
-        assert(out == "1\n1\n") { out }
+        assert(out == "anon : (lin 2, col 27) : argument error : cannot receive pending reference\n1\n") { out }
+        //assert(out == "1\n1\n") { out }
     }
 
     // FUNC / ARGS / DOTS / ...
@@ -4198,8 +4213,7 @@ class Exec_01 {
             println(g())
         """
         )
-        assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference out\n" +
-                "") { out }
+        assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun clo23x() {

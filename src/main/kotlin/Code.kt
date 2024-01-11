@@ -295,7 +295,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         """
                                     }.joinToString("")}
                                     ${f_b.args.filter { it.first.str!="..." }.mapIndexed { i,arg ->
-                                        val idc = vars.get(this, arg.first.str).idc(0)
+                                        val id = arg.first
+                                        val idc = vars.get(this, id.str).idc(0)
                                         """
                                         if (ceu_n > $i) {
                                             $idc = ceu_args[$i];
@@ -308,7 +309,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                                 // Always possible to pass to tight func:
                                                 // f([...]) ;; FLEET ;; change type and block
                                                 // f(t)     ;; ELSE  ;; keep   type and block
+                                                // Exception:
+                                                // f([[nil]][0]) ;; passing part of fleeting
+                                                //  - reject if fleet has multiple refs
                                                 if ($idc.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
+                                                    if ($idc.Dyn->Any.refs > 1) {
+                                                        CEU_Value ceu_err_$n = { CEU_VALUE_ERROR, {.Error="argument error : cannot receive pending reference"} };
+                                                        CEU_ERROR($blkc, "${id.pos.file} : (lin ${id.pos.lin}, col ${id.pos.col})", ceu_err_$n);
+                                                    }
                                                     //ceu_hold_set_from_fleet($idc, CEU_HOLD_MUTAB, $blkc); 
                                                     ceu_hold_set_rec($idc, CEU_HOLD_MUTAB, 0, $blkc); 
                                                 }
@@ -393,7 +401,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             if (ceu_acc.Dyn->Any.hld.type == CEU_HOLD_IMMUT) {
                                 CEU_Value ceu_err_$n = { CEU_VALUE_ERROR, {.Error="block escape error : reference has immutable scope"} };
                         #if CEU <= 1
-                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
+                                CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
                         #else
                                 do {
                                     // allocate throw on up
