@@ -1660,8 +1660,7 @@ class Exec_01 {
         val out = test("""
             var out
             do {
-                var x
-                set x = []
+                val x = []
                 set out = [x]   ;; err
             }
             println(1)

@@ -1122,6 +1122,95 @@ fun Coder.main (tags: Tags): String {
             ceu_hold_add(dyn, blk CEU5(COMMA dyns));
         }
 
+        void ceu_hold_set_rec (
+            CEU_Value src,
+            CEU_HOLD fr_type, CEU_HOLD to_type,
+            CEU_Block* up_blk, CEU_Block* to_blk
+        ) {
+            if (src.type < CEU_VALUE_DYNAMIC) {
+                return;
+            }
+            
+            CEU_Dyn* src_dyn = src.Dyn;
+
+            if (src.Dyn->Any.hld.type == to_type) {
+                return;     // breaks cycle
+            }
+            if (ceu_block_is_up_dn(up_blk, CEU_HLD_BLOCK(src.Dyn))) {
+                return;     // breaks cycle
+            }
+            
+            if (to_type != CEU_HOLD_NONE) {
+                src_dyn->Any.hld.type = to_type;
+            }
+            if (to_blk != NULL) {
+                ceu_hold_chg(src_dyn, to_blk CEU5(COMMA &to_blk->dn.dyns));
+            }
+
+            switch (src.type) {
+        #if CEU >= 2
+                case CEU_VALUE_THROW:
+                    ceu_hold_set_rec(src_dyn->Throw.val, fr_type, to_type, fr_blk, to_blk);
+                    ceu_hold_set_rec(src_dyn->Throw.stk, fr_type, to_type, fr_blk, to_blk);
+                    break;
+        #endif
+                case CEU_VALUE_CLO_FUNC:
+        #if CEU >= 3
+                case CEU_VALUE_CLO_CORO:
+        #endif
+        #if CEU >= 4
+                case CEU_VALUE_CLO_TASK:
+        #endif
+                    for (int i=0; i<src_dyn->Clo.upvs.its; i++) {
+                        ceu_hold_set_rec(src_dyn->Clo.upvs.buf[i], fr_type, to_type, fr_blk, to_blk);
+                    }
+                    break;
+                case CEU_VALUE_TUPLE: {
+                    for (int i=0; i<src_dyn->Tuple.its; i++) {
+                        ceu_hold_set_rec(src_dyn->Tuple.buf[i], fr_type, to_type, fr_blk, to_blk);
+                    }
+                    break;
+                }
+                case CEU_VALUE_VECTOR: {
+                    for (int i=0; i<src_dyn->Vector.its; i++) {
+                        CEU_Value ret = ceu_vector_get(&src_dyn->Vector, i);
+                        assert(ret.type != CEU_VALUE_ERROR);
+                        ceu_hold_set_rec(ret, fr_type, to_type, fr_blk, to_blk);
+                    }
+                    break;
+                }
+                case CEU_VALUE_DICT: {
+                    for (int i=0; i<src_dyn->Dict.max; i++) {
+                        ceu_hold_set_rec((*src_dyn->Dict.buf)[i][0], fr_type, to_type, fr_blk, to_blk);
+                        ceu_hold_set_rec((*src_dyn->Dict.buf)[i][1], fr_type, to_type, fr_blk, to_blk);
+                    }
+                    break;
+                }
+        #if CEU >= 3
+                case CEU_VALUE_EXE_CORO:
+        #if CEU >= 4
+                case CEU_VALUE_EXE_TASK:
+        #endif
+        #if CEU >= 5
+                case CEU_VALUE_EXE_TASK_IN:
+        #endif
+                {
+                    CEU_Value arg = ceu_dyn_to_val((CEU_Dyn*)src_dyn->Exe.frame.clo);
+                    ceu_hold_set_rec(arg, fr_type, to_type, fr_blk, to_blk);
+                }
+        #endif
+        #if CEU >= 5
+                case CEU_VALUE_TRACK:
+                    // do not drop task (and chk_set ensures that track>=task)
+                    break;
+        #endif
+                default:
+                    //printf(">>> %d\n", src.type);
+                    assert(0 && "TODO: drop");
+                    break;
+            }
+        }
+
         void ceu_hold_set_from_fleet (CEU_Value src, CEU_HOLD dst_type, CEU_Block* dst_blk) {
             if (src.type < CEU_VALUE_DYNAMIC) {
                 return;
@@ -1129,7 +1218,10 @@ fun Coder.main (tags: Tags): String {
             
             CEU_Dyn*   src_dyn = src.Dyn;
             CEU_Block* src_blk = CEU_HLD_BLOCK(src_dyn);
-            assert(src_dyn->Any.hld.type == CEU_HOLD_FLEET);
+
+            if (src.Dyn->Any.hld.type != CEU_HOLD_FLEET) {
+                return;     // breaks cycle
+            }
             
             src_dyn->Any.hld.type = dst_type;
             ceu_hold_chg(src_dyn, dst_blk CEU5(COMMA &dst_blk->dn.dyns));
@@ -1369,8 +1461,10 @@ fun Coder.main (tags: Tags): String {
             
             // col=FLEET / v=FLEET
             // col=MUTAB / v=FLEET
+            //  - set type(v) = MUTAB
             //  - set blk(v) = blk(col)
             // col=FLEET / v=MUTAB
+            //  - set col(v) = MUTAB
             //  - set blk(col) = blk(v)
             // MUTAB/MUTAB | IMMUT/IMMUT
             //  - assert that blk(v) > blk(col)
