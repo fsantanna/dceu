@@ -557,7 +557,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Drop -> this.e.code()
 
             is Expr.Catch -> {
-                val bupc = ups.first_block(this)!!.idc("block")
                 """
                 { // CATCH ${this.dump()}
                     do { // catch
@@ -569,38 +568,22 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             continue;   // do not execute next statement, instead free up block
                         }
                     """ }}
-                    if (ceu_acc.type == CEU_VALUE_THROW) {
+                    if (ceu_acc.type == CEU_VALUE_THROW) {      // caught internal throw
                         CEU_Value ceu_err = ceu_acc;
-                        if (ceu_err.type == CEU_VALUE_THROW) {
-                            // Always possible to throw up:
-                            //  - EXCEPT if IMMUT *and* DST<SRC:
-                            // throw [] ;; FLEET ;; keep type ;; up block
-                            // throw x  ;; ELSE  ;; keep type ;; up block
-                            //  - Move block to least bw src and up:
-                            //      - blk = MIN(up, src)
-                            //      - stop when src<=up
-                            assert(ceu_err.Dyn->Any.hld.type!=CEU_HOLD_IMMUT && "TODO: not tested");
-                            if (ceu_err.Dyn->Any.hld.type == CEU_HOLD_IMMUT) {
-                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="throw error : reference has immutable scope"} };
-                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                            } else {
-                                //ceu_hold_set_to_up(ceu_err, $bupc, CEU_HOLD_NONE);
-                                ceu_hold_set_rec(ceu_err, CEU_HOLD_NONE, $bupc, 1);
-                            }
-                        }
+                        int ceu_ok;
                         do {
-                            ${this.cnd.code()}
+                            ${this.cnd.code()}  // ceu_ok = 1|0
                         } while (0);
-                        assert(ceu_acc.type!=CEU_VALUE_THROW && "TODO: throw in catch condition");
-                        if (!ceu_as_bool(ceu_acc)) {
-                            CEU_Value ceu_ret = ceu_drop(ceu_err);
-                            assert(ceu_ret.type==CEU_VALUE_NIL && "impossible case");
+                        ceu_dump_value(ceu_acc);
+                        assert(ceu_acc.Dyn==ceu_err.Dyn && "TODO: throw in catch condition");
+                        if (!ceu_ok) {  // condition fail: rethrow error, escape catch block
                             ceu_acc = ceu_err;
-                            continue; // uncaught, rethrow
+                            continue;
+                        } else {        // condition true: catch error, continue after catch block
+                            ceu_acc = ceu_err.Dyn->Throw.val;
+                            assert(ceu_err.Dyn->Throw.refs == 0);
+                            ceu_gc_rem(ceu_err.Dyn, 0);
                         }
-                        ceu_acc = ceu_err.Dyn->Throw.val;
-                        assert(ceu_err.Dyn->Throw.refs == 0);
-                        ceu_gc_rem(ceu_err.Dyn, 0);
                     }
                 }
                 """
@@ -850,7 +833,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     x
                 }
                 when (this.tk_.tag) {
-                    null   -> body + "\n" + "ceu_acc = ((CEU_Value){ CEU_VALUE_NIL });"
+                    null   -> body //+ "\n" + "ceu_acc = ((CEU_Value){ CEU_VALUE_NIL });"
                     ":ceu" -> "ceu_acc = $body;"
                     else -> {
                         val (TAG,Tag) = this.tk_.tag.drop(1).let {

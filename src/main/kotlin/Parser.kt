@@ -840,6 +840,10 @@ class Parser (lexer_: Lexer)
                     do {
                         val ${xidtag.tostr(true)} = `:ceu ceu_acc.Dyn->Throw.val`
                         $xcnd
+                        ```
+                            ceu_ok = ceu_as_bool(ceu_acc);
+                            ceu_acc = ceu_err;
+                        ```
                     }
                 """)
 

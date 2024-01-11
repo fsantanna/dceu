@@ -18,7 +18,8 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         // has up block, no declarations, no spawns
         val dcls = vars.blk_to_dcls[blk]!!
         val f_b = ups.pub[blk]?.let { ups.first_proto_or_block(it) }
-        return (f_b is Expr.Do) && dcls.isEmpty() && !this.spws.contains(blk)
+        val is_catch_cnd = ups.pub[blk].let { it is Expr.Catch && it.cnd==blk }
+        return (f_b is Expr.Do) && dcls.isEmpty() && !this.spws.contains(blk) && !is_catch_cnd
     }
 
     fun Expr.traverse () {

@@ -161,6 +161,7 @@ class Exec_02 {
     }
     @Test
     fun jj_05_catch_valgrind() {
+        DEBUG = true
         val out = test("""
             catch (it=> it==:x) {
                 throw([])
@@ -239,7 +240,7 @@ class Exec_02 {
     @Test
     fun jj_10_catch() {
         val out = test("""
-            catch ( it => it==[] ) {
+            catch (it => false) {
                 throw([])
                 println(9)
             }
