@@ -838,12 +838,13 @@ class Parser (lexer_: Lexer)
 
                 val xxcnd = this.nest("""
                     do {
-                        val ${xidtag.tostr(true)} = `:ceu ceu_acc.Dyn->Throw.val`
-                        $xcnd
-                        ```
-                            ceu_ok = ceu_as_bool(ceu_acc);
-                            ceu_acc = ceu_err;
-                        ```
+                        val ${xidtag.tostr(true)}
+                        `${D}${xidtag.first.str} = ceu_err.Dyn->Throw.val;`
+                        val ret_$N = do {
+                            $xcnd
+                        }
+                        `${D}${xidtag.first.str} = (CEU_Value) { CEU_VALUE_NIL };`
+                        ret_$N
                     }
                 """)
 

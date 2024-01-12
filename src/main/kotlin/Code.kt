@@ -570,13 +570,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                     if (ceu_acc.type == CEU_VALUE_THROW) {      // caught internal throw
                         CEU_Value ceu_err = ceu_acc;
-                        int ceu_ok;
                         do {
                             ${this.cnd.code()}  // ceu_ok = 1|0
                         } while (0);
-                        ceu_dump_value(ceu_acc);
-                        assert(ceu_acc.Dyn==ceu_err.Dyn && "TODO: throw in catch condition");
-                        if (!ceu_ok) {  // condition fail: rethrow error, escape catch block
+                        assert(ceu_acc.type!=CEU_VALUE_THROW && "TODO: throw in catch condition");
+                        if (!ceu_as_bool(ceu_acc)) {  // condition fail: rethrow error, escape catch block
                             ceu_acc = ceu_err;
                             continue;
                         } else {        // condition true: catch error, continue after catch block

@@ -54,10 +54,16 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Drop   -> "drop(" + this.e.tostr(pre) + ")"
 
         is Expr.Catch  -> {
-            assert(this.cnd.es.size >= 1)
-            val dcl = this.cnd.es[0] as Expr.Dcl
-            val id_tag = Pair(dcl.id, dcl.tag)
-            val cnd = id_tag.tostr(pre) + " => " + this.cnd.es.drop(1).tostr(pre)
+            val cnd = this.cnd.es.let {
+                assert(it.size == 5)
+                val id_tag = (it[0] as Expr.Dcl).let {
+                    Pair(it.id, it.tag)
+                }
+                val xdo = (it[2] as Expr.Dcl).let {
+                    it.src!! as Expr.Do
+                }
+                id_tag.tostr(pre) + " => " + xdo.es.tostr(pre)
+            }
             "catch (" + cnd + ") " + this.blk.tostr(pre)
         }
         is Expr.Defer  -> "defer " + this.blk.tostr(pre)
