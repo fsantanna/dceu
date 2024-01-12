@@ -59,10 +59,8 @@ fun Expr.tostr (pre: Boolean = false): String {
                 val id_tag = (it[0] as Expr.Dcl).let {
                     Pair(it.id, it.tag)
                 }
-                val xdo = (it[2] as Expr.Dcl).let {
-                    it.src!! as Expr.Do
-                }
-                id_tag.tostr(pre) + " => " + xdo.es.tostr(pre)
+                val xcnd = (it[2] as Expr.Dcl).src!!
+                id_tag.tostr(pre) + " => " + xcnd.tostr(pre)
             }
             "catch (" + cnd + ") " + this.blk.tostr(pre)
         }

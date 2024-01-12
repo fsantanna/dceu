@@ -258,7 +258,9 @@ class Exec_02 {
             }
             println(1)
         """)
-        assert(out == " v  anon : (lin 2, col 35) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 2, col 35) : block escape error : cannot copy reference out\n") { out }
+        assert(out == " |  anon : (lin 4, col 17) : throw(xxx)\n" +
+                " v  throw error : []\n") { out }
     }
     @Test
     fun jj_12_catch() {
@@ -338,8 +340,9 @@ class Exec_02 {
                 nil
             }
         """)
-        //assert(out == ":ok\n") { out }
-        assert(out.contains(" v  anon : (lin 2, col 13) : block escape error : cannot copy reference out\n")) { out }
+        assert(out == " |  anon : (lin 4, col 17) : throw(t)\n" +
+                " v  throw error : @[]\n") { out }
+        //assert(out.contains(" v  anon : (lin 2, col 13) : block escape error : cannot copy reference out\n")) { out }
     }
 
     // CALL STACK

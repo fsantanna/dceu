@@ -840,9 +840,7 @@ class Parser (lexer_: Lexer)
                     do {
                         val ${xidtag.tostr(true)}
                         `${D}${xidtag.first.str} = ceu_err.Dyn->Throw.val;`
-                        val ret_$N = do {
-                            $xcnd
-                        }
+                        val ret_$N = $xcnd
                         `${D}${xidtag.first.str} = (CEU_Value) { CEU_VALUE_NIL };`
                         ret_$N
                     }
