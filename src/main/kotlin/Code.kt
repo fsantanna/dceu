@@ -304,7 +304,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                                 ${inexe.cond { """
                                                     // must check CEU_HOLD_FLEET for parallel scopes, but only for exes:
                                                     // [gg_02_scope] v -> coro/task
-                                                    TODO    
+                                                    if ($idc.Dyn->Any.hld.type != CEU_HOLD_FLEET) {
+                                                        if (!ceu_block_is_up_dn(CEU_HLD_BLOCK($idc.Dyn), $blkc)) {
+                                                            CEU_Value ceu_err_$n = { CEU_VALUE_ERROR, {.Error="argument error : cannot receive alien reference"} };
+                                                            CEU_ERROR($blkc, "${id.pos.file} : (lin ${id.pos.lin}, col ${id.pos.col})", ceu_err_$n);
+                                                        }
+                                                    }
                                                 """ }}
                                                 // Always possible to pass to tight func:
                                                 // f([...]) ;; FLEET ;; change type and block
@@ -659,7 +664,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ceu_frame->exe->status = CEU_EXE_STATUS_YIELDED;
                     ceu_frame->exe->pc = $n;      // next resume
                     if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
-                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="yield error : cannot receive assigned reference"} };
+                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="yield error : cannot return pending reference"} };
                         CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                     }
                     return ceu_acc;
@@ -676,6 +681,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                 #endif
                     ceu_acc = (ceu_n == 1) ? ceu_args[0] : (CEU_Value) { CEU_VALUE_NIL };
+                    if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                        // must check CEU_HOLD_FLEET for parallel scopes, but only for exes:
+                        // [gg_03x_scope]
+                        if (ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET &&
+                            !ceu_block_is_up_dn(CEU_HLD_BLOCK(ceu_acc.Dyn), $bupc))
+                        {
+                            CEU_Value ceu_err_$n = { CEU_VALUE_ERROR, {.Error="resume error : cannot receive alien reference"} };
+                            CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
+                        }
+                    }
                 }
                 """
             }
@@ -777,17 +792,25 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     this.isdst() -> {
                         val src = ups.pub[this]!!.idc("src")
                         """
-                        { // PUB - SET | ${this.dump()}
-                            CEU_ASSERT(
-                                $bupc,
-                                ceu_hold_chk($src, CEU_HOLD_MUTAB, ceu_block_up_block($bupc), "set error"),
-                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
-                            );
+                        // PUB - SET | ${this.dump()}
+                        if ($src.type > CEU_VALUE_DYNAMIC) {
+                            // set pub = []   ;; FLEET ;; change to MUTAB type ;; change to pub blk
+                            // set pub = src  ;; ELSE  ;; keep ELSE type       ;; keep block
+                            //  - Check for type=ELSE:
+                            //      - blk(pub) >= blk(src) (deeper)
+                            if ($src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
+                                ceu_hold_set_rec($src, CEU_HOLD_MUTAB, 0, $bupc);
+                            } else {
+                                if (!ceu_block_is_up_dn(CEU_HLD_BLOCK($src.Dyn), $bupc)) {
+                                    CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot assign reference to outer scope"} };
+                                    CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                }
+                            }
+
                             ceu_gc_inc($src);
-                            ceu_gc_dec(ceu_acc.Dyn->Exe_Task.pub, 1);
-                            ceu_acc.Dyn->Exe_Task.pub = $src;
                         }                        
-                        ceu_hold_set_rec($src, CEU_HOLD_MUTAB, ceu_block_up_block($bupc), 1),
+                        ceu_gc_dec(ceu_acc.Dyn->Exe_Task.pub, 1);
+                        ceu_acc.Dyn->Exe_Task.pub = $src;
                         """
                     }
                     this.isdrop() -> "assert(0 && \"TODO: drop pub\");"
@@ -857,12 +880,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         """
                         // ACC - SET | ${this.dump()}
-                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                        if ($src.type > CEU_VALUE_DYNAMIC) {
                             // set dst = []   ;; FLEET ;; change to MUTAB type ;; change to dst blk
                             // set dst = src  ;; ELSE  ;; keep ELSE type       ;; keep block
                             //  - Check for type=ELSE:
                             //      - blk(dst) >= blk(src) (deeper)
-                            if (ceu_acc.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
+                            if ($src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                                 //ceu_hold_set_from_fleet($src, CEU_HOLD_MUTAB, ${vblk.idc("block",nst)});
                                 ceu_hold_set_rec($src, CEU_HOLD_MUTAB, 0, ${vblk.idc("block",nst)});
                             } else {

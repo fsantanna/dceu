@@ -272,7 +272,7 @@ class Exec_03 {
     fun cc_13_tuple_leak() {
         val out = test("""
             val T = coro () {
-                pass [1,2,3]
+                do [1,2,3]
                 func(it) { nil } (yield(nil))
             }
             resume (coroutine(T)) ()
@@ -590,7 +590,7 @@ class Exec_03 {
                 set xxx = t ;; error
             }
         """)
-        assert(out == " v  anon : (lin 8, col 21) : set error : cannot copy reference out\n") { out }
+        assert(out == " v  anon : (lin 8, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun todo_ff_04_move_err () {
@@ -652,7 +652,7 @@ class Exec_03 {
         //assert(out == " |  anon : (lin 9, col 24) : t(v)\n" +
         //        " v  anon : (lin 2, col 30) : resume error : incompatible scopes\n") { out }
         assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
-                " v  anon : (lin 2, col 27) : argument error : cannot copy reference out\n") { out }
+                " v  anon : (lin 2, col 27) : argument error : cannot receive alien reference\n") { out }
     }
     @Test
     fun gg_03_scope() {
@@ -680,9 +680,45 @@ class Exec_03 {
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
         //        " v  anon : (lin 3, col 34) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
+        //        " |  anon : (lin 3, col 25) : (func (x) { x })(yield(nil))\n" +
+        //        " v  anon : (lin 3, col 34) : block escape error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
-                " |  anon : (lin 3, col 25) : (func (x) { x })(yield(nil))\n" +
-                " v  anon : (lin 3, col 34) : block escape error : cannot copy reference out\n") { out }
+                " v  anon : (lin 3, col 41) : resume error : cannot receive alien reference\n") { out }
+    }
+    @Test
+    fun gg_03x_scope() {
+        val out = test("""
+            val T = coro () {
+                val v = yield(nil)
+                yield(nil)
+                println(v)                
+            }
+            val t = coroutine(T)
+            resume t()
+            do {
+                val v = []
+                resume t(v)
+            }
+        """)
+        assert(out == " |  anon : (lin 11, col 17) : (resume (t)(v))\n" +
+                " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
+    }
+    @Test
+    fun gg_03y_scope() {
+        val out = test("""
+            val T = coro (v) {
+                yield(nil)
+                println(v)                
+            }
+            val t = coroutine(T)
+            do {
+                val v = []
+                resume t(v)
+            }
+        """)
+        assert(out == " |  anon : (lin 9, col 17) : (resume (t)(v))\n" +
+                " v  anon : (lin 2, col 27) : argument error : cannot receive alien reference\n") { out }
     }
     @Test
     fun gg_04_scope() {
@@ -727,7 +763,7 @@ class Exec_03 {
             resume t()
         """)
         assert(out == " |  anon : (lin 16, col 33) : (resume (t)(nil))\n" +
-                " v  anon : (lin 5, col 21) : yield error : cannot receive assigned reference\n") { out }
+                " v  anon : (lin 5, col 21) : yield error : cannot return pending reference\n") { out }
     }
     @Test
     fun gg_06_scope() {
@@ -789,8 +825,10 @@ class Exec_03 {
                 resume co (e)
             }
         """)
+        //assert(out == " |  anon : (lin 10, col 17) : (resume (co)(e))\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 10, col 17) : (resume (co)(e))\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
+                " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
     }
 
     // CATCH / THROW
@@ -1124,7 +1162,27 @@ class Exec_03 {
             }
             resume t()
         """)
-        assert(out == "[]\n10\n") { out }
+        //assert(out == "[]\n10\n") { out }
+        assert(out == " |  anon : (lin 14, col 17) : (resume (t)(v))\n" +
+                " v  anon : (lin 6, col 20) : resume error : cannot receive alien reference\n") { out }
+    }
+    @Test
+    fun kk_02_scope() {
+        val out = test("""
+            val T = coro () {
+                val t = []
+                yield(t)
+                println(t)                
+            }
+            val t = coroutine(T)
+            do {
+                resume t()
+            }
+            resume t()
+        """)
+        //assert(out == "[]\n10\n") { out }
+        assert(out == " |  anon : (lin 9, col 17) : (resume (t)(nil))\n" +
+                " v  anon : (lin 4, col 17) : yield error : cannot return pending reference\n") { out }
     }
 
     // KILL

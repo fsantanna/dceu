@@ -234,8 +234,8 @@ class Exec_04 {
             }
             println(2)
         """)
-        assert(out == " v  anon : (lin 3, col 21) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == "2\n") { out }
+        //assert(out == " v  anon : (lin 3, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "2\n") { out }
     }
     @Test
     fun cc_01_scope() {
@@ -315,7 +315,7 @@ class Exec_04 {
         val out = test("""
             val T = task (t1) {
                 val t2 = []
-                pass [t1,[],t2]
+                do [t1,[],t2]
                 yield(nil) ;;thus { it => nil }
             }
             do {
@@ -333,10 +333,8 @@ class Exec_04 {
     fun cd_01_every() {
         val out = test("""
             spawn (task () :void {
-                (pass yield(nil))
-                do (it) {
-                    yield(nil)
-                }
+                val it = yield(nil)
+                yield(nil)
             }) (nil)
             do {
                 val e = []
@@ -1818,8 +1816,8 @@ class Exec_04 {
         """)
         //assert(out == "anon : (lin 8, col 13) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
-        //assert(out == "[]\n") { out }
-        assert(out == " v  anon : (lin 8, col 13) : declaration error : cannot copy reference out\n") { out }
+        assert(out == "[]\n") { out }
+        //assert(out == " v  anon : (lin 8, col 13) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
     fun kj_02_expose_err() {

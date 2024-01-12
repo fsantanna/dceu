@@ -1197,6 +1197,7 @@ fun Coder.main (tags: Tags): String {
                 {
                     CEU_Value arg = ceu_dyn_to_val((CEU_Dyn*)src_dyn->Exe.frame.clo);
                     ceu_hold_set_rec(arg, to_type, isup, to_blk);
+                    break;
                 }
         #endif
         #if CEU >= 5
@@ -1494,7 +1495,7 @@ fun Coder.main (tags: Tags): String {
                 ceu_gc_inc(evt); // save from nested gc_chk
                 if (evt.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                     // keep the block, set MUTAB recursively
-                    ceu_hold_set_rec(1, evt, CEU_HOLD_MUTAB, NULL);
+                    ceu_hold_set_rec(evt, CEU_HOLD_MUTAB, 0, NULL);
                 }
             }
             CEU_Value xin = args[1];
