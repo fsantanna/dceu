@@ -322,6 +322,7 @@ fun Coder.main (tags: Tags): String {
         int CEU_BREAK = 0;
     #if CEU >= 4
         CEU_Stack CEU_BSTK = { NULL, 1, NULL };
+        CEU_Value id_evt = { CEU_VALUE_NIL };
     #endif
     #if CEU >= 5
         CEU_Stack CEU_DSTK = { NULL, 1, NULL };
@@ -1247,7 +1248,14 @@ fun Coder.main (tags: Tags): String {
                 assert(c_type == v_type);   // TODO: either mutab/mutab or immut/immut
                 // v becomes part of col, so it must be in same/outer scope
                 if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(v.Dyn), CEU_HLD_BLOCK(col))) {
-                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error="store error : cannot assign reference to outer scope"} };
+            #if CEU >= 4
+                    if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(col), CEU_HLD_BLOCK(v.Dyn))) {
+                        return (CEU_Value) { CEU_VALUE_ERROR, {.Error="declaration error : cannot hold \"evt\" reference"} };
+                    } else                                        
+            #endif
+                    {
+                        return (CEU_Value) { CEU_VALUE_ERROR, {.Error="store error : cannot assign reference to outer scope"} };
+                    }
                 }
             }
             return (CEU_Value) { CEU_VALUE_NIL };

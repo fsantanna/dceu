@@ -742,6 +742,157 @@ class Exec_04 {
                 " v  throw error : :XXX\n") { out }
     }
 
+    // EVT
+
+    @Test
+    fun de_01_evt() {
+        val out = test("""
+            println(evt)
+        """)
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun de_02_evt() {
+        val out = test("""
+            spawn (task () {
+                println(evt)
+                yield(nil)
+                println(evt)
+            }) ()
+            broadcast(10)
+        """)
+        assert(out == "nil\n10\n") { out }
+    }
+    @Test
+    fun de_03_evt_err() {
+        DEBUG = true
+        val out = test("""
+            spawn (task () {
+                yield(nil)
+                val x = evt
+                println(x)
+            }) ()
+            do {
+                val x
+                broadcast([10])
+            }
+        """)
+        assert(out == " |  anon : (lin 9, col 17) : broadcast'([10],:task)\n" +
+                " v  anon : (lin 4, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
+    }
+    @Test
+    fun de_03x_evt_err() {
+        DEBUG = true
+        val out = test("""
+            spawn (task () {
+                yield(nil)
+                var x
+                set x = evt
+                println(x)
+            }) ()
+            do {
+                val x
+                broadcast([10])
+            }
+        """)
+        assert(out == " |  anon : (lin 10, col 17) : broadcast'([10],:task)\n" +
+                " v  anon : (lin 5, col 21) : declaration error : cannot hold \"evt\" reference\n") { out }
+    }
+    @Test
+    fun de_03y_evt_err() {
+        DEBUG = true
+        val out = test("""
+            spawn (task () {
+                yield(nil)
+                val x = [nil]
+                set x[0] = evt
+                println(x)
+            }) ()
+            do {
+                val x
+                broadcast([10])
+            }
+        """)
+        assert(out == " |  anon : (lin 10, col 17) : broadcast'([10],:task)\n" +
+                " v  anon : (lin 5, col 21) : declaration error : cannot hold \"evt\" reference\n") { out }
+    }
+    @Test
+    fun de_04_evt_err() {
+        val out = test("""
+            spawn (task () {
+                yield(nil)
+                do {
+                    val x = evt
+                    println(x)
+                    yield(nil)
+                }
+            }) ()
+            do {
+                val x
+                broadcast([10])
+            }
+        """)
+        //assert(out == "[10]\n" +
+        //        " |  anon : (lin 10, col 13) : broadcast'([10],:task)\n" +
+        //        " v  anon : (lin 7, col 21) : yield error : cannot hold \"evt\" reference\n") { out }
+        assert(out == " |  anon : (lin 12, col 17) : broadcast'([10],:task)\n" +
+                " v  anon : (lin 5, col 21) : declaration error : cannot hold \"evt\" reference\n") { out }
+    }
+    @Test
+    fun de_05_evt() {
+        val out = test("""
+            spawn (task () {
+                yield(nil)
+                do {
+                    val x = evt
+                    println(x)
+                }
+                yield(nil)
+            }) ()
+            do {
+                val x
+                broadcast([10])
+            }
+        """)
+        //assert(out == "[10]\n") { out }
+        assert(out == " |  anon : (lin 12, col 17) : broadcast'([10],:task)\n" +
+                " v  anon : (lin 5, col 21) : declaration error : cannot hold \"evt\" reference\n") { out }
+    }
+    @Test
+    fun de_05_evt_err_valgrind() {
+        val out = test("""
+            spawn (task () {
+                yield(nil)
+                val x = evt
+                println(x)
+                yield(nil)
+                println(x)
+            }) ()
+            do {
+                val e = [10]
+                broadcast(e)
+            }
+            broadcast(nil)
+        """)
+        assert(out == " |  anon : (lin 11, col 17) : broadcast'(e,:task)\n" +
+                " v  anon : (lin 4, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
+    }
+    @Test
+    fun de_06_evt_err() {
+        val out = test("""
+            spawn (task () {
+                yield(nil)
+                println(do {
+                    evt
+                })
+            }) ()
+            do {
+                val x
+                broadcast([10])
+            }
+        """)
+        assert(out == "[10]\n"") { out }
+    }
 
     // THROW / CATCH
 

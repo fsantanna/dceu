@@ -75,6 +75,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Proto -> {
                 val blk = ups.first_block(this)!!
                 val isexe = (this.tk.str != "func")
+                val istsk = (this.tk.str == "task")
                 val code = this.blk.code()
                 val mem = Mem(ups, vars, clos, sta, defers)
                 val id = this.idc()
@@ -103,6 +104,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         CEU_Value ceu_args[]
                     ) {
                         CEU_Value ceu_acc;
+                        
+                        ${istsk.cond { """
+                        CEU_Value id_evt = { CEU_VALUE_NIL };
+                           // - C does not allow redeclaration (after each yield)
+                           // - A task can only awake once per cycle
+                           // - So it is safe to use one "global" id_evt per task
+                        """ }}
+
                         ${clos.protos_refs[this].cond { """
                             CEU_Clo_Upvs_$id* ceu_upvs = (CEU_Clo_Upvs_$id*) ceu_frame->clo->upvs.buf;                    
                         """ }}
@@ -498,9 +507,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // Always possible to assign in new declaration:
                             // val x = []   ;; FLEET ;; change to MUTAB type ;; change to dst blk
                             // val x = y    ;; ELSE  ;; keep ELSE type       ;; keep block
+                            // Exception:
+                            // val x = evt
                             if (ceu_acc.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                                 //ceu_hold_set_from_fleet(ceu_acc, CEU_HOLD_MUTAB, $bupc); 
                                 ceu_hold_set_rec(ceu_acc, CEU_HOLD_MUTAB, 0, $bupc); 
+                            } else {
+                                ${ups.inexe(this,"task",true).cond { """
+                                    if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(ceu_acc.Dyn), $bupc)) {
+                                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="declaration error : cannot hold \"evt\" reference"} };
+                                        CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                    }
+                                """ }}
                             }
                         }
                     """
@@ -658,6 +676,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             }
             is Expr.Yield -> {
                 val bupc = ups.first_block(this)!!.idc("block")
+                val intsk = ups.inexe(this, "task", true)
                 """
                 { // YIELD ${this.dump()}
                     ${this.arg.code()}
@@ -681,16 +700,22 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                 #endif
                     ceu_acc = (ceu_n == 1) ? ceu_args[0] : (CEU_Value) { CEU_VALUE_NIL };
-                    if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                        // must check CEU_HOLD_FLEET for parallel scopes, but only for exes:
-                        // [gg_03x_scope]
-                        if (ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET &&
-                            !ceu_block_is_up_dn(CEU_HLD_BLOCK(ceu_acc.Dyn), $bupc))
-                        {
-                            CEU_Value ceu_err_$n = { CEU_VALUE_ERROR, {.Error="resume error : cannot receive alien reference"} };
-                            CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
+                    ${intsk.cond2({ """
+                        id_evt = ceu_acc;
+                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                    """ }, { """
+                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                            // must check CEU_HOLD_FLEET for parallel scopes, but only for exes:
+                            // [gg_03x_scope]
+                            if (ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET &&
+                                !ceu_block_is_up_dn(CEU_HLD_BLOCK(ceu_acc.Dyn), $bupc))
+                            {
+                                CEU_Value ceu_err_$n = { CEU_VALUE_ERROR, {.Error="resume error : cannot receive alien reference"} };
+                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
+                            }
                         }
-                    }
+                        """
+                    })}
                 }
                 """
             }
