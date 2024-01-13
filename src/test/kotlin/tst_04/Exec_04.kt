@@ -334,6 +334,7 @@ class Exec_04 {
         val out = test("""
             spawn (task () :void {
                 val it = yield(nil)
+                println(it, evt)
                 yield(nil)
             }) (nil)
             do {
@@ -343,8 +344,11 @@ class Exec_04 {
             println(:ok)
         """)
         //assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing thus\n") { out }
-        assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 4, col 21) : argument error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 21) : argument error : cannot copy reference out\n") { out }
+        //assert(out == "nil\t[]\n:ok\n") { out }
+        assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
+                " v  anon : (lin 3, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
     }
     @Test
     fun cd_02_bcast_spawn_arg() {
@@ -359,8 +363,9 @@ class Exec_04 {
             }
             println(:ok)
         """)
-        assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
+        assert(out == "TODO\n") { out }
     }
 
     // BROADCAST
@@ -392,26 +397,26 @@ class Exec_04 {
         val out = test("""
             var tk = task (v) {
                 val e1 = yield(nil) ;;thus { it => it }
-                println(:1, e1)
+                println(:1, evt, e1)
                 val e2 = yield(nil) ;;thus { it => it }
-                println(:2, e2)
+                println(:2, evt, e2)
             }
             spawn tk ()
             broadcast(1)
             broadcast(2)
             broadcast(3)
         """)
-        assert(out == ":1\t1\n:2\t2\n") { out }
+        assert(out == ":1\t1\t1\n:2\t2\t2\n") { out }
     }
     @Test
     fun dd_04_bcast() {
         val out = test("""
             var tk
             set tk = task (v) {
-                val e1 = yield(nil) ;;thus { it => it }
-                println(v,e1)
-                var e2 = yield(nil) ;;thus { it => it }
-                println(v,e2)
+                ;;;val e1 = ;;; yield(nil) ;;thus { it => it }
+                println(v,;;;e1;;;evt)
+                ;;;var e2 = ;;; yield(nil) ;;thus { it => it }
+                println(v,;;;e2;;;evt)
             }
             var co1 = spawn tk(:1)
             var co2 = spawn tk(:2)
@@ -466,8 +471,8 @@ class Exec_04 {
             var tk
             set tk = task (v) {
                 println(v)
-                val e = yield(nil) ;;thus { it => it }
-                println(e)
+                ;;;val e =;;; yield(nil) ;;thus { it => it }
+                println(;;;e;;;evt)
             }
             var co = spawn(tk)(1)
             broadcast(2)
@@ -505,8 +510,8 @@ class Exec_04 {
             var tk
             set tk = task () {
                 yield(nil) ;;thus { it => nil }
-                val e = yield(nil) ;;thus { it => it }
-                println(e)                
+                ;;;val e =;;; yield(nil) ;;thus { it => it }
+                println(;;;e;;;evt)                
             }
             var co1 = spawn (tk) ()
             var co2 = spawn tk ()
@@ -878,7 +883,7 @@ class Exec_04 {
                 " v  anon : (lin 4, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
     }
     @Test
-    fun de_06_evt_err() {
+    fun de_06_evt() {
         val out = test("""
             spawn (task () {
                 yield(nil)
@@ -891,7 +896,23 @@ class Exec_04 {
                 broadcast([10])
             }
         """)
-        assert(out == "[10]\n"") { out }
+        assert(out == "[10]\n") { out }
+    }
+    @Test
+    fun de_07_evt_err() {
+        val out = test("""
+            spawn (task () {
+                yield(nil)
+                val x = evt[0]
+                println(x)
+            }) ()
+            do {
+                val e = [[10]]
+                broadcast(e)
+            }
+        """)
+        assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
+                " v  anon : (lin 4, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
     }
 
     // THROW / CATCH
@@ -1082,8 +1103,10 @@ class Exec_04 {
             }
             broadcast(nil)
         """)
+        //assert(out == " |  anon : (lin 10, col 17) : broadcast'([],:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 10, col 17) : broadcast'([],:task)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
+                " v  anon : (lin 3, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
     }
     @Test
     fun ee_10_bcast_err2() {
@@ -1099,8 +1122,10 @@ class Exec_04 {
             }
         """)
         //assert(out == "[]\n") { out }
+        //assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
+                " v  anon : (lin 3, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
     }
     @Test
     fun ee_11_bcast() {
@@ -1736,9 +1761,9 @@ class Exec_04 {
         val out = test(
             """
             var T = task () {
-                val evt = yield(nil) ;;thus { it => it}
+                val e = yield(nil) ;;thus { it => it}
                 do {
-                    var v = evt
+                    var v = e
                     println(v)
                 }
             }

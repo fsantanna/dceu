@@ -702,7 +702,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ceu_acc = (ceu_n == 1) ? ceu_args[0] : (CEU_Value) { CEU_VALUE_NIL };
                     ${intsk.cond2({ """
                         id_evt = ceu_acc;
-                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                        //ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                     """ }, { """
                         if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                             // must check CEU_HOLD_FLEET for parallel scopes, but only for exes:
