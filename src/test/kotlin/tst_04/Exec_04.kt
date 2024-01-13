@@ -365,7 +365,8 @@ class Exec_04 {
         """)
         //assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
-        assert(out == "TODO\n") { out }
+        assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
+                " v  anon : (lin 3, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
     }
 
     // BROADCAST
@@ -3710,8 +3711,10 @@ class Exec_04 {
         //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : broadcast'(e)\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 13, col 25) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 13, col 25) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
+                " v  anon : (lin 3, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
     }
     @Test
     fun zz_15_bcast_okr() {
@@ -3735,7 +3738,7 @@ class Exec_04 {
             """
             var T = task () {
                 var v =
-                func (it) { it} (yield(nil) )
+                    func (it) {it} (yield(nil))
                 println(v)
             }
             var t = spawn T()
@@ -3758,9 +3761,11 @@ class Exec_04 {
         //        ":error\n") { out }
         //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 4, col 28) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
+        //        " |  anon : (lin 4, col 17) : (func (it) { it })(yield(nil))\n" +
+        //        " v  anon : (lin 4, col 27) : block escape error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
-                " |  anon : (lin 4, col 17) : (func (it) { it })(yield(nil))\n" +
-                " v  anon : (lin 4, col 27) : block escape error : cannot copy reference out\n") { out }
+                " v  anon : (lin 3, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
     }
     @Test
     fun zz_17_bcast() {
@@ -3770,20 +3775,20 @@ class Exec_04 {
             var T1 = task () {
                 yield(nil) ;;thus { it => nil}
                 spawn( task () {                ;; GC = task (no more)
-                    val evt = yield(nil) ;;thus { it => it}
+                    val xevt = yield(nil) ;;thus { it => it}
                     println(:1)
-                    var v = evt
+                    var v = xevt
                 } )()
                 nil
             }
             var t1 = spawn T1()
             var T2 = task () {
                 yield(nil) ;;thus { it => nil}
-                val evt = yield(nil) ;;thus { it => nil}
+                val xevt = yield(nil) ;;thus { it => nil}
                 ;;println(:2)
                 do {
-                    var v = evt
-                    ;;println(:evt, v, evt)
+                    var v = xevt
+                    ;;println(:evt, v, xevt)
                 }
             }
             var t2 = spawn T2()
@@ -3841,8 +3846,8 @@ class Exec_04 {
                 println(x)      ;; x will be freed and v would contain dangling pointer
             }
             var T = task () {
-                val evt = yield(nil) ;;thus { it => it}   ;; NOT FLEETING (vs prv test)
-                f(evt)
+                val xevt = yield(nil) ;;thus { it => it}   ;; NOT FLEETING (vs prv test)
+                f(xevt)
             }
             spawn T()
             broadcast ([[1]])
@@ -3920,8 +3925,8 @@ class Exec_04 {
                 println(x)
             }
             var g = func (v) {
-                val evt = v
-                f(evt)
+                val xevt = v
+                f(xevt)
             }
             g([[1]])
         """)

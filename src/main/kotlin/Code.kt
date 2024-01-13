@@ -410,6 +410,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // return [] ;; FLEET ;; keep type ;; up block
                             // return x  ;; ELSE  ;; keep type ;; up block
                             //  - Move block to least bw src and up:
+                            //      - NOT for alien:
+                            //          return evt  // should not move block
                             //      - blk = MIN(up, src)
                             //      - stop when src<=up
                             if (ceu_acc.Dyn->Any.hld.type == CEU_HOLD_IMMUT) {
@@ -423,7 +425,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 } while (0);    // catch continue in CEU_ERROR
                         #endif
                             } else {
-                                ceu_hold_set_rec(ceu_acc, CEU_HOLD_NONE, 1, $up1);
+                        #if CEU >= 4
+                                    if (!ceu_block_is_up_dn($up1, CEU_HLD_BLOCK(ceu_acc.Dyn))) {
+                                        // ignore evt
+                                    } else
+                        #endif
+                                {
+                                    ceu_hold_set_rec(ceu_acc, CEU_HOLD_NONE, 1, $up1);
+                                }
                             }
                         }
                         """
