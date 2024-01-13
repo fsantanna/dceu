@@ -41,11 +41,14 @@ class Ups (outer: Expr.Do) {
     fun first_task_real (e: Expr): Expr.Proto? {
         return this.first(e) { it is Expr.Proto && it.tk.str=="task" && it.tag?.str!=":void" } as Expr.Proto?
     }
-    fun inexe (e: Expr, immediate: Boolean): Boolean {
+    fun inexe (e: Expr, spc: String?, immediate: Boolean): Boolean {
+        fun f (s: String): Boolean {
+            return (spc==null && s!="func") || spc==s
+        }
         return if (immediate) {
-            this.first(e) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }
+            this.first(e) { it is Expr.Proto }.let { it!=null && f(it.tk.str) }
         } else {
-            this.any(e) { it is Expr.Proto && it.tk.str != "func" }
+            this.any(e) { it is Expr.Proto && f(it.tk.str) }
         }
     }
 

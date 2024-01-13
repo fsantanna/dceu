@@ -199,7 +199,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val ismem  = this.ismem(sta,clos)
                 val isvoid = sta.void(this)
                 //println(listOf(isvoid,this.tk))
-                val inexe  = ups.inexe(this, true)
+                val inexe  = ups.inexe(this, null,true)
                 val istsk  = (f_b?.tk?.str == "task")
 
                 """
@@ -621,7 +621,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bup = ups.first_block(this)!!
                 val bupc = bup.idc("block")
                 val coc = this.idc("co")
-                val inexeT = ups.inexe(this,true)
+                val inexeT = ups.inexe(this, null,true)
                 val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"
 
                 """
@@ -701,7 +701,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val argsc = this.idc("args")
                 val tsksc = this.idc("tsks")
                 val tskc = this.idc("tsk")
-                val inexeT = ups.inexe(this,true)
+                val inexeT = ups.inexe(this, null, true)
                 val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"
 
                 """
@@ -885,13 +885,23 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // set dst = src  ;; ELSE  ;; keep ELSE type       ;; keep block
                             //  - Check for type=ELSE:
                             //      - blk(dst) >= blk(src) (deeper)
+                            // Also error:
+                            // set dst = evt
                             if ($src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                                 //ceu_hold_set_from_fleet($src, CEU_HOLD_MUTAB, ${vblk.idc("block",nst)});
                                 ceu_hold_set_rec($src, CEU_HOLD_MUTAB, 0, ${vblk.idc("block",nst)});
                             } else {
                                 if (!ceu_block_is_up_dn(CEU_HLD_BLOCK($src.Dyn), ${vblk.idc("block",nst)})) {
-                                    CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot assign reference to outer scope"} };
-                                    CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                    ${ups.inexe(this,"task",true).cond { """
+                                        if (!ceu_block_is_up_dn(${vblk.idc("block",nst)}, CEU_HLD_BLOCK($src.Dyn))) {
+                                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="declaration error : cannot hold \"evt\" reference"} };
+                                            CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                        } else                                        
+                                    """ }}
+                                    {
+                                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot assign reference to outer scope"} };
+                                        CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                    }
                                 }
                             }
                             ceu_gc_inc($src);
@@ -1134,7 +1144,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     val (blk,dcl) = vars.get(dots as Expr.Acc)
                     dcl.idc(0)
                 }
-                val inexeT = ups.inexe(this,true)
+                val inexeT = ups.inexe(this, null, true)
                 val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"
                 """
                 { // CALL | ${this.dump()}
