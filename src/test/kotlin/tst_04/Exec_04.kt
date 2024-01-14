@@ -1879,10 +1879,8 @@ class Exec_04 {
             }
             val t = spawn T()
         """)
-        //assert(out == " |  anon : (lin 8, col 21) : (spawn T())\n" +
-        //        " v  anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 8, col 21) : (spawn T())\n" +
-                " v  anon : (lin 3, col 17) : block escape error : reference has immutable scope\n") { out }
+                " v  anon : (lin 5, col 25) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun kk_06_pub_err() {
@@ -1897,8 +1895,7 @@ class Exec_04 {
             }
             println(pub(t))
         """)
-        //assert(out == " v  anon : (lin 8, col 21) : set error : cannot copy reference out\n") { out }
-        assert(out == " v  anon : (lin 6, col 13) : block escape error : reference has immutable scope\n") { out }
+        assert(out == " v  anon : (lin 8, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun kk_07_pub_tag() {
@@ -1980,6 +1977,22 @@ class Exec_04 {
         """)
         assert(out == " |  anon : (lin 2, col 13) : (spawn (task () { (set pub()[:x] = 10) nil })...)\n" +
                 " v  anon : (lin 3, col 21) : index error : expected collection\n") { out }
+    }
+    @Test
+    fun kk_14_pub() {
+        val out = test("""
+            spawn (task () {
+                yield(nil)
+                set pub() = evt
+                nil
+            }) ()
+            do {
+                val x
+                broadcast([])
+            }
+        """)
+        assert(out == " |  anon : (lin 9, col 17) : broadcast'([],:task)\n" +
+                " v  anon : (lin 4, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
 
     // ORIGINAL / PUB / EXPOSE

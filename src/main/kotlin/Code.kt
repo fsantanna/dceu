@@ -841,10 +841,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // NEW: in both cases, change to IMMUT
                             //  - Check for type=ELSE:
                             //      - blk(pub) >= blk(src) (deeper)
+                            // Also error:
+                            // set pub = evt
                             if ($src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                                ceu_hold_set_rec($src, CEU_HOLD_IMMUT, 0, $bupc);
+                                ceu_hold_set_rec($src, CEU_HOLD_IMMUT, 0, ceu_acc.Dyn->Exe_Task.dn_block);
                             } else {
-                                if (!ceu_block_is_up_dn(CEU_HLD_BLOCK($src.Dyn), $bupc)) {
+                                if (!ceu_block_is_up_dn(CEU_HLD_BLOCK($src.Dyn), ceu_acc.Dyn->Exe_Task.dn_block)) {
                                     CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot assign reference to outer scope"} };
                                     CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                 }
