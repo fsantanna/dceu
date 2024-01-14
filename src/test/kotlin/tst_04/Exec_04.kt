@@ -1839,8 +1839,10 @@ class Exec_04 {
             println(x)
         """)
         //assert(out == " v  anon : (lin 6, col 25) : pub error : expected active task\n") { out }
+        //assert(out == " |  anon : (lin 5, col 21) : (spawn t())\n" +
+        //        " v  anon : (lin 2, col 29) : block escape error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 5, col 21) : (spawn t())\n" +
-                " v  anon : (lin 2, col 29) : block escape error : cannot copy reference out\n") { out }
+                " v  anon : (lin 2, col 29) : block escape error : reference has immutable scope\n") { out }
     }
     @Test
     fun kk_03_pub() {
@@ -1877,8 +1879,10 @@ class Exec_04 {
             }
             val t = spawn T()
         """)
+        //assert(out == " |  anon : (lin 8, col 21) : (spawn T())\n" +
+        //        " v  anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 8, col 21) : (spawn T())\n" +
-                " v  anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
+                " v  anon : (lin 3, col 17) : block escape error : reference has immutable scope\n") { out }
     }
     @Test
     fun kk_06_pub_err() {
@@ -1893,7 +1897,8 @@ class Exec_04 {
             }
             println(pub(t))
         """)
-        assert(out == " v  anon : (lin 8, col 21) : set error : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 8, col 21) : set error : cannot copy reference out\n") { out }
+        assert(out == " v  anon : (lin 6, col 13) : block escape error : reference has immutable scope\n") { out }
     }
     @Test
     fun kk_07_pub_tag() {
@@ -2010,7 +2015,8 @@ class Exec_04 {
             }
             println(x)
         """)
-        assert(out == " v  anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == " v  anon : (lin 2, col 21) : block escape error : reference has immutable scope\n") { out }
     }
     @Test
     fun kj_03_expose_err() {
@@ -2018,7 +2024,7 @@ class Exec_04 {
             var f = func (t) {
                 do { do {
                 var p = pub(t)   ;; ok
-                set p = pub(t)   ;; ok
+                set p = pub(t)   ;; ERROR: spawn A and f() are not comparable
                 set p = p       ;; ok
                 println(p)      ;; ok
                 ;;p               ;; ok
@@ -2042,8 +2048,10 @@ class Exec_04 {
         //assert(out == "anon : (lin 15, col 13) : f(a)\n" +
         //        "anon : (lin 3, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
+        //assert(out == " |  anon : (lin 18, col 13) : f(a)\n" +
+        //        " v  anon : (lin 4, col 17) : declaration error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 18, col 13) : f(a)\n" +
-                " v  anon : (lin 4, col 17) : declaration error : cannot copy reference out\n") { out }
+                " v  anon : (lin 5, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun kj_05_expose_err() {
@@ -2068,8 +2076,10 @@ class Exec_04 {
         //assert(out == "anon : (lin 12, col 21) : f(a)\n" +
         //        "anon : (lin 3, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
+        //assert(out == " |  anon : (lin 12, col 21) : f(a)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 12, col 21) : f(a)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
+                " v  anon : (lin 2, col 30) : block escape error : reference has immutable scope\n") { out }
     }
     @Test
     fun kj_06_expose_err() {
@@ -2092,7 +2102,7 @@ class Exec_04 {
         //        "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
         //        ":error\n") { out }
         assert(out == " |  anon : (lin 12, col 21) : f(a)\n" +
-                " v  anon : (lin 4, col 21) : set error : cannot copy reference out\n") { out }
+                " v  anon : (lin 4, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun kj_07_pub_func() {
@@ -2116,7 +2126,7 @@ class Exec_04 {
             var t = task (v) {
                 set pub() = v
                 var f = func () {
-                    pub()
+                    pub()   ;; should be ok bc f is called inside t
                 }
                 println(f())
             }
