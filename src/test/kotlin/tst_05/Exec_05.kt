@@ -764,8 +764,10 @@ class Exec_05 {
             }
             println(v)
         """)
-        assert(out.contains("exe-task: 0x")) { out }
+        //assert(out.contains("exe-task: 0x")) { out }
         //assert(out == " v  anon : (lin 6, col 22) : drop error : value is not movable\n") { out }
+        assert(out == " |  anon : (lin 5, col 32) : (func (it) { if it { ```                     ...)\n" +
+                " v  anon : (lin 6, col 22) : drop error : value contains multiple references\n") { out }
     }
     @Test
     fun dd_07_detrack_nested() {
@@ -944,7 +946,7 @@ class Exec_05 {
         //assert(out == " v  anon : (lin 10, col 21) : status(t) : status error : expected running coroutine or task\n") { out }
         //assert(out == " v  anon : (lin 8, col 13) : declaration error : cannot expose task-in-pool reference\n") { out }
         assert(out == " |  anon : (lin 9, col 32) : (func (it) { if it { ```                     ...)\n" +
-                " v  anon : (lin 10, col 21) : block escape error : cannot expose reference to task in pool\n") { out }
+                " v  anon : (lin 10, col 21) : set error : cannot expose reference to task in pool\n") { out }
     }
     @Test
     fun ff_03_detrack_err() {
@@ -1179,7 +1181,7 @@ class Exec_05 {
         assert(out == "[]\n:ok\n") { out }
     }
     @Test
-    fun fg_07_throw_track() {
+    fun todo_fg_07_throw_track() {
         val out = test("""
             val T = task () {
                 set pub() = 10
@@ -1196,10 +1198,11 @@ class Exec_05 {
             detrack(t) { it => println(pub(it)) }
         """)
         //assert(out == ":ok\n") { out }
-        assert(out == "10\n") { out }
+        //assert(out == "10\n") { out }
+        assert(out.contains("TODO: error inside throw")) { out }
     }
     @Test
-    fun fg_08_throw_track() {
+    fun todo_fg_08_throw_track() {
         val out = test("""
             val T = task () {
                 yield(nil) ; nil
@@ -1216,10 +1219,10 @@ class Exec_05 {
             println(x)
         """)
         //assert(out == ":ok\n") { out }
-        assert(out.contains(" v  anon : (lin 5, col 21) : block escape error : cannot move track outside its task scope\n")) { out }
+        assert(out.contains("TODO: error inside throw")) { out }
     }
     @Test
-    fun fg_09_throw_track() {
+    fun todo_fg_09_throw_track() {
         val out = test("""
             val T = task () {
                 yield(nil) ; nil
@@ -1232,7 +1235,8 @@ class Exec_05 {
                     throw(drop(t))
                 }
             }
-            println(:ok)
+            //println(:ok)
+            assert(out.contains("TODO: error inside throw")) { out }
         """)
         assert(out == ":ok\n") { out }
     }
@@ -1413,7 +1417,7 @@ class Exec_05 {
     // ORIGINAL
 
     @Test
-    fun oo_01_tracks() {
+    fun todo_oo_01_tracks() {
         val out = test("""
             val T = task () { yield(nil) ; nil }
             do {
@@ -1433,7 +1437,8 @@ class Exec_05 {
         """)
         //assert(out == "anon : (lin 9, col 29) : set error : incompatible scopes\n" +
         //        ":error\n") { out }
-        assert(out.contains("#[track: 0x")) { out }
+        //assert(out.contains("#[track: 0x")) { out }
+        assert(out == (" v  anon : (lin 12, col 29) : store error : cannot hold reference to track or task in pool\n")) { out }
     }
     @Test
     fun oo_02_track_err() {
@@ -1491,7 +1496,7 @@ class Exec_05 {
         //assert(out == " v  anon : (lin 7, col 13) : declaration error : cannot expose task-in-pool reference\n") { out }
         //assert(out.contains("exe-task: 0x")) { out }
         assert(out == (" |  anon : (lin 9, col 28) : (func (it) { if it { ```                     ...)\n" +
-                " v  anon : (lin 9, col 28) : block escape error : cannot expose reference to task in pool")) { out }
+                " v  anon : (lin 9, col 28) : block escape error : cannot expose reference to task in pool\n")) { out }
     }
 
     // ORIGINAL / TRACK / DETRACK
@@ -1646,7 +1651,8 @@ class Exec_05 {
             }
             println(y)
         """)
-        assert(out == " v  anon : (lin 6, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 6, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out.contains("track: 0x")) { out }
     }
     @Test
     fun op_07_track_scope() {

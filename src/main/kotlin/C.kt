@@ -1240,6 +1240,11 @@ fun Coder.main (tags: Tags): String {
             CEU_HOLD c_type = col->Any.hld.type;
             CEU_HOLD v_type = v.Dyn->Any.hld.type;
 
+        #if CEU >= 5
+            if (v.type==CEU_VALUE_TRACK || v.type==CEU_VALUE_EXE_TASK_IN) {
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="store error : cannot hold reference to track or task in pool"} };
+            } else
+        #endif
             if (v_type == CEU_HOLD_FLEET) {
                 //ceu_hold_set_to_up(v, CEU_HLD_BLOCK(col), col->Any.hld.type);
                 ceu_hold_set_rec(v, col->Any.hld.type, 0, CEU_HLD_BLOCK(col));
@@ -2234,7 +2239,7 @@ fun Coder.main (tags: Tags): String {
             };
             
             ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
-            assert(ceu_hold_chk_set_col((CEU_Dyn*)ret, val).type != CEU_VALUE_ERROR);
+            assert(ceu_hold_chk_set_col((CEU_Dyn*)ret, val).type!=CEU_VALUE_ERROR && "TODO: error inside throw");
             assert(ceu_hold_chk_set_col((CEU_Dyn*)ret, stk).type != CEU_VALUE_ERROR);
             
             return (CEU_Value) { CEU_VALUE_THROW, {.Dyn=(CEU_Dyn*)ret} };
