@@ -236,6 +236,7 @@ class Exec_04 {
         """)
         //assert(out == " v  anon : (lin 3, col 21) : block escape error : cannot copy reference out\n") { out }
         assert(out == "2\n") { out }
+        //assert(out == " v  anon : (lin 3, col 21) : block escape error : cannot assign running coro or task to outer scope\n") { out }
     }
     @Test
     fun cc_01_scope() {
@@ -247,6 +248,7 @@ class Exec_04 {
         """)
         //assert(out == "anon : (lin 3, col 21) : block escape error : incompatible scopes\n:error\n") { out }
         assert(out == "2\n") { out }
+        //assert(out == " v  anon : (lin 2, col 21) : block escape error : cannot assign running coro or task to outer scope\n") { out }
     }
     @Test
     fun cc_02_scope() {
@@ -261,6 +263,7 @@ class Exec_04 {
         """)
         //assert(out == "anon : (lin 7, col 30) : block escape error : incompatible scopes\n:error\n") { out }
         assert(out == ":ok\n") { out }
+        //assert(out == " v  anon : (lin 7, col 30) : block escape error : cannot assign running coro or task to outer scope\n") { out }
     }
     @Test
     fun cc_03_scope() {
@@ -309,6 +312,7 @@ class Exec_04 {
         """)
         assert(out == ":ok\n") { out }
         //assert(out == "anon : (lin 7, col 21) : block escape error : incompatible scopes\n:error\n") { out }
+        //assert(out == " v  anon : (lin 7, col 21) : block escape error : cannot assign running coro or task to outer scope\n") { out }
     }
     @Test
     fun cc_06_scope() {

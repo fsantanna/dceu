@@ -193,7 +193,8 @@ class Exec_05 {
             }
             println(:ok)
        """)
-        assert(out == " v  anon : (lin 7, col 17) : spawn error : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 7, col 17) : spawn error : cannot copy reference out\n") { out }
+        assert(out == " v  anon : (lin 7, col 17) : spawn error : task pool outlives task prototype\n") { out }
     }
     @Test
     fun ab_03_tasks_proto() {
@@ -332,25 +333,7 @@ class Exec_05 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun bb_06_track_err() {
-        val out = test("""
-            var T
-            set T = task () { yield(nil) }
-            var x
-            do {
-                var t = spawn (T) ()
-                set x = track(t)         ;; error scope
-            }
-            ;;println(status(detrack(x)))
-            println(x)
-        """)
-        //assert(out.contains("terminated\nx-track: 0x")) { out }
-        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        assert(out == (" v  anon : (lin 7, col 21) : set error : cannot move track outside its task scope\n")) { out }
-    }
-    @Test
-    fun bb_07_track_up() {
+    fun bb_06_track_up() {
         DEBUG = true
         val out = test("""
             $DETRACK
@@ -376,6 +359,81 @@ class Exec_05 {
             println(:ok)
         """)
         assert(out == ("false\n:ok\n")) { out }
+    }
+
+    // TRACK / SCOPE / ERROR
+
+    @Test
+    fun bd_01_track_err() {
+        val out = test("""
+            var T
+            set T = task () { yield(nil) }
+            var x
+            do {
+                val t = spawn (T) ()
+                set x = track(t)         ;; error scope
+            }
+            ;;println(status(detrack(x)))
+            println(x)
+        """)
+        //assert(out.contains("terminated\nx-track: 0x")) { out }
+        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == (" v  anon : (lin 7, col 21) : set error : cannot move track outside its task scope\n")) { out }
+    }
+    @Test
+    fun bd_02_track_err() {
+        val out = test("""
+            var T
+            set T = task () { yield(nil) }
+            val x = do {
+                val t = spawn (T) ()
+                track(t)         ;; error scope
+            }
+            ;;println(status(detrack(x)))
+            println(x)
+        """)
+        //assert(out.contains("terminated\nx-track: 0x")) { out }
+        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == (" v  anon : (lin 4, col 21) : block escape error : cannot move track outside its task scope\n")) { out }
+    }
+    @Test
+    fun bd_03_track_err() {
+        val out = test("""
+            var T
+            set T = task () { yield(nil) }
+            val t1 = spawn T()
+            do {
+                val t2 = spawn T()
+                set pub(t1) = track(t2)         ;; error scope
+            }
+            println(pub(t1))
+        """)
+        //assert(out.contains("terminated\nx-track: 0x")) { out }
+        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == (" v  anon : (lin 5, col 13) : block escape error : reference has immutable scope\n")) { out }
+        //assert(out == (" v  anon : (lin 5, col 13) : block escape error : cannot move track outside its task scope\n")) { out }
+    }
+    @Test
+    fun bd_04_track_err() {
+        val out = test("""
+            var T
+            set T = task () { yield(nil) }
+            var x
+            do {
+                val t = spawn (T) ()
+                val x' = track(t)
+                x'         ;; error scope
+            }
+            ;;println(status(detrack(x)))
+            println(x)
+        """)
+        //assert(out.contains("terminated\nx-track: 0x")) { out }
+        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == (" v  anon : (lin 5, col 13) : block escape error : cannot move track outside its task scope\n")) { out }
     }
 
     // TRACK / DROP
@@ -862,7 +920,31 @@ class Exec_05 {
         """)
         //assert(out == " v  anon : (lin 9, col 24) : block escape error : cannot copy reference out\n") { out }
         //assert(out == " v  anon : (lin 10, col 21) : status(t) : status error : expected running coroutine or task\n") { out }
-        assert(out == " v  anon : (lin 8, col 13) : declaration error : cannot expose task-in-pool reference\n") { out }
+        //assert(out == " v  anon : (lin 8, col 13) : declaration error : cannot expose task-in-pool reference\n") { out }
+        assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
+                " v  anon : (lin 8, col 32) : block escape error : cannot expose reference to task in pool\n") { out }
+    }
+    @Test
+    fun ff_02x_detrack_err() {
+        val out = test("""
+            val T = task () {
+                ${AWAIT()}
+            }
+            val ts = tasks()
+            spawn T() in ts
+            val x = next-tasks(ts)
+            var y
+            val t = detrack(x) { it =>
+                set y = it
+            }
+            broadcast(nil)
+            println(status(t))
+        """)
+        //assert(out == " v  anon : (lin 9, col 24) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 10, col 21) : status(t) : status error : expected running coroutine or task\n") { out }
+        //assert(out == " v  anon : (lin 8, col 13) : declaration error : cannot expose task-in-pool reference\n") { out }
+        assert(out == " |  anon : (lin 9, col 32) : (func (it) { if it { ```                     ...)\n" +
+                " v  anon : (lin 10, col 21) : block escape error : cannot expose reference to task in pool\n") { out }
     }
     @Test
     fun ff_03_detrack_err() {
@@ -960,8 +1042,10 @@ class Exec_05 {
         """)
         //assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
         //assert(out == "[10]\n") { out }
+        //assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
+        //        " v  anon : (lin 8, col 32) : block escape error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
-                " v  anon : (lin 8, col 32) : block escape error : cannot copy reference out\n") { out }
+                " v  anon : (lin 8, col 32) : block escape error : reference has immutable scope\n") { out }
     }
     @Test
     fun fg_02_detrack_pub() {
@@ -991,9 +1075,11 @@ class Exec_05 {
             broadcast(nil)
             println(v)
         """)
-        assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
-                " v  anon : (lin 8, col 32) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
+        //        " v  anon : (lin 8, col 32) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "[10]\n") { out }
+        assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
+                " v  anon : (lin 8, col 32) : block escape error : reference has immutable scope\n") { out }
     }
     @Test
     fun fg_04_expose_err() {
@@ -1014,7 +1100,9 @@ class Exec_05 {
         """)
         //assert(out == ":pub\t[]\n" +
         //        " v  anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " v  anon : (lin 11, col 17) : declaration error : cannot expose task-in-pool reference\n") { out }
+        //assert(out == " v  anon : (lin 11, col 17) : declaration error : cannot expose task-in-pool reference\n") { out }
+        assert(out == " |  anon : (lin 11, col 38) : (func (it) { if it { ```                     ...)\n" +
+                " v  anon : (lin 11, col 38) : block escape error : cannot expose reference to task in pool\n") { out }
     }
     @Test
     fun fg_05_expose() {
@@ -1034,12 +1122,15 @@ class Exec_05 {
             println(:ok)
         """)
         //assert(out == ":ok\n") { out }
-        assert(out == " |  anon : (lin 13, col 13) : (spawn T(track(t)))\n" +
-                " |  anon : (lin 5, col 40) : (func (it) { if it { ```                     ...)\n" +
-                " v  anon : (lin 5, col 40) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 13, col 13) : (spawn T(track(t)))\n" +
+        //        " |  anon : (lin 5, col 40) : (func (it) { if it { ```                     ...)\n" +
+        //        " v  anon : (lin 5, col 40) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "anon : (lin 13, col 19) : T(track(t))\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
+        assert(out == " |  anon : (lin 13, col 13) : (spawn T(track(t)))\n" +
+                " |  anon : (lin 5, col 40) : (func (it) { if it { ```                     ...)\n" +
+                " v  anon : (lin 5, col 40) : block escape error : reference has immutable scope\n") { out }
     }
     @Test
     fun fg_06_expose() {
@@ -1233,9 +1324,12 @@ class Exec_05 {
             println(v)
         """
         )
+        //assert(out == "[10]\n" +
+        //        " |  anon : (lin 9, col 33) : (func (it) { if it { ```                     ...)\n" +
+        //        " v  anon : (lin 9, col 33) : block escape error : cannot copy reference out\n") { out }
         assert(out == "[10]\n" +
                 " |  anon : (lin 9, col 33) : (func (it) { if it { ```                     ...)\n" +
-                " v  anon : (lin 9, col 33) : block escape error : cannot copy reference out\n") { out }
+                " v  anon : (lin 9, col 33) : block escape error : reference has immutable scope\n") { out }
     }
 
     // ABORTION
@@ -1378,7 +1472,7 @@ class Exec_05 {
         """)
         //assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n:error\n") { out }
-        assert(out == " v  anon : (lin 14, col 25) : set error : cannot copy reference out\n") { out }
+        assert(out == " v  anon : (lin 14, col 25) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun oo_04_track() {
@@ -1394,8 +1488,10 @@ class Exec_05 {
             }
             println(x)
         """)
-        assert(out == " v  anon : (lin 7, col 13) : declaration error : cannot expose task-in-pool reference\n") { out }
+        //assert(out == " v  anon : (lin 7, col 13) : declaration error : cannot expose task-in-pool reference\n") { out }
         //assert(out.contains("exe-task: 0x")) { out }
+        assert(out == (" |  anon : (lin 9, col 28) : (func (it) { if it { ```                     ...)\n" +
+                " v  anon : (lin 9, col 28) : block escape error : cannot expose reference to task in pool")) { out }
     }
 
     // ORIGINAL / TRACK / DETRACK

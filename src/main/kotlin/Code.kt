@@ -422,21 +422,45 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             //          return evt  // should not move block
                             //      - blk = MIN(up, src)
                             //      - stop when src<=up
-                            if (ceu_acc.Dyn->Any.hld.type==CEU_HOLD_IMMUT && !ceu_block_is_up_dn(CEU_HLD_BLOCK(ceu_acc.Dyn),$up1)) {
-                                CEU_Value ceu_err_$n = { CEU_VALUE_ERROR, {.Error="block escape error : reference has immutable scope"} };
+                            // Also error:
+                            // return trk(x) where block(up) < block(x)
+                            // Also error:
+                            // return detrack(x), in any case
+                            char* ceu_err_$n = NULL;
+                            if (
+                                ceu_acc.Dyn->Any.hld.type == CEU_HOLD_IMMUT &&
+                                !ceu_block_is_up_dn(CEU_HLD_BLOCK(ceu_acc.Dyn),$up1)
+                            ) {
+                                ceu_err_$n = "block escape error : reference has immutable scope";
+                            }
+                        #if CEU >= 5
+                            else if (
+                                ceu_acc.Dyn->Any.type   == CEU_VALUE_TRACK  &&
+                                ceu_acc.Dyn->Track.task != NULL             &&
+                                !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)ceu_acc.Dyn->Track.task), $up1)
+                            ) {
+                                ceu_err_$n = "block escape error : cannot move track outside its task scope";
+                            }
+                            else if (ceu_acc.type == CEU_VALUE_EXE_TASK_IN) {
+                                ceu_err_$n = "block escape error : cannot expose reference to task in pool";
+                            }
+                        #endif
+                        
+                            if (ceu_err_$n != NULL) {
+                                CEU_Value x_ceu_err_$n = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
                         #if CEU <= 1
-                                CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
+                                CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", x_ceu_err_$n);
                         #else
                                 do {
                                     // allocate throw on up
-                                    CEU_ERROR($up1, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
+                                    CEU_ERROR($up1, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", x_ceu_err_$n);
                                 } while (0);    // catch continue in CEU_ERROR
                         #endif
                             } else {
                         #if CEU >= 4
-                                    if (!ceu_block_is_up_dn($up1, CEU_HLD_BLOCK(ceu_acc.Dyn))) {
-                                        // ignore evt
-                                    } else
+                                if (!ceu_block_is_up_dn($up1, CEU_HLD_BLOCK(ceu_acc.Dyn))) {
+                                    // ignore evt
+                                } else
                         #endif
                                 {
                                     ceu_hold_set_rec(ceu_acc, CEU_HOLD_NONE, 1, $up1);
@@ -843,6 +867,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             //      - blk(pub) >= blk(src) (deeper)
                             // Also error:
                             // set pub = evt
+                        #if CEU >= 5
+                            if ($src.type == CEU_VALUE_EXE_TASK_IN) {
+                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot expose reference to task in pool"} };
+                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                            } else
+                        #endif
                             if ($src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                                 ceu_hold_set_rec($src, CEU_HOLD_IMMUT, 0, ceu_acc.Dyn->Exe_Task.dn_block);
                             } else {
@@ -933,9 +963,33 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             //      - blk(dst) >= blk(src) (deeper)
                             // Also error:
                             // set dst = evt
+                            // Also error:
+                            // set dst = trk(x) where block(dst) < block(x)
+                            // Also error:
+                            // set dst = detrack(x), where block(dst) < current block
+                            char* ceu_err_$n = NULL;
+                        #if CEU >= 5
+                            if (
+                                $src.type == CEU_VALUE_EXE_TASK_IN &&
+                                !ceu_block_is_up_dn($bupc, ${vblk.idc("block",nst)})
+                            ) {
+                                ceu_err_$n = "set error : cannot expose reference to task in pool";
+                            } else
+                        #endif
                             if ($src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                                //ceu_hold_set_from_fleet($src, CEU_HOLD_MUTAB, ${vblk.idc("block",nst)});
-                                ceu_hold_set_rec($src, CEU_HOLD_MUTAB, 0, ${vblk.idc("block",nst)});
+                        #if CEU >= 5
+                                if (
+                                    $src.Dyn->Any.type   == CEU_VALUE_TRACK  &&
+                                    $src.Dyn->Track.task != NULL             &&
+                                    !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)$src.Dyn->Track.task), ${vblk.idc("block",nst)})
+                                ) {
+                                    ceu_err_$n = "set error : cannot move track outside its task scope";
+                                }
+                                else
+                        #endif
+                                {
+                                    ceu_hold_set_rec($src, CEU_HOLD_MUTAB, 0, ${vblk.idc("block",nst)});
+                                }
                             } else {
                                 if (!ceu_block_is_up_dn(CEU_HLD_BLOCK($src.Dyn), ${vblk.idc("block",nst)})) {
                                     ${ups.inexe(this,"task",true).cond { """
@@ -949,6 +1003,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                     }
                                 }
+                            }
+                            if (ceu_err_$n != NULL) {
+                                CEU_Value x_ceu_err_$n = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
+                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", x_ceu_err_$n);
                             }
                             ceu_gc_inc($src);
                         }

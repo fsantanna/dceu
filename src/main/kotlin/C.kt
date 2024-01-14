@@ -1202,6 +1202,9 @@ fun Coder.main (tags: Tags): String {
                 }
         #endif
         #if CEU >= 5
+                case CEU_VALUE_TASKS:
+                    assert(src_dyn->Tasks.dyns.first==NULL && "TODO: moving tasks?");
+                    break;
                 case CEU_VALUE_TRACK:
                     // do not drop task (and chk_set ensures that track>=task)
                     break;
@@ -1909,12 +1912,12 @@ fun Coder.main (tags: Tags): String {
                 return n;
             }
             {
-                CEU_Block* b_tsks = CEU_HLD_BLOCK((CEU_Dyn*)tasks);
-                CEU_Value ret = ceu_hold_chk(clo, CEU_HOLD_NONE, b_tsks, "spawn error");
-                if (ret.type == CEU_VALUE_ERROR) {
-                    return ret;
+                CEU_Block* ts_blk = CEU_HLD_BLOCK((CEU_Dyn*)tasks);
+                if (clo.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
+                    ceu_hold_set_rec(clo, CEU_HOLD_MUTAB, 0, ts_blk);
+                } else if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(clo.Dyn), ts_blk)) {
+                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error="spawn error : task pool outlives task prototype"} };
                 }
-                ceu_hold_set_rec(clo, CEU_HOLD_NONE, b_tsks, -1);
             }
             if (tasks->max==0 || ceu_tasks_n(tasks)<tasks->max) {
                 CEU_Value ret = _ceu_create_exe_task_(CEU_VALUE_EXE_TASK_IN, CEU_HLD_BLOCK((CEU_Dyn*)tasks), clo, &tasks->dyns);
