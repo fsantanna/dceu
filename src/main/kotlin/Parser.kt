@@ -553,26 +553,20 @@ class Parser (lexer_: Lexer)
                 }
                 this.acceptFix_err("=")
                 val src = this.expr()
-                if (CEU>=99 && dst is Expr.Do && dst.es[0] is Expr.Pass && dst.es[1].let { it is Expr.Do && TODO() }) {
-                    val xdo = dst.es[1] as Expr.Do
-                    val arg = dst.es[0] as Expr.Pass
-                    val (dcl,_) = Pair(null as Tk,null)
-                    val c = xdo.es[0] as Expr.Nat
+                if (CEU>=99 && dst is Expr.Do && dst.es.let { it.size==3 && it[0] is Expr.Dcl && it[1] is Expr.Nat && it[2] is Expr.Index }) {
+                    val dcl = dst.es[0] as Expr.Dcl
+                    val c   = dst.es[1] as Expr.Nat
                     when (c.tk.str) {
                         "/* = */" -> this.nest("""
                             do {
-                                pass ${arg.e.tostr()}
-                                do (${dcl.str}) {
-                                    set ${dcl.str}[#${dcl.str}-1] = ${src.tostr(true)}
-                                }
+                                ${dcl.tostr(true)}
+                                set ${dcl.id.str}[#${dcl.id.str}-1] = ${src.tostr(true)}
                             }
                         """)
                         "/* + */" -> this.nest("""
                             do {
-                                pass ${arg.e.tostr()}
-                                do (${dcl.str}) {
-                                    set ${dcl.str}[#${dcl.str}] = ${src.tostr(true)}
-                                }
+                                ${dcl.tostr(true)}
+                                set ${dcl.id.str}[#${dcl.id.str}] = ${src.tostr(true)}
                             }
                         """)
                         "/* - */" -> err(tk0, "set error : expected assignable destination") as Expr
@@ -1248,7 +1242,6 @@ class Parser (lexer_: Lexer)
         val ok = this.tk0.pos.isSameLine(this.tk1.pos) && (
                 (CEU>=99 && this.acceptFix("thus")) || this.acceptFix("[") || this.acceptFix(".") || this.acceptFix("(")
                  )
-        val op = this.tk0
         if (!ok) {
             return e
         }
@@ -1338,10 +1331,8 @@ class Parser (lexer_: Lexer)
                     val (id_tag,es) = lambda(N)
                     this.nest( """
                         do {
-                            pass (${e.tostr(true)})
-                            ${tk1.pos.pre()}do (${id_tag.tostr(true)}) {
-                                ${es.tostr(true)}
-                            }
+                            val ${id_tag.tostr(true)} = ${e.tostr(true)}
+                            ${es.tostr(true)}
                         }
                     """)
                 }
@@ -1414,13 +1405,14 @@ class Parser (lexer_: Lexer)
                     """)
                     } else {
                         this.nest("""
-                        ((${e1.tostr(true)}) thus { ceu_${e1.n} =>
-                            if ceu_${e1.n} {
-                                ${e2.tostr(true)}
-                            } else {
-                                ceu_${e1.n}
+                            do {
+                                val ceu_${e1.n} = ${e1.tostr(true)}
+                                if ceu_${e1.n} {
+                                    ${e2.tostr(true)}
+                                } else {
+                                    ceu_${e1.n}
+                                }
                             }
-                        })
                     """)
                     }
                 }
@@ -1432,18 +1424,18 @@ class Parser (lexer_: Lexer)
                             } else {
                                 ${e2.tostr(true)}
                             }
-                        })
-                    """)
+                        """)
                     } else {
                         this.nest("""
-                        ((${e1.tostr(true)}) thus { ceu_${e1.n} =>  
-                            if ceu_${e1.n} {
-                                ceu_${e1.n}
-                            } else {
-                                ${e2.tostr(true)}
+                            do {
+                                val ceu_${e1.n} = ${e1.tostr(true)}
+                                if ceu_${e1.n} {
+                                    ceu_${e1.n}
+                                } else {
+                                    ${e2.tostr(true)}
+                                }
                             }
-                        })
-                    """)
+                        """)
                     }
                 }
                 "is?" -> this.nest("is'(${e1.tostr(true)}, ${e2.tostr(true)})")
