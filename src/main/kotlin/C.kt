@@ -1126,7 +1126,8 @@ fun Coder.main (tags: Tags): String {
         void ceu_hold_set_rec (
             CEU_Value src,
             CEU_HOLD to_type,
-            int isup, CEU_Block* to_blk
+            int isup,           // to_blk is above src, such that f can stop if otherwise
+            CEU_Block* to_blk
         ) {
             if (src.type < CEU_VALUE_DYNAMIC) {
                 return;

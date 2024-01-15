@@ -1414,10 +1414,44 @@ class Exec_05 {
         assert(out == ":ok\n") { out }
     }
 
-    // ORIGINAL
+    // TRACK / COLLECTION
 
     @Test
-    fun todo_oo_01_tracks() {
+    fun TODO_jj_01_tracks() {
+        val out = test("""
+            val T = task () { yield(nil) ; nil }
+            val ts = tasks()
+            spawn T() in ts
+            val vec = #[]
+            val t = next-tasks(ts,nil)
+            set vec[#vec] = t
+            println(vec)
+        """)
+        assert(out.contains("#[track: 0x")) { out }
+    }
+    @Test
+    fun TODO_jj_02_tracks() {
+        val out = test("""
+            $DETRACK
+            val f = func (trk) {
+                println(detrack(trk) { it => status(it) })
+            }
+            val T = task () { yield(nil) ; nil }
+            val x' = do {
+                val ts = tasks()
+                spawn T() in ts
+                val x = [next-tasks(ts,nil)]
+                ;;dump(x)
+                f(x[0])
+                x
+            }
+            f(x'[0])
+        """)
+        assert(out.contains(":yielded\n" +
+                " v  anon : (lin 7, col 22) : block escape error : reference has immutable scope\n")) { out }
+    }
+    @Test
+    fun TODO_jj_03_tracks() {
         val out = test("""
             val T = task () { yield(nil) ; nil }
             do {
@@ -1437,9 +1471,12 @@ class Exec_05 {
         """)
         //assert(out == "anon : (lin 9, col 29) : set error : incompatible scopes\n" +
         //        ":error\n") { out }
-        //assert(out.contains("#[track: 0x")) { out }
-        assert(out == (" v  anon : (lin 12, col 29) : store error : cannot hold reference to track or task in pool\n")) { out }
+        assert(out.contains("#[track: 0x")) { out }
+        //assert(out == (" v  anon : (lin 12, col 29) : store error : cannot hold reference to track or task in pool\n")) { out }
     }
+
+    // ORIGINAL
+
     @Test
     fun oo_02_track_err() {
         val out = test("""
