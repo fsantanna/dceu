@@ -329,7 +329,6 @@ fun Coder.main (tags: Tags): String {
     #endif
         CEU_Block CEU_BLOCK = { 0, {.block=NULL}, { CEU4(NULL COMMA) {NULL,NULL} } };
         CEU_Frame CEU_FRAME = { &CEU_BLOCK, NULL CEU3(COMMA {.exe=NULL}) };                
-        CEU_Value ceu_acc;
     """ +
     """ // CEU_Tags
         typedef struct CEU_Tags_Names {
@@ -677,8 +676,7 @@ fun Coder.main (tags: Tags): String {
             if (v.Dyn->Any.refs > 0) {  // possible for uncaptured fleeting values on block termination
                 v.Dyn->Any.refs--;
             }
-            if (chk && !(ceu_acc.type>CEU_VALUE_DYNAMIC && v.Dyn==ceu_acc.Dyn)) {
-                // ceu_acc is an active reference
+            if (chk) {
                 ceu_gc_rem_chk(v);
             }
         }
@@ -2514,6 +2512,7 @@ fun Coder.main (tags: Tags): String {
     """ // MAIN
         int main (int ceu_argc, char** ceu_argv) {
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
+            CEU_Value ceu_acc;
         #if CEU >= 4
            CEU_Stack* ceu_bstk = &CEU_BSTK;
         #endif

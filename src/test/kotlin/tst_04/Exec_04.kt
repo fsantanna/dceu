@@ -1842,11 +1842,12 @@ class Exec_04 {
             val x = pub(a)
             println(x)
         """)
+        assert(out == "[]\n") { out }
         //assert(out == " v  anon : (lin 6, col 25) : pub error : expected active task\n") { out }
         //assert(out == " |  anon : (lin 5, col 21) : (spawn t())\n" +
         //        " v  anon : (lin 2, col 29) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 5, col 21) : (spawn t())\n" +
-                " v  anon : (lin 2, col 29) : block escape error : reference has immutable scope\n") { out }
+        //assert(out == " |  anon : (lin 5, col 21) : (spawn t())\n" +
+        //        " v  anon : (lin 2, col 29) : block escape error : reference has immutable scope\n") { out }
     }
     @Test
     fun kk_03_pub() {
@@ -2024,7 +2025,7 @@ class Exec_04 {
             val x = do {
                 var t = task () {
                     set pub() = []
-                    yield(nil) ;;thus { it => nil }
+                    yield(nil)
                     nil
                 }
                 var a = spawn (t) ()
@@ -2033,7 +2034,8 @@ class Exec_04 {
             println(x)
         """)
         //assert(out == " v  anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " v  anon : (lin 2, col 21) : block escape error : reference has immutable scope\n") { out }
+        //assert(out == " v  anon : (lin 2, col 21) : block escape error : reference has immutable scope\n") { out }
+        assert(out == "[]\n") { out }
     }
     @Test
     fun kj_03_expose_err() {
@@ -2086,7 +2088,7 @@ class Exec_04 {
             var x = f(a)        ;; no
             println(x)
         """)
-        //assert(out == "[]\n") { out }
+        assert(out == "[]\n") { out }
         //assert(out == "anon : (lin 12, col 21) : f(a)\n" +
         //        "anon : (lin 2, col 30) : block escape error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -2095,8 +2097,8 @@ class Exec_04 {
         //        ":error\n") { out }
         //assert(out == " |  anon : (lin 12, col 21) : f(a)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 12, col 21) : f(a)\n" +
-                " v  anon : (lin 2, col 30) : block escape error : reference has immutable scope\n") { out }
+        //assert(out == " |  anon : (lin 12, col 21) : f(a)\n" +
+        //        " v  anon : (lin 2, col 30) : block escape error : reference has immutable scope\n") { out }
     }
     @Test
     fun kj_06_expose_err() {

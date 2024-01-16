@@ -103,7 +103,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         int ceu_n,
                         CEU_Value ceu_args[]
                     ) {
-                        CEU_Value ceu_acc;
+                        CEU_Value ceu_acc;  // prevent from being replaced from nested broadcast
                         
                         ${istsk.cond { """
                         CEU_Value id_evt = { CEU_VALUE_NIL };
@@ -384,7 +384,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             """
                             if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
                                 // do not check if they are returned back (this is not the case with locals created here)
-                                ceu_gc_dec($idc, 1);
+                                ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
                             }
                             """
                         }.joinToString("")
@@ -394,7 +394,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${istsk.cond { """
                         if (ceu_frame->exe_task->pub.type > CEU_VALUE_DYNAMIC) {
                             // do not check if it is returned back (this is not the case with locals created here)
-                            ceu_gc_dec(ceu_frame->exe_task->pub, 1));
+                            ceu_gc_dec(ceu_frame->exe_task->pub, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==ceu_frame->exe_task->pub.Dyn));
                         }
                         ceu_frame->exe_task->pub = ceu_acc;     // task final return value
                     """ }}
@@ -506,7 +506,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                     }}
                     // block free | ${this.dump()}
-                    ${(!isvoid).cond { "ceu_gc_rem_all(CEU5(ceu_dstk COMMA) CEU4(ceu_bstk COMMA) $blkc);" }}
+                    ${(!isvoid).cond { """
+                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                            ceu_gc_inc(ceu_acc);        // prevent it from being collected
+                        }
+                        ceu_gc_rem_all(CEU5(ceu_dstk COMMA) CEU4(ceu_bstk COMMA) $blkc);
+                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                            ceu_gc_dec(ceu_acc, 0);     // do not check fleeting value
+                        }
+                    """ }}
                     // check error
                     ${(CEU>=2 && (f_b is Expr.Do)).cond { """
                         if (CEU_ISERR(ceu_acc)) {
@@ -866,7 +874,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             } else
                         #endif
                             if ($src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                                ceu_hold_set_rec($src, TODO-CEU_HOLD_MUTAB, 0, ceu_acc.Dyn->Exe_Task.dn_block);
+                                ceu_hold_set_rec($src, CEU_HOLD_MUTAB, 0, ceu_acc.Dyn->Exe_Task.dn_block);
                             } else {
                                 if (!ceu_block_is_up_dn(CEU_HLD_BLOCK($src.Dyn), ceu_acc.Dyn->Exe_Task.dn_block)) {
                                     CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot assign reference to outer scope"} };
@@ -922,7 +930,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     x
                 }
                 when (this.tk_.tag) {
-                    null   -> body //+ "\n" + "ceu_acc = ((CEU_Value){ CEU_VALUE_NIL });"
+                    null   -> body + "\n" + "ceu_acc = ((CEU_Value){ CEU_VALUE_NIL });"
                     ":ceu" -> "ceu_acc = $body;"
                     else -> {
                         val (TAG,Tag) = this.tk_.tag.drop(1).let {
