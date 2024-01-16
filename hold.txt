@@ -1,0 +1,181 @@
+- ceu_chk_set_col (col, v)
+
+    1. col[_] = F
+        - ceu_hold_set_rec(v, col.typ, 0, col.blk);
+        - set v.typ = col.typ
+        - set v.blk = col.blk
+    2. col[F] = X
+        - ceu_hold_set_rec(col, v.typ, 0, NULL);
+        - set col.typ = X
+        - set col.blk = keep  / guaranteed to be deeper than blk(v)
+    E1. col[_] = TRACK/TASK
+        - "store error : cannot hold reference to track or task in pool"
+    E2. col[X] = X
+        - asr X=X
+            - TODO: no error message
+        - asr up_dn(v,col)
+            - "store error : cannot assign reference to outer scope"
+        - chk up_dn(col,v)
+            - "store error : cannot hold \"evt\" reference"
+            - alien scope
+            - col[X]=evt
+
+- ceu_drop (v)
+
+    1. v
+        - ceu_hold_set_rec(v, FLEET, 0, NULL);
+        - v.typ = F
+        - v.blk = keep
+    E1. v.typ == IMMUT
+        - "drop error : value is not movable"
+    E2. v.refs > 1
+        - "drop error : value contains multiple references"
+
+- ceu_broadcast (evt)
+
+    1. evt = F
+        - ceu_hold_set_rec(evt, MUTAB, 0, NULL);
+        - v.typ = M
+        - v.blk = keep
+
+- ceu_create_exe_task_in (CEU_Value clo, CEU_Tasks* ts)
+
+    X. ts[F] <- _
+    1. ts[_] <- F
+        - ceu_hold_set_rec(clo, MUTAB, 0, ts.blk);
+        - clo.typ = M
+        - clo.blk = ts.blk
+    E1. ts[X] <- X
+        - asr up_dn(clo,ts)
+            - "spawn error : task pool outlives task prototype"
+
+- pass arg: f(v) -> func (v)
+
+    1. f(F)
+        - ceu_hold_set_rec(v, MUTAB, 0, f.blk); 
+        - set v.typ = M
+        - set v.blk = f.blk
+    2. f(X)
+        - keep all
+    E1. f([F][F])
+        - v.refs > 1
+        - "argument error : cannot receive pending reference"
+
+- move up: { <- v }
+
+    1. { <- _ }
+        - up_dn(up,v)
+            - otherwise { <- evt }, do nothing
+        - ceu_hold_set_rec(v, NONE, 1, up.blk);
+        - set v.blk = up.blk  [stop recursion]
+    E1. { <- I }
+        - !up_dn(v,up)
+        - "block escape error : reference has immutable scope"
+    E2. { <- trk }
+        - !up_dn(v.tsk,up)
+        - "block escape error : cannot move track outside its task scope"
+    E3. { <- tsk-in }
+        - "block escape error : cannot expose reference to task in pool"
+
+- val x = v
+    1. x = F
+        - ceu_hold_set_rec(v, MUTAB, 0, x.blk)
+        - set v.typ = MUTAB
+        - set v.blk = x.blk
+    2. x = X
+        - keep as is
+    E. x = evt
+        - !up_dn(evt,x)
+        - "declaration error : cannot hold \"evt\" reference"
+
+- set pub(t) = v
+    1. pub(_) = F
+        - ceu_hold_set_rec(v, IMMUT, 0, pub.tsk.blk)
+        - set v.typ = IMMUT
+    2. pub(_) = X
+        - ceu_hold_set_rec(v, IMMUT, 0, NULL)
+        - set v.typ = IMMUT
+        - set v.blk = keep
+
+
+                        // PUB - SET | ${this.dump()}
+                            // set pub = []   ;; FLEET ;; change to MUTAB type ;; change to pub blk
+                            // set pub = src  ;; ELSE  ;; keep ELSE type       ;; keep block
+                            // NEW: in both cases, change to IMMUT
+                            //  - Check for type=ELSE:
+                            //      - blk(pub) >= blk(src) (deeper)
+                            // Also error:
+                            // set pub = evt
+                        #if CEU >= 5
+                            if ($src.type == CEU_VALUE_EXE_TASK_IN) {
+                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot expose reference to task in pool"} };
+                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                            } else
+                        #endif
+                            if ($src.Dyn->Any.hld.type == FLEET) {
+                            } else {
+                                if (!ceu_block_is_up_dn(CEU_HLD_BLOCK($src.Dyn), ceu_acc.Dyn->Exe_Task.dn_block)) {
+                                    CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot assign reference to outer scope"} };
+                                    CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                }
+                                ceu_hold_set_rec($src, IMMUT, 0, NULL);
+                            }
+
+                            ceu_gc_inc($src);
+                        }                        
+                        ceu_gc_dec(ceu_acc.Dyn->Exe_Task.pub, 1);
+                        ceu_acc.Dyn->Exe_Task.pub = $src;
+
+
+
+
+                        // ACC - SET | ${this.dump()}
+                        if ($src.type > CEU_VALUE_DYNAMIC) {
+                            // set dst = []   ;; FLEET ;; change to MUTAB type ;; change to dst blk
+                            // set dst = src  ;; ELSE  ;; keep ELSE type       ;; keep block
+                            //  - Check for type=ELSE:
+                            //      - blk(dst) >= blk(src) (deeper)
+                            // Also error:
+                            // set dst = evt
+                            // Also error:
+                            // set dst = trk(x) where block(dst) < block(x)
+                            // Also error:
+                            // set dst = detrack(x), where block(dst) < current block
+                            char* ceu_err_$n = NULL;
+                        #if CEU >= 5
+                            if (
+                                $src.type == CEU_VALUE_EXE_TASK_IN &&
+                                !ceu_block_is_up_dn($bupc, ${vblk.idc("block",nst)})
+                            ) {
+                                ceu_err_$n = "set error : cannot expose reference to task in pool";
+                            } else
+                        #endif
+                            if ($src.Dyn->Any.hld.type == FLEET) {
+                        #if CEU >= 5
+                                if (
+                                    $src.Dyn->Any.type   == CEU_VALUE_TRACK  &&
+                                    $src.Dyn->Track.task != NULL             &&
+                                    !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)$src.Dyn->Track.task), ${vblk.idc("block",nst)})
+                                ) {
+                                    ceu_err_$n = "set error : cannot move track outside its task scope";
+                                }
+                                else
+                        #endif
+                                {
+                                    ceu_hold_set_rec($src, MUTAB, 0, ${vblk.idc("block",nst)});
+                                }
+                            } else {
+                                if (!ceu_block_is_up_dn(CEU_HLD_BLOCK($src.Dyn), ${vblk.idc("block",nst)})) {
+                                    ${ups.inexe(this,"task",true).cond { """
+                                        if (!ceu_block_is_up_dn(${vblk.idc("block",nst)}, CEU_HLD_BLOCK($src.Dyn))) {
+                                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="declaration error : cannot hold \"evt\" reference"} };
+                                            CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                        } else                                        
+                                    """ }}
+                                    {
+                                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot assign reference to outer scope"} };
+                                        CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                    }
+                                }
+                            }
+
