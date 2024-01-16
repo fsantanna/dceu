@@ -384,7 +384,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             """
                             if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
                                 // do not check if they are returned back (this is not the case with locals created here)
-                                ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
+                                ceu_gc_dec($idc, 1);
                             }
                             """
                         }.joinToString("")
@@ -394,14 +394,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${istsk.cond { """
                         if (ceu_frame->exe_task->pub.type > CEU_VALUE_DYNAMIC) {
                             // do not check if it is returned back (this is not the case with locals created here)
-                            ceu_gc_dec(ceu_frame->exe_task->pub, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==ceu_frame->exe_task->pub.Dyn));
-/*
-                            if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==ceu_frame->exe_task->pub.Dyn) {
-                                // do not decrement bc pub==ret
-                            } else {
-                                ceu_gc_dec(ceu_frame->exe_task->pub, 1);
-                            }
-*/
+                            ceu_gc_dec(ceu_frame->exe_task->pub, 1));
                         }
                         ceu_frame->exe_task->pub = ceu_acc;     // task final return value
                     """ }}
@@ -414,7 +407,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                             // Always possible to return:
                             //  - EXCEPT if IMMUT *and* DST<SRC
-                            //  - EXCEPT if pub and task/=terminated
                             // return [] ;; FLEET ;; keep type ;; up block
                             // return x  ;; ELSE  ;; keep type ;; up block
                             //  - Move block to least bw src and up:
@@ -874,13 +866,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             } else
                         #endif
                             if ($src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                                ceu_hold_set_rec($src, CEU_HOLD_IMMUT, 0, ceu_acc.Dyn->Exe_Task.dn_block);
+                                ceu_hold_set_rec($src, TODO-CEU_HOLD_MUTAB, 0, ceu_acc.Dyn->Exe_Task.dn_block);
                             } else {
                                 if (!ceu_block_is_up_dn(CEU_HLD_BLOCK($src.Dyn), ceu_acc.Dyn->Exe_Task.dn_block)) {
                                     CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot assign reference to outer scope"} };
                                     CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                 }
-                                ceu_hold_set_rec($src, CEU_HOLD_IMMUT, 0, NULL);
+                                ceu_hold_set_rec($src, $src.Dyn->Any.hld.type, 0, NULL);
                             }
 
                             ceu_gc_inc($src);

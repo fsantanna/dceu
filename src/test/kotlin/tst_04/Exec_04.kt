@@ -824,7 +824,7 @@ class Exec_04 {
             }
         """)
         assert(out == " |  anon : (lin 10, col 17) : broadcast'([10],:task)\n" +
-                " v  anon : (lin 5, col 21) : declaration error : cannot hold \"evt\" reference\n") { out }
+                " v  anon : (lin 5, col 21) : store error : cannot hold \"evt\" reference\n") { out }
     }
     @Test
     fun de_04_evt_err() {
