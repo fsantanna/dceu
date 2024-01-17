@@ -441,25 +441,31 @@ class Parser (lexer_: Lexer)
         return this.nest(when (type) {
             "await" -> """
                 ${pre0}loop {
-                    ${pre0}break if (${pre0}yield() thus { ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
+                    ${pre0}yield()
+                    ${pre0}until (evt --> \{ ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
                         ${pre0}$xcnd ${cnt.cond { "and (do { ${it.tostr(true)} } or true)" }}
                     })
                 }
             """ //.let { println(it);it }
             "every" -> """
                 ${pre0}loop {
-                    ${pre0}break if (${pre0}yield() thus { ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
-                        ${pre0}$xcnd and loop {
-                             ${cnt!!.tostr(true)}
-                             break (false) if true
-                        }
+                    ${pre0}yield()
+                    skip if not (evt --> \{ ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
+                        ${pre0}$xcnd
                     })
+                    until evt --> \{ ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
+                        loop {
+                            ${cnt!!.tostr(true)}
+                            break (false) if true
+                        }
+                    }
                 }
             """
             "watching" -> """
                 ${pre0}par-or {
                     ${pre0}loop {
-                        ${pre0}break if (${pre0}yield() thus { ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
+                        ${pre0}yield()
+                        ${pre0}until (evt --> \{ ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
                             ${pre0}$xcnd
                         })
                     }
