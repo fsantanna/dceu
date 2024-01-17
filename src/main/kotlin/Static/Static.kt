@@ -69,10 +69,18 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 if (ups.pub[this] is Expr.Do && ups.pub[ups.pub[this]] is Expr.Loop) {
                     // ok
                 } else {
-                    err(this.tk, "break error : expected parent loop")
+                    err(this.tk, "break error : expected immediate parent loop")
                 }
                 this.cnd.traverse()
                 this.e?.traverse()
+            }
+            is Expr.Skip -> {
+                if (ups.pub[this] is Expr.Do && ups.pub[ups.pub[this]] is Expr.Loop) {
+                    // ok
+                } else {
+                    err(this.tk, "skip error : expected immediate parent loop")
+                }
+                this.cnd.traverse()
             }
             is Expr.Enum   -> {}
             is Expr.Data   -> {}

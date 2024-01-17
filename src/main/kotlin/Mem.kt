@@ -15,6 +15,7 @@ class Mem (val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static, val de
             is Expr.If     -> this.cnd.coexists()
             is Expr.Drop   -> this.e.coexists()
             is Expr.Break  -> this.cnd.coexists() || (this.e?.coexists() ?: false)
+            is Expr.Skip   -> this.cnd.coexists()
             is Expr.Loop   -> this.blk.coexists()
             is Expr.Pass   -> this.e.coexists()
 
@@ -104,6 +105,7 @@ class Mem (val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static, val de
                     ${this.e?.mem() ?: ""}
                 };
             """
+            is Expr.Skip -> this.cnd.mem()
             is Expr.Pass -> this.e.mem()
             is Expr.Drop -> this.e.mem()
 

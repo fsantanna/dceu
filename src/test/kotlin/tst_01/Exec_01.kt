@@ -2919,7 +2919,33 @@ class Exec_01 {
             }
             println(:out)
         """)
-        assert(out == "anon : (lin 4, col 21) : break error : expected parent loop\n") { out }
+        assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
+    }
+    @Test
+    fun oo_01x_loop_err() {
+        val out = test("""
+            loop {
+                do {
+                    skip if true
+                }
+            }
+            println(:out)
+        """)
+        assert(out == "anon : (lin 4, col 21) : skip error : expected immediate parent loop\n") { out }
+    }
+    @Test
+    fun oo_01y_loop_err() {
+        val out = test("""
+            var ok = false
+            loop {
+                break if ok
+                set ok = true
+                do []
+                skip if true
+            }
+            println(:out)
+        """)
+        assert(out == ":out\n") { out }
     }
     @Test
     fun oo_02_loop() {
@@ -2928,6 +2954,22 @@ class Exec_01 {
             do {
                 loop {
                     println(:in)
+                    break if true
+                }
+            }
+            println(:out)
+        """
+        )
+        assert(out == ":in\n:out\n") { out }
+    }
+    @Test
+    fun oo_02x_loop() {
+        val out = test(
+            """
+            do {
+                loop {
+                    println(:in)
+                    skip if false
                     break if true
                 }
             }
@@ -3032,7 +3074,7 @@ class Exec_01 {
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 21) : break error : expected parent loop\n") { out }
+        assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
     }
     @Test
     fun oo_10_loop() {
@@ -3045,7 +3087,7 @@ class Exec_01 {
             }
             println(:ok)
         """)
-        assert(out == "anon : (lin 5, col 21) : break error : expected parent loop\n") { out }
+        assert(out == "anon : (lin 5, col 21) : break error : expected immediate parent loop\n") { out }
     }
     @Test
     fun oo_11_loop() {
@@ -3081,6 +3123,22 @@ class Exec_01 {
             }
         """)
         assert(out == "1\n2\n3\n4\n5\n") { out }
+    }
+    @Test
+    fun oo_13_iter() {
+        val out = test("""
+            $PLUS
+            var i = 0
+            loop {
+                set i = i + 1
+                println(i)
+                skip if i /= 2
+                println(i)
+                break if true
+            }
+            println(i)
+        """)
+        assert(out == "1\n2\n2\n2\n") { out }
     }
 
     // NATIVE

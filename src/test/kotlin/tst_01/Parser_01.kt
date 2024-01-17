@@ -570,9 +570,9 @@ class Parser_01 {
     }
     @Test
     fun rr_02_break_err() {
-        val l = lexer("break 1")
+        val l = lexer("skip 1")
         val parser = Parser(l)
-        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 7) : expected \"if\" : have \"1\"")
+        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 6) : expected \"if\" : have \"1\"")
     }
     @Test
     fun rr_03_break_err() {
@@ -588,10 +588,10 @@ class Parser_01 {
     }
     @Test
     fun rr_05_break() {
-        val l = lexer("break (1) if true")
+        val l = lexer("skip if true")
         val parser = Parser(l)
-        val e = parser.expr() as Expr.Break
-        assert(e.tostr() == "(break(1) if true)") { e.tostr() }
+        val e = parser.expr() as Expr.Skip
+        assert(e.tostr() == "(skip if true)") { e.tostr() }
     }
     @Test
     fun rr_06_break() {
@@ -599,6 +599,13 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr() as Expr.Break
         assert(e.tostr() == "(break if nil)") { e.tostr() }
+    }
+    @Test
+    fun rr_07_skip() {
+        val l = lexer("skip if nil")
+        val parser = Parser(l)
+        val e = parser.expr() as Expr.Skip
+        assert(e.tostr() == "(skip if nil)") { e.tostr() }
     }
 
     // NATIVE

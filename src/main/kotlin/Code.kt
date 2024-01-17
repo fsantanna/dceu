@@ -619,6 +619,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
                 }
             """
+            is Expr.Skip -> """ // SKIP | ${this.dump()}
+                ${this.cnd.code()}
+                if (ceu_as_bool(ceu_acc)) {
+                    goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
+                }
+            """
             is Expr.Enum -> ""
             is Expr.Data -> ""
             is Expr.Pass -> "// PASS | ${this.dump()}\n" + this.e.code()

@@ -4186,4 +4186,25 @@ class Exec_04 {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun z2_03_skip_valgrind() {
+        val out = test("""
+            spawn (task () {
+                spawn (task () {
+                    loop {
+                        yield(nil)
+                        skip if (func () {
+                            true
+                        } ())
+                    }
+                }) ()
+                spawn (task () {
+                    nil
+                }) ()
+                yield(nil)
+            }) ()
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 }

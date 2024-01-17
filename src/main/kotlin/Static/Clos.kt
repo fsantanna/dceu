@@ -44,8 +44,9 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.src.traverse()
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
-            is Expr.Loop  -> this.blk.traverse()
-            is Expr.Break -> { this.cnd.traverse() ; this.e?.traverse() }
+            is Expr.Loop   -> this.blk.traverse()
+            is Expr.Break  -> { this.cnd.traverse() ; this.e?.traverse() }
+            is Expr.Skip   -> this.cnd.traverse()
             is Expr.Enum   -> {}
             is Expr.Data   -> {}
             is Expr.Pass   -> this.e.traverse()

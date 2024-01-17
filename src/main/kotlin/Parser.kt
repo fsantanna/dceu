@@ -627,6 +627,12 @@ class Parser (lexer_: Lexer)
                 val cnd = this.expr()
                 Expr.Break(tk0, cnd, e)
             }
+            this.acceptFix("skip") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptFix_err("if")
+                val cnd = this.expr()
+                Expr.Skip(tk0, cnd)
+            }
             this.acceptFix("loop") -> {
                 if (CEU<99 || this.checkFix("{")) {
                     return Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, this.block().es))
@@ -1327,11 +1333,10 @@ class Parser (lexer_: Lexer)
                     }
                 }
                 "thus" -> {
-                    val tk1 = this.tk1
                     val (id_tag,es) = lambda(N)
                     this.nest( """
                         do {
-                            val ${id_tag.tostr(true)} = ${e.tostr(true)}
+                            ${id_tag.first.pos.pre()}val ${id_tag.tostr(true)} = ${e.tostr(true)}
                             ${es.tostr(true)}
                         }
                     """)
