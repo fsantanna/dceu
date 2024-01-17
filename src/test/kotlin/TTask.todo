@@ -1100,7 +1100,7 @@ class TTask {
         )
         assert(out == "1\n") { out }
         //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
-        //        "anon : (lin 4, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
+        //        "anon : (lin 4, col 27) : invalid evt : cannot expose dynamic alien\n:error\n") { out }
         //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
         //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -1122,7 +1122,7 @@ class TTask {
         """
         )
         //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
-        //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n:error\n") { out }
+        //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic alien field\n:error\n") { out }
         assert(out == "2\n") { out }
         //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
         //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
@@ -1147,7 +1147,7 @@ class TTask {
         )
         assert(out == "1\n") { out }
         //assert(out == "anon : (lin 10, col 14) : broadcast []\n" +
-        //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
+        //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic alien\n:error\n") { out }
         //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
         //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -1171,7 +1171,7 @@ class TTask {
         )
         assert(out == "1\n") { out }
         //assert(out == "anon : (lin 10, col 14) : broadcast []\n" +
-        //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
+        //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic alien\n:error\n") { out }
         //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
         //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -1303,7 +1303,7 @@ class TTask {
         )
         assert(out == "2\n") { out }
         //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
-        //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n") { out }
+        //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic alien field\n") { out }
         //assert(out == "anon : (lin 9, col 13) : broadcast #[[]]\n" +
         //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -1324,7 +1324,7 @@ class TTask {
         )
         assert(out == "2\n") { out }
         //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
-        //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n") { out }
+        //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic alien field\n") { out }
     }
 
     // PUB

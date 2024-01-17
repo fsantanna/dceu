@@ -352,7 +352,7 @@ class Exec_04 {
         //        " v  anon : (lin 4, col 21) : argument error : cannot copy reference out\n") { out }
         //assert(out == "nil\t[]\n:ok\n") { out }
         assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
+                " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun cd_02_bcast_spawn_arg() {
@@ -370,7 +370,7 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
+                " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
 
     // BROADCAST
@@ -788,7 +788,7 @@ class Exec_04 {
             }
         """)
         assert(out == " |  anon : (lin 9, col 17) : broadcast'([10],:task)\n" +
-                " v  anon : (lin 4, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
+                " v  anon : (lin 4, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun de_03x_evt_err() {
@@ -806,7 +806,7 @@ class Exec_04 {
             }
         """)
         assert(out == " |  anon : (lin 10, col 17) : broadcast'([10],:task)\n" +
-                " v  anon : (lin 5, col 21) : declaration error : cannot hold \"evt\" reference\n") { out }
+                " v  anon : (lin 5, col 21) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun de_03y_evt_err() {
@@ -824,7 +824,7 @@ class Exec_04 {
             }
         """)
         assert(out == " |  anon : (lin 10, col 17) : broadcast'([10],:task)\n" +
-                " v  anon : (lin 5, col 21) : store error : cannot hold \"evt\" reference\n") { out }
+                " v  anon : (lin 5, col 21) : store error : cannot hold alien reference\n") { out }
     }
     @Test
     fun de_04_evt_err() {
@@ -844,9 +844,9 @@ class Exec_04 {
         """)
         //assert(out == "[10]\n" +
         //        " |  anon : (lin 10, col 13) : broadcast'([10],:task)\n" +
-        //        " v  anon : (lin 7, col 21) : yield error : cannot hold \"evt\" reference\n") { out }
+        //        " v  anon : (lin 7, col 21) : yield error : cannot hold alien reference\n") { out }
         assert(out == " |  anon : (lin 12, col 17) : broadcast'([10],:task)\n" +
-                " v  anon : (lin 5, col 21) : declaration error : cannot hold \"evt\" reference\n") { out }
+                " v  anon : (lin 5, col 21) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun de_05_evt() {
@@ -866,7 +866,7 @@ class Exec_04 {
         """)
         //assert(out == "[10]\n") { out }
         assert(out == " |  anon : (lin 12, col 17) : broadcast'([10],:task)\n" +
-                " v  anon : (lin 5, col 21) : declaration error : cannot hold \"evt\" reference\n") { out }
+                " v  anon : (lin 5, col 21) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun de_05_evt_err_valgrind() {
@@ -885,7 +885,7 @@ class Exec_04 {
             broadcast(nil)
         """)
         assert(out == " |  anon : (lin 11, col 17) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 4, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
+                " v  anon : (lin 4, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun de_06_evt() {
@@ -917,7 +917,7 @@ class Exec_04 {
             }
         """)
         assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 4, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
+                " v  anon : (lin 4, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
 
     // THROW / CATCH
@@ -1111,7 +1111,7 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 10, col 17) : broadcast'([],:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 10, col 17) : broadcast'([],:task)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
+                " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun ee_10_bcast_err2() {
@@ -1130,7 +1130,7 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
+                " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun ee_11_bcast() {
@@ -3743,7 +3743,7 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 13, col 25) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 13, col 25) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
+                " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun zz_15_bcast_okr() {
@@ -3794,7 +3794,7 @@ class Exec_04 {
         //        " |  anon : (lin 4, col 17) : (func (it) { it })(yield(nil))\n" +
         //        " v  anon : (lin 4, col 27) : block escape error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot hold \"evt\" reference\n") { out }
+                " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun zz_17_bcast() {

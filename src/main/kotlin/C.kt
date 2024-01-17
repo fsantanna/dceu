@@ -1259,7 +1259,7 @@ fun Coder.main (tags: Tags): String {
                 if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(v.Dyn), CEU_HLD_BLOCK(col))) {
             #if CEU >= 4
                     if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(col), CEU_HLD_BLOCK(v.Dyn))) {
-                        return (CEU_Value) { CEU_VALUE_ERROR, {.Error="store error : cannot hold \"evt\" reference"} };
+                        return (CEU_Value) { CEU_VALUE_ERROR, {.Error="store error : cannot hold alien reference"} };
                     } else                                        
             #endif
                     {

@@ -507,13 +507,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }}
                     // block free | ${this.dump()}
                     ${(!isvoid).cond { """
-                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                            ceu_gc_inc(ceu_acc);        // prevent it from being collected
-                        }
+                        ${(f_b != null).cond { """
+                            if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                                ceu_gc_inc(ceu_acc);        // prevent it from being collected
+                            }
+                        """ }}
                         ceu_gc_rem_all(CEU5(ceu_dstk COMMA) CEU4(ceu_bstk COMMA) $blkc);
-                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                            ceu_gc_dec(ceu_acc, 0);     // do not check fleeting value
-                        }
+                        ${(f_b != null).cond { """
+                            if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                                ceu_gc_dec(ceu_acc, 0);     // do not check fleeting value
+                            }
+                        """ }}
                     """ }}
                     // check error
                     ${(CEU>=2 && (f_b is Expr.Do)).cond { """
@@ -556,7 +560,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             } else {
                                 ${ups.inexe(this,"task",true).cond { """
                                     if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(ceu_acc.Dyn), $bupc)) {
-                                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="declaration error : cannot hold \"evt\" reference"} };
+                                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="declaration error : cannot hold alien reference"} };
                                         CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                     }
                                 """ }}
@@ -994,7 +998,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 if (!ceu_block_is_up_dn(CEU_HLD_BLOCK($src.Dyn), ${vblk.idc("block",nst)})) {
                                     ${ups.inexe(this,"task",true).cond { """
                                         if (!ceu_block_is_up_dn(${vblk.idc("block",nst)}, CEU_HLD_BLOCK($src.Dyn))) {
-                                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="declaration error : cannot hold \"evt\" reference"} };
+                                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="declaration error : cannot hold alien reference"} };
                                             CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                         } else                                        
                                     """ }}

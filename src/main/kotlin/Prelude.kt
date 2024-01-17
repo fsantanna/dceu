@@ -80,18 +80,18 @@ val DETRACK = """
 """.replace("\n", " ")
 
 val XAWAIT = """
-func await-chk (evt, cnd) {
+func await-chk (e, cnd) {
     ifs {
-        (type(cnd) == :tag)      { evt is? cnd }
+        (type(cnd) == :tag)      { e is? cnd }
         (type(cnd) == :exe-task) { status(cnd) == :terminated }
         (type(cnd) == :track)    { not detrack(cnd) }
         else { false }
     }
 }
 
-func await-ret (evt) {
-    val ok = `:bool ${D}evt.type>=CEU_VALUE_DYNAMIC || ceu_as_bool(${D}evt)`
-    ok  or evt
+func await-ret (e) {
+    val ok = `:bool ${D}e.type>=CEU_VALUE_DYNAMIC || ceu_as_bool(${D}e)`
+    ok or e
 }
 """.replace("\n", " ")
 

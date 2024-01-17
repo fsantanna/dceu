@@ -496,7 +496,7 @@ class Exec_99 {
         """
         )
         //assert(out == "[1,2,3]\n") { out }
-        assert(out == " v  anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
+        assert(out == " v  anon : (lin 5, col 25) : set error : cannot assign reference to outer scope\n") { out }
         //assert(out == " |  anon : (lin 4, col 30) : (func (a) { (set x = a) })([1,2,3])\n" +
         //        " v  anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
     }
@@ -602,7 +602,8 @@ class Exec_99 {
             }
             println(v)
         """)
-        assert(out == " v  anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[]\n") { out }
     }
     @Test
     fun mm_07_and_or() {
@@ -625,8 +626,8 @@ class Exec_99 {
                 }
             }
             var g = func (v) {
-                val evt = v
-                f(evt)
+                val e = v
+                f(e)
             }
             g([[1]])
         """)
@@ -746,11 +747,13 @@ class Exec_99 {
         //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
-                " v  anon : (lin 3, col 41) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
+        //        " v  anon : (lin 3, col 41) : block escape error : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
         //        " |  anon : (lin 3, col 41) : (func (x) { x })(yield(nil))\n" +
         //        " v  anon : (lin 3, col 41) : block escape error : cannot copy reference out\n") { out }
+        assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
+                " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
     }
     @Test
     fun mm_17_catch_yield_err() {
@@ -772,7 +775,7 @@ class Exec_99 {
         val out = test("""
             coro () {
                 catch ( it => do {
-                    pass it
+                    do it
                     yield(nil) thus { it => nil }
                 } )
                 {
@@ -873,7 +876,9 @@ class Exec_99 {
             }
             resume t()
         """)
-        assert(out == "[]\n10\n") { out }
+        //assert(out == "[]\n10\n") { out }
+        assert(out == " |  anon : (lin 14, col 17) : (resume (t)(v))\n" +
+                " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
     }
     @Test
     fun mm_24_yield() {
@@ -958,8 +963,10 @@ class Exec_99 {
         //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
         //        " |  anon : (lin 4, col 33) : (func (it) { it })(yield(nil))\n" +
         //        " v  anon : (lin 4, col 33) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 33) : block escape error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 4, col 33) : block escape error : cannot copy reference out\n") { out }
+                " v  anon : (lin 4, col 35) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun mm_28_data_await() {
@@ -1903,8 +1910,9 @@ class Exec_99 {
             }
             println(:ok)
         """)
-        assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 4, col 27) : argument error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 27) : argument error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing func\n") { out }
     }
     @Test
     fun kk_12_await_detrack() {
@@ -2629,7 +2637,7 @@ class Exec_99 {
             val ts = tasks()
             loop in {1=>10} {
                 ;;dump(ts)
-                pass [ts]
+                do [ts]
             }
             println(:ok)
         """, true)

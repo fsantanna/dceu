@@ -401,14 +401,16 @@ class Exec_05 {
     @Test
     fun bd_03_track_err() {
         val out = test("""
+            $DETRACK
             var T
             set T = task () { yield(nil) }
             val t1 = spawn T()
             do {
                 val t2 = spawn T()
                 set pub(t1) = track(t2)         ;; error scope
+                nil
             }
-            println(pub(t1))
+            println(detrack(pub(t1)))
         """)
         //assert(out.contains("terminated\nx-track: 0x")) { out }
         //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
@@ -1043,11 +1045,11 @@ class Exec_05 {
             println(detrack(x) { it => pub(it) })
         """)
         //assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
-        //assert(out == "[10]\n") { out }
+        assert(out == "[10]\n") { out }
         //assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
         //        " v  anon : (lin 8, col 32) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
-                " v  anon : (lin 8, col 32) : block escape error : reference has immutable scope\n") { out }
+        //assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
+        //        " v  anon : (lin 8, col 32) : block escape error : reference has immutable scope\n") { out }
     }
     @Test
     fun fg_02_detrack_pub() {
@@ -1077,11 +1079,12 @@ class Exec_05 {
             broadcast(nil)
             println(v)
         """)
+        assert(out == "[10]\n") { out }
         //assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
         //        " v  anon : (lin 8, col 32) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "[10]\n") { out }
-        assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
-                " v  anon : (lin 8, col 32) : block escape error : reference has immutable scope\n") { out }
+        //assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
+        //        " v  anon : (lin 8, col 32) : block escape error : reference has immutable scope\n") { out }
     }
     @Test
     fun fg_04_expose_err() {
@@ -1130,9 +1133,11 @@ class Exec_05 {
         //assert(out == "anon : (lin 13, col 19) : T(track(t))\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
+        //assert(out == " |  anon : (lin 13, col 13) : (spawn T(track(t)))\n" +
+        //        " |  anon : (lin 5, col 40) : (func (it) { if it { ```                     ...)\n" +
+        //        " v  anon : (lin 5, col 40) : block escape error : reference has immutable scope\n") { out }
         assert(out == " |  anon : (lin 13, col 13) : (spawn T(track(t)))\n" +
-                " |  anon : (lin 5, col 40) : (func (it) { if it { ```                     ...)\n" +
-                " v  anon : (lin 5, col 40) : block escape error : reference has immutable scope\n") { out }
+                " v  anon : (lin 5, col 21) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun fg_06_expose() {
@@ -1328,12 +1333,13 @@ class Exec_05 {
             println(v)
         """
         )
+        assert(out == "[10]\n[10]\n") { out }
         //assert(out == "[10]\n" +
         //        " |  anon : (lin 9, col 33) : (func (it) { if it { ```                     ...)\n" +
         //        " v  anon : (lin 9, col 33) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "[10]\n" +
-                " |  anon : (lin 9, col 33) : (func (it) { if it { ```                     ...)\n" +
-                " v  anon : (lin 9, col 33) : block escape error : reference has immutable scope\n") { out }
+        //assert(out == "[10]\n" +
+        //        " |  anon : (lin 9, col 33) : (func (it) { if it { ```                     ...)\n" +
+        //        " v  anon : (lin 9, col 33) : block escape error : reference has immutable scope\n") { out }
     }
 
     // ABORTION

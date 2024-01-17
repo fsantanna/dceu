@@ -16,9 +16,10 @@
         - asr up_dn(v,col)
             - "store error : cannot assign reference to outer scope"
         - chk up_dn(col,v)
-            - "store error : cannot hold \"evt\" reference"
+            - "store error : cannot hold alien reference"
             - alien scope
             - col[X]=evt
+            - col[X]=pub(alien)
 
 - ceu_drop (v)
 
@@ -85,10 +86,12 @@
     2. x = X
         - keep as is
     E. x = evt
+        - x=pub(alien)
         - !up_dn(evt,x)
-        - "declaration error : cannot hold \"evt\" reference"
+        - "declaration error : cannot hold alien reference"
 
 - set pub(t) = v
+    - need to change to IMMUT to prevent it escaping
     1. pub(_) = F
         - ceu_hold_set_rec(v, IMMUT, 0, pub.tsk.blk)
         - set v.typ = IMMUT
