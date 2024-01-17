@@ -12,9 +12,9 @@ set cpo&vim
 
 let s:ft = matchstr(&ft, '^\([^.]\)\+')
 
-syn keyword Statement   as break data do drop else
+syn keyword Statement   as break data do drop else evt
 syn keyword Statement   enum false func if
-syn keyword Statement   loop nil pass set
+syn keyword Statement   loop nil pass set skip
 syn keyword Statement   thus true val var
 syn keyword Statement   catch defer
 syn keyword Statement   coro resume yield

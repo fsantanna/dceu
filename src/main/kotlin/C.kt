@@ -1118,10 +1118,6 @@ fun Coder.main (tags: Tags): String {
             dyn->Any.hld.prev  = NULL;
             dyn->Any.hld.next  = NULL;
         }
-        void ceu_hold_chg (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns)) {
-            ceu_hold_rem(dyn);
-            ceu_hold_add(dyn, blk CEU5(COMMA dyns));
-        }
 
         void ceu_hold_set_rec (
             CEU_Value src,
@@ -1146,7 +1142,8 @@ fun Coder.main (tags: Tags): String {
                 src_dyn->Any.hld.type = to_type;
             }
             if (to_blk != NULL) {
-                ceu_hold_chg(src_dyn, to_blk CEU5(COMMA &to_blk->dn.dyns));
+                ceu_hold_rem(src_dyn);
+                ceu_hold_add(src_dyn, to_blk CEU5(COMMA &to_blk->dn.dyns));
             }
 
             switch (src.type) {
