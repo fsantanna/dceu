@@ -74,7 +74,7 @@
         - "block escape error : reference has immutable scope"
     E2. { <- trk }
         - !up_dn(v.tsk,up)
-        - "block escape error : cannot move track outside its task scope"
+        - "block escape error : cannot expose track outside its task scope"
     E3. { <- tsk-in }
         - "block escape error : cannot expose reference to task in pool"
 
@@ -160,7 +160,7 @@
                                     $src.Dyn->Track.task != NULL             &&
                                     !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)$src.Dyn->Track.task), ${vblk.idc("block",nst)})
                                 ) {
-                                    ceu_err_$n = "set error : cannot move track outside its task scope";
+                                    ceu_err_$n = "set error : cannot expose track outside its task scope";
                                 }
                                 else
                         #endif
