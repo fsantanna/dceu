@@ -1150,7 +1150,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_Block* to_blk;
             } Tskin;
             struct {    // DCL
-                CEU3(int inexe;)    // TODO: same offset as Arg.inexe
+                CEU3(int inexe;)
                 CEU_Block* to_blk;
             } Dcl;
             struct {    // ESC
@@ -1158,7 +1158,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_Block* to_blk;
             } Esc;
             struct {    // ARG
-                CEU3(int inexe;)    // TODO: same offset as Dcl.inexe
+                CEU3(int inexe;)
                 CEU_Block* to_blk;
             } Arg;
         } ceu_hold_cmd;
@@ -1303,12 +1303,13 @@ fun Coder.main (tags: Tags): String {
             assert(src.type > CEU_VALUE_DYNAMIC);
 
             #if CEU >= 3
-            if (arg.Dcl.inexe && (cmd==CEU_HOLD_CMD_DCL || cmd==CEU_HOLD_CMD_ARG)) {
-                if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), arg.Dcl.to_blk)) {
-                    // DCL | val x = evt
-                    // ARG | do { val t=[] ; resume co(t) }   ;; Exec_03.gg_02_scope
-                    return "cannot hold alien reference";
-                }
+            if (arg.Dcl.inexe && (
+                (cmd==CEU_HOLD_CMD_DCL && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Dcl.to_blk)) ||
+                (cmd==CEU_HOLD_CMD_ARG && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Arg.to_blk) && src.Dyn->Any.hld.type!=CEU_HOLD_FLEET)
+            )) {
+                // DCL | val x = evt
+                // ARG | do { val t=[] ; resume co(t) }   ;; Exec_03.gg_02_scope
+                return "cannot hold alien reference";
             }
             #endif
 

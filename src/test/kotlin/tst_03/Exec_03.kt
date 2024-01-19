@@ -702,7 +702,7 @@ class Exec_03 {
             }
         """)
         assert(out == " |  anon : (lin 11, col 17) : (resume (t)(v))\n" +
-                " v  anon : (lin 3, col 25) : resume error : cannot hold alien reference\n") { out }
+                " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
     }
     @Test
     fun gg_03y_scope() {
