@@ -555,8 +555,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         if (ceu_acc.type > CEU_VALUE_DYNAMIC) {                            
                             char* ceu_$n = x_ceu_hold_set_msg (
                                 CEU_HOLD_CMD_DCL,
-                                CEU3(${ups.inexe(this,"task",true).cond2({"1"},{"0"})} COMMA)
-                                ceu_acc, NULL, CEU_HOLD_MUTAB, 0, $bupc, "declaration error"
+                                ceu_acc,
+                                "declaration error",
+                                (ceu_hold_cmd) {.Dcl={
+                                    CEU3(${ups.inexe(this,"task",true).cond2({"1"},{"0"})} COMMA)
+                                    $bupc
+                                }}
                             );
                             if (ceu_$n != NULL) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error=ceu_$n} };
@@ -1054,7 +1058,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                         { // ACC - DROP
                             CEU_Value ceu_$n = $idc;
-                            char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_DROP, CEU3(0 COMMA) ceu_$n, NULL, CEU_HOLD_FLEET, 0, NULL, "drop error");
+                            char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_DROP, ceu_$n, "drop error", (ceu_hold_cmd){.Drop={}});
                             if (ceu_err_$n != NULL) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
                                 CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
@@ -1221,7 +1225,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             }
                             
                             CEU_Value ceu_val_$n = ceu_acc;
-                            char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_DROP, CEU3(0 COMMA) ceu_val_$n, NULL, CEU_HOLD_FLEET, 0, NULL, "drop error");
+                            char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_DROP, ceu_val_$n, "drop error", (ceu_hold_cmd){.Drop={}});
                             if (ceu_err_$n != NULL) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
                                 CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);

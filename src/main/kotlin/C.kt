@@ -1135,6 +1135,20 @@ fun Coder.main (tags: Tags): String {
                 // val x = evt
         } CEU_HOLD_CMD;
         
+        typedef union {
+            struct {    // DROP
+            } Drop;
+            struct {    // BCAST
+            } Bcast;
+            struct {    // TSKIN
+                CEU_Block* to_blk;
+            } Tskin;
+            struct {    // DCL
+                CEU3(int inexe;)
+                CEU_Block* to_blk;
+            } Dcl;
+        } ceu_hold_cmd;
+        
         char* x_ceu_hold_set_rec (
             CEU_HOLD_CMD cmd,
             CEU_Value src,
@@ -1269,58 +1283,33 @@ fun Coder.main (tags: Tags): String {
 
         char* x_ceu_hold_set_pre (
             CEU_HOLD_CMD cmd,
-        #if CEU >= 3
-            int inexe,
-        #endif
             CEU_Value src,
-            CEU_Block* cur_blk,
-            CEU_HOLD to_type,
-            int isup,           // to_blk is above src, such that f can stop if otherwise
-            CEU_Block* to_blk
+            ceu_hold_cmd arg
         ) {
             assert(src.type > CEU_VALUE_DYNAMIC);
 
             switch (cmd) {
                 case CEU_HOLD_CMD_DROP:
-                    CEU3(assert(inexe == 0));           // drop never holds alien
-                    assert(cur_blk == NULL);
-                    assert(to_type == CEU_HOLD_FLEET);  // dcl always fleets value
-                    assert(isup == 0);
-                    assert(to_blk == NULL);
                     if (src.Dyn->Any.hld.type == CEU_HOLD_IMMUT) {
                         return "value is not movable";
                     } else if (src.Dyn->Any.refs > 1) {
                         return "value contains multiple references";
                     }
-                    x_ceu_hold_set_rec(cmd, src, cur_blk, to_type, isup, to_blk);
+                    x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_FLEET, 0, NULL);
                     break;
                 case CEU_HOLD_CMD_BCAST:
-                    CEU3(assert(inexe == 0));           // never holds alien
-                    assert(cur_blk == NULL);
-                    assert(to_type == CEU_HOLD_MUTAB);
-                    assert(isup == 0);
-                    assert(to_blk == NULL);
-                    assert(NULL == x_ceu_hold_set_rec(cmd, src, cur_blk, to_type, isup, to_blk) && "TODO: propagate error up");
+                    assert(NULL == x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_MUTAB, 0, NULL) && "TODO: propagate error up");
                     break;
                 case CEU_HOLD_CMD_TSKIN:
-                    CEU3(assert(inexe == 0));           // never holds alien
-                    assert(cur_blk == NULL);
-                    assert(to_type == CEU_HOLD_MUTAB);
-                    assert(isup == 0);
-                    assert(to_blk != NULL);
                     if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                        assert(NULL == x_ceu_hold_set_rec(cmd, src, cur_blk, to_type, isup, to_blk) && "TODO: propagate error up");
-                    } else if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), to_blk)) {
+                        assert(NULL == x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_MUTAB, 0, arg.Tskin.to_blk) && "TODO: propagate error up");
+                    } else if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), arg.Tskin.to_blk)) {
                         return "task pool outlives task prototype";
                     }
                     break;
                 case CEU_HOLD_CMD_DCL:
-                    assert(cur_blk == NULL);
-                    assert(to_type == CEU_HOLD_MUTAB);  // dcl always holds value
-                    assert(isup == 0);
-                    assert(to_blk != NULL);
                     if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                        x_ceu_hold_set_rec(cmd, src, cur_blk, to_type, isup, to_blk);
+                        x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_MUTAB, 0, arg.Dcl.to_blk);
                     }
             #if CEU >= 3
                     else {
@@ -1338,22 +1327,16 @@ fun Coder.main (tags: Tags): String {
 
         char* x_ceu_hold_set_msg (
             CEU_HOLD_CMD cmd,
-        #if CEU >= 3
-            int inexe,
-        #endif
             CEU_Value src,
-            CEU_Block* cur_blk,
-            CEU_HOLD to_type,
-            int isup,           // to_blk is above src, such that f can stop if otherwise
-            CEU_Block* to_blk,
-            char* pre
+            char* pre,
+            ceu_hold_cmd arg
         ) {
             if (cmd == CEU_HOLD_CMD_BCAST) {
                 assert(pre == NULL);
             } else {
                 assert(pre != NULL);
             }
-            char* err = x_ceu_hold_set_pre(cmd, CEU3(inexe COMMA) src, cur_blk, to_type, isup, to_blk);
+            char* err = x_ceu_hold_set_pre(cmd, src, arg);
             if (err != NULL) {
                 static char msg[255];
                 strcpy(msg, pre); 
@@ -1771,7 +1754,7 @@ fun Coder.main (tags: Tags): String {
                 ceu_gc_inc(evt); // save from nested gc_chk
                 if (evt.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                     // keep the block, set MUTAB recursively
-                    assert(NULL == x_ceu_hold_set_msg(CEU_HOLD_CMD_BCAST, CEU4(0 COMMA) evt, NULL, CEU_HOLD_MUTAB, 0, NULL, NULL));
+                    assert(NULL == x_ceu_hold_set_msg(CEU_HOLD_CMD_BCAST, evt, NULL, (ceu_hold_cmd){.Bcast={}}));
                 }
             }
             CEU_Value xin = args[1];
@@ -2178,7 +2161,7 @@ fun Coder.main (tags: Tags): String {
             }
             {
                 CEU_Block* ts_blk = CEU_HLD_BLOCK((CEU_Dyn*)tasks);
-                assert(NULL == x_ceu_hold_set_msg(CEU_HOLD_CMD_TSKIN, CEU4(0 COMMA) clo, NULL, CEU_HOLD_MUTAB, 0, ts_blk, "spawn error"));
+                assert(NULL == x_ceu_hold_set_msg(CEU_HOLD_CMD_TSKIN, "spawn error", (ceu_hold_cmd){.Tskin={clo, ts_blk}}));
             }
             if (tasks->max==0 || ceu_tasks_n(tasks)<tasks->max) {
                 CEU_Value ret = _ceu_create_exe_task_(CEU_VALUE_EXE_TASK_IN, CEU_HLD_BLOCK((CEU_Dyn*)tasks), clo, &tasks->dyns);
