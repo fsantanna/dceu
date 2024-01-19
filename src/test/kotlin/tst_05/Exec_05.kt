@@ -460,6 +460,18 @@ class Exec_05 {
             val T = task () { yield(nil) }
             val y = do {
                 val t = spawn T ()
+                track(t)
+            }
+            println(y)
+        """)
+        assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+    }
+    @Test
+    fun bc_02x_track_drop_err() {
+        val out = test("""
+            val T = task () { yield(nil) }
+            val y = do {
+                val t = spawn T ()
                 val x = track(t)
                 drop(x)
             }

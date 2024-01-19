@@ -1131,6 +1131,12 @@ fun Coder.main (tags: Tags): String {
                 // "dcl error : cannot hold alien reference"
             CEU_HOLD_CMD_ESC,
                 // "block escape error : reference has immutable scope"
+                // "cannot expose task in pool to outer scope"
+                //  - ff_02_detrack_err
+                //      - detrack(x) { it=>it }
+                // "cannot expose track outside its task scope"
+                //  - bc_02_track_drop_err
+                //      - do { val t=spawn T() ; track(t) }
         } CEU_HOLD_CMD;
         
         typedef union {
