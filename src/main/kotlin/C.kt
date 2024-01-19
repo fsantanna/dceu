@@ -2161,7 +2161,7 @@ fun Coder.main (tags: Tags): String {
             }
             {
                 CEU_Block* ts_blk = CEU_HLD_BLOCK((CEU_Dyn*)tasks);
-                assert(NULL == x_ceu_hold_set_msg(CEU_HOLD_CMD_TSKIN, "spawn error", (ceu_hold_cmd){.Tskin={clo, ts_blk}}));
+                assert(NULL == x_ceu_hold_set_msg(CEU_HOLD_CMD_TSKIN, clo, "spawn error", (ceu_hold_cmd){.Tskin={ts_blk}}));
             }
             if (tasks->max==0 || ceu_tasks_n(tasks)<tasks->max) {
                 CEU_Value ret = _ceu_create_exe_task_(CEU_VALUE_EXE_TASK_IN, CEU_HLD_BLOCK((CEU_Dyn*)tasks), clo, &tasks->dyns);
