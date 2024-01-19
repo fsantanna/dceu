@@ -1313,7 +1313,7 @@ fun Coder.main (tags: Tags): String {
                     }
             #if CEU >= 3
                     else {
-                        if (inexe && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), to_blk)) {
+                        if (arg.Dcl.inexe && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), arg.Dcl.to_blk)) {
                             // val x = evt
                             //  - evt is never FLEET
                             return "cannot hold alien reference";
