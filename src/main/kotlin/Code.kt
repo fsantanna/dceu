@@ -310,29 +310,20 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         if (ceu_n > $i) {
                                             $idc = ceu_args[$i];
                                             if ($idc.type > CEU_VALUE_DYNAMIC) {
-                                                ${inexe.cond { """
-                                                    // must check CEU_HOLD_FLEET for parallel scopes, but only for exes:
-                                                    // [gg_02_scope] v -> coro/task
-                                                    if ($idc.Dyn->Any.hld.type != CEU_HOLD_FLEET) {
-                                                        if (!ceu_block_is_up_dn(CEU_HLD_BLOCK($idc.Dyn), $blkc)) {
-                                                            CEU_Value ceu_err_$n = { CEU_VALUE_ERROR, {.Error="argument error : cannot receive alien reference"} };
-                                                            CEU_ERROR($blkc, "${id.pos.file} : (lin ${id.pos.lin}, col ${id.pos.col})", ceu_err_$n);
-                                                        }
-                                                    }
-                                                """ }}
                                                 // Always possible to pass to tight func:
                                                 // f([...]) ;; FLEET ;; change type and block
                                                 // f(t)     ;; ELSE  ;; keep   type and block
                                                 // Exception:
                                                 // f([[nil]][0]) ;; passing part of fleeting
                                                 //  - reject if fleet has multiple refs
-                                                if ($idc.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                                                    if ($idc.Dyn->Any.refs > 1) {
-                                                        CEU_Value ceu_err_$n = { CEU_VALUE_ERROR, {.Error="argument error : cannot receive pending reference"} };
-                                                        CEU_ERROR($blkc, "${id.pos.file} : (lin ${id.pos.lin}, col ${id.pos.col})", ceu_err_$n);
-                                                    }
-                                                    //ceu_hold_set_from_fleet($idc, CEU_HOLD_MUTAB, $blkc); 
-                                                    assert(NULL==ceu_hold_set_rec($idc, NULL, CEU_HOLD_MUTAB, 0, $blkc) && "TODO: propagate error up"); 
+                                                char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_ARG, $idc, "argument error",
+                                                    (ceu_hold_cmd) {.Arg={
+                                                        CEU3(${inexe.toc()} COMMA)
+                                                        $blkc
+                                                    }});
+                                                if (ceu_err_$n != NULL) {
+                                                    CEU_Value x_ceu_err_$n = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
+                                                    CEU_ERROR($blkc, "${id.pos.file} : (lin ${id.pos.lin}, col ${id.pos.col})", x_ceu_err_$n);
                                                 }
                                             }
                                         }
@@ -526,7 +517,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 ceu_acc,
                                 "declaration error",
                                 (ceu_hold_cmd) {.Dcl={
-                                    CEU3(${ups.inexe(this,"task",true).cond2({"1"},{"0"})} COMMA)
+                                    CEU3(${ups.inexe(this,"task",true).toc()} COMMA)
                                     $bupc
                                 }}
                             );

@@ -652,7 +652,7 @@ class Exec_03 {
         //assert(out == " |  anon : (lin 9, col 24) : t(v)\n" +
         //        " v  anon : (lin 2, col 30) : resume error : incompatible scopes\n") { out }
         assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
-                " v  anon : (lin 2, col 27) : argument error : cannot receive alien reference\n") { out }
+                " v  anon : (lin 2, col 27) : argument error : cannot hold alien reference\n") { out }
     }
     @Test
     fun gg_03_scope() {
@@ -702,7 +702,7 @@ class Exec_03 {
             }
         """)
         assert(out == " |  anon : (lin 11, col 17) : (resume (t)(v))\n" +
-                " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
+                " v  anon : (lin 3, col 25) : resume error : cannot hold alien reference\n") { out }
     }
     @Test
     fun gg_03y_scope() {
@@ -718,7 +718,7 @@ class Exec_03 {
             }
         """)
         assert(out == " |  anon : (lin 9, col 17) : (resume (t)(v))\n" +
-                " v  anon : (lin 2, col 27) : argument error : cannot receive alien reference\n") { out }
+                " v  anon : (lin 2, col 27) : argument error : cannot hold alien reference\n") { out }
     }
     @Test
     fun gg_04_scope() {

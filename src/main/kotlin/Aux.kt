@@ -24,6 +24,10 @@ fun <T> T?.cond (f: (v:T)->String): String {
     return this.cond2(f) {""}
 }
 
+fun Boolean.toc (): String {
+    return if (this) "1" else "0"
+}
+
 fun Expr.is_innocuous (): Boolean {
     return when (this) {
         is Expr.Tuple, is Expr.Vector, is Expr.Dict, is Expr.Index, is Expr.Acc,

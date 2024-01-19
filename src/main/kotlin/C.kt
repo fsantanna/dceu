@@ -1137,6 +1137,8 @@ fun Coder.main (tags: Tags): String {
                 // "cannot expose track outside its task scope"
                 //  - bc_02_track_drop_err
                 //      - do { val t=spawn T() ; track(t) }
+            CEU_HOLD_CMD_ARG,
+                // "argument error : cannot receive pending reference"
         } CEU_HOLD_CMD;
         
         typedef union {
@@ -1148,13 +1150,17 @@ fun Coder.main (tags: Tags): String {
                 CEU_Block* to_blk;
             } Tskin;
             struct {    // DCL
-                CEU3(int inexe;)
+                CEU3(int inexe;)    // TODO: same offset as Arg.inexe
                 CEU_Block* to_blk;
             } Dcl;
             struct {    // ESC
                 CEU_Block* cur_blk;
                 CEU_Block* to_blk;
             } Esc;
+            struct {    // ARG
+                CEU3(int inexe;)    // TODO: same offset as Dcl.inexe
+                CEU_Block* to_blk;
+            } Arg;
         } ceu_hold_cmd;
         
         char* x_ceu_hold_set_rec (
@@ -1296,6 +1302,16 @@ fun Coder.main (tags: Tags): String {
         ) {
             assert(src.type > CEU_VALUE_DYNAMIC);
 
+            #if CEU >= 3
+            if (arg.Dcl.inexe && (cmd==CEU_HOLD_CMD_DCL || cmd==CEU_HOLD_CMD_ARG)) {
+                if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), arg.Dcl.to_blk)) {
+                    // DCL | val x = evt
+                    // ARG | do { val t=[] ; resume co(t) }   ;; Exec_03.gg_02_scope
+                    return "cannot hold alien reference";
+                }
+            }
+            #endif
+
             switch (cmd) {
                 case CEU_HOLD_CMD_DROP:
                     if (src.Dyn->Any.hld.type == CEU_HOLD_IMMUT) {
@@ -1303,31 +1319,22 @@ fun Coder.main (tags: Tags): String {
                     } else if (src.Dyn->Any.refs > 1) {
                         return "value contains multiple references";
                     }
-                    x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_FLEET, NULL);
+                    x_ceu_hold_set_rec(CEU_HOLD_CMD_DROP, src, NULL, CEU_HOLD_FLEET, NULL);
                     break;
                 case CEU_HOLD_CMD_BCAST:
-                    assert(NULL == x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_MUTAB, NULL) && "TODO: propagate error up");
+                    assert(NULL == x_ceu_hold_set_rec(CEU_HOLD_CMD_BCAST, src, NULL, CEU_HOLD_MUTAB, NULL) && "TODO: propagate error up");
                     break;
                 case CEU_HOLD_CMD_TSKIN:
                     if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                        assert(NULL == x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_MUTAB, arg.Tskin.to_blk) && "TODO: propagate error up");
+                        assert(NULL == x_ceu_hold_set_rec(CEU_HOLD_CMD_TSKIN, src, NULL, CEU_HOLD_MUTAB, arg.Tskin.to_blk) && "TODO: propagate error up");
                     } else if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), arg.Tskin.to_blk)) {
                         return "task pool outlives task prototype";
                     }
                     break;
                 case CEU_HOLD_CMD_DCL:
                     if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                        x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_MUTAB, arg.Dcl.to_blk);
+                        x_ceu_hold_set_rec(CEU_HOLD_CMD_DCL, src, NULL, CEU_HOLD_MUTAB, arg.Dcl.to_blk);
                     }
-            #if CEU >= 3
-                    else {
-                        if (arg.Dcl.inexe && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), arg.Dcl.to_blk)) {
-                            // val x = evt
-                            //  - evt is never FLEET
-                            return "cannot hold alien reference";
-                        }
-                    }
-            #endif
                     break;
                 case CEU_HOLD_CMD_ESC:
                     if (
@@ -1342,7 +1349,16 @@ fun Coder.main (tags: Tags): String {
                     } else
                 #endif
                     {
-                        return x_ceu_hold_set_rec(cmd, src, arg.Esc.cur_blk, CEU_HOLD_NONE, arg.Esc.to_blk);
+                        return x_ceu_hold_set_rec(CEU_HOLD_CMD_ESC, src, arg.Esc.cur_blk, CEU_HOLD_NONE, arg.Esc.to_blk);
+                    }
+                    break;
+                case CEU_HOLD_CMD_ARG:
+                    if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
+                        if (src.Dyn->Any.refs > 1) {
+                            // f([[nil]][0])
+                            return "cannot receive pending reference";
+                        }
+                        assert(NULL == x_ceu_hold_set_rec(CEU_HOLD_CMD_ARG, src, NULL, CEU_HOLD_MUTAB, arg.Arg.to_blk) && "TODO: propagate error up"); 
                     }
                     break;
                 }
