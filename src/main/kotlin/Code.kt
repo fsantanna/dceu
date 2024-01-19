@@ -418,39 +418,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // return trk(x) where block(up) < block(x)
                             // Also error:
                             // return detrack(x), in any case
-                            char* ceu_err_$n = NULL;
-                            if (
-                                ceu_acc.Dyn->Any.hld.type == CEU_HOLD_IMMUT &&
-                                !ceu_block_is_up_dn(CEU_HLD_BLOCK(ceu_acc.Dyn),$up1)
-                            ) {
-                                ceu_err_$n = "block escape error : reference has immutable scope";
-                            }
-                        #if 0 //CEU >= 5
-                            else if (
-                                ceu_acc.Dyn->Any.type   == CEU_VALUE_TRACK  &&
-                                ceu_acc.Dyn->Track.task != NULL             &&
-                                !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)ceu_acc.Dyn->Track.task), $up1)
-                            ) {
-                                ceu_err_$n = "block escape error : cannot expose track outside its task scope";
-                            }
-                            else if (ceu_acc.type == CEU_VALUE_EXE_TASK_IN) {
-                                ceu_err_$n = "block escape error : cannot expose reference to task in pool";
-                            }
-                        #endif
-                        #if CEU >= 4
-                            else if (!ceu_block_is_up_dn($up1, CEU_HLD_BLOCK(ceu_acc.Dyn))) {
-                                // ignore evt
-                            }
-                        #endif
-                            else {
-                                ceu_err_$n = ceu_hold_set_rec(ceu_acc, $blkc, CEU_HOLD_NONE, 1, $up1);
-                                if (ceu_err_$n != NULL) {
-                                    strcpy(ceu_err_msg, "block escape error : "); 
-                                    strncat(ceu_err_msg, ceu_err_$n, 100);
-                                    ceu_err_$n = ceu_err_msg;
-                                }
-                            }
-
+                            char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_ESC, ceu_acc, "block escape error", (ceu_hold_cmd){.Esc={$blkc,$up1}});
                             if (ceu_err_$n != NULL) {
                                 CEU_Value x_ceu_err_$n = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
                         #if CEU <= 1

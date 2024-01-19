@@ -1128,11 +1128,9 @@ fun Coder.main (tags: Tags): String {
             CEU_HOLD_CMD_TSKIN,
                 // "spawn error : task pool outlives task prototype"
             CEU_HOLD_CMD_DCL,
-                // Always possible to assign in new declaration:
-                // val x = []   ;; FLEET ;; change to MUTAB type ;; change to dst blk
-                // val x = y    ;; ELSE  ;; keep ELSE type       ;; keep block
-                // Exception:
-                // val x = evt
+                // "dcl error : cannot hold alien reference"
+            CEU_HOLD_CMD_ESC,
+                // "block escape error : reference has immutable scope"
         } CEU_HOLD_CMD;
         
         typedef union {
@@ -1147,6 +1145,10 @@ fun Coder.main (tags: Tags): String {
                 CEU3(int inexe;)
                 CEU_Block* to_blk;
             } Dcl;
+            struct {    // ESC
+                CEU_Block* cur_blk;
+                CEU_Block* to_blk;
+            } Esc;
         } ceu_hold_cmd;
         
         char* x_ceu_hold_set_rec (
@@ -1168,7 +1170,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Block* src_blk = CEU_HLD_BLOCK(src.Dyn);
             
         #if CEU >= 5
-            if (0) {
+            if (cmd == CEU_HOLD_CMD_ESC) {
                 if (
                     cur_blk != NULL &&
                     src.type == CEU_VALUE_EXE_TASK_IN &&
@@ -1320,6 +1322,22 @@ fun Coder.main (tags: Tags): String {
                         }
                     }
             #endif
+                    break;
+                case CEU_HOLD_CMD_ESC:
+                    if (
+                        src.Dyn->Any.hld.type == CEU_HOLD_IMMUT &&
+                        !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), arg.Esc.to_blk)
+                    ) {
+                        return "reference has immutable scope";
+                    }
+                #if CEU >= 4
+                    if (!ceu_block_is_up_dn(arg.Esc.to_blk, CEU_HLD_BLOCK(src.Dyn))) {
+                        // ignore evt
+                    } else
+                #endif
+                    {
+                        return x_ceu_hold_set_rec(cmd, src, arg.Esc.cur_blk, CEU_HOLD_NONE, 1, arg.Esc.to_blk);
+                    }
                     break;
                 }
             return NULL;
