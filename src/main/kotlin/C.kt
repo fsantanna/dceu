@@ -1120,6 +1120,7 @@ fun Coder.main (tags: Tags): String {
         }
         
         typedef enum {
+            CEU_HOLD_CMD_ERR,
             CEU_HOLD_CMD_NONE,
             CEU_HOLD_CMD_DCL,
                 // Always possible to assign in new declaration:
@@ -1128,9 +1129,6 @@ fun Coder.main (tags: Tags): String {
                 // Exception:
                 // val x = evt
             CEU_HOLD_CMD_DROP,
-                // Only IMMUT values fail:
-                // drop(x)  ;; change to FLEET type ;; keep blk
-            CEU_HOLD_CMD_BCAST,
                 // Only IMMUT values fail:
                 // drop(x)  ;; change to FLEET type ;; keep blk
         } CEU_HOLD_CMD;
@@ -1153,8 +1151,13 @@ fun Coder.main (tags: Tags): String {
 
             CEU_Block* src_blk = CEU_HLD_BLOCK(src.Dyn);
             
-        #if CEU >= 5
             if (cmd == CEU_HOLD_CMD_NONE) {
+                assert(cur_blk == NULL);
+                assert(!isup);
+            }
+            
+        #if CEU >= 5
+            if (cmd == CEU_HOLD_CMD_ERR) {
                 if (
                     cur_blk != NULL &&
                     src.type == CEU_VALUE_EXE_TASK_IN &&
@@ -1292,13 +1295,6 @@ fun Coder.main (tags: Tags): String {
                     return "value contains multiple references";
                 }
                 x_ceu_hold_set_rec(cmd, src, cur_blk, to_type, isup, to_blk);
-            } else if (cmd == CEU_HOLD_CMD_BCAST) {
-                CEU3(assert(inexe == 0));           // bcast never holds alien
-                assert(cur_blk == NULL);
-                assert(to_type == CEU_HOLD_MUTAB);  // bcast always fleets value
-                assert(isup == 0);
-                assert(to_blk == NULL);
-                x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_MUTAB, 0, NULL);
             } else if (cmd == CEU_HOLD_CMD_DCL) {
                 assert(cur_blk == NULL);
                 assert(to_type == CEU_HOLD_MUTAB);  // dcl always holds value
@@ -1332,11 +1328,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Block* to_blk,
             char* pre
         ) {
-            if (cmd == CEU_HOLD_CMD_BCAST) {
-                assert(pre == NULL);
-            } else {
-                assert(pre != NULL);
-            }
+            assert(pre != NULL);
             char* err = x_ceu_hold_set_pre(cmd, CEU3(inexe COMMA) src, cur_blk, to_type, isup, to_blk);
             if (err != NULL) {
                 static char msg[255];
@@ -1755,7 +1747,7 @@ fun Coder.main (tags: Tags): String {
                 ceu_gc_inc(evt); // save from nested gc_chk
                 if (evt.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                     // keep the block, set MUTAB recursively
-                    assert(NULL==x_ceu_hold_set_msg(CEU_HOLD_CMD_BCAST, CEU3(0 COMMA) evt, NULL, CEU_HOLD_MUTAB, 0, NULL, NULL) && "TODO: propagate error up");
+                    assert(NULL==x_ceu_hold_set_rec(CEU_HOLD_CMD_NONE, evt, NULL, CEU_HOLD_MUTAB, 0, NULL) && "TODO: propagate error up");
                 }
             }
             CEU_Value xin = args[1];
@@ -2163,7 +2155,7 @@ fun Coder.main (tags: Tags): String {
             {
                 CEU_Block* ts_blk = CEU_HLD_BLOCK((CEU_Dyn*)tasks);
                 if (clo.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                    assert(NULL==ceu_hold_set_rec(clo, NULL, CEU_HOLD_MUTAB, 0, ts_blk) && "TODO: propagate error up");
+                    assert(NULL==x_ceu_hold_set_rec(CEU_HOLD_CMD_NONE, clo, NULL, CEU_HOLD_MUTAB, 0, ts_blk) && "TODO: propagate error up");
                 } else if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(clo.Dyn), ts_blk)) {
                     return (CEU_Value) { CEU_VALUE_ERROR, {.Error="spawn error : task pool outlives task prototype"} };
                 }
