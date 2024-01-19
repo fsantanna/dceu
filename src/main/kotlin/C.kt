@@ -1118,7 +1118,197 @@ fun Coder.main (tags: Tags): String {
             dyn->Any.hld.prev  = NULL;
             dyn->Any.hld.next  = NULL;
         }
+        
+        typedef enum {
+            CEU_HOLD_CMD_DCL
+                // Always possible to assign in new declaration:
+                // val x = []   ;; FLEET ;; change to MUTAB type ;; change to dst blk
+                // val x = y    ;; ELSE  ;; keep ELSE type       ;; keep block
+                // Exception:
+                // val x = evt
+        } CEU_HOLD_CMD;
+        
+        char* x_ceu_hold_set_rec (
+            CEU_Value src,
+            CEU_Block* cur_blk,
+            CEU_HOLD to_type,
+            int isup,           // to_blk is above src, such that f can stop if otherwise
+            CEU_Block* to_blk
+        ) {
+            if (src.type < CEU_VALUE_DYNAMIC) {
+                return NULL;
+            }
 
+            if (src.Dyn->Any.hld.type == to_type) {
+                return NULL;     // breaks cycle
+            }
+
+            CEU_Block* src_blk = CEU_HLD_BLOCK(src.Dyn);
+            
+        #if CEU >= 5
+            if (
+                cur_blk != NULL &&
+                src.type == CEU_VALUE_EXE_TASK_IN &&
+                !ceu_block_is_up_dn(cur_blk, to_blk)
+            ) {
+                return "cannot expose task in pool to outer scope";
+            } else if (
+                //isup &&
+                to_blk != NULL &&
+                src.Dyn->Any.type   == CEU_VALUE_TRACK  &&
+                src.Dyn->Track.task != NULL             &&
+                !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)src.Dyn->Track.task), to_blk)
+            ) {
+                return "cannot expose track outside its task scope";
+            }
+        #endif            
+            
+            if (isup && ceu_block_is_up_dn(src_blk, to_blk)) {
+                return NULL;     // breaks cycle
+            }
+            
+            if (to_type != CEU_HOLD_NONE) {
+                src.Dyn->Any.hld.type = to_type;
+            }
+            if (to_blk!=NULL && to_blk!=CEU_HLD_BLOCK(src.Dyn)) {
+                ceu_hold_rem(src.Dyn);
+                ceu_hold_add(src.Dyn, to_blk CEU5(COMMA &to_blk->dn.dyns));
+            }
+            
+            char* xret = NULL;
+            #define CEU_ERR_RET(v) { xret=v; if (xret!=NULL) goto __ERR__; }
+
+            switch (src.type) {
+        #if CEU >= 2
+                case CEU_VALUE_THROW:
+                    CEU_ERR_RET(x_ceu_hold_set_rec(src.Dyn->Throw.val, cur_blk, to_type, isup, to_blk));
+                    CEU_ERR_RET(x_ceu_hold_set_rec(src.Dyn->Throw.stk, cur_blk, to_type, isup, to_blk));
+                    break;
+        #endif
+                case CEU_VALUE_CLO_FUNC:
+        #if CEU >= 3
+                case CEU_VALUE_CLO_CORO:
+        #endif
+        #if CEU >= 4
+                case CEU_VALUE_CLO_TASK:
+        #endif
+                    for (int i=0; i<src.Dyn->Clo.upvs.its; i++) {
+                        CEU_ERR_RET(x_ceu_hold_set_rec(src.Dyn->Clo.upvs.buf[i], cur_blk, to_type, isup, to_blk));
+                    }
+                    break;
+                case CEU_VALUE_TUPLE: {
+                    for (int i=0; i<src.Dyn->Tuple.its; i++) {
+                        CEU_ERR_RET(x_ceu_hold_set_rec(src.Dyn->Tuple.buf[i], cur_blk, to_type, isup, to_blk));
+                    }
+                    break;
+                }
+                case CEU_VALUE_VECTOR: {
+                    for (int i=0; i<src.Dyn->Vector.its; i++) {
+                        CEU_Value ret = ceu_vector_get(&src.Dyn->Vector, i);
+                        assert(ret.type != CEU_VALUE_ERROR);
+                        CEU_ERR_RET(x_ceu_hold_set_rec(ret, cur_blk, to_type, isup, to_blk));
+                    }
+                    break;
+                }
+                case CEU_VALUE_DICT: {
+                    for (int i=0; i<src.Dyn->Dict.max; i++) {
+                        CEU_ERR_RET(x_ceu_hold_set_rec((*src.Dyn->Dict.buf)[i][0], cur_blk, to_type, isup, to_blk));
+                        CEU_ERR_RET(x_ceu_hold_set_rec((*src.Dyn->Dict.buf)[i][1], cur_blk, to_type, isup, to_blk));
+                    }
+                    break;
+                }
+        #if CEU >= 3
+                case CEU_VALUE_EXE_CORO:
+        #if CEU >= 4
+                case CEU_VALUE_EXE_TASK:
+        #endif
+        #if CEU >= 5
+                case CEU_VALUE_EXE_TASK_IN:
+        #endif
+                {
+                    CEU_Value arg = ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.frame.clo);
+                    CEU_ERR_RET(x_ceu_hold_set_rec(arg, cur_blk, to_type, isup, to_blk));
+                    break;
+                }
+        #endif
+        #if CEU >= 5
+                case CEU_VALUE_TASKS:
+                    assert(src.Dyn->Tasks.dyns.first==NULL && "TODO: moving tasks?");
+                    break;
+                case CEU_VALUE_TRACK:
+                    // do not drop task (and chk_set ensures that track>=task)
+                    break;
+        #endif
+                default:
+                    //printf(">>> %d\n", src.type);
+                    assert(0 && "TODO: drop");
+                    break;
+            }
+
+            if (0) {
+        __ERR__:
+                // return to orignal block to match failed child blocks
+                if (to_blk != src_blk) {
+                    ceu_hold_rem(src.Dyn);
+                    ceu_hold_add(src.Dyn, src_blk CEU5(COMMA &src_blk->dn.dyns));
+                }
+            }
+            
+            return xret;
+        }
+
+        char* x_ceu_hold_set_pre (
+            CEU_HOLD_CMD cmd,
+        #if CEU >= 3
+            int inexe,
+        #endif
+            CEU_Value src,
+            CEU_Block* cur_blk,
+            CEU_HOLD to_type,
+            int isup,           // to_blk is above src, such that f can stop if otherwise
+            CEU_Block* to_blk
+        ) {
+            assert(src.type > CEU_VALUE_DYNAMIC);
+            if (cmd == CEU_HOLD_CMD_DCL) {
+                assert(to_type == CEU_HOLD_MUTAB);
+                if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
+                    x_ceu_hold_set_rec(src, cur_blk, to_type, isup, to_blk);
+                }
+        #if CEU >= 3
+                else {
+                    // val x = evt
+                    //  - evt is never FLEET
+                    if (inexe && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), to_blk)) {
+                        return "cannot hold alien reference";
+                    }
+                }
+        #endif
+            }
+            return NULL;
+        }
+
+        char* x_ceu_hold_set_msg (
+            CEU_HOLD_CMD cmd,
+        #if CEU >= 3
+            int inexe,
+        #endif
+            CEU_Value src,
+            CEU_Block* cur_blk,
+            CEU_HOLD to_type,
+            int isup,           // to_blk is above src, such that f can stop if otherwise
+            CEU_Block* to_blk,
+            char* pre
+        ) {
+            char* err = x_ceu_hold_set_pre(cmd, CEU3(inexe COMMA) src, cur_blk, to_type, isup, to_blk);
+            if (err != NULL) {
+                static char msg[255];
+                strcpy(msg, pre); 
+                strncat(msg, err, 100);
+                return msg;
+            }
+            return NULL;
+        }
+        
         char* ceu_hold_set_rec (
             CEU_Value src,
             CEU_Block* cur_blk,

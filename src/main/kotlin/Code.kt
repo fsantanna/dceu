@@ -552,29 +552,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 // DCL | ${this.dump()}
                 ${(this.init && this.src !=null && !unused).cond {
                     this.src!!.code() + """ 
-                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                            // Always possible to assign in new declaration:
-                            // val x = []   ;; FLEET ;; change to MUTAB type ;; change to dst blk
-                            // val x = y    ;; ELSE  ;; keep ELSE type       ;; keep block
-                            // Exception:
-                            // val x = evt
-                            char* ceu_err_$n = NULL;
-                            if (ceu_acc.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                                ceu_err_$n = ceu_hold_set_rec(ceu_acc, NULL, CEU_HOLD_MUTAB, 0, $bupc); 
-                                if (ceu_err_$n != NULL) {
-                                    strcpy(ceu_err_msg, "declaration error : "); 
-                                    strncat(ceu_err_msg, ceu_err_$n, 100);
-                                    ceu_err_$n = ceu_err_msg;
-                                }
-                            } else {
-                                ${ups.inexe(this,"task",true).cond { """
-                                    if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(ceu_acc.Dyn), $bupc)) {
-                                        ceu_err_$n = "declaration error : cannot hold alien reference";
-                                    }
-                                """ }}
-                            }
-                            if (ceu_err_$n != NULL) {
-                                CEU_Value err = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
+                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {                            
+                            char* ceu_$n = x_ceu_hold_set_msg (
+                                CEU_HOLD_CMD_DCL,
+                                CEU3(${ups.inexe(this,"task",true).cond2({"1"},{"0"})} COMMA)
+                                ceu_acc, NULL, CEU_HOLD_MUTAB, 0, $bupc, "declaration error"
+                            );
+                            if (ceu_$n != NULL) {
+                                CEU_Value err = { CEU_VALUE_ERROR, {.Error=ceu_$n} };
                                 CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                             }
                         }
