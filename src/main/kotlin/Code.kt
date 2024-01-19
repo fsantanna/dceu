@@ -1054,7 +1054,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                         { // ACC - DROP
                             CEU_Value ceu_$n = $idc;
-                            char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_DROP, ceu_$n, NULL, CEU_HOLD_FLEET, 0, NULL, "drop error");
+                            char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_DROP, CEU3(0 COMMA) ceu_$n, NULL, CEU_HOLD_FLEET, 0, NULL, "drop error");
                             if (ceu_err_$n != NULL) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
                                 CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
@@ -1221,7 +1221,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             }
                             
                             CEU_Value ceu_val_$n = ceu_acc;
-                            char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_DROP, ceu_val_$n, NULL, CEU_HOLD_FLEET, 0, NULL, "drop error");
+                            char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_DROP, CEU3(0 COMMA) ceu_val_$n, NULL, CEU_HOLD_FLEET, 0, NULL, "drop error");
                             if (ceu_err_$n != NULL) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
                                 CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);

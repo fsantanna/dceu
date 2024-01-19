@@ -1120,6 +1120,7 @@ fun Coder.main (tags: Tags): String {
         }
         
         typedef enum {
+            CEU_HOLD_CMD_NONE,
             CEU_HOLD_CMD_DCL,
                 // Always possible to assign in new declaration:
                 // val x = []   ;; FLEET ;; change to MUTAB type ;; change to dst blk
@@ -1129,9 +1130,13 @@ fun Coder.main (tags: Tags): String {
             CEU_HOLD_CMD_DROP,
                 // Only IMMUT values fail:
                 // drop(x)  ;; change to FLEET type ;; keep blk
+            CEU_HOLD_CMD_BCAST,
+                // Only IMMUT values fail:
+                // drop(x)  ;; change to FLEET type ;; keep blk
         } CEU_HOLD_CMD;
         
         char* x_ceu_hold_set_rec (
+            CEU_HOLD_CMD cmd,
             CEU_Value src,
             CEU_Block* cur_blk,
             CEU_HOLD to_type,
@@ -1149,20 +1154,22 @@ fun Coder.main (tags: Tags): String {
             CEU_Block* src_blk = CEU_HLD_BLOCK(src.Dyn);
             
         #if CEU >= 5
-            if (
-                cur_blk != NULL &&
-                src.type == CEU_VALUE_EXE_TASK_IN &&
-                !ceu_block_is_up_dn(cur_blk, to_blk)
-            ) {
-                return "cannot expose task in pool to outer scope";
-            } else if (
-                //isup &&
-                to_blk != NULL &&
-                src.Dyn->Any.type   == CEU_VALUE_TRACK  &&
-                src.Dyn->Track.task != NULL             &&
-                !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)src.Dyn->Track.task), to_blk)
-            ) {
-                return "cannot expose track outside its task scope";
+            if (cmd == CEU_HOLD_CMD_NONE) {
+                if (
+                    cur_blk != NULL &&
+                    src.type == CEU_VALUE_EXE_TASK_IN &&
+                    !ceu_block_is_up_dn(cur_blk, to_blk)
+                ) {
+                    return "cannot expose task in pool to outer scope";
+                } else if (
+                    //isup &&
+                    to_blk != NULL &&
+                    src.Dyn->Any.type   == CEU_VALUE_TRACK  &&
+                    src.Dyn->Track.task != NULL             &&
+                    !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)src.Dyn->Track.task), to_blk)
+                ) {
+                    return "cannot expose track outside its task scope";
+                }
             }
         #endif            
             
@@ -1184,8 +1191,8 @@ fun Coder.main (tags: Tags): String {
             switch (src.type) {
         #if CEU >= 2
                 case CEU_VALUE_THROW:
-                    CEU_ERR_RET(x_ceu_hold_set_rec(src.Dyn->Throw.val, cur_blk, to_type, isup, to_blk));
-                    CEU_ERR_RET(x_ceu_hold_set_rec(src.Dyn->Throw.stk, cur_blk, to_type, isup, to_blk));
+                    CEU_ERR_RET(x_ceu_hold_set_rec(cmd, src.Dyn->Throw.val, cur_blk, to_type, isup, to_blk));
+                    CEU_ERR_RET(x_ceu_hold_set_rec(cmd, src.Dyn->Throw.stk, cur_blk, to_type, isup, to_blk));
                     break;
         #endif
                 case CEU_VALUE_CLO_FUNC:
@@ -1196,12 +1203,12 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_CLO_TASK:
         #endif
                     for (int i=0; i<src.Dyn->Clo.upvs.its; i++) {
-                        CEU_ERR_RET(x_ceu_hold_set_rec(src.Dyn->Clo.upvs.buf[i], cur_blk, to_type, isup, to_blk));
+                        CEU_ERR_RET(x_ceu_hold_set_rec(cmd, src.Dyn->Clo.upvs.buf[i], cur_blk, to_type, isup, to_blk));
                     }
                     break;
                 case CEU_VALUE_TUPLE: {
                     for (int i=0; i<src.Dyn->Tuple.its; i++) {
-                        CEU_ERR_RET(x_ceu_hold_set_rec(src.Dyn->Tuple.buf[i], cur_blk, to_type, isup, to_blk));
+                        CEU_ERR_RET(x_ceu_hold_set_rec(cmd, src.Dyn->Tuple.buf[i], cur_blk, to_type, isup, to_blk));
                     }
                     break;
                 }
@@ -1209,14 +1216,14 @@ fun Coder.main (tags: Tags): String {
                     for (int i=0; i<src.Dyn->Vector.its; i++) {
                         CEU_Value ret = ceu_vector_get(&src.Dyn->Vector, i);
                         assert(ret.type != CEU_VALUE_ERROR);
-                        CEU_ERR_RET(x_ceu_hold_set_rec(ret, cur_blk, to_type, isup, to_blk));
+                        CEU_ERR_RET(x_ceu_hold_set_rec(cmd, ret, cur_blk, to_type, isup, to_blk));
                     }
                     break;
                 }
                 case CEU_VALUE_DICT: {
                     for (int i=0; i<src.Dyn->Dict.max; i++) {
-                        CEU_ERR_RET(x_ceu_hold_set_rec((*src.Dyn->Dict.buf)[i][0], cur_blk, to_type, isup, to_blk));
-                        CEU_ERR_RET(x_ceu_hold_set_rec((*src.Dyn->Dict.buf)[i][1], cur_blk, to_type, isup, to_blk));
+                        CEU_ERR_RET(x_ceu_hold_set_rec(cmd, (*src.Dyn->Dict.buf)[i][0], cur_blk, to_type, isup, to_blk));
+                        CEU_ERR_RET(x_ceu_hold_set_rec(cmd, (*src.Dyn->Dict.buf)[i][1], cur_blk, to_type, isup, to_blk));
                     }
                     break;
                 }
@@ -1230,7 +1237,7 @@ fun Coder.main (tags: Tags): String {
         #endif
                 {
                     CEU_Value arg = ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.frame.clo);
-                    CEU_ERR_RET(x_ceu_hold_set_rec(arg, cur_blk, to_type, isup, to_blk));
+                    CEU_ERR_RET(x_ceu_hold_set_rec(cmd, arg, cur_blk, to_type, isup, to_blk));
                     break;
                 }
         #endif
@@ -1274,15 +1281,31 @@ fun Coder.main (tags: Tags): String {
             assert(src.type > CEU_VALUE_DYNAMIC);
 
             if (cmd == CEU_HOLD_CMD_DROP) {
+                CEU3(assert(inexe == 0));           // drop never holds alien
+                assert(cur_blk == NULL);
+                assert(to_type == CEU_HOLD_FLEET);  // dcl always fleets value
+                assert(isup == 0);
+                assert(to_blk == NULL);
                 if (src.Dyn->Any.hld.type == CEU_HOLD_IMMUT) {
                     return "value is not movable";
                 } else if (src.Dyn->Any.refs > 1) {
                     return "value contains multiple references";
                 }
+                x_ceu_hold_set_rec(cmd, src, cur_blk, to_type, isup, to_blk);
+            } else if (cmd == CEU_HOLD_CMD_BCAST) {
+                CEU3(assert(inexe == 0));           // bcast never holds alien
+                assert(cur_blk == NULL);
+                assert(to_type == CEU_HOLD_MUTAB);  // bcast always fleets value
+                assert(isup == 0);
+                assert(to_blk == NULL);
+                x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_MUTAB, 0, NULL);
             } else if (cmd == CEU_HOLD_CMD_DCL) {
-                assert(to_type == CEU_HOLD_MUTAB);
+                assert(cur_blk == NULL);
+                assert(to_type == CEU_HOLD_MUTAB);  // dcl always holds value
+                assert(isup == 0);
+                assert(to_blk != NULL);
                 if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                    x_ceu_hold_set_rec(src, cur_blk, to_type, isup, to_blk);
+                    x_ceu_hold_set_rec(cmd, src, cur_blk, to_type, isup, to_blk);
                 }
         #if CEU >= 3
                 else {
@@ -1309,6 +1332,11 @@ fun Coder.main (tags: Tags): String {
             CEU_Block* to_blk,
             char* pre
         ) {
+            if (cmd == CEU_HOLD_CMD_BCAST) {
+                assert(pre == NULL);
+            } else {
+                assert(pre != NULL);
+            }
             char* err = x_ceu_hold_set_pre(cmd, CEU3(inexe COMMA) src, cur_blk, to_type, isup, to_blk);
             if (err != NULL) {
                 static char msg[255];
@@ -1338,22 +1366,20 @@ fun Coder.main (tags: Tags): String {
             CEU_Block* src_blk = CEU_HLD_BLOCK(src.Dyn);
             
         #if CEU >= 5
-            if (cmd == CEU_HOLD_CMD_DCL) {
-                if (
-                    cur_blk != NULL &&
-                    src.type == CEU_VALUE_EXE_TASK_IN &&
-                    !ceu_block_is_up_dn(cur_blk, to_blk)
-                ) {
-                    return "cannot expose task in pool to outer scope";
-                } else if (
-                    //isup &&
-                    to_blk != NULL &&
-                    src.Dyn->Any.type   == CEU_VALUE_TRACK  &&
-                    src.Dyn->Track.task != NULL             &&
-                    !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)src.Dyn->Track.task), to_blk)
-                ) {
-                    return "cannot expose track outside its task scope";
-                }
+            if (
+                cur_blk != NULL &&
+                src.type == CEU_VALUE_EXE_TASK_IN &&
+                !ceu_block_is_up_dn(cur_blk, to_blk)
+            ) {
+                return "cannot expose task in pool to outer scope";
+            } else if (
+                //isup &&
+                to_blk != NULL &&
+                src.Dyn->Any.type   == CEU_VALUE_TRACK  &&
+                src.Dyn->Track.task != NULL             &&
+                !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)src.Dyn->Track.task), to_blk)
+            ) {
+                return "cannot expose track outside its task scope";
             }
         #endif            
             
@@ -1729,7 +1755,7 @@ fun Coder.main (tags: Tags): String {
                 ceu_gc_inc(evt); // save from nested gc_chk
                 if (evt.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                     // keep the block, set MUTAB recursively
-                    assert(NULL==ceu_hold_set_rec(evt, NULL, CEU_HOLD_MUTAB, 0, NULL) && "TODO: propagate error up");
+                    assert(NULL==x_ceu_hold_set_msg(CEU_HOLD_CMD_BCAST, CEU3(0 COMMA) evt, NULL, CEU_HOLD_MUTAB, 0, NULL, NULL) && "TODO: propagate error up");
                 }
             }
             CEU_Value xin = args[1];
