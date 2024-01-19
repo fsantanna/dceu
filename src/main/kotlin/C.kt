@@ -1120,17 +1120,19 @@ fun Coder.main (tags: Tags): String {
         }
         
         typedef enum {
-            CEU_HOLD_CMD_ERR,
-            CEU_HOLD_CMD_NONE,
+            CEU_HOLD_CMD_DROP,
+                // "drop error : value is not movable"
+                // "drop error : value contains multiple references"
+            CEU_HOLD_CMD_BCAST,
+                // no error
+            CEU_HOLD_CMD_TSKIN,
+                // "spawn error : task pool outlives task prototype"
             CEU_HOLD_CMD_DCL,
                 // Always possible to assign in new declaration:
                 // val x = []   ;; FLEET ;; change to MUTAB type ;; change to dst blk
                 // val x = y    ;; ELSE  ;; keep ELSE type       ;; keep block
                 // Exception:
                 // val x = evt
-            CEU_HOLD_CMD_DROP,
-                // Only IMMUT values fail:
-                // drop(x)  ;; change to FLEET type ;; keep blk
         } CEU_HOLD_CMD;
         
         char* x_ceu_hold_set_rec (
@@ -1151,13 +1153,8 @@ fun Coder.main (tags: Tags): String {
 
             CEU_Block* src_blk = CEU_HLD_BLOCK(src.Dyn);
             
-            if (cmd == CEU_HOLD_CMD_NONE) {
-                assert(cur_blk == NULL);
-                assert(!isup);
-            }
-            
         #if CEU >= 5
-            if (cmd == CEU_HOLD_CMD_ERR) {
+            if (0) {
                 if (
                     cur_blk != NULL &&
                     src.type == CEU_VALUE_EXE_TASK_IN &&
@@ -1283,36 +1280,59 @@ fun Coder.main (tags: Tags): String {
         ) {
             assert(src.type > CEU_VALUE_DYNAMIC);
 
-            if (cmd == CEU_HOLD_CMD_DROP) {
-                CEU3(assert(inexe == 0));           // drop never holds alien
-                assert(cur_blk == NULL);
-                assert(to_type == CEU_HOLD_FLEET);  // dcl always fleets value
-                assert(isup == 0);
-                assert(to_blk == NULL);
-                if (src.Dyn->Any.hld.type == CEU_HOLD_IMMUT) {
-                    return "value is not movable";
-                } else if (src.Dyn->Any.refs > 1) {
-                    return "value contains multiple references";
-                }
-                x_ceu_hold_set_rec(cmd, src, cur_blk, to_type, isup, to_blk);
-            } else if (cmd == CEU_HOLD_CMD_DCL) {
-                assert(cur_blk == NULL);
-                assert(to_type == CEU_HOLD_MUTAB);  // dcl always holds value
-                assert(isup == 0);
-                assert(to_blk != NULL);
-                if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                    x_ceu_hold_set_rec(cmd, src, cur_blk, to_type, isup, to_blk);
-                }
-        #if CEU >= 3
-                else {
-                    if (inexe && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), to_blk)) {
-                        // val x = evt
-                        //  - evt is never FLEET
-                        return "cannot hold alien reference";
+            switch (cmd) {
+                case CEU_HOLD_CMD_DROP:
+                    CEU3(assert(inexe == 0));           // drop never holds alien
+                    assert(cur_blk == NULL);
+                    assert(to_type == CEU_HOLD_FLEET);  // dcl always fleets value
+                    assert(isup == 0);
+                    assert(to_blk == NULL);
+                    if (src.Dyn->Any.hld.type == CEU_HOLD_IMMUT) {
+                        return "value is not movable";
+                    } else if (src.Dyn->Any.refs > 1) {
+                        return "value contains multiple references";
                     }
+                    x_ceu_hold_set_rec(cmd, src, cur_blk, to_type, isup, to_blk);
+                    break;
+                case CEU_HOLD_CMD_BCAST:
+                    CEU3(assert(inexe == 0));           // never holds alien
+                    assert(cur_blk == NULL);
+                    assert(to_type == CEU_HOLD_MUTAB);
+                    assert(isup == 0);
+                    assert(to_blk == NULL);
+                    assert(NULL == x_ceu_hold_set_rec(cmd, src, cur_blk, to_type, isup, to_blk) && "TODO: propagate error up");
+                    break;
+                case CEU_HOLD_CMD_TSKIN:
+                    CEU3(assert(inexe == 0));           // never holds alien
+                    assert(cur_blk == NULL);
+                    assert(to_type == CEU_HOLD_MUTAB);
+                    assert(isup == 0);
+                    assert(to_blk != NULL);
+                    if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
+                        assert(NULL == x_ceu_hold_set_rec(cmd, src, cur_blk, to_type, isup, to_blk) && "TODO: propagate error up");
+                    } else if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), to_blk)) {
+                        return "task pool outlives task prototype";
+                    }
+                    break;
+                case CEU_HOLD_CMD_DCL:
+                    assert(cur_blk == NULL);
+                    assert(to_type == CEU_HOLD_MUTAB);  // dcl always holds value
+                    assert(isup == 0);
+                    assert(to_blk != NULL);
+                    if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
+                        x_ceu_hold_set_rec(cmd, src, cur_blk, to_type, isup, to_blk);
+                    }
+            #if CEU >= 3
+                    else {
+                        if (inexe && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), to_blk)) {
+                            // val x = evt
+                            //  - evt is never FLEET
+                            return "cannot hold alien reference";
+                        }
+                    }
+            #endif
+                    break;
                 }
-        #endif
-            }
             return NULL;
         }
 
@@ -1328,7 +1348,11 @@ fun Coder.main (tags: Tags): String {
             CEU_Block* to_blk,
             char* pre
         ) {
-            assert(pre != NULL);
+            if (cmd == CEU_HOLD_CMD_BCAST) {
+                assert(pre == NULL);
+            } else {
+                assert(pre != NULL);
+            }
             char* err = x_ceu_hold_set_pre(cmd, CEU3(inexe COMMA) src, cur_blk, to_type, isup, to_blk);
             if (err != NULL) {
                 static char msg[255];
@@ -1747,7 +1771,7 @@ fun Coder.main (tags: Tags): String {
                 ceu_gc_inc(evt); // save from nested gc_chk
                 if (evt.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                     // keep the block, set MUTAB recursively
-                    assert(NULL==x_ceu_hold_set_rec(CEU_HOLD_CMD_NONE, evt, NULL, CEU_HOLD_MUTAB, 0, NULL) && "TODO: propagate error up");
+                    assert(NULL == x_ceu_hold_set_msg(CEU_HOLD_CMD_BCAST, CEU4(0 COMMA) evt, NULL, CEU_HOLD_MUTAB, 0, NULL, NULL));
                 }
             }
             CEU_Value xin = args[1];
@@ -2154,11 +2178,7 @@ fun Coder.main (tags: Tags): String {
             }
             {
                 CEU_Block* ts_blk = CEU_HLD_BLOCK((CEU_Dyn*)tasks);
-                if (clo.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                    assert(NULL==x_ceu_hold_set_rec(CEU_HOLD_CMD_NONE, clo, NULL, CEU_HOLD_MUTAB, 0, ts_blk) && "TODO: propagate error up");
-                } else if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(clo.Dyn), ts_blk)) {
-                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error="spawn error : task pool outlives task prototype"} };
-                }
+                assert(NULL == x_ceu_hold_set_msg(CEU_HOLD_CMD_TSKIN, CEU4(0 COMMA) clo, NULL, CEU_HOLD_MUTAB, 0, ts_blk, "spawn error"));
             }
             if (tasks->max==0 || ceu_tasks_n(tasks)<tasks->max) {
                 CEU_Value ret = _ceu_create_exe_task_(CEU_VALUE_EXE_TASK_IN, CEU_HLD_BLOCK((CEU_Dyn*)tasks), clo, &tasks->dyns);
