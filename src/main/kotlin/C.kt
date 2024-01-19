@@ -1120,12 +1120,15 @@ fun Coder.main (tags: Tags): String {
         }
         
         typedef enum {
-            CEU_HOLD_CMD_DCL
+            CEU_HOLD_CMD_DCL,
                 // Always possible to assign in new declaration:
                 // val x = []   ;; FLEET ;; change to MUTAB type ;; change to dst blk
                 // val x = y    ;; ELSE  ;; keep ELSE type       ;; keep block
                 // Exception:
                 // val x = evt
+            CEU_HOLD_CMD_DROP,
+                // Only IMMUT values fail:
+                // drop(x)  ;; change to FLEET type ;; keep blk
         } CEU_HOLD_CMD;
         
         char* x_ceu_hold_set_rec (
@@ -1269,16 +1272,23 @@ fun Coder.main (tags: Tags): String {
             CEU_Block* to_blk
         ) {
             assert(src.type > CEU_VALUE_DYNAMIC);
-            if (cmd == CEU_HOLD_CMD_DCL) {
+
+            if (cmd == CEU_HOLD_CMD_DROP) {
+                if (src.Dyn->Any.hld.type == CEU_HOLD_IMMUT) {
+                    return "value is not movable";
+                } else if (src.Dyn->Any.refs > 1) {
+                    return "value contains multiple references";
+                }
+            } else if (cmd == CEU_HOLD_CMD_DCL) {
                 assert(to_type == CEU_HOLD_MUTAB);
                 if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                     x_ceu_hold_set_rec(src, cur_blk, to_type, isup, to_blk);
                 }
         #if CEU >= 3
                 else {
-                    // val x = evt
-                    //  - evt is never FLEET
                     if (inexe && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), to_blk)) {
+                        // val x = evt
+                        //  - evt is never FLEET
                         return "cannot hold alien reference";
                     }
                 }
@@ -1303,6 +1313,7 @@ fun Coder.main (tags: Tags): String {
             if (err != NULL) {
                 static char msg[255];
                 strcpy(msg, pre); 
+                strncat(msg, " : ", 5);
                 strncat(msg, err, 100);
                 return msg;
             }
@@ -1327,20 +1338,22 @@ fun Coder.main (tags: Tags): String {
             CEU_Block* src_blk = CEU_HLD_BLOCK(src.Dyn);
             
         #if CEU >= 5
-            if (
-                cur_blk != NULL &&
-                src.type == CEU_VALUE_EXE_TASK_IN &&
-                !ceu_block_is_up_dn(cur_blk, to_blk)
-            ) {
-                return "cannot expose task in pool to outer scope";
-            } else if (
-                //isup &&
-                to_blk != NULL &&
-                src.Dyn->Any.type   == CEU_VALUE_TRACK  &&
-                src.Dyn->Track.task != NULL             &&
-                !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)src.Dyn->Track.task), to_blk)
-            ) {
-                return "cannot expose track outside its task scope";
+            if (cmd == CEU_HOLD_CMD_DCL) {
+                if (
+                    cur_blk != NULL &&
+                    src.type == CEU_VALUE_EXE_TASK_IN &&
+                    !ceu_block_is_up_dn(cur_blk, to_blk)
+                ) {
+                    return "cannot expose task in pool to outer scope";
+                } else if (
+                    //isup &&
+                    to_blk != NULL &&
+                    src.Dyn->Any.type   == CEU_VALUE_TRACK  &&
+                    src.Dyn->Track.task != NULL             &&
+                    !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)src.Dyn->Track.task), to_blk)
+                ) {
+                    return "cannot expose track outside its task scope";
+                }
             }
         #endif            
             
@@ -1490,23 +1503,6 @@ fun Coder.main (tags: Tags): String {
             }
             return (CEU_Value) { CEU_VALUE_NIL };
         }
-        
-        CEU_Value ceu_drop (CEU_Value v) {
-            // Only IMMUT values fail:
-            // drop(x)  ;; change to FLEET type ;; keep blk
-        
-            if (v.type < CEU_VALUE_DYNAMIC) {
-                return (CEU_Value) { CEU_VALUE_NIL };
-            } else if (v.Dyn->Any.hld.type == CEU_HOLD_IMMUT) {
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : value is not movable"} };
-            } else if (v.Dyn->Any.refs > 1) {
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : value contains multiple references"} };
-            }
-            //ceu_hold_set_to_fleet(v);
-            assert(NULL==ceu_hold_set_rec(v, NULL, CEU_HOLD_FLEET, 0, NULL) && "TODO: propagate error up");
-            ceu_gc_dec(v, 0);
-            return (CEU_Value) { CEU_VALUE_NIL };
-        }        
     """ +
     """ // BCAST
     #if CEU >= 4
