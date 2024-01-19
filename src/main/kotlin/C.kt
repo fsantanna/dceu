@@ -1162,7 +1162,6 @@ fun Coder.main (tags: Tags): String {
             CEU_Value src,
             CEU_Block* cur_blk,
             CEU_HOLD to_type,
-            int isup,           // to_blk is above src, such that f can stop if otherwise
             CEU_Block* to_blk
         ) {
             if (src.type < CEU_VALUE_DYNAMIC) {
@@ -1193,9 +1192,10 @@ fun Coder.main (tags: Tags): String {
                     return "cannot expose track outside its task scope";
                 }
             }
-        #endif            
+        #endif
             
-            if (isup && ceu_block_is_up_dn(src_blk, to_blk)) {
+            if (cmd==CEU_HOLD_CMD_ESC && ceu_block_is_up_dn(src_blk, to_blk)) {
+                // do { x[0]=x ; x }
                 return NULL;     // breaks cycle
             }
             
@@ -1213,8 +1213,8 @@ fun Coder.main (tags: Tags): String {
             switch (src.type) {
         #if CEU >= 2
                 case CEU_VALUE_THROW:
-                    CEU_ERR_RET(x_ceu_hold_set_rec(cmd, src.Dyn->Throw.val, cur_blk, to_type, isup, to_blk));
-                    CEU_ERR_RET(x_ceu_hold_set_rec(cmd, src.Dyn->Throw.stk, cur_blk, to_type, isup, to_blk));
+                    CEU_ERR_RET(x_ceu_hold_set_rec(cmd, src.Dyn->Throw.val, cur_blk, to_type, to_blk));
+                    CEU_ERR_RET(x_ceu_hold_set_rec(cmd, src.Dyn->Throw.stk, cur_blk, to_type, to_blk));
                     break;
         #endif
                 case CEU_VALUE_CLO_FUNC:
@@ -1225,12 +1225,12 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_CLO_TASK:
         #endif
                     for (int i=0; i<src.Dyn->Clo.upvs.its; i++) {
-                        CEU_ERR_RET(x_ceu_hold_set_rec(cmd, src.Dyn->Clo.upvs.buf[i], cur_blk, to_type, isup, to_blk));
+                        CEU_ERR_RET(x_ceu_hold_set_rec(cmd, src.Dyn->Clo.upvs.buf[i], cur_blk, to_type, to_blk));
                     }
                     break;
                 case CEU_VALUE_TUPLE: {
                     for (int i=0; i<src.Dyn->Tuple.its; i++) {
-                        CEU_ERR_RET(x_ceu_hold_set_rec(cmd, src.Dyn->Tuple.buf[i], cur_blk, to_type, isup, to_blk));
+                        CEU_ERR_RET(x_ceu_hold_set_rec(cmd, src.Dyn->Tuple.buf[i], cur_blk, to_type, to_blk));
                     }
                     break;
                 }
@@ -1238,14 +1238,14 @@ fun Coder.main (tags: Tags): String {
                     for (int i=0; i<src.Dyn->Vector.its; i++) {
                         CEU_Value ret = ceu_vector_get(&src.Dyn->Vector, i);
                         assert(ret.type != CEU_VALUE_ERROR);
-                        CEU_ERR_RET(x_ceu_hold_set_rec(cmd, ret, cur_blk, to_type, isup, to_blk));
+                        CEU_ERR_RET(x_ceu_hold_set_rec(cmd, ret, cur_blk, to_type, to_blk));
                     }
                     break;
                 }
                 case CEU_VALUE_DICT: {
                     for (int i=0; i<src.Dyn->Dict.max; i++) {
-                        CEU_ERR_RET(x_ceu_hold_set_rec(cmd, (*src.Dyn->Dict.buf)[i][0], cur_blk, to_type, isup, to_blk));
-                        CEU_ERR_RET(x_ceu_hold_set_rec(cmd, (*src.Dyn->Dict.buf)[i][1], cur_blk, to_type, isup, to_blk));
+                        CEU_ERR_RET(x_ceu_hold_set_rec(cmd, (*src.Dyn->Dict.buf)[i][0], cur_blk, to_type, to_blk));
+                        CEU_ERR_RET(x_ceu_hold_set_rec(cmd, (*src.Dyn->Dict.buf)[i][1], cur_blk, to_type, to_blk));
                     }
                     break;
                 }
@@ -1259,7 +1259,7 @@ fun Coder.main (tags: Tags): String {
         #endif
                 {
                     CEU_Value arg = ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.frame.clo);
-                    CEU_ERR_RET(x_ceu_hold_set_rec(cmd, arg, cur_blk, to_type, isup, to_blk));
+                    CEU_ERR_RET(x_ceu_hold_set_rec(cmd, arg, cur_blk, to_type, to_blk));
                     break;
                 }
         #endif
@@ -1303,21 +1303,21 @@ fun Coder.main (tags: Tags): String {
                     } else if (src.Dyn->Any.refs > 1) {
                         return "value contains multiple references";
                     }
-                    x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_FLEET, 0, NULL);
+                    x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_FLEET, NULL);
                     break;
                 case CEU_HOLD_CMD_BCAST:
-                    assert(NULL == x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_MUTAB, 0, NULL) && "TODO: propagate error up");
+                    assert(NULL == x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_MUTAB, NULL) && "TODO: propagate error up");
                     break;
                 case CEU_HOLD_CMD_TSKIN:
                     if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                        assert(NULL == x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_MUTAB, 0, arg.Tskin.to_blk) && "TODO: propagate error up");
+                        assert(NULL == x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_MUTAB, arg.Tskin.to_blk) && "TODO: propagate error up");
                     } else if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), arg.Tskin.to_blk)) {
                         return "task pool outlives task prototype";
                     }
                     break;
                 case CEU_HOLD_CMD_DCL:
                     if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                        x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_MUTAB, 0, arg.Dcl.to_blk);
+                        x_ceu_hold_set_rec(cmd, src, NULL, CEU_HOLD_MUTAB, arg.Dcl.to_blk);
                     }
             #if CEU >= 3
                     else {
@@ -1342,7 +1342,7 @@ fun Coder.main (tags: Tags): String {
                     } else
                 #endif
                     {
-                        return x_ceu_hold_set_rec(cmd, src, arg.Esc.cur_blk, CEU_HOLD_NONE, 1, arg.Esc.to_blk);
+                        return x_ceu_hold_set_rec(cmd, src, arg.Esc.cur_blk, CEU_HOLD_NONE, arg.Esc.to_blk);
                     }
                     break;
                 }
