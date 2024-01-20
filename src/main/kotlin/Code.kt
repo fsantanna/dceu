@@ -838,11 +838,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // Also error:
                             // set pub = evt
                             char* ceu_err_$n = NULL;
-                        #if 0 //CEU >= 5
-                            if ($src.type == CEU_VALUE_EXE_TASK_IN) {
-                                ceu_err_$n = "set error : cannot expose reference to task in pool";
-                            } else
-                        #endif
                             if ($src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                                 ceu_err_$n = ceu_hold_set_rec($src, NULL, CEU_HOLD_MUTAB, 0, ceu_acc.Dyn->Exe_Task.dn_block);
                                 if (ceu_err_$n != NULL) {

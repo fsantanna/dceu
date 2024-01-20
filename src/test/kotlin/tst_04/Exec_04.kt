@@ -372,6 +372,26 @@ class Exec_04 {
         assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
                 " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
+    @Test
+    fun cd_03_bcast_pub_arg() {
+        val out = test("""
+            val T = task () {
+                yield(nil)
+                set pub() = evt
+                nil
+            }
+            spawn T() 
+            do {
+                val e = []
+                broadcast(e)
+            }
+            println(:ok)
+        """)
+        //assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
+        assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
+                " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
+    }
 
     // BROADCAST
 
