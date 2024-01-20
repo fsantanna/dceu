@@ -1155,10 +1155,10 @@ fun Coder.main (tags: Tags): String {
                 CEU3(int inexe;)
                 CEU_Block* to_blk;
             } Dcl;
-            struct {    // ESC
-                CEU_Block* cur_blk;
+            struct {    // SET
+                CEU3(int inexe;)
                 CEU_Block* to_blk;
-            } Esc;
+            } Set;
             struct {    // ARG
                 CEU3(int inexe;)
                 CEU_Block* to_blk;
@@ -1311,13 +1311,19 @@ fun Coder.main (tags: Tags): String {
             #if CEU >= 3
             if (arg.Dcl.inexe && (
                 (cmd==CEU_HOLD_CMD_DCL && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Dcl.to_blk)) ||
+                (cmd==CEU_HOLD_CMD_SET && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Dcl.to_blk) && src.Dyn->Any.hld.type!=CEU_HOLD_FLEET) ||
                 (cmd==CEU_HOLD_CMD_ARG && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Arg.to_blk) && src.Dyn->Any.hld.type!=CEU_HOLD_FLEET)
             )) {
                 // DCL | val x = evt
+                // SET | { yield() ; var x ; set x=evt }  ;; Exec_04.de_03x_evt_err
                 // ARG | do { val t=[] ; resume co(t) }   ;; Exec_03.gg_02_scope
                 return "cannot hold alien reference";
             }
             #endif
+
+            if (cmd==CEU_HOLD_CMD_SET && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Dcl.to_blk) && src.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
+                return "cannot assign reference to outer scope";
+            }
 
             switch (cmd) {
                 case CEU_HOLD_CMD_DROP:

@@ -951,30 +951,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // set dst = trk(x) where block(dst) < block(x)
                             // Also error:
                             // set dst = detrack(x), where block(dst) < current block
-                            char* ceu_err_$n = NULL;
-                            if ($src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                                {
-                                    ceu_err_$n = ceu_hold_set_rec($src, NULL, CEU_HOLD_MUTAB, 0, ${vblk.idc("block",nst)});
-                                    if (ceu_err_$n != NULL) {
-                                        strcpy(ceu_err_msg, "set error : "); 
-                                        strncat(ceu_err_msg, ceu_err_$n, 100);
-                                        ceu_err_$n = ceu_err_msg;
-                                    }
-                                }
-                            } else {
-                                if (!ceu_block_is_up_dn(CEU_HLD_BLOCK($src.Dyn), ${vblk.idc("block",nst)})) {
-                                    ${ups.inexe(this,"task",true).cond { """
-                                        if (!ceu_block_is_up_dn(${vblk.idc("block",nst)}, CEU_HLD_BLOCK($src.Dyn))) {
-                                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="declaration error : cannot hold alien reference"} };
-                                            CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                                        } else                                        
-                                    """ }}
-                                    {
-                                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot assign reference to outer scope"} };
-                                        CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                                    }
-                                }
-                            }
+                            char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_SET, $src, "set error", (ceu_hold_cmd) {.Set={
+                                CEU3(${ups.inexe(this,"task",true).toc()} COMMA)
+                                ${vblk.idc("block",nst)}
+                            }});
                             if (ceu_err_$n != NULL) {
                                 CEU_Value x_ceu_err_$n = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
                                 CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", x_ceu_err_$n);
