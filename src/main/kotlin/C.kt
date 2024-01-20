@@ -1187,7 +1187,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Block* src_blk = CEU_HLD_BLOCK(src.Dyn);
             
         #if CEU >= 5
-            if (cmd == CEU_HOLD_CMD_ESC) {
+            if (cmd==CEU_HOLD_CMD_SET || cmd==CEU_HOLD_CMD_ESC) {
                 if (
                     cur_blk != NULL &&
                     src.type == CEU_VALUE_EXE_TASK_IN &&
@@ -1351,7 +1351,7 @@ fun Coder.main (tags: Tags): String {
                     break;
                 case CEU_HOLD_CMD_SET:
                     if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                        assert(NULL == x_ceu_hold_set_rec(CEU_HOLD_CMD_DCL, src, NULL, CEU_HOLD_MUTAB, arg.Dcl.to_blk) && "TODO: propagate error up");
+                        return x_ceu_hold_set_rec(CEU_HOLD_CMD_SET, src, NULL, CEU_HOLD_MUTAB, arg.Set.to_blk);
                     }
                     break;
                 case CEU_HOLD_CMD_ARG:
