@@ -1130,6 +1130,9 @@ fun Coder.main (tags: Tags): String {
             CEU_HOLD_CMD_DCL,
                 // "dcl error : cannot hold alien reference"
             CEU_HOLD_CMD_SET,
+        #if CEU >= 4
+            CEU_HOLD_CMD_PUB,
+        #endif
                 // 
             CEU_HOLD_CMD_ARG,
                 // "argument error : cannot receive pending reference"
@@ -1193,7 +1196,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Block* src_blk = CEU_HLD_BLOCK(src.Dyn);
             
         #if CEU >= 5
-            if (cmd==CEU_HOLD_CMD_SET || cmd==CEU_HOLD_CMD_ESC) {
+            if (cmd==CEU_HOLD_CMD_SET || cmd==CEU_HOLD_CMD_PUB || cmd==CEU_HOLD_CMD_ESC) {
                 if (
                     cur_blk != NULL &&
                     src.type == CEU_VALUE_EXE_TASK_IN &&
@@ -1318,7 +1321,9 @@ fun Coder.main (tags: Tags): String {
             if (src.Dyn->Any.hld.type!=CEU_HOLD_FLEET && arg.Dcl.inexe && (
                 (cmd==CEU_HOLD_CMD_DCL && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Dcl.to_blk)) ||
                 (cmd==CEU_HOLD_CMD_SET && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Dcl.to_blk) /*&& src.Dyn->Any.hld.type!=CEU_HOLD_FLEET*/) ||
-                //(cmd==CEU_HOLD_CMD_PUB && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Dcl.to_blk) /*&& src.Dyn->Any.hld.type!=CEU_HOLD_FLEET*/) ||
+            #if CEU >= 4
+                (cmd==CEU_HOLD_CMD_PUB && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Dcl.to_blk) /*&& src.Dyn->Any.hld.type!=CEU_HOLD_FLEET*/) ||
+            #endif
                 (cmd==CEU_HOLD_CMD_ARG && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Arg.to_blk) /*&& src.Dyn->Any.hld.type!=CEU_HOLD_FLEET*/)
             )) {
                 // DCL | val x = evt
@@ -1329,7 +1334,13 @@ fun Coder.main (tags: Tags): String {
             }
             #endif
 
-            if (cmd==CEU_HOLD_CMD_SET && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Dcl.to_blk) && src.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
+            if (
+                cmd==CEU_HOLD_CMD_SET && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Dcl.to_blk) && src.Dyn->Any.hld.type!=CEU_HOLD_FLEET
+            #if CEU >= 4
+                ||
+                cmd==CEU_HOLD_CMD_PUB && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Pub.to_blk) && src.Dyn->Any.hld.type!=CEU_HOLD_FLEET
+            #endif
+            ) {
                 return "cannot assign reference to outer scope";
             }
 
@@ -1362,6 +1373,13 @@ fun Coder.main (tags: Tags): String {
                         return x_ceu_hold_set_rec(CEU_HOLD_CMD_SET, src, NULL, CEU_HOLD_MUTAB, arg.Set.to_blk);
                     }
                     break;
+            #if CEU >= 4
+                case CEU_HOLD_CMD_PUB:
+                    if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
+                        return x_ceu_hold_set_rec(CEU_HOLD_CMD_PUB, src, NULL, CEU_HOLD_MUTAB, arg.Pub.to_blk);
+                    }
+                    break;
+            #endif
                 case CEU_HOLD_CMD_ARG:
                     if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                         if (src.Dyn->Any.refs > 1) {
