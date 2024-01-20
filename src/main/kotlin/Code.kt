@@ -952,25 +952,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // Also error:
                             // set dst = detrack(x), where block(dst) < current block
                             char* ceu_err_$n = NULL;
-                        #if 0 //CEU >= 5
-                            if (
-                                $src.type == CEU_VALUE_EXE_TASK_IN &&
-                                !ceu_block_is_up_dn($bupc, ${vblk.idc("block",nst)})
-                            ) {
-                                ceu_err_$n = "set error : cannot expose reference to task in pool";
-                            } else
-                        #endif
                             if ($src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                        #if 0 //CEU >= 5
-                                if (
-                                    $src.Dyn->Any.type   == CEU_VALUE_TRACK  &&
-                                    $src.Dyn->Track.task != NULL             &&
-                                    !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)$src.Dyn->Track.task), ${vblk.idc("block",nst)})
-                                ) {
-                                    ceu_err_$n = "set error : cannot expose track outside its task scope";
-                                }
-                                else
-                        #endif
                                 {
                                     ceu_err_$n = ceu_hold_set_rec($src, NULL, CEU_HOLD_MUTAB, 0, ${vblk.idc("block",nst)});
                                     if (ceu_err_$n != NULL) {
@@ -991,15 +973,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot assign reference to outer scope"} };
                                         CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                     }
-                                } else {
-                                    /*
-                                    ceu_err_$n = ceu_hold_set_rec($src, $bupc, CEU_HOLD_NONE, 0, ${vblk.idc("block",nst)});
-                                    if (ceu_err_$n != NULL) {
-                                        strcpy(ceu_err_msg, "set error : "); 
-                                        strncat(ceu_err_msg, ceu_err_$n, 100);
-                                        ceu_err_$n = ceu_err_msg;
-                                    }
-                                    */
                                 }
                             }
                             if (ceu_err_$n != NULL) {

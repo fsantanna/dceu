@@ -806,7 +806,7 @@ class Exec_04 {
             }
         """)
         assert(out == " |  anon : (lin 10, col 17) : broadcast'([10],:task)\n" +
-                " v  anon : (lin 5, col 21) : declaration error : cannot hold alien reference\n") { out }
+                " v  anon : (lin 5, col 21) : set error : cannot hold alien reference\n") { out }
     }
     @Test
     fun de_03y_evt_err() {

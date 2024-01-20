@@ -944,7 +944,7 @@ class Exec_05 {
                 " v  anon : (lin 8, col 32) : block escape error : cannot expose task in pool to outer scope\n") { out }
     }
     @Test
-    fun ff_02x_detrack_err() {
+    fun XXX_ff_02x_detrack_err() {
         val out = test("""
             val T = task () {
                 ${AWAIT()}
@@ -1540,7 +1540,7 @@ class Exec_05 {
         assert(out == " v  anon : (lin 14, col 25) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
-    fun oo_04_track() {
+    fun XXX_oo_04_track() {
         val out = test("""
             var T = task (v) {
                 yield(nil) ; nil
