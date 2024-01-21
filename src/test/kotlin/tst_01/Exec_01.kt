@@ -1347,7 +1347,7 @@ class Exec_01 {
         assert(out == "anon : (lin 3, col 17) : declaration error : variable \"x\" is already declared\n") { out }
     }
     @Test
-    fun todo_dcl4_dup() {
+    fun dcl4_dup() {
         val out = test(
             """
             do {
@@ -3303,15 +3303,15 @@ class Exec_01 {
         assert(out.contains("pointer: 0x")) { out }
     }
     @Test
-    fun todo_native13_pre() {
+    fun TODO_native13_pre_visible() {
         val out = test(
             """
             ```
-            int X = 1;
+            int X = 1;          ;; should it be visible...
             ```
             var f
             set f = func () {
-                `:number X`
+                `:number X`     ;; ...here?
             }
             println(f())
         """

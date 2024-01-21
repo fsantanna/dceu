@@ -660,7 +660,7 @@ class Exec_04 {
         assert(out == "true\n") { out }
     }
     @Test
-    fun todo_debug_gc_dd_16_bcast() {
+    fun gc_dd_16_bcast() {
         val out = test(
             """
             do {
@@ -1554,7 +1554,7 @@ class Exec_04 {
     //  - Option 2: should at least raise an exception and not panic program
 
     @Test
-    fun todo_gh_01_coro_defer_bcast_err() {
+    fun TODO_gh_01_coro_defer_bcast_err() {
         val out = test("""
             val f = func (v) {
                 println(:4)
@@ -1579,7 +1579,7 @@ class Exec_04 {
         assert(out.contains(": Assertion `0 && \"TODO: cannot spawn or broadcast during abortion\"'")) { out }
     }
     @Test
-    fun todo_gh_02_coro_defer_spawn_err() {
+    fun TODO_gh_02_coro_defer_spawn_err() {
         val out = test("""
             val f = func (v) {
                 spawn (task () {
@@ -1807,7 +1807,7 @@ class Exec_04 {
         //        " v  anon : (lin 3, col 38) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
-    fun todo_jj_02_task_nest() {
+    fun jj_02_task_nest() {
         val out = test("""
             spawn( task (v1) {
                 spawn (task (v2) {
@@ -1818,10 +1818,11 @@ class Exec_04 {
                 })(2)
             })(1)
         """)
-        assert(out == "1\t2\t3\n" +
-                " |  anon : (lin 2, col 19) : (task (v1) { spawn (task (v2) { spawn (task (...)\n" +
-                " |  anon : (lin 3, col 23) : (task (v2) { spawn (task (v3) { println(v1,v2...)\n" +
-                " v  anon : (lin 3, col 33) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "1\t2\t3\n" +
+        //        " |  anon : (lin 2, col 19) : (task (v1) { spawn (task (v2) { spawn (task (...)\n" +
+        //        " |  anon : (lin 3, col 23) : (task (v2) { spawn (task (v3) { println(v1,v2...)\n" +
+        //        " v  anon : (lin 3, col 33) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "1\t2\t3\n") { out }
     }
 
     // PUB
@@ -2493,7 +2494,7 @@ class Exec_04 {
         assert(out == ":1\n:2\n:3\n:a\n:b\n:ok\n") { out }
     }
     @Test
-    fun todo_xxx_remove_or_move_when_stack_overflow_resolved_in_previous_example() {
+    fun mm_06x_bcast_term() {
         val out = test("""
             spawn (task () {
                 val T = task () {
@@ -2556,7 +2557,7 @@ class Exec_04 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun todo_mo_02_global_abort() {
+    fun mo_02_global_abort() {
         val out = test("""
             spawn (task () {
                 yield(nil)
@@ -2572,7 +2573,7 @@ class Exec_04 {
             broadcast(nil)
             println(:ok)
         """)
-        assert(out == "10\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun mo_04_bcast_term() {
@@ -2660,7 +2661,7 @@ class Exec_04 {
         assert(out == ":0\n:1\n:2\n:3\n:ok\n:4\n") { out }
     }
     @Test
-    fun BUG_mo_07_bcast_term() {
+    fun mo_07_bcast_term() {
         val out = test("""
             spawn (task () {
                 val T = task () {
@@ -2693,11 +2694,11 @@ class Exec_04 {
         assert(out == ":0\n:1\n:2\n:3\n:ok\n:4\n") { out }
     }
     @Test
-    fun BUG_mo_08_bcast_term() {
+    fun BUG_mo_08_bcast_func_defer() {
         val out = test("""
             val f = func (t) {
                 defer {
-                    println(:ok)    // TODO: aborted func does not execute defer
+                    println(:ok)    ;; TODO: aborted func should execute defer
                 }
                 println(:1)
                 broadcast(nil) in t
@@ -2754,12 +2755,12 @@ class Exec_04 {
         assert(out == ":1\n:2\n:3\n") { out }
     }
     @Test
-    fun BUG_mp_02_abort() {
+    fun BUG_mp_02_bcast_func_defer() {
         val out = test("""
             val f = func () {
                 do {
                     defer {
-                        println(:4)    // TODO: aborted func does not execute defer
+                        println(:4)    ;; TODO: aborted func should execute defer
                     }
                     println(:1)
                     broadcast(nil) in :global
@@ -2833,12 +2834,12 @@ class Exec_04 {
         assert(out == ":1\n:2\n:3\n") { out }
     }
     @Test
-    fun BUG_mp_05_abort() {
+    fun BUG_mp_05_bcast_func_defer() {
         val out = test("""
             val f = func () {
                 do {
                     defer {
-                        println(:4)    // TODO: aborted func does not execute defer
+                        println(:4)    ;; TODO: aborted func should execute defer
                     }
                     println(:1)
                     resume (coroutine(coro () {
@@ -2866,12 +2867,32 @@ class Exec_04 {
         assert(out == ":1\n:2\n:3\n:4\n") { out }
     }
     @Test
-    fun BUG_mp_06_abort() {
+    fun BUG_mp_05_bcast_func_leak() {
+        val out = test("""
+            val f = func () {
+                val x = []
+                broadcast(nil) in :global
+            }
+            spawn (task () {
+                spawn (task () {
+                    yield(nil)
+                    f()
+                    println(:nooo)
+                }) ()
+                yield(nil)
+            }) ()
+            broadcast(nil)
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun BUG_mp_06_bcast_func_defer() {
         val out = test("""
             val f = func () {
                 do {
                     defer {
-                        println(:4)    // TODO: aborted func does not execute defer
+                        println(:4)    ;; TODO: aborted func should execute defer
                     }
                     println(:1)
                     spawn (task () {

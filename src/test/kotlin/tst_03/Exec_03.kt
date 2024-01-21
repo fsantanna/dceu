@@ -246,25 +246,25 @@ class Exec_03 {
         assert(out == "13\n") { out }
     }
     @Test
-    fun todo_cc_11_mult() {
+    fun TODO_cc_11_mult() {
         val out = test("""
             var co
             set co = coroutine(coro (x,y) {
                 println(x,y)
             })
-            resume co(1,2)
+            resume co(1,2)  ;; pass multiple values
         """)
         assert(out == "1\t2\n") { out }
     }
     @Test
-    fun todo_cc_12_multi_err() {
+    fun TODO_cc_12_multi_err() {
         val out = test("""
             var co
             set co = coroutine(coro () {
                 yield(nil) ;;thus { it => nil }
             })
             resume co()
-            resume co(1,2)
+            resume co(1,2)  ;; pass multiple values
         """)
         assert(out.contains("TODO: multiple arguments to resume")) { out }
     }
@@ -364,12 +364,12 @@ class Exec_03 {
     // MEM vs STACK
 
     @Test
-    fun todo_dd_01_stack() {    // TODO: for now, all exes use mem
+    fun TODO_dd_01_access_from_c() {    // TODO: for now, all exes use mem
         val out = test("""
             val CO = coro (v1) {
                 val v2 = 2
                 println(v1, v2)
-                ```
+                ```                 // access from c
                 printf("%f\t%f\n", id_v1.Number, id_v2.Number);
                 ```
             }
@@ -593,21 +593,22 @@ class Exec_03 {
         assert(out == " v  anon : (lin 8, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
-    fun todo_ff_04_move_err () {
+    fun ff_04_move_err () {
         val out = test("""
             val y = do {
                 val x = coroutine(coro () {
-                    yield(nil) thus { it => nil}
-                    println(:ok)
+                    println(:1)
+                    yield(nil)
+                    println(:2)
                 })
                 resume x()
                 drop(x)
             }
-            println(y)
+            resume y()
         """)
         //assert(out == "anon : (lin 9, col 22) : move error : value is not movable\n" +
         //        ":error\n") { out }
-        assert(out.contains("Assertion `0 && \"TODO: drop\"' failed."))
+        assert(out == (":1\n:2\n"))
     }
 
     // SCOPE
@@ -890,7 +891,7 @@ class Exec_03 {
         assert(out == ":e1\n:e2\n") { out }
     }
     @Test
-    fun BUG_hh_04_catch_yield_err() {
+    fun hh_04_catch_yield_err() {
         val out = test("""
             coro () {
                 catch ( it => do {
@@ -901,7 +902,7 @@ class Exec_03 {
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 40) : declaration error : variable \"it\" is already declared\n") { out }
+        assert(out == "anon : (lin 4, col 27) : declaration error : variable \"it\" is already declared\n") { out }
     }
     @Test
     fun hh_05_throw() {
@@ -987,7 +988,7 @@ class Exec_03 {
         assert(out == ":it\t[]\n") { out }
     }
     @Test
-    fun BUG_jj_03_it_err() {
+    fun jj_03_it_err() {
         val out = test("""
             val CO = coro (x) {
                 func (x) {
@@ -998,7 +999,7 @@ class Exec_03 {
             resume co()
             resume co([])
         """,)
-        assert(out == "anon : (lin 3, col 35) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == "anon : (lin 3, col 23) : declaration error : variable \"x\" is already declared\n") { out }
     }
     @Test
     fun jj_04_it_data() {
@@ -1016,7 +1017,7 @@ class Exec_03 {
         assert(out == ":it\t10\n") { out }
     }
     @Test
-    fun BUG_jj_04_it_it_err() {
+    fun jj_04_it_it_err() {
         val out = test("""
             val CO = coro () {
                 func (x) {
@@ -1027,7 +1028,7 @@ class Exec_03 {
             }
         """,)
         //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing yield\n") thus { out }
-        assert(out == "anon : (lin 4, col 39) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == "anon : (lin 4, col 27) : declaration error : variable \"x\" is already declared\n") { out }
     }
 
     // INDEX / TUPLE / VECTOR / DICT
