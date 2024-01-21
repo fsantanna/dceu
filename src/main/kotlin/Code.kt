@@ -316,7 +316,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                                 // Exception:
                                                 // f([[nil]][0]) ;; passing part of fleeting
                                                 //  - reject if fleet has multiple refs
-                                                char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_ARG, $idc, "argument error",
+                                                char* ceu_err_$n = ceu_hold_set_msg(CEU_HOLD_CMD_ARG, $idc, "argument error",
                                                     (ceu_hold_cmd) {.Arg={
                                                         $blkc
                                                         CEU3(COMMA ${inexe.toc()})
@@ -409,7 +409,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // return trk(x) where block(up) < block(x)
                             // Also error:
                             // return detrack(x), in any case
-                            char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_ESC, ceu_acc, "block escape error", (ceu_hold_cmd){.Esc={$blkc,$up1}});
+                            char* ceu_err_$n = ceu_hold_set_msg(CEU_HOLD_CMD_ESC, ceu_acc, "block escape error", (ceu_hold_cmd){.Esc={$blkc,$up1}});
                             if (ceu_err_$n != NULL) {
                                 CEU_Value x_ceu_err_$n = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
                         #if CEU <= 1
@@ -512,7 +512,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 ${(this.init && this.src !=null && !unused).cond {
                     this.src!!.code() + """ 
                         if (ceu_acc.type > CEU_VALUE_DYNAMIC) {                            
-                            char* ceu_$n = x_ceu_hold_set_msg (
+                            char* ceu_$n = ceu_hold_set_msg (
                                 CEU_HOLD_CMD_DCL,
                                 ceu_acc,
                                 "declaration error",
@@ -837,7 +837,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             //      - blk(pub) >= blk(src) (deeper)
                             // Also error:
                             // set pub = evt
-                            char* ceu_err_$n = x_ceu_hold_set_msg (
+                            char* ceu_err_$n = ceu_hold_set_msg (
                                 CEU_HOLD_CMD_PUB,
                                 $src,
                                 "set error",
@@ -934,7 +934,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // set dst = trk(x) where block(dst) < block(x)
                             // Also error:
                             // set dst = detrack(x), where block(dst) < current block
-                            char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_SET, $src, "set error", (ceu_hold_cmd) {.Set={
+                            char* ceu_err_$n = ceu_hold_set_msg(CEU_HOLD_CMD_SET, $src, "set error", (ceu_hold_cmd) {.Set={
                                 ${vblk.idc("block",nst)}
                                 CEU3(COMMA ${ups.inexe(this,"task",true).toc()})
                             }});
@@ -953,7 +953,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                         { // ACC - DROP
                             CEU_Value ceu_$n = $idc;
-                            char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_DROP, ceu_$n, "drop error", (ceu_hold_cmd){.Drop={}});
+                            char* ceu_err_$n = ceu_hold_set_msg(CEU_HOLD_CMD_DROP, ceu_$n, "drop error", (ceu_hold_cmd){.Drop={}});
                             if (ceu_err_$n != NULL) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
                                 CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
@@ -1120,7 +1120,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             }
                             
                             CEU_Value ceu_val_$n = ceu_acc;
-                            char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_DROP, ceu_val_$n, "drop error", (ceu_hold_cmd){.Drop={}});
+                            char* ceu_err_$n = ceu_hold_set_msg(CEU_HOLD_CMD_DROP, ceu_val_$n, "drop error", (ceu_hold_cmd){.Drop={}});
                             if (ceu_err_$n != NULL) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
                                 CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
