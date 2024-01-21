@@ -944,7 +944,7 @@ class Exec_05 {
                 " v  anon : (lin 8, col 32) : block escape error : cannot expose task in pool to outer scope\n") { out }
     }
     @Test
-    fun XXX_ff_02x_detrack_err() {
+    fun ff_02x_detrack_err() {
         val out = test("""
             val T = task () {
                 ${AWAIT()}
@@ -965,6 +965,32 @@ class Exec_05 {
         //assert(out == " v  anon : (lin 8, col 13) : declaration error : cannot expose task-in-pool reference\n") { out }
         assert(out == " |  anon : (lin 9, col 32) : (func (it) { if it { ```                     ...)\n" +
                 " v  anon : (lin 10, col 21) : set error : cannot expose task in pool to outer scope\n") { out }
+    }
+    @Test
+    fun ff_02y_detrack_err() {
+        val out = test("""
+            val T = task () {
+                ${AWAIT()}
+            }
+            val ts = tasks()
+            spawn T() in ts
+            val x = next-tasks(ts)
+            spawn (task () {
+                detrack(x) { it =>
+                    set pub() = it  ;; ERR: cannot expose it
+                    nil
+                }
+                broadcast(nil) in :global
+                println(status(pub()))
+            }) ()
+            println(:nooo)
+        """)
+        //assert(out == " v  anon : (lin 9, col 24) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 10, col 21) : status(t) : status error : expected running coroutine or task\n") { out }
+        //assert(out == " v  anon : (lin 8, col 13) : declaration error : cannot expose task-in-pool reference\n") { out }
+        assert(out == " |  anon : (lin 8, col 13) : (spawn (task () { (detrack(x) { it => (set pu...)\n" +
+                " |  anon : (lin 9, col 28) : (func (it) { if it { ```                     ...)\n" +
+                " v  anon : (lin 10, col 25) : set error : cannot expose task in pool to outer scope\n") { out }
     }
     @Test
     fun ff_03_detrack_err() {
@@ -1202,7 +1228,7 @@ class Exec_05 {
         assert(out == "[]\n:ok\n") { out }
     }
     @Test
-    fun todo_fg_07_throw_track() {
+    fun fg_07_throw_track() {
         val out = test("""
             val T = task () {
                 set pub() = 10
@@ -1219,11 +1245,11 @@ class Exec_05 {
             detrack(t) { it => println(pub(it)) }
         """)
         //assert(out == ":ok\n") { out }
-        //assert(out == "10\n") { out }
-        assert(out.contains("TODO: error inside throw")) { out }
+        assert(out == "10\n") { out }
+        //assert(out.contains("TODO: error inside throw")) { out }
     }
     @Test
-    fun todo_fg_08_throw_track() {
+    fun fg_08_throw_track() {
         val out = test("""
             val T = task () {
                 yield(nil) ; nil
@@ -1240,10 +1266,11 @@ class Exec_05 {
             println(x)
         """)
         //assert(out == ":ok\n") { out }
-        assert(out.contains("TODO: error inside throw")) { out }
+        //assert(out.contains("TODO: error inside throw")) { out }
+        assert(out == (" v  anon : (lin 5, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
     }
     @Test
-    fun todo_fg_09_throw_track() {
+    fun fg_09_throw_track() {
         val out = test("""
             val T = task () {
                 yield(nil) ; nil
@@ -1256,7 +1283,7 @@ class Exec_05 {
                     throw(drop(t))
                 }
             }
-            //println(:ok)
+            println(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -1438,7 +1465,7 @@ class Exec_05 {
     // TRACK / COLLECTION
 
     @Test
-    fun TODO_jj_01_tracks() {
+    fun jj_01_tracks() {
         val out = test("""
             val T = task () { yield(nil) ; nil }
             val ts = tasks()
@@ -1451,7 +1478,7 @@ class Exec_05 {
         assert(out.contains("#[track: 0x")) { out }
     }
     @Test
-    fun TODO_jj_02_tracks() {
+    fun jj_02_tracks() {
         val out = test("""
             $DETRACK
             val f = func (trk) {
@@ -1474,7 +1501,7 @@ class Exec_05 {
                 " v  anon : (lin 7, col 22) : block escape error : cannot expose track outside its task scope\n")) { out }
     }
     @Test
-    fun TODO_jj_03_tracks() {
+    fun jj_03_tracks() {
         val out = test("""
             val T = task () { yield(nil) ; nil }
             do {
@@ -1540,7 +1567,7 @@ class Exec_05 {
         assert(out == " v  anon : (lin 14, col 25) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
-    fun XXX_oo_04_track() {
+    fun BUG_oo_04_track() {
         val out = test("""
             var T = task (v) {
                 yield(nil) ; nil
@@ -1747,6 +1774,7 @@ class Exec_05 {
     }
     @Test
     fun BUG_op_08_track_throw() {
+        // aborted trask in pool does not bcast itself to clear track
         val out = test("""
             val T = task () {
                 defer {
@@ -1795,7 +1823,7 @@ class Exec_05 {
         assert(out == "nil\n") { out }
     }
     @Test
-    fun TODO_zz_02_all() {
+    fun zz_02_all() {
         val out = test("""
             val iter-tasks = func (itr) {
                 set itr[2] = next-tasks(itr[1],itr[2])
@@ -1812,15 +1840,16 @@ class Exec_05 {
                     set tt[0] = next-tasks(ts,tt[0])
                     val t = tt[0]
                     break(false) if {{==}}(t,nil)
-                    break(drop(t)) if true
+                    break((t)) if true
                 }
             }
             println(x)
        """)
-        assert(out == "nil\n") { out }
+        //assert(out == "nil\n") { out }
+        assert(out.contains("track: 0x")) { out }
     }
     @Test
-    fun TODO_zz_03_all() {
+    fun zz_03_all() {
         val out = test("""
             val x = do {
                 val tt = [nil]
@@ -1828,11 +1857,11 @@ class Exec_05 {
                     set tt[0] = @[]
                     val t = tt[0]
                     break(false) if {{==}}(t,nil)
-                    break(drop(t)) if true
+                    break((t)) if true
                 }
             }
             println(x)
        """)
-        assert(out == "nil\n") { out }
+        assert(out == "@[]\n") { out }
     }
 }

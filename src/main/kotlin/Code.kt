@@ -409,7 +409,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // return trk(x) where block(up) < block(x)
                             // Also error:
                             // return detrack(x), in any case
-                            char* ceu_err_$n = ceu_hold_set_msg(CEU_HOLD_CMD_ESC, ceu_acc, "block escape error", (ceu_hold_cmd){.Esc={$blkc,$up1}});
+                            char* ceu_err_$n = ceu_hold_set_msg(CEU_HOLD_CMD_ESC, ceu_acc, "block escape error", (ceu_hold_cmd){.Esc={$up1 CEU5(COMMA $blkc)}});
                             if (ceu_err_$n != NULL) {
                                 CEU_Value x_ceu_err_$n = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
                         #if CEU <= 1
@@ -606,7 +606,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     if (ceu_acc.type == CEU_VALUE_THROW) {      // caught internal throw
                         CEU_Value ceu_err = ceu_acc;
                         // in case err=FLEET and condition tries to hold it: do { val x=err }
-                        assert(NULL == ceu_hold_set_rec(CEU_HOLD_CMD_SET, ceu_err, NULL, CEU_HOLD_MUTAB, $blkc));
+                        assert(NULL == ceu_hold_set_rec(CEU_HOLD_CMD_SET, ceu_err, CEU_HOLD_MUTAB, $blkc CEU5(COMMA NULL)));
                         do {
                             ${this.cnd.code()}  // ceu_ok = 1|0
                         } while (0);
@@ -846,6 +846,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 "set error",
                                 (ceu_hold_cmd) {.Pub={
                                     ceu_acc.Dyn->Exe_Task.dn_block
+                                    CEU5(COMMA $bupc)
                                 }}
                             );
                             if (ceu_err_$n != NULL) {
@@ -940,6 +941,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             char* ceu_err_$n = ceu_hold_set_msg(CEU_HOLD_CMD_SET, $src, "set error", (ceu_hold_cmd) {.Set={
                                 ${vblk.idc("block",nst)}
                                 CEU3(COMMA ${ups.inexe(this,"task",true).toc()})
+                                CEU5(COMMA $bupc)
                             }});
                             if (ceu_err_$n != NULL) {
                                 CEU_Value x_ceu_err_$n = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
