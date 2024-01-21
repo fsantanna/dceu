@@ -318,8 +318,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                                 //  - reject if fleet has multiple refs
                                                 char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_ARG, $idc, "argument error",
                                                     (ceu_hold_cmd) {.Arg={
-                                                        CEU3(${inexe.toc()} COMMA)
                                                         $blkc
+                                                        CEU3(COMMA ${inexe.toc()})
                                                     }});
                                                 if (ceu_err_$n != NULL) {
                                                     CEU_Value x_ceu_err_$n = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
@@ -517,8 +517,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 ceu_acc,
                                 "declaration error",
                                 (ceu_hold_cmd) {.Dcl={
-                                    CEU3(${ups.inexe(this,"task",true).toc()} COMMA)
                                     $bupc
+                                    CEU3(COMMA ${ups.inexe(this,"task",true).toc()})
                                 }}
                             );
                             if (ceu_$n != NULL) {
@@ -842,7 +842,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 $src,
                                 "set error",
                                 (ceu_hold_cmd) {.Pub={
-                                    CEU3(${ups.inexe(this,"task",true).toc()} COMMA)
                                     ceu_acc.Dyn->Exe_Task.dn_block
                                 }}
                             );
@@ -936,8 +935,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // Also error:
                             // set dst = detrack(x), where block(dst) < current block
                             char* ceu_err_$n = x_ceu_hold_set_msg(CEU_HOLD_CMD_SET, $src, "set error", (ceu_hold_cmd) {.Set={
-                                CEU3(${ups.inexe(this,"task",true).toc()} COMMA)
                                 ${vblk.idc("block",nst)}
+                                CEU3(COMMA ${ups.inexe(this,"task",true).toc()})
                             }});
                             if (ceu_err_$n != NULL) {
                                 CEU_Value x_ceu_err_$n = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };

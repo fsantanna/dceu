@@ -1155,22 +1155,21 @@ fun Coder.main (tags: Tags): String {
                 CEU_Block* to_blk;
             } Tskin;
             struct {    // DCL
-                CEU3(int inexe;)
                 CEU_Block* to_blk;
+                CEU3(int inexe;)
             } Dcl;
             struct {    // SET
-                CEU3(int inexe;)
                 CEU_Block* to_blk;
+                CEU3(int inexe;)
             } Set;
         #if CEU >= 4
             struct {    // PUB
-                CEU3(int inexe;)
                 CEU_Block* to_blk;
             } Pub;
         #endif
             struct {    // ARG
-                CEU3(int inexe;)
                 CEU_Block* to_blk;
+                CEU3(int inexe;)
             } Arg;
             struct {    // ESC
                 CEU_Block* cur_blk;
@@ -1317,33 +1316,36 @@ fun Coder.main (tags: Tags): String {
         ) {
             assert(src.type > CEU_VALUE_DYNAMIC);
             
-            if (cmd==CEU_HOLD_CMD_DCL || cmd==CEU_HOLD_CMD_SET ||
-                cmd==CEU_HOLD_CMD_PUB || cmd==CEU_HOLD_CMD_ARG)
-            {
-                int fr_to = ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), arg.Dcl.to_blk);
-                int to_fr = ceu_block_is_up_dn(arg.Dcl.to_blk, CEU_HLD_BLOCK(src.Dyn));
-
-                if (
-                    cmd==CEU_HOLD_CMD_SET && !fr_to && to_fr
+            if (src.Dyn->Any.hld.type != CEU_HOLD_FLEET) {
+                if (cmd==CEU_HOLD_CMD_DCL || cmd==CEU_HOLD_CMD_SET ||
+                    CEU4(cmd==CEU_HOLD_CMD_PUB ||) cmd==CEU_HOLD_CMD_ARG)
+                {
+                    int fr_to = ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), arg.Dcl.to_blk);
+                    int to_fr = ceu_block_is_up_dn(arg.Dcl.to_blk, CEU_HLD_BLOCK(src.Dyn));
+    
+    //printf(">>> [%d] %d | %d\n", CEU_HOLD_CMD_PUB, cmd, to_fr);
+                    if (
+                        cmd==CEU_HOLD_CMD_SET && !fr_to && to_fr
         #if CEU >= 4
-                    ||
-                    cmd==CEU_HOLD_CMD_PUB && !fr_to && to_fr
+                        ||
+                        cmd==CEU_HOLD_CMD_PUB && !fr_to && to_fr
         #endif
-                ) {
-                    return "cannot assign reference to outer scope";
-                }
-
+                    ) {
+                        return "cannot assign reference to outer scope";
+                    }
+    
         #if CEU >= 3
-                if (src.Dyn->Any.hld.type!=CEU_HOLD_FLEET && arg.Dcl.inexe &&
-                     !fr_to && !to_fr
-                ) {
-                    // DCL | val x = evt
-                    // SET | { yield() ; var x ; set x=evt }  ;; Exec_04.de_03x_evt_err
-                    // PUB | { yield() ; set pub()=evt }      ;; Exec_04.cd_03_bcast_pub_arg
-                    // ARG | do { val t=[] ; resume co(t) }   ;; Exec_03.gg_02_scope
-                    return "cannot hold alien reference";
-                }
+                    if (src.Dyn->Any.hld.type!=CEU_HOLD_FLEET && (arg.Dcl.inexe || cmd==CEU_HOLD_CMD_PUB) &&
+                         !fr_to && !to_fr
+                    ) {
+                        // DCL | val x = evt
+                        // SET | { yield() ; var x ; set x=evt }  ;; Exec_04.de_03x_evt_err
+                        // PUB | { yield() ; set pub()=evt }      ;; Exec_04.cd_03_bcast_pub_arg
+                        // ARG | do { val t=[] ; resume co(t) }   ;; Exec_03.gg_02_scope
+                        return "cannot hold alien reference";
+                    }
         #endif
+                }
             }
 
             switch (cmd) {

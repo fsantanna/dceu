@@ -1920,7 +1920,7 @@ class Exec_04 {
             }
             println(pub(t))
         """)
-        assert(out == " v  anon : (lin 8, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        assert(out == " v  anon : (lin 8, col 21) : set error : cannot hold alien reference\n") { out }
     }
     @Test
     fun kk_07_pub_tag() {
@@ -2017,7 +2017,7 @@ class Exec_04 {
             }
         """)
         assert(out == " |  anon : (lin 9, col 17) : broadcast'([],:task)\n" +
-                " v  anon : (lin 4, col 21) : set error : cannot assign reference to outer scope\n") { out }
+                " v  anon : (lin 4, col 21) : set error : cannot hold alien reference\n") { out }
     }
 
     // ORIGINAL / PUB / EXPOSE
@@ -2063,7 +2063,7 @@ class Exec_04 {
             var f = func (t) {
                 do { do {
                 var p = pub(t)   ;; ok
-                set p = pub(t)   ;; ERROR: spawn A and f() are not comparable
+                set p = pub(t)   ;; ok  ;;ERROR: spawn A and f() are not comparable
                 set p = p       ;; ok
                 println(p)      ;; ok
                 ;;p               ;; ok
@@ -2079,7 +2079,7 @@ class Exec_04 {
             f(a)
             nil
         """)
-        //assert(out == "[]\n") { out }
+        assert(out == "[]\n") { out }
         //assert(out == "anon : (lin 15, col 13) : f(a)\n" +
         //        "anon : (lin 2, col 30) : block escape error : incompatible scopes\n" +
         //        "[]\n" +
@@ -2089,8 +2089,8 @@ class Exec_04 {
         //        ":error\n") { out }
         //assert(out == " |  anon : (lin 18, col 13) : f(a)\n" +
         //        " v  anon : (lin 4, col 17) : declaration error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 18, col 13) : f(a)\n" +
-                " v  anon : (lin 5, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        //assert(out == " |  anon : (lin 18, col 13) : f(a)\n" +
+        //        " v  anon : (lin 5, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun kj_05_expose_err() {
