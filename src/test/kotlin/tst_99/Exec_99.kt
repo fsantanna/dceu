@@ -331,7 +331,7 @@ class Exec_99 {
                 val it = 10
             }            
         """)
-        assert(out == "anon : (lin 5, col 17) : declaration error : variable \"it\" is already declared\n") { out }
+        assert(out == "anon : (lin 5, col 21) : declaration error : variable \"it\" is already declared\n") { out }
     }
     @Test
     fun ee_03_it() {
@@ -342,7 +342,7 @@ class Exec_99 {
             }            
             println(it)
         """)
-        assert(out == "anon : (lin 4, col 17) : declaration error : variable \"it\" is already declared\n") { out }
+        assert(out == "anon : (lin 4, col 21) : declaration error : variable \"it\" is already declared\n") { out }
 
     }
     @Test

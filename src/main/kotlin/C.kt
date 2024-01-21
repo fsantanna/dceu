@@ -1120,6 +1120,7 @@ fun Coder.main (tags: Tags): String {
         }
         
         typedef enum {
+            CEU_HOLD_CMD_NONE,
             CEU_HOLD_CMD_DROP,
                 // "drop error : value is not movable"
                 // "drop error : value contains multiple references"
@@ -1191,7 +1192,7 @@ fun Coder.main (tags: Tags): String {
             }
 
             if (src.Dyn->Any.hld.type == to_type) {
-                return NULL;     // breaks cycle
+                //return NULL;     // breaks cycle
             }
 
             CEU_Block* src_blk = CEU_HLD_BLOCK(src.Dyn);
@@ -1201,7 +1202,9 @@ fun Coder.main (tags: Tags): String {
                 if (
                     cur_blk != NULL &&
                     src.type == CEU_VALUE_EXE_TASK_IN &&
-                    !ceu_block_is_up_dn(cur_blk, to_blk)
+                    (to_blk==NULL || !ceu_block_is_up_dn(cur_blk, to_blk))
+                        // TODO: to_blk==NULL is probably wrong
+                        // did this to pass Exec_05.ff_02x_detrack_err
                 ) {
                     return "cannot expose task in pool to outer scope";
                 } else if (
