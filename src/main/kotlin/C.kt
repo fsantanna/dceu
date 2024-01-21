@@ -1316,32 +1316,34 @@ fun Coder.main (tags: Tags): String {
             ceu_hold_cmd arg
         ) {
             assert(src.type > CEU_VALUE_DYNAMIC);
+            
+            if (cmd==CEU_HOLD_CMD_DCL || cmd==CEU_HOLD_CMD_SET ||
+                cmd==CEU_HOLD_CMD_PUB || cmd==CEU_HOLD_CMD_ARG)
+            {
+                int fr_to = ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn), arg.Dcl.to_blk);
+                int to_fr = ceu_block_is_up_dn(arg.Dcl.to_blk, CEU_HLD_BLOCK(src.Dyn));
 
-            #if CEU >= 3
-            if (src.Dyn->Any.hld.type!=CEU_HOLD_FLEET && arg.Dcl.inexe && (
-                (cmd==CEU_HOLD_CMD_DCL && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Dcl.to_blk)) ||
-                (cmd==CEU_HOLD_CMD_SET && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Dcl.to_blk) /*&& src.Dyn->Any.hld.type!=CEU_HOLD_FLEET*/) ||
-            #if CEU >= 4
-                (cmd==CEU_HOLD_CMD_PUB && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Dcl.to_blk) /*&& src.Dyn->Any.hld.type!=CEU_HOLD_FLEET*/) ||
-            #endif
-                (cmd==CEU_HOLD_CMD_ARG && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Arg.to_blk) /*&& src.Dyn->Any.hld.type!=CEU_HOLD_FLEET*/)
-            )) {
-                // DCL | val x = evt
-                // SET | { yield() ; var x ; set x=evt }  ;; Exec_04.de_03x_evt_err
-                // PUB | { yield() ; set pub()=evt }      ;; Exec_04.cd_03_bcast_pub_arg
-                // ARG | do { val t=[] ; resume co(t) }   ;; Exec_03.gg_02_scope
-                return "cannot hold alien reference";
-            }
-            #endif
+                if (
+                    cmd==CEU_HOLD_CMD_SET && !fr_to && to_fr
+        #if CEU >= 4
+                    ||
+                    cmd==CEU_HOLD_CMD_PUB && !fr_to && to_fr
+        #endif
+                ) {
+                    return "cannot assign reference to outer scope";
+                }
 
-            if (
-                cmd==CEU_HOLD_CMD_SET && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Dcl.to_blk) && src.Dyn->Any.hld.type!=CEU_HOLD_FLEET
-            #if CEU >= 4
-                ||
-                cmd==CEU_HOLD_CMD_PUB && !ceu_block_is_up_dn(CEU_HLD_BLOCK(src.Dyn),arg.Pub.to_blk) && src.Dyn->Any.hld.type!=CEU_HOLD_FLEET
-            #endif
-            ) {
-                return "cannot assign reference to outer scope";
+        #if CEU >= 3
+                if (src.Dyn->Any.hld.type!=CEU_HOLD_FLEET && arg.Dcl.inexe &&
+                     !fr_to && !to_fr
+                ) {
+                    // DCL | val x = evt
+                    // SET | { yield() ; var x ; set x=evt }  ;; Exec_04.de_03x_evt_err
+                    // PUB | { yield() ; set pub()=evt }      ;; Exec_04.cd_03_bcast_pub_arg
+                    // ARG | do { val t=[] ; resume co(t) }   ;; Exec_03.gg_02_scope
+                    return "cannot hold alien reference";
+                }
+        #endif
             }
 
             switch (cmd) {
