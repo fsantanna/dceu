@@ -140,7 +140,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 ceu_acc = ceu_create_clo${isexe.cond{"_exe"}} (
                     ${isexe.cond{"CEU_VALUE_CLO_${this.tk.str.uppercase()},"}}
                     ${blk.idc("block")},
-                    ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_IMMUT" else "CEU_HOLD_FLEET"},
+                    ${if (clos.protos_noclos.contains(this)) "-=- TODO -=-" else ""}
                     ${when {
                         (blk == outer) -> "NULL"
                         isexe -> "&ceu_frame->exe->frame"

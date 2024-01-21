@@ -1548,11 +1548,13 @@ class Exec_01 {
                 set a = [1,2,3]
                 set x = a           ;; err: x<a
             }
+            println(x)
         """
         )
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        assert(out == "[1,2,3]\n") { out }
     }
     @Test
     fun scope4() {
@@ -1600,7 +1602,8 @@ class Exec_01 {
             println(x)
         """)
         //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 7, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        assert(out == "[1,2,[10,20,30]]\n") { out }
     }
     @Test
     fun scope6() {
@@ -1641,9 +1644,11 @@ class Exec_01 {
                 set a = @[(1,[])]
                 set x = a
             }
+            println(x)
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        assert(out == "@[(1,[])]\n") { out }
+        //assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope10x() {
@@ -1660,7 +1665,8 @@ class Exec_01 {
             println(1)
         """
         )
-        assert(out == "anon : (lin 7, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope10_err() {
@@ -1672,7 +1678,8 @@ class Exec_01 {
             }
             println(1)
         """)
-        assert(out == "anon : (lin 5, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun scope11_err() {
@@ -1687,7 +1694,8 @@ class Exec_01 {
             println(1)
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun scope12_err() {
@@ -1702,7 +1710,8 @@ class Exec_01 {
             println(1)
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun scope13_tuple_err() {
@@ -1892,9 +1901,11 @@ class Exec_01 {
                 set d[0] = t2
                 nil
             }
+            println(1)
         """
         )
-        assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun scope22b_vec() {
@@ -1906,9 +1917,11 @@ class Exec_01 {
                 set d[0] = t2
                 nil
             }
+            println(1)
         """
         )
-        assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun scope22c_dic() {
@@ -1920,9 +1933,11 @@ class Exec_01 {
                 set d[t2] = 10
                 nil
             }
+            println(1)
         """
         )
-        assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun scope22d_dic() {
@@ -1934,9 +1949,11 @@ class Exec_01 {
                 set d[10] = t2
                 nil
             }
+            println(1)
         """
         )
-        assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope22x_dict() {
@@ -1954,7 +1971,8 @@ class Exec_01 {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 7, col 25) : store error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 7, col 25) : store error : cannot assign reference to outer scope\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun scope22y_dict() {
@@ -1970,7 +1988,8 @@ class Exec_01 {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 6, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 6, col 21) : store error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope22z_dict() {
@@ -2133,8 +2152,8 @@ class Exec_01 {
             ;;println(d)  ;; OK: [[1],[2],[3],*]
             println(:ok)
         """)
-        //assert(out == ":ok\n") { out }
-        assert(out == "anon : (lin 10, col 22) : drop error : value contains multiple references\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 10, col 22) : drop error : value contains multiple references\n") { out }
     }
     @Test
     fun scope30x() {
@@ -2768,8 +2787,8 @@ class Exec_01 {
             println(f([[nil]][0]))  ;; err
             ;;`ceu_gc_collect();`
         """)
-        assert(out == "anon : (lin 2, col 27) : argument error : cannot receive pending reference\n") { out }
-        //assert(out == "nil\n") { out }
+        //assert(out == "anon : (lin 2, col 27) : argument error : cannot receive pending reference\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun nn_20x_func_err() {
@@ -2783,8 +2802,8 @@ class Exec_01 {
             println(f([[nil]][0]))  ;; err
             ;;`ceu_gc_collect();`
         """)
-        assert(out == "anon : (lin 2, col 27) : argument error : cannot receive pending reference\n") { out }
-        //assert(out == "nil\n") { out }
+        //assert(out == "anon : (lin 2, col 27) : argument error : cannot receive pending reference\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun nn_21_func() {
@@ -2796,8 +2815,8 @@ class Exec_01 {
             println(f(t[0]))        ;; 1
             println(f([[nil]][0]))  ;; err
         """)
-        assert(out == "anon : (lin 2, col 27) : argument error : cannot receive pending reference\n1\n") { out }
-        //assert(out == "1\n1\n") { out }
+        //assert(out == "anon : (lin 2, col 27) : argument error : cannot receive pending reference\n1\n") { out }
+        assert(out == "1\n1\n") { out }
     }
 
     // FUNC / ARGS / DOTS / ...
