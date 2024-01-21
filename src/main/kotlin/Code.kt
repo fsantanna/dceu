@@ -166,7 +166,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                         {
                             CEU_Value ceu_up = ${dcl.idc(upv)};
-                            assert(ceu_hold_chk_set_col(ceu_acc.Dyn, ceu_up).type != CEU_VALUE_ERROR);
                             ceu_gc_inc(ceu_up);
                             ((CEU_Clo_Upvs_$id*)ceu_acc.Dyn->Clo.upvs.buf)->${idc} = ceu_up;
                         }
@@ -288,7 +287,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 id__dot__dot__dot_ = ceu_create_tuple($blkc, ceu_argc);
                                 for (int i=0; i<ceu_argc; i++) {
                                     CEU_Value vec = ceu_vector_from_c_string($blkc, ceu_argv[i]);
-                                    assert(ceu_tuple_set(&id__dot__dot__dot_.Dyn->Tuple, i, vec).type != CEU_VALUE_ERROR);
+                                    ceu_tuple_set(&id__dot__dot__dot_.Dyn->Tuple, i, vec);
                                 }
                             """
                             (f_b is Expr.Proto) -> {
@@ -309,23 +308,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         """
                                         if (ceu_n > $i) {
                                             $idc = ceu_args[$i];
-                                            if ($idc.type > CEU_VALUE_DYNAMIC) {
-                                                // Always possible to pass to tight func:
-                                                // f([...]) ;; FLEET ;; change type and block
-                                                // f(t)     ;; ELSE  ;; keep   type and block
-                                                // Exception:
-                                                // f([[nil]][0]) ;; passing part of fleeting
-                                                //  - reject if fleet has multiple refs
-                                                char* ceu_err_$n = ceu_hold_set_msg(CEU_HOLD_CMD_ARG, $idc, "argument error",
-                                                    (ceu_hold_cmd) {.Arg={
-                                                        $blkc
-                                                        CEU3(COMMA ${inexe.toc()})
-                                                    }});
-                                                if (ceu_err_$n != NULL) {
-                                                    CEU_Value x_ceu_err_$n = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
-                                                    CEU_ERROR($blkc, "${id.pos.file} : (lin ${id.pos.lin}, col ${id.pos.col})", x_ceu_err_$n);
-                                                }
-                                            }
                                         }
                                         """
                                     }.joinToString("")}
@@ -335,7 +317,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         int ceu_tup_n_$n = MAX(0,ceu_n-$args_n);
                                         $idc = ceu_create_tuple($blkc, ceu_tup_n_$n);
                                         for (int i=0; i<ceu_tup_n_$n; i++) {
-                                            assert(ceu_tuple_set(&$idc.Dyn->Tuple, i, ceu_args[$args_n+i]).type != CEU_VALUE_ERROR);
+                                            ceu_tuple_set(&$idc.Dyn->Tuple, i, ceu_args[$args_n+i]);
                                         }
                                         ceu_gc_inc($idc);
                                     """ }}
@@ -389,41 +371,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         ceu_frame->exe_task->pub = ceu_acc;     // task final return value
                     """ }}
-                    
-                    // move up dynamic ceu_acc (return or error)
-                    // after gc-dec b/c of PASSD -> FLEET
-                    ${(f_b!=null && !isvoid).cond {
-                        val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc
-                        """
-                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                            // Always possible to return:
-                            //  - EXCEPT if IMMUT *and* DST<SRC
-                            // return [] ;; FLEET ;; keep type ;; up block
-                            // return x  ;; ELSE  ;; keep type ;; up block
-                            //  - Move block to least bw src and up:
-                            //      - NOT for alien:
-                            //          return evt  // should not move block
-                            //      - blk = MIN(up, src)
-                            //      - stop when src<=up
-                            // Also error:
-                            // return trk(x) where block(up) < block(x)
-                            // Also error:
-                            // return detrack(x), in any case
-                            char* ceu_err_$n = ceu_hold_set_msg(CEU_HOLD_CMD_ESC, ceu_acc, "block escape error", (ceu_hold_cmd){.Esc={$up1 CEU5(COMMA $blkc)}});
-                            if (ceu_err_$n != NULL) {
-                                CEU_Value x_ceu_err_$n = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
-                        #if CEU <= 1
-                                CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", x_ceu_err_$n);
-                        #else
-                                do {
-                                    // allocate throw on up
-                                    CEU_ERROR($up1, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", x_ceu_err_$n);
-                                } while (0);    // catch continue in CEU_ERROR
-                        #endif
-                            }
-                        }
-                        """
-                    }}
                     
                     // unlink task.dn_block = me
                     // unlink up.dn.block = me
@@ -500,8 +447,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Dcl -> {
                 val idc = this.idc(0)
                 val blk = ups.first_block(this)!!
-                val bupc = blk.idc("block")
-                val unused = false // TODO //sta.unused.contains(this) && (this.src is Expr.Closure)
 
                 if (this.id.upv==1 && clos.vars_refs.none { it.second==this }) {
                     err(this.tk, "var error : unreferenced upvar")
@@ -509,24 +454,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
                 """
                 // DCL | ${this.dump()}
-                ${(this.init && this.src !=null && !unused).cond {
-                    this.src!!.code() + """ 
-                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {                            
-                            char* ceu_$n = ceu_hold_set_msg (
-                                CEU_HOLD_CMD_DCL,
-                                ceu_acc,
-                                "declaration error",
-                                (ceu_hold_cmd) {.Dcl={
-                                    $bupc
-                                    CEU3(COMMA ${ups.inexe(this,"task",true).toc()})
-                                }}
-                            );
-                            if (ceu_$n != NULL) {
-                                CEU_Value err = { CEU_VALUE_ERROR, {.Error=ceu_$n} };
-                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                            }
-                        }
-                    """
+                ${(this.init && this.src!=null).cond {
+                    this.src!!.code()
                 }}
                 ${when {
                     !this.init -> ""
@@ -927,28 +856,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         """
                         // ACC - SET | ${this.dump()}
-                        if ($src.type > CEU_VALUE_DYNAMIC) {
-                            // set dst = []   ;; FLEET ;; change to MUTAB type ;; change to dst blk
-                            // set dst = src  ;; ELSE  ;; keep ELSE type       ;; keep block
-                            //  - Check for type=ELSE:
-                            //      - blk(dst) >= blk(src) (deeper)
-                            // Also error:
-                            // set dst = evt
-                            // Also error:
-                            // set dst = trk(x) where block(dst) < block(x)
-                            // Also error:
-                            // set dst = detrack(x), where block(dst) < current block
-                            char* ceu_err_$n = ceu_hold_set_msg(CEU_HOLD_CMD_SET, $src, "set error", (ceu_hold_cmd) {.Set={
-                                ${vblk.idc("block",nst)}
-                                CEU3(COMMA ${ups.inexe(this,"task",true).toc()})
-                                CEU5(COMMA $bupc)
-                            }});
-                            if (ceu_err_$n != NULL) {
-                                CEU_Value x_ceu_err_$n = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
-                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", x_ceu_err_$n);
-                            }
-                            ceu_gc_inc($src);
-                        }
+                        ceu_gc_inc($src);
                         ceu_gc_dec($idc, 1);
                         $idc = $src;
                         """
@@ -989,14 +897,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }}
                     $tupc = ceu_create_tuple(${bup.idc("block")}, ${this.args.size});
                     ${this.args.mapIndexed { i, it ->
-                    it.code() + """
-                        CEU_ASSERT(
-                            $bupc,
-                            ceu_tuple_set(&$tupc.Dyn->Tuple, $i, ceu_acc),
-                            "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
-                        );
+                        it.code() + """
+                        ceu_tuple_set(&$tupc.Dyn->Tuple, $i, ceu_acc);
                         """
-                }.joinToString("")}
+                    }.joinToString("")}
                     ceu_acc = $tupc;
                 }
                 """
