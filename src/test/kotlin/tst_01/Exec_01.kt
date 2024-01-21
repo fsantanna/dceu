@@ -808,8 +808,8 @@ class Exec_01 {
             }                   ;; not a problem b/c gc_dec does not chk current block
             println(x)
         """)
-        assert(out == "anon : (lin 5, col 22) : drop error : value contains multiple references\n") { out }
-        //assert(out == "[1,2,3]\n") { out }
+        //assert(out == "anon : (lin 5, col 22) : drop error : value contains multiple references\n") { out }
+        assert(out == "[1,2,3]\n") { out }
     }
     @Test
     fun cc_10_drop_multi_err_why() {
@@ -826,8 +826,11 @@ class Exec_01 {
             println("-=-=-=-=-=-=-=-=-")
             println(t)
         """)
-        assert(out == "anon : (lin 6, col 26) : drop error : value contains multiple references\n") { out }
+        //assert(out == "anon : (lin 6, col 26) : drop error : value contains multiple references\n") { out }
         //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
+        assert(out == "[99]\n" +
+                "-=-=-=-=-=-=-=-=-\n" +
+                "[1,[99],3]\n") { out }
     }
     @Test
     fun cc_11_drop_deep() {
@@ -857,7 +860,9 @@ class Exec_01 {
             }
         """)
         //assert(out == "anon : (lin 6, col 21) : declaration error : cannot move pending reference in\n") { out }
-        assert(out == "anon : (lin 6, col 35) : drop error : value contains multiple references\n") { out }
+        //assert(out == "anon : (lin 6, col 35) : drop error : value contains multiple references\n") { out }
+        assert(out == "[1]\n" +
+                "nil\n") { out }
     }
     @Test
     fun cc_13_drop_cycle() {
@@ -872,7 +877,8 @@ class Exec_01 {
             println(z[0][0] == z)
         """
         )
-        assert(out == "anon : (lin 6, col 22) : drop error : value contains multiple references\n") { out }
+        //assert(out == "anon : (lin 6, col 22) : drop error : value contains multiple references\n") { out }
+        assert(out == "true\n") { out }
     }
     @Test
     fun cc_13_drop_cycle_x() {
@@ -1027,8 +1033,8 @@ class Exec_01 {
             println(v)
         """
         )
-        assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n" +
-                "") { out }
+        //assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        assert(out == "@[([],true)]\n") { out }
     }
     @Test
     fun dd_dict13_key_nil() {
@@ -4405,12 +4411,11 @@ class Exec_01 {
             ;;println(`:number CEU_GC.gc`)
         """
         )
-        //assert(out == "1\n") { out }
-        //assert(out == "0\n") { out }
         assert(out == ">>> GC: 2\n" +
                 "    alloc = 3\n" +
                 "    free  = 1\n" +
-                "    gc    = 0\n") { out }
+                "    gc    = 1\n"       // = 0
+        ) { out }
 
     }
     @Test
@@ -4542,8 +4547,10 @@ class Exec_01 {
         )
         //assert(out == "0\n1\n") { out }
         //assert(out == "0\n0\n") { out }
-        assert(out == "0\t0\n" +
-                "0\t1\n") { out }
+        assert(out ==
+            "0\t0\n" +
+            "1\t1\n"    // 0 1
+        ) { out }
     }
     @Test
     fun gc9_err() {

@@ -343,7 +343,6 @@ fun Coder.main (tags: Tags): String {
 
         void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns));
         void ceu_hold_rem (CEU_Dyn* dyn);
-        void ceu_gc_rem_all (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Block* blk);
 
         CEU_Value ceu_create_tuple   (CEU_Block* hld, int n);
         CEU_Value ceu_create_vector  (CEU_Block* hld);
@@ -582,7 +581,7 @@ fun Coder.main (tags: Tags): String {
                 exit(0);
             }
             CEU_Block* up = (blk->istop) ? blk->up.frame->up_block : blk->up.block;
-            ceu_gc_rem_all(CEU5(dstk COMMA) CEU4(bstk COMMA) blk);
+            //ceu_gc_rem_all(CEU5(dstk COMMA) CEU4(bstk COMMA) blk);
             return ceu_exit(CEU5(dstk COMMA) CEU4(bstk COMMA) up);
         }
         void _ceu_error_ (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Block* blk, char* pre, CEU_Value err) {
@@ -622,25 +621,6 @@ fun Coder.main (tags: Tags): String {
         #define ceu_debug_rem(x)
     #endif
     
-        // void ceu_dyn_rem_free_chk (CEU_Dyn* dyn)
-        //  - called from ceu_gc_dec
-        //  - called from TASK_IN termination
-        //  - calls (ceu_hold_rem)
-        //  - calls (ceu_dyn_free)
-        
-        // void ceu_gc_dec (CEU_Value v, int chk)
-        //  - calls (v.Dyn->refs--)
-        //  - chk arg: do not reclaim drops and returns to outer
-        //  - calls (ceu_gc_rem_chk) to check if v.Dyn->refs==0
-        
-        // void ceu_gc_rem_chk (CEU_Value v)
-        //  - calls (ceu_gc_dec_rec) if v.Dyn->refs==0
-        
-        // void ceu_gc_dec_rec (CEU_Dyn* dyn)
-        //  - called when dyn->refs==0
-        //  - calls (ceu_gc_dec) to decrement dyn childs
-        //  - calls (ceu_dyn_rem_free_chk) to free dyn
-        
         void ceu_gc_dec_rec (CEU_Dyn* dyn, int chk);
         void ceu_gc_rem (CEU_Dyn* dyn, int chk);
         void ceu_gc_free (CEU_Dyn* dyn);
@@ -677,31 +657,6 @@ fun Coder.main (tags: Tags): String {
             v.Dyn->Any.refs++;
         }
         
-        ///
-
-        void ceu_gc_rem_all (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Block* blk) {
-            CEU_Dyns* dyns = &blk->dn.dyns;
-            {
-                CEU_Dyn* cur = dyns->first;
-                while (cur != NULL) {
-        #if CEU >= 3
-                    CEU_Value ret = ceu_dyn_exe_kill(CEU5(dstk COMMA) CEU4(bstk COMMA) cur);    // kill exes before gc all
-                    assert(!CEU_ISERR(ret) && "TODO: impossible case");
-        #endif
-                    ceu_gc_dec_rec(cur, 0);         // dec refs to outer scopes
-                    cur = cur->Any.hld.next;
-                }
-            }
-            // free remaining
-            {
-                while (dyns->first != NULL) {
-                    ceu_gc_rem(dyns->first, 0);    // regardless of refs>0 (b/c of cycles)
-                }
-            }
-            assert(dyns->first == NULL);
-            assert(dyns->last  == NULL);
-        }
-
         void ceu_gc_inc_args (int n, CEU_Value args[]) {
             for (int i=0; i<n; i++) {
                 ceu_gc_inc(args[i]);

@@ -339,25 +339,23 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                     ${defers[this].cond { it.third }}
                     ceu_acc = CEU_ERR_OR(ceu_acc, ceu_acc_$n);
+                    CEU_Dyn* ceu_$n = (ceu_acc.type > CEU_VALUE_DYNAMIC) ? ceu_acc.Dyn : NULL;
                     
                     // dcls gc-dec
                     ${dcls.map { """
-                        // free below b/c of
-                        //   - pending refs defers
-                        //   - drop w/ multiple refs
-                        ceu_gc_dec($it, 0);
+                        if ($it.type > CEU_VALUE_DYNAMIC) {
+                            ceu_gc_dec($it, ceu_$n!=$it.Dyn);
+                        }
                     """ }.joinToString("")}
                     
                     // args gc-dec (cannot call ceu_gc_dec_args b/c of copy to ids)
-                    
                     ${(f_b is Expr.Proto).cond {
                         f_b as Expr.Proto
                         f_b.args.map { arg ->
                             val idc = vars.get(this, arg.first.str).idc(0)
                             """
-                            if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
-                                // do not check if they are returned back (this is not the case with locals created here)
-                                ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
+                            if ($idc.type > CEU_VALUE_DYNAMIC) {
+                                ceu_gc_dec($idc, ceu_$n!=$idc.Dyn);
                             }
                             """
                         }.joinToString("")
@@ -366,8 +364,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     // pub gc-dec
                     ${istsk.cond { """
                         if (ceu_frame->exe_task->pub.type > CEU_VALUE_DYNAMIC) {
-                            // do not check if it is returned back (this is not the case with locals created here)
-                            ceu_gc_dec(ceu_frame->exe_task->pub, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==ceu_frame->exe_task->pub.Dyn));
+                            ceu_gc_dec(ceu_frame->exe_task->pub, ceu_$n!=ceu_frame->exe_task->pub.Dyn);
                         }
                         ceu_frame->exe_task->pub = ceu_acc;     // task final return value
                     """ }}
@@ -415,20 +412,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         #endif
                         """
                     }}
-                    // block free | ${this.dump()}
-                    ${(!isvoid).cond { """
-                        ${(f_b != null).cond { """
-                            if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                ceu_gc_inc(ceu_acc);        // prevent it from being collected
-                            }
-                        """ }}
-                        ceu_gc_rem_all(CEU5(ceu_dstk COMMA) CEU4(ceu_bstk COMMA) $blkc);
-                        ${(f_b != null).cond { """
-                            if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                ceu_gc_dec(ceu_acc, 0);     // do not check fleeting value
-                            }
-                        """ }}
-                    """ }}
                     // check error
                     ${(CEU>=2 && (f_b is Expr.Do)).cond { """
                         if (CEU_ISERR(ceu_acc)) {
@@ -912,11 +895,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     $vecc = ceu_create_vector(${bup.idc("block")});
                     ${this.args.mapIndexed { i, it ->
                     it.code() + """
-                        CEU_ASSERT(
-                            $bupc,
-                            ceu_vector_set(&$vecc.Dyn->Vector, $i, ceu_acc),
-                            "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
-                        );
+                        ceu_vector_set(&$vecc.Dyn->Vector, $i, ceu_acc);
                         """
                 }.joinToString("")}
                     ceu_acc = $vecc;
@@ -987,10 +966,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         CEU_Value ok = { CEU_VALUE_NIL };
                         switch (ceu_col_$n.type) {
                             case CEU_VALUE_TUPLE:
-                                ok = ceu_tuple_set(&ceu_col_$n.Dyn->Tuple, $idxc.Number, $src);
+                                ceu_tuple_set(&ceu_col_$n.Dyn->Tuple, $idxc.Number, $src);
                                 break;
                             case CEU_VALUE_VECTOR:
-                                ok = ceu_vector_set(&ceu_col_$n.Dyn->Vector, $idxc.Number, $src);
+                                ceu_vector_set(&ceu_col_$n.Dyn->Vector, $idxc.Number, $src);
                                 break;
                             case CEU_VALUE_DICT: {
                                 CEU_Value ceu_dict = ceu_col_$n;
