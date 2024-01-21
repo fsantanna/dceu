@@ -1335,7 +1335,7 @@ fun Coder.main (tags: Tags): String {
                     }
     
         #if CEU >= 3
-                    if (src.Dyn->Any.hld.type!=CEU_HOLD_FLEET && (arg.Dcl.inexe || cmd==CEU_HOLD_CMD_PUB) &&
+                    if (src.Dyn->Any.hld.type!=CEU_HOLD_FLEET && (arg.Dcl.inexe CEU4(|| cmd==CEU_HOLD_CMD_PUB)) &&
                          !fr_to && !to_fr
                     ) {
                         // DCL | val x = evt
