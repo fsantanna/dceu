@@ -1344,7 +1344,7 @@ class Exec_01 {
             val x
         """
         )
-        assert(out == "anon : (lin 3, col 13) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == "anon : (lin 3, col 17) : declaration error : variable \"x\" is already declared\n") { out }
     }
     @Test
     fun todo_dcl4_dup() {
@@ -3354,7 +3354,7 @@ class Exec_01 {
         assert(out == "> 10.000000\n") { out }
     }
     @Test
-    fun todo_native_XXX() {
+    fun BUG_native_XXX() {
         val out = test(
             """
             var x

@@ -212,7 +212,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                         it_uses[prv] = this // found new dcl w/o uses of prv dcl
                     }
                 } else {
-                    err(this.tk, "declaration error : variable \"${this.id.str}\" is already declared")
+                    err(this.id, "declaration error : variable \"${this.id.str}\" is already declared")
                 }
 
                 val blk = ups.first_block(this)!!
@@ -334,7 +334,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 if (CEU>=99 && dcl.id.str=="it") {
                     val prv = it_uses[dcl]
                     when (prv) {
-                        is Expr.Dcl -> err(prv.tk, "declaration error : variable \"${prv.id.str}\" is already declared")
+                        is Expr.Dcl -> err(prv.id, "declaration error : variable \"${prv.id.str}\" is already declared")
                         is Expr.Acc -> {}
                         else -> {
                             if (!this.ign) {

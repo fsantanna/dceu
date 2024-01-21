@@ -2432,8 +2432,8 @@ fun Coder.main (tags: Tags): String {
             };
             
             ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
-            assert(ceu_hold_chk_set_col((CEU_Dyn*)ret, val).type!=CEU_VALUE_ERROR && "TODO: error inside throw");
-            assert(ceu_hold_chk_set_col((CEU_Dyn*)ret, stk).type != CEU_VALUE_ERROR);
+            assert(ceu_hold_chk_set_col((CEU_Dyn*)ret, val).type != CEU_VALUE_ERROR && "TODO: error inside throw");
+            assert(ceu_hold_chk_set_col((CEU_Dyn*)ret, stk).type != CEU_VALUE_ERROR && "TODO: error inside throw");
             
             return (CEU_Value) { CEU_VALUE_THROW, {.Dyn=(CEU_Dyn*)ret} };
         }

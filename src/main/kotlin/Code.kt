@@ -591,6 +591,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Drop -> this.e.code()
 
             is Expr.Catch -> {
+                val blkc = ups.first_block(this)!!.idc("block")
                 """
                 { // CATCH ${this.dump()}
                     do { // catch
@@ -604,6 +605,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                     if (ceu_acc.type == CEU_VALUE_THROW) {      // caught internal throw
                         CEU_Value ceu_err = ceu_acc;
+                        // in case err=FLEET and condition tries to hold it: do { val x=err }
+                        assert(NULL == ceu_hold_set_rec(CEU_HOLD_CMD_SET, ceu_err, NULL, CEU_HOLD_MUTAB, $blkc));
                         do {
                             ${this.cnd.code()}  // ceu_ok = 1|0
                         } while (0);
@@ -635,7 +638,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         do {
                             ${this.blk.code()}
                         } while (0);    // catch throw
-                        //assert(ceu_acc.type != CEU_VALUE_THROW && "TODO: throw in defer");
+                        assert(ceu_acc.type != CEU_VALUE_THROW && "TODO: throw in defer");
                     }
                 """
                 ns.add(n)

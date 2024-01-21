@@ -274,13 +274,13 @@ class Exec_02 {
         assert(out == "[]\n") { out }
     }
     @Test
-    fun todo_jj_13_throw_catch_condition() {
+    fun BUG_jj_13_throw_catch_condition() {
         val out = test("""
             catch ( it => throw(2)) {
                 throw(1)
             }
         """)
-        assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in catch condition\"' failed.")) { out }
+        assert(out.contains("main: Assertion `ceu_acc.type!=CEU_VALUE_THROW && \"TODO: throw in catch condition\"' failed.")) { out }
     }
     @Test
     fun jj_14_blocks() {
@@ -296,7 +296,7 @@ class Exec_02 {
         assert(out == ":x\n") { out }
     }
     @Test
-    fun BUG_jj_13_catch_dcl_err() {
+    fun jj_13_catch_dcl_err() {
         val out = test("""
             val x
             catch ( x => true) {
@@ -332,7 +332,7 @@ class Exec_02 {
         assert(out == "[:x]\n") { out }
     }
     @Test
-    fun jj_17_throw_immut_err() {
+    fun jj_17_throw() {
         val out = test("""
             do {
                 val t = @[]
@@ -343,6 +343,18 @@ class Exec_02 {
         assert(out == " |  anon : (lin 4, col 17) : throw(t)\n" +
                 " v  throw error : @[]\n") { out }
         //assert(out.contains(" v  anon : (lin 2, col 13) : block escape error : cannot copy reference out\n")) { out }
+    }
+    @Test
+    fun jj_18_throw_err() {
+        val out = test("""
+            val x = catch (it => true) {
+                val t = @[]
+                throw(t)
+                nil
+            }
+            println(x)
+        """)
+        assert(out == "@[]\n") { out }
     }
 
     // CALL STACK
@@ -379,7 +391,7 @@ class Exec_02 {
     // THROW/CATCH / DEFER
 
     @Test
-    fun todo_pp_01_throw_defer() {
+    fun BUG_pp_01_throw_defer() {
         val out = test("""
             catch ( it => true) {
                 defer {
@@ -391,7 +403,23 @@ class Exec_02 {
         assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in defer\"' failed.")) { out }
     }
     @Test
-    fun todo_pp_02_defer_err() {
+    fun BUG_ppx_02_defer_err() {
+        val out = test("""
+            val v = do {
+                defer {
+                    println(:2)
+                }
+                defer {
+                    println(:1)
+                    throw(:err)     ;; ERR
+                }
+            }
+            println(:3)
+        """)
+        assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in defer\"' failed.")) { out }
+    }
+    @Test
+    fun BUG_pp_02_defer_err() {
         val out = test("""
             val v = do {
                 defer {
@@ -399,7 +427,7 @@ class Exec_02 {
                 }
                 defer {
                     println(:2)
-                    throw(:err)
+                    throw(:err)     ;; ERR
                     println(:3)
                 }
                 defer {
@@ -422,7 +450,7 @@ class Exec_02 {
                 " v  throw error : :error\n") { out }
     }
     @Test
-    fun todo_pp_04_throw_defer() {
+    fun BUG_pp_04_throw_defer() {
         val out = test("""
             defer {
                 throw(:2)
@@ -432,7 +460,7 @@ class Exec_02 {
         assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in defer\"' failed.")) { out }
     }
     @Test
-    fun todo_pp_05_throw_defer() {
+    fun BUG_pp_05_throw_defer() {
         val out = test("""
             do {
                 defer {
@@ -448,27 +476,41 @@ class Exec_02 {
     // ORIGINAL
 
     @Test
-    fun todo_zz_01() {
+    fun zz_01() {
         val out = test("""
             do {
-                catch ( it =>  ;; err is binded to x and is being moved up
-                    var x
-                    set x = it
-                    println(it) `/* ZZZZ */`
+                catch (it => do {
+                    val x = it
+                    println(it) ;; [:x]
                     false
-                ) {
+                }) {
                     throw([:x])
-                    println(9)
+                    println(:no)
                 }
             }
             println(:ok)
         """)
-        //assert(out == "anon : (lin 11, col 17) : rethrow error : incompatible scopes\n" +
-        //        "anon : (lin 9, col 21) : throw([:x])\n" +
-        //        "throw error : uncaught exception\n" +
-        //        "[:x]\n" +
-        //        ":error\n") { out }
-        assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in catch condition\"' failed."))
+        assert(out == "[:x]\n" +
+                " |  anon : (lin 8, col 21) : throw([:x])\n" +
+                " v  throw error : [:x]\n") { out }
+    }
+    @Test
+    fun zz_02() {
+        val out = test("""
+            do {
+                val y = catch (it => do {
+                    val x = it
+                    println(it) ;; [:x]
+                    x
+                }) {
+                    throw([:x])
+                    println(:no)
+                }
+                println(y)
+            }
+            println(:ok)
+        """)
+        assert(out == ("[:x]\n[:x]\n:ok\n"))
     }
 
 }

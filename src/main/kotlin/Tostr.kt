@@ -40,7 +40,7 @@ fun Expr.tostr (pre: Boolean = false): String {
             }
         }
         is Expr.Dcl    -> {
-            "(" + this.tk_.str + " " + this.id.tostr() + this.tag.cond{" "+it.str} + this.src.cond { " = ${it.tostr(pre)}" } + ")"
+            "(" + this.tk_.str + " " + Pair(this.id,this.tag).tostr(pre) + this.src.cond { " = ${it.tostr(pre)}" } + ")"
         }
         is Expr.Set    -> "(set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre) + ")"
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
