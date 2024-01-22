@@ -800,7 +800,6 @@ class Parser (lexer_: Lexer)
                     Expr.Do(Tk.Fix("do",tpl.pos), l)
                 }
             }
-            this.acceptFix("drop") -> Expr.Drop(this.tk0 as Tk.Fix, this.expr_in_parens()!!)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 // ()                   ;; (null, null, null)   ;; (_  :_ => (_ or true))
@@ -1126,7 +1125,7 @@ class Parser (lexer_: Lexer)
                         loop {
                             val ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
                             if (status(ceu_co_$N) /= :terminated) or (ceu_v_$N /= nil) {
-                                set ceu_arg_$N = yield(drop(ceu_v_$N))
+                                set ceu_arg_$N = yield(ceu_v_$N)
                             }
                             break if (status(ceu_co_$N) == :terminated)
                         }

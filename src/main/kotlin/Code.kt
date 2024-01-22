@@ -53,9 +53,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
     fun Expr.isdst (): Boolean {
         return ups.pub[this].let { it is Expr.Set && it.dst==this }
     }
-    fun Expr.isdrop (): Boolean {
-        return ups.pub[this].let { it is Expr.Drop && it.e==this }
-    }
 
     fun Expr.up_task_real_c (): String {
         val n = ups.all_until(this) {
@@ -500,7 +497,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Enum -> ""
             is Expr.Data -> ""
             is Expr.Pass -> "// PASS | ${this.dump()}\n" + this.e.code()
-            is Expr.Drop -> this.e.code()
 
             is Expr.Catch -> {
                 val blkc = ups.first_block(this)!!.idc("block")
@@ -772,7 +768,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ceu_acc.Dyn->Exe_Task.pub = $src;
                         """
                     }
-                    this.isdrop() -> "assert(0 && \"TODO: drop pub\");"
                     else -> "ceu_acc = ceu_acc.Dyn->Exe_Task.pub;\n"
                 }
             }
@@ -842,17 +837,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ceu_gc_inc($src);
                         ceu_gc_dec($idc, 1);
                         $idc = $src;
-                        """
-                    }
-                    this.isdrop() -> {
-                        val bupc = ups.first_block(this)!!.idc("block")
-                        """
-                        { // ACC - DROP
-                            CEU_Value ceu_$n = $idc;
-                            ceu_gc_dec(ceu_$n, 0);
-                            $idc = (CEU_Value) { CEU_VALUE_NIL };
-                            ceu_acc = ceu_$n;
-                        }
                         """
                     }
                     else -> "ceu_acc = $idc;\n"
@@ -980,53 +964,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 assert(0 && "bug found");
                         }
                         CEU_ASSERT($bupc, ok, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                        """
-                    }
-                    this.isdrop() -> {
-                        val bupc = ups.first_block(this)!!.idc("block")
-                        """
-                        {   // INDEX - DROP
-                            switch (ceu_col_$n.type) {
-                                case CEU_VALUE_TUPLE:
-                                    ceu_acc = ceu_col_$n.Dyn->Tuple.buf[(int) $idxc.Number];
-                                    break;
-                                case CEU_VALUE_VECTOR:
-                                    ceu_acc = CEU_ASSERT($bupc, ceu_vector_get(&ceu_col_$n.Dyn->Vector, $idxc.Number), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                                    break;
-                                case CEU_VALUE_DICT: {
-                                    CEU_Value ceu_dict = ceu_col_$n;
-                                    ceu_acc = ceu_dict_get(&ceu_dict.Dyn->Dict, $idxc);
-                                    break;
-                                }
-                                default:
-                                    assert(0 && "bug found");
-                            }
-                            
-                            CEU_Value ceu_val_$n = ceu_acc;
-                            ceu_gc_dec(ceu_val_$n, 0);
-                            
-                            switch (ceu_col_$n.type) {
-                                case CEU_VALUE_TUPLE:
-                                    ceu_col_$n.Dyn->Tuple.buf[(int)$idxc.Number] = (CEU_Value) {CEU_VALUE_NIL};
-                                    break;
-                                case CEU_VALUE_VECTOR:
-                                    assert($idxc.Number == ceu_col_$n.Dyn->Vector.its-1);
-                                    ceu_col_$n.Dyn->Vector.its--;
-                                    break;
-                                case CEU_VALUE_DICT: {
-                                    int ceu_old;
-                                    ceu_dict_key_to_index(&ceu_col_$n.Dyn->Dict, $idxc, &ceu_old);
-                                    if (ceu_old != -1) {
-                                        (*ceu_col_$n.Dyn->Dict.buf)[ceu_old][1] = (CEU_Value) { CEU_VALUE_NIL };
-                                    }
-                                    break;
-                                }
-                                default:
-                                    assert(0 && "bug found");
-                            }
-                            
-                            ceu_acc = ceu_val_$n;
-                        }
                         """
                     }
                     else -> """

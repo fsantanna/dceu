@@ -165,7 +165,7 @@ set to-string = func (v) {
             set str[#str] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
             set i = i + 1
         }
-        drop(str)
+        ;;;drop;;;(str)
     } else {
         if type(v) == :number {
             ```
@@ -231,7 +231,7 @@ set copy = func (v) {
                 set ret[i] = copy(v[i])
                 set i = i + 1
             }
-            drop(ret)
+            ;;;drop;;;(ret)
         } else {
             error("TODO")
         }

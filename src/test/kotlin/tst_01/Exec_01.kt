@@ -428,6 +428,7 @@ class Exec_01 {
                     0
                 }
             }
+            ;;dump(println)
             println(f(3))
         """, true
         )
@@ -508,7 +509,7 @@ class Exec_01 {
             """
             val out = do {
                 val ins = [1,2,3]
-                drop(ins)
+                ;;;drop;;;(ins)
             }
             println(out)
         """
@@ -547,7 +548,7 @@ class Exec_01 {
         val out = test(
             """
             val v = do {
-                drop([[1,2]])
+                ;;;drop;;;([[1,2]])
             }
             println(v)
         """
@@ -632,7 +633,7 @@ class Exec_01 {
             }
             val g = func () {
                 var v = f()
-                drop(v)
+                ;;;drop;;;(v)
             }
             println(g())
         """
@@ -646,9 +647,9 @@ class Exec_01 {
             val g = do {
                 val v = do {
                     val x = [0,'a']
-                    drop(x)
+                    ;;;drop;;;(x)
                 }
-                drop(v)
+                ;;;drop;;;(v)
             }
             println(g)
         """
@@ -660,14 +661,15 @@ class Exec_01 {
         val out = test(
             """
             val t = [[1]]
-            val s = drop(t[0])
+            val s = ;;;drop;;;(t[0])
             val d = @[(1,[1])]
-            val e = drop(d[1])
+            val e = ;;;drop;;;(d[1])
             println(t,t[0],s)
             println(d,d[1],e)
         """
         )
-        assert(out == "[nil]\tnil\t[1]\n@[(1,nil)]\tnil\t[1]\n") { out }
+        //assert(out == "[nil]\tnil\t[1]\n@[(1,nil)]\tnil\t[1]\n") { out }
+        assert(out == "[[1]]\t[1]\t[1]\n@[(1,[1])]\t[1]\t[1]\n") { out }
     }
     @Test
     fun cm_03_drop() {
@@ -675,14 +677,14 @@ class Exec_01 {
             """
         var t = []
         do {
-            val x = drop(t)
+            val x = ;;;drop;;;(t)
             println(:x, x)
         }
         println(:t, t)
         """
         )
-        assert(out == ":x\t[]\n" +
-                ":t\tnil\n") { out }
+        assert(out == ":x\t[]\n:t\t[]\n") { out }
+        //assert(out == ":x\t[]\n:t\tnil\n") { out }
     }
     @Test
     fun cm_04_dots() {
@@ -690,7 +692,7 @@ class Exec_01 {
             """
             var f = func (...) {
                 var x = [...]
-                drop(x)
+                ;;;drop;;;(x)
             }
             println(f(1,2,3))
         """
@@ -703,8 +705,8 @@ class Exec_01 {
         val out = test(
             """
             var f = func (t) {
-                var x = [drop(t)]
-                drop(x)
+                var x = [;;;drop;;;(t)]
+                ;;;drop;;;(x)
             }
             println(f([1,2,3]))
         """
@@ -716,12 +718,13 @@ class Exec_01 {
         val out = test(
             """
             val t1 = [1]
-            val t2 = [drop(t1)]
-            val t3 = drop(t2)
+            val t2 = [;;;drop;;;(t1)]
+            val t3 = ;;;drop;;;(t2)
             println(t1, t2, t3)
         """
         )
-        assert(out == "nil\tnil\t[[1]]\n") { out }
+        //assert(out == "nil\tnil\t[[1]]\n") { out }
+        assert(out == "[1]\t[[1]]\t[[1]]\n") { out }
     }
     @Test
     fun cm_05x() {
@@ -742,7 +745,7 @@ class Exec_01 {
             ;;dump(e)
             val g = func () {
                 val co = [e]
-                drop(co)
+                ;;;drop;;;(co)
             }
             val x = g()
             println(x)
@@ -791,12 +794,13 @@ class Exec_01 {
             }
             do {
                 val x = []
-                val y = f(drop(x))
+                val y = f(;;;drop;;;(x))
                 println(x, y)
             }
         """
         )
-        assert(out == "nil\t10\n") { out }
+        //assert(out == "nil\t10\n") { out }
+        assert(out == "[]\t10\n") { out }
     }
     @Test
     fun cc_10_drop_multi_err() {
@@ -804,7 +808,7 @@ class Exec_01 {
             val x = do {
                 val t1 = [1,2,3]
                 val t2 = t1
-                drop(t1)        ;; ~ERR~: `t1` has multiple references
+                ;;;drop;;;(t1)        ;; ~ERR~: `t1` has multiple references
             }                   ;; not a problem b/c gc_dec does not chk current block
             println(x)
         """)
@@ -818,7 +822,7 @@ class Exec_01 {
             do {
                 val y = do {
                     val x = t[1]
-                    drop(x)
+                    ;;;drop;;;(x)
                 }
                 println(y)
             }
@@ -838,13 +842,14 @@ class Exec_01 {
             do {
                 val t1 = [1]
                 do {
-                    val t2 = drop(t1)
+                    val t2 = ;;;drop;;;(t1)
                     println(t2)
                 }
                 println(t1)
             }
         """)
-        assert(out == "[1]\nnil\n") { out }
+        //assert(out == "[1]\nnil\n") { out }
+        assert(out == "[1]\n[1]\n") { out }
     }
     @Test
     fun cc_12_drop_deep() {
@@ -853,7 +858,7 @@ class Exec_01 {
                 val t1 = [1]
                 val t2 = t1
                 do {
-                    val t3 = drop(t1)
+                    val t3 = ;;;drop;;;(t1)
                     println(t2)
                 }
                 println(t1)
@@ -861,8 +866,8 @@ class Exec_01 {
         """)
         //assert(out == "anon : (lin 6, col 21) : declaration error : cannot move pending reference in\n") { out }
         //assert(out == "anon : (lin 6, col 35) : drop error : value contains multiple references\n") { out }
-        assert(out == "[1]\n" +
-                "nil\n") { out }
+        //assert(out == "[1]\nnil\n") { out }
+        assert(out == "[1]\n[1]\n") { out }
     }
     @Test
     fun cc_13_drop_cycle() {
@@ -872,7 +877,7 @@ class Exec_01 {
                 var x = [nil]
                 var y = [x]
                 set x[0] = y
-                drop(x)
+                ;;;drop;;;(x)
             }
             println(z[0][0] == z)
         """
@@ -888,7 +893,7 @@ class Exec_01 {
                 var x = [nil]
                 var y = [x]
                 set x[0] = y
-                ;;;drop;;;(x)
+                ;;;;;;drop;;;;;;(x)
             }
             println(z[0][0] == z)
         """
@@ -927,7 +932,7 @@ class Exec_01 {
         val out = test(
             """
             val f = func (v) {
-                drop(v)
+                ;;;drop;;;(v)
             }
             println(f([1]))
         """
@@ -2147,7 +2152,7 @@ class Exec_01 {
             var d = do {
                 var b = [2]
                 var c = cycle([a,b,[3],nil])
-                drop(c)
+                ;;;drop;;;(c)
             }
             ;;println(d)  ;; OK: [[1],[2],[3],*]
             println(:ok)
@@ -4327,7 +4332,7 @@ class Exec_01 {
             }
             var g = do {
                 var t = [1]
-                ;;;drop;;;(f(drop(t)))
+                ;;;drop;;;(f(;;;drop;;;(t)))
             }
             println(g())
         """
@@ -4379,7 +4384,7 @@ class Exec_01 {
                 val g = func () {
                     y
                 }
-                drop(g)
+                ;;;drop;;;(g)
             }
             println(f(1)())
             """,
@@ -4557,7 +4562,7 @@ class Exec_01 {
             do {
                 val out = do {
                     val ins = [1,2,3]
-                    drop(ins)
+                    ;;;drop;;;(ins)
                 }   ;; gc'd by block
                 println(`:number CEU_GC.gc`, `:number CEU_GC.free`)
             }
@@ -4594,7 +4599,7 @@ class Exec_01 {
             do {
                 do {
                     var v = []
-                    drop(v)
+                    ;;;drop;;;(v)
                 }
                 ;; [] not captured, should be checked 
                 println(`:number CEU_GC.gc`)

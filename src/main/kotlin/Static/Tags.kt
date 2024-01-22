@@ -54,7 +54,6 @@ class Tags (outer: Expr.Do) {
             }
             is Expr.Data -> add(this.tk, this.tk.str, this.tk.str.tag2c(), null)
             is Expr.Pass   -> this.e.traverse()
-            is Expr.Drop   -> this.e.traverse()
 
             is Expr.Catch  -> { this.cnd?.traverse() ; this.blk.traverse() }
             is Expr.Defer  -> this.blk.traverse()

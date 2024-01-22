@@ -38,7 +38,7 @@ val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 
 val KEYWORDS: SortedSet<String> = (
     setOf (
-        "break", "data", "do", "drop", "else",
+        "break", "data", "do", "else",
         "enum", "false", "func", "if",
         "loop", "nil", "set", "skip",
         "true", "val", "var",
@@ -132,7 +132,6 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Enum   (val tk_: Tk.Fix, val tags: List<Pair<Tk.Tag,Tk.Nat?>>): Expr(N++, tk_)
     data class Data   (val tk_: Tk.Tag, val ids: List<Pair<Tk.Id,Tk.Tag?>>): Expr(N++, tk_)
     data class Pass   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
-    data class Drop   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
 
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr.Do, val blk: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)

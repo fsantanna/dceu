@@ -1029,7 +1029,7 @@ fun Coder.main (tags: Tags): String {
     #endif
     #endif
     """ +
-    """ // HOLD / DROP
+    """ // HOLD
         void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns)) {
         #if CEU < 5
             CEU_Dyns* dyns = &blk->dn.dyns;
