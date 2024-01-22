@@ -282,6 +282,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             (f_b == null) -> """
                                 // main block varargs (...)
                                 id__dot__dot__dot_ = ceu_create_tuple($blkc, ceu_argc);
+                                ceu_gc_inc(id__dot__dot__dot_);
                                 for (int i=0; i<ceu_argc; i++) {
                                     CEU_Value vec = ceu_vector_from_c_string($blkc, ceu_argv[i]);
                                     ceu_tuple_set(&id__dot__dot__dot_.Dyn->Tuple, i, vec);
@@ -292,7 +293,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 val args_n = f_b.args.size - 1
                                 """
                                 { // func args
-                                    ceu_gc_inc_args(ceu_n, ceu_args);
                                     ${f_b.args.map {
                                         val idc = vars.get(this, it.first.str).idc(0)
                                         """
@@ -400,6 +400,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 puts("");
                             }
                         #endif
+                        ceu_gc_dec(id__dot__dot__dot_);
                         """
                     }}
                     // check error
