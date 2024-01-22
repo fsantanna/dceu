@@ -51,8 +51,8 @@ fun Coder.main (tags: Tags): String {
         #define CEU_HLD_BLOCK(dyn) ({ CEU_Block* blk=(dyn)->Any.hld.block; (dyn)->Any.type!=CEU_VALUE_EXE_TASK_IN ? blk : ((CEU_Block*)((CEU_Tasks*)blk)->hld.block); }) 
         #define CEU_HLD_DYNS(dyn) ((dyn)->Any.type == CEU_VALUE_EXE_TASK_IN ? (&((CEU_Tasks*)((dyn)->Any.hld.block))->dyns) : (&((CEU_Block*)(dyn)->Any.hld.block)->dn.dyns)) 
         #else
-        #define CEU_HLD_BLOCK(dyn) ((dyn)->Any.hld.block)
-        #define CEU_HLD_DYNS(dyn) (&((CEU_Block*)(dyn)->Any.hld.block)->dn.dyns)
+        //#define CEU_HLD_BLOCK(dyn) ((dyn)->Any.hld.block)
+        //#define CEU_HLD_DYNS(dyn) (&((CEU_Block*)(dyn)->Any.hld.block)->dn.dyns)
         #endif
         
         #define CEU_ACC(v) { CEU_Value ceu_tmp=v; ceu_gc_inc(ceu_tmp); ceu_gc_dec(ceu_acc); ceu_acc=ceu_tmp; }
@@ -175,7 +175,9 @@ fun Coder.main (tags: Tags): String {
         #define _CEU_Dyn_                   \
             CEU_VALUE type;                 \
             uint8_t refs;                   \
-            struct CEU_Tags_List* tags;     \
+            struct CEU_Tags_List* tags;
+            
+        #if 0
             struct {                        \
                 void* block;   /* block/tasks */ \
                 union CEU_Dyn* prev;        \
@@ -413,8 +415,8 @@ fun Coder.main (tags: Tags): String {
                 printf("    dyn   = %p\n", v.Dyn);
                 printf("    type  = %d\n", v.type);
                 printf("    refs  = %d\n", v.Dyn->Any.refs);
-                printf("    block = %p\n", CEU_HLD_BLOCK(v.Dyn));
-                printf("    next  = %p\n", v.Dyn->Any.hld.next);
+                //printf("    block = %p\n", CEU_HLD_BLOCK(v.Dyn));
+                //printf("    next  = %p\n", v.Dyn->Any.hld.next);
                 printf("    ----\n");
                 switch (v.type) {
             #if CEU >= 4
@@ -451,7 +453,7 @@ fun Coder.main (tags: Tags): String {
             while (cur != NULL) {
                 ceu_dump_value(ceu_dyn_to_val(cur));
                 CEU_Dyn* old = cur;
-                cur = old->Any.hld.next;
+                //cur = old->Any.hld.next;
             }
         }
     #endif
@@ -1018,6 +1020,7 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // HOLD
         void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns)) {
+        #if 0
         #if CEU < 5
             CEU_Dyns* dyns = &blk->dn.dyns;
         #endif
@@ -1030,8 +1033,10 @@ fun Coder.main (tags: Tags): String {
                 dyns->last->Any.hld.next = dyn;
             }
             dyns->last = dyn;
+        #endif
         }
         void ceu_hold_rem (CEU_Dyn* dyn) {
+        #if 0
             CEU_Dyns* dyns = CEU_HLD_DYNS(dyn);
             if (dyns->first == dyn) {
                 dyns->first = dyn->Any.hld.next;
@@ -1048,6 +1053,7 @@ fun Coder.main (tags: Tags): String {
             dyn->Any.hld.block = NULL;
             dyn->Any.hld.prev  = NULL;
             dyn->Any.hld.next  = NULL;
+        #endif
         }
         void ceu_hold_chg (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns)) {
             ceu_hold_rem(dyn);
@@ -1543,11 +1549,11 @@ fun Coder.main (tags: Tags): String {
             CEU_Tuple* ret = malloc(sizeof(CEU_Tuple) + n*sizeof(CEU_Value));
             assert(ret != NULL);
             *ret = (CEU_Tuple) {
-                CEU_VALUE_TUPLE, 0, NULL, { blk, NULL, NULL },
+                CEU_VALUE_TUPLE, 0, NULL,
                 n, {}
             };
             memset(ret->buf, 0, n*sizeof(CEU_Value));
-            ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
+            //ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
             return (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)ret} };
         }
         
@@ -1566,10 +1572,10 @@ fun Coder.main (tags: Tags): String {
             assert(buf != NULL);
             buf[0] = '\0';
             *ret = (CEU_Vector) {
-                CEU_VALUE_VECTOR, 0,  NULL, { blk, NULL, NULL },
+                CEU_VALUE_VECTOR, 0,  NULL,
                 0, 0, CEU_VALUE_NIL, buf
             };
-            ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
+            //ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
             return (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ret} };
         }
         
@@ -1578,10 +1584,10 @@ fun Coder.main (tags: Tags): String {
             CEU_Dict* ret = malloc(sizeof(CEU_Dict));
             assert(ret != NULL);
             *ret = (CEU_Dict) {
-                CEU_VALUE_DICT, 0, NULL, { blk, NULL, NULL },
+                CEU_VALUE_DICT, 0, NULL,
                 0, NULL
             };
-            ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
+            //ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
             return (CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)ret} };
         }
         
@@ -1595,10 +1601,10 @@ fun Coder.main (tags: Tags): String {
                 buf[i] = (CEU_Value) { CEU_VALUE_NIL };
             }
             *ret = (CEU_Clo) {
-                type, 0, NULL, { blk, NULL, NULL },
+                type, 0, NULL,
                 frame, proto, { upvs, buf }
             };
-            ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
+            //ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
             return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
         }
 
@@ -2128,98 +2134,98 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // FUNCS
         CEU_Clo ceu_dump = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_dump_f, {0,NULL}
         };
         CEU_Clo ceu_error = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_error_f, {0,NULL}
         };
         CEU_Clo ceu_next_dict = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_next_dict_f, {0,NULL}
         };
         CEU_Clo ceu_print = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_print_f, {0,NULL}
         };
         CEU_Clo ceu_println = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_println_f, {0,NULL}
         };
         CEU_Clo ceu_sup_question_ = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_sup_question__f, {0,NULL}
         };
         CEU_Clo ceu_tags = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_tags_f, {0,NULL}
         };
         CEU_Clo ceu_tuple = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_tuple_f, {0,NULL}
         };
         CEU_Clo ceu_type = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_type_f, {0,NULL}
         };
         CEU_Clo ceu_op_equals_equals = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_op_equals_equals_f, {0,NULL}
         };
         CEU_Clo ceu_op_hash = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_op_hash_f, {0,NULL}
         };
         CEU_Clo ceu_op_slash_equals = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_op_slash_equals_f, {0,NULL}
         };
         CEU_Clo ceu_string_to_tag = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_string_to_tag_f, {0,NULL}
         };
         #if CEU >= 2
         CEU_Clo ceu_pointer_to_string = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_pointer_to_string_f, {0,NULL}
         };
         CEU_Clo ceu_throw = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_throw_f, {0,NULL}
         };
         #endif
         #if CEU >= 3
         CEU_Clo ceu_coroutine = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_coroutine_f, {0,NULL}
         };
         CEU_Clo ceu_status = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_status_f, {0,NULL}
         };
         #endif
         #if CEU >= 4
         CEU_Clo ceu_broadcast = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_broadcast_f, {0,NULL}
         };
         #endif
         #if CEU >= 5
         CEU_Clo ceu_tasks = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_tasks_f, {0,NULL}
         };
         CEU_Clo ceu_track = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_track_f, {0,NULL}
         };
         CEU_Clo ceu_next_tasks = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_next_tasks_f, {0,NULL}
         };
         CEU_Clo ceu_detrack = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { &CEU_BLOCK, NULL, NULL },
+            CEU_VALUE_CLO_FUNC, 1, NULL,
             &CEU_FRAME, ceu_detrack_f, {0,NULL}
         };
         #endif
