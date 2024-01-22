@@ -55,6 +55,8 @@ fun Coder.main (tags: Tags): String {
         #define CEU_HLD_DYNS(dyn) (&((CEU_Block*)(dyn)->Any.hld.block)->dn.dyns)
         #endif
         
+        #define CEU_ACC(v) { ceu_gc_dec(ceu_acc); ceu_acc=v; ceu_gc_inc(ceu_acc); }
+        
         typedef enum CEU_ARG {
         #if CEU >= 4
             CEU_ARG_TOGGLE = -3,    // restore time to CEU_TIME_MIN after toggle
@@ -560,11 +562,11 @@ fun Coder.main (tags: Tags): String {
         }
         #define CEU_ERROR(blk,pre,err) {            \
             if (err.type == CEU_VALUE_THROW) {      \
-                ceu_acc = err;                      \
+                CEU_ACC(err);                       \
             } else {                                \
-                ceu_acc = _ceu_throw_(blk, err);    \
+                CEU_ACC(_ceu_throw_(blk, err));     \
             }                                       \
-            CEU_ERROR_PUSH(pre,ceu_acc);        \
+            CEU_ERROR_PUSH(pre,ceu_acc);            \
             continue;                               \
         }
         #define CEU_ASSERT(blk,err,pre) ({      \
@@ -2267,7 +2269,7 @@ fun Coder.main (tags: Tags): String {
     """ // MAIN
         int main (int ceu_argc, char** ceu_argv) {
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
-            CEU_Value ceu_acc;
+            CEU_Value ceu_acc = { CEU_VALUE_NIL };
             char ceu_err_msg[255];
         #if CEU >= 4
            CEU_Stack* ceu_bstk = &CEU_BSTK;
@@ -2277,6 +2279,7 @@ fun Coder.main (tags: Tags): String {
         #endif
             CEU_Frame* ceu_frame = &CEU_FRAME;
             ${this.code}
+            CEU_ACC((CEU_Value) { CEU_VALUE_NIL });     // clear/free last ceu_acc
             return 0;
         }
     """)

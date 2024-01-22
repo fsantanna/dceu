@@ -13,11 +13,9 @@ class Exec_01 {
 
     @Test
     fun aa_print1() {
-        val out = test(
-            """
+        val out = test("""
             print([10])
-        """
-        )
+        """)
         assert(out == "[10]") { out }
     }
     @Test
@@ -4521,6 +4519,7 @@ class Exec_01 {
             do {
                 var y = x
             }
+            ;;dump(x)
             set x = nil
             println(`:number CEU_GC.gc`)
         """
