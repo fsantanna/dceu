@@ -55,7 +55,7 @@ fun Coder.main (tags: Tags): String {
         #define CEU_HLD_DYNS(dyn) (&((CEU_Block*)(dyn)->Any.hld.block)->dn.dyns)
         #endif
         
-        #define CEU_ACC(v) { ceu_gc_dec(ceu_acc); ceu_acc=v; ceu_gc_inc(ceu_acc); }
+        #define CEU_ACC(v) { CEU_Value ceu_tmp=v; ceu_gc_inc(ceu_tmp); ceu_gc_dec(ceu_acc); ceu_acc=ceu_tmp; }
         
         typedef enum CEU_ARG {
         #if CEU >= 4
@@ -181,6 +181,7 @@ fun Coder.main (tags: Tags): String {
                 union CEU_Dyn* prev;        \
                 union CEU_Dyn* next;        \
             } hld;
+        #endif
             
         typedef struct CEU_Any {
             _CEU_Dyn_

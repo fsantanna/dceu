@@ -335,7 +335,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_Value ceu_acc_$n = ceu_acc;
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                     ${defers[this].cond { it.third }}
-                    CEU_ACC(CEU_ERR_OR(ceu_acc, ceu_acc_$n));
+                    ceu_acc = CEU_ERR_OR(ceu_acc, ceu_acc_$n);
+                    //ceu_gc_inc(ceu_acc);
                     
                     // dcls gc-dec
                     ${dcls.map { """
@@ -435,8 +436,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     (this.src == null) -> ""
                     else -> "$idc = ceu_acc;"
                 }}
-                //ceu_gc_inc($idc);
-                ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                ceu_gc_inc($idc);
+                //ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                 """
             }
             is Expr.Set -> {
@@ -956,20 +957,20 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             default:
                                 assert(0 && "bug found");
                         }
-                        ceu_acc = $src;
+                        CEU_ACC($src);
                         CEU_ASSERT($bupc, ok, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         """
                     }
                     else -> """
                         switch (ceu_acc.type) {
                             case CEU_VALUE_TUPLE:
-                                ceu_acc = ceu_acc.Dyn->Tuple.buf[(int) $idxc.Number];
+                                CEU_ACC(ceu_acc.Dyn->Tuple.buf[(int) $idxc.Number]);
                                 break;
                             case CEU_VALUE_VECTOR:
-                                ceu_acc = CEU_ASSERT($bupc, ceu_vector_get(&ceu_acc.Dyn->Vector, $idxc.Number), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                CEU_ACC(CEU_ASSERT($bupc, ceu_vector_get(&ceu_acc.Dyn->Vector, $idxc.Number), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"));
                                 break;
                             case CEU_VALUE_DICT:
-                                ceu_acc = ceu_dict_get(&ceu_acc.Dyn->Dict, $idxc);
+                                CEU_ACC(ceu_dict_get(&ceu_acc.Dyn->Dict, $idxc));
                                 break;
                             default:
                                 assert(0 && "bug found");

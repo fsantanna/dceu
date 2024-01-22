@@ -4574,6 +4574,7 @@ class Exec_01 {
         val out = test(
             """
             do #[ [1] ]
+            do nil
             println(`:number CEU_GC.gc`)
         """
         )
@@ -4642,14 +4643,15 @@ class Exec_01 {
                     var v = []
                     ;;;drop;;;(v)
                 }
-                ;; [] not captured, should be checked 
+                ;; bypassed 
                 println(`:number CEU_GC.gc`)
             }
             println(`:number CEU_GC.gc`)
         """, true
         )
         //assert(out == "1\n1\n") { out }
-        assert(out == "0\n0\n") { out }
+        //assert(out == "0\n0\n") { out }
+        assert(out == "0\n1\n") { out }
     }
     @Test
     fun gc11() {
