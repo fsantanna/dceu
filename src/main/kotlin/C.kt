@@ -639,15 +639,13 @@ fun Coder.main (tags: Tags): String {
         #endif
         }
         
-        void ceu_gc_dec (CEU_Value v, int chk) {
+        void ceu_gc_dec (CEU_Value v) {
             if (v.type < CEU_VALUE_DYNAMIC)
                 return;
             if (v.Dyn->Any.refs > 0) {  // possible for uncaptured fleeting values on block termination
                 v.Dyn->Any.refs--;
             }
-            if (chk) {
-                ceu_gc_rem_chk(v);
-            }
+            ceu_gc_rem_chk(v);
         }
 
         void ceu_gc_inc (CEU_Value v) {
@@ -693,31 +691,31 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_CLO_TASK:
         #endif
                     for (int i=0; i<dyn->Clo.upvs.its; i++) {
-                        ceu_gc_dec(dyn->Clo.upvs.buf[i], chk);
+                        ceu_gc_dec(dyn->Clo.upvs.buf[i]);
                     }
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<dyn->Tuple.its; i++) {
-                        ceu_gc_dec(dyn->Tuple.buf[i], chk);
+                        ceu_gc_dec(dyn->Tuple.buf[i]);
                     }
                     break;
                 case CEU_VALUE_VECTOR:
                     for (int i=0; i<dyn->Vector.its; i++) {
                         CEU_Value ret = ceu_vector_get(&dyn->Vector, i);
                         assert(ret.type != CEU_VALUE_ERROR);
-                        ceu_gc_dec(ret, 1);
+                        ceu_gc_dec(ret);
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<dyn->Dict.max; i++) {
-                        ceu_gc_dec((*dyn->Dict.buf)[i][0], chk);
-                        ceu_gc_dec((*dyn->Dict.buf)[i][1], chk);
+                        ceu_gc_dec((*dyn->Dict.buf)[i][0]);
+                        ceu_gc_dec((*dyn->Dict.buf)[i][1]);
                     }
                     break;
             #if CEU >= 2
                 case CEU_VALUE_THROW:
-                    ceu_gc_dec(dyn->Throw.val, chk);
-                    ceu_gc_dec(dyn->Throw.stk, chk);
+                    ceu_gc_dec(dyn->Throw.val);
+                    ceu_gc_dec(dyn->Throw.stk);
                     break;
             #endif
         #if CEU >= 3
@@ -728,7 +726,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
                 case CEU_VALUE_EXE_TASK_IN:
         #endif
-                    ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo), chk);
+                    ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo));
                     break;
         #endif
         #if CEU >= 5
@@ -1313,7 +1311,7 @@ fun Coder.main (tags: Tags): String {
                 }
             }
             if (evt.type > CEU_VALUE_DYNAMIC) {
-                ceu_gc_dec(evt, 1);
+                ceu_gc_dec(evt);
             }
 
             CEU_TIME_N--;
@@ -1349,7 +1347,7 @@ fun Coder.main (tags: Tags): String {
         
         void ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v) {
             ceu_gc_inc(v);
-            ceu_gc_dec(tup->buf[i], 1);
+            ceu_gc_dec(tup->buf[i]);
             tup->buf[i] = v;
         }
         
@@ -1368,7 +1366,7 @@ fun Coder.main (tags: Tags): String {
                 assert(i == vec->its-1);
                 CEU_Value ret = ceu_vector_get(vec, i);
                 assert(ret.type != CEU_VALUE_ERROR);
-                ceu_gc_dec(ret, 1);
+                ceu_gc_dec(ret);
                 vec->its--;
             } else {
                 if (vec->its == 0) {
@@ -1390,7 +1388,7 @@ fun Coder.main (tags: Tags): String {
                     CEU_Value ret = ceu_vector_get(vec, i);
                     assert(ret.type != CEU_VALUE_ERROR);
                     ceu_gc_inc(v);
-                    ceu_gc_dec(ret, 1);
+                    ceu_gc_dec(ret);
                     assert(i < vec->its);
                 }
                 memcpy(vec->buf + i*sz, (char*)&v.Number, sz);
@@ -1515,12 +1513,12 @@ fun Coder.main (tags: Tags): String {
             CEU_Value vv = ceu_dict_get(col, key);
             
             if (val.type == CEU_VALUE_NIL) {
-                ceu_gc_dec(vv, 1);
-                ceu_gc_dec(key, 1);
+                ceu_gc_dec(vv);
+                ceu_gc_dec(key);
                 (*col->buf)[old][0] = (CEU_Value) { CEU_VALUE_NIL };
             } else {
                 ceu_gc_inc(val);
-                ceu_gc_dec(vv, 1);
+                ceu_gc_dec(vv);
                 if (vv.type == CEU_VALUE_NIL) {
                     ceu_gc_inc(key);
                 }

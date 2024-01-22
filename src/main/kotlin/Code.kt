@@ -336,12 +336,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                     ${defers[this].cond { it.third }}
                     ceu_acc = CEU_ERR_OR(ceu_acc, ceu_acc_$n);
-                    CEU_Dyn* ceu_$n = (ceu_acc.type > CEU_VALUE_DYNAMIC) ? ceu_acc.Dyn : NULL;
+                    ceu_gc_inc(ceu_acc);
                     
                     // dcls gc-dec
                     ${dcls.map { """
                         if ($it.type > CEU_VALUE_DYNAMIC) {
-                            ceu_gc_dec($it, ceu_$n!=$it.Dyn);
+                            ceu_gc_dec($it);
                         }
                     """ }.joinToString("")}
                     
@@ -352,7 +352,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             val idc = vars.get(this, arg.first.str).idc(0)
                             """
                             if ($idc.type > CEU_VALUE_DYNAMIC) {
-                                ceu_gc_dec($idc, ceu_$n!=$idc.Dyn);
+                                ceu_gc_dec($idc);
                             }
                             """
                         }.joinToString("")
@@ -361,7 +361,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     // pub gc-dec
                     ${istsk.cond { """
                         if (ceu_frame->exe_task->pub.type > CEU_VALUE_DYNAMIC) {
-                            ceu_gc_dec(ceu_frame->exe_task->pub, ceu_$n!=ceu_frame->exe_task->pub.Dyn);
+                            ceu_gc_dec(ceu_frame->exe_task->pub);
                         }
                         ceu_frame->exe_task->pub = ceu_acc;     // task final return value
                     """ }}
@@ -764,7 +764,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
                             ceu_gc_inc($src);
                         }                        
-                        ceu_gc_dec(ceu_acc.Dyn->Exe_Task.pub, 1);
+                        ceu_gc_dec(ceu_acc.Dyn->Exe_Task.pub);
                         ceu_acc.Dyn->Exe_Task.pub = $src;
                         """
                     }
@@ -835,7 +835,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                         // ACC - SET | ${this.dump()}
                         ceu_gc_inc($src);
-                        ceu_gc_dec($idc, 1);
+                        ceu_gc_dec($idc);
                         $idc = $src;
                         """
                     }
