@@ -340,9 +340,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     
                     // dcls gc-dec
                     ${dcls.map { """
-                        if ($it.type > CEU_VALUE_DYNAMIC) {
-                            ceu_gc_dec($it);
-                        }
+                        ceu_gc_dec($it);
                     """ }.joinToString("")}
                     
                     // args gc-dec (cannot call ceu_gc_dec_args b/c of copy to ids)
@@ -351,18 +349,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         f_b.args.map { arg ->
                             val idc = vars.get(this, arg.first.str).idc(0)
                             """
-                            if ($idc.type > CEU_VALUE_DYNAMIC) {
-                                ceu_gc_dec($idc);
-                            }
+                            ceu_gc_dec($idc);
                             """
                         }.joinToString("")
                     }}
                     
                     // pub gc-dec
                     ${istsk.cond { """
-                        if (ceu_frame->exe_task->pub.type > CEU_VALUE_DYNAMIC) {
-                            ceu_gc_dec(ceu_frame->exe_task->pub);
-                        }
+                        ceu_gc_dec(ceu_frame->exe_task->pub);
                         ceu_frame->exe_task->pub = ceu_acc;     // task final return value
                     """ }}
                     
