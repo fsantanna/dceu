@@ -4476,18 +4476,19 @@ class Exec_01 {
         DEBUG = true
         val out = test(
             """
-            do []  ;; not checked
-            do []  ;; not checked
+            do []  ;; ;;;not;;; checked
+            do []  ;; ;;;not;;; checked
+            nil
             `ceu_dump_gc();`
             ;;println(`:number CEU_GC.gc`)
         """
         )
         //assert(out == "2\n") { out }
         //assert(out == "0\n") { out }
-        assert(out == ">>> GC: 4\n" +
+        assert(out == ">>> GC: 2\n" +
                 "    alloc = 4\n" +
-                "    free  = 0\n" +
-                "    gc    = 0\n") { out }
+                "    free  = 2\n" +
+                "    gc    = 2\n") { out }
     }
     @Test
     fun gc3_cycle() {
@@ -4561,11 +4562,39 @@ class Exec_01 {
                 v
             }
             #( #[ f([1]) ] )
+            nil
             println(`:number CEU_GC.gc`)
         """
         )
         assert(out == "2\n") { out }
         //assert(out == "0\n") { out }
+    }
+    @Test
+    fun gc7x() {
+        DEBUG = true
+        val out = test(
+            """
+            do #[ [1] ]
+            println(`:number CEU_GC.gc`)
+        """
+        )
+        assert(out == "2\n") { out }
+        //assert(out == "0\n") { out }
+    }
+    @Test
+    fun gc7y() {
+        DEBUG = true
+        val out = test(
+            """
+            var f = func (v) {
+                [2]
+            }
+            f([1])
+            nil
+            println(`:number CEU_GC.gc`)
+        """
+        )
+        assert(out == "2\n") { out }
     }
     @Test
     fun gc8() {
@@ -4668,9 +4697,7 @@ class Exec_01 {
         val out = test("""
             val t = []
             do {
-                ;;dump(t)
                 val x = [t]
-                ;;dump(t)
                 nil
             }
             do {
@@ -4683,7 +4710,7 @@ class Exec_01 {
             }
             dump(t)
         """)
-        assert(out.contains("refs  = 1")) { out }
+        assert(out.contains("refs  = 2")) { out }
     }
 
     // MISC

@@ -1033,7 +1033,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     
                     CEU_Frame ceu_frame_$n = { $bupc, &ceu_acc.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
                     
-                    CEU_ACC(ceu_frame_$n.clo->proto (
+                    CEU_Value ceu_$n = ceu_frame_$n.clo->proto (
                         CEU5(ceu_dstk COMMA)
                         CEU4($bstk COMMA)
                         &ceu_frame_$n,
@@ -1043,7 +1043,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             }
                         }},
                         ${if (has_dots) "_ceu_args_$n" else argsc}
-                    ));
+                    );
+                    ceu_gc_dec(ceu_acc);
+                    ceu_acc = ceu_$n;
 
                     static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
                     
