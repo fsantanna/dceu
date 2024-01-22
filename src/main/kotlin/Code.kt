@@ -820,8 +820,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val idc = dcl.idc(this.tk_.upv, nst)
                 when {
                     this.isdst() -> {
-                        val ublk = ups.first_block(this)!!
-                        val bupc = ublk.idc("block")
                         val src = ups.pub[this]!!.idc("src")
                         if (dcl.id.upv > 0) {
                             err(tk, "set error : cannot reassign an upval")
@@ -831,6 +829,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ceu_gc_inc($src);
                         ceu_gc_dec($idc);
                         $idc = $src;
+                        ceu_acc = $src;
                         """
                     }
                     else -> "CEU_ACC($idc);\n"
@@ -957,6 +956,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             default:
                                 assert(0 && "bug found");
                         }
+                        ceu_acc = $src;
                         CEU_ASSERT($bupc, ok, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         """
                     }

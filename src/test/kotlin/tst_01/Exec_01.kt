@@ -4534,7 +4534,6 @@ class Exec_01 {
             do {
                 var y = x
             }
-            ;;dump(x)
             set x = nil
             println(`:number CEU_GC.gc`)
         """

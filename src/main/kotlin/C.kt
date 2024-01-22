@@ -869,7 +869,8 @@ fun Coder.main (tags: Tags): String {
                             ceu_tuple_set(&tup.Dyn->Tuple, i++, (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} });
                             cur = cur->next;
                         }
-                    }                    
+                    }
+                    ceu_gc_inc(tup);
                     return tup;
                 }
                 case 2: {   // check
@@ -1388,6 +1389,7 @@ fun Coder.main (tags: Tags): String {
             for (int i=0; i<N; i++) {
                 ceu_vector_set(&vec.Dyn->Vector, vec.Dyn->Vector.its, (CEU_Value) { CEU_VALUE_CHAR, {.Char=str[i]} });
             }
+            ceu_gc_inc(vec);
             return vec;
         }
 
@@ -1444,6 +1446,7 @@ fun Coder.main (tags: Tags): String {
             if (nxt == NULL) {
                 return (CEU_Value) { CEU_VALUE_NIL };
             } else {
+                -=- TODO: gc_inc -=-
                 return ceu_create_track(frame->up_block, &nxt->Exe_Task);
             }
         }
@@ -1549,7 +1552,9 @@ fun Coder.main (tags: Tags): String {
         
         CEU_Value ceu_tuple_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n==1 && args[0].type==CEU_VALUE_NUMBER);
-            return ceu_create_tuple(frame->up_block, args[0].Number);
+            CEU_Value ret = ceu_create_tuple(frame->up_block, args[0].Number);
+            ceu_gc_inc(ret);
+            return ret;
         }
         
         CEU_Value ceu_create_vector (CEU_Block* blk) {
@@ -1636,8 +1641,6 @@ fun Coder.main (tags: Tags): String {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="spawn error : expected task"} };
             }
             CEU_Value ret = _ceu_create_exe_(type, sizeof(CEU_Exe_Task), blk, clo CEU5(COMMA dyns));
-            //ret.Dyn->Exe_Task.hld.type = CEU_HOLD_MUTAB;
-            ret.Dyn->Any.refs = 1;  // bc task is alive regardless of pointers
             ret.Dyn->Exe_Task.time = CEU_TIME_MAX;
             ret.Dyn->Exe_Task.dn_block = NULL;
             ret.Dyn->Exe_Task.pub = (CEU_Value) { CEU_VALUE_NIL };
@@ -1675,6 +1678,7 @@ fun Coder.main (tags: Tags): String {
                     ret.Dyn->Exe_Task.hld.type = tasks->hld.type; // TODO: not sure 
                     ret.Dyn->Any.hld.block = (void*) tasks; // point to tasks (vs enclosing block)
                 }
+                -=- TODO: gc_inc -=-
                 return ret;
             } else {
                 return (CEU_Value) { CEU_VALUE_NIL };
@@ -1686,7 +1690,7 @@ fun Coder.main (tags: Tags): String {
             assert(ret != NULL);
 
             *ret = (CEU_Tasks) {
-                CEU_VALUE_TASKS, 1, NULL, { blk, NULL, NULL },
+                CEU_VALUE_TASKS, 0, NULL, { blk, NULL, NULL },
                 max, { NULL, NULL }
             };
             
@@ -1715,6 +1719,7 @@ fun Coder.main (tags: Tags): String {
                 }
                 max = xmax.Number;
             }
+            -=- TODO: gc_inc -=-
             return ceu_create_tasks(frame->up_block, max);
         }
         #endif
