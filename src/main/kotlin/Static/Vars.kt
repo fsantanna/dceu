@@ -3,7 +3,7 @@ package dceu
 typealias LData = List<Pair<Tk.Id,Tk.Tag?>>
 
 fun Expr.Do.ismem (sta: Static, clos: Clos): Boolean {
-    return sta.exes.contains(this) || /*sta.ylds.contains(this) ||*/ clos.blks_nested.contains(this)
+    return /*sta.exes.contains(this) ||*/ sta.ylds.contains(this) || clos.blks_nested.contains(this)
 }
 
 fun String.idc (n: Int? = null): String {
