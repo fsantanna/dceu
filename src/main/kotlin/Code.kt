@@ -286,6 +286,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 for (int i=0; i<ceu_argc; i++) {
                                     CEU_Value vec = ceu_vector_from_c_string($blkc, ceu_argv[i]);
                                     ceu_tuple_set(&id__dot__dot__dot_.Dyn->Tuple, i, vec);
+                                    ceu_gc_dec(vec);
                                 }
                             """
                             (f_b is Expr.Proto) -> {
@@ -452,6 +453,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${this.dst.code()}
                     //ceu_acc = $srcc;
                     //CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
+                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL };    // X: prevent srcc gc_dec (see Acc/Index)
                 }
                 """
             }
@@ -830,7 +832,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ceu_gc_inc($src);
                         ceu_gc_dec($idc);
                         $idc = $src;
-                        ceu_acc = $src;
+                        ceu_acc = $src;     // X: restore srcc (see Set)
                         """
                     }
                     else -> "CEU_ACC($idc);\n"
@@ -918,6 +920,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val idxc = this.idc("idx")
                 """
                 { // INDEX | ${this.dump()}
+                    ${this.isdst().cond { """
+                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };    // save srcc, do not clear
+                    """ }}
+
                     // IDX
                     ${(!blk.ismem(sta,clos)).cond {
                         "CEU_Value ceu_idx_$n;\n"
@@ -932,7 +938,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         $idxc = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=$idx} };
                         """
                     }}
-                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL };    // clear idxc below
+                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL };    // save idxc, clear below
                     
                     // COL
                     ${this.col.code()}
@@ -957,7 +963,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             default:
                                 assert(0 && "bug found");
                         }
-                        CEU_ACC($src);
+                        CEU_ACC($src);     // X: restore srcc (see Set)
                         CEU_ASSERT($bupc, ok, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         """
                     }
