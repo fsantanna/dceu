@@ -947,40 +947,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     this.isdst() -> {
                         val src = ups.pub[this]!!.idc("src")
                         """
-                        CEU_Value ok = { CEU_VALUE_NIL };
-                        switch (ceu_acc.type) {
-                            case CEU_VALUE_TUPLE:
-                                ceu_tuple_set(&ceu_acc.Dyn->Tuple, $idxc.Number, $src);
-                                break;
-                            case CEU_VALUE_VECTOR:
-                                ceu_vector_set(&ceu_acc.Dyn->Vector, $idxc.Number, $src);
-                                break;
-                            case CEU_VALUE_DICT: {
-                                CEU_Value ceu_dict = ceu_acc;
-                                ok = ceu_dict_set(&ceu_dict.Dyn->Dict, $idxc, $src);
-                                break;
-                            }
-                            default:
-                                assert(0 && "bug found");
-                        }
+                        CEU_Value ok = ceu_col_set(ceu_acc, $idxc, $src);
                         CEU_ACC($src);     // X: restore srcc (see Set)
                         CEU_ASSERT($bupc, ok, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         """
                     }
                     else -> """
-                        switch (ceu_acc.type) {
-                            case CEU_VALUE_TUPLE:
-                                CEU_ACC(ceu_acc.Dyn->Tuple.buf[(int) $idxc.Number]);
-                                break;
-                            case CEU_VALUE_VECTOR:
-                                CEU_ACC(CEU_ASSERT($bupc, ceu_vector_get(&ceu_acc.Dyn->Vector, $idxc.Number), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"));
-                                break;
-                            case CEU_VALUE_DICT:
-                                CEU_ACC(ceu_dict_get(&ceu_acc.Dyn->Dict, $idxc));
-                                break;
-                            default:
-                                assert(0 && "bug found");
-                        }
+                        CEU_ACC(CEU_ASSERT($bupc, ceu_col_get(ceu_acc,$idxc), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"));
                     """
                 } + """
                     ceu_gc_dec($idxc);  // clear idxc from above

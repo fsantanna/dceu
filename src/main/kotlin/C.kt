@@ -1340,6 +1340,43 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
+        CEU_Value ceu_col_get (CEU_Value col, CEU_Value key) {
+            CEU_Value err = ceu_col_check(col,key);
+            if (err.type == CEU_VALUE_ERROR) {
+                return err;
+            }
+            switch (col.type) {
+                case CEU_VALUE_TUPLE:
+                    return col.Dyn->Tuple.buf[(int) key.Number];
+                case CEU_VALUE_VECTOR:
+                    return ceu_vector_get(&col.Dyn->Vector, key.Number);
+                    break;
+                case CEU_VALUE_DICT:
+                    return ceu_dict_get(&col.Dyn->Dict, key);
+                default:
+                    assert(0 && "bug found");
+            }
+        }
+        
+        CEU_Value ceu_col_set (CEU_Value col, CEU_Value key, CEU_Value val) {
+            CEU_Value ok = { CEU_VALUE_NIL };
+            switch (col.type) {
+                case CEU_VALUE_TUPLE:
+                    ceu_tuple_set(&col.Dyn->Tuple, key.Number, val);
+                    break;
+                case CEU_VALUE_VECTOR:
+                    ceu_vector_set(&col.Dyn->Vector, key.Number, val);
+                    break;
+                case CEU_VALUE_DICT: {
+                    ok = ceu_dict_set(&col.Dyn->Dict, key, val);
+                    break;
+                }
+                default:
+                    assert(0 && "bug found");
+            }
+            return ok;
+        }
+        
         void ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v) {
             ceu_gc_inc(v);
             ceu_gc_dec(tup->buf[i]);
