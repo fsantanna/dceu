@@ -918,10 +918,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val idxc = this.idc("idx")
                 """
                 { // INDEX | ${this.dump()}
-                    ${this.isdst().cond { """
-                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };    // save srcc, do not clear
-                    """ }}
-
                     // IDX
                     ${(!blk.ismem(sta,clos)).cond {
                         "CEU_Value ceu_idx_$n;\n"
@@ -946,6 +942,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         val srcc = ups.pub[this]!!.idc("src")
                         """
                         CEU_Value ok = ceu_col_set(ceu_acc, $idxc, $srcc);
+                        CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
                         CEU_ASSERT($bupc, ok, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         """
                     }
@@ -971,6 +968,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"
                 """
                 { // CALL | ${this.dump()}
+                    CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
                     ${(!bup.ismem(sta,clos)).cond {
                         "CEU_Value ceu_args_$n[${this.args.size}];\n"
                     }}
