@@ -55,7 +55,10 @@ fun Coder.main (tags: Tags): String {
         //#define CEU_HLD_DYNS(dyn) (&((CEU_Block*)(dyn)->Any.hld.block)->dn.dyns)
         #endif
         
-        #define CEU_ACC(v) { CEU_Value ceu_tmp=v; ceu_gc_inc(ceu_tmp); ceu_gc_dec(ceu_acc); ceu_acc=ceu_tmp; }
+        #define CEU_ACC(v)  { CEU_Value ceu_tmp=v; ceu_gc_inc(ceu_tmp); ceu_gc_dec(ceu_acc); ceu_acc=ceu_tmp; }
+        #define CEU_PUSH(v) { ceu_acc = (CEU_Value) { CEU_VALUE_NIL }; } // prevents gc_dec of v
+        #define CEU_PEEK(v) { ceu_acc = v; }
+        #define CEU_POP(v)  { ceu_gc_dec(v); }
         
         typedef enum CEU_ARG {
         #if CEU >= 4

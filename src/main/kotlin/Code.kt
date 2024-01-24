@@ -450,10 +450,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         "CEU_Value ceu_src_$n;\n"
                     }}
                     $srcc = ceu_acc;
+                    CEU_PUSH($srcc);
                     ${this.dst.code()}
-                    //ceu_acc = $srcc;
-                    //CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
-                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL };    // X: prevent srcc gc_dec (see Acc/Index)
+                    CEU_PEEK($srcc);
                 }
                 """
             }
@@ -823,16 +822,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val idc = dcl.idc(this.tk_.upv, nst)
                 when {
                     this.isdst() -> {
-                        val src = ups.pub[this]!!.idc("src")
+                        val srcc = ups.pub[this]!!.idc("src")
                         if (dcl.id.upv > 0) {
                             err(tk, "set error : cannot reassign an upval")
                         }
                         """
                         // ACC - SET | ${this.dump()}
-                        ceu_gc_inc($src);
+                        ceu_gc_inc($srcc);
                         ceu_gc_dec($idc);
-                        $idc = $src;
-                        ceu_acc = $src;     // X: restore srcc (see Set)
+                        $idc = $srcc;
                         """
                     }
                     else -> "CEU_ACC($idc);\n"
@@ -938,17 +936,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         $idxc = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=$idx} };
                         """
                     }}
-                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL };    // save idxc, clear below
+                    CEU_PUSH($idxc);
                     
                     // COL
                     ${this.col.code()}
                     CEU_ASSERT($bupc, ceu_col_check(ceu_acc, $idxc), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                 """ + when {
                     this.isdst() -> {
-                        val src = ups.pub[this]!!.idc("src")
+                        val srcc = ups.pub[this]!!.idc("src")
                         """
-                        CEU_Value ok = ceu_col_set(ceu_acc, $idxc, $src);
-                        CEU_ACC($src);     // X: restore srcc (see Set)
+                        CEU_Value ok = ceu_col_set(ceu_acc, $idxc, $srcc);
                         CEU_ASSERT($bupc, ok, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         """
                     }
@@ -956,7 +953,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         CEU_ACC(CEU_ASSERT($bupc, ceu_col_get(ceu_acc,$idxc), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"));
                     """
                 } + """
-                    ceu_gc_dec($idxc);  // clear idxc from above
+                    CEU_POP($idxc);
                 }
                 """
             }
