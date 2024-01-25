@@ -1,10 +1,8 @@
 package dceu
 
 class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
-    val unused: MutableSet<Expr.Dcl> = mutableSetOf()
     val spws:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 spawn
     val ylds:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 yield (including subs) or nested coro/task
-    //val exes:   MutableSet<Expr.Do>  = mutableSetOf() // TODO: all blocks in exes
 
     init {
         outer.traverse()
@@ -13,14 +11,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     // ylds: block yields -> vars must be in Mem (TODO: spawn also, see gh_01_set)
     // void: block is innocuous -> should be a proxy to up block
 
-    fun void (blk: Expr.Do): Boolean {
-        //return false
-        // has up block, no declarations, no spawns
-        val dcls = vars.blk_to_dcls[blk]!!
-        val f_b = ups.pub[blk]?.let { ups.first_proto_or_block(it) }
-        return (f_b is Expr.Do) && dcls.isEmpty() && !this.spws.contains(blk)
-    }
-
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
@@ -28,29 +18,11 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.blk.traverse()
             }
             is Expr.Export -> this.blk.traverse()
-            is Expr.Do     -> {
-                this.es.forEach { it.traverse() }
-                /*
-                if (ups.inexe(this,null, true)) {
-                    exes.add(this)
-                }
-                */
-            }
-            is Expr.Dcl    -> {
-                unused.add(this)
-                this.src?.traverse()
-            }
+            is Expr.Do     -> this.es.forEach { it.traverse() }
+            is Expr.Dcl    -> this.src?.traverse()
             is Expr.Set    -> {
                 this.dst.traverse()
                 this.src.traverse()
-                /*
-                val thus = ups.first(this) { it is Expr.Do && it.tk.str=="thus"}
-                if (thus != null) {
-                    if (ups.any(this.dst.base(ups)) { it==thus }) {
-                        err(this.tk, "set error : destination across thus")
-                    }
-                }
-                 */
                 if (this.dst is Expr.Acc) {
                     val (_,dcl) = vars.get(this.dst)
                     if (dcl.tk.str == "val") {
@@ -161,7 +133,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
                 val (blk,dcl) = vars.get(this)
-                unused.remove(dcl)
                 //err(this.tk, "access error : cannot access \"_\"")
 
                 if (blk!=outer && ups.none(blk) { it is Expr.Proto && it.tk.str!="func" }) {

@@ -562,8 +562,8 @@ fun Coder.main (tags: Tags): String {
         #define CEU_ERR_OR(err,v) ({ CEU_Value ceu=v; assert(!(CEU_ISERR(err) && CEU_ISERR(ceu)) && "TODO: double error"); (CEU_ISERR(err) ? err : ceu); })
         #if CEU <= 1
         #define CEU_ISERR(v) (v.type == CEU_VALUE_ERROR)
-        #define CEU_ERROR(blk,pre,err)  _ceu_error_(blk,pre,err)
-        #define CEU_ASSERT(blk,err,pre) ceu_assert(blk,err,pre)
+        #define CEU_ERROR(pre,err)  _ceu_error_(pre,err)
+        #define CEU_ASSERT(err,pre) ceu_assert(err,pre)
         #else
         #define CEU_ISERR(v) (v.type==CEU_VALUE_ERROR || v.type==CEU_VALUE_THROW)
         #define CEU_ERROR_PUSH(pre,err) {                   \
@@ -594,21 +594,14 @@ fun Coder.main (tags: Tags): String {
         })
         #endif
 
-        void ceu_exit (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Block* blk) {
-            if (blk == NULL) {
-                ceu_vstk_drop(ceu_vstk_top());
-                exit(0);
-            }
-            CEU_Block* up = (blk->istop) ? blk->up.frame->up_block : blk->up.block;
-            return ceu_exit(CEU5(dstk COMMA) CEU4(bstk COMMA) up);
-        }
-        void _ceu_error_ (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Block* blk, char* pre, CEU_Value err) {
+        void _ceu_error_ (char* pre, CEU_Value err) {
             fprintf(stderr, "%s : %s\n", pre, err.Error);
-            ceu_exit(CEU5(bstk COMMA) CEU4(bstk COMMA) blk);
+            ceu_vstk_drop(ceu_vstk_top());
+            exit(0);
         }
-        CEU_Value ceu_assert (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Block* blk, CEU_Value err, char* pre) {
+        CEU_Value ceu_assert (CEU_Value err, char* pre) {
             if (CEU_ISERR(err)) {
-                _ceu_error_(CEU5(dstk COMMA) CEU4(bstk COMMA) blk, pre, err);
+                _ceu_error_(pre, err);
             }
             return err;
         }
