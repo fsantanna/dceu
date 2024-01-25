@@ -335,13 +335,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             }
                             else -> ""
                         }}
+                        ${(CEU>=2 && !isvoid).cond { "ceu_vstk_block(1);" }}
                         $body
                         ${(up is Expr.Loop).cond { """
                             CEU_LOOP_STOP_${up!!.n}:
                         """ }}
                     ${(CEU >= 2).cond { "} while (0);" }}
 
-                    ${(!isvoid).cond { "ceu_vstk_block(0);" }}
+                    ${(CEU>=2 && !isvoid).cond { "ceu_vstk_block(0);" }}
 
                     ${(CEU>=4 && !isvoid).cond { """
                         ceu_stack_kill(ceu_bstk, $blkc);

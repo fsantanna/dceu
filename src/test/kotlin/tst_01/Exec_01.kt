@@ -819,6 +819,20 @@ class Exec_01 {
         assert(out == "[]\t10\n") { out }
     }
     @Test
+    fun cc_09x_drop_nest() {
+        val out = test(
+            """
+            val f = func () {
+                nil
+            }
+            f(nil)
+            println(:ok)
+        """
+        )
+        //assert(out == "nil\t10\n") { out }
+        assert(out == ":ok\n") { out }
+    }
+    @Test
     fun cc_09x_call_arg() {
         val out = test(
             """

@@ -67,6 +67,9 @@ fun Coder.main (tags: Tags): String {
         } CEU_ARG;
 
         typedef enum CEU_VALUE {
+        #if CEU >= 2
+            CEU_VALUE_BLOCK = -1,
+        #endif
             CEU_VALUE_NIL = 0,
             CEU_VALUE_ERROR,
             CEU_VALUE_TAG,
@@ -593,10 +596,10 @@ fun Coder.main (tags: Tags): String {
 
         void ceu_exit (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Block* blk) {
             if (blk == NULL) {
+                ceu_vstk_drop(ceu_vstk_top());
                 exit(0);
             }
             CEU_Block* up = (blk->istop) ? blk->up.frame->up_block : blk->up.block;
-            //ceu_gc_rem_all(CEU5(dstk COMMA) CEU4(bstk COMMA) blk);
             return ceu_exit(CEU5(dstk COMMA) CEU4(bstk COMMA) up);
         }
         void _ceu_error_ (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Block* blk, char* pre, CEU_Value err) {
@@ -825,6 +828,27 @@ fun Coder.main (tags: Tags): String {
                 ceu_gc_dec(ceu_vstk[--ceu_vstk_n]);
             }
         }
+        CEU_Value ceu_vstk_pop (int dec) {
+            CEU_Value v = ceu_vstk[--ceu_vstk_n];
+            if (dec) {
+                ceu_gc_dec(v);
+            }
+            return v;
+        }
+        #if CEU >= 2
+        void ceu_vstk_block (int on) {
+            if (on) {
+                ceu_vstk_push((CEU_Value) { CEU_VALUE_BLOCK });
+            } else {
+                CEU_Value ret = ceu_vstk_pop(0);
+                CEU_Value v;
+                do {
+                    v = ceu_vstk_pop(1);
+                } while (v.type != CEU_VALUE_BLOCK);
+                ceu_vstk[ceu_vstk_n++] = ret;
+            }
+        }
+        #endif
     """ +
     """ // IMPLS
         CEU_Value ceu_dyn_to_val (CEU_Dyn* dyn) {
@@ -1846,6 +1870,11 @@ fun Coder.main (tags: Tags): String {
                 ceu_gc_rem(tup.Dyn);
             }
             switch (v.type) {
+            #if CEU >= 2
+                case CEU_VALUE_BLOCK:
+                    printf("(block sentinel)");
+                    break;
+            #endif
                 case CEU_VALUE_NIL:
                     printf("nil");
                     break;
