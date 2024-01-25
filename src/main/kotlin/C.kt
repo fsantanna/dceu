@@ -996,7 +996,7 @@ fun Coder.main (tags: Tags): String {
                     CEU_Value bool = ceu_vstk_peek(base+2);
                     assert(bool.type == CEU_VALUE_BOOL);
                     f_set(bool.Bool);
-                    ceu_vstk_drop(base+1);  // keep dyn
+                    ceu_vstk_base(base+1);  // keep dyn
                     break;
                 }
             }
@@ -2006,7 +2006,7 @@ fun Coder.main (tags: Tags): String {
                 if (i > base) {
                     printf("\t");
                 }
-                ceu_print1(_2, ceu_vstk_peek(base+i));
+                ceu_print1(_2, ceu_vstk_peek(i));
             }
             ceu_vstk_base(base);
             ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL });

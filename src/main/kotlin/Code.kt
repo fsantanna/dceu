@@ -253,6 +253,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 val args_n = f_b.args.size - 1
                                 """
                                 { // func args
+                                    int ceu_N = ceu_vstk_top() - ceu_base;
                                     ${f_b.args.map {
                                         val idc = vars.get(this, it.first.str).idc(0)
                                         """
@@ -263,7 +264,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         val id = arg.first
                                         val idc = vars.get(this, id.str).idc(0)
                                         """
-                                        int ceu_N = ceu_vstk_top() - ceu_base;
                                         if (ceu_N > $i) {
                                             $idc = ceu_vstk_peek(-ceu_N+$i);
                                             ceu_gc_inc($idc);

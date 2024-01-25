@@ -3801,7 +3801,7 @@ class Exec_01 {
             println(tags())
         """
         )
-        assert(out.contains("ceu_tags_f: Assertion `n >= 1' failed")) { out }
+        assert(out.contains("ceu_tags_f: Assertion `N >= 1' failed")) { out }
     }
     @Test
     fun tags4() {
