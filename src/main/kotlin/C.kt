@@ -955,27 +955,27 @@ fun Coder.main (tags: Tags): String {
                 }
             }
             
-            CEU_Value ret;
             switch (n) {
                 case 1: {   // all tags
-                    ret = _ceu_tags_all_(dyn);
+                    CEU_Value ret = _ceu_tags_all_(dyn);
+                    ceu_pop(-n);
+                    ceu_push(ret);
                     break;
                 }
                 case 2: {   // check tag
-                    ret = f_chk();
+                    CEU_Value ret = f_chk();
+                    ceu_pop(-n);
+                    ceu_push(ret);
                     break;
                 }
                 default: {   // add/rem tag
                     CEU_Value bool = ceu_peek(-n+2);
                     assert(bool.type == CEU_VALUE_BOOL);
                     f_set(bool.Bool);
-                    ceu_gc_inc(dyn);
-                    ret = dyn;
+                    ceu_pop(-n+1);  // keep dyn
                     break;
                 }
             }
-            ceu_pop(-n);
-            ceu_push(ret);
         }
         char* ceu_tag_to_string (int tag) {
             CEU_Tags_Names* cur = CEU_TAGS;
@@ -1844,6 +1844,7 @@ fun Coder.main (tags: Tags): String {
                     }
                     printf(" ");
                 }
+                ceu_gc_rem(tup.Dyn);
             }
             switch (v.type) {
                 case CEU_VALUE_NIL:
@@ -2365,6 +2366,7 @@ fun Coder.main (tags: Tags): String {
         #endif
             CEU_Frame* ceu_frame = &CEU_FRAME;
             ${this.code}
+            ceu_pop(-1);
             return 0;
         }
     """)

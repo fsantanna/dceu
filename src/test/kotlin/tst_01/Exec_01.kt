@@ -3937,6 +3937,14 @@ class Exec_01 {
         )
         assert(out == "[:Z,:Y,:X]\n1\n") { out }
     }
+    @Test
+    fun tags13x() {
+        val out = test("""
+            var t = []
+            println(tags(t, :X, true))
+        """)
+        assert(out == ":X []\n") { out }
+    }
 
     // ENUM
 
