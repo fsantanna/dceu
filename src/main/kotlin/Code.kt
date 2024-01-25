@@ -196,11 +196,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     // link up.dn.block = me
                     ${when {
                     (f_b is Expr.Proto && f_b.tk.str == "task") -> """
-                            ceu_frame->exe_task->dn_block = $blkc;                        
-                        """
-                    (f_b !is Expr.Proto && !isvoid) -> """
-                            $bupc->dn.block = $blkc;
-                        """
+                        ceu_frame->exe_task->dn_block = $blkc;                        
+                    """
+                    (f_b !is Expr.Proto) -> """
+                        $bupc->dn.block = $blkc;
+                    """
                     else -> ""
                 }}
                 #endif
@@ -332,7 +332,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         (f_b is Expr.Proto && f_b.tk.str == "task") -> """
                                 ceu_frame->exe_task->dn_block = NULL;                        
                             """
-                        (f_b !is Expr.Proto && !isvoid) -> """
+                        (f_b !is Expr.Proto) -> """
                                 $bupc->dn.block = NULL;
                             """
                         else -> ""
