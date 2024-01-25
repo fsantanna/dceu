@@ -86,6 +86,13 @@ class Exec_01 {
         assert(out == "12\n3\n") { out }
     }
     @Test
+    fun aa_print_err2x() {
+        val out = test("""
+            println()
+        """)
+        assert(out == "\n") { out }
+    }
+    @Test
     fun aa_print4() {
         val out = test("print(nil)")
         assert(out == "nil") { out }
