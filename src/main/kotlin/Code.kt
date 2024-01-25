@@ -83,7 +83,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         CEU5(CEU_Stack* ceu_dstk COMMA)
                         CEU4(CEU_Stack* ceu_bstk COMMA)
                         CEU_Frame* ceu_frame,
-                        int ceu_n
+                        int ceu_base
                     ) {
                         ${istsk.cond { """
                         CEU_Value id_evt = { CEU_VALUE_NIL };
@@ -102,7 +102,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             ceu_frame->exe->status = CEU_EXE_STATUS_RESUMED;
                             switch (ceu_frame->exe->pc) {
                                 case 0:
-                                    if (ceu_n == CEU_ARG_ABORT) {
+                                    if (ceu_base == CEU_ARG_ABORT) {
                                         ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
                                         return (CEU_Value) { CEU_VALUE_NIL };
                                     }
@@ -263,8 +263,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         val id = arg.first
                                         val idc = vars.get(this, id.str).idc(0)
                                         """
-                                        if (ceu_n > $i) {
-                                            $idc = ceu_vstk_peek(-ceu_n+$i);
+                                        int ceu_N = ceu_vstk_top() - ceu_base;
+                                        if (ceu_N > $i) {
+                                            $idc = ceu_vstk_peek(-ceu_N+$i);
                                             ceu_gc_inc($idc);
                                         }
                                         """
@@ -272,14 +273,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     ${dots.cond {
                                         val idc = f_b.args.last().first.str.idc()
                                         """
-                                        int ceu_tup_n_$n = MAX(0,ceu_n-$args_n);
+                                        int ceu_tup_n_$n = MAX(0,ceu_N-$args_n);
                                         $idc = ceu_create_tuple(ceu_tup_n_$n);
                                         for (int i=0; i<ceu_tup_n_$n; i++) {
-                                            ceu_tuple_set(&$idc.Dyn->Tuple, i, ceu_vstk_peek(-ceu_n+$args_n+i));
+                                            ceu_tuple_set(&$idc.Dyn->Tuple, i, ceu_vstk_peek(-ceu_N+$args_n+i));
                                         }
                                         ceu_gc_inc($idc);
                                     """ }}
-                                    ceu_vstk_drop(ceu_n);
+                                    ceu_vstk_base(ceu_base);
                                 }
                                 """
                             }
@@ -377,7 +378,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                     // check free
                     ${(CEU>=3 && (f_b is Expr.Do) && inexe).cond { """
-                        if (ceu_n == CEU_ARG_ABORT) {
+                        if (ceu_base == CEU_ARG_ABORT) {
                             continue;   // do not execute next statement, instead free up block
                         }
                     """ }}
@@ -465,7 +466,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     } while (0); // catch
                     // check free
                     ${(CEU>=3 && ups.any(this) { it is Expr.Proto && it.tk.str!="func" }).cond { """
-                        if (ceu_n == CEU_ARG_ABORT) {
+                        if (ceu_base == CEU_ARG_ABORT) {
                             continue;   // do not execute next statement, instead free up block
                         }
                     """ }}
@@ -564,13 +565,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                     return ceu_acc;
                 case $n: // YIELD ${this.dump()}
-                    if (ceu_n == CEU_ARG_ABORT) {
+                    if (ceu_base == CEU_ARG_ABORT) {
                         CEU_REPL((CEU_Value) { CEU_VALUE_NIL }); // to be ignored in further move/checks
                         continue;
                     }
-                    assert(ceu_n <= 1 && "TODO: multiple arguments to resume");
+                    assert(ceu_base <= 1 && "TODO: multiple arguments to resume");
                 #if CEU >= 4
-                    if (ceu_n == CEU_ARG_ERROR) {
+                    if (ceu_base == CEU_ARG_ERROR) {
                         CEU_REPL(ceu_args[0]);
                         continue;
                     }
@@ -635,10 +636,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_ASSERT($bupc, ceu_x_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                     
                     ${inexeT.cond { """
-                        if (ceu_n != CEU_ARG_ABORT) {
+                        if (ceu_base != CEU_ARG_ABORT) {
                             ceu_frame->exe->pc = $n;
                             case $n: // YIELD ${this.dump()}
-                                if (ceu_n == CEU_ARG_ABORT) {
+                                if (ceu_base == CEU_ARG_ABORT) {
                                     CEU_REPL((CEU_Value) { CEU_VALUE_NIL }); // to be ignored in further move/checks
                                     continue;
                                 }
@@ -908,10 +909,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
                     // call -> bcast -> outer abortion -> need to clean up from here
                     ${(CEU>=4 && inexeT).cond { """
-                        if (ceu_n != CEU_ARG_ABORT) {
+                        if (ceu_base != CEU_ARG_ABORT) {
                             ceu_frame->exe->pc = $n;
                             case $n: // YIELD ${this.dump()}
-                                if (ceu_n == CEU_ARG_ABORT) {
+                                if (ceu_base == CEU_ARG_ABORT) {
                                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL }; // to be ignored in further move/checks
                                     continue;
                                 }
@@ -925,7 +926,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         CEU5(ceu_dstk COMMA)
                         CEU4($bstk COMMA)
                         &ceu_frame_$n,
-                        ceu_vstk_top()-ceu_$n
+                        ceu_$n
                     );
                     ceu_gc_dec(ceu_clo_$n);
 

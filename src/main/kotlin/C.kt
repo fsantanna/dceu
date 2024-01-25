@@ -340,15 +340,16 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // PROTOS
         int ceu_vstk_top (void);
+        void ceu_vstk_base (int base);
         void ceu_vstk_push (CEU_Value v);
         CEU_Value ceu_vstk_peek (int i);
         void ceu_vstk_drop (int n);
 
-        void ceu_type_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n);
+        void ceu_type_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int base);
         int ceu_as_bool (CEU_Value v);
         CEU_Value ceu_dyn_to_val (CEU_Dyn* dyn);
 
-        void ceu_tags_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n);
+        void ceu_tags_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int base);
         char* ceu_tag_to_string (int tag);
         int ceu_type_to_size (int type);
 
@@ -378,7 +379,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value _ceu_op_equals_equals_ (CEU_Value e1, CEU_Value e2);
 
         #if CEU >= 2
-        void ceu_pointer_to_string_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n);
+        void ceu_pointer_to_string_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base);
         #endif
         #if CEU >= 3
         int ceu_isexe (CEU_Dyn* dyn);
@@ -605,12 +606,12 @@ fun Coder.main (tags: Tags): String {
             }
             return err;
         }
-        void ceu_error_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n) {
-            assert(n == 1);
-            CEU_Value arg = ceu_vstk_peek(-1);
+        void ceu_error_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int base) {
+            assert(ceu_vstk_top()-base == 1);
+            CEU_Value arg = ceu_vstk_peek(base);
             assert(arg.type == CEU_VALUE_TAG);
             CEU_Value ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error=ceu_tag_to_string(arg.Tag)} };
-            ceu_vstk_drop(n);
+            ceu_vstk_base(base);
             ceu_vstk_push(ret);
         }        
     """ +
@@ -821,6 +822,12 @@ fun Coder.main (tags: Tags): String {
                 ceu_gc_dec(ceu_vstk[--ceu_vstk_n]);
             }
         }
+        void ceu_vstk_base (int base) {
+            assert(base<=ceu_vstk_n && "BUG: index out of range");
+            for (int i=ceu_vstk_n; i>base; i--) {
+                ceu_gc_dec(ceu_vstk[--ceu_vstk_n]);
+            }
+        }
         CEU_Value ceu_vstk_pop (int dec) {
             CEU_Value v = ceu_vstk[--ceu_vstk_n];
             if (dec) {
@@ -848,14 +855,14 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { dyn->Any.type, {.Dyn=dyn} };
         }
         
-        void ceu_dump_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n) {
-            assert(n == 1);
+        void ceu_dump_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int base) {
+            assert(ceu_vstk_top()-base == 1);
         #ifdef CEU_DEBUG
-            ceu_dump_value(ceu_vstk_peek(-1));
-            ceu_vstk_drop(n);
+            ceu_dump_value(ceu_vstk_peek(base));
+            ceu_vstk_base(base);
             ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL });
         #else
-            ceu_vstk_drop(n);
+            ceu_vstk_base(base);
             ceu_vstk_push((CEU_Value) { CEU_VALUE_ERROR, {.Error="debug is off"} });
         #endif
         }
@@ -863,10 +870,10 @@ fun Coder.main (tags: Tags): String {
         int ceu_as_bool (CEU_Value v) {
             return !(v.type==CEU_VALUE_NIL || (v.type==CEU_VALUE_BOOL && !v.Bool));
         }
-        void ceu_type_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n) {
-            assert(n == 1 && "bug found");
-            int type = ceu_vstk_peek(-1).type;
-            ceu_vstk_drop(n);
+        void ceu_type_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int base) {
+            assert(ceu_vstk_top()-base==1 && "bug found");
+            int type = ceu_vstk_peek(base).type;
+            ceu_vstk_base(base);
             ceu_vstk_push((CEU_Value) { CEU_VALUE_TAG, {.Tag=type} });
         }
         
@@ -894,12 +901,12 @@ fun Coder.main (tags: Tags): String {
                 ))
             } };
         }
-        void ceu_sup_question__f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n) {
-            assert(n >= 2);
-            CEU_Value sup = ceu_vstk_peek(-2);
-            CEU_Value sub = ceu_vstk_peek(-1);
+        void ceu_sup_question__f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int base) {
+            assert(ceu_vstk_top()-base >= 2);
+            CEU_Value sup = ceu_vstk_peek(base);
+            CEU_Value sub = ceu_vstk_peek(base+1);
             CEU_Value ret = _ceu_sup_(sup, sub);
-            ceu_vstk_drop(n);
+            ceu_vstk_base(base);
             ceu_vstk_push(ret);
         }
         
@@ -923,13 +930,14 @@ fun Coder.main (tags: Tags): String {
             return tup;
         }
             
-        void ceu_tags_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n) {
-            assert(n >= 1);
-            CEU_Value dyn = ceu_vstk_peek(-n+0);
+        void ceu_tags_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base) {
+            int N = ceu_vstk_top() - base;
+            assert(N >= 1);
+            CEU_Value dyn = ceu_vstk_peek(base);
             assert(dyn.type > CEU_VALUE_DYNAMIC);
             CEU_Value tag; // = (CEU_Value) { CEU_VALUE_NIL };
-            if (n >= 2) {
-                tag = ceu_vstk_peek(-n+1);
+            if (N >= 2) {
+                tag = ceu_vstk_peek(base+1);
                 assert(tag.type == CEU_VALUE_TAG);
             }
             
@@ -971,24 +979,24 @@ fun Coder.main (tags: Tags): String {
                 }
             }
             
-            switch (n) {
+            switch (N) {
                 case 1: {   // all tags
                     CEU_Value ret = _ceu_tags_all_(dyn);
-                    ceu_vstk_drop(n);
+                    ceu_vstk_base(base);
                     ceu_vstk_push(ret);
                     break;
                 }
                 case 2: {   // check tag
                     CEU_Value ret = f_chk();
-                    ceu_vstk_drop(n);
+                    ceu_vstk_base(base);
                     ceu_vstk_push(ret);
                     break;
                 }
                 default: {   // add/rem tag
-                    CEU_Value bool = ceu_vstk_peek(-n+2);
+                    CEU_Value bool = ceu_vstk_peek(base+2);
                     assert(bool.type == CEU_VALUE_BOOL);
                     f_set(bool.Bool);
-                    ceu_vstk_drop(n-1);  // keep dyn
+                    ceu_vstk_drop(base+1);  // keep dyn
                     break;
                 }
             }
@@ -1003,9 +1011,9 @@ fun Coder.main (tags: Tags): String {
             }
             assert(0 && "bug found");
         }
-        void ceu_string_to_tag_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n) {
-            assert(n == 1);
-            CEU_Value str = ceu_vstk_peek(-n);
+        void ceu_string_to_tag_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int base) {
+            assert(ceu_vstk_top()-base == 1);
+            CEU_Value str = ceu_vstk_peek(base);
             assert(str.type==CEU_VALUE_VECTOR && str.Dyn->Vector.unit==CEU_VALUE_CHAR);
             CEU_Tags_Names* cur = CEU_TAGS;
             CEU_Value ret = (CEU_Value) { CEU_VALUE_NIL };
@@ -1016,7 +1024,7 @@ fun Coder.main (tags: Tags): String {
                 }
                 cur = cur->next;
             }
-            ceu_vstk_drop(n);
+            ceu_vstk_base(base);
             ceu_vstk_push(ret);
         }
     """ +
@@ -1339,7 +1347,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
 
-        void ceu_broadcast_f (CEU5(CEU_Stack* dstk COMMA) CEU_Stack* bstk, CEU_Frame* frame, int n) {
+        void ceu_broadcast_f (CEU5(CEU_Stack* dstk COMMA) CEU_Stack* bstk, CEU_Frame* frame, int base) {
             assert(n == 2);
             ceu_bstk_assert(bstk);
 
@@ -1347,7 +1355,7 @@ fun Coder.main (tags: Tags): String {
             CEU_TIME_N++;
             uint8_t now = ++CEU_TIME_MAX;
             
-            CEU_Value evt = ceu_vstk_peek(-n);
+            CEU_Value evt = ceu_vstk_peek(base);
             if (evt.type > CEU_VALUE_DYNAMIC) {
                 if (evt.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                     // keep the block, set MUTAB recursively
@@ -1504,14 +1512,15 @@ fun Coder.main (tags: Tags): String {
             return vec;
         }
 
-        void ceu_next_dict_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n) {
-            assert(n==1 || n==2);
-            CEU_Value dict = ceu_vstk_peek(-n);
+        void ceu_next_dict_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base) {
+            int N = ceu_vstk_top() - base;
+            assert(N==1 || N==2);
+            CEU_Value dict = ceu_vstk_peek(base);
             CEU_Value ret;
             if (dict.type != CEU_VALUE_DICT) {
                 ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="next-dict error : expected dict"} };
             } else {
-                CEU_Value key = (n == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : ceu_vstk_peek(-n+1);
+                CEU_Value key = (N == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : ceu_vstk_peek(base+1);
                 if (key.type == CEU_VALUE_NIL) {
                     ret = (*dict.Dyn->Dict.buf)[0][0];
                 } else {
@@ -1526,12 +1535,12 @@ fun Coder.main (tags: Tags): String {
                     }
                 }
             }
-            ceu_vstk_drop(n);
+            ceu_vstk_base(base);
             ceu_vstk_push(ret);
         }
         
     #if CEU >= 5
-        CEU_Value _ceu_next_tasks_f_ (CEU_Frame* frame, int n) {
+        CEU_Value _ceu_next_tasks_f_ (CEU_Frame* frame, int base) {
             assert(n==1 || n==2);
             CEU_Value tsks = args[0];
             if (tsks.type != CEU_VALUE_TASKS) {
@@ -1561,7 +1570,7 @@ fun Coder.main (tags: Tags): String {
                 return ceu_create_track(&nxt->Exe_Task);
             }
         }
-        CEU_Value ceu_next_tasks_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n) {
+        CEU_Value ceu_next_tasks_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base) {
             -=- TODO -=-
             CEU_Value ret = _ceu_next_tasks_f_(frame, n, args);
             ceu_gc_dec_args(n, args);
@@ -1661,12 +1670,12 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)ret} };
         }
         
-        void ceu_tuple_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n) {
-            assert(n == 1);
-            CEU_Value arg = ceu_vstk_peek(-1);
+        void ceu_tuple_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base) {
+            assert(ceu_vstk_top()-base == 1);
+            CEU_Value arg = ceu_vstk_peek(base);
             assert(arg.type == CEU_VALUE_NUMBER);
             CEU_Value ret = ceu_create_tuple(arg.Number);
-            ceu_vstk_drop(n);
+            ceu_vstk_base(base);
             ceu_vstk_push(ret);
         }
         
@@ -1822,7 +1831,7 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { CEU_VALUE_TRACK, {.Dyn=(CEU_Dyn*)ret} };
         }
         
-        CEU_Value ceu_tasks_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n) {
+        CEU_Value ceu_tasks_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base) {
             -=- TODO -=-
             assert(n <= 1);
             int max = 0;
@@ -1991,18 +2000,19 @@ fun Coder.main (tags: Tags): String {
                     assert(0 && "bug found");
             }
         }
-        void ceu_print_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n) {
-            for (int i=0; i<n; i++) {
-                if (i > 0) {
+        void ceu_print_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int base) {
+            int top = ceu_vstk_top();
+            for (int i=base; i<top; i++) {
+                if (i > base) {
                     printf("\t");
                 }
-                ceu_print1(_2, ceu_vstk_peek(-n+i));
+                ceu_print1(_2, ceu_vstk_peek(base+i));
             }
-            ceu_vstk_drop(n);
+            ceu_vstk_base(base);
             ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL });
         }
-        void ceu_println_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n) {
-            ceu_print_f(CEU5(_0 COMMA) CEU4(_1 COMMA) _2, n);
+        void ceu_println_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int base) {
+            ceu_print_f(CEU5(_0 COMMA) CEU4(_1 COMMA) _2, base);
             printf("\n");
         }
     """ +
@@ -2061,23 +2071,23 @@ fun Coder.main (tags: Tags): String {
             }
             return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=v} };
         }
-        void ceu_op_equals_equals_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n) {
-            assert(n == 2);
-            CEU_Value ret = _ceu_op_equals_equals_(ceu_vstk_peek(-n), ceu_vstk_peek(-n+1));
-            ceu_vstk_drop(n);
+        void ceu_op_equals_equals_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int base) {
+            assert(ceu_vstk_top()-base == 2);
+            CEU_Value ret = _ceu_op_equals_equals_(ceu_vstk_peek(base), ceu_vstk_peek(base+1));
+            ceu_vstk_base(base);
             ceu_vstk_push(ret);
         }
-        void ceu_op_slash_equals_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n) {
-            ceu_op_equals_equals_f(CEU5(_0 COMMA) CEU4(_1 COMMA) _2, n);
+        void ceu_op_slash_equals_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int base) {
+            ceu_op_equals_equals_f(CEU5(_0 COMMA) CEU4(_1 COMMA) _2, base);
             CEU_Value ret = ceu_vstk_pop(0);
             assert(ret.type == CEU_VALUE_BOOL);
             ret.Bool = !ret.Bool;
             ceu_vstk_push(ret);
         }
         
-        void ceu_op_hash_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n) {
-            assert(n == 1);
-            CEU_Value v = ceu_vstk_peek(-n);
+        void ceu_op_hash_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int base) {
+            assert(ceu_vstk_top()-base == 1);
+            CEU_Value v = ceu_vstk_peek(base);
             CEU_Value ret;
             if (v.type == CEU_VALUE_VECTOR) {
                 ret = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=v.Dyn->Vector.its} };
@@ -2086,7 +2096,7 @@ fun Coder.main (tags: Tags): String {
             } else {
                 ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="length error : not a vector"} };
             }
-            ceu_vstk_drop(n);
+            ceu_vstk_base(base);
             ceu_vstk_push(ret);
         }
     """ +
@@ -2109,7 +2119,7 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { CEU_VALUE_THROW, {.Dyn=(CEU_Dyn*)ret} };
         }
 
-        CEU_Value ceu_throw_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n) {
+        CEU_Value ceu_throw_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base) {
             -=- TODO -=-
             assert(n == 1);
             return _ceu_throw_(frame->up_block, args[0]);
@@ -2125,8 +2135,8 @@ fun Coder.main (tags: Tags): String {
             return str;
         }
 
-        CEU_Value ceu_pointer_to_string_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n) {
-            assert(n == 1);
+        CEU_Value ceu_pointer_to_string_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base) {
+            assert(ceu_vstk_top()-base == 1);
             assert(args[0].type == CEU_VALUE_POINTER);
             return _ceu_pointer_to_string_(frame->up_block, args[0].Pointer);
         }
@@ -2138,7 +2148,7 @@ fun Coder.main (tags: Tags): String {
             return (dyn->Any.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask_dyn(dyn)));
         }
         
-        CEU_Value ceu_coroutine_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n) {
+        CEU_Value ceu_coroutine_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base) {
             assert(n == 1);
             CEU_Value coro = args[0];
             if (coro.type != CEU_VALUE_CLO_CORO) {
@@ -2147,7 +2157,7 @@ fun Coder.main (tags: Tags): String {
             return _ceu_create_exe_(CEU_VALUE_EXE_CORO, sizeof(CEU_Exe), coro CEU5(COMMA &frame->up_block->dn.dyns));
         }
         
-        CEU_Value ceu_status_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n) {
+        CEU_Value ceu_status_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base) {
             assert(n == 1);
             CEU_Value exe = args[0];
             CEU_Value ret;
@@ -2208,7 +2218,7 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // TRACK
         #if CEU >= 5
-        CEU_Value ceu_track_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n) {
+        CEU_Value ceu_track_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base) {
             assert(n == 1);
             CEU_Value task = args[0];
             if (!ceu_istask_val(task)) {
@@ -2220,7 +2230,7 @@ fun Coder.main (tags: Tags): String {
             //    task->Dyn->up_dyns.dyns->up_block : frame->up_block;
             return ceu_create_track((CEU_Exe_Task*)task.Dyn);
         }
-        CEU_Value ceu_detrack_f (CEU_Stack* _0, CEU_Stack* _1, CEU_Frame* frame, int n) {
+        CEU_Value ceu_detrack_f (CEU_Stack* _0, CEU_Stack* _1, CEU_Frame* frame, int base) {
             assert(n == 1);
             CEU_Value trk = args[0];
             if (trk.type != CEU_VALUE_TRACK) {                
