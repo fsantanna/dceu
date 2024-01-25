@@ -815,25 +815,15 @@ fun Coder.main (tags: Tags): String {
             ceu_vstk[ceu_vstk_n++] = v;
         }
         CEU_Value ceu_peek (int i) {
-            if (i < 0) {
-                assert(-i<=ceu_vstk_n && "BUG: index out of range");
-                return ceu_vstk[ceu_vstk_n+i];
-            } else {
-                assert(i<ceu_vstk_n && "BUG: index out of range");
-                return ceu_vstk[i];
-            }
+            int I = (i>=0) ? i : ceu_vstk_n+i;
+            assert(I<ceu_vstk_n && "BUG: index out of range");
+            return ceu_vstk[I];
         }
         void ceu_pop (int i) {
-            if (i < 0) {
-                for (int x=0; x<-i; x++) {
-                    assert(ceu_vstk_n>0 && "BUG: index out of range");
-                    ceu_gc_dec(ceu_vstk[--ceu_vstk_n]);
-                }
-            } else {
-                assert(ceu_vstk_n>i && "BUG: index out of range");
-                for (int x=ceu_vstk_n; x>i; x--) {
-                    ceu_gc_dec(ceu_vstk[--ceu_vstk_n]);
-                }
+            int I = (i>=0) ? ceu_vstk_n-i : -i;
+            assert(i<=ceu_vstk_n && "BUG: index out of range");
+            for (int x=0; x<I; x++) {
+                ceu_gc_dec(ceu_vstk[--ceu_vstk_n]);
             }
         }
     """ +
