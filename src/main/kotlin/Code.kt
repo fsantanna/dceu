@@ -324,7 +324,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         int ceu_tup_n_$n = MAX(0,ceu_n-$args_n);
                                         $idc = ceu_create_tuple($blkc, ceu_tup_n_$n);
                                         for (int i=0; i<ceu_tup_n_$n; i++) {
-                                            ceu_tuple_set(&$idc.Dyn->Tuple, i, ceu_peek(-n+$args_n+i));
+                                            ceu_tuple_set(&$idc.Dyn->Tuple, i, ceu_peek(-ceu_n+$args_n+i));
                                         }
                                         ceu_gc_inc($idc);
                                     """ }}
@@ -477,9 +477,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Break -> """ // BREAK | ${this.dump()}
                 ${this.cnd.code()}
                 int ceu_$n = ceu_as_bool(ceu_peek(-1));
-                ceu_pop(-1);
                 if (ceu_$n) {
-                    ${this.e.cond { it.code() }}
+                    ${this.e.cond { """
+                        ceu_pop(-1); // pop cnd only if e
+                        ${it.code()}
+                    """ }}
                     CEU_BREAK = 1;
                     goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
                 }

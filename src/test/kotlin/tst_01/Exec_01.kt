@@ -1127,6 +1127,16 @@ class Exec_01 {
         assert(out == ":x\t1\n:y\t2\nnil\tnil\n") { out }
     }
     @Test
+    fun de_02x_next() {
+        val out = test(
+            """
+            val t = @[(:x,1),(:y,2)]
+            println(next-dict(t,:x))
+        """
+        )
+        assert(out == ":y\n") { out }
+    }
+    @Test
     fun de_03_next() {
         val out = test(
             """
@@ -3771,10 +3781,10 @@ class Exec_01 {
         assert(out.contains("[]\n")) { out }
     }
     @Test
-    fun tags5() {
+    fun BUG_tags5() {
         val out = test(
             """
-            println(tags(1,:2))
+            println(tags(1,:2))   ;; TODO: error message
         """
         )
         assert(out == "false\n") { out }
@@ -3814,6 +3824,18 @@ class Exec_01 {
         """
         )
         assert(out == ":x []\tnil\ttrue\n[]\tnil\ttrue\n") { out }
+    }
+    @Test
+    fun tags8x() {
+        val out = test(
+            """
+            val t = []
+            val x1 = tags(t,:x,true)
+            val x2 = tags(t,:x,true)
+            println(x1, x2, x1==t, x2==t)
+        """
+        )
+        assert(out == ":x []\t:x []\ttrue\ttrue\n") { out }
     }
     @Test
     fun tags9() {
