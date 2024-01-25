@@ -352,19 +352,19 @@ fun Coder.main (tags: Tags): String {
         void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns));
         void ceu_hold_rem (CEU_Dyn* dyn);
 
-        CEU_Value ceu_create_tuple   (CEU_Block* hld, int n);
-        CEU_Value ceu_create_vector  (CEU_Block* hld);
-        CEU_Value ceu_create_dict    (CEU_Block* hld);
-        CEU_Value ceu_create_clo     (CEU_Block* hld, CEU_Frame* frame, CEU_Proto proto, int upvs);
+        CEU_Value ceu_create_tuple   (int n);
+        CEU_Value ceu_create_vector  (void);
+        CEU_Value ceu_create_dict    (void);
+        CEU_Value ceu_create_clo     (CEU_Frame* frame, CEU_Proto proto, int upvs);
         #if CEU >= 4
-        CEU_Value ceu_create_track   (CEU_Block* blk, CEU_Exe_Task* task);
+        CEU_Value ceu_create_track   (CEU_Exe_Task* task);
         #endif
 
         void ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v);
 
         CEU_Value ceu_vector_get (CEU_Vector* vec, int i);
         void ceu_vector_set (CEU_Vector* vec, int i, CEU_Value v);
-        CEU_Value ceu_vector_from_c_string (CEU_Block* hld, const char* str);
+        CEU_Value ceu_vector_from_c_string (const char* str);
         
         int ceu_dict_key_to_index (CEU_Dict* col, CEU_Value key, int* idx);
         CEU_Value ceu_dict_get (CEU_Dict* col, CEU_Value key);
@@ -895,7 +895,7 @@ fun Coder.main (tags: Tags): String {
                     cur = cur->next;
                 }
             }
-            CEU_Value tup = ceu_create_tuple(NULL, len);
+            CEU_Value tup = ceu_create_tuple(len);
             {
                 CEU_Tags_List* cur = dyn.Dyn->Any.tags;
                 int i = 0;
@@ -1478,8 +1478,8 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        CEU_Value ceu_vector_from_c_string (CEU_Block* hld, const char* str) {
-            CEU_Value vec = ceu_create_vector(hld);
+        CEU_Value ceu_vector_from_c_string (const char* str) {
+            CEU_Value vec = ceu_create_vector();
             int N = strlen(str);
             for (int i=0; i<N; i++) {
                 ceu_vector_set(&vec.Dyn->Vector, vec.Dyn->Vector.its, (CEU_Value) { CEU_VALUE_CHAR, {.Char=str[i]} });
@@ -1542,7 +1542,7 @@ fun Coder.main (tags: Tags): String {
                 return (CEU_Value) { CEU_VALUE_NIL };
             } else {
                 -=- TODO: gc_inc -=-
-                return ceu_create_track(frame->up_block, &nxt->Exe_Task);
+                return ceu_create_track(&nxt->Exe_Task);
             }
         }
         CEU_Value ceu_next_tasks_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n) {
@@ -1632,7 +1632,7 @@ fun Coder.main (tags: Tags): String {
         }
     """ +
     """ // CREATES
-        CEU_Value ceu_create_tuple (CEU_Block* blk, int n) {
+        CEU_Value ceu_create_tuple (int n) {
             ceu_debug_add(CEU_VALUE_TUPLE);
             CEU_Tuple* ret = malloc(sizeof(CEU_Tuple) + n*sizeof(CEU_Value));
             assert(ret != NULL);
@@ -1649,12 +1649,12 @@ fun Coder.main (tags: Tags): String {
             assert(n == 1);
             CEU_Value arg = ceu_peek(-1);
             assert(arg.type == CEU_VALUE_NUMBER);
-            CEU_Value ret = ceu_create_tuple(frame->up_block, arg.Number);
+            CEU_Value ret = ceu_create_tuple(arg.Number);
             ceu_pop(-n);
             ceu_push(ret);
         }
         
-        CEU_Value ceu_create_vector (CEU_Block* blk) {
+        CEU_Value ceu_create_vector (void) {
             ceu_debug_add(CEU_VALUE_VECTOR);
             CEU_Vector* ret = malloc(sizeof(CEU_Vector));
             assert(ret != NULL);
@@ -1669,7 +1669,7 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ret} };
         }
         
-        CEU_Value ceu_create_dict (CEU_Block* blk) {
+        CEU_Value ceu_create_dict (void) {
             ceu_debug_add(CEU_VALUE_DICT);
             CEU_Dict* ret = malloc(sizeof(CEU_Dict));
             assert(ret != NULL);
@@ -1681,7 +1681,7 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)ret} };
         }
         
-        CEU_Value _ceu_create_clo_ (int sz, int type, CEU_Block* blk, CEU_Frame* frame, CEU_Proto proto, int upvs) {
+        CEU_Value _ceu_create_clo_ (int sz, int type, CEU_Frame* frame, CEU_Proto proto, int upvs) {
             ceu_debug_add(type);
             CEU_Clo* ret = malloc(sz);
             assert(ret != NULL);
@@ -1698,20 +1698,20 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
         }
 
-        CEU_Value ceu_create_clo (CEU_Block* blk, CEU_Frame* frame, CEU_Proto proto, int upvs) {
-            return _ceu_create_clo_(sizeof(CEU_Clo), CEU_VALUE_CLO_FUNC, blk, frame, proto, upvs);
+        CEU_Value ceu_create_clo (CEU_Frame* frame, CEU_Proto proto, int upvs) {
+            return _ceu_create_clo_(sizeof(CEU_Clo), CEU_VALUE_CLO_FUNC, frame, proto, upvs);
         }
 
         #if CEU >= 3
-        CEU_Value ceu_create_clo_exe (int type, CEU_Block* blk, CEU_Frame* frame, CEU_Proto proto, int upvs) {
-            CEU_Value clo = _ceu_create_clo_(sizeof(CEU_Clo_Exe), blk, frame, proto, upvs);
+        CEU_Value ceu_create_clo_exe (int type, CEU_Frame* frame, CEU_Proto proto, int upvs) {
+            CEU_Value clo = _ceu_create_clo_(sizeof(CEU_Clo_Exe), frame, proto, upvs);
             clo.Dyn->Clo_Exe.mem_n = 0;
             return clo;
         }
         #endif
 
         #if CEU >= 3
-        CEU_Value _ceu_create_exe_ (int type, int sz, CEU_Block* blk, CEU_Value clo CEU5(COMMA CEU_Dyns* dyns)) {
+        CEU_Value _ceu_create_exe_ (int type, int sz, CEU_Value clo CEU5(COMMA CEU_Dyns* dyns)) {
             ceu_debug_add(type);
             assert(clo.type==CEU_VALUE_CLO_CORO CEU4(|| clo.type==CEU_VALUE_CLO_TASK));
             ceu_gc_inc(clo);
@@ -1794,12 +1794,12 @@ fun Coder.main (tags: Tags): String {
             ceu_hold_add((CEU_Dyn*)ret, blk, &blk->dn.dyns);
             return (CEU_Value) { CEU_VALUE_TASKS, {.Dyn=(CEU_Dyn*)ret} };
         }
-        CEU_Value ceu_create_track (CEU_Block* blk, CEU_Exe_Task* task) {
+        CEU_Value ceu_create_track (CEU_Exe_Task* task) {
             ceu_debug_add(CEU_VALUE_TRACK);
             CEU_Track* ret = malloc(sizeof(CEU_Track));
             assert(ret != NULL);
             *ret = (CEU_Track) {
-                CEU_VALUE_TRACK, 0, NULL, { blk, NULL, NULL },
+                CEU_VALUE_TRACK, 0, NULL,
                 task
             };
             ceu_hold_add((CEU_Dyn*)ret, blk, &blk->dn.dyns);
@@ -1818,7 +1818,7 @@ fun Coder.main (tags: Tags): String {
                 max = xmax.Number;
             }
             -=- TODO: gc_inc -=-
-            return ceu_create_tasks(frame->up_block, max);
+            return ceu_create_tasks(max);
         }
         #endif
     """ +
@@ -2072,8 +2072,8 @@ fun Coder.main (tags: Tags): String {
     """
         // THROW / POINTER-TO-STRING
         #if CEU >= 2
-        CEU_Value _ceu_throw_ (CEU_Block* blk, CEU_Value val) {
-            CEU_Value stk = ceu_create_vector(blk);
+        CEU_Value _ceu_throw_ (CEU_Value val) {
+            CEU_Value stk = ceu_create_vector();
             
             ceu_gc_inc(val);
             ceu_gc_inc(stk);
@@ -2081,11 +2081,9 @@ fun Coder.main (tags: Tags): String {
             CEU_Throw* ret = malloc(sizeof(CEU_Throw));
             assert(ret != NULL);
             *ret = (CEU_Throw) {
-                CEU_VALUE_THROW, 0, NULL, { blk, NULL, NULL },
+                CEU_VALUE_THROW, 0, NULL, { NULL, NULL },
                 val, stk
             };
-            
-            ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
             
             return (CEU_Value) { CEU_VALUE_THROW, {.Dyn=(CEU_Dyn*)ret} };
         }
@@ -2096,8 +2094,8 @@ fun Coder.main (tags: Tags): String {
             return _ceu_throw_(frame->up_block, args[0]);
         }
 
-        CEU_Value _ceu_pointer_to_string_ (CEU_Block* blk, const char* ptr) {
-            CEU_Value str = ceu_create_vector(blk);
+        CEU_Value _ceu_pointer_to_string_ (const char* ptr) {
+            CEU_Value str = ceu_create_vector();
             int len = strlen(ptr);
             for (int i=0; i<len; i++) {
                 CEU_Value chr = { CEU_VALUE_CHAR, {.Char=ptr[i]} };
@@ -2125,7 +2123,7 @@ fun Coder.main (tags: Tags): String {
             if (coro.type != CEU_VALUE_CLO_CORO) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="coroutine error : expected coro"} };
             }
-            return _ceu_create_exe_(CEU_VALUE_EXE_CORO, sizeof(CEU_Exe), frame->up_block, coro CEU5(COMMA &frame->up_block->dn.dyns));
+            return _ceu_create_exe_(CEU_VALUE_EXE_CORO, sizeof(CEU_Exe), coro CEU5(COMMA &frame->up_block->dn.dyns));
         }
         
         CEU_Value ceu_status_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n) {
@@ -2199,7 +2197,7 @@ fun Coder.main (tags: Tags): String {
             }
             //CEU_Block* blk = (ceu_dmin(task->Dyn->up_dyns.dyns->up_block) > ceu_dmin(frame->up_block)) ?
             //    task->Dyn->up_dyns.dyns->up_block : frame->up_block;
-            return ceu_create_track(frame->up_block, (CEU_Exe_Task*)task.Dyn);
+            return ceu_create_track((CEU_Exe_Task*)task.Dyn);
         }
         CEU_Value ceu_detrack_f (CEU_Stack* _0, CEU_Stack* _1, CEU_Frame* frame, int n) {
             assert(n == 1);
