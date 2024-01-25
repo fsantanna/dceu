@@ -607,6 +607,17 @@ class Exec_01 {
         )
         assert(out == "[nil,nil,nil]\n[nil,10,nil]\n") { out }
     }
+    @Test
+    fun cc_24x_tuple() {
+        val out = test(
+            """
+            val t = tuple(3)
+            println(t)
+            println(set t[1] = 10)
+        """
+        )
+        assert(out == "[nil,nil,nil]\n10\n") { out }
+    }
 
     // DROP
 
@@ -3823,7 +3834,7 @@ class Exec_01 {
             println(x1, x2, x1==t)
         """
         )
-        assert(out == ":x []\tnil\ttrue\n[]\tnil\ttrue\n") { out }
+        assert(out == ":x []\t:x []\ttrue\n[]\t[]\ttrue\n") { out }
     }
     @Test
     fun tags8x() {
@@ -4967,6 +4978,15 @@ class Exec_01 {
         """, true
         )
         assert(out == "true\ttrue\ntrue\ttrue\n") { out }
+    }
+    @Test
+    fun tplate16x() {
+        val out = test("""
+            val x = tags([tags([ ], :y, true)], :x, true)
+            println(tags(x,:x))
+            println(:ok)
+        """)
+        assert(out == "true\n:ok\n") { out }
     }
     @Test
     fun tplate17_func() {

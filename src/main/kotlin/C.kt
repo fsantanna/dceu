@@ -918,11 +918,11 @@ fun Coder.main (tags: Tags): String {
             }
             
             CEU_Value f_chk () {
-                CEU_Value ret;
+                CEU_Value ret = { CEU_VALUE_BOOL, {.Bool=0} };
                 CEU_Tags_List* cur = dyn.Dyn->Any.tags;
                 while (cur != NULL) {
                     CEU_Value sub = { CEU_VALUE_TAG, {.Tag=cur->tag} };
-                    CEU_Value ret = _ceu_sup_(tag, sub);
+                    ret = _ceu_sup_(tag, sub);
                     if (ret.Bool) {
                         break;
                     }
