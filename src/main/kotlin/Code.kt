@@ -329,7 +329,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         }
                                         ceu_gc_inc($idc);
                                     """ }}
-                                    ceu_vstk_rem(-1, ceu_n);
+                                    ceu_vstk_drop(ceu_n);
                                 }
                                 """
                             }
@@ -340,6 +340,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_LOOP_STOP_${up!!.n}:
                         """ }}
                     ${(CEU >= 2).cond { "} while (0);" }}
+
+                    ${(!isvoid).cond { "ceu_vstk_block(0);" }}
 
                     ${(CEU>=4 && !isvoid).cond { """
                         ceu_stack_kill(ceu_bstk, $blkc);
@@ -896,7 +898,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 ceu_dict_set(&ceu_vstk_peek(-3).Dyn->Dict, ceu_vstk_peek(-2), ceu_vstk_peek(-1)),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
-                            ceu_vstk_rem(-1, 2);
+                            ceu_vstk_drop(2);
                         }
                     """ }.joinToString("")}
                 }
@@ -925,13 +927,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                         CEU_Value ceu_$n = ceu_col_set(ceu_vstk_peek(-1), ceu_vstk_peek(-2), ceu_vstk_peek(-3));
                         CEU_ASSERT($bupc, ceu_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                        ceu_vstk_rem(-1, 2);    // keep src
+                        ceu_vstk_drop(2);    // keep src
                         """
                     }
                     else -> """
                         CEU_Value ceu_$n = CEU_ASSERT($bupc, ceu_col_get(ceu_vstk_peek(-1),ceu_vstk_peek(-2)), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         ceu_gc_inc(ceu_$n);
-                        ceu_vstk_rem(-1, 2);
+                        ceu_vstk_drop(2);
                         ceu_vstk_push(ceu_$n);
                         ceu_gc_dec(ceu_$n);
                     """
