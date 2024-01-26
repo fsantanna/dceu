@@ -171,7 +171,9 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
             }
             is Expr.Do     -> {
-                blk_to_dcls[this] = mutableListOf()
+                if (this != outer) {
+                    blk_to_dcls[this] = mutableListOf()
+                }
                 val size = dcls.size    // restore this size after nested block
 
                 // func (a,b,...) { ... }

@@ -563,7 +563,7 @@ fun Coder.main (tags: Tags): String {
         #define CEU_ERR_OR(err,v) ({ CEU_Value ceu=v; assert(!(CEU_ISERR(err) && CEU_ISERR(ceu)) && "TODO: double error"); (CEU_ISERR(err) ? err : ceu); })
         #if CEU <= 1
         #define CEU_ISERR(v) (v.type == CEU_VALUE_ERROR)
-        #define CEU_ERROR(pre,err)  _ceu_error_(pre,err)
+        #define CEU_ERROR(pre,err) _ceu_error_(pre,err)
         #define CEU_ASSERT(err,pre) ceu_assert(err,pre)
         #else
         #define CEU_ISERR(v) (v.type==CEU_VALUE_ERROR || v.type==CEU_VALUE_THROW)
@@ -577,11 +577,11 @@ fun Coder.main (tags: Tags): String {
                 ).type != CEU_VALUE_ERROR                   \
             );                                              \
         }
-        #define CEU_ERROR(blk,pre,err) {            \
+        #define CEU_ERROR(pre,err) {                \
             if (err.type == CEU_VALUE_THROW) {      \
-                CEU_REPL(err);                       \
+                CEU_REPL(err);                      \
             } else {                                \
-                CEU_REPL(_ceu_throw_(blk, err));     \
+                CEU_REPL(_ceu_throw_(err));         \
             }                                       \
             CEU_ERROR_PUSH(pre,ceu_acc);            \
             continue;                               \
@@ -2112,17 +2112,18 @@ fun Coder.main (tags: Tags): String {
             CEU_Throw* ret = malloc(sizeof(CEU_Throw));
             assert(ret != NULL);
             *ret = (CEU_Throw) {
-                CEU_VALUE_THROW, 0, NULL, { NULL, NULL },
+                CEU_VALUE_THROW, 0, NULL,
                 val, stk
             };
             
             return (CEU_Value) { CEU_VALUE_THROW, {.Dyn=(CEU_Dyn*)ret} };
         }
 
-        CEU_Value ceu_throw_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base) {
-            -=- TODO -=-
-            assert(n == 1);
-            return _ceu_throw_(frame->up_block, args[0]);
+        void ceu_throw_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base) {
+            assert(ceu_vstk_top()-base == 1);
+            CEU_Value v = _ceu_throw_(ceu_vstk_peek(base));
+            ceu_vstk_base(base);
+            ceu_vstk_push(v);
         }
 
         CEU_Value _ceu_pointer_to_string_ (const char* ptr) {
@@ -2135,10 +2136,12 @@ fun Coder.main (tags: Tags): String {
             return str;
         }
 
-        CEU_Value ceu_pointer_to_string_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base) {
+        void ceu_pointer_to_string_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base) {
             assert(ceu_vstk_top()-base == 1);
-            assert(args[0].type == CEU_VALUE_POINTER);
-            return _ceu_pointer_to_string_(frame->up_block, args[0].Pointer);
+            CEU_Value ptr = ceu_vstk_peek(base);
+            assert(ptr.type == CEU_VALUE_POINTER);
+            ceu_vstk_base(base);
+            ceu_vstk_push(_ceu_pointer_to_string_(ptr.Pointer));
         }
         #endif
     """ +

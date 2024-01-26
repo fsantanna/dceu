@@ -179,7 +179,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
                 val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
                 val dcls = vars.blk_to_dcls[this]!!.filter { it.init }
-                    .filter { !GLOBALS.contains(it.id.str) }
+                    .filter { !GLOBALS.contains(it.id.str) }    // declared by hand in C.kt
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
                     .map    { it.idc(0) }
 
@@ -235,7 +235,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                     }}
                     
-                    ${(CEU >= 2).cond { "do {" }}
+                    ${(CEU >= 2).cond { "do {" }} // error escape with `continue`
                         // main args, func args
                         ${when {
                             (f_b == null) -> """
