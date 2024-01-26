@@ -177,43 +177,52 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     (f_b is Expr.Proto) -> Pair("1", "{.frame=${if (f_b.tk.str=="func") "ceu_frame" else "&ceu_frame->exe->frame"}}")
                     else -> Pair("0", "{.block=$bupc}")
                 }
-                val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
-                val dcls = vars.blk_to_dcls[this]!!.filter { it.init }
-                    .filter { !GLOBALS.contains(it.id.str) }    // declared by hand in C.kt
-                    .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
-                    .map    { it.idc(0) }
-
                 val inexe  = ups.inexe(this, null,true)
-                val istsk  = (f_b?.tk?.str == "task")
 
                 """
                 { // BLOCK | ${this.dump()}
-                    CEU_Block $_blkc = (CEU_Block) { $bf, $ptr, { CEU4(NULL COMMA) {NULL,NULL} } };
-                    CEU_Block* $blkc = &$_blkc;                                 
+                    ${(CEU >= 4).cond { """ 
+                        CEU_Block $_blkc = (CEU_Block) { $bf, $ptr, { CEU4(NULL COMMA) {NULL,NULL} } };
+                        CEU_Block* $blkc = &$_blkc;
+                        // link task.dn_block = me
+                        // link up.dn.block = me
+                        ${when {
+                            (f_b is Expr.Proto && f_b.tk.str == "task") -> """
+                                ceu_frame->exe_task->dn_block = $blkc;                        
+                            """
+                            (f_b !is Expr.Proto) -> """
+                                $bupc->dn.block = $blkc;
+                            """
+                            else -> ""
+                        }}
+                    """ }}
 
-                #if CEU >= 4
-                    // link task.dn_block = me
-                    // link up.dn.block = me
-                    ${when {
-                    (f_b is Expr.Proto && f_b.tk.str == "task") -> """
-                        ceu_frame->exe_task->dn_block = $blkc;                        
-                    """
-                    (f_b !is Expr.Proto) -> """
-                        $bupc->dn.block = $blkc;
-                    """
-                    else -> ""
-                }}
-                #endif
+                    ceu_vstk_block_enter(${vars.blk_to_dcls[this]!!.size});
+                    
+                    // GLOBALS
+                    ${(up == null).cond { """ 
+                        // funcs
+                        ${GLOBALS.first.mapIndexed { i,id -> """
+                        {
+                            CEU_Value clo = ceu_create_clo(NULL, ceu_${id.idc()}_f, 0);
+                            ceu_vstk_repl(1+$i, clo);
+                                // +1 = BLOCK
+                        }
+                        """ }.joinToString("")}
 
-                    // main args, func args
-                    // inline vars dcls
-                    ${dcls.map { """
-                        CEU_Value $it;
-                    """ }.joinToString("")}
-                    // vars inits
-                    ${dcls.map { """
-                        $it = (CEU_Value) { CEU_VALUE_NIL };
-                    """ }.joinToString("")}
+                        // ... args ...
+                        {
+                            CEU_Value xxx = ceu_create_tuple(ceu_argc);
+                            for (int i=0; i<ceu_argc; i++) {
+                                CEU_Value vec = ceu_vector_from_c_string(ceu_argv[i]);
+                                ceu_tuple_set(&xxx.Dyn->Tuple, i, vec);
+                            }
+                            ceu_vstk_repl(1+${GLOBALS.first.size+GLOBALS.second.indexOf("...")}, xxx);
+                                // +1 = BLOCK
+                        }
+                        
+                    """ }}
+
                     // defers init
                     ${defers[this].cond { it.second }}
                     // pres funcs
@@ -283,39 +292,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${defers[this].cond { it.third }}
                     #endif
                     
-                    // dcls gc-dec
-                    ${dcls.map { """
-                        ceu_gc_dec($it);
-                    """ }.joinToString("")}
+                    ceu_vstk_block_leave();
                     
-                    // args gc-dec (cannot call ceu_gc_dec_args b/c of copy to ids)
-                    ${(f_b is Expr.Proto).cond {
-                        f_b as Expr.Proto
-                        f_b.args.map { arg ->
-                            val idc = vars.get(this, arg.first.str).idc(0)
-                            """
-                            ceu_gc_dec($idc);
-                            """
-                        }.joinToString("")
-                    }}
-                    
-                    // pub gc-dec
-                    ${istsk.cond { """
-                        ceu_gc_dec(ceu_frame->exe_task->pub);
-                        ceu_frame->exe_task->pub = ceu_acc;     // task final return value
-                    """ }}
-                    
-                    // unlink task.dn_block = me
-                    // unlink up.dn.block = me
-                    ${when {
-                        (CEU < 4) -> ""
-                        (f_b is Expr.Proto && f_b.tk.str == "task") -> """
-                                ceu_frame->exe_task->dn_block = NULL;                        
-                            """
-                        (f_b !is Expr.Proto) -> """
-                                $bupc->dn.block = NULL;
-                            """
-                        else -> ""
+                    // unlink task/block
+                    ${(CEU >= 4).cond {
+                        when {
+                            (f_b is Expr.Proto && f_b.tk.str == "task") -> """
+                                    ceu_frame->exe_task->dn_block = NULL;                        
+                                """
+                            (f_b !is Expr.Proto) -> """
+                                    $bupc->dn.block = NULL;
+                                """
+                            else -> ""
+                        }
                     }}
 
                     // uncaught throw

@@ -12,24 +12,22 @@ class Exec_01 {
     // PRINT
 
     @Test
-    fun aa_print1() {
+    fun aa_01_print() {
+        val out = test("""
+            println(10)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun aa_02_print() {
         val out = test("""
             print([10])
-        """)
-        assert(out == "[10]") { out }
-    }
-    @Test
-    fun aa_print2() {
-        val out = test(
-            """
-            print(10)
             println(20)
-        """
-        )
-        assert(out == "1020\n") { out }
+        """)
+        assert(out == "[10]20") { out }
     }
     @Test
-    fun aa_print3a() {
+    fun aa_03_print() {
         val out = test(
             """
             println(func () { nil })
@@ -38,7 +36,7 @@ class Exec_01 {
         assert(out.contains("func: 0x")) { out }
     }
     @Test
-    fun aa_print3b() {
+    fun aa_04_print() {
         val out = test(
             """
             println([[],[1,2,3]])
@@ -47,6 +45,7 @@ class Exec_01 {
         )
         assert(out.contains("[[],[1,2,3]]\nfunc: 0x")) { out }
     }
+
     @Test
     fun aa_print34() {
         val out = test(
@@ -111,13 +110,11 @@ class Exec_01 {
     // VAR
 
     @Test
-    fun bb_var1() {
-        val out = test(
-            """
+    fun bb_01_var() {
+        val out = test("""
             var v
             print(v)
-        """
-        )
+        """)
         assert(out == "nil") { out }
     }
     @Test

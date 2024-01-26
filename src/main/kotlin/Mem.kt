@@ -8,7 +8,7 @@ class Mem (val ups: Ups, val vars: Vars) {
         if (ups.pub[blk] == null) {
             val idx = vars.blk_to_dcls[blk]!!.lastIndexOf(dcl)
             assert(idx != -1)
-            return idx.toString()
+            return (1+idx).toString()   // +1 = BLOCK
         } else {
             return "TODO"
         }

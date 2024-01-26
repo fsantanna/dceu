@@ -2,39 +2,6 @@ package dceu
 
 typealias LData = List<Pair<Tk.Id,Tk.Tag?>>
 
-fun String.idc (n: Int? = null): String {
-    return when {
-        (this[0] == '{') -> {
-            val MAP = mapOf(
-                Pair('+', "plus"),
-                Pair('-', "minus"),
-                Pair('*', "asterisk"),
-                Pair('/', "slash"),
-                Pair('>', "greater"),
-                Pair('<', "less"),
-                Pair('=', "equals"),
-                Pair('!', "exclaim"),
-                Pair('|', "bar"),
-                Pair('&', "ampersand"),
-                Pair('#', "hash"),
-            )
-            "op_" + this.drop(2).dropLast(2).toList().map { MAP[it] }.joinToString("_")
-        }
-        else -> {
-            val MAP = mapOf(
-                Pair('.', "_dot_"),
-                Pair('-', "_dash_"),
-                Pair('\'', "_plic_"),
-                Pair('?', "_question_"),
-                Pair('!', "_bang_"),
-            )
-            "id_" + this.toList().map { MAP[it] ?: it }.joinToString("")
-        }
-    }.let {
-        it + (if (n==null) "" else "_" + n)
-    }
-}
-
 class Vars (val outer: Expr.Do, val ups: Ups) {
     val datas = mutableMapOf<String,LData>()
 
@@ -43,13 +10,14 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         // Acc = previous use
         // Dcl = previous hide without previous use
 
-    private val dcls: MutableList<Expr.Dcl> = GLOBALS.map {
-        Expr.Dcl (
-            Tk.Fix("val", outer.tk.pos),
-            Tk.Id(it,outer.tk.pos,0),
-            null, true, null
-        )
-    }.toMutableList()
+    private val dcls: MutableList<Expr.Dcl> = (GLOBALS.first + GLOBALS.second)
+        .map {
+            Expr.Dcl (
+                Tk.Fix("val", outer.tk.pos),
+                Tk.Id(it,outer.tk.pos,0),
+                null, true, null
+            )
+        }.toMutableList()
     public val dcl_to_blk: MutableMap<Expr.Dcl,Expr.Do> = dcls.map {
         Pair(it, outer)
     }.toMap().toMutableMap()

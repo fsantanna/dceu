@@ -94,23 +94,26 @@ val TAGS = listOf (
     ":h", ":min", ":s", ":ms",
 ))
 
-val GLOBALS = setOf (
-    "dump", "error", "next-dict", "print", "println",   // bc of detrack'' in prelude
-    "string-to-tag", "sup?", "tags",
-    "tuple", "type", "{{#}}", "{{==}}", "{{/=}}",
-) + (if (CEU < 2) setOf() else setOf(
-    "pointer-to-string", "throw"
-)) + (if (CEU < 3) setOf() else setOf(
-    "coroutine", "status"
-)) + (if (CEU < 4) setOf() else setOf(
-    "broadcast'", "evt"
-)) + (if (CEU < 5) setOf() else setOf(
-    "detrack'", "next-tasks", "tasks", "track"
-)) + setOf(
-    "..."
-) + (if (CEU < 4) setOf() else setOf(
-    "evt"
-))
+val GLOBALS = Pair (
+    setOf (     // funcs
+        "dump", "error", "next-dict", "print", "println",   // bc of detrack'' in prelude
+        "string-to-tag", "sup?", "tags",
+        "tuple", "type", "{{#}}", "{{==}}", "{{/=}}",
+    ) + (if (CEU < 2) setOf() else setOf(
+        "pointer-to-string", "throw"
+    )) + (if (CEU < 3) setOf() else setOf(
+        "coroutine", "status"
+    )) + (if (CEU < 4) setOf() else setOf(
+        "broadcast'", "evt"
+    )) + (if (CEU < 5) setOf() else setOf(
+        "detrack'", "next-tasks", "tasks", "track"
+    )),
+    setOf (     // vars
+        "..."
+    ) + (if (CEU < 4) setOf() else setOf(
+        "evt"
+    ))
+)
 
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos, val n_: Int=N++): Tk("", pos_)
