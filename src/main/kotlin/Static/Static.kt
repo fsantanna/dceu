@@ -24,7 +24,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.dst.traverse()
                 this.src.traverse()
                 if (this.dst is Expr.Acc) {
-                    val (_,dcl) = vars.get(this.dst)
+                    val dcl = vars.acc_to_dcl[this.dst]!!
                     if (dcl.tk.str == "val") {
                         err(this.tk, "set error : destination is immutable")
                     }
@@ -132,7 +132,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
-                val (blk,dcl) = vars.get(this)
+                val blk = vars.dcl_to_blk[vars.acc_to_dcl[this]!!]!!
                 //err(this.tk, "access error : cannot access \"_\"")
 
                 if (blk!=outer && ups.none(blk) { it is Expr.Proto && it.tk.str!="func" }) {

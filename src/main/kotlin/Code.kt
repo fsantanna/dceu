@@ -5,13 +5,13 @@ import java.lang.Integer.min
 class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static) {
     val pres: MutableList<Pair<String,String>> = mutableListOf()
     val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
+    val mem = Mem(ups, vars)
     val code: String = outer.code()
 
-    fun Expr.idc (pre: String, nst: Int=0): String {
+    fun Expr.idc (pre: String): String {
         return "ceu_${pre}_${this.n}"
     }
-    fun Expr.Dcl.idc (upv: Int, nst: Int=0): String {
-        val blk = vars.dcl_to_blk[this]!!
+    fun Expr.Dcl.idc (upv: Int): String {
         return when {
             (upv == 2) -> {
                 val idc = this.id.str.idc()
@@ -206,17 +206,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 #endif
 
                     // main args, func args
-                    ${when {
-                        (f_b == null) -> """
-                            // main block varargs (...)
-                            CEU_Value id__dot__dot__dot_;
-                        """
-                        (f_b is Expr.Proto) -> {
-                            f_b.args.map { (id,_) ->
-                                "CEU_Value ${id.str.idc()};"
-                            }.joinToString("")}
-                        else -> ""
-                    }}
                     // inline vars dcls
                     ${dcls.map { """
                         CEU_Value $it;
@@ -238,16 +227,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${(CEU >= 2).cond { "do {" }} // error escape with `continue`
                         // main args, func args
                         ${when {
-                            (f_b == null) -> """
-                                // main block varargs (...)
-                                id__dot__dot__dot_ = ceu_create_tuple(ceu_argc);
-                                ceu_gc_inc(id__dot__dot__dot_);
-                                for (int i=0; i<ceu_argc; i++) {
-                                    CEU_Value vec = ceu_vector_from_c_string(ceu_argv[i]);
-                                    ceu_tuple_set(&id__dot__dot__dot_.Dyn->Tuple, i, vec);
-                                    ceu_gc_dec(vec);
-                                }
-                            """
                             (f_b is Expr.Proto) -> {
                                 val dots = (f_b.args.lastOrNull()?.first?.str == "...")
                                 val args_n = f_b.args.size - 1
@@ -367,7 +346,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 puts("");
                             }
                         #endif
-                        ceu_gc_dec(id__dot__dot__dot_);
                         """
                     }}
                     // check error
@@ -386,7 +364,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
             }
             is Expr.Dcl -> {
-                if (this.id.upv==1 && clos.vars_refs.none { it.second==this }) {
+                if (this.id.upv==1 && clos.vars_refs.none { it==this }) {
                     err(this.tk, "var error : unreferenced upvar")
                 }
                 when {
@@ -748,7 +726,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         val nst = ups
                             .all_until(this) { it==vblk }  // go up until find dcl blk
                             .count { it is Expr.Proto }          // count protos in between acc-dcl
-                        val idc = dcl.idc(0, nst)
+                        val idc = dcl.idc(0)
                         //println(setOf(x, v))
                         x = x.replaceFirst("XXX", idc)
                     }
@@ -766,11 +744,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
             }
             is Expr.Acc -> {
-                val (vblk,dcl) = vars.get(this)
-                val nst = ups
-                    .all_until(this) { it==vblk }  // go up until find dcl blk
-                    .count { it is Expr.Proto }          // count protos in between acc-dcl
-                val idc = dcl.idc(this.tk_.upv, nst)
+                val dcl = vars.acc_to_dcl[this]!!
+                println(listOf(this.tk.str,mem.pub(this)))
+                val idc = dcl.idc(this.tk_.upv)
+                val idx = mem.pub(this)
                 when {
                     this.isdst() -> {
                         if (dcl.id.upv > 0) {
@@ -783,7 +760,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         $idc = ceu_vstk_peek(-1);
                         """
                     }
-                    else -> "ceu_vstk_push($idc);\n"
+                    else -> "ceu_vstk_push(ceu_vstk_peek($idx));\n"
                 }
             }
             is Expr.Nil  -> "ceu_vstk_push(((CEU_Value) { CEU_VALUE_NIL }));"
@@ -881,8 +858,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val dots = this.args.lastOrNull()
                 val has_dots = (dots!=null && dots is Expr.Acc && dots.tk.str=="...") && !this.clo.let { it is Expr.Acc && it.tk.str=="{{#}}" }
                 val id_dots = if (!has_dots) "" else {
-                    val (blk,dcl) = vars.get(dots as Expr.Acc)
-                    dcl.idc(0)
+                    vars.acc_to_dcl[dots as Expr.Acc]!!.idc(0)
                 }
                 val inexeT = ups.inexe(this, null, true)
                 val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"

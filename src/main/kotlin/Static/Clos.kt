@@ -13,7 +13,7 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     //  - for each var access ACC, we get its declaration DCL and set here
     //  - in another round (Code), we assert that the DCL appears here
     //  - TODO: can also be used to warn for unused normal vars
-    val vars_refs = mutableSetOf<Pair<Expr.Do,Expr.Dcl>>()
+    val vars_refs = mutableSetOf<Expr.Dcl>()
 
     // Set of uprefs within protos:
     //  - for each ^^ACC, we get the enclosing PROTOS and add ACC.ID to them
@@ -65,10 +65,11 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
-                val (blk,dcl) = vars.get(this)
+                val dcl = vars.acc_to_dcl[this]!!
+                val blk = vars.dcl_to_blk[dcl]!!
                 when {
                     (dcl.id.upv==1 && this.tk_.upv==2) -> {
-                        vars_refs.add(Pair(blk,dcl)) // UPVS_VARS_REFS
+                        vars_refs.add(dcl) // UPVS_VARS_REFS
 
                         // UPVS_PROTOS_REFS
                         ups.all_until(this) { blk==it }

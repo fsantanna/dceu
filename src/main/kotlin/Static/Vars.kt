@@ -50,11 +50,11 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             null, true, null
         )
     }.toMutableList()
-    public  val dcl_to_blk: MutableMap<Expr.Dcl,Expr.Do> = dcls.map {
+    public val dcl_to_blk: MutableMap<Expr.Dcl,Expr.Do> = dcls.map {
         Pair(it, outer)
     }.toMap().toMutableMap()
-    private val acc_to_dcl: MutableMap<Expr.Acc,Expr.Dcl> = mutableMapOf()
-    public  val blk_to_dcls: MutableMap<Expr.Do,MutableList<Expr.Dcl>> = mutableMapOf(
+    public val acc_to_dcl: MutableMap<Expr.Acc,Expr.Dcl> = mutableMapOf()
+    public val blk_to_dcls: MutableMap<Expr.Do,MutableList<Expr.Dcl>> = mutableMapOf(
         Pair(outer, dcls.toList().toMutableList())
     )
     public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
@@ -113,7 +113,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     }
 
     fun find (e: Expr, id: String, upv: Int): Expr.Dcl {
-        val dcl = dcls.findLast { id == it.id.str }
+        val dcl = dcls.findLast { id == it.id.str } // last bc of it redeclaration
         when {
             (dcl == null) -> err(e.tk, "access error : variable \"${id}\" is not declared")
             (upv==0 && dcl.id.upv==1) -> err(e.tk, "access error : incompatible upval modifier")
@@ -128,11 +128,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             }
         }
         return dcl!!
-    }
-
-    fun get (acc: Expr.Acc): Pair<Expr.Do,Expr.Dcl> {
-        val dcl = acc_to_dcl[acc]!!
-        return Pair(dcl_to_blk[dcl]!!, dcl)
     }
 
     fun get (blk: Expr.Do, id: String): Expr.Dcl {

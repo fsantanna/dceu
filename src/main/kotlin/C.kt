@@ -800,7 +800,7 @@ fun Coder.main (tags: Tags): String {
         }        
     """ +
     """ // CEU_VSTK
-        #define CEU_VSTK_MAX 16
+        #define CEU_VSTK_MAX 32
         CEU_Value ceu_vstk[CEU_VSTK_MAX];
         int ceu_vstk_n = 0;
         int ceu_vstk_top (void) {
@@ -1508,7 +1508,6 @@ fun Coder.main (tags: Tags): String {
             for (int i=0; i<N; i++) {
                 ceu_vector_set(&vec.Dyn->Vector, vec.Dyn->Vector.its, (CEU_Value) { CEU_VALUE_CHAR, {.Char=str[i]} });
             }
-            ceu_gc_inc(vec);
             return vec;
         }
 
@@ -2256,135 +2255,26 @@ fun Coder.main (tags: Tags): String {
         #endif
     """ +
     """ // FUNCS
-        CEU_Clo ceu_dump = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_dump_f, {0,NULL}
-        };
-        CEU_Clo ceu_error = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_error_f, {0,NULL}
-        };
-        CEU_Clo ceu_next_dict = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_next_dict_f, {0,NULL}
-        };
-        CEU_Clo ceu_print = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_print_f, {0,NULL}
-        };
-        CEU_Clo ceu_println = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_println_f, {0,NULL}
-        };
-        CEU_Clo ceu_sup_question_ = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_sup_question__f, {0,NULL}
-        };
-        CEU_Clo ceu_tags = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_tags_f, {0,NULL}
-        };
-        CEU_Clo ceu_tuple = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_tuple_f, {0,NULL}
-        };
-        CEU_Clo ceu_type = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_type_f, {0,NULL}
-        };
-        CEU_Clo ceu_op_equals_equals = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_op_equals_equals_f, {0,NULL}
-        };
-        CEU_Clo ceu_op_hash = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_op_hash_f, {0,NULL}
-        };
-        CEU_Clo ceu_op_slash_equals = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_op_slash_equals_f, {0,NULL}
-        };
-        CEU_Clo ceu_string_to_tag = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_string_to_tag_f, {0,NULL}
-        };
+        CEU_Proto ceu_funcs[] = {
+            ceu_dump_f, ceu_error_f, ceu_next_dict_f,
+            ceu_print_f, ceu_println_f, ceu_string_to_tag_f,
+            ceu_sup_question__f, ceu_tags_f, ceu_tuple_f,
+            ceu_type_f, ceu_op_hash_f, ceu_op_equals_equals_f,
+            ceu_op_slash_equals_f,
         #if CEU >= 2
-        CEU_Clo ceu_pointer_to_string = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_pointer_to_string_f, {0,NULL}
-        };
-        CEU_Clo ceu_throw = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_throw_f, {0,NULL}
-        };
+            ceu_pointer_to_string_f, ceu_throw_f,
         #endif
         #if CEU >= 3
-        CEU_Clo ceu_coroutine = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_coroutine_f, {0,NULL}
-        };
-        CEU_Clo ceu_status = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_status_f, {0,NULL}
-        };
+            ceu_coroutine_f, ceu_status_f,
         #endif
         #if CEU >= 4
-        CEU_Clo ceu_broadcast = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_broadcast_f, {0,NULL}
+            ceu_broadcast_f,
         };
         #endif
         #if CEU >= 5
-        CEU_Clo ceu_tasks = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_tasks_f, {0,NULL}
+            ceu_detrack_f, ceu_next_tasks_f, ceu_tasks_f, ceu_track_f,
+        #endif
         };
-        CEU_Clo ceu_track = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_track_f, {0,NULL}
-        };
-        CEU_Clo ceu_next_tasks = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_next_tasks_f, {0,NULL}
-        };
-        CEU_Clo ceu_detrack = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL,
-            &CEU_FRAME, ceu_detrack_f, {0,NULL}
-        };
-        #endif
-
-        CEU_Value id_dump                    = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_dump}                    };
-        CEU_Value id_error                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_error}                   };
-        CEU_Value id_next_dash_dict          = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_next_dict}               };
-        CEU_Value id_print                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_print}                   };
-        CEU_Value id_println                 = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_println}                 };
-        CEU_Value id_tags                    = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_tags}                    };
-        CEU_Value id_type                    = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_type}                    };
-        CEU_Value id_tuple                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_tuple}                   };
-        CEU_Value op_hash                    = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_op_hash}                 };
-        CEU_Value id_sup_question_           = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_sup_question_}           };
-        CEU_Value op_equals_equals           = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_op_equals_equals}        };
-        CEU_Value op_slash_equals            = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_op_slash_equals}         };
-        CEU_Value id_string_dash_to_dash_tag = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_string_to_tag}           };
-        #if CEU >= 2
-        CEU_Value id_pointer_dash_to_dash_string = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_pointer_to_string}   };
-        CEU_Value id_throw                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_throw}                   };
-        #endif
-        #if CEU >= 3
-        CEU_Value id_coroutine               = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_coroutine}               };
-        CEU_Value id_status                  = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_status}                  };
-        #endif
-        #if CEU >= 4
-        CEU_Value id_broadcast_plic_         = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_broadcast}               };
-        #endif
-        #if CEU >= 5
-        CEU_Value id_tasks                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_tasks}                   };
-        CEU_Value id_detrack_plic_           = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_detrack}                 };
-        CEU_Value id_track                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_track}                   };
-        CEU_Value id_next_dash_tasks         = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_next_tasks}              };
-        #else
-        CEU_Value id_detrack_plic_           = (CEU_Value) { CEU_VALUE_NIL };   // bc of detrack'' in prelude        
-        #endif
     """ +
     """ // MAIN
         int main (int ceu_argc, char** ceu_argv) {
@@ -2397,6 +2287,23 @@ fun Coder.main (tags: Tags): String {
            CEU_Stack* ceu_dstk = &CEU_DSTK;
         #endif
             CEU_Frame* ceu_frame = &CEU_FRAME;
+            
+            // GLOBALS
+            // funcs
+            for (int i=0; i<sizeof(ceu_funcs)/sizeof(CEU_Proto); i++) {
+                CEU_Value clo = ceu_create_clo(NULL, ceu_funcs[i], 0);
+                ceu_vstk_push(clo);
+            }
+            // ...
+            {
+                CEU_Value xxx = ceu_create_tuple(ceu_argc);
+                for (int i=0; i<ceu_argc; i++) {
+                    CEU_Value vec = ceu_vector_from_c_string(ceu_argv[i]);
+                    ceu_tuple_set(&xxx.Dyn->Tuple, i, vec);
+                }
+                ceu_vstk_push(xxx);
+            }
+            
             ${this.code}
             ceu_vstk_pop(1);
             return 0;

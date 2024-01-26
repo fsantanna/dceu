@@ -95,9 +95,9 @@ val TAGS = listOf (
 ))
 
 val GLOBALS = setOf (
-    "detrack'", "dump", "error", "next-dict", "print", "println",   // bc of detrack'' in prelude
+    "dump", "error", "next-dict", "print", "println",   // bc of detrack'' in prelude
     "string-to-tag", "sup?", "tags",
-    "tuple", "type", "{{#}}", "{{==}}", "{{/=}}", "..."
+    "tuple", "type", "{{#}}", "{{==}}", "{{/=}}",
 ) + (if (CEU < 2) setOf() else setOf(
     "pointer-to-string", "throw"
 )) + (if (CEU < 3) setOf() else setOf(
@@ -105,7 +105,11 @@ val GLOBALS = setOf (
 )) + (if (CEU < 4) setOf() else setOf(
     "broadcast'", "evt"
 )) + (if (CEU < 5) setOf() else setOf(
-    "next-tasks", "tasks", "track"
+    "detrack'", "next-tasks", "tasks", "track"
+)) + setOf(
+    "..."
+) + (if (CEU < 4) setOf() else setOf(
+    "evt"
 ))
 
 sealed class Tk (val str: String, val pos: Pos) {
