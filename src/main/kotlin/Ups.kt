@@ -5,17 +5,17 @@ class Ups (outer: Expr.Do) {
 
     fun all_until (e: Expr, cnd: (Expr)->Boolean): List<Expr> {
         val up = pub[e]
-        return when {
-            cnd(e) -> listOf(e)
+        return listOf(e) + when {
+            cnd(e) -> emptyList()
             (up == null) -> emptyList()
-            else -> this.all_until(up,cnd).let { if (it.isEmpty()) it else it+e }
+            else -> this.all_until(up,cnd)
         }
     }
     fun all (e: Expr): List<Expr> {
         val up = pub[e]
         return listOf(e) + when {
             (up == null) -> emptyList()
-            else -> this.all(up).let { if (it.isEmpty()) it else it+e }
+            else -> this.all(up)
         }
     }
     fun first (e: Expr, cnd: (Expr)->Boolean): Expr? {

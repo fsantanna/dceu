@@ -238,10 +238,57 @@ class Exec_01 {
         //assert(out.contains("hold  = 2")) { out }
     }
 
+    // DCL
+
+    @Test
+    fun bc_01_dcl() {
+        val out = test(
+            """
+            val x
+            println(x)
+        """
+        )
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun bc_02_dcl_chars() {
+        val out = test(
+            """
+            val x'
+            val f!
+            val even?
+            println(x')
+            println(f!)
+            println(even?)
+        """
+        )
+        assert(out == "nil\nnil\nnil\n") { out }
+    }
+    @Test
+    fun bc_03_dcl_redeclaration_err() {
+        val out = test(
+            """
+            val x
+            val x
+        """
+        )
+        assert(out == "anon : (lin 3, col 17) : declaration error : variable \"x\" is already declared\n") { out }
+    }
+    @Test
+    fun bc_04_dcl_blk() {
+        val out = test("""
+            do {
+                val x
+                println(x)
+            }
+        """)
+        assert(out == "nil\n") { out }
+    }
+
     // SET
 
     @Test
-    fun bc_01_set_err() {
+    fun bd_01_set_err() {
         val out = test("""
             set nil = nil
         """)
@@ -514,7 +561,7 @@ class Exec_01 {
         assert(out == "[1,2,3]\n") { out }
     }
     @Test
-    fun cc_tuple15_call_scope() {
+    fun cc_15_tuple_call_scope() {
         val out = test(
             """
             val f = func (v) {
@@ -1365,59 +1412,6 @@ class Exec_01 {
         """
         )
         assert(out == "a\nabba\nabba\n") { out }
-    }
-
-    // DCL
-
-    @Test
-    fun dcl() {
-        val out = test(
-            """
-            val x
-            println(x)
-        """
-        )
-        assert(out == "nil\n") { out }
-    }
-    @Test
-    fun dcl_chars() {
-        val out = test(
-            """
-            val x'
-            val f!
-            val even?
-            println(x')
-            println(f!)
-            println(even?)
-        """
-        )
-        assert(out == "nil\nnil\nnil\n") { out }
-    }
-    @Test
-    fun dcl_redeclaration_err() {
-        val out = test(
-            """
-            val x
-            val x
-        """
-        )
-        assert(out == "anon : (lin 3, col 17) : declaration error : variable \"x\" is already declared\n") { out }
-    }
-    @Test
-    fun dcl4_dup() {
-        val out = test(
-            """
-            do {
-                val x
-                println(x)
-            }
-            do {
-                val x
-                println(x)
-            }
-        """
-        )
-        assert(out == "nil\nnil\n") { out }
     }
 
     // SET
@@ -2574,7 +2568,16 @@ class Exec_01 {
     // FUNC / CALL
 
     @Test
-    fun func0_err() {
+    fun oo_01_func() {
+        val out = test("""
+            val f = func (v) { v }
+            val x = f(10)
+            println(x)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun oo_02_func0_err() {
         val out = test(
             """
             val x
