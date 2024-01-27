@@ -219,7 +219,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${GLOBALS.first.mapIndexed { i,id -> """
                         {
                             CEU_Value clo = ceu_create_clo(NULL, ceu_${id.idc()}_f, 0);
-                            ceu_x_repl(1+$i, clo);
+                            ceu_x_repl(X(1+$i), clo);
                                 // +1 = BLOCK
                         }
                         """ }.joinToString("")}
@@ -231,7 +231,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 CEU_Value vec = ceu_vector_from_c_string(ceu_argv[i]);
                                 ceu_tuple_set(&xxx.Dyn->Tuple, i, vec);
                             }
-                            ceu_x_repl(1+${GLOBALS.first.size+GLOBALS.second.indexOf("...")}, xxx);
+                            ceu_x_repl(X(1+${GLOBALS.first.size+GLOBALS.second.indexOf("...")}), xxx);
                                 // +1 = BLOCK
                         }
                         
@@ -256,12 +256,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         val idx = vars.idx(TODO() as Expr.Dcl)
                         """
                         {
-                            int N = MAX(0, ceu_vstk_top()-ceu_base-$N-1);
+                            int N = MAX(0, ceu_x_top()-ceu_base-$N-1);
                             CEU_Value xxx = ceu_create_tuple(N);
                             for (int i=0; i<N; i++) {
-                                ceu_tuple_set(&xxx.Dyn->Tuple, i, ceu_vstk_peek(ceu_base+$N+i));
+                                ceu_tuple_set(&xxx.Dyn->Tuple, i, ceu_x_peek(X(ceu_base+$N+i)));
                             }
-                            ceu_vstk_repl($idx, xxx);
+                            ceu_x_repl(X($idx), xxx);
                         }
                     """ }}
 
@@ -355,7 +355,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                         // DCL | ${this.dump()}
                         ${this.src.code()}
-                        ceu_x_repl($idx, ceu_x_peek(-1));
+                        ceu_x_repl(X($idx), ceu_x_peek(X(-1)));
                         """
                     }
                 }
@@ -369,7 +369,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.If -> """
                 { // IF | ${this.dump()}
                     ${this.cnd.code()}
-                    int ceu_$n = ceu_as_bool(ceu_x_peek(-1));
+                    int ceu_$n = ceu_as_bool(ceu_x_peek(X(-1)));
                     ceu_x_pop(1);
                     if (ceu_$n) {
                         ${this.t.code()}
@@ -391,7 +391,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             """
             is Expr.Break -> """ // BREAK | ${this.dump()}
                 ${this.cnd.code()}
-                int ceu_$n = ceu_as_bool(ceu_x_peek(-1));
+                int ceu_$n = ceu_as_bool(ceu_x_peek(X(-1)));
                 if (ceu_$n) {
                     //ceu_x_pop(1);
                     ${this.e.cond { """
@@ -404,7 +404,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             """
             is Expr.Skip -> """ // SKIP | ${this.dump()}
                 ${this.cnd.code()}
-                int ceu_$n = ceu_as_bool(ceu_x_peek(-1));
+                int ceu_$n = ceu_as_bool(ceu_x_peek(X(-1)));
                 //ceu_x_pop(1);
                 if (ceu_$n) {
                     goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
@@ -505,7 +505,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                 """ }}
 
-                CEU_ASSERT($bupc, ceu_x_peek(-1), ceu_err_$n);                
+                CEU_ASSERT($bupc, ceu_x_peek(X(-1)), ceu_err_$n);                
                 """
             }
             is Expr.Yield -> {
@@ -618,7 +618,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                     """ }}
                     
-                    CEU_ASSERT($bupc, ceu_x_peek(-1), ceu_err_$n);
+                    CEU_ASSERT($bupc, ceu_x_peek(X(-1)), ceu_err_$n);
     
                     ${this.tsks.cond2({"""
                             CEU_REPL((CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} });
@@ -720,10 +720,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         """
                         // ACC - SET | ${this.dump()}
-                        ceu_x_repl($idx, ceu_x_peek(-1));
+                        ceu_x_repl(X($idx), ceu_x_peek(X(-1)));
                         """
                     }
-                    else -> "ceu_x_push(ceu_x_peek($idx), 1);\n"
+                    else -> "ceu_x_push(ceu_x_peek(X($idx)), 1);\n"
                 }
             }
             is Expr.Nil  -> "ceu_x_push((CEU_Value) { CEU_VALUE_NIL }, 1);"
@@ -738,7 +738,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ceu_x_push(ceu_create_tuple(${this.args.size}), 1);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
-                        ceu_tuple_set(&ceu_x_peek(-2).Dyn->Tuple, $i, ceu_x_peek(-1));
+                        ceu_tuple_set(&ceu_x_peek(X(-2)).Dyn->Tuple, $i, ceu_x_peek(X(-1)));
                         ceu_x_pop(1);
                         """
                     }.joinToString("")}
@@ -751,7 +751,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ceu_x_push(ceu_create_vector(), 1);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
-                        ceu_vector_set(&ceu_x_peek(-2).Dyn->Vector, $i, ceu_x_peek(-1));
+                        ceu_vector_set(&ceu_x_peek(X(-2)).Dyn->Vector, $i, ceu_x_peek(X(-1)));
                         ceu_x_pop(1);
                         """
                     }.joinToString("")}
@@ -766,7 +766,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${it.first.code()}
                         ${it.second.code()}
                         CEU_ASSERT(
-                            ceu_dict_set(&ceu_x_peek(-3).Dyn->Dict, ceu_x_peek(-2), ceu_x_peek(-1)),
+                            ceu_dict_set(&ceu_x_peek(X(-3)).Dyn->Dict, ceu_x_peek(X(-2)), ceu_x_peek(X(-1))),
                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                         );
                         ceu_x_drop(2);
@@ -789,17 +789,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     
                     // COL
                     ${this.col.code()}
-                    CEU_ASSERT(ceu_col_check(ceu_x_peek(-1),ceu_x_peek(-2)), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                    CEU_ASSERT(ceu_col_check(ceu_x_peek(X(-1)),ceu_x_peek(X(-2))), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                 """ + when {
                     this.isdst() -> {
                         """
-                        CEU_Value ceu_$n = ceu_col_set(ceu_x_peek(-1), ceu_x_peek(-2), ceu_x_peek(-3));
+                        CEU_Value ceu_$n = ceu_col_set(ceu_x_peek(X(-1)), ceu_x_peek(X(-2)), ceu_x_peek(X(-3)));
                         CEU_ASSERT(ceu_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         ceu_x_drop(2);    // keep src
                         """
                     }
                     else -> """
-                        CEU_Value ceu_$n = CEU_ASSERT(ceu_col_get(ceu_x_peek(-1),ceu_x_peek(-2)), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                        CEU_Value ceu_$n = CEU_ASSERT(ceu_col_get(ceu_x_peek(X(-1)),ceu_x_peek(X(-2))), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         ceu_gc_inc(ceu_$n);
                         ceu_x_drop(2);
                         ceu_x_push(ceu_$n, 1);
@@ -857,7 +857,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
 
                     //static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
-                    CEU_ASSERT(ceu_x_peek(-1), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                    CEU_ASSERT(ceu_x_peek(X(-1)), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                 } // CALL | ${this.dump()}
                 """
             }
