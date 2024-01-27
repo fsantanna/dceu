@@ -24,7 +24,7 @@ class Exec_01 {
             print([10])
             println(20)
         """)
-        assert(out == "[10]20") { out }
+        assert(out == "[10]20\n") { out }
     }
     @Test
     fun aa_03_print() {
@@ -45,9 +45,8 @@ class Exec_01 {
         )
         assert(out.contains("[[],[1,2,3]]\nfunc: 0x")) { out }
     }
-
     @Test
-    fun aa_print34() {
+    fun aa_05_print() {
         val out = test(
             """
             var f
@@ -63,7 +62,7 @@ class Exec_01 {
         assert(out.contains("func: 0x")) { out }
     }
     @Test
-    fun aa_print_err1() {
+    fun aa_06_print_err() {
         val out = test(
             """
             println(1)
@@ -72,7 +71,7 @@ class Exec_01 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun aa_print_err2() {
+    fun aa_07_print_err() {
         val out = test(
             """
             print(1)
@@ -85,24 +84,24 @@ class Exec_01 {
         assert(out == "12\n3\n") { out }
     }
     @Test
-    fun aa_print_err2x() {
+    fun aa_08_print_err() {
         val out = test("""
             println()
         """)
         assert(out == "\n") { out }
     }
     @Test
-    fun aa_print4() {
+    fun aa_09_print() {
         val out = test("print(nil)")
         assert(out == "nil") { out }
     }
     @Test
-    fun aa_print5() {
+    fun aa_10_print() {
         val out = test("print(true)")
         assert(out == "true") { out }
     }
     @Test
-    fun aa_print6() {
+    fun aa_11_print() {
         val out = test("println(false)")
         assert(out == "false\n") { out }
     }
@@ -118,7 +117,7 @@ class Exec_01 {
         assert(out == "nil") { out }
     }
     @Test
-    fun bb_var2() {
+    fun bb_02_var() {
         val out = test(
             """
             var vvv = 1
@@ -128,7 +127,7 @@ class Exec_01 {
         assert(out == "1") { out }
     }
     @Test
-    fun bb_var3() {
+    fun bb_03_var() {
         val out = test(
             """
             var this-is-a-var = 1
@@ -138,7 +137,7 @@ class Exec_01 {
         assert(out == "1") { out }
     }
     @Test
-    fun bb_var4_kebab_amb() {
+    fun bb_04_var_kebab_amb() {
         val out = test(
             """
             var x = 10
@@ -150,7 +149,7 @@ class Exec_01 {
         assert(out == "anon : (lin 4, col 21) : access error : variable \"x-y\" is not declared\n") { out }
     }
     @Test
-    fun bb_var5_kebab_amb() {
+    fun bb_05_var_kebab_amb() {
         val out = test(
             """
             var x = 10
@@ -211,14 +210,12 @@ class Exec_01 {
     }
     @Test
     fun bb_10_var() {
-        val out = test(
-            """
+        val out = test("""
             do {
                 val x = println(10)
                 println(x)
             }
-        """
-        )
+        """)
         assert(out == "10\nnil\n") { out }
     }
     @Test
@@ -379,13 +376,11 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple5_free() {
-        val out = test(
-            """
+        val out = test("""
             val f = func () { nil }
             f([1,2,3])
             println(1)
-        """
-        )
+        """)
         assert(out == "1\n") { out }
     }
     @Test

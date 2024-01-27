@@ -127,7 +127,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ceu_f_$id,
                     ${clos.protos_refs[this]?.size ?: 0}
                 );
-                ceu_vstk_push(ceu_clo_$n);
+                ceu_vstk_push(ceu_clo_$n, 1);
                 ${isexe.cond { """
                     ceu_clo_$n.Dyn->Clo_Exe.mem_n = sizeof(CEU_Clo_Mem_$id);                    
                 """ }}
@@ -234,51 +234,28 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }}
                     
                     ${(CEU >= 2).cond { "do {" }} // error escape with `continue`
-                        // main args, func args
-                        ${when {
-                            (f_b is Expr.Proto) -> {
-                                val dots = (f_b.args.lastOrNull()?.first?.str == "...")
-                                val args_n = f_b.args.size - 1
-                                """
-                                { // func args
-                                    int ceu_N = ceu_vstk_top() - ceu_base;
-                                    ${f_b.args.map {
-                                        val idc = vars.get(this, it.first.str).idc(0)
-                                        """
-                                        $idc = (CEU_Value) { CEU_VALUE_NIL };
-                                        """
-                                    }.joinToString("")}
-                                    ${f_b.args.filter { it.first.str!="..." }.mapIndexed { i,arg ->
-                                        val id = arg.first
-                                        val idc = vars.get(this, id.str).idc(0)
-                                        """
-                                        if (ceu_N > $i) {
-                                            $idc = ceu_vstk_peek(-ceu_N+$i);
-                                            ceu_gc_inc($idc);
-                                        }
-                                        """
-                                    }.joinToString("")}
-                                    ${dots.cond {
-                                        val idc = f_b.args.last().first.str.idc()
-                                        """
-                                        int ceu_tup_n_$n = MAX(0,ceu_N-$args_n);
-                                        $idc = ceu_create_tuple(ceu_tup_n_$n);
-                                        for (int i=0; i<ceu_tup_n_$n; i++) {
-                                            ceu_tuple_set(&$idc.Dyn->Tuple, i, ceu_vstk_peek(-ceu_N+$args_n+i));
-                                        }
-                                        ceu_gc_inc($idc);
-                                    """ }}
-                                    ceu_vstk_base(ceu_base);
-                                }
-                                """
+
+                    // func ... args
+                    ${(f_b is Expr.Proto && f_b.args.lastOrNull()?.first?.str=="...").cond {
+                        f_b as Expr.Proto
+                        val N = f_b.args.size - 1  // -1 = ...
+                        val idx = mem.pub(TODO() as Expr.Dcl)
+                        """
+                        {
+                            int N = MAX(0, ceu_vstk_top()-ceu_base-$N-1);
+                            CEU_Value xxx = ceu_create_tuple(N);
+                            for (int i=0; i<N; i++) {
+                                ceu_tuple_set(&xxx.Dyn->Tuple, i, ceu_vstk_peek(ceu_base+$N+i));
                             }
-                            else -> ""
-                        }}
-                        ${(CEU >= 2).cond { "ceu_vstk_block(1);" }}
-                        $body
-                        ${(up is Expr.Loop).cond { """
-                            CEU_LOOP_STOP_${up!!.n}:
-                        """ }}
+                            ceu_vstk_repl($idx, xxx);
+                        }
+                    """ }}
+
+                    ${(CEU >= 2).cond { "ceu_vstk_block(1);" }}
+                    $body
+                    ${(up is Expr.Loop).cond { """
+                        CEU_LOOP_STOP_${up!!.n}:
+                    """ }}
                     ${(CEU >= 2).cond { "} while (0);" }}
 
                     ${(CEU >= 2).cond { "ceu_vstk_block(0);" }}
@@ -357,15 +334,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     err(this.tk, "var error : unreferenced upvar")
                 }
                 when {
-                    !this.init -> "ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL });"
-                    (this.src == null) -> "ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL });"
+                    !this.init -> "ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL }, 1);"
+                    (this.src == null) -> "ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL }, 1);"
                     else -> {
-                        val idc = this.idc(0)
+                        val idx = mem.pub(this)
                         """
                         // DCL | ${this.dump()}
                         ${this.src.code()}
-                        $idc = ceu_vstk_peek(-1);
-                        ceu_gc_inc($idc);
+                        ceu_vstk_repl($idx, ceu_vstk_peek(-1));
                         """
                     }
                 }
@@ -420,8 +396,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
                 }
             """
-            is Expr.Enum -> "ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL} );"
-            is Expr.Data -> "ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL} );"
+            is Expr.Enum -> "ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL}, 1);"
+            is Expr.Data -> "ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL}, 1);"
             is Expr.Pass -> "// PASS | ${this.dump()}\n" + this.e.code()
 
             is Expr.Catch -> {
@@ -722,20 +698,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     x
                 }
                 when (this.tk_.tag) {
-                    null   -> body + "\n" + "ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL} );\n"
-                    ":ceu" -> "ceu_vstk_push($body);"
+                    null   -> body + "\n" + "ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL}, 1);\n"
+                    ":ceu" -> "ceu_vstk_push($body, 1);"
                     else -> {
                         val (TAG,Tag) = this.tk_.tag.drop(1).let {
                             Pair(it.uppercase(), it.first().uppercase()+it.drop(1))
                         }
-                        "ceu_vstk_push(((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} }));"
+                        "ceu_vstk_push(((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} }), 1);"
                     }
                 }
             }
             is Expr.Acc -> {
                 val dcl = vars.acc_to_dcl[this]!!
-                println(listOf(this.tk.str,mem.pub(this)))
-                val idc = dcl.idc(this.tk_.upv)
                 val idx = mem.pub(this)
                 when {
                     this.isdst() -> {
@@ -744,24 +718,22 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         """
                         // ACC - SET | ${this.dump()}
-                        ceu_gc_inc(ceu_vstk_peek(-1));
-                        ceu_gc_dec($idc);
-                        $idc = ceu_vstk_peek(-1);
+                        ceu_vstk_repl($idx, ceu_vstk_peek(-1));
                         """
                     }
-                    else -> "ceu_vstk_push(ceu_vstk_peek($idx));\n"
+                    else -> "ceu_vstk_push(ceu_vstk_peek($idx), 1);\n"
                 }
             }
-            is Expr.Nil  -> "ceu_vstk_push(((CEU_Value) { CEU_VALUE_NIL }));"
-            is Expr.Tag  -> "ceu_vstk_push(((CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_${this.tk.str.tag2c()}} }));"
-            is Expr.Bool -> "ceu_vstk_push(((CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} }));"
-            is Expr.Char -> "ceu_vstk_push(((CEU_Value) { CEU_VALUE_CHAR, {.Char=${this.tk.str}} }));"
-            is Expr.Num  -> "ceu_vstk_push(((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} }));"
+            is Expr.Nil  -> "ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL }, 1);"
+            is Expr.Tag  -> "ceu_vstk_push((CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_${this.tk.str.tag2c()}} }, 1);"
+            is Expr.Bool -> "ceu_vstk_push((CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} }, 1);"
+            is Expr.Char -> "ceu_vstk_push((CEU_Value) { CEU_VALUE_CHAR, {.Char=${this.tk.str}} }, 1);"
+            is Expr.Num  -> "ceu_vstk_push((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} }, 1);"
 
             is Expr.Tuple -> {
                 """
                 { // TUPLE | ${this.dump()}
-                    ceu_vstk_push(ceu_create_tuple(${this.args.size}));
+                    ceu_vstk_push(ceu_create_tuple(${this.args.size}), 1);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
                         ceu_tuple_set(&ceu_vstk_peek(-2).Dyn->Tuple, $i, ceu_vstk_peek(-1));
@@ -774,7 +746,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Vector -> {
                 """
                 { // VECTOR | ${this.dump()}
-                    ceu_vstk_push(ceu_create_vector());
+                    ceu_vstk_push(ceu_create_vector(), 1);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
                         ceu_vector_set(&ceu_vstk_peek(-2).Dyn->Vector, $i, ceu_vstk_peek(-1));
@@ -789,7 +761,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bupc = bup.idc("block")
                 """
                 { // DICT | ${this.dump()}
-                    ceu_vstk_push(ceu_create_dict());
+                    ceu_vstk_push(ceu_create_dict(), 1);
                     ${this.args.map { """
                         {
                             ${it.first.code()}
@@ -815,7 +787,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         this.idx.code()
                     } else {
                         """
-                        ceu_vstk_push((CEU_Value) { CEU_VALUE_NUMBER, {.Number=$idx} });
+                        ceu_vstk_push((CEU_Value) { CEU_VALUE_NUMBER, {.Number=$idx} }, 1);
                         """
                     }}
                     
@@ -834,7 +806,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         CEU_Value ceu_$n = CEU_ASSERT(ceu_col_get(ceu_vstk_peek(-1),ceu_vstk_peek(-2)), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         ceu_gc_inc(ceu_$n);
                         ceu_vstk_drop(2);
-                        ceu_vstk_push(ceu_$n);
+                        ceu_vstk_push(ceu_$n, 1);
                         ceu_gc_dec(ceu_$n);
                     """
                 } + """
@@ -853,24 +825,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"
                 """
                 { // CALL | ${this.dump()}
-                    int ceu_$n = ceu_vstk_top();
+                    ${this.clo.code()}
                     ${this.args.filter{!(has_dots && it.tk.str=="...")}.mapIndexed { i,e -> """
                         ${e.code()}
                     """ }.joinToString("")}                    
                     ${has_dots.cond { """
+                        -=- TODO -=-
                         for (int ceu_i_$n=0; ceu_i_$n<$id_dots.Dyn->Tuple.its; ceu_i_$n++) {
-                            ceu_vstk_push($id_dots.Dyn->Tuple.buf[ceu_i_$n]);
+                            ceu_vstk_push($id_dots.Dyn->Tuple.buf[ceu_i_$n], 1);
                         }
                     """ }}
-
-                    ${this.clo.code()}
-                    CEU_Value ceu_clo_$n = ceu_vstk_peek(-1);
-                    if (ceu_clo_$n.type != CEU_VALUE_CLO_FUNC) {
-                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="call error : expected function"} };
-                        CEU_ERROR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                    }
-                    ceu_gc_inc(ceu_clo_$n);
-                    ceu_vstk_pop(1);
 
                     // call -> bcast -> outer abortion -> need to clean up from here
                     ${(CEU>=4 && inexeT).cond { """
@@ -885,17 +849,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         CEU_Stack ceu_bstk_$n = { $bupc, 1, ceu_bstk };
                     """ }}
                     
-                    CEU_Frame ceu_frame_$n = { $bupc, &ceu_clo_$n.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
-                    
-                    ceu_frame_$n.clo->proto (
-                        CEU5(ceu_dstk COMMA)
-                        CEU4($bstk COMMA)
-                        &ceu_frame_$n,
-                        ceu_$n
-                    );
-                    ceu_gc_dec(ceu_clo_$n);
-
-                    static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
+                    ceu_vstk_call(${this.args.size});
                     
                     ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
                         if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
@@ -906,6 +860,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                     """ }}
 
+                    static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
                     CEU_ASSERT(ceu_vstk_peek(-1), ceu_err_$n);
                 } // CALL | ${this.dump()}
                 """

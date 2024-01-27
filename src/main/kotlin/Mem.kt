@@ -1,16 +1,18 @@
 package dceu
 
 class Mem (val ups: Ups, val vars: Vars) {
-
-    fun pub (acc: Expr.Acc): String {
-        val dcl = vars.acc_to_dcl[acc]!!
+    fun pub (dcl: Expr.Dcl): String {
         val blk = vars.dcl_to_blk[dcl]!!
-        if (ups.pub[blk] == null) {
-            val idx = vars.blk_to_dcls[blk]!!.lastIndexOf(dcl)
-            assert(idx != -1)
-            return (1+idx).toString()   // +1 = BLOCK
-        } else {
-            return "TODO"
-        }
+        val idx = 1 + vars.blk_to_dcls[blk]!!.lastIndexOf(dcl)
+                    // +1 = BLOCK
+        assert(idx != -1)
+        val off = ups.all_until(dcl) { it is Expr.Proto}
+            .filter { it is Expr.Do }
+            .map { 1 + vars.blk_to_dcls[it]!!.count() }
+            .sum()  // +1 = BLOCK
+        return (off+idx).toString()
+    }
+    fun pub (acc: Expr.Acc): String {
+        return this.pub(vars.acc_to_dcl[acc]!!)
     }
 }
