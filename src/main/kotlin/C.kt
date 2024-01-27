@@ -461,13 +461,6 @@ fun Coder.main (tags: Tags): String {
                 //cur = old->Any.hld.next;
             }
         }
-        
-        void ceu_dump_stack (void) {
-            for (int i=0; i<ceu_vstk_top(); i++) {
-                printf(">>> %d\n", i);
-                ceu_dump_value(ceu_vstk_peek(i));
-            }
-        }
     #endif
     """ +
     """ // TAGS
@@ -799,7 +792,14 @@ fun Coder.main (tags: Tags): String {
     """ // CEU_VSTK
         #define CEU_VSTK_MAX $STACK
         CEU_Value ceu_vstk[CEU_VSTK_MAX];
-        int ceu_vstk_n = 0;
+        int ceu_vstk_n = 0;        
+        void ceu_vstk_dump (int n) {
+            int N = (n >= 0) ? n : ceu_vstk_top()+n;
+            for (int i=N; i<ceu_vstk_top(); i++) {
+                printf(">>> %d\n", i);
+                ceu_dump_value(ceu_vstk_peek(i));
+            }
+        }
         int ceu_vstk_top (void) {
             return ceu_vstk_n;
         }

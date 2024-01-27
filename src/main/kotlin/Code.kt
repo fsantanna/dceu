@@ -208,7 +208,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }}
                     """ }}
 
-                    ceu_vstk_block_enter(${vars.blk_to_dcls[this]!!.size});
+                    ceu_vstk_block_enter(
+                        // ignore args (up==null)
+                        ${vars.blk_to_dcls[this]!!.count { this==outer || ups.pub[it]!=null }}
+                    );
                     
                     // GLOBALS
                     ${(up == null).cond { """ 

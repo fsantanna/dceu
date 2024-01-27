@@ -109,8 +109,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
         val blk = this.dcl_to_blk[dcl]!!
         val idx = 1 + this.blk_to_dcls[blk]!!.lastIndexOf(dcl)
-        // +1 = block sentinel
-        assert(idx != -1)
+                    // +1 = block sentinel
+        assert(idx > 0)
         val proto = ups.first(blk) { it is Expr.Proto }
         val off = ups.all_until(blk) { it == proto }
             //.let { println(it) ; it }

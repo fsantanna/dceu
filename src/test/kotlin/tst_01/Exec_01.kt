@@ -2880,6 +2880,20 @@ class Exec_01 {
         //assert(out == "anon : (lin 2, col 27) : argument error : cannot receive pending reference\n1\n") { out }
         assert(out == "1\n1\n") { out }
     }
+    @Test
+    fun nn_22_func_block() {
+        val out = test("""
+            val f = func (v) {
+                do {
+                    val x = nil
+                }
+            }
+            f(nil)
+            println(:ok)
+        """)
+        //assert(out == "anon : (lin 4, col 26) : block escape error : cannot copy reference out\n") { out }
+        assert(out == ":ok\n") { out }
+    }
 
     // FUNC / ARGS / DOTS / ...
 
