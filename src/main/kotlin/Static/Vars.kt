@@ -140,9 +140,9 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
         // index of upval for dcl
         // (ignore if -1 not access to upval)
-        val proto_src = ups.first(blk) { it is Expr.Proto }
+        val proto_src = ups.first(src) { it is Expr.Proto }
         val upv = if (proto_src == null) -1 else {
-            //println(proto_to_upvs[proto])
+            //println(proto_to_upvs[proto_src])
             proto_to_upvs[proto_src]!!.indexOf(dcl)
         }
         //println(listOf(dcl.id.str,upv))
