@@ -144,24 +144,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """ }}
                 
                 // UPVALS
-                ${clos.protos_refs[this].cond {
-                    it.map { dcl ->
-                        val dcl_blk = vars.dcl_to_blk[dcl]!!
-                        val idc = dcl.id.str.idc()
-                        val btw = ups
-                            .all_until(this) { dcl_blk==it }
-                            .filter { it is Expr.Proto }
-                            .count() // other protos in between myself and dcl, so it its an upref (upv=2)
-                        val upv = min(2, btw)
-                        """
-                        {
-                            CEU_Value ceu_up = ${dcl.idc(upv)};
-                            ceu_gc_inc(ceu_up);
-                            ((CEU_Clo_Upvs_$id*)ceu_clo_$n.Dyn->Clo.upvs.buf)->${idc} = ceu_up;
-                        }
-                        """   // TODO: use this.body (ups.ups[this]?) to not confuse with args
-                    }.joinToString("\n")
-                }}
+                ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl -> """
+                {
+                    CEU_Value ceu_up = ceu_x_peek(${vars.idx(dcl)});
+                    ceu_gc_inc(ceu_up);
+                    ceu_clo_$n.Dyn->Clo.upvs.buf[$i] = ceu_up;
+                }
+                """ }.joinToString("\n")}
                 """
 
                 if (clos.protos_noclos.contains(this) && this.tk.str=="func") {

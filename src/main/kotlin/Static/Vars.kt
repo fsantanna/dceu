@@ -26,6 +26,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         Pair(outer, dcls.toList().toMutableList())
     )
     public val nats: MutableMap<Expr.Nat,String> = mutableMapOf()
+    public val proto_to_upvs: MutableMap<Expr.Proto,MutableSet<Expr.Dcl>> = mutableMapOf()
 
     init {
         this.outer.traverse()
@@ -80,7 +81,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         }
     }
 
-    fun find (e: Expr, id: String, upv: Int): Expr.Dcl {
+    fun acc (e: Expr, id: String, upv: Int): Expr.Dcl {
         val dcl = dcls.findLast { id == it.id.str } // last bc of it redeclaration
         when {
             (dcl == null) -> err(e.tk, "access error : variable \"${id}\" is not declared")
@@ -93,53 +94,90 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 if (nocross) {
                     err(e.tk, "access error : unnecessary upref modifier")
                 }
+                val proto = ups.first(e) { it is Expr.Proto }!!
+                this.proto_to_upvs[proto]!!.add(dcl)
             }
         }
-        return dcl!!
+        dcl!!
+        if (e is Expr.Acc) {        // TODO: what about Expr.Nat?
+            acc_to_dcl[e] = dcl
+        }
+        if (CEU>=99 && dcl.id.str=="it") {
+            val prv = it_uses[dcl]
+            when (prv) {
+                is Expr.Dcl -> err(prv.id, "declaration error : variable \"${prv.id.str}\" is already declared")
+                is Expr.Acc -> {}
+                else -> {
+                    if (e is Expr.Acc && !e.ign) {
+                        it_uses[dcl] = e        // ignore __acc
+                    }
+                }
+            }
+        }
+        return dcl
     }
 
     fun get (blk: Expr.Do, id: String): Expr.Dcl {
         return blk_to_dcls[blk]!!.findLast { it.id.str == id }!!
     }
 
+    fun idx (acc: Expr.Acc): String {
+        return this.idx(this.acc_to_dcl[acc]!!)
+    }
     fun idx (dcl: Expr.Dcl): String {
         // Use ups[blk] instead of ups[dcl]
         //  - some dcl are args
         //  - dcl args are created after ups
 
         val blk = this.dcl_to_blk[dcl]!!
+
+        // index of dcl inside its block
+        // (ignore if access to upval)
         val idx = 1 + this.blk_to_dcls[blk]!!.lastIndexOf(dcl)
-                    // +1 = block sentinel
+            // +1 = block sentinel
         assert(idx > 0)
+
+        // enclosing proto of declaration block
         val proto = ups.first(blk) { it is Expr.Proto }
-        val off = ups.all_until(blk) { it == proto }
+
+        // index of upval for dcl
+        // (ignore if -1 not access to upval)
+        val upv = if (proto == null) -1 else {
+            proto_to_upvs[proto]!!.indexOf(dcl)
+        }
+
+        // all blocks in between proto and declaration block
+        val blks = ups.all_until(blk) { it == proto }
             //.let { println(it) ; it }
             .drop(1)    // myself
             .filter { it is Expr.Do }
             .map { 1 + this.blk_to_dcls[it]!!.count() }
             .sum()  // +1 = block sentinel
         //println(listOf(dcl.id.str,off,idx))
+
+
         return when {
             (proto == null) -> {            // global
-                (off + idx).toString()
+                assert(upv == -1)
+                (blks + idx).toString()
+            }
+            (upv != -1) -> {                // upval
+                (-1-upv).toString()         // -1 = must be <0
             }
             (ups.pub[dcl] == null) -> {     // argument
-                // arguments are before the block sentinel
-                "-1 + ceu_base + " + (off + idx).toString()
+                // -1 = arguments are before the block sentinel
+                "-1 + ceu_base + " + (blks + idx).toString()
             }
             else -> {                       // local
-                "ceu_base + " + (off + idx).toString()
+                "ceu_base + " + (blks + idx).toString()
             }
         }.let { "(" + it + ")" }
     }
-    fun idx (acc: Expr.Acc): String {
-        return this.idx(this.acc_to_dcl[acc]!!)
-    }
-
 
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
+                proto_to_upvs[this] = mutableSetOf()
                 if (this.tag!=null && this.tag.str!=":void" && !datas.containsKey(this.tag.str)) {
                     //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
@@ -312,32 +350,16 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                             if (id.length == 0) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
-                            val dcl = find(this, id, 0)
+                            val dcl = acc(this, id, 0)
                             val x = idx(dcl)
-                            "(ceu_vstk_peek($x))$no"
+                            "(ceu_x_peek($x))$no"
                         }
                     }
                     //println(str)
                     str
                 }
             }
-            is Expr.Acc    -> {
-                val dcl = find(this, this.tk.str, this.tk_.upv)
-                acc_to_dcl[this] = dcl
-
-                if (CEU>=99 && dcl.id.str=="it") {
-                    val prv = it_uses[dcl]
-                    when (prv) {
-                        is Expr.Dcl -> err(prv.id, "declaration error : variable \"${prv.id.str}\" is already declared")
-                        is Expr.Acc -> {}
-                        else -> {
-                            if (!this.ign) {
-                                it_uses[dcl] = this        // ignore __acc
-                            }
-                        }
-                    }
-                }
-            }
+            is Expr.Acc    -> acc(this, this.tk.str, this.tk_.upv)
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
             is Expr.Bool   -> {}
