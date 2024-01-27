@@ -3408,17 +3408,17 @@ class Exec_01 {
         val out = test(
             """
             ```
-            int X = 1;          ;; should it be visible...
+            int Z = 1;          // should it be visible...
             ```
             var f
             set f = func () {
-                `:number X`     ;; ...here?
+                `:number Z`     ;; ...here?
             }
             println(f())
         """
         )
         //assert(out == "1\n") { out }
-        assert(out.contains("error: ‘X’ undeclared")) { out }
+        assert(out.contains("error: ‘Z’ undeclared")) { out }
     }
     @Test
     fun native14_char() {
