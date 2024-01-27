@@ -808,7 +808,8 @@ fun Coder.main (tags: Tags): String {
         ============
          CALL
          clo        BASE
-           - upvs   -x
+         upvs       -x
+         locs
          args       +y
          BLOCK      +K
          temps
@@ -890,6 +891,15 @@ fun Coder.main (tags: Tags): String {
             ceu_x[ceu_x_n++] = ret;
         }
         
+        void ceu_x_shift (int I) {
+            assert(I>=0 && I<ceu_x_n && "TODO: stack error");
+            for (int i=ceu_x_n; i>I; i--) {
+                ceu_x[i] = ceu_x[i-1];
+            }
+            ceu_x[I] = (CEU_Value) { CEU_VALUE_NIL };
+            ceu_x_n++;
+        }
+        
         void ceu_x_call (int n) {
             int base = ceu_x_n - n - 1;
             CEU_Value clo = ceu_x_peek(X(-n-1));
@@ -897,8 +907,12 @@ fun Coder.main (tags: Tags): String {
                 ceu_x_push((CEU_Value){ CEU_VALUE_ERROR, {.Error="call error : expected function"} }, 1);
                 return;
             }
+            for (int i=0; i<clo.Dyn->Clo.upvs.its; i++) {
+                ceu_x_shift(base+i+1);
+                ceu_x_repl(base+i+1, clo.Dyn->Clo.upvs.buf[i]);
+            }
             CEU_Frame frame = { NULL, &clo.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
-            clo.Dyn->Clo.proto(&frame, ceu_x_n-n);
+            clo.Dyn->Clo.proto(&frame, ceu_x_n-n-clo.Dyn->Clo.upvs.its);
             CEU_Value ret = ceu_x_pop(0);
             ceu_x_base(base);
             ceu_x_push(ret, 0);

@@ -138,12 +138,15 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             // +1 = block sentinel
         assert(idx > 0)
 
+        // number of upvals in enclosing proto
         // index of upval for dcl
         // (ignore if -1 not access to upval)
         val proto_src = ups.first(src) { it is Expr.Proto }
-        val upv = if (proto_src == null) -1 else {
+        val (upvs,upv) = if (proto_src == null) Pair(0,-1) else {
             //println(proto_to_upvs[proto_src])
-            proto_to_upvs[proto_src]!!.indexOf(dcl)
+            proto_to_upvs[proto_src]!!.let {
+                Pair(it.size, it.indexOf(dcl))
+            }
         }
         //println(listOf(dcl.id.str,upv))
 
@@ -160,18 +163,17 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
         return when {
             (proto_blk == null) -> {            // global
-                assert(upv == -1)
-                (blks + idx).toString()
+                "($blks + $idx)"
             }
             (upv != -1) -> {                // upval
-                (-1-upv).toString()         // -1 = must be <0
+                "(ceu_base + $upv)"
             }
             isarg -> {                      // argument
                 // -1 = arguments are before the block sentinel
-                "-1 + ceu_base + " + (blks + idx).toString()
+                "(-1 + ceu_base + $upvs + $blks + $idx)"
             }
             else -> {                       // local
-                "ceu_base + " + (blks + idx).toString()
+                "(ceu_base + $upvs + $blks + $idx)"
             }
         }.let { "(" + it + ")" }
     }

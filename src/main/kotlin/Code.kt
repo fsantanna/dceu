@@ -10,17 +10,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
     fun Expr.idc (pre: String): String {
         return "ceu_${pre}_${this.n}"
     }
-    fun Expr.Dcl.idc (upv: Int): String {
-        return when {
-            (upv == 2) -> {
-                val idc = this.id.str.idc()
-                "(ceu_upvs->$idc)"
-            }
-            else -> {
-                this.id.str.idc()
-            }
-        }
-    }
     fun Expr.Proto.idc (): String {
         return ups.pub[this].let {
             when {
@@ -103,9 +92,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                            // - So it is safe to use one "global" id_evt per task
                         """ }}
 
-                        ${clos.protos_refs[this].cond { """
-                            CEU_Clo_Upvs_$id* ceu_upvs = (CEU_Clo_Upvs_$id*) ceu_frame->clo->upvs.buf;                    
-                        """ }}
                         ${isexe.cond { """
                             CEU_Clo_Mem_$id* ceu_mem = (CEU_Clo_Mem_$id*) ceu_frame->exe->mem;                    
                         """ }}
@@ -136,7 +122,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         else -> "ceu_frame"
                     }},
                     ceu_f_$id,
-                    ${clos.protos_refs[this]?.size ?: 0}
+                    ${vars.proto_to_upvs[this]!!.size}
                 );
                 ceu_x_push(ceu_clo_$n, 1);
                 ${isexe.cond { """
@@ -804,7 +790,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val dots = this.args.lastOrNull()
                 val has_dots = (dots!=null && dots is Expr.Acc && dots.tk.str=="...") && !this.clo.let { it is Expr.Acc && it.tk.str=="{{#}}" }
                 val id_dots = if (!has_dots) "" else {
-                    vars.acc_to_dcl[dots as Expr.Acc]!!.idc(0)
+                    TODO()
                 }
                 val inexeT = ups.inexe(this, null, true)
                 val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"
