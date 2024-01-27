@@ -3307,7 +3307,7 @@ class Exec_01 {
         assert(out == ">>> 10\n20\n") { out }
     }
     @Test
-    fun native6() {
+    fun TODO_native6() {    // cannot write C -> Ceu
         val out = test(
             """
             var x
@@ -3334,7 +3334,7 @@ class Exec_01 {
         assert(out == "anon : (lin 1, col 1) : native error : (lin 3, col 4) : invalid identifier\n") { out }
     }
     @Test
-    fun native8() {
+    fun TODO_native8() {    // cannot write C -> Ceu
         val out = test(
             """
             var x
@@ -3467,7 +3467,7 @@ class Exec_01 {
         assert(out == "10\n") { out }
     }
     @Test
-    fun native17() {
+    fun TODO_native17() {    // cannot write C -> Ceu
         val out = test(
             """
             func () {
