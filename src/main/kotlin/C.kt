@@ -863,6 +863,7 @@ fun Coder.main (tags: Tags): String {
         }
         
         void ceu_vstk_call (int n) {
+            int base = ceu_vstk_top() - n - 1;
             CEU_Value clo = ceu_vstk_peek(-n-1);
             if (clo.type != CEU_VALUE_CLO_FUNC) {
                 ceu_vstk_push((CEU_Value){ CEU_VALUE_ERROR, {.Error="call error : expected function"} }, 1);
@@ -871,7 +872,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Frame frame = { NULL, &clo.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
             clo.Dyn->Clo.proto(&frame, ceu_vstk_top()-n);
             CEU_Value ret = ceu_vstk_pop(0);
-            ceu_vstk_drop(n+1);
+            ceu_vstk_base(base);
             ceu_vstk_push(ret, 0);
         }
     """ +

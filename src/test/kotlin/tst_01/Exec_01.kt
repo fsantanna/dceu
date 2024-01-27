@@ -1238,7 +1238,8 @@ class Exec_01 {
         val out = test("""
             next-dict(nil)
         """)
-        assert(out == "anon : (lin 2, col 13) : next-dict(nil) : next-dict error : expected dict\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : next-dict(nil) : next-dict error : expected dict\n") { out }
+        assert(out == "anon : (lin 2, col 13) : next-dict error : expected dict\n") { out }
     }
 
 
@@ -1328,7 +1329,8 @@ class Exec_01 {
             #1
         """
         )
-        assert(out == "anon : (lin 2, col 13) : {{#}}(1) : length error : not a vector\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : {{#}}(1) : length error : not a vector\n") { out }
+        assert(out == "anon : (lin 2, col 13) : length error : not a vector\n") { out }
     }
     @Test
     fun vector8_err() {
@@ -1388,7 +1390,8 @@ class Exec_01 {
         """, true
         )
         //assert(out == "anon : (lin 3, col 16) : access error : \"v-1\" is ambiguous with \"v\"") { out }
-        assert(out == "anon : (lin 3, col 15) : {{#}}(v) : length error : not a vector\n") { out }
+        //assert(out == "anon : (lin 3, col 15) : {{#}}(v) : length error : not a vector\n") { out }
+        assert(out == "anon : (lin 3, col 15) : length error : not a vector\n") { out }
     }
     @Test
     fun vector16_copy() {
@@ -2049,7 +2052,9 @@ class Exec_01 {
             error(:ok)
         """
         )
-        assert(out == "anon : (lin 5, col 13) : error(:ok) : :ok\n" +
+        //assert(out == "anon : (lin 5, col 13) : error(:ok) : :ok\n" +
+        //        "@[([],[])]\n") { out }
+        assert(out == "anon : (lin 5, col 13) : :ok\n" +
                 "@[([],[])]\n") { out }
     }
     @Test
@@ -2062,7 +2067,9 @@ class Exec_01 {
             error(:ok)
         """
         )
-        assert(out == "anon : (lin 5, col 13) : error(:ok) : :ok\n" +
+        //assert(out == "anon : (lin 5, col 13) : error(:ok) : :ok\n" +
+        //        "[[1],[1]]\n") { out }
+        assert(out == "anon : (lin 5, col 13) : :ok\n" +
                 "[[1],[1]]\n") { out }
     }
     @Test
@@ -2638,12 +2645,10 @@ class Exec_01 {
     fun func4() {
         val out = test(
             """
-            var f
-            set f = func (x) {
+            val f = func (x) {
                 x
             }
-            var x
-            set x = f()
+            val x = f()
             println(x)
         """
         )

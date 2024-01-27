@@ -84,6 +84,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         CEU_Frame* ceu_frame,
                         int ceu_base
                     ) {
+                        ${this.args.let { 
+                            assert(it.none { it.first.str=="..." }) { "TODO: args" }
+                            """
+                            {   // fill missing args with nils
+                                int N = ${it.size} - (ceu_vstk_top()-ceu_base);
+                                //printf(">>> %d\n", N);
+                                for (int i=0; i<N; i++) {
+                                    ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL }, 1);
+                                }
+                            }
+                            """
+                        }}
                         ${istsk.cond { """
                         CEU_Value id_evt = { CEU_VALUE_NIL };
                            // - C does not allow redeclaration (after each yield)
