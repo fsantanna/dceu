@@ -5,7 +5,6 @@ import java.lang.Integer.min
 class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static) {
     val pres: MutableList<Pair<String,String>> = mutableListOf()
     val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
-    val mem = Mem(ups, vars)
     val code: String = outer.code()
 
     fun Expr.idc (pre: String): String {
@@ -239,7 +238,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${(f_b is Expr.Proto && f_b.args.lastOrNull()?.first?.str=="...").cond {
                         f_b as Expr.Proto
                         val N = f_b.args.size - 1  // -1 = ...
-                        val idx = mem.pub(TODO() as Expr.Dcl)
+                        val idx = vars.idx(TODO() as Expr.Dcl)
                         """
                         {
                             int N = MAX(0, ceu_vstk_top()-ceu_base-$N-1);
@@ -337,7 +336,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     !this.init -> "ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL }, 1);"
                     (this.src == null) -> "ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL }, 1);"
                     else -> {
-                        val idx = mem.pub(this)
+                        val idx = vars.idx(this)
                         """
                         // DCL | ${this.dump()}
                         ${this.src.code()}
@@ -710,7 +709,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             }
             is Expr.Acc -> {
                 val dcl = vars.acc_to_dcl[this]!!
-                val idx = mem.pub(this)
+                val idx = vars.idx(this)
                 when {
                     this.isdst() -> {
                         if (dcl.id.upv > 0) {
@@ -756,29 +755,23 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
                 """
             }
-            is Expr.Dict -> {
-                val bup = ups.first_block(this)!!
-                val bupc = bup.idc("block")
-                """
-                { // DICT | ${this.dump()}
-                    ceu_vstk_push(ceu_create_dict(), 1);
-                    ${this.args.map { """
-                        {
-                            ${it.first.code()}
-                            ${it.second.code()}
-                            CEU_ASSERT(
-                                ceu_dict_set(&ceu_vstk_peek(-3).Dyn->Dict, ceu_vstk_peek(-2), ceu_vstk_peek(-1)),
-                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
-                            );
-                            ceu_vstk_drop(2);
-                        }
-                    """ }.joinToString("")}
-                }
-                """
+            is Expr.Dict -> """
+            { // DICT | ${this.dump()}
+                ceu_vstk_push(ceu_create_dict(), 1);
+                ${this.args.map { """
+                    {
+                        ${it.first.code()}
+                        ${it.second.code()}
+                        CEU_ASSERT(
+                            ceu_dict_set(&ceu_vstk_peek(-3).Dyn->Dict, ceu_vstk_peek(-2), ceu_vstk_peek(-1)),
+                            "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                        );
+                        ceu_vstk_drop(2);
+                    }
+                """ }.joinToString("")}
             }
+            """
             is Expr.Index -> {
-                val blk = ups.first_block(this)!!
-                val bupc = blk.idc("block")
                 val idx = vars.data(this).let { if (it == null) -1 else it.first!! }
                 """
                 { // INDEX | ${this.dump()}

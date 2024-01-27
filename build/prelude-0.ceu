@@ -240,6 +240,7 @@ set copy = func (v) {
 
 ;; DETRACK
 
+;;;
 val detrack'' = func (trk) {
     if detrack'(trk) {
         true
@@ -247,6 +248,7 @@ val detrack'' = func (trk) {
         false
     }
 }
+;;;
 
 ;; AWAIT
 ;;;
