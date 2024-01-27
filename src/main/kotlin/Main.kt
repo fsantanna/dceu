@@ -27,6 +27,7 @@ val THROW = false
 var DUMP = true
 var N = 1
 val D = "\$"
+var STACK = 32
 
 // VERSION
 const val MAJOR    = 0

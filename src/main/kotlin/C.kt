@@ -797,7 +797,7 @@ fun Coder.main (tags: Tags): String {
         }        
     """ +
     """ // CEU_VSTK
-        #define CEU_VSTK_MAX 32
+        #define CEU_VSTK_MAX $STACK
         CEU_Value ceu_vstk[CEU_VSTK_MAX];
         int ceu_vstk_n = 0;
         int ceu_vstk_top (void) {
