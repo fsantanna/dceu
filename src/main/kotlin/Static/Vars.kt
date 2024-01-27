@@ -122,13 +122,14 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     }
 
     fun idx (acc: Expr.Acc): String {
-        return this.idx(this.acc_to_dcl[acc]!!)
+        return this.idx(this.acc_to_dcl[acc]!!, acc)
     }
-    fun idx (dcl: Expr.Dcl): String {
+    fun idx (dcl: Expr.Dcl, src: Expr): String {
         // Use ups[blk] instead of ups[dcl]
         //  - some dcl are args
         //  - dcl args are created after ups
 
+        val isarg = (ups.pub[dcl] == null)
         val blk = this.dcl_to_blk[dcl]!!
 
         // index of dcl inside its block
@@ -137,17 +138,19 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             // +1 = block sentinel
         assert(idx > 0)
 
-        // enclosing proto of declaration block
-        val proto = ups.first(blk) { it is Expr.Proto }
-
         // index of upval for dcl
         // (ignore if -1 not access to upval)
-        val upv = if (proto == null) -1 else {
-            proto_to_upvs[proto]!!.indexOf(dcl)
+        val proto_src = ups.first(blk) { it is Expr.Proto }
+        val upv = if (proto_src == null) -1 else {
+            //println(proto_to_upvs[proto])
+            proto_to_upvs[proto_src]!!.indexOf(dcl)
         }
+        //println(listOf(dcl.id.str,upv))
 
-        // all blocks in between proto and declaration block
-        val blks = ups.all_until(blk) { it == proto }
+        // enclosing proto of declaration block
+        // all blocks in between declaration block and proto
+        val proto_blk = ups.first(blk) { it is Expr.Proto }
+        val blks = ups.all_until(blk) { it == proto_blk }
             //.let { println(it) ; it }
             .drop(1)    // myself
             .filter { it is Expr.Do }
@@ -155,16 +158,15 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             .sum()  // +1 = block sentinel
         //println(listOf(dcl.id.str,off,idx))
 
-
         return when {
-            (proto == null) -> {            // global
+            (proto_blk == null) -> {            // global
                 assert(upv == -1)
                 (blks + idx).toString()
             }
             (upv != -1) -> {                // upval
                 (-1-upv).toString()         // -1 = must be <0
             }
-            (ups.pub[dcl] == null) -> {     // argument
+            isarg -> {                      // argument
                 // -1 = arguments are before the block sentinel
                 "-1 + ceu_base + " + (blks + idx).toString()
             }
@@ -351,7 +353,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
                             val dcl = acc(this, id, 0)
-                            val x = idx(dcl)
+                            val x = idx(dcl,this)
                             "(ceu_x_peek($x))$no"
                         }
                     }

@@ -146,7 +146,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 // UPVALS
                 ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl -> """
                 {
-                    CEU_Value ceu_up = ceu_x_peek(${vars.idx(dcl)});
+                    CEU_Value ceu_up = ceu_x_peek(${vars.idx(dcl,dcl)});
                     ceu_gc_inc(ceu_up);
                     ceu_clo_$n.Dyn->Clo.upvs.buf[$i] = ceu_up;
                 }
@@ -242,7 +242,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${(f_b is Expr.Proto && f_b.args.lastOrNull()?.first?.str=="...").cond {
                         f_b as Expr.Proto
                         val N = f_b.args.size - 1  // -1 = ...
-                        val idx = vars.idx(TODO() as Expr.Dcl)
+                        val idx = vars.idx(TODO() as Expr.Dcl, TODO())
                         """
                         {
                             int N = MAX(0, ceu_x_top()-ceu_base-$N-1);
@@ -340,7 +340,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     !this.init -> "ceu_x_push((CEU_Value) { CEU_VALUE_NIL }, 1);"
                     (this.src == null) -> "ceu_x_push((CEU_Value) { CEU_VALUE_NIL }, 1);"
                     else -> {
-                        val idx = vars.idx(this)
+                        val idx = vars.idx(this,this)
                         """
                         // DCL | ${this.dump()}
                         ${this.src.code()}
