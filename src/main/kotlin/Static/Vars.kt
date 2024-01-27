@@ -25,7 +25,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     public val blk_to_dcls: MutableMap<Expr.Do,MutableList<Expr.Dcl>> = mutableMapOf(
         Pair(outer, dcls.toList().toMutableList())
     )
-    public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
+    public val nats: MutableMap<Expr.Nat,String> = mutableMapOf()
 
     init {
         this.outer.traverse()
@@ -275,8 +275,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
             is Expr.Nat    -> {
                 nats[this] = this.tk.str.let {
-                    assert(!it.contains("XXX")) { "TODO: native cannot contain XXX"}
-                    val set = mutableListOf<Expr.Dcl>()
                     var str = ""
                     var i = 0
 
@@ -315,11 +313,12 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
                             val dcl = find(this, id, 0)
-                            set.add(dcl)
-                            "(XXX)$no"
+                            val x = idx(dcl)
+                            "(ceu_vstk_peek($x))$no"
                         }
                     }
-                    Pair(set, str)
+                    //println(str)
+                    str
                 }
             }
             is Expr.Acc    -> {

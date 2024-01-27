@@ -683,19 +683,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             }
 
             is Expr.Nat -> {
-                val body = vars.nats[this]!!.let { (set, str) ->
-                    var x = str
-                    for (dcl in set) {
-                        val vblk = vars.dcl_to_blk[dcl]!!
-                        val nst = ups
-                            .all_until(this) { it==vblk }  // go up until find dcl blk
-                            .count { it is Expr.Proto }          // count protos in between acc-dcl
-                        val idc = dcl.idc(0)
-                        //println(setOf(x, v))
-                        x = x.replaceFirst("XXX", idc)
-                    }
-                    x
-                }
+                val body = vars.nats[this]!!
                 when (this.tk_.tag) {
                     null   -> body + "\n" + "ceu_vstk_push((CEU_Value) { CEU_VALUE_NIL}, 1);\n"
                     ":ceu" -> "ceu_vstk_push($body, 1);"
@@ -853,8 +841,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                     """ }}
 
-                    static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
-                    CEU_ASSERT(ceu_vstk_peek(-1), ceu_err_$n);
+                    //static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
+                    CEU_ASSERT(ceu_vstk_peek(-1), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                 } // CALL | ${this.dump()}
                 """
             }

@@ -461,6 +461,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple6_free() {
+        STACK = 128
         val out = test(
             """
             var f
@@ -480,6 +481,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple7_hold_err() {
+        STACK = 128
         val out = test("""
             var f
             set f = func (v) {
@@ -498,6 +500,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple8_hold_err() {
+        STACK = 128
         val out = test(
             """
             var f
@@ -3433,7 +3436,7 @@ class Exec_01 {
         assert(out == "> 10.000000\n") { out }
     }
     @Test
-    fun BUG_native_XXX() {
+    fun native_XXX() {
         val out = test(
             """
             var x
