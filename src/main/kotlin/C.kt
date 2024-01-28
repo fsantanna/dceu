@@ -854,9 +854,9 @@ fun Coder.main (tags: Tags): String {
     typedef struct CEUX {
         int base;   // index above args
         int args;   // number of args
-    }
+    } CEUX;
     #define CEU_VSTK_MAX $STACK
-    CEU_Value ceux[CEU_VSTK_MAX];
+    CEU_Value ceux_buf[CEU_VSTK_MAX];
     int ceux_n = 0;
             
     int X (int i) {
@@ -878,11 +878,11 @@ fun Coder.main (tags: Tags): String {
         if (inc) {
             ceu_gc_inc(v);
         }
-        ceux[ceux_n++] = v;
+        ceux_buf[ceux_n++] = v;
     }
     CEU_Value ceux_pop (int dec) {
         assert(ceux_n>0 && "TODO: stack error");
-        CEU_Value v = ceux[--ceux_n];
+        CEU_Value v = ceux_buf[--ceux_n];
         if (dec) {
             ceu_gc_dec(v);
         }
@@ -890,29 +890,29 @@ fun Coder.main (tags: Tags): String {
     }
     CEU_Value ceux_peek (int i) {
         assert(i>=0 && i<ceux_n && "TODO: stack error");
-        return ceux[i];
+        return ceux_buf[i];
     }
     void ceux_copy (int i) {
         assert(i>=0 && i<ceux_n && "TODO: stack error");
-        ceux_push(ceux[i], 1);
+        ceux_push(ceux_buf[i], 1);
     }
     void ceux_drop (int n) {
         assert(n<=ceux_n && "BUG: index out of range");
         for (int i=0; i<n; i++) {
-            ceu_gc_dec(ceux[--ceux_n]);
+            ceu_gc_dec(ceux_buf[--ceux_n]);
         }
     }
     void ceux_base (int base) {
         assert(base>=0 && base<ceux_n && "TODO: stack error");
         for (int i=ceux_n; i>base; i--) {
-            ceu_gc_dec(ceux[--ceux_n]);
+            ceu_gc_dec(ceux_buf[--ceux_n]);
         }
     }
     void ceux_repl (int i, CEU_Value v) {
         assert(i>=0 && i<ceux_n && "TODO: stack error");
         ceu_gc_inc(v);
-        ceu_gc_dec(ceux[i]);
-        ceux[i] = v;
+        ceu_gc_dec(ceux_buf[i]);
+        ceux_buf[i] = v;
     }
 
     void ceux_block_enter (int n) {
@@ -927,15 +927,15 @@ fun Coder.main (tags: Tags): String {
         do {
             v = ceux_pop(1);
         } while (v.type != CEU_VALUE_BLOCK);
-        ceux[ceux_n++] = ret;
+        ceux_buf[ceux_n++] = ret;
     }
     
     void ceux_shift (int I) {
         assert(I>=0 && I<=ceux_n && "TODO: stack error");
         for (int i=ceux_n; i>I; i--) {
-            ceux[i] = ceux[i-1];
+            ceux_buf[i] = ceux_buf[i-1];
         }
-        ceux[I] = (CEU_Value) { CEU_VALUE_NIL };
+        ceux_buf[I] = (CEU_Value) { CEU_VALUE_NIL };
         ceux_n++;
     }
     
@@ -1827,7 +1827,7 @@ fun Coder.main (tags: Tags): String {
     
     void ceu_hash_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int base) {
         assert(ceux_top()-base == 1);
-        CEU_Value v = ceu_x_peek(base);
+        CEU_Value v = ceux_peek(base);
         CEU_Value ret;
         if (v.type == CEU_VALUE_VECTOR) {
             ret = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=v.Dyn->Vector.its} };
@@ -1836,7 +1836,7 @@ fun Coder.main (tags: Tags): String {
         } else {
             ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="length error : not a vector"} };
         }
-        ceu_x_push(ret, 1);
+        ceux_push(ret, 1);
     }
     """
     }
@@ -2125,7 +2125,7 @@ fun xxx_01 (): String {
     #endif
                 /* TODO: stack trace for error on task termination
                 do {
-                    CEU_ASSERT(BUPC, ceu_x_peek(X(-1)), "FILE : (lin LIN, col COL) : ERR");
+                    CEU_ASSERT(BUPC, ceux_peek(X(-1)), "FILE : (lin LIN, col COL) : ERR");
                 } while (0);
                 */
                 goto __CEU_FREE__;
@@ -2221,7 +2221,7 @@ fun xxx_01 (): String {
             CEU_TIME_N++;
             uint8_t now = ++CEU_TIME_MAX;
 
-            CEU_Value evt = ceu_x_peek(base);
+            CEU_Value evt = ceux_peek(base);
             if (evt.type > CEU_VALUE_DYNAMIC) {
                 if (evt.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                     // keep the block, set MUTAB recursively
@@ -2389,8 +2389,8 @@ fun xxx_01 (): String {
 
         void ceu_throw_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base) {
             assert(ceu_x_top()-base == 1);
-            CEU_Value v = _ceu_throw_(ceu_x_peek(base));
-            ceu_x_push(v, 1);
+            CEU_Value v = _ceu_throw_(ceux_peek(base));
+            ceux_push(v, 1);
         }
 
         CEU_Value _ceu_pointer_to_string_ (const char* ptr) {
@@ -2405,9 +2405,9 @@ fun xxx_01 (): String {
 
         void ceu_pointer_to_string_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int base) {
             assert(ceu_x_top()-base == 1);
-            CEU_Value ptr = ceu_x_peek(base);
+            CEU_Value ptr = ceux_peek(base);
             assert(ptr.type == CEU_VALUE_POINTER);
-            ceu_x_push(_ceu_pointer_to_string_(ptr.Pointer), 1);
+            ceux_push(_ceu_pointer_to_string_(ptr.Pointer), 1);
         }
         #endif
     """ +
