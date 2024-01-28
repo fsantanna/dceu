@@ -829,13 +829,16 @@ class Exec_01 {
         val out = test(
             """
             val F = func (x) {
+                ;;println(:1, x)
                 func () {
+                    ;;println(:3, x)
                     x
                 }
             }
             do {
                 val x = []
                 val f = F(x)
+                ;;println(:2, f)
                 println(f())
             }
         """

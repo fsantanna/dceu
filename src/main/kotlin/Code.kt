@@ -62,13 +62,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         CEU5(CEU_Stack* ceu_dstk COMMA)
                         CEU4(CEU_Stack* ceu_bstk COMMA)
                         CEU_Frame* ceu_frame,
-                        int ceu_base
+                        CEUX ceux
                     ) {
                         ${this.args.let { 
                             assert(it.none { it.first.str=="..." }) { "TODO: args" }
                             """
                             {   // fill missing args with nils
-                                int N = ${it.size} - (ceux_top()-ceu_base);
+                                int N = ${it.size} - ceux.args;
                                 //printf(">>> %d\n", N);
                                 for (int i=0; i<N; i++) {
                                     ceux_push((CEU_Value) { CEU_VALUE_NIL }, 1);
@@ -213,7 +213,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         val idx = vars.idx(TODO() as Expr.Dcl, TODO())
                         """
                         {
-                            int N = MAX(0, ceux_top()-ceu_base-$N-1);
+                            int N = MAX(0, ceux_args-$N-1);
                             CEU_Value xxx = ceu_create_tuple(N);
                             for (int i=0; i<N; i++) {
                                 ceu_tuple_set(&xxx.Dyn->Tuple, i, ceux_peek(ceu_base+$N+i));

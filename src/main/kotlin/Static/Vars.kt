@@ -175,7 +175,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         // enclosing proto of declaration block
         // all blocks in between declaration block and proto
         val proto_blk = ups.first(blk) { it is Expr.Proto }
-        val blks = ups.all_until(blk) { it == proto_blk }
+        val locs = ups.all_until(blk) { it == proto_blk }
             //.let { println(it) ; it }
             .drop(1)    // myself
             .filter { it is Expr.Do }
@@ -185,18 +185,17 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
         return when {
             isupv(dcl,src) -> {                // upval
-                "(ceu_base + $upv) /* upval ${dcl.id.str} */"
+                "(ceux.base + $upv) /* upval ${dcl.id.str} */"
             }
             (proto_blk == null) -> {        // global
-                "($blks + $idx) /* global ${dcl.id.str} */"
+                "($locs + $idx) /* global ${dcl.id.str} */"
             }
             isarg -> {                      // argument
-                assert(blks == 0)
-                // -1 = arguments are before the block sentinel
-                "(ceu_base + $upvs + -1 + $idx) /* arg ${dcl.id.str} */"
+                assert(locs == 0)   // -1 = no block sentinel
+                "ceux_arg(ceux, $idx-1) /* arg ${dcl.id.str} */"
             }
             else -> {                       // local
-                "(ceu_base + $upvs + $blks + $idx) /* local ${dcl.id.str} */"
+                "(ceux.base + $upvs + $locs + $idx) /* local ${dcl.id.str} */"
             }
         }
     }
