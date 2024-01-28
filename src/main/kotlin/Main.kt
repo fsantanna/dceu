@@ -6,7 +6,7 @@ import java.util.*
 
 var DEBUG = true
 var CEU = 1
-    // 1: dyn-lex               ;; 7 (21) normal / 25 valgrind errors
+    // 1: dyn-lex               ;; 7 (15) normal / 9 valgrind errors
     // 2: defer, throw/catch
     // 3: coro, yield, resume
     // 4: task, pub, bcast, toggle, ref, delay
@@ -19,8 +19,8 @@ var CEU = 1
 //  - definitely lost
 //  - Invalid read of size
 //  - uninitialised value
-//val VALGRIND = ""
-val VALGRIND = "valgrind "
+val VALGRIND = ""
+//val VALGRIND = "valgrind "
 val THROW = false
 //val THROW = true
 
