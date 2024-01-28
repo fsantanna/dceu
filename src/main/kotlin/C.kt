@@ -892,7 +892,7 @@ fun Coder.main (tags: Tags): String {
         }
         
         void ceu_x_shift (int I) {
-            assert(I>=0 && I<ceu_x_n && "TODO: stack error");
+            assert(I>=0 && I<=ceu_x_n && "TODO: stack error");
             for (int i=ceu_x_n; i>I; i--) {
                 ceu_x[i] = ceu_x[i-1];
             }
@@ -908,8 +908,8 @@ fun Coder.main (tags: Tags): String {
                 return;
             }
             for (int i=0; i<clo.Dyn->Clo.upvs.its; i++) {
-                ceu_x_shift(base+i+1);
-                ceu_x_repl(base+i+1, clo.Dyn->Clo.upvs.buf[i]);
+                ceu_x_shift(base+1+i);
+                ceu_x_repl(base+1+i, clo.Dyn->Clo.upvs.buf[i]);
             }
             CEU_Frame frame = { NULL, &clo.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
             clo.Dyn->Clo.proto(&frame, base+1);
