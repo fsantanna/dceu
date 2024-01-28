@@ -366,7 +366,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                             }
                             val dcl = acc(this, id)
                             val x = idx(dcl,this)
-                            "(ceu_x_peek($x))$no"
+                            "(ceux_peek($x))$no"
                         }
                     }
                     //println(str)
