@@ -170,7 +170,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
                     ceux_block_enter(
                         // ignore args (up==null)
-                        ${vars.blk_to_dcls[this]!!.count { this==outer || ups.pub[it]!=null }}
+                        ${vars.enc_to_dcls[this]!!.count { this==outer || ups.pub[it]!=null }}
                     );
                     
                     // GLOBALS

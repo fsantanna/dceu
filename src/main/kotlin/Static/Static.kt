@@ -132,7 +132,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
-                val blk = vars.dcl_to_blk[vars.acc_to_dcl[this]!!]!!
+                val blk = vars.dcl_to_enc[vars.acc_to_dcl[this]!!]!!
                 //err(this.tk, "access error : cannot access \"_\"")
 
                 if (blk!=outer && ups.none(blk) { it is Expr.Proto && it.tk.str!="func" }) {

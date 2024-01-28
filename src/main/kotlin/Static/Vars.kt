@@ -18,11 +18,11 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 null, true, null
             )
         }.toMutableList()
-    public val dcl_to_blk: MutableMap<Expr.Dcl,Expr.Do> = dcls.map {
+    public val dcl_to_enc: MutableMap<Expr.Dcl,Expr> = dcls.map {
         Pair(it, outer)
     }.toMap().toMutableMap()
     public val acc_to_dcl: MutableMap<Expr.Acc,Expr.Dcl> = mutableMapOf()
-    public val blk_to_dcls: MutableMap<Expr.Do,MutableList<Expr.Dcl>> = mutableMapOf(
+    public val enc_to_dcls: MutableMap<Expr,MutableList<Expr.Dcl>> = mutableMapOf(
         Pair(outer, dcls.toList().toMutableList())
     )
     public val nats: MutableMap<Expr.Nat,String> = mutableMapOf()
@@ -92,7 +92,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         //          <src>
         //      }
         //  }
-        val blk = dcl_to_blk[dcl]!!
+        val blk = dcl_to_enc[dcl]!!
         return (blk!=outer) && ups.all_until(src) { it == blk }.any { it is Expr.Proto }
     }
 
@@ -107,7 +107,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         // stop at declaration (orig)
         // use blk bc of args
         if (isupv(dcl,e)) {
-            val orig = ups.first(dcl_to_blk[dcl]!!) { it is Expr.Proto }
+            val orig = ups.first(dcl_to_enc[dcl]!!) { it is Expr.Proto }
             //println(listOf(dcl.id.str, orig?.tk))
             val proto = ups.first(e) { it is Expr.Proto }!!
             ups.all_until(proto) { it == orig }
@@ -116,7 +116,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
                 .filter { it is Expr.Proto }
                 .forEach {
-                    println(listOf(dcl.id.str, it.tk))
+                    //println(listOf(dcl.id.str, it.tk))
                     this.proto_to_upvs[it]!!.add(dcl)
                 }
         }
@@ -140,25 +140,20 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     }
 
     fun get (blk: Expr.Do, id: String): Expr.Dcl {
-        return blk_to_dcls[blk]!!.findLast { it.id.str == id }!!
+        return enc_to_dcls[blk]!!.findLast { it.id.str == id }!!
     }
 
     fun idx (acc: Expr.Acc): String {
         return this.idx(this.acc_to_dcl[acc]!!, acc)
     }
     fun idx (dcl: Expr.Dcl, src: Expr): String {
-        // Use ups[blk] instead of ups[dcl]
-        //  - some dcl are args
-        //  - dcl args are created after ups
+        val enc  = this.dcl_to_enc[dcl]!!
+        val dcls = this.enc_to_dcls[enc]!!
 
-        val isarg = (ups.pub[dcl] == null)
-        val blk = this.dcl_to_blk[dcl]!!
-
-        // index of dcl inside its block
-        // (ignore if access to upval)
-        val idx = 1 + this.blk_to_dcls[blk]!!.lastIndexOf(dcl)
-            // +1 = block sentinel
-        assert(idx > 0)
+        // (not used for upval)
+        // index of dcl inside its blk/proto
+        val I = dcls.lastIndexOf(dcl)
+        assert(I != -1)
 
         // number of upvals in enclosing proto
         // index of upval for dcl
@@ -174,12 +169,12 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
         // enclosing proto of declaration block
         // all blocks in between declaration block and proto
-        val proto_blk = ups.first(blk) { it is Expr.Proto }
-        val locs = ups.all_until(blk) { it == proto_blk }
+        val proto_blk = ups.first(enc) { it is Expr.Proto }
+        val locs = ups.all_until(enc) { it == proto_blk }
             //.let { println(it) ; it }
             .drop(1)    // myself
             .filter { it is Expr.Do }
-            .map { 1 + this.blk_to_dcls[it]!!.count() }
+            .map { 1 + this.enc_to_dcls[it]!!.count() }
             .sum()  // +1 = block sentinel
         //println(listOf(dcl.id.str,off,idx))
 
@@ -188,14 +183,14 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 "(ceux.base + $upv) /* upval ${dcl.id.str} */"
             }
             (proto_blk == null) -> {        // global
-                "($locs + $idx) /* global ${dcl.id.str} */"
+                "($locs + $I) /* global ${dcl.id.str} */"
             }
-            isarg -> {                      // argument
+            (enc is Expr.Proto) -> {        // argument
                 assert(locs == 0)   // -1 = no block sentinel
-                "ceux_arg(ceux, $idx-1) /* arg ${dcl.id.str} */"
+                "ceux_arg(ceux, $I-1) /* arg ${dcl.id.str} */"
             }
             else -> {                       // local
-                "(ceux.base + $upvs + $locs + $idx) /* local ${dcl.id.str} */"
+                "(ceux.base + $upvs + $locs + $I) /* local ${dcl.id.str} */"
             }
         }
     }
@@ -203,6 +198,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
+                enc_to_dcls[this] = mutableListOf()
                 proto_to_upvs[this] = mutableSetOf()
                 if (this.tag!=null && this.tag.str!=":void" && !datas.containsKey(this.tag.str)) {
                     //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
@@ -221,7 +217,20 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                         //err(tag, "declaration error : data ${tag.str} is not declared")
                     }
                 }
+
+                this.args.forEach { (id, tag) ->
+                    val dcl = Expr.Dcl(
+                        Tk.Fix("val", this.tk.pos),
+                        id, /*false,*/  tag, true, null
+                    )
+                    dcls.add(dcl)
+                    dcl_to_enc[dcl] = this
+                    enc_to_dcls[this]!!.add(dcl)
+                }
                 this.blk.traverse()
+                repeat(this.args.size) {
+                    dcls.removeLast()   // dropLast(n) copies the list
+                }
             }
             is Expr.Export -> {
                 val size = dcls.size
@@ -234,23 +243,9 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.Do     -> {
                 if (this != outer) {
-                    blk_to_dcls[this] = mutableListOf()
+                    enc_to_dcls[this] = mutableListOf()
                 }
                 val size = dcls.size    // restore this size after nested block
-
-                // func (a,b,...) { ... }
-                val proto = ups.pub[this]
-                if (proto is Expr.Proto) {
-                    proto.args.forEach { (id, tag) ->
-                        val dcl = Expr.Dcl(
-                            Tk.Fix("val", this.tk.pos),
-                            id, /*false,*/  tag, true, null
-                        )
-                        dcls.add(dcl)
-                        dcl_to_blk[dcl] = this
-                        blk_to_dcls[this]!!.add(dcl)
-                    }
-                }
 
                 // nest into expressions
                 this.es.forEach { it.traverse() }
@@ -277,8 +272,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
                 val blk = ups.first_block(this)!!
                 dcls.add(this)
-                dcl_to_blk[this] = blk
-                blk_to_dcls[blk]!!.add(this)
+                dcl_to_enc[this] = blk
+                enc_to_dcls[blk]!!.add(this)
 
                 if (this.tag !=null && !datas.containsKey(this.tag.str)) {
                     //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
