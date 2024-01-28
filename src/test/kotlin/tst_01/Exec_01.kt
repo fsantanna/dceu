@@ -4305,16 +4305,18 @@ class Exec_01 {
     fun clo19() {
         val out = test(
             """
-            var curry
-            set curry = func (^fff) {
+            val curry = func (^fff) {
+                println(:1, ^fff)
                 func (^xxx) {
+                    println(:2, ^^fff, ^xxx)
                     func (yyy) {
+                        println(:3, ^^fff, ^^xxx, yyy)
                         ^^fff(^^xxx,yyy)
                     }
                 }
             }
 
-            var f = func (a,b) {
+            val f = func (a,b) {
                 [a,b]
             }
             var f' = curry(f)
