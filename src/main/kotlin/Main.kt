@@ -6,7 +6,7 @@ import java.util.*
 
 var DEBUG = true
 var CEU = 1
-    // 1: dyn-lex               ;; 7 (23) normal / 25 valgrind errors
+    // 1: dyn-lex               ;; 7 (21) normal / 25 valgrind errors
     // 2: defer, throw/catch
     // 3: coro, yield, resume
     // 4: task, pub, bcast, toggle, ref, delay

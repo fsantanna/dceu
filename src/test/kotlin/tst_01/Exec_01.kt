@@ -4120,6 +4120,7 @@ class Exec_01 {
         val out = test("""
             val f = do {
                 var x = []
+                ;;println(x)
                 func () {   ;; block_set(1)
                     x       ;; because of x
                 }           ;; err: scope on return
@@ -4252,11 +4253,11 @@ class Exec_01 {
         val out = test(
             """
             val curry = func (fff) {
-                println(:1, fff)
+                ;;println(:1, fff)
                 func (xxx) {
-                    println(:2, fff, xxx)
+                    ;;println(:2, fff, xxx)
                     func (yyy) {
-                        println(:3, fff, xxx, yyy)
+                        ;;println(:3, fff, xxx, yyy)
                         fff(xxx,yyy)
                     }
                 }

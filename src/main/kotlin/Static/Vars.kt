@@ -81,7 +81,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         }
     }
 
-    fun isup (dcl: Expr.Dcl, src: Expr): Boolean {
+    fun isupv (dcl: Expr.Dcl, src: Expr): Boolean {
         // 1. <src> -> <dcl> must cross proto
         // 2. but <dcl> must not be in outer block
         //  ...             ;; NO: not up (outer block)
@@ -103,9 +103,22 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         }
         dcl!!
 
-        if (isup(dcl,e)) {
+        // add upval to all protos upwards
+        // stop at declaration (orig)
+        // use blk bc of args
+        if (isupv(dcl,e)) {
+            val orig = ups.first(dcl_to_blk[dcl]!!) { it is Expr.Proto }
+            //println(listOf(dcl.id.str, orig?.tk))
             val proto = ups.first(e) { it is Expr.Proto }!!
-            this.proto_to_upvs[proto]!!.add(dcl)
+            ups.all_until(proto) { it == orig }
+                .let {  // remove orig
+                    if (orig==null) it else it.dropLast(1)
+                }
+                .filter { it is Expr.Proto }
+                .forEach {
+                    println(listOf(dcl.id.str, it.tk))
+                    this.proto_to_upvs[it]!!.add(dcl)
+                }
         }
 
         if (e is Expr.Acc) {        // TODO: what about Expr.Nat?
@@ -171,19 +184,19 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         //println(listOf(dcl.id.str,off,idx))
 
         return when {
-            isup(dcl,src) -> {                // upval
-                "(ceu_base + $upv) /* upval */"
+            isupv(dcl,src) -> {                // upval
+                "(ceu_base + $upv) /* upval ${dcl.id.str} */"
             }
             (proto_blk == null) -> {        // global
-                "($blks + $idx) /* global */"
+                "($blks + $idx) /* global ${dcl.id.str} */"
             }
             isarg -> {                      // argument
                 assert(blks == 0)
                 // -1 = arguments are before the block sentinel
-                "(ceu_base + $upvs + -1 + $idx) /* arg */"
+                "(ceu_base + $upvs + -1 + $idx) /* arg ${dcl.id.str} */"
             }
             else -> {                       // local
-                "(ceu_base + $upvs + $blks + $idx) /* local */"
+                "(ceu_base + $upvs + $blks + $idx) /* local ${dcl.id.str} */"
             }
         }
     }
