@@ -4477,8 +4477,8 @@ class Exec_01 {
             ;;println(`:number CEU_GC.gc`)
         """
         )
-        assert(out == ">>> GC: 2\n" +
-                "    alloc = 3\n" +
+        assert(out == ">>> GC: 15\n" +
+                "    alloc = 16\n" +
                 "    free  = 1\n" +
                 "    gc    = 1\n"       // = 0
         ) { out }
@@ -4496,8 +4496,8 @@ class Exec_01 {
         """
         )
         //assert(out == "1\n") { out }
-        assert(out == ">>> GC: 3\n" +
-                "    alloc = 4\n" +
+        assert(out == ">>> GC: 16\n" +
+                "    alloc = 17\n" +
                 "    free  = 1\n" +
                 "    gc    = 1\n") { out }
     }
@@ -4515,8 +4515,8 @@ class Exec_01 {
         )
         //assert(out == "2\n") { out }
         //assert(out == "0\n") { out }
-        assert(out == ">>> GC: 2\n" +
-                "    alloc = 4\n" +
+        assert(out == ">>> GC: 15\n" +
+                "    alloc = 17\n" +
                 "    free  = 2\n" +
                 "    gc    = 2\n") { out }
     }
@@ -4535,8 +4535,8 @@ class Exec_01 {
         """
         )
         //assert(out == "0\n") { out }
-        assert(out == ">>> GC: 4\n" +
-                "    alloc = 4\n" +
+        assert(out == ">>> GC: 17\n" +
+                "    alloc = 17\n" +
                 "    free  = 0\n" +
                 "    gc    = 0\n") { out }
     }
