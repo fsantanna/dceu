@@ -81,24 +81,33 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         }
     }
 
-    fun acc (e: Expr, id: String, upv: Int): Expr.Dcl {
+    fun isup (dcl: Expr.Dcl, src: Expr): Boolean {
+        // 1. <src> -> <dcl> must cross proto
+        // 2. but <dcl> must not be in outer block
+        //  ...             ;; NO: not up (outer block)
+        //  do {
+        //      <dcl>       ;; OK: is up
+        //      func () {
+        //          ...     ;; NO: not up (same proto)
+        //          <src>
+        //      }
+        //  }
+        val blk = dcl_to_blk[dcl]!!
+        return (blk!=outer) && ups.all_until(src) { it == blk }.any { it is Expr.Proto }
+    }
+
+    fun acc (e: Expr, id: String): Expr.Dcl {
         val dcl = dcls.findLast { id == it.id.str } // last bc of it redeclaration
-        when {
-            (dcl == null) -> err(e.tk, "access error : variable \"${id}\" is not declared")
-            (upv==0 && dcl.id.upv==1) -> err(e.tk, "access error : incompatible upval modifier")
-            (upv >0 && dcl.id.upv==0) -> err(e.tk, "access error : incompatible upval modifier")
-            (upv == 2) -> {
-                val nocross = dcl_to_blk[dcl].let { blk ->
-                    ups.all_until(e) { it == blk }.none { it is Expr.Proto }
-                }
-                if (nocross) {
-                    err(e.tk, "access error : unnecessary upref modifier")
-                }
-                val proto = ups.first(e) { it is Expr.Proto }!!
-                this.proto_to_upvs[proto]!!.add(dcl)
-            }
+        if (dcl == null) {
+            err(e.tk, "access error : variable \"${id}\" is not declared")
         }
         dcl!!
+
+        if (isup(dcl,e)) {
+            val proto = ups.first(e) { it is Expr.Proto }!!
+            this.proto_to_upvs[proto]!!.add(dcl)
+        }
+
         if (e is Expr.Acc) {        // TODO: what about Expr.Nat?
             acc_to_dcl[e] = dcl
         }
@@ -162,21 +171,21 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         //println(listOf(dcl.id.str,off,idx))
 
         return when {
-            (proto_blk == null) -> {        // global
-                "($blks + $idx)"
+            isup(dcl,src) -> {                // upval
+                "(ceu_base + $upv) /* upval */"
             }
-            (upv != -1) -> {                // upval
-                "(ceu_base + $upv)"
+            (proto_blk == null) -> {        // global
+                "($blks + $idx) /* global */"
             }
             isarg -> {                      // argument
                 assert(blks == 0)
                 // -1 = arguments are before the block sentinel
-                "(ceu_base + $upvs + -1 + $idx)"
+                "(ceu_base + $upvs + -1 + $idx) /* arg */"
             }
             else -> {                       // local
-                "(ceu_base + $upvs + $blks + $idx)"
+                "(ceu_base + $upvs + $blks + $idx) /* local */"
             }
-        }.let { "(" + it + ")" }
+        }
     }
 
     fun Expr.traverse () {

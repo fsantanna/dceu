@@ -4265,8 +4265,9 @@ class Exec_01 {
             val f = func (a,b) {
                 [a,b]
             }
-            var f' = curry(f)
-            println(f'(1)(2))
+            val f'  = curry(f)
+            val f'' = f'(1)
+            println(f''(2))
         """
         )
         assert(out == "[1,2]\n") { out }

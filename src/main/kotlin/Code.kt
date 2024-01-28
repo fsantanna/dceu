@@ -120,13 +120,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """ }}
                 
                 // UPVALS
-                ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl -> """
-                {
-                    CEU_Value ceu_up = ceu_x_peek(${vars.idx(dcl,dcl)});
-                    ceu_gc_inc(ceu_up);
-                    ceu_clo_$n.Dyn->Clo.upvs.buf[$i] = ceu_up;
-                }
-                """ }.joinToString("\n")}
+                ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
+                    """
+                    {
+                        CEU_Value ceu_up = ceu_x_peek(${vars.idx(dcl,this)});
+                        ceu_gc_inc(ceu_up);
+                        ceu_clo_$n.Dyn->Clo.upvs.buf[$i] = ceu_up;
+                    }
+                    """
+                }.joinToString("\n")}
                 """
             }
             is Expr.Export -> this.blk.es.code()
