@@ -902,7 +902,7 @@ fun Coder.main (tags: Tags): String {
         
         void ceu_x_call (int n) {
             int base = ceu_x_n - n - 1;
-            CEU_Value clo = ceu_x_peek(X(-n-1));
+            CEU_Value clo = ceu_x_peek(base);
             if (clo.type != CEU_VALUE_CLO_FUNC) {
                 ceu_x_push((CEU_Value){ CEU_VALUE_ERROR, {.Error="call error : expected function"} }, 1);
                 return;
@@ -912,7 +912,7 @@ fun Coder.main (tags: Tags): String {
                 ceu_x_repl(base+i+1, clo.Dyn->Clo.upvs.buf[i]);
             }
             CEU_Frame frame = { NULL, &clo.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
-            clo.Dyn->Clo.proto(&frame, ceu_x_n-n-clo.Dyn->Clo.upvs.its);
+            clo.Dyn->Clo.proto(&frame, base+1);
             CEU_Value ret = ceu_x_pop(0);
             ceu_x_base(base);
             ceu_x_push(ret, 0);

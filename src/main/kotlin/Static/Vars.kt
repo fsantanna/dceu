@@ -162,15 +162,16 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         //println(listOf(dcl.id.str,off,idx))
 
         return when {
-            (proto_blk == null) -> {            // global
+            (proto_blk == null) -> {        // global
                 "($blks + $idx)"
             }
             (upv != -1) -> {                // upval
                 "(ceu_base + $upv)"
             }
             isarg -> {                      // argument
+                assert(blks == 0)
                 // -1 = arguments are before the block sentinel
-                "(-1 + ceu_base + $upvs + $blks + $idx)"
+                "(ceu_base + $upvs + -1 + $idx)"
             }
             else -> {                       // local
                 "(ceu_base + $upvs + $blks + $idx)"
