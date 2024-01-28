@@ -14,7 +14,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         .map {
             Expr.Dcl (
                 Tk.Fix("val", outer.tk.pos),
-                Tk.Id(it,outer.tk.pos,0),
+                Tk.Id(it, outer.tk.pos),
                 null, true, null
             )
         }.toMutableList()
@@ -259,19 +259,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 dcl_to_blk[this] = blk
                 blk_to_dcls[blk]!!.add(this)
 
-                //val bup = ups.first_block(this)
-                val bup = ups.first(this) {
-                    it is Expr.Do && !ups.pub[it].let { it is Expr.Export && it.ids.any { it == this.id.str } }
-                }!! as Expr.Do
-                when {
-                    (this.id.upv == 2) -> {
-                        err(tk, "var error : cannot declare an upref")
-                    }
-                    (this.id.upv==1 && bup==outer) -> {
-                        err(tk, "var error : cannot declare a global upvar")
-                    }
-                }
-
                 if (this.tag !=null && !datas.containsKey(this.tag.str)) {
                     //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
@@ -355,7 +342,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                             if (id.length == 0) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
-                            val dcl = acc(this, id, 0)
+                            val dcl = acc(this, id)
                             val x = idx(dcl,this)
                             "(ceu_x_peek($x))$no"
                         }
@@ -364,7 +351,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     str
                 }
             }
-            is Expr.Acc    -> acc(this, this.tk.str, this.tk_.upv)
+            is Expr.Acc    -> acc(this, this.tk.str)
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
             is Expr.Bool   -> {}

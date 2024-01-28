@@ -828,9 +828,9 @@ class Exec_01 {
     fun cc_08_drop() {
         val out = test(
             """
-            val F = func (^x) {
+            val F = func (x) {
                 func () {
-                    ^^x
+                    x
                 }
             }
             do {
@@ -4049,28 +4049,10 @@ class Exec_01 {
     // CLOSURE / ESCAPE / FUNC / UPVALS
 
     @Test
-    fun clo1_err() {
-        val out = test(
-            """
-            var ^^x     ;; can't declare upref
-        """
-        )
-        assert(out == "anon : (lin 2, col 13) : var error : cannot declare an upref\n") { out }
-    }
-    @Test
-    fun clo2_err() {
-        val out = test(
-            """
-            var ^x     ;; upvar can't be global
-        """
-        )
-        assert(out == "anon : (lin 2, col 13) : var error : cannot declare a global upvar\n") { out }
-    }
-    @Test
     fun clo3_err() {
         val out = test(
             """
-            ^x     ;; upvar can't be in global
+            x     ;; upvar can't be in global
         """
         )
         assert(out == "anon : (lin 2, col 13) : access error : variable \"x\" is not declared\n") { out }
@@ -4079,7 +4061,7 @@ class Exec_01 {
     fun clo4_err() {
         val out = test(
             """
-            ^^x     ;; upref can't be in global
+            x     ;; upref can't be in global
         """
         )
         assert(out == "anon : (lin 2, col 13) : access error : variable \"x\" is not declared\n") { out }
@@ -4091,10 +4073,10 @@ class Exec_01 {
             var g
             set g = 10
             var f
-            set f = func (^x) {
-                set ^x = []  ;; err: cannot reassign
+            set f = func (x) {
+                set x = []  ;; err: cannot reassign
                 func () {
-                    ^^x == g
+                    x == g
                 }
             }
             println(f([])())
@@ -4110,10 +4092,10 @@ class Exec_01 {
             var g
             set g = 10
             var f
-            set f = func (^x) {
+            set f = func (x) {
                 func () {
-                    set ^^x = []  ;; err: cannot reassign
-                    ;;^^x + g
+                    set x = []  ;; err: cannot reassign
+                    ;;x + g
                 }
             }
             println(f([])())
@@ -4123,68 +4105,31 @@ class Exec_01 {
         assert(out == "anon : (lin 7, col 21) : set error : destination is immutable\n") { out }
     }
     @Test
-    fun clo7_err() {
-        val out = test(
-            """
-            do {
-                var ^x     ;; err: no associated upref
-                ^x
-            }
-            println(1)
-        """
-        )
-        assert(out == "anon : (lin 3, col 17) : var error : unreferenced upvar\n") { out }
-    }
-    @Test
     fun clo8_err() {
         val out = test(
             """
             do {
-                ^^x     ;; err: no associated upvar
+                x     ;; err: no associated upvar
             }
         """
         )
         assert(out == "anon : (lin 3, col 17) : access error : variable \"x\" is not declared\n") { out }
     }
     @Test
-    fun clo9_err() {
-        val out = test(
-            """
-            do {
-                var x
-                ^^x     ;; err: no associated upvar
-            }
-        """
-        )
-        assert(out == "anon : (lin 4, col 17) : access error : incompatible upval modifier\n") { out }
-    }
-    @Test
-    fun clo10_err() {
-        val out = test(
-            """
-            do {
-                var ^x
-                ^^x     ;; err: no associated upvar
-            }
-        """
-        )
-        assert(out == "anon : (lin 4, col 17) : access error : unnecessary upref modifier\n") { out }
-    }
-    @Test
     fun clo11_err() {
         val out = test("""
-            var f
-            set f = do {
+            val f = do {
                 var x = []
                 func () {   ;; block_set(1)
                     x       ;; because of x
                 }           ;; err: scope on return
             }
-            println(f(10))
+            println(f())
         """
         )
         //assert(out == "anon : (lin 3, col 21) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "anon : (lin 3, col 21) : block escape error : reference has immutable scope\n") { out }
+        //assert(out == "anon : (lin 3, col 21) : block escape error : reference has immutable scope\n") { out }
+        assert(out == "[]\n") { out }
     }
     @Test
     fun clo12_err() {
@@ -4200,7 +4145,8 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 3, col 30) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "anon : (lin 3, col 30) : block escape error : reference has immutable scope\n") { out }
+        //assert(out == "anon : (lin 3, col 30) : block escape error : reference has immutable scope\n") { out }
+        assert(out == "10\n") { out }
     }
     @Test
     fun clo13_err() {
@@ -4209,9 +4155,9 @@ class Exec_01 {
             var g
             set g = 10
             var f
-            set f = func (^x) {
+            set f = func (x) {
                 func () {       ;; block_set(0)
-                    ^^x + g     ;; all (non-global) upvals are marked
+                    x + g     ;; all (non-global) upvals are marked
                 }
             }
             println(f(20)())
@@ -4226,9 +4172,9 @@ class Exec_01 {
             var g
             set g = 10
             var f
-            set f = func (^x) {
+            set f = func (x) {
                 func () {
-                    ^^x[0] + g
+                    x[0] + g
                 }
             }
             println(f([20])())
@@ -4241,9 +4187,9 @@ class Exec_01 {
         val out = test(
             """
             var f
-            set f = func (^x) {
+            set f = func (x) {
                 ;;;val :fleet z =;;; func (y) {
-                    [^^x,y]
+                    [x,y]
                 }
                 ;;dump(z)
                 ;;z
@@ -4259,9 +4205,9 @@ class Exec_01 {
             """
             var f
             set f = func () {
-                var ^x = 10     ;; TODO: needs initialization
+                var x = 10     ;; TODO: needs initialization
                 func (y) {
-                    [^^x,y]
+                    [x,y]
                 }
             }
             println(f()(20))
@@ -4274,11 +4220,11 @@ class Exec_01 {
         val out = test(
             """
             var f
-            set f = func (^x) {
-                println(:1, ^x)
+            set f = func (x) {
+                println(:1, x)
                 func () {
-                    println(:2, ^^x)
-                    ^^x
+                    println(:2, x)
+                    x
                 }
             }
             println(:3, f(10)())
@@ -4291,9 +4237,9 @@ class Exec_01 {
         val out = test(
             """
             var f
-            set f = func (^x) {
+            set f = func (x) {
                 func () {
-                    ^^x
+                    x
                 }
             }
             println(f(10)())
@@ -4305,13 +4251,13 @@ class Exec_01 {
     fun clo19() {
         val out = test(
             """
-            val curry = func (^fff) {
-                println(:1, ^fff)
-                func (^xxx) {
-                    println(:2, ^^fff, ^xxx)
+            val curry = func (fff) {
+                println(:1, fff)
+                func (xxx) {
+                    println(:2, fff, xxx)
                     func (yyy) {
-                        println(:3, ^^fff, ^^xxx, yyy)
-                        ^^fff(^^xxx,yyy)
+                        println(:3, fff, xxx, yyy)
+                        fff(xxx,yyy)
                     }
                 }
             }
@@ -4330,10 +4276,10 @@ class Exec_01 {
         val out = test(
             """
             var curry
-            set curry = func (^fff) {
-                func (^xxx) {
+            set curry = func (fff) {
+                func (xxx) {
                     func (yyy) {
-                        ^^fff(^^xxx,yyy)
+                        fff(xxx,yyy)
                     }
                 }
             }
@@ -4349,9 +4295,9 @@ class Exec_01 {
     fun clo21_err() {
         val out = test(
             """
-            var f = func (^a) {
+            var f = func (a) {
                 func () {
-                    ^^a
+                    a
                 }
             }
             var g = do {
@@ -4382,9 +4328,9 @@ class Exec_01 {
     fun clo23_err() {
         val out = test(
             """
-            var f = func (^a) {
+            var f = func (a) {
                 func () {
-                    ^^a
+                    a
                 }
             }
             var g = do {
@@ -4418,9 +4364,9 @@ class Exec_01 {
     fun clo23x() {
         val out = test(
             """
-            var f = func (^a) {
+            var f = func (a) {
                 func () {
-                    ^^a
+                    a
                 }
             }
             var g = do {
@@ -4436,9 +4382,9 @@ class Exec_01 {
     fun clo25_compose() {
         val out = test(
             """
-            var comp = func (^f) {
+            var comp = func (f) {
                 func (v) {
-                    ^^f(v)
+                    f(v)
                 }
             }
             var f = func (x) {
@@ -4454,9 +4400,9 @@ class Exec_01 {
     fun clo26_compose() {
         val out = test(
             """
-            var comp = func (^f,^g) {
+            var comp = func (f,g) {
                 func (v) {
-                    ^^f(^^g(v))
+                    f(g(v))
                 }
             }
             var f = func (x) {
@@ -4482,14 +4428,15 @@ class Exec_01 {
             println(f(1)())
             """,
         )
-        assert(out == "anon : (lin 7, col 22) : drop error : value is not movable\n") { out }
+        //assert(out == "anon : (lin 7, col 22) : drop error : value is not movable\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun pp_28_clo_print() {
         val out = test("""
-            val f = func (^x) {
+            val f = func (x) {
                 func () {
-                    ^^x[0]
+                    x[0]
                 }
             }
             println(f([20]))
@@ -4811,9 +4758,9 @@ class Exec_01 {
         val out = test(
             """
             var f
-            set f = func (^x) {
+            set f = func (x) {
                 func (y) {
-                    if ^^x { ^^x } else { y }
+                    if x { x } else { y }
                 }
             }
             println(f(3)(1))

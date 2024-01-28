@@ -1,9 +1,7 @@
 package dceu
 
-import java.lang.Integer.min
-
-class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static) {
-    val pres: MutableList<Pair<String,String>> = mutableListOf()
+class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) {
+    val pres: MutableList<String> = mutableListOf()
     val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
     val code: String = outer.code()
 
@@ -58,15 +56,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val code = this.blk.code()
                 val id = this.idc()
 
-                val pres = Pair(""" // UPVS | ${this.dump()}
-                    ${clos.protos_refs[this].cond { """
-                        typedef struct {
-                            ${clos.protos_refs[this]!!.map {
-                                "CEU_Value ${it.id.str.idc()};"
-                            }.joinToString("")}
-                        } CEU_Clo_Upvs_$id;                    
-                    """ }}
-                """ , """ // FUNC | ${this.dump()}
+                pres.add("""
+                    // FUNC | ${this.dump()}
                     void ceu_f_$id (
                         CEU5(CEU_Stack* ceu_dstk COMMA)
                         CEU4(CEU_Stack* ceu_bstk COMMA)
@@ -112,10 +103,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                 """)
 
-                val pos = """ // CLO | ${this.dump()}
+                """ // CLO | ${this.dump()}
                 CEU_Value ceu_clo_$n = ceu_create_clo${isexe.cond{"_exe"}} (
                     ${isexe.cond{"CEU_VALUE_CLO_${this.tk.str.uppercase()},"}}
-                    ${if (clos.protos_noclos.contains(this)) "-=- TODO -=-" else ""}
                     ${when {
                         (blk == outer) -> "NULL"
                         isexe -> "&ceu_frame->exe->frame"
@@ -138,13 +128,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
                 """ }.joinToString("\n")}
                 """
-
-                if (clos.protos_noclos.contains(this) && this.tk.str=="func") {
-                    pres.first + pres.second + pos
-                } else {
-                    this@Coder.pres.add(pres)
-                    pos
-                }
             }
             is Expr.Export -> this.blk.es.code()
             is Expr.Do -> {
@@ -216,10 +199,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${defers[this].cond { it.second }}
                     // pres funcs
                     ${(f_b == null).cond {
-                        pres.unzip().let {
-                            it.first.joinToString("") +
-                            it.second.joinToString("")
-                        }
+                        pres.joinToString("")
                     }}
                     
                     ${(CEU >= 2).cond { "do {" }} // error escape with `continue`
@@ -318,14 +298,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
                 """
             }
-            is Expr.Dcl -> {
-                if (this.id.upv==1 && clos.vars_refs.none { it==this }) {
-                    err(this.tk, "var error : unreferenced upvar")
-                }
-                when {
-                    !this.init -> "ceu_x_push((CEU_Value) { CEU_VALUE_NIL }, 1);"
-                    (this.src == null) -> "ceu_x_push((CEU_Value) { CEU_VALUE_NIL }, 1);"
-                    else -> {
+            is Expr.Dcl -> when {
+                !this.init -> "ceu_x_push((CEU_Value) { CEU_VALUE_NIL }, 1);"
+                (this.src == null) -> "ceu_x_push((CEU_Value) { CEU_VALUE_NIL }, 1);"
+                else -> {
                         val idx = vars.idx(this,this)
                         """
                         // DCL | ${this.dump()}
@@ -333,7 +309,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ceu_x_repl($idx, ceu_x_peek(X(-1)));
                         """
                     }
-                }
             }
             is Expr.Set -> """
                 { // SET | ${this.dump()}
@@ -689,15 +664,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val dcl = vars.acc_to_dcl[this]!!
                 val idx = vars.idx(this)
                 when {
-                    this.isdst() -> {
-                        if (dcl.id.upv > 0) {
-                            err(tk, "set error : cannot reassign an upval")
-                        }
-                        """
+                    this.isdst() -> """
                         // ACC - SET | ${this.dump()}
                         ceu_x_repl($idx, ceu_x_peek(X(-1)));
-                        """
-                    }
+                    """
                     else -> "ceu_x_push(ceu_x_peek($idx), 1);\n"
                 }
             }
