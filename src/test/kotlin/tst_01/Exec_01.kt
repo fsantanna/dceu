@@ -4081,7 +4081,7 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 6, col 21) : set error : cannot reassign an upval") { out }
-        assert(out == "anon : (lin 6, col 17) : set error : destination is immutable\n") { out }
+        assert(out == "anon : (lin 5, col 17) : set error : destination is immutable\n") { out }
     }
     @Test
     fun clo6_err() {
@@ -5130,8 +5130,7 @@ class Exec_01 {
     @Test
     fun zz_03_func_scope() {
         val out = test("""
-            var f
-            set f = func (v) {
+            val f = func (v) {
                 if v == nil {
                     1
                 } else {
@@ -5153,8 +5152,7 @@ class Exec_01 {
                 ]),
                 (:right, nil)
             ]
-            var itemCheck
-            set itemCheck = func (tree) {
+            val itemCheck = func (tree) {
                 if tree == nil {
                     1
                 }
