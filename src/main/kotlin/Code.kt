@@ -172,7 +172,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     // TODO: unlink task/block
                     ${(CEU >= 4).cond { "TODO" }}
 
-                    ceux_block_leave(${vars.enc_to_base[this]}, ${vars.enc_to_dcls[this]!!.size});
+                    ceux_block_leave(ceux.base+${vars.enc_to_base[this]}, ${vars.enc_to_dcls[this]!!.size});
                     
                     // check error
                     ${(CEU >= 2).cond { """

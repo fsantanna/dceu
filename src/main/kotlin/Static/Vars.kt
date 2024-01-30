@@ -95,8 +95,8 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         //          <src>
         //      }
         //  }
-        val blk = dcl_to_enc[dcl]!!
-        return /*(blk!=outer) &&*/ ups.all_until(src) { it == blk }.any { it is Expr.Proto }
+        val enc = dcl_to_enc[dcl]!!
+        return /*(enc!=outer) &&*/ ups.all_until(src) { it == enc }.any { it is Expr.Proto && it!=enc }
     }
 
     fun acc (e: Expr, id: String): Expr.Dcl {
@@ -110,7 +110,9 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         // stop at declaration (orig)
         // use blk bc of args
         if (isupv(dcl,e)) {
-            assert(dcl.tk.str == "val") // TODO: upval must be immut
+            if (dcl.tk.str != "val") {
+                err(e.tk, "access error : outer variable \"${dcl.id.str}\" must be immutable")
+            }
             val orig = ups.first(dcl_to_enc[dcl]!!) { it is Expr.Proto }
             //println(listOf(dcl.id.str, orig?.tk))
             val proto = ups.first(e) { it is Expr.Proto }!!
@@ -253,8 +255,9 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 }
             }
             is Expr.Do     -> {
+                val proto = ups.first(this) { it is Expr.Proto } as Expr.Proto
                 enc_to_dcls[this] = mutableListOf()
-                enc_to_base[this] = dcls.size
+                enc_to_base[this] = dcls.size - enc_to_base[proto]!!
 
                 // X. restore this size after nested block
                 val size = dcls.size
@@ -264,7 +267,6 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
 
                 // brefore (X)
                 // max number of simultaneous locals in outer proto
-                val proto = ups.first(this) { it is Expr.Proto } as Expr.Proto
                 proto_to_locs[proto] = max(proto_to_locs[proto]!!, dcls.size)
 
                 // X. restore size
@@ -278,8 +280,6 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
 
             }
             is Expr.Dcl    -> {
-                this.src?.traverse()
-
                 val prv = dcls.firstOrNull { this.id.str == it.id.str }
                 if (prv==null || (CEU>=99 && prv.id.str=="it" && it_uses[prv]==null)) {
                     // ok
@@ -303,6 +303,8 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 if (this.tag !=null && !datas.containsKey(this.tag.str)) {
                     //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
+
+                this.src?.traverse()
             }
             is Expr.Set    -> {
                 this.dst.traverse()

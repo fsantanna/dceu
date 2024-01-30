@@ -849,8 +849,9 @@ fun Coder.main (tags: Tags): String {
 
     void ceux_dump (int n) {
         for (int i=n; i<ceux_n; i++) {
-            printf(">>> %d\n", i);
-            ceu_dump_value(ceux_peek(i));
+            printf(">>> [%d]: ", i);
+            ceu_print1(NULL, ceux_peek(i));
+            puts("");
         }
     }
     int ceux_top (void) {

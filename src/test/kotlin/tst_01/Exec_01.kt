@@ -206,7 +206,8 @@ class Exec_01 {
             println(x)
         """
         )
-        assert(out == "10\n") { out }
+        //assert(out == "10\n") { out }
+        assert(out == "anon : (lin 3, col 21) : declaration error : variable \"x\" is already declared\n") { out }
     }
     @Test
     fun bb_10_var() {
@@ -446,8 +447,7 @@ class Exec_01 {
     fun cc_tuple6a_free() {
         val out = test(
             """
-            var f
-            set f = func (v) {
+            val f = func (v) {
                 if v > 0 {
                     [f(v - 1)]
                 } else {
@@ -464,9 +464,7 @@ class Exec_01 {
         STACK = 128
         val out = test(
             """
-            var f
-            set f = func (v) {
-                ;;println(v)
+            val f = func (v) {
                 if v > 0 {
                     [f(v - 1)]
                 } else {
@@ -483,8 +481,7 @@ class Exec_01 {
     fun cc_tuple7_hold_err() {
         STACK = 128
         val out = test("""
-            var f
-            set f = func (v) {
+            val f = func (v) {
                 var x
                 if v > 0 {
                     set x = f(v - 1)
@@ -503,8 +500,7 @@ class Exec_01 {
         STACK = 128
         val out = test(
             """
-            var f
-            set f = func (v) {
+            val f = func (v) {
                 if v > 0 {
                     val x = f(v - 1)
                     [x] ;; invalid return
@@ -2813,15 +2809,16 @@ class Exec_01 {
         assert(out == "anon : (lin 3, col 13) : call error : expected function\n") { out }
     }
     @Test
-    fun func18_err_rec() {
+    fun func18_rec() {
         val out = test(
             """
             val f = func () {
                 f()
             }
+            println(f)
         """
         )
-        assert(out == "anon : (lin 3, col 17) : access error : variable \"f\" is not declared\n") { out }
+        assert(out.contains("func: 0x")) { out }
     }
     @Test
     fun nn_19_func_out() {
@@ -4119,7 +4116,24 @@ class Exec_01 {
         assert(out == "anon : (lin 3, col 17) : access error : variable \"x\" is not declared\n") { out }
     }
     @Test
-    fun clo11_err() {
+    fun clo11() {
+        val out = test("""
+            val f = do {
+                val x = []
+                ;;println(x)
+                func () {   ;; block_set(1)
+                    x       ;; because of x
+                }           ;; err: scope on return
+            }
+            println(f())
+        """
+        )
+        //assert(out == "anon : (lin 3, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 3, col 21) : block escape error : reference has immutable scope\n") { out }
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun clo11a_err() {
         val out = test("""
             val f = do {
                 var x = []
@@ -4133,7 +4147,24 @@ class Exec_01 {
         )
         //assert(out == "anon : (lin 3, col 21) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "anon : (lin 3, col 21) : block escape error : reference has immutable scope\n") { out }
-        assert(out == "[]\n") { out }
+        assert(out == "anon : (lin 6, col 21) : access error : outer variable \"x\" must be immutable\n") { out }
+    }
+    @Test
+    fun clo11b_err() {
+        val out = test("""
+            val f = do {
+                var x = []
+                ;;println(x)
+                func () {   ;; block_set(1)
+                    set x = nil
+                }
+            }
+            println(f())
+        """
+        )
+        //assert(out == "anon : (lin 3, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 3, col 21) : block escape error : reference has immutable scope\n") { out }
+        assert(out == "anon : (lin 6, col 25) : access error : outer variable \"x\" must be immutable\n") { out }
     }
     @Test
     fun clo12_err() {
@@ -5138,5 +5169,15 @@ class Exec_01 {
             println(itemCheck(tree1))
         """, true)
         assert(out == "3\n") { out }
+    }
+    @Test
+    fun zz_05_dup_ids() {
+        val out = test("""
+            val f = func (x,y) {
+                y
+            }
+            println(f(1,2,3))
+        """)
+        assert(out == "2\n") { out }
     }
 }

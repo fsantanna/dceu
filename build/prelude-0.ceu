@@ -154,8 +154,7 @@ val {{<}} = func (v1,v2) {
 
 ;; TO-*
 
-var to-string
-set to-string = func (v) {
+val to-string = func (v) {
     if type(v) == :pointer {
         var i = 0
         val n = `:number strlen($v.Pointer)`
@@ -218,8 +217,7 @@ val type-dynamic? = func (v) {
 
 ;; COPY
 
-var copy
-set copy = func (v) {
+val copy = func (v) {
     if type-static?(type(v)) {
         v
     } else {
