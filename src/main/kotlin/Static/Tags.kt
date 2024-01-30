@@ -1,6 +1,6 @@
 package dceu
 
-class Tags (outer: Expr.Do) {
+class Tags (outer: Expr.Call) {
     val pub: MutableMap<String,Triple<String,String,String?>> = TAGS.map { Pair(it,Triple(it, it.tag2c(), null)) }.toMap().toMutableMap()
 
     fun add (tk: Tk, id: String, c: String, enu: String?) {

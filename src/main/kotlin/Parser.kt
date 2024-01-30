@@ -549,7 +549,7 @@ class Parser (lexer_: Lexer)
                 val src = if (!this.acceptFix("=")) null else {
                     this.expr()
                 }
-                Expr.Dcl(tk0, id, tag, true, src)
+                Expr.Dcl(tk0, id, tag, src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix

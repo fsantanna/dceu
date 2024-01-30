@@ -95,26 +95,19 @@ val TAGS = listOf (
     ":h", ":min", ":s", ":ms",
 ))
 
-val GLOBALS = Pair (
-    setOf (     // funcs
-        "dump", "error", "next-dict", "print", "println",   // bc of detrack'' in prelude
-        "string-to-tag", "sup?", "tags",
-        "tuple", "type", "{{#}}", "{{==}}", "{{/=}}",
-    ) + (if (CEU < 2) setOf() else setOf(
-        "pointer-to-string", "throw"
-    )) + (if (CEU < 3) setOf() else setOf(
-        "coroutine", "status"
-    )) + (if (CEU < 4) setOf() else setOf(
-        "broadcast'", "evt"
-    )) + (if (CEU < 5) setOf() else setOf(
-        "detrack'", "next-tasks", "tasks", "track"
-    )),
-    setOf (     // vars
-        "..."
-    ) + (if (CEU < 4) setOf() else setOf(
-        "evt"
-    ))
-)
+val GLOBALS = setOf (
+    "dump", "error", "next-dict", "print", "println",   // bc of detrack'' in prelude
+    "string-to-tag", "sup?", "tags",
+    "tuple", "type", "{{#}}", "{{==}}", "{{/=}}",
+) + (if (CEU < 2) setOf() else setOf(
+    "pointer-to-string", "throw"
+)) + (if (CEU < 3) setOf() else setOf(
+    "coroutine", "status"
+)) + (if (CEU < 4) setOf() else setOf(
+    "broadcast'", "evt"
+)) + (if (CEU < 5) setOf() else setOf(
+    "detrack'", "next-tasks", "tasks", "track"
+))
 
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos, val n_: Int=N++): Tk("", pos_)
@@ -131,7 +124,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val tag: Tk.Tag?, val args: List<Pair<Tk.Id,Tk.Tag?>>, val blk: Expr.Do): Expr(N++, tk_)
     data class Export (val tk_: Tk.Fix, val ids: List<String>, val blk: Expr.Do) : Expr(N++, tk_)
     data class Do     (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
-    data class Dcl    (val tk_: Tk.Fix, val id: Tk.Id, /*val poly: Boolean,*/  val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
+    data class Dcl    (val tk_: Tk.Fix, val id: Tk.Id, /*val poly: Boolean,*/  val tag: Tk.Tag?, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
     data class Loop   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
@@ -205,7 +198,16 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
             System.err.println("... analysing ...")
         }
         //readLine()
-        val outer  = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), es)
+        val pos = Pos("anon", 0, 0)
+        val glbs = GLOBALS.map { Expr.Dcl(Tk.Fix("val",pos), Tk.Id(it,pos), null, null) }
+        val outer = Expr.Call (
+            Tk.Fix("main", pos),
+            Expr.Proto (
+                Tk.Fix("func",pos), null, listOf(/*Pair(Tk.Id("...",pos),null)*/),
+                Expr.Do(Tk.Fix("",pos), glbs + es)
+            ),
+            listOf(/*Expr.Acc(Tk.Id("...",pos))*/)
+        )
         val ups    = Ups(outer)
         val tags   = Tags(outer)
         val vars   = Vars(outer, ups)
@@ -213,7 +215,7 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
         if (verbose) {
             System.err.println("... ceu -> c ...")
         }
-        val coder  = Coder(outer, ups, vars, sta)
+        val coder = Coder(outer, ups, vars, sta)
         coder.main(tags)
     } catch (e: Throwable) {
         if (THROW) {

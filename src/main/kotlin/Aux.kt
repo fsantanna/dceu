@@ -28,6 +28,11 @@ fun Boolean.toc (): String {
     return if (this) "1" else "0"
 }
 
+fun Expr.Call.main (): Expr.Proto {
+    assert(this.tk.str == "main")
+    return this.clo as Expr.Proto
+}
+
 fun Expr.is_innocuous (): Boolean {
     return when (this) {
         is Expr.Tuple, is Expr.Vector, is Expr.Dict, is Expr.Index, is Expr.Acc,

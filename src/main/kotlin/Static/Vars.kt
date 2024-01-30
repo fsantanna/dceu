@@ -1,8 +1,10 @@
 package dceu
 
+import kotlin.math.max
+
 typealias LData = List<Pair<Tk.Id,Tk.Tag?>>
 
-class Vars (val outer: Expr.Do, val ups: Ups) {
+class Vars (val outer: Expr.Call, val ups: Ups) {
     val datas = mutableMapOf<String,LData>()
 
     // allow it to be redeclared as long as it is not accessed
@@ -10,14 +12,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         // Acc = previous use
         // Dcl = previous hide without previous use
 
-    private val dcls: MutableList<Expr.Dcl> = (GLOBALS.first + GLOBALS.second)
-        .map {
-            Expr.Dcl (
-                Tk.Fix("val", outer.tk.pos),
-                Tk.Id(it, outer.tk.pos),
-                null, true, null
-            )
-        }.toMutableList()
+    private val dcls: MutableList<Expr.Dcl> = mutableListOf()
     public val dcl_to_enc: MutableMap<Expr.Dcl,Expr> = dcls.map {
         Pair(it, outer)
     }.toMap().toMutableMap()
@@ -27,6 +22,14 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     )
     public val nats: MutableMap<Expr.Nat,String> = mutableMapOf()
     public val proto_to_upvs: MutableMap<Expr.Proto,MutableSet<Expr.Dcl>> = mutableMapOf()
+
+    // proto_to_locs: max number of locals in proto
+    //  - must allocate this space on call
+    // enc_to_base: base stack index at beginning of block
+    //  - must pop down to it on leave
+    //  - proto base is required bc block must be relative to it
+    public val proto_to_locs: MutableMap<Expr.Proto,Int> = mutableMapOf()
+    public val enc_to_base: MutableMap<Expr,Int> = mutableMapOf()
 
     init {
         this.outer.traverse()
@@ -93,7 +96,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         //      }
         //  }
         val blk = dcl_to_enc[dcl]!!
-        return (blk!=outer) && ups.all_until(src) { it == blk }.any { it is Expr.Proto }
+        return /*(blk!=outer) &&*/ ups.all_until(src) { it == blk }.any { it is Expr.Proto }
     }
 
     fun acc (e: Expr, id: String): Expr.Dcl {
@@ -107,6 +110,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         // stop at declaration (orig)
         // use blk bc of args
         if (isupv(dcl,e)) {
+            assert(dcl.tk.str == "val") // TODO: upval must be immut
             val orig = ups.first(dcl_to_enc[dcl]!!) { it is Expr.Proto }
             //println(listOf(dcl.id.str, orig?.tk))
             val proto = ups.first(e) { it is Expr.Proto }!!
@@ -174,8 +178,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             //.let { println(it) ; it }
             .drop(1)    // myself
             .filter { it is Expr.Do }
-            .map { 1 + this.enc_to_dcls[it]!!.count() }
-            .sum()  // +1 = block sentinel
+            .map { this.enc_to_dcls[it]!!.count() }
+            .sum()
         //println(listOf(dcl.id.str,off,idx))
 
         return when {
@@ -186,8 +190,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 "($locs + $I) /* global ${dcl.id.str} */"
             }
             (enc is Expr.Proto) -> {        // argument
-                assert(locs == 0)   // -1 = no block sentinel
-                "ceux_arg(ceux, $I-1) /* arg ${dcl.id.str} */"
+                assert(locs == 0)
+                "ceux_arg(ceux, $I) /* arg ${dcl.id.str} */"
             }
             else -> {                       // local
                 "(ceux.base + $upvs + $locs + $I) /* local ${dcl.id.str} */"
@@ -200,6 +204,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Proto  -> {
                 enc_to_dcls[this] = mutableListOf()
                 proto_to_upvs[this] = mutableSetOf()
+                enc_to_base[this] = dcls.size
                 if (this.tag!=null && this.tag.str!=":void" && !datas.containsKey(this.tag.str)) {
                     //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
@@ -217,17 +222,23 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                         //err(tag, "declaration error : data ${tag.str} is not declared")
                     }
                 }
-
                 this.args.forEach { (id, tag) ->
                     val dcl = Expr.Dcl(
                         Tk.Fix("val", this.tk.pos),
-                        id, /*false,*/  tag, true, null
+                        id, /*false,*/  tag, null
                     )
                     dcls.add(dcl)
                     dcl_to_enc[dcl] = this
                     enc_to_dcls[this]!!.add(dcl)
                 }
+
+                val base = dcls.size                                // 1. base before proto
+                proto_to_locs[this] = 0                             // 2. blk.traverse max
+
                 this.blk.traverse()
+
+                proto_to_locs[this] = proto_to_locs[this]!! - base  // 3. then we subtract base from max
+
                 repeat(this.args.size) {
                     dcls.removeLast()   // dropLast(n) copies the list
                 }
@@ -242,20 +253,29 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
             }
             is Expr.Do     -> {
-                if (this != outer) {
-                    enc_to_dcls[this] = mutableListOf()
-                }
-                val size = dcls.size    // restore this size after nested block
+                enc_to_dcls[this] = mutableListOf()
+                enc_to_base[this] = dcls.size
+
+                // X. restore this size after nested block
+                val size = dcls.size
 
                 // nest into expressions
                 this.es.forEach { it.traverse() }
 
+                // brefore (X)
+                // max number of simultaneous locals in outer proto
+                val proto = ups.first(this) { it is Expr.Proto } as Expr.Proto
+                proto_to_locs[proto] = max(proto_to_locs[proto]!!, dcls.size)
+
+                // X. restore size
                 // do not remove ids listed in outer export
                 if (ups.pub[this] !is Expr.Export) {
                     repeat(dcls.size - size) {
                         dcls.removeLast()
                     }
                 }
+
+
             }
             is Expr.Dcl    -> {
                 this.src?.traverse()
@@ -274,6 +294,11 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 dcls.add(this)
                 dcl_to_enc[this] = blk
                 enc_to_dcls[blk]!!.add(this)
+
+                val proto = ups.first(this) { it is Expr.Proto } as Expr.Proto?
+                if (proto != null) {
+                    proto_to_locs[proto] = max(proto_to_locs[proto]!!, dcls.size)
+                }
 
                 if (this.tag !=null && !datas.containsKey(this.tag.str)) {
                     //err(this.tag, "declaration error : data ${this.tag.str} is not declared")

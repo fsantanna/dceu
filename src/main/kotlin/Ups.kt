@@ -1,6 +1,6 @@
 package dceu
 
-class Ups (outer: Expr.Do) {
+class Ups (outer: Expr.Call) {
     val pub = outer.traverse()
 
     fun all_until (e: Expr, cnd: (Expr)->Boolean): List<Expr> {

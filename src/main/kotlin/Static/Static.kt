@@ -1,8 +1,7 @@
 package dceu
 
-class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
-    val spws:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 spawn
-    val ylds:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 yield (including subs) or nested coro/task
+class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
+    val ylds: MutableSet<Expr.Do>  = mutableSetOf() // at least 1 yield (including subs) or nested coro/task
 
     init {
         outer.traverse()
@@ -14,7 +13,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
-                spws.add(ups.first_block(this)!!)
                 this.blk.traverse()
             }
             is Expr.Export -> this.blk.traverse()
@@ -103,7 +101,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
 
             is Expr.Spawn  -> {
-                spws.add(ups.first_block(this)!!)
                 this.tsks?.traverse()
                 this.tsk.traverse()
                 this.args.forEach { it.traverse() }
@@ -135,11 +132,15 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 val blk = vars.dcl_to_enc[vars.acc_to_dcl[this]!!]!!
                 //err(this.tk, "access error : cannot access \"_\"")
 
-                if (blk!=outer && ups.none(blk) { it is Expr.Proto && it.tk.str!="func" }) {
-                    val coro = ups.first(this) { it is Expr.Proto && it.tk.str!="func" }
-                    if (coro != null) {
-                        if (ups.any(coro) { it==blk}) {
-                            err(this.tk, "access error : cannot access local across coro" + (CEU>=4).cond { " or task" })
+                if (CEU >= 3) {
+                    if (TODO()!=outer && ups.none(blk) { it is Expr.Proto && it.tk.str != "func" }) {
+                        val coro = ups.first(this) { it is Expr.Proto && it.tk.str != "func" }
+                        if (coro != null) {
+                            if (ups.any(coro) { it == blk }) {
+                                err(
+                                    this.tk,
+                                    "access error : cannot access local across coro" + (CEU >= 4).cond { " or task" })
+                            }
                         }
                     }
                 }
