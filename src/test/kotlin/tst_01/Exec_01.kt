@@ -2268,7 +2268,7 @@ class Exec_01 {
     @Test
     fun ll_04_fleet_tuple_func_err() {
         val out = test("""
-            var f = func (v) {
+            val f = func (v) {
                 println(v[0])
             }
             var g = func (v) {
@@ -2730,8 +2730,7 @@ class Exec_01 {
     fun func12() {
         val out = test(
             """
-            var fff
-            set fff = func (xxx) {
+            val fff = func (xxx) {
                 println(type(xxx))
                 xxx
             }
@@ -4070,8 +4069,7 @@ class Exec_01 {
     fun clo5_err() {
         val out = test(
             """
-            var g
-            set g = 10
+            val g = 10
             var f
             set f = func (x) {
                 set x = []  ;; err: cannot reassign
@@ -4187,8 +4185,7 @@ class Exec_01 {
     fun clo13_err() {
         val out = test(
             """
-            var g
-            set g = 10
+            val g = 10
             var f
             set f = func (x) {
                 func () {       ;; block_set(0)
@@ -4204,8 +4201,7 @@ class Exec_01 {
     fun clo14() {
         val out = test(
             """
-            var g
-            set g = 10
+            val g = 10
             var f
             set f = func (x) {
                 func () {
@@ -4240,7 +4236,7 @@ class Exec_01 {
             """
             var f
             set f = func () {
-                var x = 10     ;; TODO: needs initialization
+                val x = 10     ;; TODO: needs initialization
                 func (y) {
                     [x,y]
                 }
