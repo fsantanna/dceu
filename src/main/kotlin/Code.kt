@@ -644,10 +644,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     }
                     else -> """
                         CEU_Value ceu_$n = CEU_ASSERT(ceu_col_get(ceux_peek(X(-1)),ceux_peek(X(-2))), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                        ceu_gc_inc(ceu_$n);
                         ceux_drop(2);
                         ceux_push(ceu_$n, 1);
-                        ceu_gc_dec(ceu_$n);
                     """
                 } + """
                 }
