@@ -60,7 +60,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     void ceu_f_$id (
                         CEU5(CEU_Stack* ceu_dstk COMMA)
                         CEU4(CEU_Stack* ceu_bstk COMMA)
-                        CEU_Frame* ceu_frame,
+                        //CEU_Frame* ceu_frame,
                         CEUX ceux
                     ) {
                         ${istsk.cond { """
@@ -75,7 +75,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         {
                             ${GLOBALS.mapIndexed { i,id -> """
                             {
-                                CEU_Value clo = ceu_create_clo(NULL, ceu_${id.idc()}_f, 0, 0, 0);
+                                CEU_Value clo = ceu_create_clo(ceu_${id.idc()}_f, 0, 0, 0);
                                 ceux_repl(ceux.base + $i, clo);
                             }
                             """ }.joinToString("")}
@@ -105,7 +105,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 """ // CLO | ${this.dump()}
                 CEU_Value ceu_clo_$n = ceu_create_clo${isexe.cond{"_exe"}} (
                     ${isexe.cond{"CEU_VALUE_CLO_${this.tk.str.uppercase()},"}}
-                    NULL,
                     ceu_f_$id,
                     ${this.args.let { assert(it.lastOrNull()?.first?.str!="...") ; it.size }},  // TODO: remove assert
                     ${vars.proto_to_locs[this]!!},
