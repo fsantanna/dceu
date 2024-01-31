@@ -1,5 +1,10 @@
 package dceu
 
+fun do_while (code: String): String {
+    return (CEU >= 2).cond { "do {" } + code + (CEU >= 2).cond { "} while (0);" }
+
+}
+
 class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static) {
     val pres: MutableList<String> = mutableListOf()
     val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
@@ -89,7 +94,9 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                                         return (CEU_Value) { CEU_VALUE_NIL };
                                     }
                         """}}
-                        $code
+                        
+                        ${do_while(code)}
+
                         ${isexe.cond{"""
                                     ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
                             }
@@ -136,14 +143,12 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     // defers init
                     ${defers[this].cond { it.second }}
                     
-                    // error escape with `continue`
-                    ${(CEU >= 2).cond { "do {" }}
-
-                    $body
-                    ${(up is Expr.Loop).cond { """
-                        CEU_LOOP_STOP_${up!!.n}:
-                    """ }}
-                    ${(CEU >= 2).cond { "} while (0);" }}
+                    ${do_while ( """    
+                        $body
+                        ${(up is Expr.Loop).cond { """
+                            CEU_LOOP_STOP_${up!!.n}:
+                        """ }}
+                    """)}
 
                     ${(CEU >= 4).cond { """
                         ceu_stack_kill(ceu_bstk, ${D}blkc);
@@ -159,9 +164,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     
                     // check error
                     ${(CEU >= 2).cond { """
-                        if (CEU_ISERR(ceu_acc)) {
-                            continue;
-                        }                        
+                        CEU_ESC_ERROR(continue);
                     """ }}
                     // check free
                     ${(CEU >= 3 /*&& inexe*/).cond { """
@@ -263,7 +266,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                             continue;   // do not execute next statement, instead free up block
                         }
                     """ }}
-                    if (ceu_acc.type == CEU_VALUE_THROW) {      // caught internal throw
+                    if (ceux_peek(X(-1)).type == CEU_VALUE_ERROR) {      // caught internal throw
                         CEU_Value ceu_err = ceu_acc;
                         // in case err=FLEET and condition tries to hold it: do { val x=err }
                         assert(NULL == ceu_hold_set_rec(CEU_HOLD_CMD_SET, ceu_err, CEU_HOLD_MUTAB, $blkc CEU5(COMMA NULL)));
