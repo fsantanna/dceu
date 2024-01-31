@@ -57,12 +57,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
 
                 pres.add("""
                     // FUNC | ${this.dump()}
-                    void ceu_f_$id (
-                        CEU5(CEU_Stack* ceu_dstk COMMA)
-                        CEU4(CEU_Stack* ceu_bstk COMMA)
-                        //CEU_Frame* ceu_frame,
-                        CEUX ceux
-                    ) {
+                    void ceu_f_$id (CEUX ceux) {
                         ${istsk.cond { """
                         CEU_Value id_evt = { CEU_VALUE_NIL };
                            // - C does not allow redeclaration (after each yield)
