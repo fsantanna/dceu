@@ -39,10 +39,12 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         return when (e) {
             is Expr.Acc -> {
                 val dcl = acc_to_dcl[e]!!
-                if (dcl.tag == null) {
-                    null
-                } else {
-                    Pair(null, this.datas[dcl.tag.str])
+                dcl.idtag.second.let {
+                    if (it == null) {
+                        null
+                    } else {
+                        Pair(null, this.datas[it.str])
+                    }
                 }
             }
             is Expr.Pub -> {
@@ -100,7 +102,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
     }
 
     fun acc (e: Expr, id: String): Expr.Dcl {
-        val dcl = dcls.findLast { id == it.id.str } // last bc of it redeclaration
+        val dcl = dcls.findLast { id == it.idtag.first.str } // last bc of it redeclaration
         if (dcl == null) {
             err(e.tk, "access error : variable \"${id}\" is not declared")
         }
@@ -111,7 +113,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         // use blk bc of args
         if (isupv(dcl,e)) {
             if (dcl.tk.str != "val") {
-                err(e.tk, "access error : outer variable \"${dcl.id.str}\" must be immutable")
+                err(e.tk, "access error : outer variable \"${dcl.idtag.first.str}\" must be immutable")
             }
             val orig = ups.first(dcl_to_enc[dcl]!!) { it is Expr.Proto }
             //println(listOf(dcl.id.str, orig?.tk))
@@ -130,10 +132,10 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         if (e is Expr.Acc) {        // TODO: what about Expr.Nat?
             acc_to_dcl[e] = dcl
         }
-        if (CEU>=99 && dcl.id.str=="it") {
+        if (CEU>=99 && dcl.idtag.first.str=="it") {
             val prv = it_uses[dcl]
             when (prv) {
-                is Expr.Dcl -> err(prv.id, "declaration error : variable \"${prv.id.str}\" is already declared")
+                is Expr.Dcl -> err(prv.idtag.first, "declaration error : variable \"${prv.idtag.first.str}\" is already declared")
                 is Expr.Acc -> {}
                 else -> {
                     if (e is Expr.Acc && !e.ign) {
@@ -146,7 +148,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
     }
 
     fun get (blk: Expr.Do, id: String): Expr.Dcl {
-        return enc_to_dcls[blk]!!.findLast { it.id.str == id }!!
+        return enc_to_dcls[blk]!!.findLast { it.idtag.first.str == id }!!
     }
 
     fun idx (acc: Expr.Acc): String {
@@ -184,19 +186,20 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             .sum()
         //println(listOf(dcl.id.str,off,idx))
 
+        val id = dcl.idtag.first.str
         return when {
             isupv(dcl,src) -> {                // upval
-                "(ceux.base + $upv) /* upval ${dcl.id.str} */"
+                "(ceux.base + $upv) /* upval $id */"
             }
             (proto_blk == null) -> {        // global
-                "($locs + $I) /* global ${dcl.id.str} */"
+                "($locs + $I) /* global $id */"
             }
             (enc is Expr.Proto) -> {        // argument
                 assert(locs == 0)
-                "ceux_arg(ceux, $I) /* arg ${dcl.id.str} */"
+                "ceux_arg(ceux, $I) /* arg $id */"
             }
             else -> {                       // local
-                "(ceux.base + $upvs + $locs + $I) /* local ${dcl.id.str} */"
+                "(ceux.base + $upvs + $locs + $I) /* local $id */"
             }
         }
     }
@@ -210,8 +213,8 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                     //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
                 this.args.forEach { (id,tag) ->
-                    val prv = dcls.firstOrNull { id.str!="..." && id.str==it.id.str }
-                    if (prv==null || (CEU>=99 && prv.id.str=="it" && it_uses[prv]==null)) {
+                    val prv = dcls.firstOrNull { id.str!="..." && id.str==it.idtag.first.str }
+                    if (prv==null || (CEU>=99 && prv.idtag.first.str=="it" && it_uses[prv]==null)) {
                         // ok
                         if (CEU>=99 && prv!=null) {
                             it_uses[prv] = this // found new dcl w/o uses of prv dcl
@@ -223,10 +226,10 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                         //err(tag, "declaration error : data ${tag.str} is not declared")
                     }
                 }
-                this.args.forEach { (id, tag) ->
+                this.args.forEach {
                     val dcl = Expr.Dcl(
                         Tk.Fix("val", this.tk.pos),
-                        id, /*false,*/  tag, null
+                        it, null
                     )
                     dcls.add(dcl)
                     dcl_to_enc[dcl] = this
@@ -249,7 +252,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 val size = dcls.size
                 this.blk.traverse()
                 for (i in dcls.size-1 downTo size) {
-                    if (!this.ids.contains(dcls[i].id.str)) {
+                    if (!this.ids.contains(dcls[i].idtag.first.str)) {
                         dcls.removeAt(i)
                     }
                 }
@@ -281,14 +284,14 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
 
             }
             is Expr.Dcl    -> {
-                val prv = dcls.firstOrNull { this.id.str == it.id.str }
-                if (prv==null || (CEU>=99 && prv.id.str=="it" && it_uses[prv]==null)) {
+                val prv = dcls.firstOrNull { this.idtag.first.str == it.idtag.first.str }
+                if (prv==null || (CEU>=99 && prv.idtag.first.str=="it" && it_uses[prv]==null)) {
                     // ok
                     if (CEU>=99 && prv!=null) {
                         it_uses[prv] = this // found new dcl w/o uses of prv dcl
                     }
                 } else {
-                    err(this.id, "declaration error : variable \"${this.id.str}\" is already declared")
+                    err(this.idtag.first, "declaration error : variable \"${this.idtag.first.str}\" is already declared")
                 }
 
                 val blk = ups.first_block(this)!!
@@ -301,8 +304,10 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                     proto_to_locs[proto] = max(proto_to_locs[proto]!!, dcls.size)
                 }
 
-                if (this.tag !=null && !datas.containsKey(this.tag.str)) {
-                    //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
+                this.idtag.second.let {
+                    if (it !=null && !datas.containsKey(it.str)) {
+                        //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
+                    }
                 }
 
                 this.src?.traverse()

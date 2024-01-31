@@ -348,7 +348,7 @@ class Parser_01 {
         val l = lexer("var x")
         val parser = Parser(l)
         val e = parser.expr_prim()
-        assert(e is Expr.Dcl && e.tk.str=="var" && e.id.str=="x")
+        assert(e is Expr.Dcl && e.tk.str=="var" && e.idtag.first.str=="x")
         assert(e.tostr() == "(var x)")
     }
     @Test
@@ -356,7 +356,7 @@ class Parser_01 {
         val l = lexer("val x")
         val parser = Parser(l)
         val e = parser.expr_prim()
-        assert(e is Expr.Dcl && e.tk.str=="val" && e.id.str=="x")
+        assert(e is Expr.Dcl && e.tk.str=="val" && e.idtag.first.str=="x")
         assert(e.tostr() == "(val x)")
     }
     @Test
@@ -370,7 +370,7 @@ class Parser_01 {
         val l = lexer("var x = 1")
         val parser = Parser(l)
         val e = parser.expr_prim()
-        assert(e is Expr.Dcl && e.id.str == "x" && e.src is Expr.Num)
+        assert(e is Expr.Dcl && e.idtag.first.str == "x" && e.src is Expr.Num)
         assert(e.tostr() == "(var x = 1)")
     }
 

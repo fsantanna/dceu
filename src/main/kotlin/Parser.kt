@@ -549,7 +549,7 @@ class Parser (lexer_: Lexer)
                 val src = if (!this.acceptFix("=")) null else {
                     this.expr()
                 }
-                Expr.Dcl(tk0, id, tag, src)
+                Expr.Dcl(tk0, Pair(id,tag), src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -562,17 +562,18 @@ class Parser (lexer_: Lexer)
                 if (CEU>=99 && dst is Expr.Do && dst.es.let { it.size==3 && it[0] is Expr.Dcl && it[1] is Expr.Nat && it[2] is Expr.Index }) {
                     val dcl = dst.es[0] as Expr.Dcl
                     val c   = dst.es[1] as Expr.Nat
+                    val id  = dcl.idtag.first
                     when (c.tk.str) {
                         "/* = */" -> this.nest("""
                             do {
                                 ${dcl.tostr(true)}
-                                set ${dcl.id.str}[#${dcl.id.str}-1] = ${src.tostr(true)}
+                                set ${id.str}[#${id.str}-1] = ${src.tostr(true)}
                             }
                         """)
                         "/* + */" -> this.nest("""
                             do {
                                 ${dcl.tostr(true)}
-                                set ${dcl.id.str}[#${dcl.id.str}] = ${src.tostr(true)}
+                                set ${id.str}[#${id.str}] = ${src.tostr(true)}
                             }
                         """)
                         "/* - */" -> err(tk0, "set error : expected assignable destination") as Expr

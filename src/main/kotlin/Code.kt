@@ -13,7 +13,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             when {
                 (it !is Expr.Dcl) -> this.n.toString()
                 (it.src != this) -> error("bug found") as String
-                else -> it.id.str.idc()
+                else -> it.idtag.first.str.idc()
             }
         }
     }

@@ -36,7 +36,7 @@ fun Expr.tostr (pre: Boolean = false): String {
             }
         }
         is Expr.Dcl    -> {
-            "(" + this.tk_.str + " " + Pair(this.id,this.tag).tostr(pre) + this.src.cond { " = ${it.tostr(pre)}" } + ")"
+            "(" + this.tk_.str + " " + this.idtag.tostr(pre) + this.src.cond { " = ${it.tostr(pre)}" } + ")"
         }
         is Expr.Set    -> "(set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre) + ")"
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
@@ -52,9 +52,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Catch  -> {
             val cnd = this.cnd.es.let {
                 assert(it.size == 5)
-                val id_tag = (it[0] as Expr.Dcl).let {
-                    Pair(it.id, it.tag)
-                }
+                val id_tag = (it[0] as Expr.Dcl).idtag
                 val xcnd = (it[2] as Expr.Dcl).src!!
                 id_tag.tostr(pre) + " => " + xcnd.tostr(pre)
             }
