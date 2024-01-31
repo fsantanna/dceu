@@ -141,11 +141,14 @@ fun Coder.main (tags: Tags): String {
     } CEU_Frame;
     #endif
 
+    #if CEU >= 4
     typedef struct CEU_Dyns {           // list of allocated data to bcast/free
         union CEU_Dyn* first;
         union CEU_Dyn* last;
     } CEU_Dyns;
+    #endif
 
+    #if 0
     typedef struct CEU_Block {
         uint8_t  istop;
         union {
@@ -159,6 +162,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Dyns dyns;
         } dn;
     } CEU_Block;
+    #endif
     """
     }
     fun h_value_dyn (): String {
@@ -347,7 +351,7 @@ fun Coder.main (tags: Tags): String {
 #if CEU >= 5
     CEU_Stack CEU_DSTK = { NULL, 1, NULL };
 #endif
-    CEU_Block CEU_BLOCK = { 0, {.block=NULL}, { CEU4(NULL COMMA) {NULL,NULL} } };
+    //CEU_Block CEU_BLOCK = { 0, {.block=NULL}, { CEU4(NULL COMMA) {NULL,NULL} } };
     """
     }
     fun h_protos (): String {
@@ -360,7 +364,7 @@ fun Coder.main (tags: Tags): String {
     char* ceu_tag_to_string (int tag);
     int ceu_type_to_size (int type);
 
-    void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns));
+    //void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns));
     //void ceu_hold_rem (CEU_Dyn* dyn);
 
     CEU_Value ceu_create_tuple   (int n);
@@ -462,7 +466,8 @@ fun Coder.main (tags: Tags): String {
             }
         }
         puts("<<<<<<<<<<<");
-    }        
+    }
+    #if 0
     void ceu_dump_block (CEU_Block* blk) {
         printf(">>> BLOCK: %p\n", blk);
         printf("    istop = %d\n", blk->istop);
@@ -474,6 +479,7 @@ fun Coder.main (tags: Tags): String {
             //cur = old->Any.hld.next;
         }
     }
+    #endif
 #endif
     """
     }
