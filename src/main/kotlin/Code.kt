@@ -198,6 +198,19 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     """
                     ${this.src.code()}
                     ceux_repl($idx, ceux_peek(X(-1)));
+                    
+                    // recursive func requires its self ref upv to be reset to itself
+                    ${this.src.let { proto -> (proto is Expr.Proto && proto.rec).cond {
+                        val i = vars.proto_to_upvs[proto]!!.indexOf(this)
+                        //println(idx)
+                        """
+                        {
+                            CEU_Value clo = ceux_peek(X(-1));
+                            ceu_gc_inc(clo);    // TODO: creates cycle, never collected
+                            clo.Dyn->Clo.upvs.buf[$i] = clo;
+                        }                        
+                        """
+                    }}}
                     """
                 }}
             """

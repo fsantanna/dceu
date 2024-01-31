@@ -297,6 +297,59 @@ class Exec_01 {
         assert(out == "anon : (lin 2, col 13) : set error : expected assignable destination\n") { out }
     }
 
+    // REC / FUNC
+
+    @Test
+    fun be_01_rec_err() {
+        val out = test("""
+            func :rec () {
+                nil
+            }
+        """)
+        assert(out == "anon : (lin 2, col 13) : func :rec error : requires enclosing val declaration\n") { out }
+    }
+    @Test
+    fun be_02_rec() {
+        STACK = 128
+        val out = test("""
+            $PLUS
+            val f = func :rec (v) {
+                if v == 0 {
+                    0
+                } else {
+                    v + f(v - 1)
+                }
+            }
+            println(f(4))
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun TODO_be_03_rec_rec() {
+        STACK = 64
+        val out = test("""
+            $PLUS
+            val f,g =
+                func :rec (v) {
+                    if v == 0 {
+                        0
+                    } else {
+                        v + g(v - 1)
+                    }
+                },
+                func :rec (v) {
+                    if v == 0 {
+                        0
+                    } else {
+                        v + f(v - 1)
+                    }
+                },
+            println(f(4))
+        """)
+        assert(out == "10\n") { out }
+    }
+
+
     // INDEX / TUPLE
 
     @Test
@@ -447,7 +500,7 @@ class Exec_01 {
     fun cc_tuple6a_free() {
         val out = test(
             """
-            val f = func (v) {
+            val f = func :rec (v) {
                 if v > 0 {
                     [f(v - 1)]
                 } else {
@@ -464,7 +517,7 @@ class Exec_01 {
         STACK = 128
         val out = test(
             """
-            val f = func (v) {
+            val f = func :rec (v) {
                 if v > 0 {
                     [f(v - 1)]
                 } else {
@@ -481,7 +534,7 @@ class Exec_01 {
     fun cc_tuple7_hold_err() {
         STACK = 128
         val out = test("""
-            val f = func (v) {
+            val f = func :rec (v) {
                 var x
                 if v > 0 {
                     set x = f(v - 1)
@@ -500,7 +553,7 @@ class Exec_01 {
         STACK = 128
         val out = test(
             """
-            val f = func (v) {
+            val f = func :rec (v) {
                 if v > 0 {
                     val x = f(v - 1)
                     [x] ;; invalid return

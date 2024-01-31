@@ -13,6 +13,12 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
+                if (this.rec) {
+                    if (ups.pub[this].let { it !is Expr.Dcl || it.tk.str!="val" }) {
+                        err(this.tk, "${this.tk.str} :rec error : requires enclosing val declaration")
+                    }
+
+                }
                 this.blk.traverse()
             }
             is Expr.Export -> this.blk.traverse()

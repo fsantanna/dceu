@@ -1,7 +1,6 @@
 package tst_04
 
 import dceu.*
-import org.junit.BeforeClass
 import org.junit.Test
 
 class Parser_04 {

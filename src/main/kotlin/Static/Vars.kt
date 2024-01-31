@@ -207,7 +207,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 enc_to_dcls[this] = mutableListOf()
                 proto_to_upvs[this] = mutableSetOf()
                 enc_to_base[this] = dcls.size
-                if (this.tag!=null && this.tag.str!=":void" && !datas.containsKey(this.tag.str)) {
+                if (this.tag !=null && this.tag.str!=":void" && !datas.containsKey(this.tag.str)) {
                     //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
                 this.args.forEach { (id,tag) ->

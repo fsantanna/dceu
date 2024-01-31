@@ -711,7 +711,7 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("func") || (CEU>=3 && this.acceptFix("coro")) || (CEU>=4 && this.acceptFix("task")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val isrec = (CEU>=99 && this.acceptTag(":rec") && this.checkEnu_err("Id"))
+                val rec = this.acceptTag(":rec")
                 val dcl = if (CEU>=99 && this.acceptEnu("Id")) {
                     this.tk0
                 } else {
@@ -726,17 +726,12 @@ class Parser (lexer_: Lexer)
                     else -> this.tk0 as Tk.Tag
                 }
                 val blk = this.block(this.tk1)
-                val proto = Expr.Proto(tk0, tag, args, blk)
-                when {
-                    (dcl == null) -> proto
-                    !isrec -> this.nest("""
+                val proto = Expr.Proto(tk0, rec, tag, args, blk)
+                if (dcl == null) {
+                    proto
+                } else {
+                    this.nest("""
                         ${tk0.pos.pre()}val ${dcl.str} = ${proto.tostr(true)}
-                    """)
-                    else -> this.nest("""
-                        export [${dcl.str}] {
-                            ${tk0.pos.pre()}var ${dcl.str}
-                            set ${dcl.str} = ${proto.tostr(true)}
-                        }
                     """)
                 }
             }
