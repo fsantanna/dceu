@@ -20,7 +20,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
     public val enc_to_dcls: MutableMap<Expr,MutableList<Expr.Dcl>> = mutableMapOf(
         Pair(outer, dcls.toList().toMutableList())
     )
-    public val nats: MutableMap<Expr.Nat,String> = mutableMapOf()
+    public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
     public val proto_to_upvs: MutableMap<Expr.Proto,MutableSet<Expr.Dcl>> = mutableMapOf()
 
     // proto_to_locs: max number of locals in proto
@@ -349,6 +349,8 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
 
             is Expr.Nat    -> {
                 nats[this] = this.tk.str.let {
+                    assert(!it.contains("XXX")) { "TODO: native cannot contain XXX"}
+                    val set = mutableListOf<Expr.Dcl>()
                     var str = ""
                     var i = 0
 
@@ -387,12 +389,11 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
                             val dcl = acc(this, id)
-                            val x = idx(dcl,this)
-                            "(ceux_peek($x))$no"
+                            set.add(dcl)
+                            "(XXX)$no"
                         }
                     }
-                    //println(str)
-                    str
+                    Pair(set, str)
                 }
             }
             is Expr.Acc    -> acc(this, this.tk.str)

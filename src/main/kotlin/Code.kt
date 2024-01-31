@@ -191,14 +191,13 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     // recursive func requires its self ref upv to be reset to itself
                     ${this.src.let { proto -> (proto is Expr.Proto && proto.rec).cond {
                         val i = vars.proto_to_upvs[proto]!!.indexOf(this)
-                        //println(idx)
-                        """
+                        (i != -1).cond { """
                         {
                             CEU_Value clo = ceux_peek(X(-1));
                             ceu_gc_inc(clo);    // TODO: creates cycle, never collected
                             clo.Dyn->Clo.upvs.buf[$i] = clo;
-                        }                        
-                        """
+                        }
+                        """ }
                     }}}
                     """
                 }}
@@ -541,7 +540,15 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             }
 
             is Expr.Nat -> {
-                val body = vars.nats[this]!!
+                val body = vars.nats[this]!!.let { (set, str) ->
+                    var x = str
+                    for (dcl in set) {
+                        val idx = vars.idx(dcl,this)
+                        //println(setOf(x, v))
+                        x = x.replaceFirst("XXX", "ceux_peek($idx)")
+                    }
+                    x
+                }
                 when (this.tk_.tag) {
                     null   -> body + "\n" + "ceux_push((CEU_Value) { CEU_VALUE_NIL}, 1);\n"
                     ":ceu" -> "ceux_push($body, 1);"
@@ -554,7 +561,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 }
             }
             is Expr.Acc -> {
-                val dcl = vars.acc_to_dcl[this]!!
                 val idx = vars.idx(this)
                 when {
                     this.isdst() -> """

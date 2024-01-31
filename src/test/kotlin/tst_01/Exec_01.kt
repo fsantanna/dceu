@@ -2244,7 +2244,7 @@ class Exec_01 {
         assert(out == "[[2]]\n") { out }
     }
     @Test
-    fun scope30() {
+    fun scope30_cyc() {
         val out = test("""
             val cycle = func (v) {
                 set v[3] = v
@@ -2263,7 +2263,7 @@ class Exec_01 {
         //assert(out == "anon : (lin 10, col 22) : drop error : value contains multiple references\n") { out }
     }
     @Test
-    fun scope30x() {
+    fun scope30x_cyc() {
         val out = test("""
             val cycle = func (v) {
                 set v[3] = v
@@ -3507,7 +3507,7 @@ class Exec_01 {
         assert(out == "> 10.000000\n") { out }
     }
     @Test
-    fun native_XXX() {
+    fun BUG_native_XXX() {
         val out = test(
             """
             var x
@@ -3534,6 +3534,19 @@ class Exec_01 {
         )
         assert(out == "2\t1\n") { out }
     }
+    @Test
+    fun on_18_nat_loc() {
+        val out = test("""
+            val n = 10
+            val f = func () {
+                val i = 5
+                println(:i, i, `:number ${D}i.Number`)
+                n
+            }
+            f()
+        """)
+        assert(out == ":i\t5\t5\n") { out }
+    }
 
     // OPERATORS
 
@@ -3544,10 +3557,10 @@ class Exec_01 {
             val f = func (v1, v2) {
                 println(v1,v2)
             }
-            println(f(10))
+            f(10)
         """
         )
-        assert(out == "-10\n") { out }
+        assert(out == "10\tnil\n") { out }
     }
     @Test
     fun op_umn() {
@@ -3708,15 +3721,26 @@ class Exec_01 {
     // to-number, to-string, to-tag, string-to-tag
 
     @Test
+    fun qq_01_tostring() {
+        STACK = 128
+        val out = test("""
+            `static char x[] = "abc";`
+            println(to-string(`:pointer x`))
+        """, true
+        )
+        assert(out == "abc\n") { out }
+    }
+    @Test
     fun tostring1() {
+        STACK = 128
         val out = test(
             """
             var s
-            set s = to-string(10)
+            set s = to-string(1234)
             println(type(s), s)
         """, true
         )
-        assert(out == ":vector\t10\n") { out }
+        assert(out == ":vector\t1234\n") { out }
     }
     @Test
     fun tonumber2() {
@@ -3731,6 +3755,7 @@ class Exec_01 {
     }
     @Test
     fun tonumber_tostring3() {
+        STACK = 128
         val out = test(
             """
             var s
@@ -5133,6 +5158,7 @@ class Exec_01 {
 
     @Test
     fun qq_01_copy() {
+        STACK = 128
         val out = test("""
             println(copy(10), copy([]))
         """, true)
@@ -5140,6 +5166,7 @@ class Exec_01 {
     }
     @Test
     fun qq_02_copy() {
+        STACK = 128
         val out = test("""
             val t = [1,2,3]
             val u = copy(t)
@@ -5197,7 +5224,7 @@ class Exec_01 {
     fun zz_03_func_scope() {
         STACK = 64
         val out = test("""
-            val f = func (v) {
+            val f = func :rec (v) {
                 if v == nil {
                     1
                 } else {
@@ -5211,6 +5238,7 @@ class Exec_01 {
     }
     @Test
     fun zz_04_arthur() {
+        STACK = 128
         val out = test("""
             val tree1 = @[
                 (:left, @[
@@ -5219,7 +5247,7 @@ class Exec_01 {
                 ]),
                 (:right, nil)
             ]
-            val itemCheck = func (tree) {
+            val itemCheck = func :rec (tree) {
                 if tree == nil {
                     1
                 }

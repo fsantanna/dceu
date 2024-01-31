@@ -63,6 +63,7 @@ val {{+}} = func (v1, v2) {
 val {{-}} = func (v1, v2) {
     val t1 = type(v1)
     val t2 = type(v2)
+    ;;println(t1,t2)
     if (t1 == :number) && (t2 == :nil) {
         `:number (- $v1.Number)`
     } else {
@@ -154,7 +155,7 @@ val {{<}} = func (v1,v2) {
 
 ;; TO-*
 
-val to-string = func (v) {
+val to-string = func :rec (v) {
     if type(v) == :pointer {
         var i = 0
         val n = `:number strlen($v.Pointer)`
@@ -217,7 +218,7 @@ val type-dynamic? = func (v) {
 
 ;; COPY
 
-val copy = func (v) {
+val copy = func :rec (v) {
     if type-static?(type(v)) {
         v
     } else {
