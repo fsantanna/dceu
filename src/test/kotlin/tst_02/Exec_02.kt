@@ -36,6 +36,31 @@ class Exec_02 {
     @Test
     fun ee_02_defer() {
         val out = test("""
+            do {
+                println(1)
+                defer { println(2) }
+                println(3)
+            }
+            println(4)
+            defer { println(5) }
+            println(6)
+        """)
+        assert(out == "2\n4\n5\n111\n333\n222\n7\n6\n8\n10\n9\n3\n11\n13\n12\n1\n") { out }
+    }
+    @Test
+    fun ee_03_defer() {
+        val out = test("""
+            val f = func () {
+                defer { 99 }
+                1
+            }
+            println(f())
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun ee_04_defer() {
+        val out = test("""
             var f
             set f = func () {
                 println(111)
@@ -62,17 +87,6 @@ class Exec_02 {
             println(13)
         """)
         assert(out == "2\n4\n5\n111\n333\n222\n7\n6\n8\n10\n9\n3\n11\n13\n12\n1\n") { out }
-    }
-    @Test
-    fun ee_03_defer() {
-        val out = test("""
-            val f = func () {
-                defer { 99 }
-                1
-            }
-            println(f())
-        """)
-        assert(out == "1\n") { out }
     }
 
     // THROW / CATCH

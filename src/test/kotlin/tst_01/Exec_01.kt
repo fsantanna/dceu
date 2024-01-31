@@ -238,6 +238,18 @@ class Exec_01 {
         """)
         //assert(out.contains("hold  = 2")) { out }
     }
+    @Test
+    fun bb_13_block() {
+        val out = test("""
+            do {
+                val x = 2
+                println(x)
+            }
+            val x
+            println(x)
+        """)
+        assert(out == "2\nnil\n") { out }
+    }
 
     // DCL
 

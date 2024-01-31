@@ -12,12 +12,10 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         // Acc = previous use
         // Dcl = previous hide without previous use
 
-    private val dcls: MutableList<Expr.Dcl> = mutableListOf()
-    public val dcl_to_enc: MutableMap<Expr.Dcl,Expr> = dcls.map {
-        Pair(it, outer)
-    }.toMap().toMutableMap()
+    private val dcls: MutableList<Expr> = mutableListOf()
+    public val dcl_to_enc: MutableMap<Expr,Expr> = mutableMapOf()
     public val acc_to_dcl: MutableMap<Expr.Acc,Expr.Dcl> = mutableMapOf()
-    public val enc_to_dcls: MutableMap<Expr,MutableList<Expr.Dcl>> = mutableMapOf(
+    public val enc_to_dcls: MutableMap<Expr,MutableList<Expr>> = mutableMapOf(
         Pair(outer, dcls.toList().toMutableList())
     )
     public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
@@ -86,7 +84,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         }
     }
 
-    fun isupv (dcl: Expr.Dcl, src: Expr): Boolean {
+    fun isupv (dcl: Expr, src: Expr): Boolean {
         // 1. <src> -> <dcl> must cross proto
         // 2. but <dcl> must not be in outer block
         //  ...             ;; NO: not up (outer block)
@@ -102,7 +100,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
     }
 
     fun acc (e: Expr, id: String): Expr.Dcl {
-        val dcl = dcls.findLast { id == it.idtag.first.str } // last bc of it redeclaration
+        val dcl = dcls.findLast { it is Expr.Dcl && id==it.idtag.first.str } as Expr.Dcl? // last bc of it redeclaration
         if (dcl == null) {
             err(e.tk, "access error : variable \"${id}\" is not declared")
         }
@@ -147,14 +145,13 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         return dcl
     }
 
-    fun get (blk: Expr.Do, id: String): Expr.Dcl {
-        return enc_to_dcls[blk]!!.findLast { it.idtag.first.str == id }!!
-    }
-
     fun idx (acc: Expr.Acc): String {
         return this.idx(this.acc_to_dcl[acc]!!, acc)
     }
-    fun idx (dcl: Expr.Dcl, src: Expr): String {
+    fun idx (def: Expr.Defer): String {
+        return this.idx(def, def)
+    }
+    fun idx (dcl: Expr, src: Expr): String {
         val enc  = this.dcl_to_enc[dcl]!!
         val dcls = this.enc_to_dcls[enc]!!
 
@@ -186,7 +183,11 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             .sum()
         //println(listOf(dcl.id.str,off,idx))
 
-        val id = dcl.idtag.first.str
+        val id = when (dcl) {
+            is Expr.Dcl -> dcl.idtag.first.str
+            is Expr.Defer -> "defer"
+            else -> error("impossible case")
+        }
         return when {
             isupv(dcl,src) -> {                // upval
                 "(ceux.base + $upv) /* upval $id */"
@@ -213,7 +214,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                     //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
                 this.args.forEach { (id,tag) ->
-                    val prv = dcls.firstOrNull { id.str!="..." && id.str==it.idtag.first.str }
+                    val prv = dcls.firstOrNull { id.str!="..." && it is Expr.Dcl && id.str==it.idtag.first.str } as Expr.Dcl?
                     if (prv==null || (CEU>=99 && prv.idtag.first.str=="it" && it_uses[prv]==null)) {
                         // ok
                         if (CEU>=99 && prv!=null) {
@@ -252,8 +253,11 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 val size = dcls.size
                 this.blk.traverse()
                 for (i in dcls.size-1 downTo size) {
-                    if (!this.ids.contains(dcls[i].idtag.first.str)) {
-                        dcls.removeAt(i)
+                    val dcl = dcls[i]
+                    if (dcl is Expr.Dcl) {
+                        if (!this.ids.contains(dcl.idtag.first.str)) {
+                            dcls.removeAt(i)
+                        }
                     }
                 }
             }
@@ -284,7 +288,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
 
             }
             is Expr.Dcl    -> {
-                val prv = dcls.firstOrNull { this.idtag.first.str == it.idtag.first.str }
+                val prv = dcls.firstOrNull { it is Expr.Dcl && this.idtag.first.str==it.idtag.first.str } as Expr.Dcl?
                 if (prv==null || (CEU>=99 && prv.idtag.first.str=="it" && it_uses[prv]==null)) {
                     // ok
                     if (CEU>=99 && prv!=null) {
@@ -341,7 +345,13 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             is Expr.Pass   -> this.e.traverse()
 
             is Expr.Catch  -> { this.cnd.traverse() ; this.blk.traverse() }
-            is Expr.Defer  -> this.blk.traverse()
+            is Expr.Defer  -> {
+                val blk = ups.first_block(this)!!
+                dcls.add(this)
+                dcl_to_enc[this] = blk
+                enc_to_dcls[blk]!!.add(this)
+                this.blk.traverse()
+            }
 
             is Expr.Yield  -> this.arg.traverse()
             is Expr.Resume -> { this.co.traverse() ; this.arg.traverse() }

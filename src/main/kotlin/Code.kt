@@ -44,7 +44,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 ${e.code()}
                 assert(ceux_top()-ceu_seq_$N == 1);
                 ${(i < this.size-1).cond { """
-                    ceux_pop(1);
+                    ceux_pop(1);    // pop intermediate exp
                 """ }}
             """ }.joinToString("")
     }
@@ -288,25 +288,27 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             }
             is Expr.Defer -> {
                 val bup = ups.first_block(this)!!
-                val idc = this.idc("defer")
+                val idx = vars.idx(this)
                 val (ns,ini,end) = defers.getOrDefault(bup, Triple(mutableListOf(),"",""))
                 val inix = """
-                    int ceu_defer_$n;
-                    $idc = 0;       // NO: do not yet execute on termination
+                    ceux_repl($idx, (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} });
+                        // false: not reached, dont finalize
                 """
                 val endx = """
-                    if ($idc) {     // ??: execute only if activate
+                    if (ceux_peek($idx).Bool) {     // if true: reached, finalize
                         do {
                             ${this.blk.code()}
                         } while (0);    // catch throw
-                        assert(ceu_acc.type != CEU_VALUE_THROW && "TODO: throw in defer");
+                        assert(ceux_peek(X(-1)).type!=CEU_VALUE_ERROR && "TODO: error in defer");
+                        ceux_pop(1);
                     }
                 """
                 ns.add(n)
                 defers[bup] = Triple(ns, ini+inix, endx+end)
                 """
-                $idc = 1;           // OK: execute on termination
-                CEU_REPL(((CEU_Value) { CEU_VALUE_NIL }));
+                ceux_repl($idx, (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} });
+                        // true: reached, finalize
+                ceux_push((CEU_Value) { CEU_VALUE_NIL }, 1);
                 """
             }
 
