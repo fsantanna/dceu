@@ -231,6 +231,7 @@ fun Coder.main (tags: Tags): String {
         _CEU_Dyn_                       \
         struct CEU_Frame* up_frame;     \
         CEU_Proto proto;                \
+        int args;                       \
         int locs;                       \
         struct {                        \
             int its;                    \
@@ -364,7 +365,7 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_create_tuple   (int n);
     CEU_Value ceu_create_vector  (void);
     CEU_Value ceu_create_dict    (void);
-    CEU_Value ceu_create_clo     (CEU_Frame* frame, CEU_Proto proto, int locs, int upvs);
+    CEU_Value ceu_create_clo     (CEU_Frame* frame, CEU_Proto proto, int args, int locs, int upvs);
     #if CEU >= 4
     CEU_Value ceu_create_track   (CEU_Exe_Task* task);
     #endif
@@ -926,12 +927,24 @@ fun Coder.main (tags: Tags): String {
     }
     
     void ceux_call (int n) {
-        int base = ceux_n;
-        CEU_Value clo = ceux_peek(base-n-1);
+        CEU_Value clo = ceux_peek(X(-n-1));
         if (clo.type != CEU_VALUE_CLO_FUNC) {
             ceux_push((CEU_Value){ CEU_VALUE_ERROR, {.Error="call error : expected function"} }, 1);
             return;
         }
+
+        // fill missing args with nils
+        {
+            int N = clo.Dyn->Clo.args - n;
+            //printf(">>> %d\n", N);
+            for (int i=0; i<N; i++) {
+                ceux_push((CEU_Value) { CEU_VALUE_NIL }, 1);
+                n++;
+            }
+        }
+
+        int base = ceux_n;
+
         for (int i=0; i<clo.Dyn->Clo.upvs.its; i++) {
             ceux_push(clo.Dyn->Clo.upvs.buf[i], 1);
         }
@@ -1432,7 +1445,7 @@ fun Coder.main (tags: Tags): String {
         return (CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)ret} };
     }
     
-    CEU_Value _ceu_create_clo_ (int sz, int type, CEU_Frame* frame, CEU_Proto proto, int locs, int upvs) {
+    CEU_Value _ceu_create_clo_ (int sz, int type, CEU_Frame* frame, CEU_Proto proto, int args, int locs, int upvs) {
         ceu_debug_add(type);
         CEU_Clo* ret = malloc(sz);
         assert(ret != NULL);
@@ -1443,14 +1456,15 @@ fun Coder.main (tags: Tags): String {
         }
         *ret = (CEU_Clo) {
             type, 0, NULL,
-            frame, proto, locs, { upvs, buf }
+            frame, proto,
+            args, locs, { upvs, buf }
         };
         //ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
         return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
     }
 
-    CEU_Value ceu_create_clo (CEU_Frame* frame, CEU_Proto proto, int locs, int upvs) {
-        return _ceu_create_clo_(sizeof(CEU_Clo), CEU_VALUE_CLO_FUNC, frame, proto, locs, upvs);
+    CEU_Value ceu_create_clo (CEU_Frame* frame, CEU_Proto proto, int args, int locs, int upvs) {
+        return _ceu_create_clo_(sizeof(CEU_Clo), CEU_VALUE_CLO_FUNC, frame, proto, args, locs, upvs);
     }
 
     #if CEU >= 3

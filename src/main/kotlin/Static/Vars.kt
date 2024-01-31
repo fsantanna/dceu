@@ -206,7 +206,6 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             is Expr.Proto  -> {
                 enc_to_dcls[this] = mutableListOf()
                 proto_to_upvs[this] = mutableSetOf()
-                enc_to_base[this] = dcls.size
                 if (this.tag !=null && this.tag.str!=":void" && !datas.containsKey(this.tag.str)) {
                     //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
@@ -235,6 +234,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 }
 
                 val base = dcls.size                                // 1. base before proto
+                enc_to_base[this] = base                            //    and after args
                 proto_to_locs[this] = 0                             // 2. blk.traverse max
 
                 this.blk.traverse()
@@ -257,6 +257,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             is Expr.Do     -> {
                 val proto = ups.first(this) { it is Expr.Proto } as Expr.Proto
                 enc_to_dcls[this] = mutableListOf()
+                //println(listOf(this.tk,dcls.size,enc_to_base[proto]))
                 enc_to_base[this] = dcls.size - enc_to_base[proto]!!
 
                 // X. restore this size after nested block

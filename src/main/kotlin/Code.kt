@@ -63,18 +63,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         CEU_Frame* ceu_frame,
                         CEUX ceux
                     ) {
-                        ${this.args.let { 
-                            assert(it.none { it.first.str=="..." }) { "TODO: args" }
-                            """
-                            {   // fill missing args with nils
-                                int N = ${it.size} - ceux.args;
-                                //printf(">>> %d\n", N);
-                                for (int i=0; i<N; i++) {
-                                    ceux_push((CEU_Value) { CEU_VALUE_NIL }, 1);
-                                }
-                            }
-                            """
-                        }}
                         ${istsk.cond { """
                         CEU_Value id_evt = { CEU_VALUE_NIL };
                            // - C does not allow redeclaration (after each yield)
@@ -87,7 +75,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         {
                             ${GLOBALS.mapIndexed { i,id -> """
                             {
-                                CEU_Value clo = ceu_create_clo(NULL, ceu_${id.idc()}_f, 0, 0);
+                                CEU_Value clo = ceu_create_clo(NULL, ceu_${id.idc()}_f, 0, 0, 0);
                                 ceux_repl(ceux.base + $i, clo);
                             }
                             """ }.joinToString("")}
@@ -119,6 +107,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     ${isexe.cond{"CEU_VALUE_CLO_${this.tk.str.uppercase()},"}}
                     NULL,
                     ceu_f_$id,
+                    ${this.args.let { assert(it.lastOrNull()?.first?.str!="...") ; it.size }},  // TODO: remove assert
                     ${vars.proto_to_locs[this]!!},
                     ${vars.proto_to_upvs[this]!!.size}
                 );

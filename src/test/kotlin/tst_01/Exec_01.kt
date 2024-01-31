@@ -3538,6 +3538,18 @@ class Exec_01 {
     // OPERATORS
 
     @Test
+    fun op_umn0() {
+        val out = test(
+            """
+            val f = func (v1, v2) {
+                println(v1,v2)
+            }
+            println(f(10))
+        """
+        )
+        assert(out == "-10\n") { out }
+    }
+    @Test
     fun op_umn() {
         val out = test(
             """
@@ -3557,8 +3569,8 @@ class Exec_01 {
     }
     @Test
     fun op_arithX() {
-        val out = test(
-            """
+        STACK = 64
+        val out = test("""
             println(((10 + -20)*2)/5)
         """, true
         )
@@ -3870,7 +3882,7 @@ class Exec_01 {
             println(tags())
         """
         )
-        assert(out.contains("ceu_tags_f: Assertion `N >= 1' failed")) { out }
+        assert(out.contains("ceu_tags_f: Assertion `X.args >= 1' failed")) { out }
     }
     @Test
     fun tags4() {
@@ -3983,7 +3995,7 @@ class Exec_01 {
             println(tags(s,:T), tags(s,:T.S))
         """, true
         )
-        assert(out == "14\t270\ntrue\tfalse\ntrue\ttrue\n") { out }
+        assert(out == "15\t271\ntrue\tfalse\ntrue\ttrue\n") { out }
     }
     @Test
     fun tags12() {
@@ -4070,7 +4082,7 @@ class Exec_01 {
             )
         """, true
         )
-        assert(out == "14\t1000\t1001\t1002\t10\t11\t12\t15\t100\t101\t16\n") { out }
+        assert(out == "15\t1000\t1001\t1002\t10\t11\t12\t16\t100\t101\t17\n") { out }
     }
     @Test
     fun enum02() {
@@ -4560,8 +4572,8 @@ class Exec_01 {
             ;;println(`:number CEU_GC.gc`)
         """
         )
-        assert(out == ">>> GC: 15\n" +
-                "    alloc = 16\n" +
+        assert(out == ">>> GC: 14\n" +
+                "    alloc = 15\n" +
                 "    free  = 1\n" +
                 "    gc    = 1\n"       // = 0
         ) { out }
@@ -4579,8 +4591,8 @@ class Exec_01 {
         """
         )
         //assert(out == "1\n") { out }
-        assert(out == ">>> GC: 16\n" +
-                "    alloc = 17\n" +
+        assert(out == ">>> GC: 15\n" +
+                "    alloc = 16\n" +
                 "    free  = 1\n" +
                 "    gc    = 1\n") { out }
     }
@@ -4598,8 +4610,8 @@ class Exec_01 {
         )
         //assert(out == "2\n") { out }
         //assert(out == "0\n") { out }
-        assert(out == ">>> GC: 15\n" +
-                "    alloc = 17\n" +
+        assert(out == ">>> GC: 14\n" +
+                "    alloc = 16\n" +
                 "    free  = 2\n" +
                 "    gc    = 2\n") { out }
     }
@@ -4618,8 +4630,8 @@ class Exec_01 {
         """
         )
         //assert(out == "0\n") { out }
-        assert(out == ">>> GC: 17\n" +
-                "    alloc = 17\n" +
+        assert(out == ">>> GC: 16\n" +
+                "    alloc = 16\n" +
                 "    free  = 0\n" +
                 "    gc    = 0\n") { out }
     }
@@ -5153,6 +5165,7 @@ class Exec_01 {
 
     @Test
     fun zz_01_sum() {
+        STACK = 128
         val out = test("""
             var sum = func (n) {                                                            
                 var i = n                                                                   
@@ -5182,6 +5195,7 @@ class Exec_01 {
     }
     @Test
     fun zz_03_func_scope() {
+        STACK = 64
         val out = test("""
             val f = func (v) {
                 if v == nil {
