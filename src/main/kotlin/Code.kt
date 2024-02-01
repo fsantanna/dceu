@@ -164,7 +164,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     
                     // check error
                     ${(CEU >= 2).cond { """
-                        CEU_ESC_ERROR(continue);
+                        CEU_ERROR_CHK(continue);
                     """ }}
                     // check free
                     ${(CEU >= 3 /*&& inexe*/).cond { """
@@ -254,7 +254,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             is Expr.Pass -> "// PASS | ${this.dump()}\n" + this.e.code()
 
             is Expr.Catch -> {
-                val blkc = ups.first_block(this)!!.idc("block")
                 """
                 { // CATCH ${this.dump()}
                     do { // catch
@@ -262,25 +261,21 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     } while (0); // catch
                     // check free
                     ${(CEU>=3 && ups.any(this) { it is Expr.Proto && it.tk.str!="func" }).cond { """
-                        if (ceu_base == CEU_ARG_ABORT) {
+                        if (CEUX.args == CEU_ARG_ABORT) {
                             continue;   // do not execute next statement, instead free up block
                         }
                     """ }}
                     if (ceux_peek(X(-1)).type == CEU_VALUE_ERROR) {      // caught internal throw
-                        CEU_Value ceu_err = ceu_acc;
-                        // in case err=FLEET and condition tries to hold it: do { val x=err }
-                        assert(NULL == ceu_hold_set_rec(CEU_HOLD_CMD_SET, ceu_err, CEU_HOLD_MUTAB, $blkc CEU5(COMMA NULL)));
+                        // [msgs,val,err]
                         do {
                             ${this.cnd.code()}  // ceu_ok = 1|0
                         } while (0);
-                        assert(ceu_acc.type!=CEU_VALUE_THROW && "TODO: throw in catch condition");
-                        if (!ceu_as_bool(ceu_acc)) {  // condition fail: rethrow error, escape catch block
-                            CEU_REPL(ceu_err);
+                        assert(ceux_peek(X(-1)).type!=CEU_VALUE_ERROR && "TODO: throw in catch condition");
+                        if (!ceu_as_bool(ceux_peek(X(-1)))) {  // condition fail: rethrow error, escape catch block
+                            ceux_pop(1);
                             continue;
                         } else {        // condition true: catch error, continue after catch block
-                            assert(ceu_err.Dyn->Throw.refs == 0);
-                            CEU_REPL(ceu_err.Dyn->Throw.val);
-                            ceu_gc_rem(ceu_err.Dyn);
+                            ceux_pop(1);
                         }
                     }
                 }
@@ -325,7 +320,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 $coc = ceu_acc;
                 if ($coc.type!=CEU_VALUE_EXE_CORO || ($coc.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED)) {                
                     CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : expected yielded coro"} };
-                    CEU_ERROR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                    CEU_ERROR_THR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                 }
                 ${this.arg.code()}
                 
@@ -346,7 +341,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     }
                 """ }}
 
-                CEU_ASSERT($bupc, ceux_peek(X(-1)), ceu_err_$n);                
+                CEU_ERROR_ASR(continue, ceux_peek(X(-1)), ceu_err_$n);                
                 """
             }
             is Expr.Yield -> {
@@ -359,7 +354,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     ceu_frame->exe->pc = $n;      // next resume
                     if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
                         CEU_Value err = { CEU_VALUE_ERROR, {.Error="yield error : cannot return pending reference"} };
-                        CEU_ERROR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                        CEU_ERROR_THR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                     }
                     return ceu_acc;
                 case $n: // YIELD ${this.dump()}
@@ -386,7 +381,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                                 !ceu_block_is_up_dn(CEU_HLD_BLOCK(ceu_acc.Dyn), $bupc))
                             {
                                 CEU_Value ceu_err_$n = { CEU_VALUE_ERROR, {.Error="resume error : cannot receive alien reference"} };
-                                CEU_ERROR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
+                                CEU_ERROR_THR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
                             }
                         }
                         """
@@ -431,7 +426,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, $tskc);                    
                     """ })}
                     
-                    CEU_ASSERT($bupc, ceu_x_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                    CEU_ERROR_ASR(continue, ceu_x_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                     
                     ${inexeT.cond { """
                         if (ceu_base != CEU_ARG_ABORT) {
@@ -459,7 +454,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         }
                     """ }}
                     
-                    CEU_ASSERT($bupc, ceux_peek(X(-1)), ceu_err_$n);
+                    CEU_ERROR_ASR(continue, ceux_peek(X(-1)), ceu_err_$n);
     
                     ${this.tsks.cond2({"""
                             CEU_REPL((CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} });
@@ -478,7 +473,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     it.code() + """ // PUB | ${this.dump()}
                         if (!ceu_istask_val(ceu_acc)) {
                             CEU_Value err = { CEU_VALUE_ERROR, {.Error="pub error : expected task"} };
-                            CEU_ERROR("${this.tsk.tk.pos.file} : (lin ${this.tsk.tk.pos.lin}, col ${this.tsk.tk.pos.col})", err);
+                            CEU_ERROR_THR("${this.tsk.tk.pos.file} : (lin ${this.tsk.tk.pos.lin}, col ${this.tsk.tk.pos.col})", err);
                         }
                     """
                 },{ """ // PUB | ${this.dump()}
@@ -508,7 +503,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                             );
                             if (ceu_err_$n != NULL) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
-                                CEU_ERROR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                CEU_ERROR_THR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                             }
 
                             ceu_gc_inc($src);
@@ -530,7 +525,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 ${this.on.code()}
                 if (!ceu_istask_val($tskc) || $tskc.Dyn->Exe_Task.status>CEU_EXE_STATUS_TOGGLED) {                
                     CEU_Value err = { CEU_VALUE_ERROR, {.Error="toggle error : expected yielded task"} };
-                    CEU_ERROR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                    CEU_ERROR_THR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                 }
                 $tskc.Dyn->Exe_Task.status = (ceu_as_bool(ceu_acc) ? CEU_EXE_STATUS_YIELDED : CEU_EXE_STATUS_TOGGLED);
                 CEU_Value ceu_$n = ceu_bcast_task(CEU5(ceu_dstk COMMA) ceu_bstk, 0, &$tskc.Dyn->Exe_Task, CEU_ARG_TOGGLE, NULL);
@@ -608,7 +603,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     {
                         ${it.first.code()}
                         ${it.second.code()}
-                        CEU_ASSERT(
+                        CEU_ERROR_ASR(
+                            continue,
                             ceu_dict_set(&ceux_peek(X(-3)).Dyn->Dict, ceux_peek(X(-2)), ceux_peek(X(-1))),
                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                         );
@@ -632,17 +628,21 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     
                     // COL
                     ${this.col.code()}
-                    CEU_ASSERT(ceu_col_check(ceux_peek(X(-1)),ceux_peek(X(-2))), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                    CEU_ERROR_ASR (
+                        continue,
+                        ceu_col_check(ceux_peek(X(-1)),ceux_peek(X(-2))),
+                        "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                    );
                 """ + when {
                     this.isdst() -> {
                         """
                         CEU_Value ceu_$n = ceu_col_set(ceux_peek(X(-1)), ceux_peek(X(-2)), ceux_peek(X(-3)));
-                        CEU_ASSERT(ceu_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                        CEU_ERROR_ASR(continue, ceu_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         ceux_drop(2);    // keep src
                         """
                     }
                     else -> """
-                        CEU_Value ceu_$n = CEU_ASSERT(ceu_col_get(ceux_peek(X(-1)),ceux_peek(X(-2))), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                        CEU_Value ceu_$n = CEU_ERROR_ASR(continue, ceu_col_get(ceux_peek(X(-1)),ceux_peek(X(-2))), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         ceu_gc_inc(ceu_$n);
                         ceux_drop(2);
                         ceux_push(ceu_$n, 1);
@@ -698,7 +698,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     """ }}
 
                     //static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
-                    CEU_ASSERT(ceux_peek(X(-1)), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                    CEU_ERROR_ASR(continue, ceux_peek(X(-1)), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                 } // CALL | ${this.dump()}
                 """
             }

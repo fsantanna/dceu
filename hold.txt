@@ -112,14 +112,14 @@
                         #if CEU >= 5
                             if ($src.type == CEU_VALUE_EXE_TASK_IN) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot expose reference to task in pool"} };
-                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                CEU_ERROR_THR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                             } else
                         #endif
                             if ($src.Dyn->Any.hld.type == FLEET) {
                             } else {
                                 if (!ceu_block_is_up_dn(CEU_HLD_BLOCK($src.Dyn), ceu_acc.Dyn->Exe_Task.dn_block)) {
                                     CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot assign reference to outer scope"} };
-                                    CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                    CEU_ERROR_THR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                 }
                                 ceu_hold_set_rec($src, IMMUT, 0, NULL);
                             }
@@ -172,12 +172,12 @@
                                     ${ups.inexe(this,"task",true).cond { """
                                         if (!ceu_block_is_up_dn(${vblk.idc("block",nst)}, CEU_HLD_BLOCK($src.Dyn))) {
                                             CEU_Value err = { CEU_VALUE_ERROR, {.Error="declaration error : cannot hold \"evt\" reference"} };
-                                            CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                            CEU_ERROR_THR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                         } else                                        
                                     """ }}
                                     {
                                         CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : cannot assign reference to outer scope"} };
-                                        CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                        CEU_ERROR_THR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                     }
                                 }
                             }

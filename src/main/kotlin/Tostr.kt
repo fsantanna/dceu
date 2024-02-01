@@ -51,10 +51,9 @@ fun Expr.tostr (pre: Boolean = false): String {
 
         is Expr.Catch  -> {
             val cnd = this.cnd.es.let {
-                assert(it.size == 5)
-                val id_tag = (it[0] as Expr.Dcl).idtag
-                val xcnd = (it[2] as Expr.Dcl).src!!
-                id_tag.tostr(pre) + " => " + xcnd.tostr(pre)
+                //println(it.tostr())
+                assert(it.size == 2)
+                (it[0] as Expr.Dcl).idtag.tostr(pre) + " => " + it[1].tostr(pre)
             }
             "catch (" + cnd + ") " + this.blk.tostr(pre)
         }

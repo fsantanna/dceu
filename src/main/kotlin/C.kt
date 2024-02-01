@@ -94,9 +94,6 @@ fun Coder.main (tags: Tags): String {
         CEU_VALUE_TUPLE,
         CEU_VALUE_VECTOR,
         CEU_VALUE_DICT,
-        #if CEU >= 2
-        CEU_VALUE_THROW,
-        #endif
         #if CEU >= 3
         CEU_VALUE_EXE_CORO,
         #endif
@@ -484,38 +481,31 @@ fun Coder.main (tags: Tags): String {
     // EXIT / ERROR / ASSERT
     fun c_exit_error (): String {
         return """
-    #define CEU_ERR_OR(err,v) ({ CEU_Value ceu=v; assert(!(CEU_ISERR(err) && CEU_ISERR(ceu)) && "TODO: double error"); (CEU_ISERR(err) ? err : ceu); })
+    #define CEU_ERR_OR(err,v) ({ CEU_Value ceu=v; assert(err.type!=CEU_VALUE_ERROR && "TODO: double error"); (err.type==CEU_VALUE_ERROR ? err : ceu); })
     #if CEU <= 1
-    #define CEU_ISERR(v) (v.type == CEU_VALUE_ERROR)
-    #define CEU_ERROR(pre,err) _ceu_error_(pre,err)
-    #define CEU_ASSERT(err,pre) ceu_assert(err,pre)
+    #define CEU_ERROR_THR(pre,err) _ceu_error_(pre,err)
+    #define CEU_ERROR_ASR(err,pre) ceu_assert(err,pre)
     #else
-    #define CEU_ISERR(v) (v.type==CEU_VALUE_ERROR || v.type==CEU_VALUE_THROW)
     #define CEU_ERROR_PUSH(pre,err) {                   \
-        assert(err.type == CEU_VALUE_THROW);            \
+        assert(err.type == CEU_VALUE_ERROR);            \
         ceu_vector_set (                                \
             &err.Dyn->Throw.stk.Dyn->Vector,            \
             err.Dyn->Throw.stk.Dyn->Vector.its,         \
             ceu_pointer_dash_to_dash_string(pre)        \
         );                                              \
     }
-    #define CEU_ERROR(pre,err) {                \
-        if (err.type == CEU_VALUE_THROW) {      \
-            /*CEU_REPL(err);*/                      \
-        } else {                                \
-            /*CEU_REPL(_ceu_throw_(err));*/         \
-        }                                       \
-        CEU_ERROR_PUSH(pre,err);            \
-        continue;                               \
+    #define CEU_ERROR_THR(cmd,msg,pre) {                                \
+        ceux_push((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} }, 1);    \
+        ceux_push((CEU_Value) { CEU_VALUE_ERROR,   {.Error=msg}   }, 1);    \
+        cmd;                                                                \
     }
-    #define CEU_ASSERT(err,pre) ({          \
-        CEU_Value ceu_err = err;            \
-        if (CEU_ISERR(ceu_err)) {           \
-            CEU_ERROR(pre,ceu_err);         \
-        };                                  \
-        ceu_err;                            \
+    #define CEU_ERROR_ASR(cmd,v,pre) ({             \
+        if (v.type == CEU_VALUE_ERROR) {            \
+            CEU_ERROR_THR(cmd,v.Error,pre);     \
+        };                                          \
+        v;                                          \
     })
-    #define CEU_ESC_ERROR(cmd) if (ceux_peek(X(-1)).type==CEU_VALUE_ERROR) cmd;
+    #define CEU_ERROR_CHK(cmd) if (ceux_peek(X(-1)).type==CEU_VALUE_ERROR) cmd;
     #endif
 
     void _ceu_error_ (char* pre, CEU_Value err) {
@@ -524,7 +514,7 @@ fun Coder.main (tags: Tags): String {
         exit(0);
     }
     CEU_Value ceu_assert (CEU_Value err, char* pre) {
-        if (CEU_ISERR(err)) {
+        if (err.type == CEU_VALUE_ERROR) {
             _ceu_error_(pre, err);
         }
         return err;
@@ -540,26 +530,10 @@ fun Coder.main (tags: Tags): String {
     }
     val c_throw = (CEU >= 2).cond { """
     #if CEU >= 2
-    CEU_Value _ceu_throw_ (CEU_Value val) {
-        CEU_Value stk = ceu_create_vector();
-
-        ceu_gc_inc(val);
-        ceu_gc_inc(stk);
-
-        CEU_Throw* ret = malloc(sizeof(CEU_Throw));
-        assert(ret != NULL);
-        *ret = (CEU_Throw) {
-            CEU_VALUE_THROW, 0, NULL,
-            val, stk
-        };
-
-        return (CEU_Value) { CEU_VALUE_THROW, {.Dyn=(CEU_Dyn*)ret} };
-    }
-
     void ceu_throw_f (CEUX X) {
         assert(X.args == 1);
-        CEU_Value v = _ceu_throw_(ceux_peek(ceux_arg(X,0)));
-        ceux_push(v, 1);
+        ceux_push(ceux_peek(ceux_arg(X,0)), 1);
+        ceux_push((CEU_Value) { CEU_VALUE_ERROR, {.Error=NULL} }, 1);
     }
     #endif
     """ }
@@ -620,7 +594,7 @@ fun Coder.main (tags: Tags): String {
     void ceu_gc_rem (CEU_Dyn* dyn) {
     #if CEU >= 3
         CEU_Value ret = ceu_dyn_exe_kill(CEU5(NULL COMMA) CEU4(NULL COMMA) dyn);
-        assert(!CEU_ISERR(ret) && "TODO: impossible case");
+        assert(ret.type!=CEU_VALUE_ERROR && "TODO: impossible case");
     #endif
         ceu_gc_dec_rec(dyn);
         //ceu_hold_rem(dyn);
@@ -658,12 +632,6 @@ fun Coder.main (tags: Tags): String {
                     ceu_gc_dec((*dyn->Dict.buf)[i][1]);
                 }
                 break;
-        #if CEU >= 2
-            case CEU_VALUE_THROW:
-                ceu_gc_dec(dyn->Throw.val);
-                ceu_gc_dec(dyn->Throw.stk);
-                break;
-        #endif
     #if CEU >= 3
             case CEU_VALUE_EXE_CORO:
     #if CEU >= 4
@@ -713,10 +681,6 @@ fun Coder.main (tags: Tags): String {
             case CEU_VALUE_DICT:
                 free(dyn->Dict.buf);
                 break;
-#if CEU >= 2
-            case CEU_VALUE_THROW:
-                break;
-#endif
 #if CEU >= 3
             case CEU_VALUE_EXE_CORO: {
 #if CEU >= 4
@@ -1670,7 +1634,7 @@ fun Coder.main (tags: Tags): String {
                 printf("nil");
                 break;
             case CEU_VALUE_ERROR:
-                printf("%s", v.Error);
+                printf("error: %s", v.Error);
                 break;
             case CEU_VALUE_TAG:
                 printf("%s", ceu_tag_to_string(v.Tag));
@@ -1758,12 +1722,6 @@ fun Coder.main (tags: Tags): String {
                 printf("task: %p", v.Dyn);
                 break;
     #endif
-    #if CEU >= 2
-            case CEU_VALUE_THROW:
-                printf("throw: %p | ", v.Dyn);
-                ceu_print1(v.Dyn->Throw.val);
-                break;
-    #endif
     #if CEU >= 3
             case CEU_VALUE_EXE_CORO:
                 printf("exe-coro: %p", v.Dyn);
@@ -1837,9 +1795,6 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 4
                 case CEU_VALUE_CLO_TASK:
-        #endif
-        #if CEU >= 2
-                case CEU_VALUE_THROW:
         #endif
         #if CEU >= 3
                 case CEU_VALUE_EXE_CORO:
@@ -2222,7 +2177,7 @@ fun xxx_01 (): String {
     #endif
                 /* TODO: stack trace for error on task termination
                 do {
-                    CEU_ASSERT(BUPC, ceux_peek(X(-1)), "FILE : (lin LIN, col COL) : ERR");
+                    CEU_ERROR_ASR(BUPC, ceux_peek(X(-1)), "FILE : (lin LIN, col COL) : ERR");
                 } while (0);
                 */
                 goto __CEU_FREE__;

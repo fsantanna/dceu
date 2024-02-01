@@ -75,9 +75,7 @@ val TAGS = listOf (
     ":task",
 )) + listOf (
     ":tuple", ":vector", ":dict",
-) + (if (CEU < 2) listOf() else listOf(
-    ":throw",
-)) + (if (CEU < 3) listOf() else listOf(
+) + (if (CEU < 3) listOf() else listOf(
     ":exe-coro",
 )) + (if (CEU < 4) listOf() else listOf(
     ":exe-task",
