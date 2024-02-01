@@ -45,7 +45,7 @@ class Exec_02 {
             defer { println(5) }
             println(6)
         """)
-        assert(out == "2\n4\n5\n111\n333\n222\n7\n6\n8\n10\n9\n3\n11\n13\n12\n1\n") { out }
+        assert(out == "1\n3\n2\n4\n6\n5\n") { out }
     }
     @Test
     fun ee_03_defer() {
@@ -60,6 +60,7 @@ class Exec_02 {
     }
     @Test
     fun ee_04_defer() {
+        STACK = 64
         val out = test("""
             var f
             set f = func () {

@@ -38,7 +38,7 @@ fun Expr.has_block (): Boolean {
         is Expr.Proto, is Expr.Dcl, is Expr.Break, is Expr.Skip, is Expr.Enum -> false
         is Expr.Data, is Expr.Delay, is Expr.Nat, is Expr.Acc, is Expr.Nil -> false
         is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> false
-        is Expr.Do, is Expr.If, is Expr.Loop, is Expr.Catch -> true
+        is Expr.Do, is Expr.If, is Expr.Loop, is Expr.Catch, is Expr.Defer -> true
         is Expr.Export -> this.blk.es.any { it.has_block() }
         is Expr.Set -> this.src.has_block()
         is Expr.Pass -> this.e.has_block()
@@ -53,7 +53,6 @@ fun Expr.has_block (): Boolean {
         is Expr.Dict -> this.args.any { it.first.has_block() || it.second.has_block()}
         is Expr.Index -> this.col.has_block() || this.idx.has_block()
         is Expr.Call -> this.clo.has_block() || this.args.any { it.has_block() }
-        is Expr.Defer -> TODO()
     }
 }
 

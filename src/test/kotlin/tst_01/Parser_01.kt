@@ -478,6 +478,22 @@ class Parser_01 {
         //assert(e.tostr() == "do (a) {\nprint(a)\n}") { e.tostr() }
         assert(e.tostr() == "do {\nprint(a)\n}") { e.tostr() }
     }
+    @Test
+    fun expr_do4() {
+        val l = lexer("do { do { nil } ; val x ; val y }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Do)
+        assert(e.tostr() == "do {\n" +
+                "do {\n" +
+                "nil\n" +
+                "}\n" +
+                "do {\n" +
+                "(val x)\n" +
+                "(val y)\n" +
+                "}\n" +
+                "}") { e.tostr() }
+    }
 
     // FUNC
 
