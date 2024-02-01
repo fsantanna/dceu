@@ -1489,8 +1489,17 @@ class Parser (lexer_: Lexer)
 
     fun exprs (): List<Expr> {
         val ret = mutableListOf<Expr>()
-        while (!this.checkFix("}") && !this.checkEnu("Eof")) {
-            ret.add(this.expr())
+        while (true) {
+            val e = this.expr()
+            ret.add(e)
+            if (this.checkFix("}") || this.checkEnu("Eof")) {
+                break
+            }
+            if (e.has_block()) {
+                // a ; { b } ; c ; d  -->  a ; { b } ; { c ; d }
+                ret.add(Expr.Do(e.tk, this.exprs()))
+                break
+            }
         }
         if (ret.size == 0) {
             if (CEU >= 99) {

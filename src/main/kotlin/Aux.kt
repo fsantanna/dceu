@@ -33,6 +33,30 @@ fun Expr.Call.main (): Expr.Proto {
     return this.clo as Expr.Proto
 }
 
+fun Expr.has_block (): Boolean {
+    return when (this) {
+        is Expr.Proto, is Expr.Dcl, is Expr.Break, is Expr.Skip, is Expr.Enum -> false
+        is Expr.Data, is Expr.Delay, is Expr.Nat, is Expr.Acc, is Expr.Nil -> false
+        is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> false
+        is Expr.Do, is Expr.If, is Expr.Loop, is Expr.Catch -> true
+        is Expr.Export -> this.blk.es.any { it.has_block() }
+        is Expr.Set -> this.src.has_block()
+        is Expr.Pass -> this.e.has_block()
+        is Expr.Yield -> this.arg.has_block()
+        is Expr.Resume -> this.arg.has_block()
+        is Expr.Spawn -> this.args.any { it.has_block() }
+        is Expr.Pub -> this.tsk?.has_block() ?: false
+        is Expr.Dtrack -> TODO()
+        is Expr.Toggle -> TODO()
+        is Expr.Tuple -> this.args.any { it.has_block() }
+        is Expr.Vector -> this.args.any { it.has_block() }
+        is Expr.Dict -> this.args.any { it.first.has_block() || it.second.has_block()}
+        is Expr.Index -> this.col.has_block() || this.idx.has_block()
+        is Expr.Call -> this.clo.has_block() || this.args.any { it.has_block() }
+        is Expr.Defer -> TODO()
+    }
+}
+
 fun Expr.is_innocuous (): Boolean {
     return when (this) {
         is Expr.Tuple, is Expr.Vector, is Expr.Dict, is Expr.Index, is Expr.Acc,
