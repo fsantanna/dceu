@@ -115,7 +115,7 @@ class Exec_02 {
     @Test
     fun jj_01_catch() {
         val out = test("""
-            val err = catch ( v => v==:x ) {
+            val err = catch ( v => do{println(v);v==:x} ) {
                 throw(:x)
                 println(9)
             }

@@ -62,7 +62,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
 
                 pres.add("""
                     // FUNC | ${this.dump()}
-                    void ceu_f_$id (CEUX ceux) {
+                    int ceu_f_$id (CEUX ceux) {
                         ${istsk.cond { """
                         CEU_Value id_evt = { CEU_VALUE_NIL };
                            // - C does not allow redeclaration (after each yield)
@@ -101,6 +101,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                                     ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
                             }
                         """}}
+                        return 1;
                     }
                 """)
 
@@ -177,12 +178,10 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             }
             is Expr.Dcl -> """
                 // DCL | ${this.dump()}
-                ${if (this.src == null) {
-                    "ceux_push((CEU_Value) { CEU_VALUE_NIL }, 1);"
-                } else {
+                ${(this.src != null).cond {
                     val idx = vars.idx(this,this)
                     """
-                    ${this.src.code()}
+                    ${this.src!!.code()}
                     ceux_repl($idx, ceux_peek(X(-1)));
                     
                     // recursive func requires its self ref upv to be reset to itself
@@ -249,8 +248,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
                 }
             """
-            is Expr.Enum -> "ceux_push((CEU_Value) { CEU_VALUE_NIL}, 1);"
-            is Expr.Data -> "ceux_push((CEU_Value) { CEU_VALUE_NIL}, 1);"
+            is Expr.Enum -> "// ENUM | ${this.dump()}\n"
+            is Expr.Data -> "// DATA | ${this.dump()}\n"
             is Expr.Pass -> "// PASS | ${this.dump()}\n" + this.e.code()
 
             is Expr.Catch -> {
@@ -544,7 +543,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     x
                 }
                 when (this.tk_.tag) {
-                    null   -> body + "\n" + "ceux_push((CEU_Value) { CEU_VALUE_NIL}, 1);\n"
+                    null   -> body + "\n"
                     ":ceu" -> "ceux_push($body, 1);"
                     else -> {
                         val (TAG,Tag) = this.tk_.tag.drop(1).let {
@@ -698,7 +697,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     """ }}
 
                     //static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
-                    CEU_ERROR_ASR(continue, ceux_peek(X(-1)), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                    CEU_ERROR_CHK(continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                 } // CALL | ${this.dump()}
                 """
             }

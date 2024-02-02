@@ -47,8 +47,7 @@ class Exec_01 {
     }
     @Test
     fun aa_05_print() {
-        val out = test(
-            """
+        val out = test("""
             var f
             set f = (func () { nil })
             do {
@@ -57,8 +56,7 @@ class Exec_01 {
                 nil
             }
             println(f)
-        """
-        )
+        """)
         assert(out.contains("func: 0x")) { out }
     }
     @Test
