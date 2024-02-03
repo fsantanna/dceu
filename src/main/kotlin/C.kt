@@ -482,9 +482,9 @@ fun Coder.main (tags: Tags): String {
     fun c_exit_error (): String {
         return """
     #define CEU_ERR_OR(err,v) ({ CEU_Value ceu=v; assert(err.type!=CEU_VALUE_ERROR && "TODO: double error"); (err.type==CEU_VALUE_ERROR ? err : ceu); })
-    #define CEU_ERROR_ASR(cmd,v,msg,pre) ({         \
-        if (!(v)) {                                 \
-            CEU_ERROR_THR(cmd,msg,pre);             \
+    #define CEU_ERROR_ASR(cmd,v,pre) ({         \
+        if (v.type == CEU_VALUE_ERROR) {            \
+            CEU_ERROR_THR(cmd,v.Error,pre);         \
         };                                          \
         v;                                          \
     })
@@ -495,8 +495,12 @@ fun Coder.main (tags: Tags): String {
         ceux_base(0);                               \
         exit(0);                                    \
     }
-    #define CEU_ERROR_CHK(cmd,pre) \
-        assert((ceux_top()==0 || ceux_peek(X(-1)).type!=CEU_VALUE_ERROR) && "bug found : impossible case")
+    #define CEU_ERROR_CHK(cmd,pre) {                    \
+        CEU_Value v = ceux_peek(X(-1));                 \
+        if (ceux_top()>0 && v.type==CEU_VALUE_ERROR) {  \
+            CEU_ERROR_THR(cmd,v.Error,pre);             \
+        }                                               \
+    }
     #else
     #define CEU_ERROR_THR(cmd,msg,pre) {                                \
         ceux_push((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} }, 1);    \
@@ -924,21 +928,28 @@ fun Coder.main (tags: Tags): String {
         }
     }
     
-    int ceux_call (int n) {
-        CEU_Value clo = ceux_peek(X(-n-1));
-        CEU_ERROR_ASR(return 1, clo.type==CEU_VALUE_CLO_FUNC, "call error : expected function", "(primitive)");
+    int ceux_call (int inp, int out) {
+        // [clo,args]
+        CEU_Value clo = ceux_peek(X(-inp-1));
+        if (clo.type != CEU_VALUE_CLO_FUNC) {
+            ceux_push((CEU_Value) { CEU_VALUE_ERROR, {.Error="call error : expected function"} }, 1);
+            return 1;
+        }
 
         // fill missing args with nils
         {
-            int N = clo.Dyn->Clo.args - n;
-            //printf(">>> %d\n", N);
+            int N = clo.Dyn->Clo.args - inp;
+            //printf(">>> %d\inp", N);
             for (int i=0; i<N; i++) {
                 ceux_push((CEU_Value) { CEU_VALUE_NIL }, 1);
-                n++;
+                inp++;
             }
         }
 
         int base = ceux_n;
+
+        // [clo,args,?]
+        //           ^ base
 
         for (int i=0; i<clo.Dyn->Clo.upvs.its; i++) {
             ceux_push(clo.Dyn->Clo.upvs.buf[i], 1);
@@ -946,12 +957,41 @@ fun Coder.main (tags: Tags): String {
         for (int i=0; i<clo.Dyn->Clo.locs; i++) {
             ceux_push((CEU_Value) { CEU_VALUE_NIL }, 1);
         }
+        
+        // [clo,args,upvs,locs]
+        //           ^ base
+        
         //CEU_Frame frame = { NULL, &clo.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
-        int ret = clo.Dyn->Clo.proto((CEUX) { base, n });
-        for (int i=0; i<ret; i++) {
-            ceux_move(base-n-1+i, ceux_n-ret+i);
+        int ret = clo.Dyn->Clo.proto((CEUX) { base, inp });
+
+        // [clo,args,upvs,locs,rets]
+        //           ^ base
+        
+        // less rets than requested
+        if (out!=99 && ret<out) {
+           // fill rets up to outs
+            for (int i=0; i<out-ret; i++) {
+                ceux_push((CEU_Value) { CEU_VALUE_NIL }, 1);
+            }
+            ret = out;
         }
-        ceux_base(base-n-1);
+        
+        // [clo,args,upvs,locs,rets=out]
+        //           ^ base
+        
+        // move rets to begin, replacing [clo,args,upvs,locs]
+        for (int i=0; i<ret; i++) {
+            ceux_move(base-inp-1+i, ceux_n-ret+i);
+        }
+        
+        // [rets,x,x,x,x]
+        //           ^ base
+
+        ceux_base(base-inp-1+ret);
+        
+        // [rets]
+        //      ^ base
+        
         return ret;
     }
     """

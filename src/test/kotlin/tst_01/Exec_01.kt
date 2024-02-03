@@ -885,8 +885,7 @@ class Exec_01 {
     }
     @Test
     fun cc_08_drop() {
-        val out = test(
-            """
+        val out = test("""
             val F = func (x) {
                 ;;println(:1, x)
                 func () {
@@ -900,9 +899,24 @@ class Exec_01 {
                 ;;println(:2, f)
                 println(f())
             }
-        """
-        )
+        """)
         assert(out == "[]\n") { out }
+    }
+    @Test
+    fun cc_08x_drop() {
+        val out = test("""
+            val F = func (x) {
+                func () {
+                    nil
+                }
+            }
+            do {
+                val x = :x
+                val f = F(:arg)
+                println(:f, f)
+            }
+        """)
+        assert(out.contains(":f\tfunc: 0x")) { out }
     }
     @Test
     fun cc_09_drop_nest() {

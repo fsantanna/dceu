@@ -329,8 +329,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 
                 CEU_REPL($coc.Dyn->Exe.frame.clo->proto(CEU5(ceu_dstk COMMA) CEU4($bstk COMMA) &$coc.Dyn->Exe.frame, 1, &ceu_acc));
 
-                static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
-                
                 ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
                     if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
                         if (CEU_ISERR(ceu_acc)) {
@@ -340,7 +338,9 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }
                 """ }}
 
-                CEU_ERROR_ASR(continue, ceux_peek(X(-1)), ceu_err_$n);                
+                CEU_ERROR_CHK(continue,
+                    "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}"
+                );
                 """
             }
             is Expr.Yield -> {
@@ -442,8 +442,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     // for some reason, gcc complains about args[0] for bcast_task(), but not for proto(), so we pass NULL here
                     ceu_acc = ceu_bcast_task(CEU5(ceu_dstk COMMA) $bstk, CEU_TIME_MAX, &ceu_x_$n.Dyn->Exe_Task, ${this.args.size}, ${if (this.args.size>0) argsc else "NULL"});
     
-                    static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
-                    
                     ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
                         if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
                             if (CEU_ISERR(ceu_acc)) {
@@ -453,7 +451,9 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         }
                     """ }}
                     
-                    CEU_ERROR_ASR(continue, ceux_peek(X(-1)), ceu_err_$n);
+                    CEU_ERROR_CHK(continue,
+                        "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}"
+                    );
     
                     ${this.tsks.cond2({"""
                             CEU_REPL((CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} });
@@ -697,7 +697,9 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     """ }}
 
                     //static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
-                    CEU_ERROR_CHK(continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                    CEU_ERROR_CHK(continue,
+                        "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}"
+                    );
                 } // CALL | ${this.dump()}
                 """
             }
