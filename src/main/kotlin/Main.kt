@@ -209,10 +209,11 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
         val tags   = Tags(outer)
         val vars   = Vars(outer, ups)
         val sta    = Static(outer, ups, vars)
+        val rets   = Rets(outer, ups)
         if (verbose) {
             System.err.println("... ceu -> c ...")
         }
-        val coder = Coder(outer, ups, vars, sta)
+        val coder = Coder(outer, ups, vars, rets)
         coder.main(tags)
     } catch (e: Throwable) {
         if (THROW) {

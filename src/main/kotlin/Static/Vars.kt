@@ -252,7 +252,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             is Expr.Export -> {
                 val size = dcls.size
                 this.blk.traverse()
-                for (i in dcls.size-1 downTo size) {
+                for (i in dcls.lastIndex downTo size) {
                     val dcl = dcls[i]
                     if (dcl is Expr.Dcl) {
                         if (!this.ids.contains(dcl.idtag.first.str)) {

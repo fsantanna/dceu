@@ -1506,7 +1506,7 @@ class Parser (lexer_: Lexer)
             }
         }
         ret.forEachIndexed { i,e ->
-            val ok = (i == ret.size-1) || !e.is_innocuous()
+            val ok = (i == ret.lastIndex) || !e.is_innocuous()
             if (!ok) {
                 err(e.tk, "expression error : innocuous expression")
             }

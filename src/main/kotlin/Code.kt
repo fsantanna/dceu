@@ -5,7 +5,7 @@ fun do_while (code: String): String {
 
 }
 
-class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static) {
+class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets) {
     val pres: MutableList<String> = mutableListOf()
     val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
     val code: String = outer.code()
@@ -685,7 +685,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         CEU_Stack ceu_bstk_$n = { ${D}bupc, 1, ceu_bstk };
                     """ }}
                     
-                    ceux_call(${this.args.size});
+                    ceux_call(${this.args.size}, ${rets.pub[this]!!});
                     
                     ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
                         if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
