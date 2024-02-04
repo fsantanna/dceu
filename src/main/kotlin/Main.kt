@@ -4,8 +4,8 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
+var DUMP = true
 var DEBUG = true
-val MULTI = -1
 var CEU = 1
     // 1: dyn-lex               ;; 7 normal  / 15 no dots / 9+X (:rec) valgrind errors
     // 2: defer, throw/catch
@@ -25,10 +25,10 @@ val VALGRIND = ""
 val THROW = false
 //val THROW = true
 
-var DUMP = true
 var N = 1
 val D = "\$"
 var STACK = 32
+val MULTI = -1
 
 // VERSION
 const val MAJOR    = 0
