@@ -509,14 +509,23 @@ fun Coder.main (tags: Tags): String {
         ceux_push(1, (CEU_Value) { CEU_VALUE_ERROR,   {.Error=msg}   });    \
         cmd;                                                                \
     }
-    #define CEU_ERROR_CHK(cmd,pre) {                        \
-        if (ceux_top()>0 && ceux_peek(X(-1)).type==CEU_VALUE_ERROR) { \
-            CEU_Value n = ceux_peek(X(-2));                 \
-            assert(n.type == CEU_VALUE_NUMBER);             \
-            ceux_repl(X(-2), (CEU_Value) { CEU_VALUE_NUMBER, {.Number=n.Number+1} }); \
-            ceux_shift(X(-2));                              \
-            ceux_repl(X(-2), (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} }); \
-            cmd;                                            \
+    int ceu_error_chk (char* pre) {
+        if (ceux_top()>0 && ceux_peek(X(-1)).type==CEU_VALUE_ERROR) {
+            if (pre != NULL) {
+                CEU_Value n = ceux_peek(X(-3));
+                assert(n.type == CEU_VALUE_NUMBER);
+                ceux_repl(X(-3), (CEU_Value) { CEU_VALUE_NUMBER, {.Number=n.Number+1} });
+                ceux_shift(X(-3));
+                ceux_repl(X(-3), (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} });
+            }
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+    #define CEU_ERROR_CHK(cmd,pre)  \
+        if (ceu_error_chk(pre)) {   \
+            cmd;                    \
         }
     #endif
 
@@ -534,8 +543,8 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 2
     int ceu_throw_f (CEUX X) {
         assert(X.args == 1);
+        ceux_push(1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=0} });
         ceux_push(1, ceux_peek(ceux_arg(X,0)));
-        ceux_push(1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=1}}));
         ceux_push(1, (CEU_Value) { CEU_VALUE_ERROR, {.Error=NULL} });
         return 3;
     }
@@ -830,10 +839,13 @@ fun Coder.main (tags: Tags): String {
     """
     val h2_ceux = """
     #define ceux_arg(X,i) (X.base - X.args + i)
+    int X (int i);
     int ceux_top (void);
     void ceux_base (int base);
     void ceux_push (int inc, CEU_Value v);
     CEU_Value ceux_peek (int i);
+    void ceux_repl (int i, CEU_Value v);
+    void ceux_shift (int I);
     void ceux_drop (int n);        
     """
     val c_ceux = """
@@ -916,6 +928,7 @@ fun Coder.main (tags: Tags): String {
     void ceux_block_enter (void) {
         ceux_push(1, (CEU_Value) { CEU_VALUE_BLOCK });
     }
+    
     void ceux_block_leave (int base, int n, int out) {
         assert(out==1 || out==0);
         for (int i=0; i<n; i++) {
@@ -967,6 +980,18 @@ fun Coder.main (tags: Tags): String {
         
         //CEU_Frame frame = { NULL, &clo.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
         int ret = clo.Dyn->Clo.proto((CEUX) { base, inp });
+        
+        // in case of error, out must be readjusted to the error stack:
+        // [clo,args,upvs,locs,...,n,pay,err]
+        //  - ... - error messages
+        //  - n   - number of error messages
+        //  - pay - error payload
+        //  - err - error value
+        if (ceux_peek(X(-1)).type == CEU_VALUE_ERROR) {
+            CEU_Value n = ceux_peek(X(-3));
+            assert(n.type == CEU_VALUE_NUMBER);
+            out = n.Number + 1 + 1 + 1;
+        }
 
         // [clo,args,upvs,locs,rets]
         //           ^ base
@@ -1694,7 +1719,7 @@ fun Coder.main (tags: Tags): String {
                 printf("nil");
                 break;
             case CEU_VALUE_ERROR:
-                printf("error: %s", v.Error);
+                printf("error: %s", (v.Error==NULL ? "(null)" : v.Error));
                 break;
             case CEU_VALUE_TAG:
                 printf("%s", ceu_tag_to_string(v.Tag));
