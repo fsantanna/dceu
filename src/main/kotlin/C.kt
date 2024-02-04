@@ -930,19 +930,38 @@ fun Coder.main (tags: Tags): String {
     }
     
     void ceux_block_leave (int base, int n, int out) {
-        assert(out==1 || out==0);
         for (int i=0; i<n; i++) {
-            // TODO: clear on leaveu? should clear on enter?
+            // XXX - TODO: clear on leaveu? should clear on enter?
             ceux_repl(base+i, (CEU_Value) { CEU_VALUE_NIL });
         }
-        CEU_Value ret = ceux_pop(0);
-        CEU_Value cur = ret;
-        while (cur.type != CEU_VALUE_BLOCK) {
-            cur = ceux_pop(1);
+        
+        int I = -1;
+        for (int i=ceux_n-1; i>=0; i--) {
+            if (ceux_peek(i).type == CEU_VALUE_BLOCK) {
+                I = i;
+                break;
+            }
         }
-        if (out == 1) {
-           ceux_push(0, ret);
+        assert(I >= 0);
+        
+    #if CEU >= 2
+        // in case of error, out must be readjusted to the error stack:
+        // [BLOCK,...,n,pay,err]
+        //  - ... - error messages
+        //  - n   - number of error messages
+        //  - pay - error payload
+        //  - err - error value
+        if (ceux_peek(X(-1)).type == CEU_VALUE_ERROR) {
+            CEU_Value n = ceux_peek(X(-3));
+            assert(n.type == CEU_VALUE_NUMBER);
+            out = n.Number + 1 + 1 + 1;
         }
+    #endif
+
+        for (int i=0; i<out; i++) {
+            ceux_repl(I+i, ceux_peek(X(-i-1)));
+        }
+        ceux_base(I + out);
     }
     
     int ceux_call (int inp, int out) {
@@ -981,6 +1000,7 @@ fun Coder.main (tags: Tags): String {
         //CEU_Frame frame = { NULL, &clo.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
         int ret = clo.Dyn->Clo.proto((CEUX) { base, inp });
         
+    #if CEU >= 2
         // in case of error, out must be readjusted to the error stack:
         // [clo,args,upvs,locs,...,n,pay,err]
         //  - ... - error messages
@@ -992,6 +1012,7 @@ fun Coder.main (tags: Tags): String {
             assert(n.type == CEU_VALUE_NUMBER);
             out = n.Number + 1 + 1 + 1;
         }
+    #endif
 
         // [clo,args,upvs,locs,rets]
         //           ^ base
