@@ -971,32 +971,36 @@ fun Coder.main (tags: Tags): String {
         // [clo,args,upvs,locs,rets]
         //           ^ base
         
-        // less rets than requested
-        if (out!=$MULTI && ret<out) {
+        if (out == CEU_MULTI) {     // any rets is ok
+            out = ret;
+        } else if (ret < out) {     // less rets than requested
            // fill rets up to outs
             for (int i=0; i<out-ret; i++) {
-                ceux_push((CEU_Value) { CEU_VALUE_NIL }, 1);
+                ceux_push(1, (CEU_Value) { CEU_VALUE_NIL });
             }
-            ret = out;
+            out = out;
+        } else {                    // enough rets than requested
+            // ret >= out
+            out = out;
         }
         
-        // [clo,args,upvs,locs,rets=out]
+        // [clo,args,upvs,locs,out]
         //           ^ base
         
         // move rets to begin, replacing [clo,args,upvs,locs]
-        for (int i=0; i<ret; i++) {
-            ceux_move(base-inp-1+i, ceux_n-ret+i);
+        for (int i=0; i<out; i++) {
+            ceux_move(base-inp-1+i, ceux_n-out+i);
         }
         
-        // [rets,x,x,x,x]
+        // [outs,x,x,x,x]
         //           ^ base
 
-        ceux_base(base-inp-1+ret);
+        ceux_base(base-inp-1+out);
         
-        // [rets]
+        // [outs]
         //      ^ base
         
-        return ret;
+        return out;
     }
     """
 
