@@ -20,6 +20,8 @@ fun Coder.main (tags: Tags): String {
         return """
     ${DEBUG.cond { "#define CEU_DEBUG" }}
     #define CEU $CEU
+    #define CEU_MULTI $MULTI
+    
     #undef MAX
     #undef MIN
     #define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
@@ -846,7 +848,7 @@ fun Coder.main (tags: Tags): String {
 
     void ceux_dump (int n) {
         for (int i=n; i<ceux_n; i++) {
-            printf(">>> [%d]: ", i);
+            printf(">>> [%d]: [%d] ", i, ceux_peek(i).type);
             ceu_print1(ceux_peek(i));
             puts("");
         }
@@ -914,8 +916,10 @@ fun Coder.main (tags: Tags): String {
     void ceux_block_enter (void) {
         ceux_push((CEU_Value) { CEU_VALUE_BLOCK }, 1);
     }
-    void ceux_block_leave (int base, int n) {
+    void ceux_block_leave (int base, int n, int out) {
+        assert(out==1 || out==0);
         for (int i=0; i<n; i++) {
+            // TODO: clear on leaveu? should clear on enter?
             ceux_repl(base+i, (CEU_Value) { CEU_VALUE_NIL });
         }
         CEU_Value ret = ceux_pop(0);
@@ -923,8 +927,8 @@ fun Coder.main (tags: Tags): String {
         while (cur.type != CEU_VALUE_BLOCK) {
             cur = ceux_pop(1);
         }
-        if (ret.type != CEU_VALUE_BLOCK) {
-            ceux_buf[ceux_n++] = ret;
+        if (out == 1) {
+           ceux_push(ret,0);
         }
     }
     
@@ -968,7 +972,7 @@ fun Coder.main (tags: Tags): String {
         //           ^ base
         
         // less rets than requested
-        if (out!=99 && ret<out) {
+        if (out!=$MULTI && ret<out) {
            // fill rets up to outs
             for (int i=0; i<out-ret; i++) {
                 ceux_push((CEU_Value) { CEU_VALUE_NIL }, 1);

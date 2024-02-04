@@ -1315,7 +1315,7 @@ class Exec_01 {
             next-dict(nil)
         """)
         //assert(out == "anon : (lin 2, col 13) : next-dict(nil) : next-dict error : expected dict\n") { out }
-        assert(out == "anon : (lin 2, col 13) : next-dict error : expected dict\n") { out }
+        assert(out == "anon : (lin 2, col 13) : next-dict(nil) : next-dict error : expected dict\n") { out }
     }
 
 
@@ -2749,7 +2749,7 @@ class Exec_01 {
     @Test
     fun func7_err() {
         val out = test("1(1)")
-        assert(out == "anon : (lin 1, col 1) : call error : expected function\n") { out }
+        assert(out == "anon : (lin 1, col 1) : 1(1) : call error : expected function\n") { out }
     }
     @Test
     fun func8() {
@@ -2882,7 +2882,7 @@ class Exec_01 {
             f()()
         """
         )
-        assert(out == "anon : (lin 3, col 13) : call error : expected function\n") { out }
+        assert(out == "anon : (lin 3, col 13) : f() : call error : expected function\n") { out }
     }
     @Test
     fun func18_rec() {

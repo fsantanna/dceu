@@ -5,6 +5,7 @@ import java.io.Reader
 import java.util.*
 
 var DEBUG = true
+val MULTI = -1
 var CEU = 1
     // 1: dyn-lex               ;; 7 normal  / 15 no dots / 9+X (:rec) valgrind errors
     // 2: defer, throw/catch

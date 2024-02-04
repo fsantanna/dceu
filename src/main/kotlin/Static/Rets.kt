@@ -12,7 +12,7 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
     fun Expr.traverse (N: Int) {
         pub[this] = N
         when (this) {
-            is Expr.Proto  -> this.blk.traverse(99)
+            is Expr.Proto  -> this.blk.traverse(MULTI)
             is Expr.Export -> this.blk.traverse(N)
             is Expr.Do     -> this.es.forEachIndexed { i,e -> e.traverse(if (i==this.es.lastIndex) N else 0) }
             is Expr.Dcl    -> this.src?.traverse(1)
@@ -69,10 +69,10 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
             is Expr.Char   -> {}
             is Expr.Num    -> {}
             is Expr.Tuple  -> this.args.forEachIndexed { i,arg ->
-                arg.traverse(if (i==this.args.lastIndex) 99 else 1)
+                arg.traverse(if (i==this.args.lastIndex) MULTI else 1)
             }
             is Expr.Vector -> this.args.forEachIndexed { i,arg ->
-                arg.traverse(if (i==this.args.lastIndex) 99 else 1)
+                arg.traverse(if (i==this.args.lastIndex) MULTI else 1)
             }
             is Expr.Dict   -> this.args.forEach { (k,v) -> k.traverse(1) ; v.traverse(1) }
             is Expr.Index  -> {
@@ -82,7 +82,7 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
             is Expr.Call   -> {
                 this.clo.traverse(1)
                 this.args.forEachIndexed { i,arg ->
-                    arg.traverse(if (i==this.args.lastIndex) 99 else 1)
+                    arg.traverse(if (i==this.args.lastIndex) MULTI else 1)
                 }
             }
         }

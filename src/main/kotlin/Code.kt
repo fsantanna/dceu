@@ -49,6 +49,13 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             """ }.joinToString("")
     }
 
+    // POP_IF_0
+    fun Expr.PI0 (v: String): String {
+        return v + (rets.pub[this]!! == 0).cond { """
+            ceux_pop(1); // PI0 (${this.dump()})
+        """ }
+    }
+
     fun Expr.code(): String {
         if (this.isdst()) {
             assert(this is Expr.Acc || this is Expr.Index || this is Expr.Pub)
@@ -105,7 +112,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }
                 """)
 
-                """ // CLO | ${this.dump()}
+                this.PI0(""" // CLO | ${this.dump()}
                 CEU_Value ceu_clo_$n = ceu_create_clo${isexe.cond{"_exe"}} (
                     ${isexe.cond{"CEU_VALUE_CLO_${this.tk.str.uppercase()},"}}
                     ceu_f_$id,
@@ -128,7 +135,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }
                     """
                 }.joinToString("\n")}
-                """
+                """)
             }
             is Expr.Export -> this.blk.es.code()
             is Expr.Do -> {
@@ -161,7 +168,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     // TODO: unlink task/block
                     ${(CEU >= 4).cond { "TODO" }}
 
-                    ceux_block_leave(ceux.base+${vars.enc_to_base[this]}, ${vars.enc_to_dcls[this]!!.size});
+                    ceux_block_leave(ceux.base+${vars.enc_to_base[this]}, ${vars.enc_to_dcls[this]!!.size}, 1 /*${rets.pub[this]!!}*/);
                     
                     // check error
                     ${(CEU >= 2).cond { """
@@ -180,7 +187,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 // DCL | ${this.dump()}
                 ${(this.src != null).cond {
                     val idx = vars.idx(this,this)
-                    """
+                    this.PI0("""
                     ${this.src!!.code()}
                     ceux_repl($idx, ceux_peek(X(-1)));
                     
@@ -195,12 +202,13 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         }
                         """ }
                     }}}
-                    """
+                    """)
                 }}
             """
             is Expr.Set -> """
                 { // SET | ${this.dump()}
                     ${this.src.code()}  // src is on the stack and should be returned
+                    // <<< SRC | DST >>>
                     ${this.dst.code()}  // dst should not pop src
                 }
             """
@@ -231,7 +239,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 ${this.cnd.code()}
                 int ceu_$n = ceu_as_bool(ceux_peek(X(-1)));
                 if (ceu_$n) {
-                    //ceux_pop(1);
                     ${this.e.cond { """
                         ceux_pop(1); // pop cnd only if e
                         ${it.code()}
@@ -243,7 +250,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             is Expr.Skip -> """ // SKIP | ${this.dump()}
                 ${this.cnd.code()}
                 int ceu_$n = ceu_as_bool(ceux_peek(X(-1)));
-                //ceux_pop(1);
+                ceux_pop(1);
                 if (ceu_$n) {
                     goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
                 }
@@ -542,8 +549,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }
                     x
                 }
-                when (this.tk_.tag) {
-                    null   -> body + "\n"
+                this.PI0(when (this.tk_.tag) {
+                    null   -> body + "\n" + "ceux_push((CEU_Value) { CEU_VALUE_NIL }, 1);\n"
                     ":ceu" -> "ceux_push($body, 1);"
                     else -> {
                         val (TAG,Tag) = this.tk_.tag.drop(1).let {
@@ -551,26 +558,25 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         }
                         "ceux_push(((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} }), 1);"
                     }
-                }
+                })
             }
             is Expr.Acc -> {
                 val idx = vars.idx(this)
                 when {
                     this.isdst() -> """
                         // ACC - SET | ${this.dump()}
-                        ceux_repl($idx, ceux_peek(X(-1)));
+                        ceux_repl($idx, ceux_peek(X(-1)));  // peek keeps src at the top
                     """
-                    else -> "ceux_push(ceux_peek($idx), 1);\n"
+                    else -> this.PI0("ceux_push(ceux_peek($idx), 1);\n")
                 }
             }
-            is Expr.Nil  -> "ceux_push((CEU_Value) { CEU_VALUE_NIL }, 1);"
-            is Expr.Tag  -> "ceux_push((CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_${this.tk.str.tag2c()}} }, 1);"
-            is Expr.Bool -> "ceux_push((CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} }, 1);"
-            is Expr.Char -> "ceux_push((CEU_Value) { CEU_VALUE_CHAR, {.Char=${this.tk.str}} }, 1);"
-            is Expr.Num  -> "ceux_push((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} }, 1);"
+            is Expr.Nil  -> this.PI0("ceux_push((CEU_Value) { CEU_VALUE_NIL }, 1);")
+            is Expr.Tag  -> this.PI0("ceux_push((CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_${this.tk.str.tag2c()}} }, 1);")
+            is Expr.Bool -> this.PI0("ceux_push((CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} }, 1);")
+            is Expr.Char -> this.PI0("ceux_push((CEU_Value) { CEU_VALUE_CHAR, {.Char=${this.tk.str}} }, 1);")
+            is Expr.Num  -> this.PI0("ceux_push((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} }, 1);")
 
-            is Expr.Tuple -> {
-                """
+            is Expr.Tuple -> this.PI0("""
                 { // TUPLE | ${this.dump()}
                     ceux_push(ceu_create_tuple(${this.args.size}), 1);
                     ${this.args.mapIndexed { i, it ->
@@ -580,10 +586,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         """
                     }.joinToString("")}
                 }
-                """
-            }
-            is Expr.Vector -> {
-                """
+            """)
+            is Expr.Vector -> this.PI0("""
                 { // VECTOR | ${this.dump()}
                     ceux_push(ceu_create_vector(), 1);
                     ${this.args.mapIndexed { i, it ->
@@ -593,25 +597,24 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         """
                     }.joinToString("")}
                 }
-                """
-            }
-            is Expr.Dict -> """
-            { // DICT | ${this.dump()}
-                ceux_push(ceu_create_dict(), 1);
-                ${this.args.map { """
-                    {
-                        ${it.first.code()}
-                        ${it.second.code()}
-                        CEU_ERROR_ASR(
-                            continue,
-                            ceu_dict_set(&ceux_peek(X(-3)).Dyn->Dict, ceux_peek(X(-2)), ceux_peek(X(-1))),
-                            "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
-                        );
-                        ceux_drop(2);
-                    }
-                """ }.joinToString("")}
-            }
-            """
+            """)
+            is Expr.Dict -> this.PI0("""
+                { // DICT | ${this.dump()}
+                    ceux_push(ceu_create_dict(), 1);
+                    ${this.args.map { """
+                        {
+                            ${it.first.code()}
+                            ${it.second.code()}
+                            CEU_ERROR_ASR(
+                                continue,
+                                ceu_dict_set(&ceux_peek(X(-3)).Dyn->Dict, ceux_peek(X(-2)), ceux_peek(X(-1))),
+                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                            );
+                            ceux_drop(2);
+                        }
+                    """ }.joinToString("")}
+                }
+            """)
             is Expr.Index -> {
                 val idx = vars.data(this).let { if (it == null) -1 else it.first!! }
                 """
@@ -640,13 +643,13 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         ceux_drop(2);    // keep src
                         """
                     }
-                    else -> """
+                    else -> this.PI0("""
                         CEU_Value ceu_$n = CEU_ERROR_ASR(continue, ceu_col_get(ceux_peek(X(-1)),ceux_peek(X(-2))), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         ceu_gc_inc(ceu_$n);
                         ceux_drop(2);
                         ceux_push(ceu_$n, 1);
                         ceu_gc_dec(ceu_$n);
-                    """
+                    """)
                 } + """
                 }
                 """
