@@ -1217,7 +1217,7 @@ class Exec_01 {
             println(x[nil])
         """)
         //assert(out == "anon : (lin 3, col 21) : dict error : index cannot be nil\n") { out }
-        assert(out == " |  anon : (lin 3, col 21)\n" +
+        assert(out == " |  anon : (lin 3, col 21) : @[(nil,10)]\n" +
                 " v  error : dict error : index cannot be nil\n") { out }
     }
     @Test
@@ -1228,7 +1228,7 @@ class Exec_01 {
             println(x[nil])
         """)
         //assert(out == "anon : (lin 3, col 17) : dict error : index cannot be nil\n") { out }
-        assert(out == " |  anon : (lin 3, col 17)\n" +
+        assert(out == " |  anon : (lin 3, col 17) : x[nil]\n" +
                 " v  error : dict error : index cannot be nil\n") { out }
     }
     @Test
@@ -1266,9 +1266,9 @@ class Exec_01 {
             set t[nil] = 1
         """)
         //assert(out == "anon : (lin 4, col 17) : dict error : index cannot be nil\n" + "nil\n") { out }
-        assert(out == " |  anon : (lin 4, col 17)\n" +
+        assert(out == " |  anon : (lin 4, col 17) : t[nil]\n" +
                 " v  error : dict error : index cannot be nil\n" +
-                "nil\n" + "nil\n") { out }
+                "nil\n") { out }
     }
     @Test
     fun de_02_next() {
@@ -1433,7 +1433,8 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 4, col 23) : index error : out of bounds\n") { out }
-        assert(out == "anon : (lin 4, col 21) : index error : out of bounds\n") { out }
+        assert(out == " |  anon : (lin 4, col 21) : v[{{#}}(v)]\n" +
+                " v  error : index error : out of bounds\n") { out }
     }
     @Test
     fun vector9_err() {

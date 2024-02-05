@@ -459,7 +459,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, $tskc);                    
                     """ })}
                     
-                    CEU_ERROR_ASR(continue, ceu_x_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                    CEU_ERROR_ASR(continue, ceu_x_$n, ${this.toerr()});
                     
                     ${inexeT.cond { """
                         if (ceu_base != CEU_ARG_ABORT) {
@@ -633,7 +633,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                             CEU_ERROR_ASR(
                                 continue,
                                 ceu_dict_set(&ceux_peek(X(-3)).Dyn->Dict, ceux_peek(X(-2)), ceux_peek(X(-1))),
-                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                                ${this.toerr()}
                             );
                             ceux_drop(2);
                         }
@@ -664,12 +664,12 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     this.isdst() -> {
                         """
                         CEU_Value ceu_$n = ceu_col_set(ceux_peek(X(-1)), ceux_peek(X(-2)), ceux_peek(X(-3)));
-                        CEU_ERROR_ASR(continue, ceu_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                        CEU_ERROR_ASR(continue, ceu_$n, ${this.toerr()});
                         ceux_drop(2);    // keep src
                         """
                     }
                     else -> this.PI0("""
-                        CEU_Value ceu_$n = CEU_ERROR_ASR(continue, ceu_col_get(ceux_peek(X(-1)),ceux_peek(X(-2))), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                        CEU_Value ceu_$n = CEU_ERROR_ASR(continue, ceu_col_get(ceux_peek(X(-1)),ceux_peek(X(-2))), ${this.toerr()});
                         ceu_gc_inc(ceu_$n);
                         ceux_drop(2);
                         ceux_push(1, ceu_$n);
