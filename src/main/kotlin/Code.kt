@@ -49,6 +49,17 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             """ }.joinToString("")
     }
 
+    fun Expr.toerr (): String {
+        val src = this.tostr(false).let {
+            it.replace('\n',' ').replace('"','\'').let { str ->
+                str.take(45).let {
+                    if (str.length<=45) it else it+"...)"
+                }
+            }
+        }
+        return "\"${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : $src\""
+    }
+
     // POP_IF_0
     fun Expr.PI0 (v: String): String {
         return v + (rets.pub[this]!! == 0).cond { """
@@ -192,7 +203,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     val idx = vars.idx(this,this)
                     this.PI0("""
                     ${this.src!!.code()}
-                    ceux_repl($idx, X(-1));
+                    ceux_copy($idx, X(-1));
                     
                     // recursive func requires its self ref upv to be reset to itself
                     ${this.src.let { proto -> (proto is Expr.Proto && proto.rec).cond {
@@ -363,9 +374,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }
                 """ }}
 
-                CEU_ERROR_CHK(continue,
-                    "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}"
-                );
+                CEU_ERROR_CHK(continue, ${this.toerr()});
                 """
             }
             is Expr.Yield -> {
@@ -476,9 +485,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         }
                     """ }}
                     
-                    CEU_ERROR_CHK(continue,
-                        "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}"
-                    );
+                    CEU_ERROR_CHK(continue, ${this.toerr()});
     
                     ${this.tsks.cond2({"""
                             CEU_REPL((CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} });
@@ -651,7 +658,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     CEU_ERROR_ASR (
                         continue,
                         ceu_col_check(ceux_peek(X(-1)),ceux_peek(X(-2))),
-                        "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                        ${this.toerr()}
                     );
                 """ + when {
                     this.isdst() -> {
@@ -717,10 +724,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         }
                     """ }}
 
-                    //static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
-                    CEU_ERROR_CHK(continue,
-                        "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}"
-                    );
+                    CEU_ERROR_CHK(continue, ${this.toerr()});
                 } // CALL | ${this.dump()}
                 """
             }

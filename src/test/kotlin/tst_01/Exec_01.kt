@@ -405,7 +405,9 @@ class Exec_01 {
         val out = test("""
             println(1[1])
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 9) : index error : expected collection\n") { out }
+        //assert(out == "anon : (lin 1, col 9) : index error : expected collection\n") { out }
+        assert(out == " |  anon : (lin 1, col 9) : 1[1]\n" +
+                " v  error : index error : expected collection\n") { out }
     }
     @Test
     fun cc_index_err2() {
@@ -414,7 +416,9 @@ class Exec_01 {
             println([1][[]])
         """.trimIndent()
         )
-        assert(out == "anon : (lin 1, col 9) : index error : expected number\n") { out }
+        //assert(out == "anon : (lin 1, col 9) : index error : expected number\n") { out }
+        assert(out == " |  anon : (lin 1, col 9) : [1][[]]\n" +
+                " v  error : index error : expected number\n") { out }
     }
     @Test
     fun cc_index23() {
@@ -433,7 +437,8 @@ class Exec_01 {
         """.trimIndent()
         )
         //assert(out == "anon : (lin 1, col 9) : index error : out of bounds\n") { out }
-        assert(out == "anon : (lin 1, col 9) : index error : out of bounds\n") { out }
+        assert(out == " |  anon : (lin 1, col 9) : [1][2]\n" +
+                " v  error : index error : out of bounds\n") { out }
     }
     @Test
     fun cc_tuple4_free() {
@@ -1211,7 +1216,9 @@ class Exec_01 {
             set x = @[(nil,10)]
             println(x[nil])
         """)
-        assert(out == "anon : (lin 3, col 21) : dict error : index cannot be nil\n") { out }
+        //assert(out == "anon : (lin 3, col 21) : dict error : index cannot be nil\n") { out }
+        assert(out == " |  anon : (lin 3, col 21)\n" +
+                " v  error : dict error : index cannot be nil\n") { out }
     }
     @Test
     fun dd_13_dict_key_nil() {
@@ -1220,7 +1227,9 @@ class Exec_01 {
             set x[nil] = 10
             println(x[nil])
         """)
-        assert(out == "anon : (lin 3, col 17) : dict error : index cannot be nil\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : dict error : index cannot be nil\n") { out }
+        assert(out == " |  anon : (lin 3, col 17)\n" +
+                " v  error : dict error : index cannot be nil\n") { out }
     }
     @Test
     fun dd_14_dict() {
@@ -1256,8 +1265,10 @@ class Exec_01 {
             println(t[nil])
             set t[nil] = 1
         """)
-        assert(out == "anon : (lin 4, col 17) : dict error : index cannot be nil\n" +
-                "nil\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : dict error : index cannot be nil\n" + "nil\n") { out }
+        assert(out == " |  anon : (lin 4, col 17)\n" +
+                " v  error : dict error : index cannot be nil\n" +
+                "nil\n" + "nil\n") { out }
     }
     @Test
     fun de_02_next() {
@@ -1316,7 +1327,8 @@ class Exec_01 {
             next-dict(nil)
         """)
         //assert(out == "anon : (lin 2, col 13) : next-dict(nil) : next-dict error : expected dict\n") { out }
-        assert(out == "anon : (lin 2, col 13) : next-dict(nil) : next-dict error : expected dict\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : next-dict(nil)\n" +
+                " v  error : next-dict error : expected dict\n") { out }
     }
 
 
@@ -1354,7 +1366,8 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 7, col 17) : index error : out of bounds\n0\n#[10]\n") { out }
-        assert(out == "anon : (lin 7, col 17) : index error : out of bounds\n") { out }
+        assert(out == " |  anon : (lin 7, col 17) : v[5]\n" +
+                " v  error : index error : out of bounds\n") { out }
     }
     @Test
     fun vector4() {
@@ -1407,7 +1420,8 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 2, col 13) : {{#}}(1) : length error : not a vector\n") { out }
-        assert(out == "anon : (lin 2, col 13) : length error : not a vector\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : {{#}}(1)\n" +
+                " v  error : length error : not a vector\n") { out }
     }
     @Test
     fun vector8_err() {
@@ -1468,7 +1482,8 @@ class Exec_01 {
         )
         //assert(out == "anon : (lin 3, col 16) : access error : \"v-1\" is ambiguous with \"v\"") { out }
         //assert(out == "anon : (lin 3, col 15) : {{#}}(v) : length error : not a vector\n") { out }
-        assert(out == "anon : (lin 3, col 15) : length error : not a vector\n") { out }
+        assert(out == " |  anon : (lin 3, col 15) : {{#}}(v)\n" +
+                " v  error : length error : not a vector\n") { out }
     }
     @Test
     fun vector16_copy() {
@@ -2129,9 +2144,8 @@ class Exec_01 {
             error(:ok)
         """
         )
-        //assert(out == "anon : (lin 5, col 13) : error(:ok) : :ok\n" +
-        //        "@[([],[])]\n") { out }
-        assert(out == "anon : (lin 5, col 13) : :ok\n" +
+        assert(out == " |  anon : (lin 5, col 13) : error(:ok)\n" +
+                " v  error : :ok\n" +
                 "@[([],[])]\n") { out }
     }
     @Test
@@ -2144,9 +2158,8 @@ class Exec_01 {
             error(:ok)
         """
         )
-        //assert(out == "anon : (lin 5, col 13) : error(:ok) : :ok\n" +
-        //        "[[1],[1]]\n") { out }
-        assert(out == "anon : (lin 5, col 13) : :ok\n" +
+        assert(out == " |  anon : (lin 5, col 13) : error(:ok)\n" +
+                " v  error : :ok\n" +
                 "[[1],[1]]\n") { out }
     }
     @Test
@@ -2750,7 +2763,8 @@ class Exec_01 {
     @Test
     fun func7_err() {
         val out = test("1(1)")
-        assert(out == "anon : (lin 1, col 1) : 1(1) : call error : expected function\n") { out }
+        assert(out == " |  anon : (lin 1, col 1) : 1(1)\n" +
+                " v  error : call error : expected function\n") { out }
     }
     @Test
     fun func8() {
@@ -2883,7 +2897,8 @@ class Exec_01 {
             f()()
         """
         )
-        assert(out == "anon : (lin 3, col 13) : f() : call error : expected function\n") { out }
+        assert(out == " |  anon : (lin 3, col 13) : f()\n" +
+                " v  error : call error : expected function\n") { out }
     }
     @Test
     fun func18_rec() {
@@ -5103,7 +5118,8 @@ class Exec_01 {
             println(u.X.v)
         """, true
         )
-        assert(out == "anon : (lin 5, col 21) : index error : out of bounds\n") { out }
+        assert(out == " |  anon : (lin 5, col 21) : u[:X]\n" +
+                " v  error : index error : out of bounds\n") { out }
     }
     @Test
     fun tplate16() {
@@ -5163,7 +5179,8 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared\n") { out }
-        assert(out == "anon : (lin 2, col 35) : index error : expected number\n") { out }
+        assert(out == " |  anon : (lin 2, col 35) : x[:s]\n" +
+                " v  error : index error : expected number\n") { out }
     }
     @Test
     fun pp_20_tplate_func() {

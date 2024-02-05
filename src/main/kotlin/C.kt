@@ -170,7 +170,7 @@ fun Coder.main (tags: Tags): String {
         CEU_VALUE type;
         union {
             //void nil;
-            char* Error;
+            char* Error;            // NULL=value on stack, !NULL=value is this string
             unsigned int Tag;
             int Bool;
             char Char;
@@ -492,10 +492,10 @@ fun Coder.main (tags: Tags): String {
     })
 
     #if CEU <= 1
-    #define CEU_ERROR_THR(cmd,msg,pre) {            \
-        fprintf(stderr, "%s : %s\n", pre, msg);     \
-        ceux_base(0);                               \
-        exit(0);                                    \
+    #define CEU_ERROR_THR(cmd,msg,pre) {                \
+        fprintf(stderr, " |  %s\n v  error : %s\n", pre, msg);  \
+        ceux_base(0);                                   \
+        exit(0);                                        \
     }
     #define CEU_ERROR_CHK(cmd,pre) {                    \
         CEU_Value v = ceux_peek(X(-1));                 \
@@ -911,14 +911,18 @@ fun Coder.main (tags: Tags): String {
         assert(i!=j && "TODO: invalid move");
         ceu_gc_dec(ceux_buf[i]);
         ceux_buf[i] = ceux_buf[j];
+        ceu_gc_inc(ceux_buf[i]);
     }
     void ceux_move (int i, int j) {
         assert(i>=0 && i<ceux_n && "TODO: stack error");
         assert(j>=0 && j<ceux_n && "TODO: stack error");
-        assert(i!=j && "TODO: invalid move");
-        ceu_gc_dec(ceux_buf[i]);
-        ceux_buf[i] = ceux_buf[j];
-        ceux_buf[j] = (CEU_Value) { CEU_VALUE_NIL };
+        if (i == j) {
+            // nothing to change
+        } else {
+            ceu_gc_dec(ceux_buf[i]);
+            ceux_buf[i] = ceux_buf[j];
+            ceux_buf[j] = (CEU_Value) { CEU_VALUE_NIL };
+        }
     }
 
     void ceux_shift (int I) {
@@ -975,7 +979,7 @@ fun Coder.main (tags: Tags): String {
     #endif
 
         for (int i=0; i<out; i++) {
-            ceux_copy(I+i, X(-i-1));
+            ceux_move(I+i, X(-i-1));
         }
         ceux_base(I + out);
     }
