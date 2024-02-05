@@ -887,10 +887,6 @@ fun Coder.main (tags: Tags): String {
         assert(i>=0 && i<ceux_n && "TODO: stack error");
         return ceux_buf[i];
     }
-    void ceux_copy (int i) {
-        assert(i>=0 && i<ceux_n && "TODO: stack error");
-        ceux_push(1, ceux_buf[i]);
-    }
     void ceux_drop (int n) {
         assert(n<=ceux_n && "BUG: index out of range");
         for (int i=0; i<n; i++) {
@@ -909,9 +905,18 @@ fun Coder.main (tags: Tags): String {
         ceu_gc_dec(ceux_buf[i]);
         ceux_buf[i] = v;
     }
+    void ceux_copy (int i, int j) {
+        assert(i>=0 && i<ceux_n && "TODO: stack error");
+        assert(j>=0 && j<ceux_n && "TODO: stack error");
+        assert(i!=j && "TODO: invalid move");
+        ceu_gc_dec(ceux_buf[i]);
+        ceux_buf[i] = ceux_buf[j];
+    }
     void ceux_move (int i, int j) {
         assert(i>=0 && i<ceux_n && "TODO: stack error");
         assert(j>=0 && j<ceux_n && "TODO: stack error");
+        assert(i!=j && "TODO: invalid move");
+        ceu_gc_dec(ceux_buf[i]);
         ceux_buf[i] = ceux_buf[j];
         ceux_buf[j] = (CEU_Value) { CEU_VALUE_NIL };
     }
@@ -970,7 +975,7 @@ fun Coder.main (tags: Tags): String {
     #endif
 
         for (int i=0; i<out; i++) {
-            ceux_repl(I+i, ceux_peek(X(-i-1)));
+            ceux_copy(I+i, X(-i-1));
         }
         ceux_base(I + out);
     }
@@ -1205,7 +1210,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_Value bool = ceux_peek(ceux_arg(X,2));
                 assert(bool.type == CEU_VALUE_BOOL);
                 f_set(bool.Bool);
-                ceux_copy(ceux_arg(X,0));  // keep dyn
+                ceux_push(1, ceux_peek(ceux_arg(X,0)));  // keep dyn
                 break;
             }
         }

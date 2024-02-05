@@ -873,9 +873,10 @@ class Exec_01 {
     fun cc_07x_global() {
         val out = test("""
             val e = func () {nil}
-            dump(e)
+            ;;dump(e)
             val g = func () {
                 val co = [e]
+                println(:e,e)
                 (co)
             }
             val x = g()

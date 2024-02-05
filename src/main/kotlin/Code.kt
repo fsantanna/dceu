@@ -192,7 +192,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     val idx = vars.idx(this,this)
                     this.PI0("""
                     ${this.src!!.code()}
-                    ceux_repl($idx, ceux_peek(X(-1)));
+                    ceux_repl($idx, X(-1));
                     
                     // recursive func requires its self ref upv to be reset to itself
                     ${this.src.let { proto -> (proto is Expr.Proto && proto.rec).cond {
@@ -583,7 +583,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 when {
                     this.isdst() -> """
                         // ACC - SET | ${this.dump()}
-                        ceux_repl($idx, ceux_peek(X(-1)));  // peek keeps src at the top
+                        ceux_copy($idx, X(-1));  // peek keeps src at the top
                     """
                     else -> this.PI0("ceux_push(1, ceux_peek($idx));\n")
                 }
