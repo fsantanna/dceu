@@ -485,9 +485,8 @@ fun Coder.main (tags: Tags): String {
         return """
     #define CEU_ERROR_ASR(cmd,v,pre) ({     \
         if (v.type == CEU_VALUE_ERROR) {    \
-            fprintf(stderr, " |  %s\n v  error : %s\n", pre, v.Error); \
-            ceux_base(0);                   \
-            exit(0);                        \
+            ceux_push(1, v);                \
+            CEU_ERROR_CHK(cmd,pre);         \
         };                                  \
         v;                                  \
     })
@@ -496,7 +495,9 @@ fun Coder.main (tags: Tags): String {
     #define CEU_ERROR_CHK(cmd,pre) {                    \
         CEU_Value v = ceux_peek(X(-1));                 \
         if (ceux_top()>0 && v.type==CEU_VALUE_ERROR) {  \
-            CEU_ERROR_THR(cmd,v.Error,pre);             \
+            fprintf(stderr, " |  %s\n v  error : %s\n", pre, v.Error); \
+            ceux_base(0);                               \
+            exit(0);                                    \
         }                                               \
     }
     #else
