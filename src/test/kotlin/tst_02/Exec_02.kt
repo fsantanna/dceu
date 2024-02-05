@@ -133,7 +133,7 @@ class Exec_02 {
             println(1)
         """)
         assert(out == " |  anon : (lin 3, col 17) : error(:y)\n" +
-                " v  throw error : :y\n") { out }
+                " v  error : :y\n") { out }
     }
     @Test
     fun jj_03_catch_err() {
@@ -150,7 +150,7 @@ class Exec_02 {
         """)
         assert(out == " |  anon : (lin 7, col 17) : f()\n" +
                 " |  anon : (lin 3, col 17) : error(:y)\n" +
-                " v  throw error : :y\n") { out }
+                " v  error : :y\n") { out }
     }
     @Test
     fun jj_04_catch() {
@@ -186,7 +186,7 @@ class Exec_02 {
         """.trimIndent())
         //assert(out == "anon : (lin 2, col 5) : throw error : expected tag\n") { out }
         assert(out == " |  anon : (lin 2, col 5) : error([])\n" +
-                " v  throw error : []\n") { out }
+                " v  error : []\n") { out }
     }
     @Test
     fun jj_06_catch() {
@@ -250,7 +250,7 @@ class Exec_02 {
         """.trimIndent()
         )
         assert(out == " |  anon : (lin 2, col 5) : error(:xxx)\n" +
-                " v  throw error : :xxx\n") { out }
+                " v  error : :xxx\n") { out }
     }
     @Test
     fun jj_10_catch() {
@@ -262,7 +262,7 @@ class Exec_02 {
             println(1)
         """)
         assert(out == " |  anon : (lin 3, col 17) : error([])\n" +
-                " v  throw error : []\n") { out }
+                " v  error : []\n") { out }
     }
     @Test
     fun jj_11_catch() {
@@ -275,7 +275,7 @@ class Exec_02 {
         """)
         //assert(out == " v  anon : (lin 2, col 35) : block escape error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 4, col 17) : error(xxx)\n" +
-                " v  throw error : []\n") { out }
+                " v  error : []\n") { out }
     }
     @Test
     fun jj_12_catch() {
@@ -356,7 +356,7 @@ class Exec_02 {
             }
         """)
         assert(out == " |  anon : (lin 4, col 17) : throw(t)\n" +
-                " v  throw error : @[]\n") { out }
+                " v  error : @[]\n") { out }
         //assert(out.contains(" v  anon : (lin 2, col 13) : block escape error : cannot copy reference out\n")) { out }
     }
     @Test
@@ -462,7 +462,7 @@ class Exec_02 {
             throw(:error)
         """)
         assert(out == " |  anon : (lin 5, col 13) : throw(:error)\n" +
-                " v  throw error : :error\n") { out }
+                " v  error : :error\n") { out }
     }
     @Test
     fun BUG_pp_04_throw_defer() {
@@ -507,7 +507,7 @@ class Exec_02 {
         """)
         assert(out == "[:x]\n" +
                 " |  anon : (lin 8, col 21) : throw([:x])\n" +
-                " v  throw error : [:x]\n") { out }
+                " v  error : [:x]\n") { out }
     }
     @Test
     fun zz_02() {
