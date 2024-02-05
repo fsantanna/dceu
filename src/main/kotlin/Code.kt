@@ -38,15 +38,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
     }
 
     fun List<Expr>.code (): String {
-        return "int ceu_seq_$N;\n" +
-            this.mapIndexed { i,e -> """
-                ceu_seq_$N = ceux_top();
-                ${e.code()}
-                assert(ceux_top()-ceu_seq_$N == 1);
-                ${(i < this.size-1).cond { """
-                    ceux_pop(1);    // pop intermediate exp
-                """ }}
-            """ }.joinToString("")
+        return this.map { it.code() }.joinToString("")
     }
 
     fun Expr.toerr (): String {
