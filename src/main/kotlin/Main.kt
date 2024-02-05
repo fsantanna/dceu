@@ -211,6 +211,7 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
         val vars   = Vars(outer, ups)
         val sta    = Static(outer, ups, vars)
         val rets   = Rets(outer, ups)
+        //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
         if (verbose) {
             System.err.println("... ceu -> c ...")
         }

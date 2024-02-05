@@ -75,20 +75,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                            // - C does not allow redeclaration (after each yield)
                            // - A task can only awake once per cycle
                            // - So it is safe to use one "global" id_evt per task
-                        """ }}
-                        
-                        // GLOBALS
-                        ${(this == outer.main()).cond { """
-                        {
-                            ${GLOBALS.mapIndexed { i,id -> """
-                            {
-                                CEU_Value clo = ceu_create_clo(ceu_${id.idc()}_f, 0, 0, 0);
-                                ceux_repl(ceux.base + $i, clo);
-                            }
-                            """ }.joinToString("")}
-                        }
-                        """ }}
-
+                        """ }}                        
                         ${isexe.cond { """
                             CEU_Clo_Mem_$id* ceu_mem = (CEU_Clo_Mem_$id*) ceu_frame->exe->mem;                    
                         """ }}
@@ -101,9 +88,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                                         return (CEU_Value) { CEU_VALUE_NIL };
                                     }
                         """}}
-                        
                         ${do_while(code)}
-
                         ${isexe.cond{"""
                                     ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
                             }
@@ -141,10 +126,28 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             is Expr.Do -> {
                 val body = this.es.code()   // before defers[this] check
                 val up = ups.pub[this]
+                val upvs = ups.first(this) { it is Expr.Proto }.let {
+                    if (it == null) 0 else {
+                        vars.proto_to_upvs[it]!!.size
+                    }
+                }
                 """
                 { // BLOCK | ${this.dump()}
-                    ceux_block_enter();
+                    // do not clear upvs
+                    ceux_block_enter(ceux.base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size});
                     
+                    // GLOBALS (must be after ceux_block_enter)
+                    ${(ups.pub[this] == outer.main()).cond { """
+                    {
+                        ${GLOBALS.mapIndexed { i,id -> """
+                        {
+                            CEU_Value clo = ceu_create_clo(ceu_${id.idc()}_f, 0, 0, 0);
+                            ceux_repl(ceux.base + $i, clo);
+                        }
+                        """ }.joinToString("")}
+                    }
+                    """ }}
+
                     // TODO: unlink task/block
                     ${(CEU >= 4).cond { "TODO" }}
 
@@ -168,7 +171,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     // TODO: unlink task/block
                     ${(CEU >= 4).cond { "TODO" }}
 
-                    ceux_block_leave(ceux.base+${vars.enc_to_base[this]}, ${vars.enc_to_dcls[this]!!.size}, 1 /*${rets.pub[this]!!}*/);
+                    ceux_block_leave(ceux.base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size}, ${rets.pub[this]!!});
                     
                     // check error
                     ${(CEU >= 2).cond { """
@@ -231,18 +234,28 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     if (CEU_BREAK) {
                         CEU_BREAK = 0;
                     } else {
-                        ceux_pop(1);
+                        //ceux_pop(1);
                         goto CEU_LOOP_START_${this.n};
                     }
             """
             is Expr.Break -> """ // BREAK | ${this.dump()}
                 ${this.cnd.code()}
                 int ceu_$n = ceu_as_bool(ceux_peek(X(-1)));
-                if (ceu_$n) {
-                    ${this.e.cond { """
-                        ceux_pop(1); // pop cnd only if e
+                    // pop condition:
+                    //  1. when false, clear for next iteration
+                    //  2. when true,  but return e is given
+                    //  3. when true,  but ret=0
+                if (!ceu_$n) {
+                    ceux_pop(1);            // (1)
+                } else {
+                    ${this.e.cond2({ """
+                        ceux_pop(1);        // (2)
                         ${it.code()}
-                    """ }}
+                    """ }, { """
+                        ${(rets.pub[this] == 0).cond { """
+                            ceux_pop(1);    // (3)
+                        """ }}
+                    """ })}
                     CEU_BREAK = 1;
                     goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
                 }

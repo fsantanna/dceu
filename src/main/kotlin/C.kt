@@ -925,16 +925,27 @@ fun Coder.main (tags: Tags): String {
         ceux_n++;
     }
     
-    void ceux_block_enter (void) {
+    // ceux_block_*
+    //  - needs to clear locals on enter and leave
+    //  - enter: initialize all vars to nil (prevents garbage)
+    //  - leave: gc locals
+    
+    void ceux_block_enter (int base, int n) {
+        // clear locals
+        // TODO: use memset=0
+        for (int i=0; i<n; i++) {
+            ceux_repl(base+i, (CEU_Value) { CEU_VALUE_NIL });
+        }        
         ceux_push(1, (CEU_Value) { CEU_VALUE_BLOCK });
     }
     
     void ceux_block_leave (int base, int n, int out) {
+        // clear locals
+        // TODO: use memset=0
         for (int i=0; i<n; i++) {
-            // XXX - TODO: clear on leaveu? should clear on enter?
             ceux_repl(base+i, (CEU_Value) { CEU_VALUE_NIL });
         }
-        
+
         int I = -1;
         for (int i=ceux_n-1; i>=0; i--) {
             if (ceux_peek(i).type == CEU_VALUE_BLOCK) {

@@ -26,6 +26,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
     // enc_to_base: base stack index at beginning of block
     //  - must pop down to it on leave
     //  - proto base is required bc block must be relative to it
+    //      - proto also has upvs at bebinning
     public val proto_to_locs: MutableMap<Expr.Proto,Int> = mutableMapOf()
     public val enc_to_base: MutableMap<Expr,Int> = mutableMapOf()
 
