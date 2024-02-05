@@ -322,7 +322,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                             ${this.blk.code()}
                         } while (0);    // catch throw
                         assert(ceux_peek(X(-1)).type!=CEU_VALUE_ERROR && "TODO: error in defer");
-                        ceux_pop(1);
                     }
                 """
                 ns.add(n)

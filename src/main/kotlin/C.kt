@@ -483,20 +483,16 @@ fun Coder.main (tags: Tags): String {
     // EXIT / ERROR / ASSERT
     fun c_exit_error (): String {
         return """
-    #define CEU_ERR_OR(err,v) ({ CEU_Value ceu=v; assert(err.type!=CEU_VALUE_ERROR && "TODO: double error"); (err.type==CEU_VALUE_ERROR ? err : ceu); })
-    #define CEU_ERROR_ASR(cmd,v,pre) ({         \
-        if (v.type == CEU_VALUE_ERROR) {            \
-            CEU_ERROR_THR(cmd,v.Error,pre);         \
-        };                                          \
-        v;                                          \
+    #define CEU_ERROR_ASR(cmd,v,pre) ({     \
+        if (v.type == CEU_VALUE_ERROR) {    \
+            fprintf(stderr, " |  %s\n v  error : %s\n", pre, v.Error); \
+            ceux_base(0);                   \
+            exit(0);                        \
+        };                                  \
+        v;                                  \
     })
 
     #if CEU <= 1
-    #define CEU_ERROR_THR(cmd,msg,pre) {                \
-        fprintf(stderr, " |  %s\n v  error : %s\n", pre, msg);  \
-        ceux_base(0);                                   \
-        exit(0);                                        \
-    }
     #define CEU_ERROR_CHK(cmd,pre) {                    \
         CEU_Value v = ceux_peek(X(-1));                 \
         if (ceux_top()>0 && v.type==CEU_VALUE_ERROR) {  \
@@ -504,19 +500,16 @@ fun Coder.main (tags: Tags): String {
         }                                               \
     }
     #else
-    #define CEU_ERROR_THR(cmd,msg,pre) {                                \
-        ceux_push(1, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} });    \
-        ceux_push(1, (CEU_Value) { CEU_VALUE_ERROR,   {.Error=msg}   });    \
-        cmd;                                                                \
-    }
     int ceu_error_chk (char* pre) {
         if (ceux_top()>0 && ceux_peek(X(-1)).type==CEU_VALUE_ERROR) {
             if (pre != NULL) {
+                [...,n,pay,err]
                 CEU_Value n = ceux_peek(X(-3));
                 assert(n.type == CEU_VALUE_NUMBER);
                 ceux_repl(X(-3), (CEU_Value) { CEU_VALUE_NUMBER, {.Number=n.Number+1} });
                 ceux_shift(X(-3));
-                ceux_repl(X(-3), (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} });
+                ceux_repl(X(-4), (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} });
+                [...,pre,n+1,pay,err]
             }
             return 1;
         } else {
@@ -530,6 +523,7 @@ fun Coder.main (tags: Tags): String {
     #endif
 
     int ceu_error_f (CEUX X) {
+        // [stk1,stk2,pay,N,err]
         assert(X.args == 1);
         CEU_Value arg = ceux_peek(ceux_arg(X,0));
         assert(arg.type == CEU_VALUE_TAG);
@@ -925,13 +919,17 @@ fun Coder.main (tags: Tags): String {
         }
     }
 
-    void ceux_shift (int I) {
-        assert(I>=0 && I<=ceux_n && "TODO: stack error");
-        for (int i=ceux_n; i>I; i--) {
-            ceux_buf[i] = ceux_buf[i-1];
+    void ceux_shift (int i) {
+        // [...,x,...]
+        //      ^ i
+        assert(i>=0 && i<=ceux_n && "TODO: stack error");
+        for (int j=ceux_n; j>i; j--) {
+            ceux_buf[j] = ceux_buf[j-1];
         }
-        ceux_buf[I] = (CEU_Value) { CEU_VALUE_NIL };
+        ceux_buf[i] = (CEU_Value) { CEU_VALUE_NIL };
         ceux_n++;
+        // [...,nil,x,...]
+        //       ^ i
     }
     
     // ceux_block_*
