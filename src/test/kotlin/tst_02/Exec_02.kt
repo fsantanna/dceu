@@ -115,7 +115,10 @@ class Exec_02 {
     @Test
     fun jj_01_catch() {
         val out = test("""
-            val err = catch ( v => do{println(v);v==:x} ) {
+            val err = catch (v => do {
+                ;;println(:v,v)
+                v == :x
+            }) {
                 error(:x)
                 println(9)
             }
@@ -282,7 +285,7 @@ class Exec_02 {
         val out = test("""
             val t = catch ( it=>true) {
                 val xxx = []
-                throw(drop(xxx))
+                error(;;;drop;;;(xxx))
             }
             println(t)
         """)
@@ -291,8 +294,8 @@ class Exec_02 {
     @Test
     fun BUG_jj_13_throw_catch_condition() {
         val out = test("""
-            catch ( it => throw(2)) {
-                throw(1)
+            catch ( it => error(2)) {
+                error(1)
             }
         """)
         assert(out.contains("main: Assertion `ceu_acc.type!=CEU_VALUE_THROW && \"TODO: throw in catch condition\"' failed.")) { out }
@@ -302,7 +305,7 @@ class Exec_02 {
         val out = test("""
             val v = catch (it => true) {
                 do {
-                    throw(:x)
+                    error(:x)
                 }
                 println(9)
             }
@@ -325,7 +328,7 @@ class Exec_02 {
         val out = test("""
             data :X = [x]
             catch ( x:X => x.x==10 ) {
-                throw([10])
+                error([10])
             }
             println(:ok)
         """)
@@ -339,7 +342,7 @@ class Exec_02 {
                 set x = it
                 it[0]==:x
             }) {
-                throw([:x])
+                error([:x])
                 println(9)
             }
             println(x)
@@ -351,11 +354,11 @@ class Exec_02 {
         val out = test("""
             do {
                 val t = @[]
-                throw(t)
+                error(t)
                 nil
             }
         """)
-        assert(out == " |  anon : (lin 4, col 17) : throw(t)\n" +
+        assert(out == " |  anon : (lin 4, col 17) : error(t)\n" +
                 " v  error : @[]\n") { out }
         //assert(out.contains(" v  anon : (lin 2, col 13) : block escape error : cannot copy reference out\n")) { out }
     }
@@ -364,7 +367,7 @@ class Exec_02 {
         val out = test("""
             val x = catch (it => true) {
                 val t = @[]
-                throw(t)
+                error(t)
                 nil
             }
             println(x)
@@ -410,7 +413,7 @@ class Exec_02 {
         val out = test("""
             catch ( it => true) {
                 defer {
-                    throw(nil)
+                    error(nil)
                 }
             }
             println(:ok)
@@ -426,7 +429,7 @@ class Exec_02 {
                 }
                 defer {
                     println(:1)
-                    throw(:err)     ;; ERR
+                    error(:err)     ;; ERR
                 }
             }
             println(:3)
@@ -442,7 +445,7 @@ class Exec_02 {
                 }
                 defer {
                     println(:2)
-                    throw(:err)     ;; ERR
+                    error(:err)     ;; ERR
                     println(:3)
                 }
                 defer {
@@ -459,18 +462,18 @@ class Exec_02 {
             defer {
                 nil
             }
-            throw(:error)
+            error(:error)
         """)
-        assert(out == " |  anon : (lin 5, col 13) : throw(:error)\n" +
+        assert(out == " |  anon : (lin 5, col 13) : error(:error)\n" +
                 " v  error : :error\n") { out }
     }
     @Test
     fun BUG_pp_04_throw_defer() {
         val out = test("""
             defer {
-                throw(:2)
+                error(:2)
             }
-            throw(:1)
+            error(:1)
         """)
         assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in defer\"' failed.")) { out }
     }
@@ -479,7 +482,7 @@ class Exec_02 {
         val out = test("""
             do {
                 defer {
-                    throw(nil)
+                    error(nil)
                 }
             }
             println(:ok)
@@ -499,14 +502,14 @@ class Exec_02 {
                     println(it) ;; [:x]
                     false
                 }) {
-                    throw([:x])
+                    error([:x])
                     println(:no)
                 }
             }
             println(:ok)
         """)
         assert(out == "[:x]\n" +
-                " |  anon : (lin 8, col 21) : throw([:x])\n" +
+                " |  anon : (lin 8, col 21) : error([:x])\n" +
                 " v  error : [:x]\n") { out }
     }
     @Test
@@ -518,7 +521,7 @@ class Exec_02 {
                     println(it) ;; [:x]
                     x
                 }) {
-                    throw([:x])
+                    error([:x])
                     println(:no)
                 }
                 println(y)

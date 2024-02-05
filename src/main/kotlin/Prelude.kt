@@ -23,7 +23,7 @@ val COMP = """
         ifs {
             (v1 is? :tag)    and (v2 is? :tag)    { `:bool (${D}v1.Tag    > ${D}v2.Tag)` }
             (v1 is? :number) and (v2 is? :number) { `:bool (${D}v1.Number > ${D}v2.Number)` }
-            else => throw(:error)
+            else => error(:error)
         }
     }
     func {{<}} (v1,v2) {

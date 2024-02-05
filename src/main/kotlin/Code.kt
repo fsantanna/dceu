@@ -297,12 +297,14 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                             ceux_pop(1);
                             continue;
                         } else {        // condition true: catch error, continue after catch block
-                            // [...,n,pay,err,cnd]
-                            CEU_Value cnd = ceux_pop(0);
-                            CEU_Value n = ceux_peek(X(-4));
+                            // [...,n,pay,err]
+                            CEU_Value cnd = ceux_pop(1);
+                            CEU_Value pay = ceux_peek(X(-2));
+                            ceu_gc_inc(pay);
+                            CEU_Value n   = ceux_peek(X(-3));
                             assert(n.type==CEU_VALUE_NUMBER && "bug found");
                             ceux_pop(n.Number+1+1+1);
-                            ceux_push(1, cnd); // evaluates catch to cnd as a whole
+                            ceux_push(0, pay); // evaluates catch to pay as a whole
                         }
                     }
                 }

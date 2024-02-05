@@ -896,7 +896,7 @@ class Exec_05 {
                 }
                 spawn( task () {
                     yield(nil) ;;thus { it => nil }
-                    throw(:error)
+                    error(:error)
                 })()
                 yield(nil) ;;thus { it => nil }
             }
@@ -905,7 +905,7 @@ class Exec_05 {
         """)
         assert(out == ":ok\n" +
                 " |  anon : (lin 13, col 13) : broadcast'(nil,:task)\n" +
-                " |  anon : (lin 8, col 21) : throw(:error)\n" +
+                " |  anon : (lin 8, col 21) : error(:error)\n" +
                 " v  throw error : :error\n") { out }
     }
 
@@ -1239,7 +1239,7 @@ class Exec_05 {
                 spawn T() in ts
                 do {
                     val t = next-tasks(ts)
-                    throw(drop(t))
+                    error(drop(t))
                 }
             }
             detrack(t) { it => println(pub(it)) }

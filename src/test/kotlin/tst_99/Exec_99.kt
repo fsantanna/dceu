@@ -763,7 +763,7 @@ class Exec_99 {
                     yield(nil) thus { it => nil }
                 } )
                 {
-                    throw(:e1)
+                    error(:e1)
                 }
             }
         """)
@@ -779,7 +779,7 @@ class Exec_99 {
                     yield(nil) thus { it => nil }
                 } )
                 {
-                    throw(:e1)
+                    error(:e1)
                 }
             }
         """)

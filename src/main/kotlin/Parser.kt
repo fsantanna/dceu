@@ -839,7 +839,7 @@ class Parser (lexer_: Lexer)
 
                 val xxcnd = this.nest("""
                     do {
-                        val ${xidtag.tostr(true)} = `:ceu ceux_peek(X(-2))`
+                        val ${xidtag.tostr(true)} = `:ceu ceux_peek(X(-2-1))` ;; -1 block sentinel
                         $xcnd
                     }
                 """)

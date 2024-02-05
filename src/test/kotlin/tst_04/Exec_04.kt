@@ -753,7 +753,7 @@ class Exec_04 {
                     yield(nil)
                     yield(nil)
                     println(:ok)
-                    throw(:XXX)
+                    error(:XXX)
                 }) ()
                 spawn (task () {
                     yield(nil)
@@ -768,7 +768,7 @@ class Exec_04 {
         assert(out == ":ok\n" +
                 " |  anon : (lin 17, col 13) : broadcast'(nil,:task)\n" +
                 " |  anon : (lin 11, col 21) : broadcast'(nil,:global)\n" +
-                " |  anon : (lin 7, col 21) : throw(:XXX)\n" +
+                " |  anon : (lin 7, col 21) : error(:XXX)\n" +
                 " v  throw error : :XXX\n") { out }
     }
 
@@ -950,7 +950,7 @@ class Exec_04 {
                     yield(nil) ;;thus { it => nil }
                 })()
                 spawn (task () {
-                    throw(:xxx)
+                    error(:xxx)
                 })()
             }
             println(10)
@@ -961,10 +961,10 @@ class Exec_04 {
     fun ee_02_throw() {
         val out = test("""
             spawn (task () {
-                throw(:err)
+                error(:err)
             })()
         """)
-        assert(out == " |  anon : (lin 2, col 13) : (spawn (task () { throw(:err) })())\n" +
+        assert(out == " |  anon : (lin 2, col 13) : (spawn (task () { error(:err) })())\n" +
                 " |  anon : (lin 3, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }

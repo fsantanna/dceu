@@ -1394,7 +1394,7 @@ class Exec_03 {
                     yield(nil)
                 } )
                 {
-                    throw(:e1)
+                    error(:e1)
                 }
             }
         """)

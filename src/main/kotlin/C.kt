@@ -894,6 +894,9 @@ fun Coder.main (tags: Tags): String {
         ceu_gc_dec(ceux_buf[i]);
         ceux_buf[i] = v;
     }
+    void ceux_dup (int i) {
+        ceux_push(1, ceux_peek(i));
+    }
     void ceux_copy (int i, int j) {
         assert(i>=0 && i<ceux_n && "TODO: stack error");
         assert(j>=0 && j<ceux_n && "TODO: stack error");
@@ -1207,7 +1210,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_Value bool = ceux_peek(ceux_arg(X,2));
                 assert(bool.type == CEU_VALUE_BOOL);
                 f_set(bool.Bool);
-                ceux_push(1, ceux_peek(ceux_arg(X,0)));  // keep dyn
+                ceux_dup(ceux_arg(X,0));  // keep dyn
                 break;
             }
         }
