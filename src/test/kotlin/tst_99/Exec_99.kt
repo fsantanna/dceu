@@ -98,7 +98,7 @@ class Exec_99 {
     @Test
     fun bb_03_or_and() {
         val out = test("""
-            println(1 or throw(5))
+            println(1 or error(5))
             println(1 and 2)
             println(nil and 2)
             println(nil or 2)
@@ -108,7 +108,7 @@ class Exec_99 {
     @Test
     fun bb_03_or_and_no() {
         val out = test("""
-            println(1 or throw(5))
+            println(1 or error(5))
             println(nil or 2)
         """)
         assert(out == "1\n2\n") { out }
@@ -120,7 +120,7 @@ class Exec_99 {
 ^[3,25](if ^[3,28]ceu_6 ^[3,34]{
 ^[4,29]ceu_6
 } else ^[5,32]{
-^[2,26]^[2,26]throw(^[2,32]5)
+^[2,26]^[2,26]error(^[2,32]5)
 })
 })
 )

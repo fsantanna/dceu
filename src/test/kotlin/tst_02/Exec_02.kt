@@ -107,7 +107,7 @@ class Exec_02 {
     fun jj_00_catch_err() {
         val out = test("""
             val err = catch ( it => set it=nil ) {
-                throw(:x)
+                error(:x)
             }
         """)
         assert(out == "anon : (lin 2, col 37) : set error : destination is immutable\n") { out }
@@ -116,7 +116,7 @@ class Exec_02 {
     fun jj_01_catch() {
         val out = test("""
             val err = catch ( v => do{println(v);v==:x} ) {
-                throw(:x)
+                error(:x)
                 println(9)
             }
             println(err)
@@ -127,19 +127,19 @@ class Exec_02 {
     fun jj_02_catch_err() {
         val out = test("""
             catch (it=>it==:x) {
-                throw(:y)
+                error(:y)
                 println(9)
             }
             println(1)
         """)
-        assert(out == " |  anon : (lin 3, col 17) : throw(:y)\n" +
+        assert(out == " |  anon : (lin 3, col 17) : error(:y)\n" +
                 " v  throw error : :y\n") { out }
     }
     @Test
     fun jj_03_catch_err() {
         val out = test("""
             val f = func () {
-                throw(:y)
+                error(:y)
                 println(9)
             }
             catch (it=>it==:x) {
@@ -149,7 +149,7 @@ class Exec_02 {
             println(1)
         """)
         assert(out == " |  anon : (lin 7, col 17) : f()\n" +
-                " |  anon : (lin 3, col 17) : throw(:y)\n" +
+                " |  anon : (lin 3, col 17) : error(:y)\n" +
                 " v  throw error : :y\n") { out }
     }
     @Test
@@ -158,7 +158,7 @@ class Exec_02 {
             var f
             set f = func () {
                 catch (it => it==:xxx) {
-                    throw(:yyy)
+                    error(:yyy)
                     println(91)
                 }
                 println(9)
@@ -179,13 +179,13 @@ class Exec_02 {
         DEBUG = true
         val out = test("""
             catch (it=> it==:x) {
-                throw([])
+                error([])
                 println(9)
             }
             println(1)
         """.trimIndent())
         //assert(out == "anon : (lin 2, col 5) : throw error : expected tag\n") { out }
-        assert(out == " |  anon : (lin 2, col 5) : throw([])\n" +
+        assert(out == " |  anon : (lin 2, col 5) : error([])\n" +
                 " v  throw error : []\n") { out }
     }
     @Test
@@ -196,13 +196,13 @@ class Exec_02 {
                     catch ( it=>it==:e3) {
                         catch ( it => it==:e4 ) {
                             println(1)
-                            throw(:e3)
+                            error(:e3)
                             println(99)
                         }
                         println(99)
                     }
                     println(2)
-                    throw(:e1)
+                    error(:e1)
                     println(99)
                 }
                 println(99)
@@ -215,7 +215,7 @@ class Exec_02 {
     fun jj_07_catch_err() {
         val out = test("""
             catch ( it => true ) {
-                throw(:y)
+                error(:y)
                 println(9)
             }
             println(1)
@@ -230,7 +230,7 @@ class Exec_02 {
             catch ( it => it==do {
                 :x
             } ) {
-                throw(:x)
+                error(:x)
                 println(9)
             }
             println(1)
@@ -243,25 +243,25 @@ class Exec_02 {
         val out = test(
             """
             catch ( it => false) {
-                throw(:xxx)
+                error(:xxx)
                 println(9)
             }
             println(1)
         """.trimIndent()
         )
-        assert(out == " |  anon : (lin 2, col 5) : throw(:xxx)\n" +
+        assert(out == " |  anon : (lin 2, col 5) : error(:xxx)\n" +
                 " v  throw error : :xxx\n") { out }
     }
     @Test
     fun jj_10_catch() {
         val out = test("""
             catch (it => false) {
-                throw([])
+                error([])
                 println(9)
             }
             println(1)
         """)
-        assert(out == " |  anon : (lin 3, col 17) : throw([])\n" +
+        assert(out == " |  anon : (lin 3, col 17) : error([])\n" +
                 " v  throw error : []\n") { out }
     }
     @Test
@@ -269,12 +269,12 @@ class Exec_02 {
         val out = test("""
             catch ( it => it==[]) {
                 val xxx = []
-                throw(xxx)
+                error(xxx)
             }
             println(1)
         """)
         //assert(out == " v  anon : (lin 2, col 35) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 4, col 17) : throw(xxx)\n" +
+        assert(out == " |  anon : (lin 4, col 17) : error(xxx)\n" +
                 " v  throw error : []\n") { out }
     }
     @Test

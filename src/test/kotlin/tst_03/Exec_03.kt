@@ -839,7 +839,7 @@ class Exec_03 {
         val out = test("""
             var co
             set co = coroutine(coro (x) {
-                throw(:e2)
+                error(:e2)
             })
             catch ( it=>:e2) {
                 resume co(1)
@@ -855,7 +855,7 @@ class Exec_03 {
             var co
             set co = coroutine(coro () {
                 yield(nil) ;;thus { it => nil }
-                throw(:e2)
+                error(:e2)
             })
             catch ( it=>:e2) {
                 resume co()
@@ -874,11 +874,11 @@ class Exec_03 {
             set co = coroutine (coro () {
                 catch ( it => :e1) {
                     yield(nil) ;;thus { it => nil }
-                    throw(:e1)
+                    error(:e1)
                 }
                 println(:e1)
                 yield(nil) ;;thus { it => nil }
-                throw(:e2)
+                error(:e2)
             })
             catch ( it=>:e2) {
                 resume co()
@@ -898,7 +898,7 @@ class Exec_03 {
                     func (it) { nil } (nil)
                 } )
                 {
-                    throw(:e1)
+                    error(:e1)
                 }
             }
         """)
@@ -917,7 +917,7 @@ class Exec_03 {
             val co = coroutine(CO)
             resume co()
             catch ( it=>true){
-                throw(nil)
+                error(nil)
             }
             println(:ok)
         """

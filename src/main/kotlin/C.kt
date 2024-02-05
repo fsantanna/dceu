@@ -495,6 +495,7 @@ fun Coder.main (tags: Tags): String {
     #define CEU_ERROR_CHK(cmd,pre) {                    \
         CEU_Value v = ceux_peek(X(-1));                 \
         if (ceux_top()>0 && v.type==CEU_VALUE_ERROR) {  \
+            assert(v.Error != NULL);                    \
             fprintf(stderr, " |  %s\n v  error : %s\n", pre, v.Error); \
             ceux_base(0);                               \
             exit(0);                                    \
@@ -524,27 +525,22 @@ fun Coder.main (tags: Tags): String {
     #endif
 
     int ceu_error_f (CEUX X) {
-        // [stk1,stk2,pay,N,err]
         assert(X.args == 1);
+    #if CEU < 2
         CEU_Value arg = ceux_peek(ceux_arg(X,0));
         assert(arg.type == CEU_VALUE_TAG);
         CEU_Value ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error=ceu_tag_to_string(arg.Tag)} };
         ceux_push(1, ret);
         return 1;
-    }        
-    """
-    }
-    val c_throw = (CEU >= 2).cond { """
-    #if CEU >= 2
-    int ceu_throw_f (CEUX X) {
-        assert(X.args == 1);
+    #else
         ceux_push(1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=0} });
         ceux_push(1, ceux_peek(ceux_arg(X,0)));
         ceux_push(1, (CEU_Value) { CEU_VALUE_ERROR, {.Error=NULL} });
         return 3;
-    }
     #endif
-    """ }
+    }        
+    """
+    }
 
     // GC
     fun gc (): String {
@@ -2043,7 +2039,7 @@ fun Coder.main (tags: Tags): String {
         h_frame_block() + h_value_dyn() + h_tags() +
         h2_ceux +
         c_globals() + h_protos() +
-        dumps() + c_exit_error() + c_throw + gc() + c_tags() +
+        dumps() + c_exit_error() + gc() + c_tags() +
         c_ceux + c_impls() +
         // block-task-up, hold, bcast
         tuple_vector_dict() + creates() +

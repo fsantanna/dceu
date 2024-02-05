@@ -19,10 +19,10 @@ class Parser_02 {
 
     @Test
     fun bb_01_throw_catch() {
-        val l = lexer("catch ( it=>1) { throw(1) }")
+        val l = lexer("catch ( it=>1) { error(1) }")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "catch (it => 1) {\nthrow(1)\n}\n") { e.tostr() }
+        assert(e.tostr() == "catch (it => 1) {\nerror(1)\n}\n") { e.tostr() }
     }
     @Test
     fun bb_02_throw_catch() {
