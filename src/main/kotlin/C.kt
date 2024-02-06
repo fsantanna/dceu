@@ -2125,7 +2125,7 @@ fun Coder.main (tags: Tags): String {
         tuple_vector_dict() + creates() +
         print() + eq_neq_len() +
         // throw, pointer-to-string
-        c_exes +
+        (CEU>=3).cond { c_exes } +
         // isexe-coro-status-exe-kill, task, track
         main()
     )
