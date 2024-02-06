@@ -512,13 +512,15 @@ fun Coder.main (tags: Tags): String {
         if (ceux_top()==0 || err.type!=CEU_VALUE_ERROR) {
             return 0;
         } else {
-            // [...,n,pay,err]
-            CEU_Value n = ceux_peek(X(-3));
-            assert(n.type == CEU_VALUE_NUMBER);
-            ceux_repl(X(-3), (CEU_Value) { CEU_VALUE_NUMBER, {.Number=n.Number+1} });
-            ceux_shift(X(-3));
-            ceux_repl(X(-4), (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} });
-            // [...,pre,n+1,pay,err]
+            if (pre != NULL) {      // blocks check but do not add a message
+                // [...,n,pay,err]
+                CEU_Value n = ceux_peek(X(-3));
+                assert(n.type == CEU_VALUE_NUMBER);
+                ceux_repl(X(-3), (CEU_Value) { CEU_VALUE_NUMBER, {.Number=n.Number+1} });
+                ceux_shift(X(-3));
+                ceux_repl(X(-4), (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} });
+                // [...,pre,n+1,pay,err]
+            }
             return 1;
         }
     }
