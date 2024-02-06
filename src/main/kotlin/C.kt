@@ -494,11 +494,11 @@ fun Coder.main (tags: Tags): String {
 
     #if CEU <= 1
     #define CEU_ERROR_CHK(cmd,pre) {                    \
-        if (ceux_top()>0 && ceux_peek(X(-1)).type==CEU_VALUE_ERROR) {  \
-            CEU_Value msg = ceux_peek(X(-2));           \
+        if (ceux_top(X.s)>0 && ceux_peek(X.s,ceux_inv(-1)).type==CEU_VALUE_ERROR) {  \
+            CEU_Value msg = ceux_peek(X.s, ceux_inv(-2));           \
             assert(msg.type == CEU_VALUE_POINTER);      \
             fprintf(stderr, " |  %s\n v  error : %s\n", pre, (char*) msg.Pointer); \
-            ceux_base(0);                               \
+            ceux_base(X.s, 0);                               \
             exit(0);                                    \
         }                                               \
     }
@@ -508,17 +508,17 @@ fun Coder.main (tags: Tags): String {
             cmd;                    \
         }
     int ceu_error_chk (char* pre) {
-        CEU_Value err = ceux_peek(X(-1));
-        if (ceux_top()==0 || err.type!=CEU_VALUE_ERROR) {
+        CEU_Value err = ceux_peek(X.s, ceux_inv(-1));
+        if (ceux_top(X.s)==0 || err.type!=CEU_VALUE_ERROR) {
             return 0;
         } else {
             if (pre != NULL) {      // blocks check but do not add a message
                 // [...,n,pay,err]
-                CEU_Value n = ceux_peek(X(-3));
+                CEU_Value n = ceux_peek(X.s, ceux_inv(-3));
                 assert(n.type == CEU_VALUE_NUMBER);
-                ceux_repl(X(-3), (CEU_Value) { CEU_VALUE_NUMBER, {.Number=n.Number+1} });
-                ceux_shift(X(-3));
-                ceux_repl(X(-4), (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} });
+                ceux_repl(X.s, ceux_inv(-3), (CEU_Value) { CEU_VALUE_NUMBER, {.Number=n.Number+1} });
+                ceux_shift(X.s, ceux_inv(-3));
+                ceux_repl(X.s, ceux_inv(-4), (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} });
                 // [...,pre,n+1,pay,err]
             }
             return 1;
@@ -528,32 +528,32 @@ fun Coder.main (tags: Tags): String {
 
     int ceu_error_e (CEU_Value e) {
         assert(e.type == CEU_VALUE_ERROR);
-        ceux_push(1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=0} });
-        ceux_push(1, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=e.Error} });
-        ceux_push(1, (CEU_Value) { CEU_VALUE_ERROR, {.Error=NULL} });
+        ceux_push(X.s, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=0} });
+        ceux_push(X.s, 1, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=e.Error} });
+        ceux_push(X.s, 1, (CEU_Value) { CEU_VALUE_ERROR, {.Error=NULL} });
         return 3;
     }
     int ceu_error_s (char* s) {
-        ceux_push(1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=0} });
-        ceux_push(1, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=s} });
-        ceux_push(1, (CEU_Value) { CEU_VALUE_ERROR });
+        ceux_push(X.s, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=0} });
+        ceux_push(X.s, 1, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=s} });
+        ceux_push(X.s, 1, (CEU_Value) { CEU_VALUE_ERROR });
         return 3;
     }
     int ceu_error_v (CEU_Value v) {
-        ceux_push(1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=0} });
-        ceux_push(1, v);
-        ceux_push(1, (CEU_Value) { CEU_VALUE_ERROR, {.Error=NULL} });
+        ceux_push(X.s, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=0} });
+        ceux_push(X.s, 1, v);
+        ceux_push(X.s, 1, (CEU_Value) { CEU_VALUE_ERROR, {.Error=NULL} });
         return 3;
     }
 
     int ceu_error_f (CEUX X) {
         assert(X.args == 1);
     #if CEU < 2
-        CEU_Value arg = ceux_peek(ceux_arg(X,0));
+        CEU_Value arg = ceux_peek(X.s, ceux_arg(X,0));
         assert(arg.type == CEU_VALUE_TAG);
         return ceu_error_s(ceu_tag_to_string(arg.Tag));
     #else
-        return ceu_error_v(ceux_peek(ceux_arg(X,0)));
+        return ceu_error_v(ceux_peek(X.s, ceux_arg(X,0)));
     #endif
     }        
     """
@@ -827,7 +827,14 @@ fun Coder.main (tags: Tags): String {
 
     // CEUX
     val h1_ceux = """
+    #define CEU_VSTK_MAX $STACK
+    typedef struct CEU_Vstk {
+        int n;
+        CEU_Value buf[CEU_VSTK_MAX];
+    } CEU_Vstk;
+    
     typedef struct CEUX {
+        CEU_Vstk vstk;
         int base;   // index above args
         int args;   // number of args
     #if CEU >= 3
@@ -851,104 +858,102 @@ fun Coder.main (tags: Tags): String {
     val h2_ceux = """
     #define ceux_arg(X,i) (X.base - X.args + i)
     int X (int i);
-    int ceux_top (void);
-    void ceux_base (int base);
-    CEU_Value ceux_pop (int dec);
-    void ceux_push (int inc, CEU_Value v);
-    CEU_Value ceux_peek (int i);
-    void ceux_repl (int i, CEU_Value v);
-    void ceux_shift (int I);
-    void ceux_drop (int n);        
+    int ceux_top (CEU_Vstk* s, void);
+    void ceux_base (CEU_Vstk* s, int base);
+    CEU_Value ceux_pop (CEU_Vstk* s, int dec);
+    void ceux_push (CEU_Vstk* s, int inc, CEU_Value v);
+    CEU_Value ceux_peek (CEU_Vstk* s, int i);
+    void ceux_repl (CEU_Vstk* s, int i, CEU_Value v);
+    void ceux_shift (CEU_Vstk* s, int I);
+    void ceux_drop (CEU_Vstk* s, int n);        
     """
     val c_ceux = """
-    #define CEU_VSTK_MAX $STACK
-    CEU_Value ceux_buf[CEU_VSTK_MAX];
-    int ceux_n = 0;
+    CEU_Vstk ceu_vstk = { 0, {} };
             
     int X (int i) {
         assert(i < 0);
         return ceux_n + i;
     };
 
-    void ceux_dump (int n) {
-        for (int i=n; i<ceux_n; i++) {
-            printf(">>> [%d]: [%d] ", i, ceux_peek(i).type);
-            ceu_print1(ceux_peek(i));
+    void ceux_dump (CEU_Vstk* s, int n) {
+        for (int i=n; i<s->n; i++) {
+            printf(">>> [%d]: [%d] ", i, ceux_peek(s,i).type);
+            ceu_print1(ceux_peek(s,i));
             puts("");
         }
     }
-    int ceux_top (void) {
-        return ceux_n;
+    int ceux_top (CEU_Vstk* s) {
+        return s->n;
     }
-    void ceux_push (int inc, CEU_Value v) {
-        assert(ceux_n<CEU_VSTK_MAX && "TODO: stack error");
+    void ceux_push (CEU_Vstk* s, int inc, CEU_Value v) {
+        assert(s->n<CEU_VSTK_MAX && "TODO: stack error");
         if (inc) {
             ceu_gc_inc(v);
         }
-        ceux_buf[ceux_n++] = v;
+        s->buf[s->n++] = v;
     }
-    CEU_Value ceux_pop (int dec) {
-        assert(ceux_n>0 && "TODO: stack error");
-        CEU_Value v = ceux_buf[--ceux_n];
+    CEU_Value ceux_pop (CEU_Vstk* s, int dec) {
+        assert(s->n>0 && "TODO: stack error");
+        CEU_Value v = s->buf[--s->n];
         if (dec) {
             ceu_gc_dec(v);
         }
         return v;
     }
-    CEU_Value ceux_peek (int i) {
-        assert(i>=0 && i<ceux_n && "TODO: stack error");
-        return ceux_buf[i];
+    CEU_Value ceux_peek (CEU_Vstk* s, int i) {
+        assert(i>=0 && i<s->n && "TODO: stack error");
+        return s->buf[i];
     }
-    void ceux_drop (int n) {
-        assert(n<=ceux_n && "BUG: index out of range");
+    void ceux_drop (CEU_Vstk* s, int n) {
+        assert(n<=s->n && "BUG: index out of range");
         for (int i=0; i<n; i++) {
-            ceu_gc_dec(ceux_buf[--ceux_n]);
+            ceu_gc_dec(s->buf[--s->n]);
         }
     }
-    void ceux_base (int base) {
-        assert(base>=0 && base<=ceux_n && "TODO: stack error");
-        for (int i=ceux_n; i>base; i--) {
-            ceu_gc_dec(ceux_buf[--ceux_n]);
+    void ceux_base (CEU_Vstk* s, int base) {
+        assert(base>=0 && base<=s->n && "TODO: stack error");
+        for (int i=s->n; i>base; i--) {
+            ceu_gc_dec(s->buf[--s->n]);
         }
     }
-    void ceux_repl (int i, CEU_Value v) {
-        assert(i>=0 && i<ceux_n && "TODO: stack error");
+    void ceux_repl (CEU_Vstk* s, int i, CEU_Value v) {
+        assert(i>=0 && i<s->n && "TODO: stack error");
         ceu_gc_inc(v);
-        ceu_gc_dec(ceux_buf[i]);
-        ceux_buf[i] = v;
+        ceu_gc_dec(s->buf[i]);
+        s->buf[i] = v;
     }
-    void ceux_dup (int i) {
-        ceux_push(1, ceux_peek(i));
+    void ceux_dup (CEU_Vstk* s, int i) {
+        ceux_push(s, 1, ceux_peek(s,i));
     }
-    void ceux_copy (int i, int j) {
-        assert(i>=0 && i<ceux_n && "TODO: stack error");
-        assert(j>=0 && j<ceux_n && "TODO: stack error");
+    void ceux_copy (CEU_Vstk* s, int i, int j) {
+        assert(i>=0 && i<s->n && "TODO: stack error");
+        assert(j>=0 && j<s->n && "TODO: stack error");
         assert(i!=j && "TODO: invalid move");
-        ceu_gc_dec(ceux_buf[i]);
-        ceux_buf[i] = ceux_buf[j];
-        ceu_gc_inc(ceux_buf[i]);
+        ceu_gc_dec(s->buf[i]);
+        s->buf[i] = s->buf[j];
+        ceu_gc_inc(s->buf[i]);
     }
-    void ceux_move (int i, int j) {
-        assert(i>=0 && i<ceux_n && "TODO: stack error");
-        assert(j>=0 && j<ceux_n && "TODO: stack error");
+    void ceux_move (CEU_Vstk* s, int i, int j) {
+        assert(i>=0 && i<s->n && "TODO: stack error");
+        assert(j>=0 && j<s->n && "TODO: stack error");
         if (i == j) {
             // nothing to change
         } else {
-            ceu_gc_dec(ceux_buf[i]);
-            ceux_buf[i] = ceux_buf[j];
-            ceux_buf[j] = (CEU_Value) { CEU_VALUE_NIL };
+            ceu_gc_dec(s->buf[i]);
+            s->buf[i] = s->buf[j];
+            s->buf[j] = (CEU_Value) { CEU_VALUE_NIL };
         }
     }
 
-    void ceux_shift (int i) {
+    void ceux_shift (CEU_Vstk* s, int i) {
         // [...,x,...]
         //      ^ i
-        assert(i>=0 && i<=ceux_n && "TODO: stack error");
-        for (int j=ceux_n; j>i; j--) {
-            ceux_buf[j] = ceux_buf[j-1];
+        assert(i>=0 && i<=s->n && "TODO: stack error");
+        for (int j=s->n; j>i; j--) {
+            s->buf[j] = s->buf[j-1];
         }
-        ceux_buf[i] = (CEU_Value) { CEU_VALUE_NIL };
-        ceux_n++;
+        s->buf[i] = (CEU_Value) { CEU_VALUE_NIL };
+        s->n++;
         // [...,nil,x,...]
         //       ^ i
     }
@@ -958,25 +963,25 @@ fun Coder.main (tags: Tags): String {
     //  - enter: initialize all vars to nil (prevents garbage)
     //  - leave: gc locals
     
-    void ceux_block_enter (int base, int n) {
+    void ceux_block_enter (CEU_Vstk* s, int base, int n) {
         // clear locals
         // TODO: use memset=0
         for (int i=0; i<n; i++) {
-            ceux_repl(base+i, (CEU_Value) { CEU_VALUE_NIL });
+            ceux_repl(s, base+i, (CEU_Value) { CEU_VALUE_NIL });
         }        
-        ceux_push(1, (CEU_Value) { CEU_VALUE_BLOCK });
+        ceux_push(s, 1, (CEU_Value) { CEU_VALUE_BLOCK });
     }
     
-    void ceux_block_leave (int base, int n, int out) {
+    void ceux_block_leave (CEU_Vstk* s, int base, int n, int out) {
         // clear locals
         // TODO: use memset=0
         for (int i=0; i<n; i++) {
-            ceux_repl(base+i, (CEU_Value) { CEU_VALUE_NIL });
+            ceux_repl(s, base+i, (CEU_Value) { CEU_VALUE_NIL });
         }
 
         int I = -1;
-        for (int i=ceux_n-1; i>=0; i--) {
-            if (ceux_peek(i).type == CEU_VALUE_BLOCK) {
+        for (int i=s->n-1; i>=0; i--) {
+            if (ceux_peek(s.i).type == CEU_VALUE_BLOCK) {
                 I = i;
                 break;
             }
@@ -990,22 +995,22 @@ fun Coder.main (tags: Tags): String {
         //  - n   - number of error messages
         //  - pay - error payload
         //  - err - error value
-        if (ceux_peek(X(-1)).type == CEU_VALUE_ERROR) {
-            CEU_Value n = ceux_peek(X(-3));
+        if (ceux_peek(s,X(-1)).type == CEU_VALUE_ERROR) {
+            CEU_Value n = ceux_peek(s,X(-3));
             assert(n.type == CEU_VALUE_NUMBER);
             out = n.Number + 1 + 1 + 1;
         }
     #endif
 
         for (int i=0; i<out; i++) {
-            ceux_move(I+i, X(-out+i));
+            ceux_move(s, I+i, X(-out+i));
         }
-        ceux_base(I + out);
+        ceux_base(s, I + out);
     }
     
-    int ceux_call (CEU3(CEU_Exe* exe COMMA) int inp, int out) {
+    int ceux_call (CEU_Vstk* s, int inp, int out CEU3(COMMA CEU_Exe* exe) ) {
         // [clo,args]
-        CEU_Value clo = ceux_peek(X(-inp-1));
+        CEU_Value clo = ceux_peek(s, X(-inp-1));
         if (CEU3(exe==NULL &&) clo.type!=CEU_VALUE_CLO_FUNC) {
             // coro/task are called indirectly
             return ceu_error_s("call error : expected function");
@@ -1016,21 +1021,21 @@ fun Coder.main (tags: Tags): String {
             int N = clo.Dyn->Clo.args - inp;
             //printf(">>> %d\inp", N);
             for (int i=0; i<N; i++) {
-                ceux_push(1, (CEU_Value) { CEU_VALUE_NIL });
+                ceux_push(s, 1, (CEU_Value) { CEU_VALUE_NIL });
                 inp++;
             }
         }
 
-        int base = ceux_n;
+        int base = s->n;
 
         // [clo,args,?]
         //           ^ base
 
         for (int i=0; i<clo.Dyn->Clo.upvs.its; i++) {
-            ceux_push(1, clo.Dyn->Clo.upvs.buf[i]);
+            ceux_push(s, 1, clo.Dyn->Clo.upvs.buf[i]);
         }
         for (int i=0; i<clo.Dyn->Clo.locs; i++) {
-            ceux_push(1, (CEU_Value) { CEU_VALUE_NIL });
+            ceux_push(s, 1, (CEU_Value) { CEU_VALUE_NIL });
         }
         
         // [clo,args,upvs,locs]
@@ -1049,8 +1054,8 @@ fun Coder.main (tags: Tags): String {
         //  - n   - number of error messages
         //  - pay - error payload
         //  - err - error value
-        if (ceux_peek(X(-1)).type == CEU_VALUE_ERROR) {
-            CEU_Value n = ceux_peek(X(-3));
+        if (ceux_peek(s,X(-1)).type == CEU_VALUE_ERROR) {
+            CEU_Value n = ceux_peek(s,X(-3));
             assert(n.type == CEU_VALUE_NUMBER);
             ret = out = n.Number + 1 + 1 + 1;
         }
@@ -1063,7 +1068,7 @@ fun Coder.main (tags: Tags): String {
         } else if (ret < out) {     // less rets than requested
            // fill rets up to outs
             for (int i=0; i<out-ret; i++) {
-                ceux_push(1, (CEU_Value) { CEU_VALUE_NIL });
+                ceux_push(s, 1, (CEU_Value) { CEU_VALUE_NIL });
             }
             out = out;
         } else {                    // enough rets than requested
@@ -1076,13 +1081,13 @@ fun Coder.main (tags: Tags): String {
         
         // move rets to begin, replacing [clo,args,upvs,locs]
         for (int i=0; i<out; i++) {
-            ceux_move(base-inp-1+i, ceux_n-out+i);
+            ceux_move(s, base-inp-1+i, s->n-out+i);
         }
         
         // [outs,x,x,x,x]
         //           ^ base
 
-        ceux_base(base-inp-1+out);
+        ceux_base(s, base-inp-1+out);
         
         // [outs]
         //      ^ base
@@ -1091,15 +1096,15 @@ fun Coder.main (tags: Tags): String {
     }
     
 #if CEU >= 3
-    int ceux_resume (int inp, int out) {
-        CEU_Value co = ceux_peek(X(-inp-1));
+    int ceux_resume (CEU_Vstk* s, int inp, int out) {
+        CEU_Value co = ceux_peek(s, X(-inp-1));
         if (co.type!=CEU_VALUE_EXE_CORO || co.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED) {
             return ceu_error_s("resume error : expected yielded coro");
         }
         // [exe,...]
-        ceux_repl(X(-inp-2), co.Dyn->Exe.clo);
+        ceux_repl(s, X(-inp-2), co.Dyn->Exe.clo);
         // [clo,...]
-        return ceux_call((CEU_Exe*)co.Dyn, inp, out);
+        return ceux_call(s, inp, out, (CEU_Exe*)co.Dyn);
     }
 #endif
     """
@@ -1114,7 +1119,7 @@ fun Coder.main (tags: Tags): String {
     int ceu_dump_f (CEUX X) {
         assert(X.args == 1);
     #ifdef CEU_DEBUG
-        ceu_dump_value(ceux_peek(ceux_arg(X,0)));
+        ceu_dump_value(ceux_peek(X.stk, ceux_arg(X,0)));
         return 0;
     #else
         return ceu_error_s("debug is off");
@@ -1126,8 +1131,8 @@ fun Coder.main (tags: Tags): String {
     }
     int ceu_type_f (CEUX X) {
         assert(X.args==1 && "bug found");
-        int type = ceux_peek(ceux_arg(X,0)).type;
-        ceux_push(1, (CEU_Value) { CEU_VALUE_TAG, {.Tag=type} });
+        int type = ceux_peek(X.stk, ceux_arg(X,0)).type;
+        ceux_push(X.stk, 1, (CEU_Value) { CEU_VALUE_TAG, {.Tag=type} });
         return 1;
     }
     
@@ -1157,10 +1162,10 @@ fun Coder.main (tags: Tags): String {
     }
     int ceu_sup_question__f (CEUX X) {
         assert(X.args >= 2);
-        CEU_Value sup = ceux_peek(ceux_arg(X,0));
-        CEU_Value sub = ceux_peek(ceux_arg(X,1));
+        CEU_Value sup = ceux_peek(X.s, ceux_arg(X,0));
+        CEU_Value sub = ceux_peek(X.s, ceux_arg(X,1));
         CEU_Value ret = _ceu_sup_(sup, sub);
-        ceux_push(1, ret);
+        ceux_push(X.s, 1, ret);
         return 1;
     }
     
@@ -1186,11 +1191,11 @@ fun Coder.main (tags: Tags): String {
         
     int ceu_tags_f (CEUX X) {
         assert(X.args >= 1);
-        CEU_Value dyn = ceux_peek(ceux_arg(X,0));
+        CEU_Value dyn = ceux_peek(X.s, ceux_arg(X,0));
         assert(dyn.type > CEU_VALUE_DYNAMIC);
         CEU_Value tag; // = (CEU_Value) { CEU_VALUE_NIL };
         if (X.args >= 2) {
-            tag = ceux_peek(ceux_arg(X,1));
+            tag = ceux_peek(X.s, ceux_arg(X,1));
             assert(tag.type == CEU_VALUE_TAG);
         }
         
@@ -1235,19 +1240,19 @@ fun Coder.main (tags: Tags): String {
         switch (X.args) {
             case 1: {   // all tags
                 CEU_Value ret = _ceu_tags_all_(dyn);
-                ceux_push(1, ret);
+                ceux_push(X.s, 1, ret);
                 break;
             }
             case 2: {   // check tag
                 CEU_Value ret = f_chk();
-                ceux_push(1, ret);
+                ceux_push(X.s, 1, ret);
                 break;
             }
             default: {   // add/rem tag
-                CEU_Value bool = ceux_peek(ceux_arg(X,2));
+                CEU_Value bool = ceux_peek(X.s, ceux_arg(X,2));
                 assert(bool.type == CEU_VALUE_BOOL);
                 f_set(bool.Bool);
-                ceux_dup(ceux_arg(X,0));  // keep dyn
+                ceux_dup(X.s, ceux_arg(X,0));  // keep dyn
                 break;
             }
         }
@@ -1266,7 +1271,7 @@ fun Coder.main (tags: Tags): String {
     }
     int ceu_string_dash_to_dash_tag_f (CEUX X) {
         assert(X.args == 1);
-        CEU_Value str = ceux_peek(ceux_arg(X,0));
+        CEU_Value str = ceux_peek(X.s, ceux_arg(X,0));
         assert(str.type==CEU_VALUE_VECTOR && str.Dyn->Vector.unit==CEU_VALUE_CHAR);
         CEU_Tags_Names* cur = CEU_TAGS;
         CEU_Value ret = (CEU_Value) { CEU_VALUE_NIL };
@@ -1277,7 +1282,7 @@ fun Coder.main (tags: Tags): String {
             }
             cur = cur->next;
         }
-        ceux_push(1, ret);
+        ceux_push(X.s, 1, ret);
         return 1;
     }
 
@@ -1295,9 +1300,9 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 2
     int ceu_pointer_dash_to_dash_string_f (CEUX X) {
         assert(X.args == 1);
-        CEU_Value ptr = ceux_peek(ceux_arg(X,0));
+        CEU_Value ptr = ceux_peek(X.s, ceux_arg(X,0));
         assert(ptr.type == CEU_VALUE_POINTER);
-        ceux_push(1, ceu_pointer_dash_to_dash_string(ptr.Pointer));
+        ceux_push(X.s, 1, ceu_pointer_dash_to_dash_string(ptr.Pointer));
         return 1;
     }
     #endif
@@ -1424,12 +1429,12 @@ fun Coder.main (tags: Tags): String {
 
     int ceu_next_dash_dict_f (CEUX X) {
         assert(X.args==1 || X.args==2);
-        CEU_Value dict = ceux_peek(ceux_arg(X,0));
+        CEU_Value dict = ceux_peek(X.s, ceux_arg(X,0));
         CEU_Value ret;
         if (dict.type != CEU_VALUE_DICT) {
             return ceu_error_s("next-dict error : expected dict");
         } else {
-            CEU_Value key = (X.args == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : ceux_peek(ceux_arg(X,1));
+            CEU_Value key = (X.args == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : ceux_peek(X.s, ceux_arg(X,1));
             if (key.type == CEU_VALUE_NIL) {
                 ret = (*dict.Dyn->Dict.buf)[0][0];
             } else {
@@ -1444,7 +1449,7 @@ fun Coder.main (tags: Tags): String {
                 }
             }
         }
-        ceux_push(1, ret);
+        ceux_push(X.s, 1, ret);
         return 1;
     }
     
@@ -1583,10 +1588,10 @@ fun Coder.main (tags: Tags): String {
     
     int ceu_tuple_f (CEUX X) {
         assert(X.args == 1);
-        CEU_Value arg = ceux_peek(ceux_arg(X,0));
+        CEU_Value arg = ceux_peek(X.s, ceux_arg(X,0));
         assert(arg.type == CEU_VALUE_NUMBER);
         CEU_Value ret = ceu_create_tuple(arg.Number);
-        ceux_push(1, ret);
+        ceux_push(X.s, 1, ret);
         return 1;
     }
     
@@ -1909,7 +1914,7 @@ fun Coder.main (tags: Tags): String {
             if (i > 0) {
                 printf("\t");
             }
-            ceu_print1(ceux_peek(ceux_arg(X,i)));
+            ceu_print1(ceux_peek(X.s, ceux_arg(X,i)));
         }
         return 0;
     }
@@ -1974,22 +1979,22 @@ fun Coder.main (tags: Tags): String {
     }
     int ceu_equals_equals_f (CEUX X) {
         assert(X.args == 2);
-        CEU_Value ret = _ceu_equals_equals_(ceux_peek(ceux_arg(X,0)), ceux_peek(ceux_arg(X,1)));
-        ceux_push(1, ret);
+        CEU_Value ret = _ceu_equals_equals_(ceux_peek(X.s, ceux_arg(X,0)), ceux_peek(X.s, ceux_arg(X,1)));
+        ceux_push(X.s, 1, ret);
         return 1;
     }
     int ceu_slash_equals_f (CEUX X) {
         ceu_equals_equals_f(CEU5(_0 COMMA) CEU4(_1 COMMA) X);
-        CEU_Value ret = ceux_pop(0);
+        CEU_Value ret = ceux_pop(X.s, 0);
         assert(ret.type == CEU_VALUE_BOOL);
         ret.Bool = !ret.Bool;
-        ceux_push(1, ret);
+        ceux_push(X.s, 1, ret);
         return 1;
     }
     
     int ceu_hash_f (CEUX X) {
         assert(X.args == 1);
-        CEU_Value v = ceux_peek(ceux_arg(X,0));
+        CEU_Value v = ceux_peek(X.s, ceux_arg(X,0));
         CEU_Value ret;
         if (v.type == CEU_VALUE_VECTOR) {
             ret = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=v.Dyn->Vector.its} };
@@ -1998,7 +2003,7 @@ fun Coder.main (tags: Tags): String {
         } else {
             return ceu_error_s("length error : not a vector");
         }
-        ceux_push(1, ret);
+        ceux_push(X.s, 1, ret);
         return 1;
     }
     """
@@ -2010,20 +2015,20 @@ fun Coder.main (tags: Tags): String {
         }
         int ceu_coroutine_f (CEUX X) {
             assert(X.args == 1);
-            CEU_Value coro = ceux_peek(ceux_arg(X,0));
+            CEU_Value coro = ceux_peek(X.s, ceux_arg(X,0));
             CEU_Value ret;
             if (coro.type != CEU_VALUE_CLO_CORO) {
                 return ceu_error_s("coroutine error : expected coro");
             } else {
                 ret = _ceu_create_exe_(CEU_VALUE_EXE_CORO, sizeof(CEU_Exe), coro CEU5(COMMA &frame->up_block->dn.dyns));
             }
-            ceux_push(1, ret);
+            ceux_push(X.s, 1, ret);
             return 1;
         }        
 
         int ceu_status_f (CEUX X) {
             assert(X.args == 1);
-            CEU_Value exe = ceux_peek(ceux_arg(X,0));
+            CEU_Value exe = ceux_peek(X.s, ceux_arg(X,0));
             CEU_Value ret;
             if (exe.type!=CEU_VALUE_EXE_CORO CEU4(&& !ceu_istask_val(exe))) {
         #if CEU < 4
@@ -2034,7 +2039,7 @@ fun Coder.main (tags: Tags): String {
             } else {
                 ret = (CEU_Value) { CEU_VALUE_TAG, {.Tag=exe.Dyn->Exe.status + CEU_TAG_yielded - 1} };
             }
-            ceux_push(1, ret);
+            ceux_push(X.s, 1, ret);
             return 1;
         }
 
@@ -2093,7 +2098,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_Value vec = ceu_vector_from_c_string(ceu_argv[i]);
                 ceu_tuple_set(&xxx.Dyn->Tuple, i, vec);
             }
-            ceux_push(1, xxx);
+            ceux_push(X.s, 1, xxx);
         }
     #endif
     
@@ -2101,29 +2106,29 @@ fun Coder.main (tags: Tags): String {
 
         // uncaught throw
     #if CEU >= 2
-        if (ceux_peek(X(-1)).type == CEU_VALUE_ERROR) {
+        if (ceux_peek(X.s,X(-1)).type == CEU_VALUE_ERROR) {
             // [...,n,pay,err]
-            CEU_Value n = ceux_peek(X(-3));
+            CEU_Value n = ceux_peek(X.s, X(-3));
             assert(n.type == CEU_VALUE_NUMBER);
             // ignore i=0 (main call)
             for (int i=1; i<n.Number; i++) {
                 printf(" |  ");
-                CEU_Value pre = ceux_peek(X(-4-i));
+                CEU_Value pre = ceux_peek(X.s, X(-4-i));
                 assert(pre.type == CEU_VALUE_POINTER);
                 printf("%s\n", (char*) pre.Pointer);
             }
-            CEU_Value pay = ceux_peek(X(-2));
+            CEU_Value pay = ceux_peek(X.s, X(-2));
             if (pay.type == CEU_VALUE_POINTER) {
                 printf(" v  %s\n", (char*) pay.Pointer);     // payload is primitive error
             } else {
                 printf(" v  error : ");
-                ceu_print1(ceux_peek(X(-2)));
+                ceu_print1(ceux_peek(X.s, X(-2)));
                 puts("");
             }
         }
     #endif
 
-        ceux_base(0);
+        ceux_base(X.s, 0);
         return 0;
     }
     """
@@ -2131,9 +2136,8 @@ fun Coder.main (tags: Tags): String {
 
     return (
         h_includes() + h_defines() + h_enums() +
-        h1_ceux +
         h_frame_block() + h_value_dyn() + h_tags() +
-        h2_ceux +
+        h1_ceux + h2_ceux +
         c_globals() + h_protos() +
         dumps() + c_error + gc() + c_tags() +
         c_ceux + c_impls() +
