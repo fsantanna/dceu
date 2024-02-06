@@ -41,7 +41,7 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
                 this.cnd.traverse(1)
                 this.blk.traverse(N)
             }
-            is Expr.Defer  -> this.blk.traverse(0)
+            is Expr.Defer  -> this.blk.traverse(1)  // to assert it is not error
 
             is Expr.Yield  -> {
                 this.arg.traverse(TODO())

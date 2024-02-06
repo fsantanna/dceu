@@ -502,8 +502,19 @@ fun Coder.main (tags: Tags): String {
     }
     #else
     int ceu_error_chk (char* pre) {
-        if (ceux_top()>0 && ceux_peek(X(-1)).type==CEU_VALUE_ERROR) {
+        CEU_Value err = ceux_peek(X(-1));
+        if (ceux_top()>0 && err.type==CEU_VALUE_ERROR) {
             if (pre != NULL) {
+                if (err.Error != NULL) {
+                    // convert from payload in error -> stack
+                    // [...,err]
+                    ceux_pop(0);
+                    ceux_push(1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=0} });
+                    ceux_push(1, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=err.Error} });
+                    err.Error = NULL;
+                    ceux_push(0, err);
+                }
+                
                 // [...,n,pay,err]
                 CEU_Value n = ceux_peek(X(-3));
                 assert(n.type == CEU_VALUE_NUMBER);
@@ -831,6 +842,7 @@ fun Coder.main (tags: Tags): String {
     int X (int i);
     int ceux_top (void);
     void ceux_base (int base);
+    CEU_Value ceux_pop (int dec);
     void ceux_push (int inc, CEU_Value v);
     CEU_Value ceux_peek (int i);
     void ceux_repl (int i, CEU_Value v);
@@ -2011,9 +2023,14 @@ fun Coder.main (tags: Tags): String {
                 assert(pre.type == CEU_VALUE_POINTER);
                 printf("%s\n", (char*) pre.Pointer);
             }
-            printf(" v  error : ");
-            ceu_print1(ceux_peek(X(-2)));
-            puts("");
+            CEU_Value pay = ceux_peek(X(-2));
+            if (pay.type == CEU_VALUE_POINTER) {
+                printf(" v  %s\n", (char*) pay.Pointer);     // payload is primitive error
+            } else {
+                printf(" v  error : ");
+                ceu_print1(ceux_peek(X(-2)));
+                puts("");
+            }
         }
     #endif
 
