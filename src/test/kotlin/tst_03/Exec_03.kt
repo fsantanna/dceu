@@ -67,7 +67,7 @@ class Exec_03 {
     // NATIVE
 
     @Test
-    fun ab_01_native() {
+    fun TODO_ab_01_native() {    // cannot write C -> Ceu
         val out = test("""
             func () {
                 val x = 1

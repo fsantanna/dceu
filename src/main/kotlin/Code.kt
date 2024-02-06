@@ -338,17 +338,16 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             is Expr.Resume -> {
                 val bup = ups.first_block(this)!!
                 val bupc = bup.idc("block")
-                val coc = this.idc("co")
                 val inexeT = ups.inexe(this, null,true)
                 val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"
 
                 """
                 ${this.co.code()}
-                CEU_Value $coc;
-                $coc = ceu_acc;
-                if ($coc.type!=CEU_VALUE_EXE_CORO || ($coc.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED)) {                
-                    CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : expected yielded coro"} };
-                    CEU_ERROR_THR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                CEU_Value ceu_co_$n = ceux_peek(X(-1));
+                if (ceu_co_$n.type!=CEU_VALUE_EXE_CORO || (ceu_co_$n.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED)) {
+                    assert(0 && "move to ceux_call");
+                    //CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : expected yielded coro"} };
+                    //CEU_ERROR_THR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                 }
                 ${this.arg.code()}
                 
@@ -356,7 +355,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     CEU_Stack ceu_bstk_$n = { $bupc, 1, ceu_bstk };
                 """ }}
                 
-                CEU_REPL($coc.Dyn->Exe.frame.clo->proto(CEU5(ceu_dstk COMMA) CEU4($bstk COMMA) &$coc.Dyn->Exe.frame, 1, &ceu_acc));
+                ceux_call(1 /* TODO: MULTI */, ${rets.pub[this]!!});
 
                 ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
                     if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
@@ -371,47 +370,30 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 """
             }
             is Expr.Yield -> {
-                val bupc = ups.first_block(this)!!.idc("block")
                 val intsk = ups.inexe(this, "task", true)
                 """
                 { // YIELD ${this.dump()}
                     ${this.arg.code()}
-                    ceu_frame->exe->status = CEU_EXE_STATUS_YIELDED;
-                    ceu_frame->exe->pc = $n;      // next resume
-                    if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
-                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="yield error : cannot return pending reference"} };
-                        CEU_ERROR_THR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                    }
-                    return ceu_acc;
+                    ceux.exe->status = CEU_EXE_STATUS_YIELDED;
+                    ceux.exe->pc = $n;
+                    return 1;   // TODO: args MULTI
                 case $n: // YIELD ${this.dump()}
                     if (ceux.action == CEU_ACTION_ABORT) {
-                        CEU_REPL((CEU_Value) { CEU_VALUE_NIL }); // to be ignored in further move/checks
+                        //CEU_REPL((CEU_Value) { CEU_VALUE_NIL }); // to be ignored in further move/checks
                         continue;
                     }
-                    assert(ceu_base <= 1 && "TODO: multiple arguments to resume");
+                    assert(ceux.args <= 1 && "TODO: multiple arguments to resume");
                 #if CEU >= 4
                     if (ceu_base == CEU_ARG_ERROR) {
                         CEU_REPL(ceu_args[0]);
                         continue;
                     }
                 #endif
-                    CEU_REPL((ceu_n == 1) ? ceu_args[0] : (CEU_Value) { CEU_VALUE_NIL });
-                    ${intsk.cond2({ """
+                    //CEU_REPL((ceu_n == 1) ? ceu_args[0] : (CEU_Value) { CEU_VALUE_NIL });
+                    ${intsk.cond { """
                         id_evt = ceu_acc;
                         //CEU_REPL((CEU_Value) { CEU_VALUE_NIL });
-                    """ }, { """
-                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                            // must check CEU_HOLD_FLEET for parallel scopes, but only for exes:
-                            // [gg_03x_scope]
-                            if (ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET &&
-                                !ceu_block_is_up_dn(CEU_HLD_BLOCK(ceu_acc.Dyn), $bupc))
-                            {
-                                CEU_Value ceu_err_$n = { CEU_VALUE_ERROR, {.Error="resume error : cannot receive alien reference"} };
-                                CEU_ERROR_THR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
-                            }
-                        }
-                        """
-                    })}
+                    """ }}
                 }
                 """
             }

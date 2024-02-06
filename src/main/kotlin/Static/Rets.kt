@@ -44,11 +44,11 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
             is Expr.Defer  -> this.blk.traverse(1)  // to assert it is not error
 
             is Expr.Yield  -> {
-                this.arg.traverse(TODO())
+                this.arg.traverse(1)    // TODO: args MULTI
             }
             is Expr.Resume -> {
-                this.co.traverse(TODO())
-                this.arg.traverse(TODO())
+                this.co.traverse(1)
+                this.arg.traverse(1)    // TODO: args MULTI
             }
 
             is Expr.Spawn  -> {

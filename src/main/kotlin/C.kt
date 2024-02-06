@@ -1989,6 +1989,9 @@ fun Coder.main (tags: Tags): String {
     }
 
     val c_exes = """
+        int ceu_isexe (CEU_Dyn* dyn) {
+            return (dyn->Any.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask_dyn(dyn)));
+        }
         int ceu_coroutine_f (CEUX X) {
             assert(X.args == 1);
             CEU_Value coro = ceux_peek(ceux_arg(X,0));
@@ -2041,7 +2044,7 @@ fun Coder.main (tags: Tags): String {
                     } else
     #endif
                     {
-                        ret = dyn->Exe.frame.clo->proto(CEU5(dstk COMMA) CEU4(bstk COMMA) &dyn->Exe.frame, CEU_ACTION_ABORT, NULL);
+                        //ret = dyn->Exe.frame.clo->proto(CEU5(dstk COMMA) CEU4(bstk COMMA) &dyn->Exe.frame, CEU_ACTION_ABORT, NULL);
                     }
                     //assert(!CEU_ISERR(ret) && "TODO: error on exe kill");
                     return ret;
@@ -2508,13 +2511,6 @@ fun xxx_01 (): String {
             return ret;
         }
     #endif
-    """ +
-    """ // ISEXE / COROUTINE / STATUS / EXE_KILL
-        #if CEU >= 3
-        int ceu_isexe (CEU_Dyn* dyn) {
-            return (dyn->Any.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask_dyn(dyn)));
-        }
-        #endif
     """ +
     """ // TASK
         #if CEU >= 4
