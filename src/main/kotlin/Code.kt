@@ -79,21 +79,19 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                            // - A task can only awake once per cycle
                            // - So it is safe to use one "global" id_evt per task
                         """ }}                        
-                        ${isexe.cond { """
-                            CEU_Clo_Mem_$id* ceu_mem = (CEU_Clo_Mem_$id*) ceu_frame->exe->mem;                    
-                        """ }}
                         ${isexe.cond{"""
-                            ceu_frame->exe->status = CEU_EXE_STATUS_RESUMED;
-                            switch (ceu_frame->exe->pc) {
+                            ceux.exe->status = CEU_EXE_STATUS_RESUMED;
+                            switch (ceux.exe->pc) {
                                 case 0:
-                                    if (ceu_base == CEU_ARG_ABORT) {
-                                        ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
-                                        return (CEU_Value) { CEU_VALUE_NIL };
+                                    if (ceux.action == CEU_ACTION_ABORT) {
+                                        ceux.exe->status = CEU_EXE_STATUS_TERMINATED;
+                                        ceux_push(1, (CEU_Value) { CEU_VALUE_NIL });
+                                        return 1;
                                     }
                         """}}
                         ${do_while(code)}
                         ${isexe.cond{"""
-                                    ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
+                                    ceux.exe->status = CEU_EXE_STATUS_TERMINATED;
                             }
                         """}}
                         return 1;
@@ -110,7 +108,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 );
                 ceux_push(1, ceu_clo_$n);
                 ${isexe.cond { """
-                    ceu_clo_$n.Dyn->Clo_Exe.mem_n = sizeof(CEU_Clo_Mem_$id);                    
+                    // TODO: use args+locs+upvs+tmps?
+                    //ceu_clo_$n.Dyn->Clo_Exe.mem_n = sizeof(CEU_Clo_Mem_$id);                    
                 """ }}
                 
                 // UPVALS = ${vars.proto_to_upvs[this]!!.size}
@@ -182,7 +181,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     """ }}
                     // check free
                     ${(CEU >= 3 /*&& inexe*/).cond { """
-                        if (ceu_base == CEU_ARG_ABORT) {
+                        if (ceux.action == CEU_ACTION_ABORT) {
                             continue;   // do not execute next statement, instead free up block
                         }
                     """ }}
@@ -283,7 +282,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     } while (0); // catch
                     // check free
                     ${(CEU>=3 && ups.any(this) { it is Expr.Proto && it.tk.str!="func" }).cond { """
-                        if (CEUX.args == CEU_ARG_ABORT) {
+                        if (CEUX.args == CEU_ACTION_ABORT) {
                             continue;   // do not execute next statement, instead free up block
                         }
                     """ }}
@@ -385,7 +384,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }
                     return ceu_acc;
                 case $n: // YIELD ${this.dump()}
-                    if (ceu_base == CEU_ARG_ABORT) {
+                    if (ceux.action == CEU_ACTION_ABORT) {
                         CEU_REPL((CEU_Value) { CEU_VALUE_NIL }); // to be ignored in further move/checks
                         continue;
                     }
@@ -456,10 +455,10 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     CEU_ERROR_ASR(continue, ceu_x_$n, ${this.toerr()});
                     
                     ${inexeT.cond { """
-                        if (ceu_base != CEU_ARG_ABORT) {
+                        if (ceu_base != CEU_ACTION_ABORT) {
                             ceu_frame->exe->pc = $n;
                             case $n: // YIELD ${this.dump()}
-                                if (ceu_base == CEU_ARG_ABORT) {
+                                if (ceux.action == CEU_ACTION_ABORT) {
                                     CEU_REPL((CEU_Value) { CEU_VALUE_NIL }); // to be ignored in further move/checks
                                     continue;
                                 }
@@ -696,10 +695,10 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
 
                     // call -> bcast -> outer abortion -> need to clean up from here
                     ${(CEU>=4 && inexeT).cond { """
-                        if (ceu_base != CEU_ARG_ABORT) {
+                        if (ceu_base != CEU_ACTION_ABORT) {
                             ceu_frame->exe->pc = $n;
                             case $n: // YIELD ${this.dump()}
-                                if (ceu_base == CEU_ARG_ABORT) {
+                                if (ceux.action == CEU_ACTION_ABORT) {
                                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL }; // to be ignored in further move/checks
                                     continue;
                                 }

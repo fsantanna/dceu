@@ -134,23 +134,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
 
             is Expr.Nat    -> {}
-            is Expr.Acc    -> {
-                val blk = vars.dcl_to_enc[vars.acc_to_dcl[this]!!]!!
-                //err(this.tk, "access error : cannot access \"_\"")
-
-                if (CEU >= 3) {
-                    if (TODO()!=outer && ups.none(blk) { it is Expr.Proto && it.tk.str != "func" }) {
-                        val coro = ups.first(this) { it is Expr.Proto && it.tk.str != "func" }
-                        if (coro != null) {
-                            if (ups.any(coro) { it == blk }) {
-                                err(
-                                    this.tk,
-                                    "access error : cannot access local across coro" + (CEU >= 4).cond { " or task" })
-                            }
-                        }
-                    }
-                }
-            }
+            is Expr.Acc    -> {}
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
             is Expr.Bool   -> {}

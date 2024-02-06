@@ -65,16 +65,18 @@ fun Coder.main (tags: Tags): String {
     }
     fun h_enums (): String {
         return """
-    typedef enum CEU_ARG {
-        #if CEU >= 4
-        CEU_ARG_TOGGLE = -3,    // restore time to CEU_TIME_MIN after toggle
-        CEU_ARG_ERROR = -2,     // awake task to catch error from nested task
-        #endif
-        #if CEU >= 3
-        CEU_ARG_ABORT = -1,     // awake task to finalize defers and release memory
-        #endif
-        CEU_ARG_ARGS  =  0      // 1, 2, ...
-    } CEU_ARG;
+    #if CEU >= 2
+    typedef enum CEU_ACTION {
+        CEU_ACTION_CALL,
+    #if CEU >= 3
+        CEU_ACTION_ABORT,           // awake exe to finalize defers and release memory
+    #endif
+    #if CEU >= 4
+        CEU_ACTION_TOGGLE,          // restore time to CEU_TIME_MIN after toggle
+        CEU_ACTION_ERROR ,          // awake task to catch error from nested task
+    #endif
+    } CEU_ACTION;
+    #endif
 
     typedef enum CEU_VALUE {
         CEU_VALUE_BLOCK = -1,
@@ -261,7 +263,7 @@ fun Coder.main (tags: Tags): String {
     #define _CEU_Exe_                   \
         _CEU_Dyn_                       \
         CEU_EXE_STATUS status;          \
-        struct CEU_Frame frame;         \
+        /*struct CEU_Frame frame;*/         \
         int pc;                         \
         char* mem;
     typedef struct CEU_Exe {
@@ -653,7 +655,7 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 5
             case CEU_VALUE_EXE_TASK_IN:
     #endif
-                ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo));
+                //ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo));
                 break;
     #endif
     #if CEU >= 5
@@ -823,6 +825,12 @@ fun Coder.main (tags: Tags): String {
     typedef struct CEUX {
         int base;   // index above args
         int args;   // number of args
+    #if CEU >= 2
+        int action; // TODO
+    #endif
+    #if CEU >= 3
+        struct CEU_Exe* exe;
+    #endif
     } CEUX;
     
     /*
@@ -1616,8 +1624,8 @@ fun Coder.main (tags: Tags): String {
     }
 
     #if CEU >= 3
-    CEU_Value ceu_create_clo_exe (int type, CEU_Proto proto, int upvs) {
-        CEU_Value clo = _ceu_create_clo_(sizeof(CEU_Clo_Exe), proto, upvs);
+    CEU_Value ceu_create_clo_exe (int type, CEU_Proto proto, int args, int locs, int upvs) {
+        CEU_Value clo = _ceu_create_clo_(sizeof(CEU_Clo_Exe), type, proto, args, locs, upvs);
         clo.Dyn->Clo_Exe.mem_n = 0;
         return clo;
     }
@@ -1634,13 +1642,12 @@ fun Coder.main (tags: Tags): String {
         char* mem = malloc(clo.Dyn->Clo_Exe.mem_n);
         assert(mem != NULL);
         
-        int hld_type = (clo.Dyn->Clo.hld.type <= CEU_HOLD_MUTAB) ? CEU_HOLD_FLEET : clo.Dyn->Clo.hld.type;
         *ret = (CEU_Exe) {
-            type, 0, NULL, { hld_type, blk, NULL, NULL },
-            CEU_EXE_STATUS_YIELDED, { blk, &clo.Dyn->Clo, {.exe=ret} }, 0, mem
+            type, 0, NULL,
+            CEU_EXE_STATUS_YIELDED, /*{ blk, &clo.Dyn->Clo, {.exe=ret} },*/ 0, mem
         };
         
-        ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA dyns));
+        //ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA dyns));
         return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
     }
     #endif
@@ -1981,6 +1988,69 @@ fun Coder.main (tags: Tags): String {
     """
     }
 
+    val c_exes = """
+        int ceu_coroutine_f (CEUX X) {
+            assert(X.args == 1);
+            CEU_Value coro = ceux_peek(ceux_arg(X,0));
+            CEU_Value ret;
+            if (coro.type != CEU_VALUE_CLO_CORO) {
+                ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="coroutine error : expected coro"} };
+            } else {
+                ret = _ceu_create_exe_(CEU_VALUE_EXE_CORO, sizeof(CEU_Exe), coro CEU5(COMMA &frame->up_block->dn.dyns));
+            }
+            ceux_push(1, ret);
+            return 1;
+        }        
+
+        int ceu_status_f (CEUX X) {
+            assert(X.args == 1);
+            CEU_Value exe = ceux_peek(ceux_arg(X,0));
+            CEU_Value ret;
+            if (exe.type!=CEU_VALUE_EXE_CORO CEU4(&& !ceu_istask_val(exe))) {
+        #if CEU < 4
+                ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="status error : expected running coroutine"} };
+        #else
+                ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="status error : expected running coroutine or task"} };
+        #endif
+            } else {
+                ret = (CEU_Value) { CEU_VALUE_TAG, {.Tag=exe.Dyn->Exe.status + CEU_TAG_yielded - 1} };
+            }
+            ceux_push(1, ret);
+            return 1;
+        }
+
+        CEU_Value ceu_dyn_exe_kill (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Dyn* dyn) {
+            CEU_Value ret = { CEU_VALUE_NIL };
+        #if CEU >= 5
+            if (dyn->Any.type == CEU_VALUE_TASKS) {
+                CEU_Dyn* cur = dyn->Tasks.dyns.first;
+                while (cur != NULL) {
+                    CEU_Dyn* nxt = cur->Any.hld.next;
+                    ret = CEU_ERR_OR(ret, ceu_dyn_exe_kill(CEU5(dstk COMMA) CEU4(bstk COMMA) cur));
+                    cur = nxt;
+                }
+                return ret;
+            }
+            else
+        #endif
+            {
+                if (ceu_isexe(dyn) && dyn->Exe.status<CEU_EXE_STATUS_TERMINATED) {
+    #if CEU >= 4
+                    if (ceu_istask_dyn(dyn)) {
+                        ret = ceu_bcast_task(CEU5(dstk COMMA) bstk, CEU_TIME_MAX, &dyn->Exe_Task, CEU_ACTION_ABORT, NULL);
+                    } else
+    #endif
+                    {
+                        ret = dyn->Exe.frame.clo->proto(CEU5(dstk COMMA) CEU4(bstk COMMA) &dyn->Exe.frame, CEU_ACTION_ABORT, NULL);
+                    }
+                    //assert(!CEU_ISERR(ret) && "TODO: error on exe kill");
+                    return ret;
+                }
+            }
+            return ret;
+        }
+    """
+
     // MAIN
     fun main (): String {
         return """
@@ -2052,6 +2122,7 @@ fun Coder.main (tags: Tags): String {
         tuple_vector_dict() + creates() +
         print() + eq_neq_len() +
         // throw, pointer-to-string
+        c_exes +
         // isexe-coro-status-exe-kill, task, track
         main()
     )
@@ -2227,8 +2298,8 @@ fun xxx_01 (): String {
             CEU_Stack xstk1 = { CEU_HLD_BLOCK((CEU_Dyn*)task), 1, xxstk0 };
             if (task->status == CEU_EXE_STATUS_TERMINATED) {
                 return ret;
-            } else if (n == CEU_ARG_ABORT) {
-                ret = task->frame.clo->proto(CEU5(dstk COMMA) &xstk1, &task->frame, CEU_ARG_ABORT, NULL);
+            } else if (n == CEU_ACTION_ABORT) {
+                ret = task->frame.clo->proto(CEU5(dstk COMMA) &xstk1, &task->frame, CEU_ACTION_ABORT, NULL);
                 if (!xstk1.on) {
                     return ret;
                 }
@@ -2442,63 +2513,6 @@ fun xxx_01 (): String {
         #if CEU >= 3
         int ceu_isexe (CEU_Dyn* dyn) {
             return (dyn->Any.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask_dyn(dyn)));
-        }
-
-        CEU_Value ceu_coroutine_f (CEU_Frame* frame, CEUX X) {
-            assert(n == 1);
-            CEU_Value coro = args[0];
-            if (coro.type != CEU_VALUE_CLO_CORO) {
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="coroutine error : expected coro"} };
-            }
-            return _ceu_create_exe_(CEU_VALUE_EXE_CORO, sizeof(CEU_Exe), coro CEU5(COMMA &frame->up_block->dn.dyns));
-        }
-
-        CEU_Value ceu_status_f (CEU_Frame* frame, CEUX X) {
-            assert(n == 1);
-            CEU_Value exe = args[0];
-            CEU_Value ret;
-            if (exe.type!=CEU_VALUE_EXE_CORO CEU4(&& !ceu_istask_val(exe))) {
-        #if CEU < 4
-                ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="status error : expected running coroutine"} };
-        #else
-                ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="status error : expected running coroutine or task"} };
-        #endif
-            } else {
-                ret = (CEU_Value) { CEU_VALUE_TAG, {.Tag=exe.Dyn->Exe.status + CEU_TAG_yielded - 1} };
-            }
-            ceu_gc_dec_args(n, args);
-            return ret;
-        }
-
-        CEU_Value ceu_dyn_exe_kill (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Dyn* dyn) {
-            CEU_Value ret = { CEU_VALUE_NIL };
-        #if CEU >= 5
-            if (dyn->Any.type == CEU_VALUE_TASKS) {
-                CEU_Dyn* cur = dyn->Tasks.dyns.first;
-                while (cur != NULL) {
-                    CEU_Dyn* nxt = cur->Any.hld.next;
-                    ret = CEU_ERR_OR(ret, ceu_dyn_exe_kill(CEU5(dstk COMMA) CEU4(bstk COMMA) cur));
-                    cur = nxt;
-                }
-                return ret;
-            }
-            else
-        #endif
-            {
-                if (ceu_isexe(dyn) && dyn->Exe.status<CEU_EXE_STATUS_TERMINATED) {
-    #if CEU >= 4
-                    if (ceu_istask_dyn(dyn)) {
-                        ret = ceu_bcast_task(CEU5(dstk COMMA) bstk, CEU_TIME_MAX, &dyn->Exe_Task, CEU_ARG_ABORT, NULL);
-                    } else
-    #endif
-                    {
-                        ret = dyn->Exe.frame.clo->proto(CEU5(dstk COMMA) CEU4(bstk COMMA) &dyn->Exe.frame, CEU_ARG_ABORT, NULL);
-                    }
-                    //assert(!CEU_ISERR(ret) && "TODO: error on exe kill");
-                    return ret;
-                }
-            }
-            return ret;
         }
         #endif
     """ +
