@@ -65,12 +65,10 @@ fun Coder.main (tags: Tags): String {
     }
     fun h_enums (): String {
         return """
-    #if CEU >= 2
+    #if CEU >= 3
     typedef enum CEU_ACTION {
         CEU_ACTION_CALL,
-    #if CEU >= 3
         CEU_ACTION_ABORT,           // awake exe to finalize defers and release memory
-    #endif
     #if CEU >= 4
         CEU_ACTION_TOGGLE,          // restore time to CEU_TIME_MIN after toggle
         CEU_ACTION_ERROR ,          // awake task to catch error from nested task
@@ -832,10 +830,8 @@ fun Coder.main (tags: Tags): String {
     typedef struct CEUX {
         int base;   // index above args
         int args;   // number of args
-    #if CEU >= 2
-        int action; // TODO
-    #endif
     #if CEU >= 3
+        CEU_ACTION action;
         struct CEU_Exe* exe;
     #endif
     } CEUX;
@@ -1007,13 +1003,12 @@ fun Coder.main (tags: Tags): String {
         ceux_base(I + out);
     }
     
-    int ceux_call (int tp, int inp, int out) {
+    int ceux_call (CEU3(CEU_Exe* exe COMMA) int inp, int out) {
         // [clo,args]
         CEU_Value clo = ceux_peek(X(-inp-1));
-        if (clo.type != tp) {
-            assert(tp == CEU_VALUE_CLO_FUNC);   // coro/task are called indirectly
+        if (CEU3(exe==NULL &&) clo.type!=CEU_VALUE_CLO_FUNC) {
+            // coro/task are called indirectly
             return ceu_error_s("call error : expected function");
-            return 1;
         }
 
         // fill missing args with nils
@@ -1042,7 +1037,11 @@ fun Coder.main (tags: Tags): String {
         //           ^ base
         
         //CEU_Frame frame = { NULL, &clo.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
+    #if CEU < 3
         int ret = clo.Dyn->Clo.proto((CEUX) { base, inp });
+    #else
+        int ret = clo.Dyn->Clo.proto((CEUX) { base, inp, CEU_ACTION_CALL, exe });
+    #endif
         
         // in case of error, out must be readjusted to the error stack:
         // [clo,args,upvs,locs,...,n,pay,err]
@@ -1091,14 +1090,18 @@ fun Coder.main (tags: Tags): String {
         return out;
     }
     
+#if CEU >= 3
     int ceux_resume (int inp, int out) {
         CEU_Value co = ceux_peek(X(-inp-1));
         if (co.type!=CEU_VALUE_EXE_CORO || co.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED) {
             return ceu_error_s("resume error : expected yielded coro");
         }
-        ceux_repl(X(-inp-1), co.Dyn->Exe.clo);
-        return ceux_call(CEU_VALUE_CLO_CORO, inp, out);
+        // [exe,...]
+        ceux_repl(X(-inp-2), co.Dyn->Exe.clo);
+        // [clo,...]
+        return ceux_call((CEU_Exe*)co.Dyn, inp, out);
     }
+#endif
     """
 
     // IMPLS
