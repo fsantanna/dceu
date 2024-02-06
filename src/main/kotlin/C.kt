@@ -263,9 +263,11 @@ fun Coder.main (tags: Tags): String {
     #define _CEU_Exe_                   \
         _CEU_Dyn_                       \
         CEU_EXE_STATUS status;          \
-        /*struct CEU_Frame frame;*/         \
+        CEU_Value clo;                  \
+        /*struct CEU_Frame frame;*/     \
         int pc;                         \
         char* mem;
+        
     typedef struct CEU_Exe {
         _CEU_Exe_
     } CEU_Exe;
@@ -1005,10 +1007,11 @@ fun Coder.main (tags: Tags): String {
         ceux_base(I + out);
     }
     
-    int ceux_call (int inp, int out) {
+    int ceux_call (int tp, int inp, int out) {
         // [clo,args]
         CEU_Value clo = ceux_peek(X(-inp-1));
-        if (clo.type != CEU_VALUE_CLO_FUNC) {
+        if (clo.type != tp) {
+            assert(tp == CEU_VALUE_CLO_FUNC);   // coro/task are called indirectly
             return ceu_error_s("call error : expected function");
             return 1;
         }
@@ -1086,6 +1089,15 @@ fun Coder.main (tags: Tags): String {
         //      ^ base
         
         return out;
+    }
+    
+    int ceux_resume (int inp, int out) {
+        CEU_Value co = ceux_peek(X(-inp-1));
+        if (co.type!=CEU_VALUE_EXE_CORO || co.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED) {
+            return ceu_error_s("resume error : expected yielded coro");
+        }
+        ceux_repl(X(-inp-1), co.Dyn->Exe.clo);
+        return ceux_call(CEU_VALUE_CLO_CORO, inp, out);
     }
     """
 
@@ -1645,7 +1657,7 @@ fun Coder.main (tags: Tags): String {
         
         *ret = (CEU_Exe) {
             type, 0, NULL,
-            CEU_EXE_STATUS_YIELDED, /*{ blk, &clo.Dyn->Clo, {.exe=ret} },*/ 0, mem
+            CEU_EXE_STATUS_YIELDED, clo, /*{ blk, &clo.Dyn->Clo, {.exe=ret} },*/ 0, mem
         };
         
         //ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA dyns));

@@ -43,7 +43,8 @@ class Exec_03 {
             val f
             resume f()
         """)
-        assert(out == " v  anon : (lin 3, col 13) : resume error : expected yielded coro\n") { out }
+        assert(out == " |  anon : (lin 3, col 13) : (resume (f)(nil))\n" +
+                " v  resume error : expected yielded coro\n") { out }
     }
     @Test
     fun aa_05_yield_err() {
@@ -92,7 +93,8 @@ class Exec_03 {
             val x = coroutine(t)
             println(x)
         """)
-        assert(out == " v  anon : (lin 5, col 21) : coroutine(t) : coroutine error : expected coro\n") { out }
+        assert(out == " |  anon : (lin 5, col 21) : coroutine(t)\n" +
+                " v  coroutine error : expected coro\n") { out }
     }
     @Test
     fun bb_02_coroutine_err() {
@@ -110,7 +112,8 @@ class Exec_03 {
         val out = test("""
             coroutine(func () {nil})
         """)
-        assert(out == " v  anon : (lin 2, col 13) : coroutine((func () { nil })) : coroutine error : expected coro\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : coroutine((func () { nil }))\n" +
+                " v  coroutine error : expected coro\n") { out }
     }
 
     // RESUME / YIELD

@@ -343,19 +343,13 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
 
                 """
                 ${this.co.code()}
-                CEU_Value ceu_co_$n = ceux_peek(X(-1));
-                if (ceu_co_$n.type!=CEU_VALUE_EXE_CORO || (ceu_co_$n.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED)) {
-                    assert(0 && "move to ceux_call");
-                    //CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : expected yielded coro"} };
-                    //CEU_ERROR_THR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                }
                 ${this.arg.code()}
                 
                 ${(CEU>=4 && inexeT).cond { """
                     CEU_Stack ceu_bstk_$n = { $bupc, 1, ceu_bstk };
                 """ }}
                 
-                ceux_call(1 /* TODO: MULTI */, ${rets.pub[this]!!});
+                ceux_resume(1 /* TODO: MULTI */, ${rets.pub[this]!!});
 
                 ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
                     if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
@@ -688,7 +682,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         CEU_Stack ceu_bstk_$n = { ${D}bupc, 1, ceu_bstk };
                     """ }}
                     
-                    ceux_call(${this.args.size}, ${rets.pub[this]!!});
+                    ceux_call(CEU_VALUE_CLO_FUNC, ${this.args.size}, ${rets.pub[this]!!});
                     
                     ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
                         if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
