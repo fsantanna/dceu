@@ -119,6 +119,17 @@ class Exec_03 {
     // RESUME / YIELD
 
     @Test
+    fun cc_00_resume() {
+        val out = test("""
+            val a = coro () {
+                println(:ok)
+            }
+            val b = coroutine(a)
+            resume b()
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
     fun cc_01_resume() {
         val out = test("""
             val t = coro (v) {

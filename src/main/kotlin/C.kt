@@ -711,6 +711,7 @@ fun Coder.main (tags: Tags): String {
 #if CEU >= 5
             case CEU_VALUE_EXE_TASK_IN:
 #endif
+                //free(dyn->Exe.S->buf);
                 free(dyn->Exe.S);
                 break;
             }
@@ -860,6 +861,7 @@ fun Coder.main (tags: Tags): String {
     val h2_ceux = """
     #define ceux_arg(X,i) (X->base - X->args + i)
     #define XX(v) (X->S->n+v)
+    #define XX2(v) (X2.S->n+v)
     #define SS(v) (S->n+v)
     int ceux_top (CEU_Vstk* S);
     void ceux_base (CEU_Vstk* S, int base);
@@ -1007,7 +1009,7 @@ fun Coder.main (tags: Tags): String {
     int ceux_call (CEUX* X, int inp, int out) {
         // [clo,args]
         CEU_Value clo = ceux_peek(X->S, XX(-inp-1));
-        if (clo.type != CEU_VALUE_CLO_FUNC) {
+        if (CEU3(X->exe==NULL &&) clo.type != CEU_VALUE_CLO_FUNC) {
             return ceu_error_s(X->S, "call error : expected function");
         }
 
@@ -1095,12 +1097,30 @@ fun Coder.main (tags: Tags): String {
             return ceu_error_s(X->S, "resume error : expected yielded coro");
         }
 
-        // [exe,...]
-        ceux_repl(X->S, XX(-inp-2), co.Dyn->Exe.clo);
-        // [clo,...]
+        // X1: [co,inps]
+        // X2: []
+        CEUX X2 = { co.Dyn->Exe.S, 0, inp, CEU_ACTION_CALL, &co.Dyn->Exe };                                        
+        ceux_push(X2.S, 1, co.Dyn->Exe.clo);                                        
+        for (int i=0; i<inp; i++) {                                                 
+            ceux_push(X2.S, 1, ceux_peek(X->S,XX(-i-1)));                               
+        }
+        ceux_base(X->S, XX(-inp-1));
+        // X1: []
+        // X2: [clo,inps]
 
-        CEUX X2 = { co.Dyn->Exe.S, 0, inp };
-        return ceux_call(&X2, inp, out);
+        int ret = ceux_call(&X2, inp, out);
+        // X1: []
+        // X2: [outs]
+        
+        ceux_dump(X2.S, 0);
+        for (int i=0; i<ret; i++) {
+            ceux_push(X->S, 1, ceux_peek(X2.S,XX2(-i-1)));                               
+        }
+        ceux_base(X2.S, XX2(-inp));
+        // X1: [outs]
+        // X2: []
+        
+        return ret;
     }
 #endif
     """
@@ -1656,8 +1676,11 @@ fun Coder.main (tags: Tags): String {
         
         CEU_Exe* ret = malloc(sz);
         assert(ret != NULL);
-        CEU_Vstk* S = malloc(CEU_VSTK_MAX /*clo.Dyn->Clo_Exe.mem_n*/);
-        assert(S != NULL);
+        CEU_Vstk* S = malloc(sizeof(CEU_Vstk));
+        //CEU_Value* buf = malloc(sizeof(CEU_Value)*CEU_VSTK_MAX /*clo.Dyn->Clo_Exe.mem_n*/);
+        assert(S!=NULL /*&& buf!=NULL*/);
+        S->n = 0;
+        //S->buf = buf;
         
         *ret = (CEU_Exe) {
             type, 0, NULL,
