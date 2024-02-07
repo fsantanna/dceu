@@ -148,7 +148,8 @@ class Exec_03 {
             resume co()
             resume co()
         """)
-        assert(out == " v  anon : (lin 4, col 13) : resume error : expected yielded coro\n") { out }
+        assert(out == " |  anon : (lin 4, col 13) : (resume (co)(nil))\n" +
+                " v  resume error : expected yielded coro\n") { out }
     }
     @Test
     fun cc_03_resume_dead_err() {
@@ -160,7 +161,8 @@ class Exec_03 {
             resume co()
             resume co()
         """)
-        assert(out == " v  anon : (lin 7, col 13) : resume error : expected yielded coro\n") { out }
+        assert(out == " |  anon : (lin 7, col 13) : (resume (co)(nil))\n" +
+                " v  resume error : expected yielded coro\n") { out }
     }
     @Test
     fun cc_04_resume_yield() {

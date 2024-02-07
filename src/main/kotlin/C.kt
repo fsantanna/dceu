@@ -860,9 +860,9 @@ fun Coder.main (tags: Tags): String {
     """
     val h2_ceux = """
     #define ceux_arg(X,i) (X->base - X->args + i)
-    #define XX(v) (X->S->n+v)
-    #define XX2(v) (X2.S->n+v)
-    #define SS(v) (S->n+v)
+    #define XX(v)  ({ assert(v<=0); X->S->n+v; })
+    #define XX2(v) ({ assert(v<=0); X2.S->n+v; })
+    #define SS(v)  ({ assert(v<=0); S->n+v;    })
     int ceux_top (CEU_Vstk* S);
     void ceux_base (CEU_Vstk* S, int base);
     CEU_Value ceux_pop (CEU_Vstk* S, int dec);
@@ -874,6 +874,7 @@ fun Coder.main (tags: Tags): String {
     """
     val c_ceux = """
     void ceux_dump (CEU_Vstk* S, int n) {
+        printf(">>> DUMP | n=%d | S=%p\n", S->n, S);
         for (int i=n; i<S->n; i++) {
             printf(">>> [%d]: [%d] ", i, ceux_peek(S,i).type);
             ceu_print1(ceux_peek(S,i));
@@ -1112,11 +1113,10 @@ fun Coder.main (tags: Tags): String {
         // X1: []
         // X2: [outs]
         
-        ceux_dump(X2.S, 0);
         for (int i=0; i<ret; i++) {
             ceux_push(X->S, 1, ceux_peek(X2.S,XX2(-i-1)));                               
         }
-        ceux_base(X2.S, XX2(-inp));
+        ceux_base(X2.S, XX2(-ret));
         // X1: [outs]
         // X2: []
         
