@@ -1075,18 +1075,22 @@ fun Coder.main (tags: Tags): String {
         // [clo,args,upvs,locs,out]
         //           ^ base
         
-        // move rets to begin, replacing [clo,args,upvs,locs]
-        for (int i=0; i<out; i++) {
-            ceux_move(X->S, base-inp-1+i, X->S->n-out+i);
+    #if CEU >= 3
+        if (clo.type!=CEU_VALUE_CLO_FUNC && clo.Dyn->Exe.status!=CEU_EXE_STATUS_TERMINATED) {
+            // do not clear stack
+        } else
+    #endif
+        {
+            // move rets to begin, replacing [clo,args,upvs,locs]
+            for (int i=0; i<out; i++) {
+                ceux_move(X->S, base-inp-1+i, X->S->n-out+i);
+            }
+            // [outs,x,x,x,x]
+            //           ^ base
+            ceux_base(X->S, base-inp-1+out);
+            // [outs]
+            //      ^ base
         }
-        
-        // [outs,x,x,x,x]
-        //           ^ base
-
-        ceux_base(X->S, base-inp-1+out);
-        
-        // [outs]
-        //      ^ base
         
         return out;
     }
