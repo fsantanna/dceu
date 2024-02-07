@@ -1007,16 +1007,27 @@ fun Coder.main (tags: Tags): String {
         ceux_base(S, I + out);
     }
     
-    int ceux_call (CEUX* X, int inp, int out) {
-        // [clo,args]
-        CEU_Value clo = ceux_peek(X->S, XX(-inp-1));
-        if (CEU3(X->exe==NULL &&) clo.type != CEU_VALUE_CLO_FUNC) {
-            return ceu_error_s(X->S, "call error : expected function");
+    int ceux_call (CEUX* X, int inp, int out CEU3(COMMA CEU_Clo* clo)) {
+    #if CEU < 3
+        CEU_Clo* clo;
+        int nclo = 1;
+    #else
+        int nclo = 0;
+        if (clo == NULL)
+    #endif
+        {
+            nclo = 1;
+            // [clo,args]
+            CEU_Value x = ceux_peek(X->S, XX(-inp-1));
+            if (CEU3(X->exe==NULL &&) x.type != CEU_VALUE_CLO_FUNC) {
+                return ceu_error_s(X->S, "call error : expected function");
+            }
+            clo = &x.Dyn->Clo;
         }
 
         // fill missing args with nils
         {
-            int N = clo.Dyn->Clo.args - inp;
+            int N = clo->args - inp;
             //printf(">>> %d\inp", N);
             for (int i=0; i<N; i++) {
                 ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
@@ -1029,10 +1040,10 @@ fun Coder.main (tags: Tags): String {
         // [clo,args,?]
         //           ^ base
 
-        for (int i=0; i<clo.Dyn->Clo.upvs.its; i++) {
-            ceux_push(X->S, 1, clo.Dyn->Clo.upvs.buf[i]);
+        for (int i=0; i<clo->upvs.its; i++) {
+            ceux_push(X->S, 1, clo->upvs.buf[i]);
         }
-        for (int i=0; i<clo.Dyn->Clo.locs; i++) {
+        for (int i=0; i<clo->locs; i++) {
             ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
         }
         
@@ -1042,7 +1053,7 @@ fun Coder.main (tags: Tags): String {
         CEUX X2 = *X;
         X2.base = base;
         X2.args = inp;
-        int ret = clo.Dyn->Clo.proto(&X2);
+        int ret = clo->proto(&X2);
         
         // in case of error, out must be readjusted to the error stack:
         // [clo,args,upvs,locs,...,n,pay,err]
@@ -1066,28 +1077,30 @@ fun Coder.main (tags: Tags): String {
             for (int i=0; i<out-ret; i++) {
                 ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
             }
-            out = out;
-        } else {                    // enough rets than requested
-            // ret >= out
-            out = out;
+        } else if (ret > out) {     // more rets than requested
+            for (int i=out; i<ret; i++) {
+                ceux_pop(X->S, 1);
+            }
+        } else { // ret == out      // exact rets requested
+            // ok
         }
         
         // [clo,args,upvs,locs,out]
         //           ^ base
         
     #if CEU >= 3
-        if (clo.type!=CEU_VALUE_CLO_FUNC && clo.Dyn->Exe.status!=CEU_EXE_STATUS_TERMINATED) {
+        if (clo->type!=CEU_VALUE_CLO_FUNC && X->exe->status!=CEU_EXE_STATUS_TERMINATED) {
             // do not clear stack
         } else
     #endif
         {
             // move rets to begin, replacing [clo,args,upvs,locs]
             for (int i=0; i<out; i++) {
-                ceux_move(X->S, base-inp-1+i, X->S->n-out+i);
+                ceux_move(X->S, base-inp-nclo+i, X->S->n-out+i);
             }
             // [outs,x,x,x,x]
             //           ^ base
-            ceux_base(X->S, base-inp-1+out);
+            ceux_base(X->S, base-inp-nclo+out);
             // [outs]
             //      ^ base
         }
@@ -1105,17 +1118,17 @@ fun Coder.main (tags: Tags): String {
         // X1: [co,inps]
         // X2: []
         CEUX X2 = { co.Dyn->Exe.S, 0, inp, CEU_ACTION_CALL, &co.Dyn->Exe };                                        
-        ceux_push(X2.S, 1, co.Dyn->Exe.clo);                                        
+        //ceux_push(X2.S, 1, co.Dyn->Exe.clo);                                        
         for (int i=0; i<inp; i++) {                                                 
             ceux_push(X2.S, 1, ceux_peek(X->S,XX(-i-1)));                               
         }
+        // X2: [~clo~,inps]
+        
+        int ret = ceux_call(&X2, inp, out, &co.Dyn->Exe.clo.Dyn->Clo);
+        // X2: [outs]
+
         ceux_base(X->S, XX(-inp-1));
         // X1: []
-        // X2: [clo,inps]
-
-        int ret = ceux_call(&X2, inp, out);
-        // X1: []
-        // X2: [outs]
         
         for (int i=0; i<ret; i++) {
             ceux_push(X->S, 1, ceux_peek(X2.S,XX2(-i-1)));                               
