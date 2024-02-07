@@ -191,17 +191,17 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         }
         return when {
             isupv(dcl,src) -> {                // upval
-                "(ceux.base + $upv) /* upval $id */"
+                "(X->base + $upv) /* upval $id */"
             }
             (proto_blk == null) -> {        // global
                 "($locs + $I) /* global $id */"
             }
             (enc is Expr.Proto) -> {        // argument
                 assert(locs == 0)
-                "ceux_arg(ceux, $I) /* arg $id */"
+                "ceux_arg(X, $I) /* arg $id */"
             }
             else -> {                       // local
-                "(ceux.base + $upvs + $locs + $I) /* local $id */"
+                "(X->base + $upvs + $locs + $I) /* local $id */"
             }
         }
     }
