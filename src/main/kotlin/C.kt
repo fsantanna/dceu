@@ -1109,7 +1109,9 @@ fun Coder.main (tags: Tags): String {
         for (int i=0; i<inp; i++) {                                                 
             ceux_push(X2->S, 1, ceux_peek(X->S,XX(-i-1)));                               
         }
-        // X1: [co,inps]
+        ceu_gc_inc(co);
+        ceux_base(X->S, XX(-inp));
+        // X1: []
         // X2: [...,inps]
         
         // first resume: place upvs+locs
@@ -1125,6 +1127,7 @@ fun Coder.main (tags: Tags): String {
             }
             X2->base = X2->S->n;
             X2->args = inp;
+            X2->action = CEU_ACTION_CALL;
             for (int i=0; i<clo->upvs.its; i++) {
                 ceux_push(X2->S, 1, clo->upvs.buf[i]);
             }
@@ -1169,9 +1172,6 @@ fun Coder.main (tags: Tags): String {
         // X1: [co,inps]
         // X2: [args,upvs,lovs,...,rets]
 
-        ceux_base(X->S, XX(-inp));
-        // X1: []
-        
         for (int i=0; i<out; i++) {
             ceux_push(X->S, 1, ceux_peek(X2->S,XX2(-ret)+i));                               
         }
@@ -1183,6 +1183,7 @@ fun Coder.main (tags: Tags): String {
             ceux_base(X2->S, 0);
         }
         
+        ceu_gc_dec(co);
         return out;
     }
 #endif
