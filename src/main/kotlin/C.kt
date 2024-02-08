@@ -1007,27 +1007,16 @@ fun Coder.main (tags: Tags): String {
         ceux_base(S, I + out);
     }
     
-    int ceux_call (CEUX* X, int inp, int out CEU3(COMMA CEU_Clo* clo)) {
-    #if CEU < 3
-        CEU_Clo* clo;
-        int nclo = 1;
-    #else
-        int nclo = 0;
-        if (clo == NULL)
-    #endif
-        {
-            nclo = 1;
-            // [clo,args]
-            CEU_Value x = ceux_peek(X->S, XX(-inp-1));
-            if (CEU3(X->exe==NULL &&) x.type != CEU_VALUE_CLO_FUNC) {
-                return ceu_error_s(X->S, "call error : expected function");
-            }
-            clo = &x.Dyn->Clo;
+    int ceux_call (CEUX* X, int inp, int out) {
+        // [clo,args]
+        CEU_Value clo = ceux_peek(X->S, XX(-inp-1));
+        if (CEU3(X->exe==NULL &&) clo.type != CEU_VALUE_CLO_FUNC) {
+            return ceu_error_s(X->S, "call error : expected function");
         }
 
         // fill missing args with nils
         {
-            int N = clo->args - inp;
+            int N = clo.Dyn->Clo.args - inp;
             //printf(">>> %d\inp", N);
             for (int i=0; i<N; i++) {
                 ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
@@ -1040,10 +1029,10 @@ fun Coder.main (tags: Tags): String {
         // [clo,args,?]
         //           ^ base
 
-        for (int i=0; i<clo->upvs.its; i++) {
-            ceux_push(X->S, 1, clo->upvs.buf[i]);
+        for (int i=0; i<clo.Dyn->Clo.upvs.its; i++) {
+            ceux_push(X->S, 1, clo.Dyn->Clo.upvs.buf[i]);
         }
-        for (int i=0; i<clo->locs; i++) {
+        for (int i=0; i<clo.Dyn->Clo.locs; i++) {
             ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
         }
         
@@ -1053,6 +1042,75 @@ fun Coder.main (tags: Tags): String {
         CEUX X2 = *X;
         X2.base = base;
         X2.args = inp;
+        int ret = clo.Dyn->Clo.proto(&X2);
+        
+        // in case of error, out must be readjusted to the error stack:
+        // [clo,args,upvs,locs,...,n,pay,err]
+        //  - ... - error messages
+        //  - n   - number of error messages
+        //  - pay - error payload
+        //  - err - error value
+        if (ceux_peek(X->S,XX(-1)).type == CEU_VALUE_ERROR) {
+            CEU_Value n = ceux_peek(X->S,XX(-3));
+            assert(n.type == CEU_VALUE_NUMBER);
+            ret = out = n.Number + 1 + 1 + 1;
+        }
+
+        // [clo,args,upvs,locs,rets]
+        //           ^ base
+        
+        if (out == CEU_MULTI) {     // any rets is ok
+            out = ret;
+        } else if (ret < out) {     // less rets than requested
+           // fill rets up to outs
+            for (int i=0; i<out-ret; i++) {
+                ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+            }
+        } else if (ret > out) {     // more rets than requested
+            for (int i=out; i<ret; i++) {
+                ceux_pop(X->S, 1);
+            }
+        } else { // ret == out      // exact rets requested
+            // ok
+        }
+        
+        // [clo,args,upvs,locs,out]
+        //           ^ base
+        
+        // move rets to begin, replacing [clo,args,upvs,locs]
+        {
+            for (int i=0; i<out; i++) {
+                ceux_move(X->S, base-inp-1+i, X->S->n-out+i);
+            }
+
+            // [outs,x,x,x,x]
+            //           ^ base
+            ceux_base(X->S, base-inp-1+out);
+        }
+        // [outs]
+        //      ^ base
+        
+        return out;
+    }
+    
+#if CEU >= 3
+    int ceux_resume (CEUX* X, int inp, int out, CEU_Clo* clo) {
+        assert(inp==1 && "TODO: varargs resume");
+
+        CEU_Value co = ceux_peek(X->S, XX(-inp-1));
+        if (co.type!=CEU_VALUE_EXE_CORO || co.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED) {
+            return ceu_error_s(X->S, "resume error : expected yielded coro");
+        }
+
+        // X1: [co,inps]
+        // X2: []
+        CEUX X2 = { co.Dyn->Exe.S, 0, inp, CEU_ACTION_CALL, &co.Dyn->Exe };                                        
+        for (int i=0; i<inp; i++) {                                                 
+            ceux_push(X2.S, 1, ceux_peek(X->S,XX(-i-1)));                               
+        }
+        // X1: [co,inps]
+        // X2: [inps]
+
         int ret = clo->proto(&X2);
         
         // in case of error, out must be readjusted to the error stack:
@@ -1106,25 +1164,8 @@ fun Coder.main (tags: Tags): String {
         }
         
         return out;
-    }
-    
-#if CEU >= 3
-    int ceux_resume (CEUX* X, int inp, int out) {
-        CEU_Value co = ceux_peek(X->S, XX(-inp-1));
-        if (co.type!=CEU_VALUE_EXE_CORO || co.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED) {
-            return ceu_error_s(X->S, "resume error : expected yielded coro");
-        }
-
-        // X1: [co,inps]
-        // X2: []
-        CEUX X2 = { co.Dyn->Exe.S, 0, inp, CEU_ACTION_CALL, &co.Dyn->Exe };                                        
-        //ceux_push(X2.S, 1, co.Dyn->Exe.clo);                                        
-        for (int i=0; i<inp; i++) {                                                 
-            ceux_push(X2.S, 1, ceux_peek(X->S,XX(-i-1)));                               
-        }
-        // X2: [~clo~,inps]
+        -=-=-
         
-        int ret = ceux_call(&X2, inp, out, &co.Dyn->Exe.clo.Dyn->Clo);
         // X2: [outs]
 
         ceux_base(X->S, XX(-inp-1));
@@ -2118,7 +2159,6 @@ fun Coder.main (tags: Tags): String {
     
     int main (int ceu_argc, char** ceu_argv) {
         assert(CEU_TAG_nil == CEU_VALUE_NIL);
-        char ceu_err_msg[255];
     #if CEU >= 4
        CEU_Stack* ceu_bstk = &CEU_BSTK;
     #endif
