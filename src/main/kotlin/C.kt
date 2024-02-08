@@ -226,7 +226,6 @@ fun Coder.main (tags: Tags): String {
 #endif
     
     struct CEUX;
-    struct CEU_Vstk;
     typedef int (*CEU_Proto) (struct CEUX* X);
 
     #define _CEU_Clo_                   \
@@ -266,7 +265,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value clo;                  \
         /*struct CEU_Frame frame;*/     \
         int pc;                         \
-        struct CEU_Vstk* S;
+        struct CEUX* X;
         
     typedef struct CEU_Exe {
         _CEU_Exe_
@@ -711,8 +710,8 @@ fun Coder.main (tags: Tags): String {
 #if CEU >= 5
             case CEU_VALUE_EXE_TASK_IN:
 #endif
-                //free(dyn->Exe.S->buf);
-                free(dyn->Exe.S);
+                free(dyn->Exe.X->S);
+                free(dyn->Exe.X);
                 break;
             }
 #endif
@@ -861,7 +860,7 @@ fun Coder.main (tags: Tags): String {
     val h2_ceux = """
     #define ceux_arg(X,i) (X->base - X->args + i)
     #define XX(v)  ({ assert(v<=0); X->S->n+v; })
-    #define XX2(v) ({ assert(v<=0); X2.S->n+v; })
+    #define XX2(v) ({ assert(v<=0); X2->S->n+v; })
     #define SS(v)  ({ assert(v<=0); S->n+v;    })
     int ceux_top (CEU_Vstk* S);
     void ceux_base (CEU_Vstk* S, int base);
@@ -1094,24 +1093,51 @@ fun Coder.main (tags: Tags): String {
     }
     
 #if CEU >= 3
-    int ceux_resume (CEUX* X, int inp, int out, CEU_Clo* clo) {
+    int ceux_resume (CEUX* X, int inp, int out) {
         assert(inp==1 && "TODO: varargs resume");
 
         CEU_Value co = ceux_peek(X->S, XX(-inp-1));
         if (co.type!=CEU_VALUE_EXE_CORO || co.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED) {
             return ceu_error_s(X->S, "resume error : expected yielded coro");
         }
-
+        assert(co.Dyn->Exe.clo.type == CEU_VALUE_CLO_CORO);
+        CEU_Clo* clo = &co.Dyn->Exe.clo.Dyn->Clo;
+        
         // X1: [co,inps]
-        // X2: []
-        CEUX X2 = { co.Dyn->Exe.S, 0, inp, CEU_ACTION_CALL, &co.Dyn->Exe };                                        
+        // X2: [...]
+        CEUX* X2 = co.Dyn->Exe.X;                                        
         for (int i=0; i<inp; i++) {                                                 
-            ceux_push(X2.S, 1, ceux_peek(X->S,XX(-i-1)));                               
+            ceux_push(X2->S, 1, ceux_peek(X->S,XX(-i-1)));                               
         }
         // X1: [co,inps]
-        // X2: [inps]
+        // X2: [...,inps]
+        
+        // first resume: place upvs+locs
+        if (co.Dyn->Exe.pc == 0) {
+            // fill missing args with nils
+            {
+                int N = clo->args - inp;
+                //printf(">>> %d\inp", N);
+                for (int i=0; i<N; i++) {
+                    ceux_push(X2->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+                    inp++;
+                }
+            }
+            X2->base = X2->S->n;
+            X2->args = inp;
+            for (int i=0; i<clo->upvs.its; i++) {
+                ceux_push(X2->S, 1, clo->upvs.buf[i]);
+            }
+            for (int i=0; i<clo->locs; i++) {
+                ceux_push(X2->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+            }
+            // X2: [args,upvs,locs]
+        } else {
+            // X2: [args,upvs,lovs,...,inps]
+        }
 
-        int ret = clo->proto(&X2);
+        int ret = clo->proto(X2);
+        // X2: [args,upvs,lovs,...,rets]
         
         // in case of error, out must be readjusted to the error stack:
         // [clo,args,upvs,locs,...,n,pay,err]
@@ -1119,15 +1145,12 @@ fun Coder.main (tags: Tags): String {
         //  - n   - number of error messages
         //  - pay - error payload
         //  - err - error value
-        if (ceux_peek(X->S,XX(-1)).type == CEU_VALUE_ERROR) {
-            CEU_Value n = ceux_peek(X->S,XX(-3));
+        if (ceux_peek(X2->S,XX2(-1)).type == CEU_VALUE_ERROR) {
+            CEU_Value n = ceux_peek(X2->S,XX2(-3));
             assert(n.type == CEU_VALUE_NUMBER);
             ret = out = n.Number + 1 + 1 + 1;
         }
 
-        // [clo,args,upvs,locs,rets]
-        //           ^ base
-        
         if (out == CEU_MULTI) {     // any rets is ok
             out = ret;
         } else if (ret < out) {     // less rets than requested
@@ -1143,42 +1166,24 @@ fun Coder.main (tags: Tags): String {
             // ok
         }
         
-        // [clo,args,upvs,locs,out]
-        //           ^ base
-        
-    #if CEU >= 3
-        if (clo->type!=CEU_VALUE_CLO_FUNC && X->exe->status!=CEU_EXE_STATUS_TERMINATED) {
-            // do not clear stack
-        } else
-    #endif
-        {
-            // move rets to begin, replacing [clo,args,upvs,locs]
-            for (int i=0; i<out; i++) {
-                ceux_move(X->S, base-inp-nclo+i, X->S->n-out+i);
-            }
-            // [outs,x,x,x,x]
-            //           ^ base
-            ceux_base(X->S, base-inp-nclo+out);
-            // [outs]
-            //      ^ base
-        }
-        
-        return out;
-        -=-=-
-        
-        // X2: [outs]
+        // X1: [co,inps]
+        // X2: [args,upvs,lovs,...,rets]
 
-        ceux_base(X->S, XX(-inp-1));
+        ceux_base(X->S, XX(-inp));
         // X1: []
         
-        for (int i=0; i<ret; i++) {
-            ceux_push(X->S, 1, ceux_peek(X2.S,XX2(-i-1)));                               
+        for (int i=0; i<out; i++) {
+            ceux_push(X->S, 1, ceux_peek(X2->S,XX2(-ret)+i));                               
         }
-        ceux_base(X2.S, XX2(-ret));
+        ceux_base(X2->S, XX2(-ret));
         // X1: [outs]
         // X2: []
         
-        return ret;
+        if (ceux_peek(X2->S,XX2(-1)).type == CEU_VALUE_ERROR) {
+            ceux_base(X2->S, 0);
+        }
+        
+        return out;
     }
 #endif
     """
@@ -1734,15 +1739,20 @@ fun Coder.main (tags: Tags): String {
         
         CEU_Exe* ret = malloc(sz);
         assert(ret != NULL);
+        CEUX* X = malloc(sizeof(CEUX));
         CEU_Vstk* S = malloc(sizeof(CEU_Vstk));
-        //CEU_Value* buf = malloc(sizeof(CEU_Value)*CEU_VSTK_MAX /*clo.Dyn->Clo_Exe.mem_n*/);
-        assert(S!=NULL /*&& buf!=NULL*/);
+        assert(X!=NULL && S!=NULL);
         S->n = 0;
-        //S->buf = buf;
-        
+        //S->buf = <dynamic>    // TODO
+        X->S = S;
+        //X->base = <first resume>
+        //X->args = <first resume>
+        //X->action = <resume>
+        X->exe = ret;
+
         *ret = (CEU_Exe) {
             type, 0, NULL,
-            CEU_EXE_STATUS_YIELDED, clo, /*{ blk, &clo.Dyn->Clo, {.exe=ret} },*/ 0, S
+            CEU_EXE_STATUS_YIELDED, clo, 0, X
         };
         
         //ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA dyns));

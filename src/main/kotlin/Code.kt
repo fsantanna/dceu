@@ -682,7 +682,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         CEU_Stack ceu_bstk_$n = { ${D}bupc, 1, ceu_bstk };
                     """ }}
                     
-                    ceux_call(X, ${this.args.size}, ${rets.pub[this]!!} CEU3(COMMA NULL));
+                    ceux_call(X, ${this.args.size}, ${rets.pub[this]!!});
                     
                     ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
                         if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
