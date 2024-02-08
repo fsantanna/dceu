@@ -289,7 +289,11 @@ class Exec_03 {
         val out = test("""
             val T = coro () {
                 do [1,2,3]
-                func(it) { nil } (yield(nil))
+                func (it) {
+                    nil
+                } (
+                    yield(nil)
+                )
             }
             resume (coroutine(T)) ()
             println(1)
@@ -306,6 +310,21 @@ class Exec_03 {
                 yield(nil)  ;;thus { it =>nil }  ;; never awakes
             }
             resume (coroutine(T)) ()
+            println(:end)
+        """)
+        assert(out == ":ok\n:end\n") { out }
+    }
+    @Test
+    fun cc_14x_coro_defer() {
+        val out = test("""
+            val T = coro () {
+                defer {
+                    println(:ok)
+                }
+                yield(nil)  ;;thus { it =>nil }  ;; never awakes
+            }
+            val co = coroutine(T)
+            resume co()
             println(:end)
         """)
         assert(out == ":end\n:ok\n") { out }

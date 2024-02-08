@@ -393,7 +393,7 @@ fun Coder.main (tags: Tags): String {
     #endif
     #if CEU >= 3
     int ceu_isexe (CEU_Dyn* dyn);
-    CEU_Value ceu_dyn_exe_kill (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Dyn* dyn);
+    void ceu_dyn_exe_kill (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Dyn* dyn);
     #endif
     #if CEU >= 4
     CEU_Value ceu_bcast_task (CEU5(CEU_Stack* dstk COMMA) CEU_Stack* bstk, uint8_t now, CEU_Exe_Task* task, int n);
@@ -614,8 +614,8 @@ fun Coder.main (tags: Tags): String {
     
     void ceu_gc_rem (CEU_Dyn* dyn) {
     #if CEU >= 3
-        CEU_Value ret = ceu_dyn_exe_kill(CEU5(NULL COMMA) CEU4(NULL COMMA) dyn);
-        assert(ret.type!=CEU_VALUE_ERROR && "TODO: impossible case");
+        ceu_gc_inc(ceu_dyn_to_val(dyn)); // prevents reentrant gc_rem
+        ceu_dyn_exe_kill(CEU5(NULL COMMA) CEU4(NULL COMMA) dyn);
     #endif
         ceu_gc_dec_rec(dyn);
         //ceu_hold_rem(dyn);
@@ -1094,7 +1094,7 @@ fun Coder.main (tags: Tags): String {
     
 #if CEU >= 3
     int ceux_resume (CEUX* X, int inp, int out) {
-        assert(inp==1 && "TODO: varargs resume");
+        assert(inp<=1 && "TODO: varargs resume");
 
         CEU_Value co = ceux_peek(X->S, XX(-inp-1));
         if (co.type!=CEU_VALUE_EXE_CORO || co.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED) {
@@ -1126,8 +1126,6 @@ fun Coder.main (tags: Tags): String {
                 }
             }
             X2->base = X2->S->n;
-            X2->args = inp;
-            X2->action = CEU_ACTION_CALL;
             for (int i=0; i<clo->upvs.its; i++) {
                 ceux_push(X2->S, 1, clo->upvs.buf[i]);
             }
@@ -1138,6 +1136,8 @@ fun Coder.main (tags: Tags): String {
         } else {
             // X2: [args,upvs,lovs,...,inps]
         }
+        X2->args = inp;
+        X2->action = X->action;
 
         int ret = clo->proto(X2);
         // X2: [args,upvs,lovs,...,rets]
@@ -2131,8 +2131,7 @@ fun Coder.main (tags: Tags): String {
             return 1;
         }
 
-        CEU_Value ceu_dyn_exe_kill (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Dyn* dyn) {
-            CEU_Value ret = { CEU_VALUE_NIL };
+        void ceu_dyn_exe_kill (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Dyn* dyn) {
         #if CEU >= 5
             if (dyn->Any.type == CEU_VALUE_TASKS) {
                 CEU_Dyn* cur = dyn->Tasks.dyns.first;
@@ -2141,7 +2140,6 @@ fun Coder.main (tags: Tags): String {
                     ret = CEU_ERR_OR(ret, ceu_dyn_exe_kill(CEU5(dstk COMMA) CEU4(bstk COMMA) cur));
                     cur = nxt;
                 }
-                return ret;
             }
             else
         #endif
@@ -2152,14 +2150,22 @@ fun Coder.main (tags: Tags): String {
                         ret = ceu_bcast_task(CEU5(dstk COMMA) bstk, CEU_TIME_MAX, &dyn->Exe_Task, CEU_ACTION_ABORT, NULL);
                     } else
     #endif
-                    {
-                        //ret = dyn->Exe.frame.clo->proto(CEU5(dstk COMMA) CEU4(bstk COMMA) &dyn->Exe.frame, CEU_ACTION_ABORT, NULL);
+                    {   // TODO - fake S/X - should propagate up to calling stack
+                        CEU_Vstk S = { 0, {} };
+                        CEUX _X = { &S, 0, 0, CEU_ACTION_ABORT, NULL };
+                        CEUX* X = &_X;
+                        ceux_push(&S, 1, ceu_dyn_to_val(dyn));
+                        int ret = ceux_resume(X, 0, 0);
+                        //ceux_pop(&S, 1);
+                        if (ret != 0) {
+                            int iserr = ceux_peek(&S,XX(-1)).type == CEU_VALUE_ERROR;
+                            assert(iserr && "TODO: abort should not return");
+                            assert(0 && "TODO: error in ceu_dyn_exe_kill");
+                        }
                     }
                     //assert(!CEU_ISERR(ret) && "TODO: error on exe kill");
-                    return ret;
                 }
             }
-            return ret;
         }
     """
 
