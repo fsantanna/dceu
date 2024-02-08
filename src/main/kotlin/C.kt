@@ -661,7 +661,8 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 5
             case CEU_VALUE_EXE_TASK_IN:
     #endif
-                //ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo));
+                ceux_base(dyn->Exe.X->S, 0);
+                ceu_gc_dec(dyn->Exe.clo);
                 break;
     #endif
     #if CEU >= 5
@@ -1175,13 +1176,14 @@ fun Coder.main (tags: Tags): String {
         for (int i=0; i<out; i++) {
             ceux_push(X->S, 1, ceux_peek(X2->S,XX2(-ret)+i));                               
         }
-        ceux_base(X2->S, XX2(-ret));
+        if (ceux_peek(X2->S,XX2(-1)).type == CEU_VALUE_ERROR) {
+            ceux_base(X2->S, 0);
+        } else {
+            ceux_base(X2->S, XX2(-ret));
+        }
         // X1: [outs]
         // X2: []
         
-        if (ceux_peek(X2->S,XX2(-1)).type == CEU_VALUE_ERROR) {
-            ceux_base(X2->S, 0);
-        }
         
         ceu_gc_dec(co);
         return out;

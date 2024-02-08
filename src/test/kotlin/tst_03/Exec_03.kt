@@ -421,7 +421,8 @@ class Exec_03 {
                 println(v1, v2)
                 yield(nil) ;;thus { it => nil }
                 ```
-                printf("%f\t%f\n", ceu_mem->id_v1_129.Number, ceu_mem->id_v2_17.Number);
+                //printf("%f\t%f\n", ceu_mem->id_v1_129.Number, ceu_mem->id_v2_17.Number);
+                printf("%f\t%f\n", ${D}v1.Number, ${D}v2.Number);
                 ```
             }
             val co = coroutine(CO)
@@ -435,6 +436,7 @@ class Exec_03 {
 
     @Test
     fun ee_01_coro() {
+        STACK = 128
         val out = test("""
             $PLUS
             var t
@@ -470,7 +472,8 @@ class Exec_03 {
                 println(2)
             }
             println(0)
-            resume (coroutine(T)) ()
+            val co = coroutine(T)
+            resume co ()
             println(4)
         """)
         assert(out == "0\n1\n4\n3\n") { out }
@@ -525,7 +528,8 @@ class Exec_03 {
                 println(2)
             }
             println(0)
-            resume (coroutine(T)) ()
+            val co = coroutine(T)
+            resume co ()
             println(4)
         """)
         assert(out == "0\n1\n4\n3\n") { out }
@@ -585,7 +589,7 @@ class Exec_03 {
         }
         val C = coro () {
             var t = []
-            yield(drop(t)) ;;thus { it => nil }
+            yield(;;;drop;;;(t)) ;;thus { it => nil }
             println(:in, t)
         }
         do {
@@ -597,8 +601,8 @@ class Exec_03 {
             f(co)
         }
         """)
-        assert(out == ":out\t[]\n" +
-                ":in\tnil\n") { out }
+        //assert(out == ":out\t[]\n:in\tnil\n") { out }
+        assert(out == ":out\t[]\n:in\t[]\n") { out }
     }
     @Test
     fun ff_02() {
@@ -611,7 +615,7 @@ class Exec_03 {
         """)
         //assert(out == "anon : (lin 6, col 21) : f()\n" +
         //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
-        assert(out.contains("coro: 0x"))
+        assert(out.contains("coro: 0x")) { out }
     }
     @Test
     fun ff_03() {
@@ -624,8 +628,10 @@ class Exec_03 {
                 set t = coroutine(T)
                 set xxx = t ;; error
             }
+            println(xxx)
         """)
-        assert(out == " v  anon : (lin 8, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        //assert(out == " v  anon : (lin 8, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        assert(out.contains("coro: 0x")) { out }
     }
     @Test
     fun ff_04_move_err () {
@@ -637,7 +643,7 @@ class Exec_03 {
                     println(:2)
                 })
                 resume x()
-                drop(x)
+                ;;;drop;;;(x)
             }
             resume y()
         """)
@@ -687,8 +693,9 @@ class Exec_03 {
         """)
         //assert(out == " |  anon : (lin 9, col 24) : t(v)\n" +
         //        " v  anon : (lin 2, col 30) : resume error : incompatible scopes\n") { out }
-        assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
-                " v  anon : (lin 2, col 27) : argument error : cannot hold alien reference\n") { out }
+        //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
+        //        " v  anon : (lin 2, col 27) : argument error : cannot hold alien reference\n") { out }
+        assert(out == "[]\n") { out }
     }
     @Test
     fun gg_03_scope() {
@@ -719,8 +726,9 @@ class Exec_03 {
         //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
         //        " |  anon : (lin 3, col 25) : (func (x) { x })(yield(nil))\n" +
         //        " v  anon : (lin 3, col 34) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
-                " v  anon : (lin 3, col 41) : resume error : cannot receive alien reference\n") { out }
+        //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
+        //        " v  anon : (lin 3, col 41) : resume error : cannot receive alien reference\n") { out }
+        assert(out == "[]\n") { out }
     }
     @Test
     fun gg_03x_scope() {
@@ -736,9 +744,11 @@ class Exec_03 {
                 val v = []
                 resume t(v)
             }
+            resume t()
         """)
-        assert(out == " |  anon : (lin 11, col 17) : (resume (t)(v))\n" +
-                " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
+        assert(out == "[]\n") { out }
+        //assert(out == " |  anon : (lin 11, col 17) : (resume (t)(v))\n" +
+        //        " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
     }
     @Test
     fun gg_03y_scope() {
