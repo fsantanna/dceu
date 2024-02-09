@@ -1149,7 +1149,7 @@ fun Coder.main (tags: Tags): String {
         //  - n   - number of error messages
         //  - pay - error payload
         //  - err - error value
-        if (ceux_peek(X2->S,XX2(-1)).type == CEU_VALUE_ERROR) {
+        if (ret>0 && ceux_peek(X2->S,XX2(-1)).type==CEU_VALUE_ERROR) {
             CEU_Value n = ceux_peek(X2->S,XX2(-3));
             assert(n.type == CEU_VALUE_NUMBER);
             ret = out = n.Number + 1 + 1 + 1;
@@ -1165,6 +1165,7 @@ fun Coder.main (tags: Tags): String {
         } else if (ret > out) {     // more rets than requested
             for (int i=out; i<ret; i++) {
                 ceux_pop(X2->S, 1);
+                ret--;
             }
         } else { // ret == out      // exact rets requested
             // ok
@@ -1176,7 +1177,7 @@ fun Coder.main (tags: Tags): String {
         for (int i=0; i<out; i++) {
             ceux_push(X->S, 1, ceux_peek(X2->S,XX2(-out)+i));                               
         }
-        if (ceux_peek(X2->S,XX2(-1)).type == CEU_VALUE_ERROR) {
+        if (ret>0 && ceux_peek(X2->S,XX2(-1)).type==CEU_VALUE_ERROR) {
             ceux_base(X2->S, 0);
         } else {
             ceux_base(X2->S, XX2(-out));

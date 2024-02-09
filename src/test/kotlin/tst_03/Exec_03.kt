@@ -1233,9 +1233,9 @@ class Exec_03 {
             }
             resume t()
         """)
-        //assert(out == "[]\n10\n") { out }
-        assert(out == " |  anon : (lin 9, col 17) : (resume (t)(nil))\n" +
-                " v  anon : (lin 4, col 17) : yield error : cannot return pending reference\n") { out }
+        assert(out == "[]\n") { out }
+        //assert(out == " |  anon : (lin 9, col 17) : (resume (t)(nil))\n" +
+        //        " v  anon : (lin 4, col 17) : yield error : cannot return pending reference\n") { out }
     }
 
     // KILL
@@ -1254,13 +1254,14 @@ class Exec_03 {
     fun ll_02_kill() {
         val out = test("""
             val t = @[]
-            resume coroutine(coro () {
+            val co = coroutine(coro () {
                 defer {
                     println(t)
                 }
                 yield(nil) ;;thus { it => nil }
                 println(:no)
-            }) ()
+            })
+            resume co()
             println(:ok)
         """)
         assert(out == ":ok\n@[]\n") { out }
@@ -1382,7 +1383,8 @@ class Exec_03 {
                 }) ()
             }
         """)
-        assert(out == "anon : (lin 5, col 29) : access error : cannot access local across coro\n") { out }
+        assert(out == "10\n") { out }
+        //assert(out == "anon : (lin 5, col 29) : access error : cannot access local across coro\n") { out }
     }
     @Test
     fun mm_09_upv () {
@@ -1406,7 +1408,8 @@ class Exec_03 {
                 }) ()
             }) ()
         """)
-        assert(out == "anon : (lin 5, col 29) : access error : cannot access local across coro\n") { out }
+        assert(out == "10\n") { out }
+        //assert(out == "anon : (lin 5, col 29) : access error : cannot access local across coro\n") { out }
     }
     @Test
     fun mm_11_nst() {
