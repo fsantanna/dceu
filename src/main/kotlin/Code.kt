@@ -282,7 +282,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     } while (0); // catch
                     // check free
                     ${(CEU>=3 && ups.any(this) { it is Expr.Proto && it.tk.str!="func" }).cond { """
-                        if (CEUX->args == CEU_ACTION_ABORT) {
+                        if (X->action == CEU_ACTION_ABORT) {
                             continue;   // do not execute next statement, instead free up block
                         }
                     """ }}

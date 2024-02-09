@@ -762,9 +762,11 @@ class Exec_03 {
                 val v = []
                 resume t(v)
             }
+            resume t()
         """)
-        assert(out == " |  anon : (lin 9, col 17) : (resume (t)(v))\n" +
-                " v  anon : (lin 2, col 27) : argument error : cannot hold alien reference\n") { out }
+        assert(out == "[]\n") { out }
+        //assert(out == " |  anon : (lin 9, col 17) : (resume (t)(v))\n" +
+        //        " v  anon : (lin 2, col 27) : argument error : cannot hold alien reference\n") { out }
     }
     @Test
     fun gg_04_scope() {
@@ -808,15 +810,16 @@ class Exec_03 {
             }
             resume t()
         """)
-        assert(out == " |  anon : (lin 16, col 33) : (resume (t)(nil))\n" +
-                " v  anon : (lin 5, col 21) : yield error : cannot return pending reference\n") { out }
+        assert(out == ":in\t[]\n:out\t[]\n") { out }
+        //assert(out == " |  anon : (lin 16, col 33) : (resume (t)(nil))\n" +
+        //        " v  anon : (lin 5, col 21) : yield error : cannot return pending reference\n") { out }
     }
     @Test
     fun gg_06_scope() {
         val out = test("""
             val T = coro () {
                 val x = []
-                yield(drop(x)) ;;thus { it => nil }    ;; err
+                yield(;;;drop;;;(x)) ;;thus { it => nil }    ;; err
                 println(:in, x)
             }
             val t = coroutine(T)
@@ -826,7 +829,8 @@ class Exec_03 {
             }
             resume t()
         """)
-        assert(out == ":out\t[]\n:in\tnil\n") { out }
+        //assert(out == ":out\t[]\n:in\tnil\n") { out }
+        assert(out == ":out\t[]\n:in\t[]\n") { out }
     }
     @Test
     fun gg_07_scope() {
@@ -873,8 +877,9 @@ class Exec_03 {
         """)
         //assert(out == " |  anon : (lin 10, col 17) : (resume (co)(e))\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 10, col 17) : (resume (co)(e))\n" +
-                " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
+        //assert(out == " |  anon : (lin 10, col 17) : (resume (co)(e))\n" +
+        //        " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
+        assert(out == "nil\t[]\n") { out }
     }
 
     // CATCH / THROW
@@ -978,7 +983,8 @@ class Exec_03 {
             val CO
             status(CO)
         """)
-        assert(out == " v  anon : (lin 3, col 13) : status(CO) : status error : expected running coroutine\n") { out }
+        assert(out == " |  anon : (lin 3, col 13) : status(CO)\n" +
+                " v  status error : expected running coroutine\n") { out }
     }
     @Test
     fun ii_02_status_err() {
@@ -986,7 +992,8 @@ class Exec_03 {
             val CO = coro () { nil }
             status(CO)
         """)
-        assert(out == " v  anon : (lin 3, col 13) : status(CO) : status error : expected running coroutine\n") { out }
+        assert(out == " |  anon : (lin 3, col 13) : status(CO)\n" +
+                " v  status error : expected running coroutine\n") { out }
     }
     @Test
     fun ii_02_status() {
@@ -1208,9 +1215,9 @@ class Exec_03 {
             }
             resume t()
         """)
-        //assert(out == "[]\n10\n") { out }
-        assert(out == " |  anon : (lin 14, col 17) : (resume (t)(v))\n" +
-                " v  anon : (lin 6, col 20) : resume error : cannot receive alien reference\n") { out }
+        assert(out == "[]\n10\n") { out }
+        //assert(out == " |  anon : (lin 14, col 17) : (resume (t)(v))\n" +
+        //        " v  anon : (lin 6, col 20) : resume error : cannot receive alien reference\n") { out }
     }
     @Test
     fun kk_02_scope() {

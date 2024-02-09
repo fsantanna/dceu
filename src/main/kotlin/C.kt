@@ -1111,7 +1111,7 @@ fun Coder.main (tags: Tags): String {
             ceux_push(X2->S, 1, ceux_peek(X->S,XX(-i-1)));                               
         }
         ceu_gc_inc(co);
-        ceux_base(X->S, XX(-inp));
+        ceux_base(X->S, XX(-inp-1));
         // X1: []
         // X2: [...,inps]
         
@@ -1160,30 +1160,29 @@ fun Coder.main (tags: Tags): String {
         } else if (ret < out) {     // less rets than requested
            // fill rets up to outs
             for (int i=0; i<out-ret; i++) {
-                ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+                ceux_push(X2->S, 1, (CEU_Value) { CEU_VALUE_NIL });
             }
         } else if (ret > out) {     // more rets than requested
             for (int i=out; i<ret; i++) {
-                ceux_pop(X->S, 1);
+                ceux_pop(X2->S, 1);
             }
         } else { // ret == out      // exact rets requested
             // ok
         }
         
-        // X1: [co,inps]
+        // X1: [co]
         // X2: [args,upvs,lovs,...,rets]
 
         for (int i=0; i<out; i++) {
-            ceux_push(X->S, 1, ceux_peek(X2->S,XX2(-ret)+i));                               
+            ceux_push(X->S, 1, ceux_peek(X2->S,XX2(-out)+i));                               
         }
         if (ceux_peek(X2->S,XX2(-1)).type == CEU_VALUE_ERROR) {
             ceux_base(X2->S, 0);
         } else {
-            ceux_base(X2->S, XX2(-ret));
+            ceux_base(X2->S, XX2(-out));
         }
         // X1: [outs]
         // X2: []
-        
         
         ceu_gc_dec(co);
         return out;
