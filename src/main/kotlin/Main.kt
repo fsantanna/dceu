@@ -6,7 +6,7 @@ import java.util.*
 
 var DUMP = true
 var DEBUG = true
-var CEU = 1
+var CEU = 4
     // 1: dyn-lex               ;; 7 normal  / 15 no dots / 9+X (:rec) valgrind errors
     // 2: defer, throw/catch
     // 3: coro, yield, resume
@@ -101,7 +101,7 @@ val GLOBALS = setOf (
 )) + (if (CEU < 3) setOf() else setOf(
     "coroutine", "status"
 )) + (if (CEU < 4) setOf() else setOf(
-    "broadcast'", "evt"
+    "broadcast'" //, "evt"
 )) + (if (CEU < 5) setOf() else setOf(
     "detrack'", "next-tasks", "tasks", "track"
 ))

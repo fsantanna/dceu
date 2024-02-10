@@ -151,7 +151,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     """ }}
 
                     // TODO: unlink task/block
-                    ${(CEU >= 4).cond { "TODO" }}
+                    ${(CEU >= 4).cond { "assert(0);" }}
 
                     // defers init
                     ${defers[this].cond { it.second }}
@@ -167,7 +167,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     ${(CEU >= 2).cond { defers[this].cond { it.third } }}
                     
                     // TODO: unlink task/block
-                    ${(CEU >= 4).cond { "TODO" }}
+                    ${(CEU >= 4).cond { "assert(0);" }}
 
                     ceux_block_leave(X->S, X->base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size}, ${rets.pub[this]!!});
                     
@@ -343,15 +343,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 
                 ceux_resume(X, 1 /* TODO: MULTI */, ${rets.pub[this]!!});
 
-                ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
-                    if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
-                        if (CEU_ISERR(ceu_acc)) {
-                            CEU_ERROR_PUSH(ceu_err_$n, ceu_acc);
-                        }
-                        return ceu_acc;       // TODO: func may leak
-                    }
-                """ }}
-
                 CEU_ERROR_CHK(continue, ${this.toerr()});
                 """
             }
@@ -370,12 +361,23 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }
                     assert(X->args <= 1 && "TODO: multiple arguments to resume");
                 #if CEU >= 4
-                    if (ceu_base == CEU_ARG_ERROR) {
+                    if (ceu_base == CEU_ACTION_ERROR) {
                         CEU_REPL(ceu_args[0]);
                         continue;
                     }
                 #endif
-                    //CEU_REPL((ceu_n == 1) ? ceu_args[0] : (CEU_Value) { CEU_VALUE_NIL });
+                #if 0
+                    // fill missing args with nils
+                    {
+                        int N = ${rets.pub[this]!!} - X->args;
+                        assert(N > 0);
+                        for (int i=0; i<N; i++) {
+                            for (int i=0; i<N; i++) {
+                                ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+                            }
+                        }
+                    }
+                #endif
                     ${intsk.cond { """
                         id_evt = ceu_acc;
                         //CEU_REPL((CEU_Value) { CEU_VALUE_NIL });
@@ -436,15 +438,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     // for some reason, gcc complains about args[0] for bcast_task(), but not for proto(), so we pass NULL here
                     ceu_acc = ceu_bcast_task(CEU_TIME_MAX, &ceu_x_$n.Dyn->Exe_Task, ${this.args.size}, ${if (this.args.size>0) argsc else "NULL"});
     
-                    ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
-                        if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
-                            if (CEU_ISERR(ceu_acc)) {
-                                CEU_ERROR_PUSH(ceu_err_$n, ceu_acc);
-                            }
-                            return ceu_acc;       // TODO: func may leak
-                        }
-                    """ }}
-                    
                     CEU_ERROR_CHK(continue, ${this.toerr()});
     
                     ${this.tsks.cond2({"""
@@ -493,7 +486,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     CEU_ERROR_THR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                 }
                 $tskc.Dyn->Exe_Task.status = (ceu_as_bool(ceu_acc) ? CEU_EXE_STATUS_YIELDED : CEU_EXE_STATUS_TOGGLED);
-                CEU_Value ceu_$n = ceu_bcast_task(0, &$tskc.Dyn->Exe_Task, CEU_ARG_TOGGLE, NULL);
+                CEU_Value ceu_$n = ceu_bcast_task(0, &$tskc.Dyn->Exe_Task, CEU_ACTION_TOGGLE, NULL);
                 assert(ceu_$n.type==CEU_VALUE_BOOL && ceu_$n.Bool);
                 """
             }
@@ -648,15 +641,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     
                     ceux_call(X, ${this.args.size}, ${rets.pub[this]!!});
                     
-                    ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
-                        if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
-                            if (CEU_ISERR(ceu_acc)) {
-                                CEU_ERROR_PUSH(ceu_err_$n, ceu_acc);
-                            }
-                            return ceu_acc;       // TODO: func may leak
-                        }
-                    """ }}
-
                     CEU_ERROR_CHK(continue, ${this.toerr()});
                 } // CALL | ${this.dump()}
                 """

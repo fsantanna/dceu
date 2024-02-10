@@ -110,45 +110,21 @@ fun Coder.main (tags: Tags): String {
     }
 
     // CEU_Frame, CEU_Block, CEU_Value, CEU_Dyn, CEU_Tags_*
-    fun h_frame_block (): String {
-        return  """
-    #if 0
-    typedef struct CEU_Frame {          // call func / create task
-        struct CEU_Block*    up_block;  // block enclosing this call/coroutine
-        struct CEU_Clo*      clo;       // TODO: should be CEU_Value, but CEU_Exe holds CEU_Frame, which holds CEU_Clo
-    #if CEU >= 3
-        union {
-            struct CEU_Exe*      exe;       // coro/task<->frame point to each other
-            struct CEU_Exe_Task* exe_task;
-        };
-    #endif
-    } CEU_Frame;
-    #endif
-
-    #if CEU >= 4
-    typedef struct CEU_Dyns {           // list of allocated data to bcast/free
-        union CEU_Dyn* first;
-        union CEU_Dyn* last;
-    } CEU_Dyns;
-    #endif
-
-    #if 0
+    val h_block = """
     typedef struct CEU_Block {
+    #if 0
         uint8_t  istop;
         union {
             //struct CEU_Frame* frame;    // istop = 1
             struct CEU_Block* block;    // istop = 0
         } up;
-        struct {
-    #if CEU >= 4
-            struct CEU_Block* block;    // bcast
     #endif
-            CEU_Dyns dyns;
+        struct {
+            struct CEU_Block* block;
+            struct CEU_Exe_Task* tasks;
         } dn;
     } CEU_Block;
-    #endif
     """
-    }
     fun h_value_dyn (): String {
         return """
     typedef struct CEU_Value {
@@ -258,6 +234,10 @@ fun Coder.main (tags: Tags): String {
             CEU_Block* up;
             CEU_Block* dn;
         } block;
+        struct {
+            struct CEU_Exe_Task* prv;
+            struct CEU_Exe_Task* nxt;
+        } link;
     } CEU_Exe_Task;
     #endif
     
@@ -324,7 +304,7 @@ fun Coder.main (tags: Tags): String {
 #if CEU >= 4
     CEU_Value id_evt = { CEU_VALUE_NIL };
 #endif
-    //CEU_Block CEU_BLOCK = { 0, {.block=NULL}, { CEU4(NULL COMMA) {NULL,NULL} } };
+    CEU_Block* CEU_BLOCK = NULL;
     """
     }
     fun h_protos (): String {
@@ -369,7 +349,7 @@ fun Coder.main (tags: Tags): String {
     void ceu_dyn_exe_kill (CEU_Dyn* dyn);
     #endif
     #if CEU >= 4
-    CEU_Value ceu_bcast_task (uint8_t now, CEU_Exe_Task* task, int n);
+    int ceu_bcast_task (CEUX* X1, uint8_t now, CEU_Exe_Task* task2);
     CEU_Exe_Task* ceu_task_up_task (CEU_Exe_Task* task);
     int ceu_istask_dyn (CEU_Dyn* dyn);
     int ceu_istask_val (CEU_Value val);
@@ -802,7 +782,12 @@ fun Coder.main (tags: Tags): String {
         int args;   // number of args
     #if CEU >= 3
         CEU_ACTION action;
-        struct CEU_Exe* exe;
+        union {
+            struct CEU_Exe* exe;
+    #if CEU >= 3
+            struct CEU_Exe_Task* exe_task;
+    #endif
+        };
     #endif
     } CEUX;
     
@@ -821,6 +806,7 @@ fun Coder.main (tags: Tags): String {
     val h2_ceux = """
     #define ceux_arg(X,i) (X->base - X->args + i)
     #define XX(v)  ({ assert(v<=0); X->S->n+v; })
+    #define XX1(v) ({ assert(v<=0); X1->S->n+v; })
     #define XX2(v) ({ assert(v<=0); X2->S->n+v; })
     #define SS(v)  ({ assert(v<=0); S->n+v;    })
     int ceux_top (CEU_Stack* S);
@@ -1689,6 +1675,8 @@ fun Coder.main (tags: Tags): String {
         ret.Dyn->Exe_Task.time = CEU_TIME_MAX;
         ret.Dyn->Exe_Task.block.up = up_blk;
         ret.Dyn->Exe_Task.block.dn = NULL;
+        ret.Dyn->Exe_Task.link.prv = NULL;
+        ret.Dyn->Exe_Task.link.nxt = NULL;
         ret.Dyn->Exe_Task.pub = (CEU_Value) { CEU_VALUE_NIL };
         return ret;
     }
@@ -2000,7 +1988,8 @@ fun Coder.main (tags: Tags): String {
                 if (ceu_isexe(dyn) && dyn->Exe.status<CEU_EXE_STATUS_TERMINATED) {
     #if CEU >= 4
                     if (ceu_istask_dyn(dyn)) {
-                        ret = ceu_bcast_task(CEU_TIME_MAX, &dyn->Exe_Task, CEU_ACTION_ABORT, NULL);
+                        //ret = ceu_bcast_task(CEU_TIME_MAX, &dyn->Exe_Task, CEU_ACTION_ABORT, NULL);
+                        assert(0 && "TODO");
                     } else
     #endif
                     {   // TODO - fake S/X - should propagate up to calling stack
@@ -2021,70 +2010,79 @@ fun Coder.main (tags: Tags): String {
             }
         }
     """
+    val c_task = """ // TASK
+        int ceu_istask_dyn (CEU_Dyn* dyn) {
+            return dyn->Any.type==CEU_VALUE_EXE_TASK CEU5(|| dyn->Any.type==CEU_VALUE_EXE_TASK_IN);
+        }
+        int ceu_istask_val (CEU_Value val) {
+            return (val.type>CEU_VALUE_DYNAMIC) && ceu_istask_dyn(val.Dyn);
+        }
+    """
     val c_bcast = """
-        CEU_Value ceu_bcast_blocks (uint8_t now, CEU_Block* blk, CEU_Value* evt);
-        CEU_Value ceu_bcast_dyns (uint8_t now, CEU_Dyn* cur, CEU_Value* evt);
-
-        CEU_Value ceu_bcast_task (uint8_t now, CEU_Exe_Task* task, int n) {
-            CEU_Value ret = { CEU_VALUE_BOOL, {.Bool=1} };
-
-            if (task->status == CEU_EXE_STATUS_TERMINATED) {
-                return ret;
-            } else if (n == CEU_ACTION_ABORT) {
-                return task->frame.clo->proto(&task->frame, CEU_ACTION_ABORT, NULL);
-            } else if (task->status == CEU_EXE_STATUS_TOGGLED) {
-                return ret;
+        int ceu_bcast_blocks (CEUX* X, uint8_t now, CEU_Block* blk);
+        int ceu_bcast_tasks (CEUX* X1, uint8_t now, CEU_Exe_Task* task2);
+        
+        int ceu_bcast_task (CEUX* X1, uint8_t now, CEU_Exe_Task* task2) {
+            if (task2->status == CEU_EXE_STATUS_TERMINATED) {
+                return 0;
+            } else if (X1->action == CEU_ACTION_ABORT) {
+                task2->X->action = CEU_ACTION_ABORT;
+                return task2->clo.Dyn->Clo.proto(task2->X);
+            } else if (task2->status == CEU_EXE_STATUS_TOGGLED) {
+                return 0;
             }
 
-            if (task->status==CEU_EXE_STATUS_RESUMED || task->pc!=0) {    // not initial spawn
-                ret = ceu_bcast_blocks(now, task->dn_block, args);
+            int ret = 0;    // !=0 means error in nested bcast
+            
+            if (task2->status==CEU_EXE_STATUS_RESUMED || task2->pc!=0) {    // not initial spawn
+                ret = ceu_bcast_blocks(task2->X, now, task2->block.dn);
             }
 
             #define ceu_time_lt(tsk,now) \
                 ((CEU_TIME_MAX>=CEU_TIME_MIN || (tsk<CEU_TIME_MAX && now<CEU_TIME_MAX) || (tsk>CEU_TIME_MIN && now>CEU_TIME_MIN)) ? \
                     (tsk < now) : (tsk > now))
 
-            if (task->status == CEU_EXE_STATUS_YIELDED) {
-                if (CEU_ISERR(ret)) {
+            if (task2->status == CEU_EXE_STATUS_YIELDED) {
+                if (ret != 0) {
                     // catch error from blocks above
-                    ret = task->frame.clo->proto(&task->frame, CEU_ARG_ERROR, &ret);
-                } else if (n!=CEU_ARG_TOGGLE && (task->pc==0 || ceu_time_lt(task->time,now))) {
-                    ret = task->frame.clo->proto( &task->frame, n, args);
+                    assert(ceux_peek(X1->S,XX1(-1)).type == CEU_VALUE_ERROR);
+                    task2->X->action = CEU_ACTION_ERROR;
+                    ret = task2->clo.Dyn->Clo.proto(task2->X);
+                } else if (X1->action!=CEU_ACTION_TOGGLE && (task2->pc==0 || ceu_time_lt(task2->time,now))) {
+                    task2->X->action = X1->action;
+                    ret = task2->clo.Dyn->Clo.proto(task2->X);
                 } else {
-                    task->time = CEU_TIME_MIN;
+                    task2->time = CEU_TIME_MIN;
                 }
             }
 
             // do not bcast aborted task (only terminated) b/c
             // it would awake parents that actually need to
             // respond/catch the error (thus not awake)
-            assert(ret.type != CEU_VALUE_ERROR);    // TODO: chg below to CEU_ISERR?
-            if (ret.type!=CEU_VALUE_THROW && task->status==CEU_EXE_STATUS_TERMINATED) {
-                task->hld.type = CEU_HOLD_MUTAB;    // TODO: copy ref to deep scope
-                CEU_Value evt2 = ceu_dyn_to_val((CEU_Dyn*)task);
-                CEU_Value ret2;
+            if (ret==0 && task2->status==CEU_EXE_STATUS_TERMINATED) {
+                ceux_push(X1->S, 1, ceu_dyn_to_val((CEU_Dyn*)task2));
 
                 assert(CEU_TIME_N < 255);
                 CEU_TIME_N++;
                 uint8_t now = ++CEU_TIME_MAX;
 
-                CEU_Exe_Task* up_task = ceu_task_up_task(task);
+                CEU_Exe_Task* up_task = NULL; //ceu_task_up_task(task2);
+                assert(0 && "TODO");
                 if (up_task != NULL) {
                     // enclosing coro of enclosing block
-                    ret2 = ceu_bcast_task(now, up_task, 1, &evt2);
+                    ret = ceu_bcast_task(X1, now, up_task);
                 } else {
                     // enclosing block
-                    ret2 = ceu_bcast_blocks(now, CEU_HLD_BLOCK((CEU_Dyn*)task), &evt2);
+                    ret = ceu_bcast_blocks(X1, now, task2->block.up);
                 }
+                
                 CEU_TIME_N--;
                 if (CEU_TIME_N == 0) {
                     CEU_TIME_MIN = now;
                 }
-                ret = CEU_ERR_OR(ret, ret2);
-                task->refs--;
-    #if CEU >= 5
-                ceu_stack_kill(dstk, task);
-    #endif
+                
+                ceux_pop(X1->S, 1);
+                
                 /* TODO: stack trace for error on task termination
                 do {
                     CEU_ERROR_ASR(BUPC, ceux_peek(XX(-1)), "FILE : (lin LIN, col COL) : ERR");
@@ -2095,56 +2093,33 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
 
-        CEU_Value ceu_bcast_dyns (uint8_t now, CEU_Dyn* cur, CEU_Value* evt) {
-            if (cur == NULL) {
-                return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
+        int ceu_bcast_tasks (CEUX* X1, uint8_t now, CEU_Exe_Task* task2) {
+            if (task2 == NULL) {
+                return 0;
             }
-            switch (cur->Any.type) {
-                case CEU_VALUE_EXE_TASK: {
-                    if (cur->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {
-                        return ceu_bcast_dyns(now, cur->Any.hld.prev, evt);
-                    }
-                    CEU_Value ret = ceu_bcast_dyns(now, cur->Any.hld.prev, evt);
-                    if (!bstk->on || !xstk.on) {
-                        return ret;
-                    }
-                    if (CEU_ISERR(ret)) {
-                        return ret;
-                    }
-                    return ceu_bcast_task(now, &cur->Exe_Task, (evt==NULL ? CEU_ARG_TOGGLE : 1), evt);
-                }
-    #if CEU >= 5
-                case CEU_VALUE_TRACK: {
-                    CEU_Value ret = ceu_bcast_dyns(now, cur->Any.hld.prev, evt);
-                    if (CEU_ISERR(ret)) {
-                        return ret;
-                    }
-                    if (evt!=NULL && ceu_istask_val(*evt) && cur->Track.task==(CEU_Exe_Task*)evt->Dyn) {
-                        cur->Track.task = NULL; // tracked coro is terminating
-                    }
-                    return (CEU_Value) { CEU_VALUE_NIL };
-                }
-    #endif
-                default:
-                    return ceu_bcast_dyns(now, cur->Any.hld.prev, evt);
+            int ret = 0;    // !=0 is error
+            if (task2->status != CEU_EXE_STATUS_TERMINATED) {
+                task2->X->action = X1->action;
+                ret = ceu_bcast_task(X1, now, task2);
             }
+            if (ret == 0) {
+                ret = ceu_bcast_tasks(X1, now, task2->link.nxt);
+            }
+            return ret;
         }
 
-        CEU_Value ceu_bcast_blocks (uint8_t now, CEU_Block* cur, CEU_Value* evt) {
+        int ceu_bcast_blocks (CEUX* X, uint8_t now, CEU_Block* cur) {
             if (cur == NULL) {
-                return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
+                return 0;
             }
-            CEU_Value ret = ceu_bcast_dyns(now, cur->dn.dyns.last, evt);
-            if (!xstk.on) {
-                return ret;
+            int ret = ceu_bcast_tasks(X, now, cur->dn.tasks);
+            if (ret == 0) {
+                ret = ceu_bcast_blocks(X, now, cur->dn.block);
             }
-            if (CEU_ISERR(ret)) {
-                return ret;
-            }
-            return ceu_bcast_blocks(now, cur->dn.block, evt);
+            return ret;
         }
 
-        void ceu_broadcast_f (CEUX* X) {
+        int ceu_broadcast_plic__f (CEUX* X) {
             assert(X->args == 2);
             //ceu_bstk_assert(bstk);
 
@@ -2154,20 +2129,38 @@ fun Coder.main (tags: Tags): String {
 
             CEU_Value evt = ceux_peek(X->S, ceux_arg(X,0));
             CEU_Value xin = ceux_peek(X->S, ceux_arg(X,1));
-            CEU_Value ret;
+            int ret;
             if (xin.type == CEU_VALUE_TAG) {
                 if (xin.Tag == CEU_TAG_global) {
-                    ret = ceu_bcast_blocks(now, &CEU_BLOCK, args);
+                    ret = ceu_bcast_blocks(X, now, CEU_BLOCK);
                 } else if (xin.Tag == CEU_TAG_task) {
+                    assert(0 && "TODO");
+            #if 0
+                    CEU_Block* outer (CEU_Block* blk) {
+                        if (blk->istop) {
+                            if (blk->up.frame->clo == NULL) {
+                                return blk;
+                            } else if (blk->up.frame->clo->type == CEU_VALUE_CLO_FUNC) {
+                                return ceu_bcast_outer(blk->up.frame->up_block);
+                            } else {
+                                return blk;     // outermost block in coro/task
+                            }
+                        } else if (blk->up.block != NULL) {
+                            return ceu_bcast_outer(blk->up.block);
+                        } else {
+                            return blk;         // global scope
+                        }
+                    }
                     ret = ceu_bcast_blocks(now, ceu_bcast_outer(frame->up_block), args);
+            #endif
                 } else {
-                    ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="invalid target"} };
+                    ret = ceu_error_s(X->S, "broadcast error : invalid target");
                 }
             } else {
                 if (ceu_istask_val(xin)) {
-                    ret = ceu_bcast_task(now, &xin.Dyn->Exe_Task, 1, args);
+                    ret = ceu_bcast_task(X, now, &xin.Dyn->Exe_Task);
                 } else {
-                    ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="invalid target"} };
+                    ret = ceu_error_s(X->S, "broadcast error : invalid target");
                 }
             }
             if (evt.type > CEU_VALUE_DYNAMIC) {
@@ -2240,7 +2233,8 @@ fun Coder.main (tags: Tags): String {
 
     return (
         h_includes() + h_defines() + h_enums() +
-        h_frame_block() + h_value_dyn() + h_tags() +
+        (CEU>=3).cond { h_block } +
+        h_value_dyn() + h_tags() +
         h1_ceux + h2_ceux +
         c_globals() + h_protos() +
         dumps() + c_error + gc() + c_tags() +
@@ -2250,6 +2244,7 @@ fun Coder.main (tags: Tags): String {
         print() + eq_neq_len() +
         // throw, pointer-to-string
         (CEU>=3).cond { c_exes } +
+        (CEU>=4).cond { c_task } +
         (CEU>=4).cond { c_bcast } +
         // isexe-coro-status-exe-kill, task, track
         main()
@@ -2379,35 +2374,6 @@ fun xxx_01 (): String {
             ceu_hold_rem(dyn);
             ceu_hold_add(dyn, blk CEU5(COMMA dyns));
         }
-    """ +
-    """ // BCAST
-    #if CEU >= 4
-        CEU_Block* ceu_bcast_outer (CEU_Block* blk) {
-            if (blk->istop) {
-                if (blk->up.frame->clo == NULL) {
-                    return blk;
-                } else if (blk->up.frame->clo->type == CEU_VALUE_CLO_FUNC) {
-                    return ceu_bcast_outer(blk->up.frame->up_block);
-                } else {
-                    return blk;     // outermost block in coro/task
-                }
-            } else if (blk->up.block != NULL) {
-                return ceu_bcast_outer(blk->up.block);
-            } else {
-                return blk;         // global scope
-            }
-        }
-    #endif
-    """ +
-    """ // TASK
-        #if CEU >= 4
-        int ceu_istask_dyn (CEU_Dyn* dyn) {
-            return dyn->Any.type==CEU_VALUE_EXE_TASK CEU5(|| dyn->Any.type==CEU_VALUE_EXE_TASK_IN);
-        }
-        int ceu_istask_val (CEU_Value val) {
-            return (val.type>CEU_VALUE_DYNAMIC) && ceu_istask_dyn(val.Dyn);
-        }
-        #endif
     """ +
     """ // TRACK
         #if CEU >= 5
