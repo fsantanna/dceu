@@ -964,10 +964,6 @@ class Parser (lexer_: Lexer)
                     val blk = this.nest("""
                         (${tk1.pos.pre()}func (${id_tag.tostr(true)}) ${tk1.pos.pre()}{
                             ${tk1.pos.pre()}if ${id_tag.first.str} {
-                                ```
-                                CEU_Stack ceu_dstk_$N = { &ceu_acc.Dyn->Exe_Task, 1, ceu_dstk };
-                                ceu_dstk = &ceu_dstk_$N;
-                                ```
                                 ${es.tostr(true)}
                             } else {
                                 nil

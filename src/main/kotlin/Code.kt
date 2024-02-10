@@ -163,10 +163,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         """ }}
                     """)}
 
-                    ${(CEU >= 4).cond { """
-                        ceu_stack_kill(ceu_bstk, ${D}blkc);
-                    """ }}
-
                     // defers execute
                     ${(CEU >= 2).cond { defers[this].cond { it.third } }}
                     
@@ -345,10 +341,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 ${this.co.code()}
                 ${this.arg.code()}
                 
-                ${(CEU>=4 && inexeT).cond { """
-                    CEU_Stack ceu_bstk_$n = { $bupc, 1, ceu_bstk };
-                """ }}
-                
                 ceux_resume(X, 1 /* TODO: MULTI */, ${rets.pub[this]!!});
 
                 ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
@@ -439,11 +431,10 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                                     continue;
                                 }
                         }
-                        CEU_Stack ceu_bstk_$n = { $bupc, 1, ceu_bstk };
                     """ }}
     
                     // for some reason, gcc complains about args[0] for bcast_task(), but not for proto(), so we pass NULL here
-                    ceu_acc = ceu_bcast_task(CEU5(ceu_dstk COMMA) $bstk, CEU_TIME_MAX, &ceu_x_$n.Dyn->Exe_Task, ${this.args.size}, ${if (this.args.size>0) argsc else "NULL"});
+                    ceu_acc = ceu_bcast_task(CEU_TIME_MAX, &ceu_x_$n.Dyn->Exe_Task, ${this.args.size}, ${if (this.args.size>0) argsc else "NULL"});
     
                     ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
                         if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
@@ -467,52 +458,26 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             }
             is Expr.Delay -> "ceu_frame->exe_task->time = CEU_TIME_MAX;"
             is Expr.Pub -> {
-                val bupc = ups.first_block(this)!!.idc("block")
                 this.tsk.cond2({
                     tsk as Expr
                     it.code() + """ // PUB | ${this.dump()}
-                        if (!ceu_istask_val(ceu_acc)) {
+                        CEU_Value ceu_tsk_$n = ceux_peek(X->S, XX(-1));
+                        if (!ceu_istask_val(ceu_tsk_$n)) {
                             CEU_Value err = { CEU_VALUE_ERROR, {.Error="pub error : expected task"} };
                             CEU_ERROR_THR("${this.tsk.tk.pos.file} : (lin ${this.tsk.tk.pos.lin}, col ${this.tsk.tk.pos.col})", err);
                         }
                     """
                 },{ """ // PUB | ${this.dump()}
-                    ceu_acc = ceu_dyn_to_val((CEU_Dyn*)${up_task_real_c()});
+                    CEU_Value ceu_tsk_$n = ceu_dyn_to_val((CEU_Dyn*)${up_task_real_c()});
                 """ }) +
                 when {
                     this.isdst() -> {
-                        val src = ups.pub[this]!!.idc("src")
                         """
-                        // PUB - SET | ${this.dump()}
-                        if ($src.type > CEU_VALUE_DYNAMIC) {
-                            // set pub = []   ;; FLEET ;; change to MUTAB type ;; change to pub blk
-                            // set pub = src  ;; ELSE  ;; keep ELSE type       ;; keep block
-                            // NEW: in both cases, change to IMMUT
-                            //  - Check for type=ELSE:
-                            //      - blk(pub) >= blk(src) (deeper)
-                            // Also error:
-                            // set pub = evt
-                            char* ceu_err_$n = ceu_hold_set_msg (
-                                CEU_HOLD_CMD_PUB,
-                                $src,
-                                "set error",
-                                (ceu_hold_cmd) {.Pub={
-                                    ceu_acc.Dyn->Exe_Task.dn_block
-                                    CEU5(COMMA $bupc)
-                                }}
-                            );
-                            if (ceu_err_$n != NULL) {
-                                CEU_Value err = { CEU_VALUE_ERROR, {.Error=ceu_err_$n} };
-                                CEU_ERROR_THR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                            }
-
-                            ceu_gc_inc($src);
-                        }                        
-                        ceu_gc_dec(ceu_acc.Dyn->Exe_Task.pub);
-                        ceu_acc.Dyn->Exe_Task.pub = $src;
+                        ceu_gc_dec(ceu_tsk_$n.Dyn->Exe_Task.pub);
+                        ceu_tsk_$n.Dyn->Exe_Task.pub = ceux_peek(X->S, XX(${this.tsk.cond2({"-2"},{"-1"})}));;
                         """
                     }
-                    else -> "CEU_REPL(ceu_acc.Dyn->Exe_Task.pub);\n"
+                    else -> "ceux_push(X->S, 1, ceu_tsk_$n.Dyn->Exe_Task.pub);\n"
                 }
             }
             is Expr.Dtrack -> this.blk.code()
@@ -528,7 +493,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     CEU_ERROR_THR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                 }
                 $tskc.Dyn->Exe_Task.status = (ceu_as_bool(ceu_acc) ? CEU_EXE_STATUS_YIELDED : CEU_EXE_STATUS_TOGGLED);
-                CEU_Value ceu_$n = ceu_bcast_task(CEU5(ceu_dstk COMMA) ceu_bstk, 0, &$tskc.Dyn->Exe_Task, CEU_ARG_TOGGLE, NULL);
+                CEU_Value ceu_$n = ceu_bcast_task(0, &$tskc.Dyn->Exe_Task, CEU_ARG_TOGGLE, NULL);
                 assert(ceu_$n.type==CEU_VALUE_BOOL && ceu_$n.Bool);
                 """
             }
@@ -679,7 +644,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                                     continue;
                                 }
                         }
-                        CEU_Stack ceu_bstk_$n = { ${D}bupc, 1, ceu_bstk };
                     """ }}
                     
                     ceux_call(X, ${this.args.size}, ${rets.pub[this]!!});
