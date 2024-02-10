@@ -39,7 +39,8 @@ class Exec_04 {
             val T = task (v) { nil }
             coroutine(T)
         """)
-        assert(out == " v  anon : (lin 3, col 13) : coroutine(T) : coroutine error : expected coro\n") { out }
+        assert(out == " |  anon : (lin 3, col 13) : coroutine(T)\n" +
+                " v  coroutine error : expected coro\n") { out }
     }
     @Test
     fun aa_04_task_err() {
@@ -47,7 +48,8 @@ class Exec_04 {
             val T = task (v) { nil }
             T()
         """)
-        assert(out == " v  anon : (lin 3, col 13) : call error : expected function\n") { out }
+        assert(out == " |  anon : (lin 3, col 13) : T()\n" +
+                " v  call error : expected function\n") { out }
     }
     @Test
     fun aa_05_yield_err() {

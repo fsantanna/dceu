@@ -107,7 +107,6 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             }
 
             is Expr.Spawn  -> {
-                this.tsks?.traverse()
                 this.tsk.traverse()
                 this.args.forEach { it.traverse() }
                 /*

@@ -901,7 +901,7 @@ class Parser (lexer_: Lexer)
                     this.expr()
                 }
                 call as Expr.Call
-                Expr.Spawn(tk0, tasks, call.clo, call.args)
+                Expr.Spawn(tk0, call.clo, call.args)
             }
             (CEU>=4 && this.acceptFix("delay")) -> Expr.Delay(this.tk0 as Tk.Fix)
             (CEU>=4 && this.acceptFix("pub")) -> {
@@ -1127,9 +1127,6 @@ class Parser (lexer_: Lexer)
                 if (this.checkFix("spawn")) {
                     val spw = this.expr()
                     spw as Expr.Spawn
-                    if (spw.tsks != null) {
-                        err(tk0, "await error : expected non-pool spawn")
-                    }
                     return this.nest("""
                         do {
                             val ceu_$N = ${spw.tostr(true)}

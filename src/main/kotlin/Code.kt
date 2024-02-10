@@ -387,45 +387,24 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             }
 
             is Expr.Spawn -> {
-                val bup = ups.first_block(this)!!
-                val bupc = bup.idc("block")
-                val argsc = this.idc("args")
-                val tsksc = this.idc("tsks")
-                val tskc = this.idc("tsk")
                 val inexeT = ups.inexe(this, null, true)
-                val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"
 
                 """
                 { // SPAWN | ${this.dump()}
-                    ceu_bstk_assert(ceu_bstk);
-    
-                    ${this.tsks.cond { "CEU_Value $tsksc;" }}
-                    CEU_Value $tskc;
                     ${this.tsk.code()}
-                    $tskc = ceu_acc;
+                    {
+                        CEU_Value exe = ceu_create_exe_task(ceux_peek(X->S,XX(-1)), ceux_block(X->S));
+                        CEU_ERROR_ASR(continue, exe, ${this.toerr()});
+                        ceux_repl(X->S, XX(-1), exe);
+                    }
                     
                     CEU_Value ceu_args_$n[${this.args.size}];
-                    ${this.args.mapIndexed { i,e -> """
+                    ${this.args.mapIndexed { i, e -> """
                         ${e.code()}
-                        $argsc[$i] = ceu_acc;
                     """ }.joinToString("")}
 
-                    ${this.tsks.cond2({ """
-                        ${it.code()}
-                        $tsksc = ceu_acc;
-                        CEU_Value ceu_x_$n = ceu_create_exe_task_in($bupc, $tskc, &$tsksc.Dyn->Tasks);
-                        if (ceu_x_$n.type == CEU_VALUE_NIL) {
-                            CEU_REPL((CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} });
-                        } else {
-                            // ... below ...
-                    """ }, { """
-                        CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, $tskc);                    
-                    """ })}
-                    
-                    CEU_ERROR_ASR(continue, ceu_x_$n, ${this.toerr()});
-                    
                     ${inexeT.cond { """
-                        if (ceu_base != CEU_ACTION_ABORT) {
+                        if (X->action != CEU_ACTION_ABORT) {
                             ceu_frame->exe->pc = $n;
                             case $n: // YIELD ${this.dump()}
                                 if (X->action == CEU_ACTION_ABORT) {
@@ -435,17 +414,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         }
                     """ }}
     
-                    // for some reason, gcc complains about args[0] for bcast_task(), but not for proto(), so we pass NULL here
-                    ceu_acc = ceu_bcast_task(CEU_TIME_MAX, &ceu_x_$n.Dyn->Exe_Task, ${this.args.size}, ${if (this.args.size>0) argsc else "NULL"});
-    
+                    ceu_bcast_task(X->S, CEU_TIME_MAX, &ceu_x_$n.Dyn->Exe_Task);
                     CEU_ERROR_CHK(continue, ${this.toerr()});
-    
-                    ${this.tsks.cond2({"""
-                            CEU_REPL((CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} });
-                        }
-                    """}, {"""
-                        CEU_REPL(ceu_x_$n);
-                    """})}
                 } // SPAWN | ${this.dump()}
                 """
             }

@@ -131,6 +131,7 @@ fun Coder.main (tags: Tags): String {
         CEU_VALUE type;
         union {
             //void nil;
+            CEU4(CEU_Block* Block;)
             char* Error;            // NULL=value on stack, !NULL=value is this string
             unsigned int Tag;
             int Bool;
@@ -917,6 +918,18 @@ fun Coder.main (tags: Tags): String {
         ceux_push(S, 1, (CEU_Value) { CEU_VALUE_BLOCK });
     }
     
+    #if CEU >= 4
+    CEU_Block* ceux_block (CEU_Stack* S) {
+        for (int i=S->n-1; i>=0; i++) {
+            CEU_Value v = ceux_peek(S, SS(-1));
+            if (v.type == CEU_VALUE_BLOCK) {
+                return v.Block;
+            }
+        }
+        assert(0 && "bug found: no block found");
+    }
+    #endif
+    
     void ceux_block_leave (CEU_Stack* S, int base, int n, int out) {
         // clear locals
         // TODO: use memset=0
@@ -1667,13 +1680,13 @@ fun Coder.main (tags: Tags): String {
     #endif
 
     #if CEU >= 4
-    CEU_Value ceu_create_exe_task (CEU_Block* up_blk, CEU_Value clo) {
+    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Block* block_up) {
         if (clo.type != CEU_VALUE_CLO_TASK) {
             return (CEU_Value) { CEU_VALUE_ERROR, {.Error="spawn error : expected task"} };
         }
         CEU_Value ret = ceu_create_exe(CEU_VALUE_EXE_TASK, sizeof(CEU_Exe_Task), clo);
         ret.Dyn->Exe_Task.time = CEU_TIME_MAX;
-        ret.Dyn->Exe_Task.block.up = up_blk;
+        ret.Dyn->Exe_Task.block.up = block_up;
         ret.Dyn->Exe_Task.block.dn = NULL;
         ret.Dyn->Exe_Task.link.prv = NULL;
         ret.Dyn->Exe_Task.link.nxt = NULL;
