@@ -325,6 +325,7 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_create_dict    (void);
     CEU_Value ceu_create_clo     (CEU_Proto proto, int args, int locs, int upvs);
     #if CEU >= 4
+    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Block* block_up);
     CEU_Value ceu_create_track   (CEU_Exe_Task* task);
     #endif
 
@@ -445,18 +446,18 @@ fun Coder.main (tags: Tags): String {
 
     #if CEU <= 1
     #define CEU_ERROR_CHK(cmd,pre) {                    \
-        if (ceux_top(X->S)>0 && ceux_peek(X->S,XX(-1)).type==CEU_VALUE_ERROR) {  \
-            CEU_Value msg = ceux_peek(X->S, XX(-2));           \
+        if (ceux_top(X->S)>0 && ceux_peek(X->S,XX(-1)).type==CEU_VALUE_ERROR) {     \
+            CEU_Value msg = ceux_peek(X->S, XX(-2));    \
             assert(msg.type == CEU_VALUE_POINTER);      \
-            fprintf(stderr, " |  %s\n v  error : %s\n", pre, (char*) msg.Pointer); \
-            ceux_base(X->S, 0);                               \
+            fprintf(stderr, " |  %s\n v  error : %s\n", pre, (char*) msg.Pointer);  \
+            ceux_base(X->S, 0);                         \
             exit(0);                                    \
         }                                               \
     }
     #else
-    #define CEU_ERROR_CHK(cmd,pre)  \
-        if (ceu_error_chk(X->S, pre)) {   \
-            cmd;                    \
+    #define CEU_ERROR_CHK(cmd,pre)      \
+        if (ceu_error_chk(X->S, pre)) { \
+            cmd;                        \
         }
     int ceu_error_chk (CEU_Stack* S, char* pre) {
         CEU_Value err = ceux_peek(S, SS(-1));
@@ -920,8 +921,8 @@ fun Coder.main (tags: Tags): String {
     
     #if CEU >= 4
     CEU_Block* ceux_block (CEU_Stack* S) {
-        for (int i=S->n-1; i>=0; i++) {
-            CEU_Value v = ceux_peek(S, SS(-1));
+        for (int i=S->n-1; i>=0; i--) {
+            CEU_Value v = ceux_peek(S, i);
             if (v.type == CEU_VALUE_BLOCK) {
                 return v.Block;
             }
@@ -1124,6 +1125,66 @@ fun Coder.main (tags: Tags): String {
         // X2: []
         
         ceu_gc_dec(co);
+        return out;
+    }
+#endif
+
+#if CEU >= 4
+    int ceux_spawn (CEUX* X1, uint8_t now, int inp) {
+        assert(inp<=1 && "TODO: varargs spawn");
+        
+        CEU_Value t = ceux_peek(X1->S, XX1(-inp-1));
+        if (t.type != CEU_VALUE_CLO_TASK) {
+            return ceu_error_s(X1->S, "spawn error : expected task");
+        }
+
+        CEU_Value xt = ceu_create_exe_task(t, ceux_block(X1->S));
+        if (xt.type == CEU_VALUE_ERROR) {
+            return ceu_error_e(X1->S, xt);
+        }        
+        assert(xt.Dyn->Exe_Task.clo.type == CEU_VALUE_CLO_TASK);
+        CEU_Clo* clo = &xt.Dyn->Exe_Task.clo.Dyn->Clo;
+        
+        // X1: [t,inps]
+        // X2: []
+        CEUX* X2 = xt.Dyn->Exe_Task.X;                                        
+        for (int i=0; i<inp; i++) {                                                 
+            ceux_push(X2->S, 1, ceux_peek(X1->S,XX1(-i-1)));                               
+        }
+        ceux_base(X1->S, XX1(-inp-1));
+        // X1: []
+        // X2: [...,inps]
+        
+        X2->base = ceux_call_pre(X2->S, clo, &inp);
+
+        // X2: [args,upvs,locs]
+        //           ^ base
+        
+        X2->args = inp;
+        X2->action = CEU_ACTION_CALL;
+
+        int ret = clo->proto(X2);
+        
+        // X2: [args,upvs,lovs,...,rets]
+        
+        int out = 0; // no returns from spawn (returns xt)
+        int err = ceux_call_pos(X2->S, ret, &out);        
+        
+        // X1: []
+        // X2: [args,upvs,lovs,...,[err]]
+
+        if (err) {
+            for (int i=0; i<out; i++) {
+                ceux_push(X1->S, 1, ceux_peek(X2->S,XX2(-out)+i));                               
+            }
+            ceux_base(X2->S, 0);
+        } else {
+            ceux_push(X1->S, 1, xt);
+        }
+        
+        // X1: [xt]
+        // X2: [...]
+        
         return out;
     }
 #endif

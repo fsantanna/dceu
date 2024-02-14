@@ -79,7 +79,8 @@ class Exec_04 {
             val t = spawn T()
             resume t()
         """)
-        assert(out == " v  anon : (lin 4, col 13) : resume error : expected yielded coro\n") { out }
+        assert(out == " |  anon : (lin 4, col 13) : (resume (t)(nil))\n" +
+                " v  resume error : expected yielded coro\n") { out }
     }
     @Test
     fun bb_03_spawn() {
@@ -95,7 +96,8 @@ class Exec_04 {
         val out = test("""
             spawn nil()
         """)
-        assert(out == " v  anon : (lin 2, col 13) : spawn error : expected task\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : (spawn nil())\n" +
+                " v  spawn error : expected task\n") { out }
     }
     @Test
     fun bb_05_spawn() {

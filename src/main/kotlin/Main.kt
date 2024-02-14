@@ -137,7 +137,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val co: Expr, val arg: Expr): Expr(N++, tk_)
 
-    data class Spawn(val tk_: Tk.Fix, val tsk: Expr, val args: List<Expr>): Expr(N++, tk_)
+    data class Spawn  (val tk_: Tk.Fix, val tsk: Expr, val args: List<Expr>): Expr(N++, tk_)
     data class Delay  (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Pub    (val tk_: Tk.Fix, val tsk: Expr?): Expr(N++, tk_)
     data class Dtrack (val tk_: Tk.Fix, val blk: Expr.Call): Expr(N++, tk_)

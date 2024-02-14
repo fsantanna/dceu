@@ -331,21 +331,12 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 """
             }
 
-            is Expr.Resume -> {
-                val bup = ups.first_block(this)!!
-                val bupc = bup.idc("block")
-                val inexeT = ups.inexe(this, null,true)
-                val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"
-
-                """
+            is Expr.Resume -> """
                 ${this.co.code()}
                 ${this.arg.code()}
-                
                 ceux_resume(X, 1 /* TODO: MULTI */, ${rets.pub[this]!!});
-
                 CEU_ERROR_CHK(continue, ${this.toerr()});
-                """
-            }
+            """
             is Expr.Yield -> {
                 val intsk = ups.inexe(this, "task", true)
                 """
@@ -361,8 +352,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }
                     assert(X->args <= 1 && "TODO: multiple arguments to resume");
                 #if CEU >= 4
-                    if (ceu_base == CEU_ACTION_ERROR) {
-                        CEU_REPL(ceu_args[0]);
+                    if (X->action == CEU_ACTION_ERROR) {
                         continue;
                     }
                 #endif
@@ -379,45 +369,25 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }
                 #endif
                     ${intsk.cond { """
-                        id_evt = ceu_acc;
-                        //CEU_REPL((CEU_Value) { CEU_VALUE_NIL });
+                        id_evt = ceux_peek(X->S, XX(-1));
                     """ }}
                 }
                 """
             }
 
             is Expr.Spawn -> {
-                val inexeT = ups.inexe(this, null, true)
-
+                val dots = this.args.lastOrNull()
+                assert(dots==null || dots !is Expr.Acc || dots.tk.str!="...") { "TODO" }
                 """
                 { // SPAWN | ${this.dump()}
                     ${this.tsk.code()}
-                    {
-                        CEU_Value exe = ceu_create_exe_task(ceux_peek(X->S,XX(-1)), ceux_block(X->S));
-                        CEU_ERROR_ASR(continue, exe, ${this.toerr()});
-                        ceux_repl(X->S, XX(-1), exe);
-                    }
-                    
-                    CEU_Value ceu_args_$n[${this.args.size}];
                     ${this.args.mapIndexed { i, e -> """
                         ${e.code()}
                     """ }.joinToString("")}
-
-                    ${inexeT.cond { """
-                        if (X->action != CEU_ACTION_ABORT) {
-                            ceu_frame->exe->pc = $n;
-                            case $n: // YIELD ${this.dump()}
-                                if (X->action == CEU_ACTION_ABORT) {
-                                    CEU_REPL((CEU_Value) { CEU_VALUE_NIL }); // to be ignored in further move/checks
-                                    continue;
-                                }
-                        }
-                    """ }}
-    
-                    ceu_bcast_task(X->S, CEU_TIME_MAX, &ceu_x_$n.Dyn->Exe_Task);
+                    ceux_spawn(X, CEU_TIME_MAX, ${this.args.size});
                     CEU_ERROR_CHK(continue, ${this.toerr()});
                 } // SPAWN | ${this.dump()}
-                """
+            """
             }
             is Expr.Delay -> "ceu_frame->exe_task->time = CEU_TIME_MAX;"
             is Expr.Pub -> {
@@ -582,8 +552,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 val id_dots = if (!has_dots) "" else {
                     TODO()
                 }
-                val inexeT = ups.inexe(this, null, true)
-                val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"
                 """
                 { // CALL | ${this.dump()}
                     ${this.clo.code()}
@@ -597,18 +565,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         }
                     """ }}
 
-                    // call -> bcast -> outer abortion -> need to clean up from here
-                    ${(CEU>=4 && inexeT).cond { """
-                        if (ceu_base != CEU_ACTION_ABORT) {
-                            ceu_frame->exe->pc = $n;
-                            case $n: // YIELD ${this.dump()}
-                                if (X->action == CEU_ACTION_ABORT) {
-                                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL }; // to be ignored in further move/checks
-                                    continue;
-                                }
-                        }
-                    """ }}
-                    
                     ceux_call(X, ${this.args.size}, ${rets.pub[this]!!});
                     
                     CEU_ERROR_CHK(continue, ${this.toerr()});
