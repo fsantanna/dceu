@@ -304,8 +304,8 @@ fun Coder.main (tags: Tags): String {
 
 #if CEU >= 4
     CEU_Value id_evt = { CEU_VALUE_NIL };
-#endif
     CEU_Block* CEU_BLOCK = NULL;
+#endif
     """
     }
     fun h_protos (): String {
@@ -966,6 +966,15 @@ fun Coder.main (tags: Tags): String {
         ceux_base(S, I + out);
     }
     
+    // fill missing args with nils
+    void ceux_call_inp_fill (CEU_Stack* S, int args, int* inp) {
+        int N = args - *inp;
+        for (int i=0; i<N; i++) {
+            ceux_push(S, 1, (CEU_Value) { CEU_VALUE_NIL });
+            (*inp)++;
+        }
+    }
+    
     int ceux_call (CEUX* X1, int inp, int out) {
         // [clo,args]
         CEU_Value clo = ceux_peek(X1->S, XX1(-inp-1));
@@ -973,15 +982,7 @@ fun Coder.main (tags: Tags): String {
             return ceu_error_s(X1->S, "call error : expected function");
         }
 
-        // fill missing args with nils
-        {
-            int N = clo.Dyn->Clo.args - inp;
-            //printf(">>> %d\inp", N);
-            for (int i=0; i<N; i++) {
-                ceux_push(X1->S, 1, (CEU_Value) { CEU_VALUE_NIL });
-                inp++;
-            }
-        }
+        ceux_call_inp_fill(X1->S, clo.Dyn->Clo.args, &inp);
 
         int base = X1->S->n;
 
@@ -1076,15 +1077,7 @@ fun Coder.main (tags: Tags): String {
         
         // first resume: place upvs+locs
         if (co.Dyn->Exe.pc == 0) {
-            // fill missing args with nils
-            {
-                int N = clo->args - inp;
-                //printf(">>> %d\inp", N);
-                for (int i=0; i<N; i++) {
-                    ceux_push(X2->S, 1, (CEU_Value) { CEU_VALUE_NIL });
-                    inp++;
-                }
-            }
+            ceux_call_inp_fill(X2->S, clo->args, &inp);
             X2->base = X2->S->n;
             for (int i=0; i<clo->upvs.its; i++) {
                 ceux_push(X2->S, 1, clo->upvs.buf[i]);
@@ -2007,7 +2000,7 @@ fun Coder.main (tags: Tags): String {
     #endif
                     {   // TODO - fake S/X - should propagate up to calling stack
                         CEU_Stack S = { 0, {} };
-                        CEUX _X = { &S, 0, 0, CEU_ACTION_ABORT, NULL };
+                        CEUX _X = { &S, 0, 0, CEU_ACTION_ABORT, {.exe=NULL} };
                         CEUX* X = &_X;
                         ceux_push(&S, 1, ceu_dyn_to_val(dyn));
                         int ret = ceux_resume(X, 0, 0);
