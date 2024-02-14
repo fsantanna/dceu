@@ -966,39 +966,48 @@ fun Coder.main (tags: Tags): String {
         ceux_base(S, I + out);
     }
     
-    // fill missing args with nils
-    void ceux_call_inp_fill (CEU_Stack* S, int args, int* inp) {
-        int N = args - *inp;
-        for (int i=0; i<N; i++) {
-            ceux_push(S, 1, (CEU_Value) { CEU_VALUE_NIL });
-            (*inp)++;
+    int ceux_call_pre (CEU_Stack* S, CEU_Clo* clo, int* inp) {
+        // fill missing args with nils
+        {
+            int N = clo->args - *inp;
+            for (int i=0; i<N; i++) {
+                ceux_push(S, 1, (CEU_Value) { CEU_VALUE_NIL });
+                (*inp)++;
+            }
         }
+        
+        int base = S->n;
+
+        // [clo,args,?]
+        //           ^ base
+
+        // place upvs+locs
+        {
+            for (int i=0; i<clo->upvs.its; i++) {
+                ceux_push(S, 1, clo->upvs.buf[i]);
+            }
+            for (int i=0; i<clo->locs; i++) {
+                ceux_push(S, 1, (CEU_Value) { CEU_VALUE_NIL });
+            }
+        }
+        // [clo,args,upvs,locs]
+        //           ^ base
+
+        return base;
     }
     
     int ceux_call (CEUX* X1, int inp, int out) {
-        // [clo,args]
+        // [clo,inps]
         CEU_Value clo = ceux_peek(X1->S, XX1(-inp-1));
         if (CEU3(X1->exe==NULL &&) clo.type != CEU_VALUE_CLO_FUNC) {
             return ceu_error_s(X1->S, "call error : expected function");
         }
 
-        ceux_call_inp_fill(X1->S, clo.Dyn->Clo.args, &inp);
+        int base = ceux_call_pre(X1->S, &clo.Dyn->Clo, &inp);
 
-        int base = X1->S->n;
-
-        // [clo,args,?]
-        //           ^ base
-
-        for (int i=0; i<clo.Dyn->Clo.upvs.its; i++) {
-            ceux_push(X1->S, 1, clo.Dyn->Clo.upvs.buf[i]);
-        }
-        for (int i=0; i<clo.Dyn->Clo.locs; i++) {
-            ceux_push(X1->S, 1, (CEU_Value) { CEU_VALUE_NIL });
-        }
-        
         // [clo,args,upvs,locs]
         //           ^ base
-        
+
         CEUX X2 = *X1;
         X2.base = base;
         X2.args = inp;
@@ -1077,17 +1086,11 @@ fun Coder.main (tags: Tags): String {
         
         // first resume: place upvs+locs
         if (co.Dyn->Exe.pc == 0) {
-            ceux_call_inp_fill(X2->S, clo->args, &inp);
-            X2->base = X2->S->n;
-            for (int i=0; i<clo->upvs.its; i++) {
-                ceux_push(X2->S, 1, clo->upvs.buf[i]);
-            }
-            for (int i=0; i<clo->locs; i++) {
-                ceux_push(X2->S, 1, (CEU_Value) { CEU_VALUE_NIL });
-            }
+            X2->base = ceux_call_pre(X2->S, clo, &inp);
             // X2: [args,upvs,locs]
+            //           ^ base
         } else {
-            // X2: [args,upvs,lovs,...,inps]
+            // X2: [args,upvs,locs,...,inps]
         }
         X2->args = inp;
         X2->action = X1->action;
