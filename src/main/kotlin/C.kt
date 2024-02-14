@@ -996,6 +996,37 @@ fun Coder.main (tags: Tags): String {
         return base;
     }
     
+    int ceux_call_pos (CEU_Stack* S, int ret, int* out) {
+        // in case of error, out must be readjusted to the error stack:
+        // [clo,args,upvs,locs,...,n,pay,err]
+        //  - ... - error messages
+        //  - n   - number of error messages
+        //  - pay - error payload
+        //  - err - error value
+        if (ret>0 && ceux_peek(S,SS(-1)).type == CEU_VALUE_ERROR) {
+            CEU_Value n = ceux_peek(S,SS(-3));
+            assert(n.type == CEU_VALUE_NUMBER);
+            *out = n.Number + 1 + 1 + 1;
+            return 1;
+        }
+         
+        if (*out == CEU_MULTI) {     // any rets is ok
+            *out = ret;
+        } else if (ret < *out) {     // less rets than requested
+           // fill rets up to outs
+            for (int i=0; i<*out-ret; i++) {
+                ceux_push(S, 1, (CEU_Value) { CEU_VALUE_NIL });
+            }
+        } else if (ret > *out) {     // more rets than requested
+            for (int i=*out; i<ret; i++) {
+                ceux_pop(S, 1);
+            }
+        } else { // ret == out      // exact rets requested
+            // ok
+        }
+        return 0;
+    }
+    
     int ceux_call (CEUX* X1, int inp, int out) {
         // [clo,inps]
         CEU_Value clo = ceux_peek(X1->S, XX1(-inp-1));
@@ -1013,35 +1044,10 @@ fun Coder.main (tags: Tags): String {
         X2.args = inp;
         int ret = clo.Dyn->Clo.proto(&X2);
         
-        // in case of error, out must be readjusted to the error stack:
-        // [clo,args,upvs,locs,...,n,pay,err]
-        //  - ... - error messages
-        //  - n   - number of error messages
-        //  - pay - error payload
-        //  - err - error value
-        if (ceux_peek(X1->S,XX1(-1)).type == CEU_VALUE_ERROR) {
-            CEU_Value n = ceux_peek(X1->S,XX1(-3));
-            assert(n.type == CEU_VALUE_NUMBER);
-            ret = out = n.Number + 1 + 1 + 1;
-        }
-
         // [clo,args,upvs,locs,rets]
         //           ^ base
         
-        if (out == CEU_MULTI) {     // any rets is ok
-            out = ret;
-        } else if (ret < out) {     // less rets than requested
-           // fill rets up to outs
-            for (int i=0; i<out-ret; i++) {
-                ceux_push(X1->S, 1, (CEU_Value) { CEU_VALUE_NIL });
-            }
-        } else if (ret > out) {     // more rets than requested
-            for (int i=out; i<ret; i++) {
-                ceux_pop(X1->S, 1);
-            }
-        } else { // ret == out      // exact rets requested
-            // ok
-        }
+        ceux_call_pos(X1->S, ret, &out);        
         
         // [clo,args,upvs,locs,out]
         //           ^ base
@@ -1090,41 +1096,18 @@ fun Coder.main (tags: Tags): String {
             // X2: [args,upvs,locs]
             //           ^ base
         } else {
+            //X2->base = <already set>
             // X2: [args,upvs,locs,...,inps]
+            //           ^ base
         }
         X2->args = inp;
         X2->action = X1->action;
 
         int ret = clo->proto(X2);
+        
         // X2: [args,upvs,lovs,...,rets]
         
-        // in case of error, out must be readjusted to the error stack:
-        // [clo,args,upvs,locs,...,n,pay,err]
-        //  - ... - error messages
-        //  - n   - number of error messages
-        //  - pay - error payload
-        //  - err - error value
-        if (ret>0 && ceux_peek(X2->S,XX2(-1)).type==CEU_VALUE_ERROR) {
-            CEU_Value n = ceux_peek(X2->S,XX2(-3));
-            assert(n.type == CEU_VALUE_NUMBER);
-            ret = out = n.Number + 1 + 1 + 1;
-        }
-
-        if (out == CEU_MULTI) {     // any rets is ok
-            out = ret;
-        } else if (ret < out) {     // less rets than requested
-           // fill rets up to outs
-            for (int i=0; i<out-ret; i++) {
-                ceux_push(X2->S, 1, (CEU_Value) { CEU_VALUE_NIL });
-            }
-        } else if (ret > out) {     // more rets than requested
-            for (int i=out; i<ret; i++) {
-                ceux_pop(X2->S, 1);
-                ret--;
-            }
-        } else { // ret == out      // exact rets requested
-            // ok
-        }
+        int err = ceux_call_pos(X2->S, ret, &out);        
         
         // X1: [co]
         // X2: [args,upvs,lovs,...,rets]
@@ -1132,7 +1115,7 @@ fun Coder.main (tags: Tags): String {
         for (int i=0; i<out; i++) {
             ceux_push(X1->S, 1, ceux_peek(X2->S,XX2(-out)+i));                               
         }
-        if (ret>0 && ceux_peek(X2->S,XX2(-1)).type==CEU_VALUE_ERROR) {
+        if (err) {
             ceux_base(X2->S, 0);
         } else {
             ceux_base(X2->S, XX2(-out));
@@ -2205,7 +2188,7 @@ fun Coder.main (tags: Tags): String {
     #endif
     
         CEU_Stack S = { 0, {} };
-        CEUX _X = { &S, 0, 0 CEU3(COMMA CEU_ACTION_CALL COMMA NULL) };
+        CEUX _X = { &S, 0, 0 CEU3(COMMA CEU_ACTION_CALL COMMA {.exe=NULL}) };
         CEUX* X = &_X;
         
         ${do_while(this.code)}
