@@ -112,16 +112,12 @@ fun Coder.main (tags: Tags): String {
     // CEU_Frame, CEU_Block, CEU_Value, CEU_Dyn, CEU_Tags_*
     val h_block = """
     typedef struct CEU_Block {
-    #if 0
-        uint8_t  istop;
-        union {
-            //struct CEU_Frame* frame;    // istop = 1
-            struct CEU_Block* block;    // istop = 0
-        } up;
-    #endif
         struct {
             struct CEU_Block* block;
-            struct CEU_Exe_Task* tasks;
+            struct {
+                struct CEU_Exe_Task* fst;   // bcast from here
+                struct CEU_Exe_Task* lst;   // link from here
+            } tasks;
         } dn;
     } CEU_Block;
     """
@@ -232,8 +228,8 @@ fun Coder.main (tags: Tags): String {
         uint8_t time;
         CEU_Value pub;
         struct {
-            CEU_Block* up;
-            CEU_Block* dn;
+            CEU_Block* up;      // bcast task termination
+            CEU_Block* dn;      // bcast nested tasks
         } block;
         struct {
             struct CEU_Exe_Task* prv;
@@ -915,8 +911,14 @@ fun Coder.main (tags: Tags): String {
         // TODO: use memset=0
         for (int i=0; i<n; i++) {
             ceux_repl(S, base+i, (CEU_Value) { CEU_VALUE_NIL });
-        }        
+        }
+    #if CEU >= 4
+        CEU_Block* blk = malloc(sizeof(CEU_Block));
+        *blk = (CEU_Block) { {NULL, {NULL,NULL}} };
+        ceux_push(S, 1, (CEU_Value) { CEU_VALUE_BLOCK, {.Block=blk} });
+    #else
         ceux_push(S, 1, (CEU_Value) { CEU_VALUE_BLOCK });
+    #endif
     }
     
     #if CEU >= 4
@@ -940,7 +942,18 @@ fun Coder.main (tags: Tags): String {
 
         int I = -1;
         for (int i=S->n-1; i>=0; i--) {
-            if (ceux_peek(S,i).type == CEU_VALUE_BLOCK) {
+            CEU_Value blk = ceux_peek(S,i);
+            if (blk.type == CEU_VALUE_BLOCK) {
+    #if CEU >= 4
+                for (
+                    CEU_Exe_Task* tsk = blk.Block->dn.tasks.fst;
+                    tsk != NULL;
+                    tsk = tsk->link.nxt
+                ) {
+                    tsk->block.up = NULL;
+                }
+                free(blk.Block);
+    #endif
                 I = i;
                 break;
             }
@@ -1031,7 +1044,7 @@ fun Coder.main (tags: Tags): String {
     int ceux_call (CEUX* X1, int inp, int out) {
         // [clo,inps]
         CEU_Value clo = ceux_peek(X1->S, XX1(-inp-1));
-        if (CEU3(X1->exe==NULL &&) clo.type != CEU_VALUE_CLO_FUNC) {
+        if (CEU3(X1->exe==NULL &&) clo.type!=CEU_VALUE_CLO_FUNC) {
             return ceu_error_s(X1->S, "call error : expected function");
         }
 
@@ -1040,9 +1053,10 @@ fun Coder.main (tags: Tags): String {
         // [clo,args,upvs,locs]
         //           ^ base
 
-        CEUX X2 = *X1;
-        X2.base = base;
-        X2.args = inp;
+        CEUX X2 = *X1; {
+            X2.base = base;
+            X2.args = inp;
+        }
         int ret = clo.Dyn->Clo.proto(&X2);
         
         // [clo,args,upvs,locs,rets]
@@ -2165,7 +2179,7 @@ fun Coder.main (tags: Tags): String {
             if (cur == NULL) {
                 return 0;
             }
-            int ret = ceu_bcast_tasks(X, now, cur->dn.tasks);
+            int ret = ceu_bcast_tasks(X, now, cur->dn.tasks.fst);
             if (ret == 0) {
                 ret = ceu_bcast_blocks(X, now, cur->dn.block);
             }
@@ -2187,25 +2201,11 @@ fun Coder.main (tags: Tags): String {
                 if (xin.Tag == CEU_TAG_global) {
                     ret = ceu_bcast_blocks(X, now, CEU_BLOCK);
                 } else if (xin.Tag == CEU_TAG_task) {
-                    assert(0 && "TODO");
-            #if 0
-                    CEU_Block* outer (CEU_Block* blk) {
-                        if (blk->istop) {
-                            if (blk->up.frame->clo == NULL) {
-                                return blk;
-                            } else if (blk->up.frame->clo->type == CEU_VALUE_CLO_FUNC) {
-                                return ceu_bcast_outer(blk->up.frame->up_block);
-                            } else {
-                                return blk;     // outermost block in coro/task
-                            }
-                        } else if (blk->up.block != NULL) {
-                            return ceu_bcast_outer(blk->up.block);
-                        } else {
-                            return blk;         // global scope
-                        }
+                    if (X->exe_task == NULL) {
+                        ret = ceu_bcast_blocks(X, now, CEU_BLOCK);
+                    } else {
+                        ret = ceu_bcast_task(X, now, X->exe_task);
                     }
-                    ret = ceu_bcast_blocks(now, ceu_bcast_outer(frame->up_block), args);
-            #endif
                 } else {
                     ret = ceu_error_s(X->S, "broadcast error : invalid target");
                 }
