@@ -297,10 +297,6 @@ fun Coder.main (tags: Tags): String {
     uint8_t CEU_TIME_MIN = 0;
     uint8_t CEU_TIME_MAX = 0;
     int CEU_BREAK = 0;
-
-#if CEU >= 4
-    CEU_Value id_evt = { CEU_VALUE_NIL };
-#endif
     """
     }
     fun h_protos (): String {

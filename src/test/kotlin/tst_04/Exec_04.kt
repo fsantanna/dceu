@@ -423,8 +423,7 @@ class Exec_04 {
     }
     @Test
     fun dd_02x_bcast() {
-        val out = test(
-            """
+        val out = test("""
             val T = task (x) {
                 println(x)
                 val y = yield(nil)
@@ -432,8 +431,7 @@ class Exec_04 {
             }
             spawn T(1)
             broadcast(2)
-        """
-        )
+        """)
         assert(out == "1\n2\n") { out }
     }
     @Test

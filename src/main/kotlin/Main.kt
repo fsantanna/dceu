@@ -101,7 +101,7 @@ val GLOBALS = setOf (
 )) + (if (CEU < 3) setOf() else setOf(
     "coroutine", "status"
 )) + (if (CEU < 4) setOf() else setOf(
-    "broadcast'" //, "evt"
+    "broadcast'"
 )) + (if (CEU < 5) setOf() else setOf(
     "detrack'", "next-tasks", "tasks", "track"
 ))

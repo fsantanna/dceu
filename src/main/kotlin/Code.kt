@@ -73,12 +73,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 pres.add("""
                     // FUNC | ${this.dump()}
                     int ceu_f_$id (CEUX* X) {
-                        ${istsk.cond { """
-                        CEU_Value id_evt = { CEU_VALUE_NIL };
-                           // - C does not allow redeclaration (after each yield)
-                           // - A task can only awake once per cycle
-                           // - So it is safe to use one "global" id_evt per task
-                        """ }}                        
                         ${isexe.cond{"""
                             X->exe->status = CEU_EXE_STATUS_RESUMED;
                             switch (X->exe->pc) {
