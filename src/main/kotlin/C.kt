@@ -300,7 +300,6 @@ fun Coder.main (tags: Tags): String {
 
 #if CEU >= 4
     CEU_Value id_evt = { CEU_VALUE_NIL };
-    CEU_Block* CEU_BLOCK = NULL;
 #endif
     """
     }
@@ -894,8 +893,12 @@ fun Coder.main (tags: Tags): String {
     }
     
     #if CEU >= 4
-    CEU_Block* ceux_block (CEU_Stack* S) {
-        for (int i=S->n-1; i>=0; i--) {
+    CEU_Block* ceux_block (CEU_Stack* S, int dir) {
+        for (
+            int i = (dir == 1) ? 0 : S->n-1;
+            (dir == 1) ? i<S->n : i>=0;
+            i = i + ((dir == 1) ? 1 : -1)
+        ) {
             CEU_Value v = ceux_peek(S, i);
             if (v.type == CEU_VALUE_BLOCK) {
                 return v.Block;
@@ -1124,7 +1127,7 @@ fun Coder.main (tags: Tags): String {
             return ceu_error_s(X1->S, "spawn error : expected task");
         }
 
-        CEU_Value xt = ceu_create_exe_task(t, ceux_block(X1->S));
+        CEU_Value xt = ceu_create_exe_task(t, ceux_block(X1->S,-1));
         if (xt.type == CEU_VALUE_ERROR) {
             return ceu_error_e(X1->S, xt);
         }        
@@ -2153,10 +2156,10 @@ fun Coder.main (tags: Tags): String {
                 return 0;
             }
             int ret = ceu_bcast_tasks(X, now, cur->dn.tasks.fst);
-            if (ret == 0) {
-                ret = ceu_bcast_blocks(X, now, cur->dn.block);
+            if (ret != 0) {
+                return ret;
             }
-            return ret;
+            return ceu_bcast_blocks(X, now, cur->dn.block);
         }
 
         int ceu_broadcast_plic__f (CEUX* X) {
@@ -2172,10 +2175,10 @@ fun Coder.main (tags: Tags): String {
             int ret;
             if (xin.type == CEU_VALUE_TAG) {
                 if (xin.Tag == CEU_TAG_global) {
-                    ret = ceu_bcast_blocks(X, now, CEU_BLOCK);
+                    ret = ceu_bcast_blocks(X, now, ceux_block(X->S,1));
                 } else if (xin.Tag == CEU_TAG_task) {
                     if (X->exe_task == NULL) {
-                        ret = ceu_bcast_blocks(X, now, CEU_BLOCK);
+                        ret = ceu_bcast_blocks(X, now, ceux_block(X->S,1));
                     } else {
                         ret = ceu_bcast_task(X, now, X->exe_task);
                     }

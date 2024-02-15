@@ -150,9 +150,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }
                     """ }}
 
-                    // TODO: unlink task/block
-                    ${(CEU >= 4).cond { "assert(0);" }}
-
                     // defers init
                     ${defers[this].cond { it.second }}
                     
@@ -166,9 +163,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     // defers execute
                     ${(CEU >= 2).cond { defers[this].cond { it.third } }}
                     
-                    // TODO: unlink task/block
-                    ${(CEU >= 4).cond { "assert(0);" }}
-
                     ceux_block_leave(X->S, X->base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size}, ${rets.pub[this]!!});
                     
                     // check error

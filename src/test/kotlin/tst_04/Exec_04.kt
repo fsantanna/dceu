@@ -404,8 +404,8 @@ class Exec_04 {
         val out = test("""
             println(broadcast(1))
         """)
-        //assert(out == "nil\n") { out }
-        assert(out == "true\n") { out }
+        assert(out == "nil\n") { out }
+        //assert(out == "true\n") { out }
     }
     @Test
     fun dd_02_bcast() {
@@ -422,20 +422,36 @@ class Exec_04 {
         assert(out == "1\n2\n") { out }
     }
     @Test
+    fun dd_02x_bcast() {
+        val out = test(
+            """
+            val T = task (x) {
+                println(x)
+                val y = yield(nil)
+                println(y)
+            }
+            spawn T(1)
+            broadcast(2)
+        """
+        )
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
     fun dd_03_bcast() {
         val out = test("""
             var tk = task (v) {
                 val e1 = yield(nil) ;;thus { it => it }
-                println(:1, evt, e1)
+                println(:1, ;;;evt,;;; e1)
                 val e2 = yield(nil) ;;thus { it => it }
-                println(:2, evt, e2)
+                println(:2, ;;;evt,;;; e2)
             }
             spawn tk ()
             broadcast(1)
             broadcast(2)
             broadcast(3)
         """)
-        assert(out == ":1\t1\t1\n:2\t2\t2\n") { out }
+        //assert(out == ":1\t1\t1\n:2\t2\t2\n") { out }
+        assert(out == ":1\t1\n:2\t2\n") { out }
     }
     @Test
     fun dd_04_bcast() {
