@@ -6,7 +6,7 @@ import java.util.*
 
 var DUMP = true
 var DEBUG = true
-var CEU = 4
+var CEU = 1
     // 1: dyn-lex               ;; 7 normal  / 15 no dots / 9+X (:rec) valgrind errors
     // 2: defer, throw/catch
     // 3: coro, yield, resume
