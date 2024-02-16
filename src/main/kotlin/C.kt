@@ -338,7 +338,7 @@ fun Coder.main (tags: Tags): String {
     int ceu_pointer_dash_to_dash_string_f (CEUX* X);
     #endif
     #if CEU >= 3
-    int ceu_isexe (CEU_Dyn* dyn);
+    int ceu_isexe_val (CEU_Value val);
     #endif
     #if CEU >= 4
     int ceu_bcast_task (CEUX* X1, uint8_t now, CEU_Exe_Task* task2);
@@ -1053,10 +1053,10 @@ fun Coder.main (tags: Tags): String {
         assert(inp<=1 && "TODO: varargs resume");
 
         CEU_Value exe = ceux_peek(X1->S, XX1(-inp-1));
-        if (!ceu_isexe(exe.Dyn) || exe.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED) {
+        if (!ceu_isexe_val(exe) || exe.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED) {
             return ceu_error_s(X1->S, "resume error : expected yielded coro");
         }
-        assert(exe.Dyn->Exe_Task.clo.type==CEU_VALUE_CLO_CORO CEU4(|| exe.Dyn->Exe_Task.clo.type==CEU_VALUE_CLO_TASK));
+        assert(exe.Dyn->Exe.clo.type==CEU_VALUE_CLO_CORO CEU4(|| exe.Dyn->Exe_Task.clo.type==CEU_VALUE_CLO_TASK));
         CEU_Clo* clo = &exe.Dyn->Exe.clo.Dyn->Clo;
         
         // X1: [exe,inps]
@@ -1959,8 +1959,8 @@ fun Coder.main (tags: Tags): String {
     }
 
     val c_exes = """
-        int ceu_isexe (CEU_Dyn* dyn) {
-            return (dyn->Any.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask_dyn(dyn)));
+        int ceu_isexe_val (CEU_Value val) {
+            return (val.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask_val(val)));
         }
         int ceu_coroutine_f (CEUX* X) {
             assert(X->args == 1);
