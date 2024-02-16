@@ -230,7 +230,7 @@ fun Coder.main (tags: Tags): String {
         uint8_t time;
         CEU_Value pub;
         struct {
-            CEU_Block* up;      // bcast task termination
+            CEU_Block* up;      // termination: bcast up and relink up
             CEU_Block* dn;      // bcast nested tasks
         } blocks;
         struct {
@@ -428,16 +428,20 @@ fun Coder.main (tags: Tags): String {
 
     // EXIT / ERROR / ASSERT
     val c_error = """
-    #define CEU_ERROR_ASR(cmd,v,pre) ({     \
+    #define CEU_ERROR_CHK_VAL(cmd,v,pre) ({     \
         if (v.type == CEU_VALUE_ERROR) {    \
             ceu_error_e(X->S,v);            \
-            CEU_ERROR_CHK(cmd,pre);         \
+            CEU_ERROR_CHK_STK(cmd,pre);         \
         };                                  \
         v;                                  \
     })
+    #define CEU_ERROR_THR_S(cmd,msg,pre) {    \
+        ceu_error_s(X->S, msg);             \
+        CEU_ERROR_CHK_STK(cmd,pre);             \
+    }
 
     #if CEU <= 1
-    #define CEU_ERROR_CHK(cmd,pre) {                    \
+    #define CEU_ERROR_CHK_STK(cmd,pre) {                    \
         if (ceux_top(X->S)>0 && ceux_peek(X->S,XX(-1)).type==CEU_VALUE_ERROR) {     \
             CEU_Value msg = ceux_peek(X->S, XX(-2));    \
             assert(msg.type == CEU_VALUE_POINTER);      \
@@ -447,11 +451,11 @@ fun Coder.main (tags: Tags): String {
         }                                               \
     }
     #else
-    #define CEU_ERROR_CHK(cmd,pre)      \
-        if (ceu_error_chk(X->S, pre)) { \
+    #define CEU_ERROR_CHK_STK(cmd,pre)      \
+        if (ceu_error_chk_stk(X->S, pre)) { \
             cmd;                        \
         }
-    int ceu_error_chk (CEU_Stack* S, char* pre) {
+    int ceu_error_chk_stk (CEU_Stack* S, char* pre) {
         CEU_Value err = ceux_peek(S, SS(-1));
         if (ceux_top(S)==0 || err.type!=CEU_VALUE_ERROR) {
             return 0;
@@ -2096,7 +2100,7 @@ fun Coder.main (tags: Tags): String {
                 
                 /* TODO: stack trace for error on task termination
                 do {
-                    CEU_ERROR_ASR(BUPC, ceux_peek(XX(-1)), "FILE : (lin LIN, col COL) : ERR");
+                    CEU_ERROR_CHK_VAL(BUPC, ceux_peek(XX(-1)), "FILE : (lin LIN, col COL) : ERR");
                 } while (0);
                 */
             }

@@ -272,8 +272,7 @@ class Exec_04 {
     @Test
     fun cc_03_scope() {
         val out = test("""
-            var t
-            set t = task () { nil }
+            val t = task () { nil }
             var f
             set f = func () {
                 spawn t()
@@ -342,21 +341,21 @@ class Exec_04 {
         val out = test("""
             spawn (task () :void {
                 val it = yield(nil)
-                println(it, evt)
+                println(it;;;, evt;;;)
                 yield(nil)
             }) (nil)
             do {
                 val e = []
-                broadcast'(e,:task)
+                broadcast'(:task,e)
             }
             println(:ok)
         """)
         //assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing thus\n") { out }
         //assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 4, col 21) : argument error : cannot copy reference out\n") { out }
-        //assert(out == "nil\t[]\n:ok\n") { out }
-        assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
+        assert(out == "[]\n:ok\n") { out }
+        //assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun cd_02_bcast_spawn_arg() {
@@ -373,28 +372,31 @@ class Exec_04 {
         """)
         //assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
+        //assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun cd_03_bcast_pub_arg() {
         val out = test("""
             val T = task () {
-                yield(nil)
+                val evt = yield(nil)
                 set pub() = evt
+                println(:in, pub())
                 nil
             }
-            spawn T() 
+            val t = spawn T() 
             do {
                 val e = []
                 broadcast(e)
             }
-            println(:ok)
+            println(:out, pub(t))
         """)
         //assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 4, col 21) : set error : cannot hold alien reference\n") { out }
+        //assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 21) : set error : cannot hold alien reference\n") { out }
+        assert(out == ":ok\n") { out }
     }
 
     // BROADCAST

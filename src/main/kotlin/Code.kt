@@ -161,7 +161,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     
                     // check error
                     ${(CEU >= 2).cond { """
-                        CEU_ERROR_CHK(continue, NULL);
+                        CEU_ERROR_CHK_STK(continue, NULL);
                     """ }}
                     // check free
                     ${(CEU >= 3 /*&& inexe*/).cond { """
@@ -323,7 +323,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 ${this.co.code()}
                 ${this.arg.code()}
                 ceux_resume(X, 1 /* TODO: MULTI */, ${rets.pub[this]!!}, CEU_ACTION_RESUME);
-                CEU_ERROR_CHK(continue, ${this.toerr()});
+                CEU_ERROR_CHK_STK(continue, ${this.toerr()});
             """
             is Expr.Yield -> {
                 val intsk = ups.inexe(this, "task", true)
@@ -370,23 +370,23 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         ${e.code()}
                     """ }.joinToString("")}
                     ceux_spawn(X, CEU_TIME_MAX, ${this.args.size});
-                    CEU_ERROR_CHK(continue, ${this.toerr()});
+                    CEU_ERROR_CHK_STK(continue, ${this.toerr()});
                 } // SPAWN | ${this.dump()}
             """
             }
-            is Expr.Delay -> "ceu_frame->exe_task->time = CEU_TIME_MAX;"
+            is Expr.Delay -> "X->exe_task->time = CEU_TIME_MAX;"
             is Expr.Pub -> {
                 this.tsk.cond2({
                     tsk as Expr
                     it.code() + """ // PUB | ${this.dump()}
                         CEU_Value ceu_tsk_$n = ceux_peek(X->S, XX(-1));
                         if (!ceu_istask_val(ceu_tsk_$n)) {
-                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="pub error : expected task"} };
-                            CEU_ERROR_THR("${this.tsk.tk.pos.file} : (lin ${this.tsk.tk.pos.lin}, col ${this.tsk.tk.pos.col})", err);
+                            CEU_ERROR_THR_S(continue, "pub error : expected task", ${this.toerr()});
                         }
                     """
                 },{ """ // PUB | ${this.dump()}
-                    CEU_Value ceu_tsk_$n = ceu_dyn_to_val((CEU_Dyn*)${up_task_real_c()});
+                    //CEU_Value ceu_tsk_$n = ceu_dyn_to_val((CEU_Dyn*)${up_task_real_c()});
+                    CEU_Value ceu_tsk_$n = ceu_dyn_to_val((CEU_Dyn*)X->exe_task);
                 """ }) +
                 when {
                     this.isdst() -> {
@@ -408,7 +408,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 ${this.on.code()}
                 if (!ceu_istask_val($tskc) || $tskc.Dyn->Exe_Task.status>CEU_EXE_STATUS_TOGGLED) {                
                     CEU_Value err = { CEU_VALUE_ERROR, {.Error="toggle error : expected yielded task"} };
-                    CEU_ERROR_THR("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                    CEU_ERROR_THR_S("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                 }
                 $tskc.Dyn->Exe_Task.status = (ceu_as_bool(ceu_acc) ? CEU_EXE_STATUS_YIELDED : CEU_EXE_STATUS_TOGGLED);
                 CEU_Value ceu_$n = ceu_bcast_task(0, &$tskc.Dyn->Exe_Task, CEU_ACTION_TOGGLE, NULL);
@@ -482,7 +482,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         {
                             ${it.first.code()}
                             ${it.second.code()}
-                            CEU_ERROR_ASR(
+                            CEU_ERROR_CHK_VAL(
                                 continue,
                                 ceu_dict_set(&ceux_peek(X->S,XX(-3)).Dyn->Dict, ceux_peek(X->S,XX(-2)), ceux_peek(X->S,XX(-1))),
                                 ${this.toerr()}
@@ -507,7 +507,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     
                     // COL
                     ${this.col.code()}
-                    CEU_ERROR_ASR (
+                    CEU_ERROR_CHK_VAL (
                         continue,
                         ceu_col_check(ceux_peek(X->S,XX(-1)),ceux_peek(X->S,XX(-2))),
                         ${this.toerr()}
@@ -516,12 +516,12 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     this.isdst() -> {
                         """
                         CEU_Value ceu_$n = ceu_col_set(ceux_peek(X->S,XX(-1)), ceux_peek(X->S,XX(-2)), ceux_peek(X->S,XX(-3)));
-                        CEU_ERROR_ASR(continue, ceu_$n, ${this.toerr()});
+                        CEU_ERROR_CHK_VAL(continue, ceu_$n, ${this.toerr()});
                         ceux_drop(X->S, 2);    // keep src
                         """
                     }
                     else -> this.PI0("""
-                        CEU_Value ceu_$n = CEU_ERROR_ASR(continue, ceu_col_get(ceux_peek(X->S,XX(-1)),ceux_peek(X->S,XX(-2))), ${this.toerr()});
+                        CEU_Value ceu_$n = CEU_ERROR_CHK_VAL(continue, ceu_col_get(ceux_peek(X->S,XX(-1)),ceux_peek(X->S,XX(-2))), ${this.toerr()});
                         ceu_gc_inc(ceu_$n);
                         ceux_drop(X->S, 2);
                         ceux_push(X->S, 1, ceu_$n);
@@ -552,7 +552,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
 
                     ceux_call(X, ${this.args.size}, ${rets.pub[this]!!});
                     
-                    CEU_ERROR_CHK(continue, ${this.toerr()});
+                    CEU_ERROR_CHK_STK(continue, ${this.toerr()});
                 } // CALL | ${this.dump()}
                 """
             }
