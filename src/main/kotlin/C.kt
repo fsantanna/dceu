@@ -591,27 +591,20 @@ fun Coder.main (tags: Tags): String {
             case CEU_VALUE_EXE_TASK:
 #endif
                 if (dyn->Exe.status < CEU_EXE_STATUS_TERMINATED) {
-#if CEU >= 4
-                    if (ceu_istask_dyn(dyn)) {
-                        //ret = ceu_bcast_task(CEU_TIME_MAX, &dyn->Exe_Task, CEU_ACTION_ABORT, NULL);
-                        //puts("TODO");
-                    } else
-#endif
-                    {   // TODO - fake S/X - should propagate up to calling stack
-                        CEU_Stack S = { 0, {} };
-                        CEUX _X = { &S, 0, 0, CEU_ACTION_ABORT, {.exe=NULL} };
-                        CEUX* X = &_X;
-                        ceux_push(&S, 1, ceu_dyn_to_val(dyn));
-                        dyn->Any.refs++;    // currently 0->1: needs ->2 to prevent double gc
-                        int ret = ceux_resume(X, 0, 0);
-                        dyn->Any.refs--;
-                        if (ret != 0) {
-                            int iserr = ceux_peek(&S,XX(-1)).type == CEU_VALUE_ERROR;
-                            assert(iserr && "TODO: abort should not return");
-                            assert(0 && "TODO: error in ceu_exe_kill");
-                        }
+                    // TODO - fake S/X - should propagate up to calling stack
+                    CEU_Stack S = { 0, {} };
+                    CEUX _X = { &S, 0, 0, CEU_ACTION_ABORT, {.exe=NULL} };
+                    CEUX* X = &_X;
+                    ceux_push(&S, 1, ceu_dyn_to_val(dyn));
+                    dyn->Any.refs++;    // currently 0->1: needs ->2 to prevent double gc
+                    // S: [co]
+                    int ret = ceux_resume(X, 0, 0);
+                    dyn->Any.refs--;
+                    if (ret != 0) {
+                        int iserr = ceux_peek(&S,XX(-1)).type == CEU_VALUE_ERROR;
+                        assert(iserr && "TODO: abort should not return");
+                        assert(0 && "TODO: error in ceu_exe_kill");
                     }
-                    //assert(!CEU_ISERR(ret) && "TODO: error on exe kill");
                 }
                 ceux_base(dyn->Exe.X->S, 0);
                 ceu_gc_dec(dyn->Exe.clo);
@@ -1056,28 +1049,29 @@ fun Coder.main (tags: Tags): String {
     
 #if CEU >= 3
     int ceux_resume (CEUX* X1, int inp, int out) {
+        // X1: [exe,inps]
         assert(inp<=1 && "TODO: varargs resume");
 
-        CEU_Value co = ceux_peek(X1->S, XX1(-inp-1));
-        if (co.type!=CEU_VALUE_EXE_CORO || co.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED) {
+        CEU_Value exe = ceux_peek(X1->S, XX1(-inp-1));
+        if (!ceu_isexe(exe.Dyn) || exe.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED) {
             return ceu_error_s(X1->S, "resume error : expected yielded coro");
         }
-        assert(co.Dyn->Exe.clo.type == CEU_VALUE_CLO_CORO);
-        CEU_Clo* clo = &co.Dyn->Exe.clo.Dyn->Clo;
+        assert(exe.Dyn->Exe_Task.clo.type==CEU_VALUE_CLO_CORO CEU4(|| exe.Dyn->Exe_Task.clo.type==CEU_VALUE_CLO_TASK));
+        CEU_Clo* clo = &exe.Dyn->Exe.clo.Dyn->Clo;
         
-        // X1: [co,inps]
+        // X1: [exe,inps]
         // X2: [...]
-        CEUX* X2 = co.Dyn->Exe.X;                                        
+        CEUX* X2 = exe.Dyn->Exe.X;                                        
         for (int i=0; i<inp; i++) {                                                 
             ceux_push(X2->S, 1, ceux_peek(X1->S,XX1(-i-1)));                               
         }
-        ceu_gc_inc(co);
+        ceu_gc_inc(exe);
         ceux_base(X1->S, XX1(-inp-1));
         // X1: []
         // X2: [...,inps]
         
         // first resume: place upvs+locs
-        if (co.Dyn->Exe.pc == 0) {
+        if (exe.Dyn->Exe.pc == 0) {
             X2->base = ceux_call_pre(X2->S, clo, &inp);
             // X2: [args,upvs,locs]
             //           ^ base
@@ -1095,7 +1089,7 @@ fun Coder.main (tags: Tags): String {
         
         int err = ceux_call_pos(X2->S, ret, &out);        
         
-        // X1: [co]
+        // X1: [exe]
         // X2: [args,upvs,lovs,...,rets]
 
         for (int i=0; i<out; i++) {
@@ -1109,70 +1103,44 @@ fun Coder.main (tags: Tags): String {
         // X1: [outs]
         // X2: []
         
-        ceu_gc_dec(co);
+        ceu_gc_dec(exe);
         return out;
     }
 #endif
 
 #if CEU >= 4
     int ceux_spawn (CEUX* X1, uint8_t now, int inp) {
+        // X1: [clo,inps]
         assert(inp<=1 && "TODO: varargs spawn");
         
-        CEU_Value t = ceux_peek(X1->S, XX1(-inp-1));
-        if (t.type != CEU_VALUE_CLO_TASK) {
+        CEU_Value clo = ceux_peek(X1->S, XX1(-inp-1));
+        if (clo.type != CEU_VALUE_CLO_TASK) {
             return ceu_error_s(X1->S, "spawn error : expected task");
         }
 
-        CEU_Value xt = ceu_create_exe_task(t, ceux_block(X1->S,-1));
-        if (xt.type == CEU_VALUE_ERROR) {
-            return ceu_error_e(X1->S, xt);
+        CEU_Value exe = ceu_create_exe_task(clo, ceux_block(X1->S,-1));
+        if (exe.type == CEU_VALUE_ERROR) {
+            return ceu_error_e(X1->S, exe);
         }        
-        assert(xt.Dyn->Exe_Task.clo.type == CEU_VALUE_CLO_TASK);
-        CEU_Clo* clo = &xt.Dyn->Exe_Task.clo.Dyn->Clo;
+        assert(exe.Dyn->Exe_Task.clo.type == CEU_VALUE_CLO_TASK);
         
-        // X1: [t,inps]
-        // X2: []
-        CEUX* X2 = xt.Dyn->Exe_Task.X;                                        
-        for (int i=0; i<inp; i++) {                                                 
-            ceux_push(X2->S, 1, ceux_peek(X1->S,XX1(-i-1)));                               
-        }
-        ceux_base(X1->S, XX1(-inp-1));
-        ceux_push(X1->S, 1, xt);        // returns xt to caller
-        // X1: [xt]
-        // X2: [...,inps]
+        ceux_repl(X1->S, XX1(-inp-1), exe);
+        // X1: [exe,inps]
         
-        X2->base = ceux_call_pre(X2->S, clo, &inp);
-
-        // X2: [args,upvs,locs]
-        //           ^ base
+        ceu_gc_inc(exe);    // keep exe alive to return it  
+        int ret = ceux_resume(X1, inp, 0);
+        // X1: []
         
-        X2->args = inp;
-        X2->action = CEU_ACTION_CALL;
-
-        int ret = clo->proto(X2);
-        
-        // X2: [args,upvs,lovs,...,rets]
-        
-        int out = 0; // no returns from spawn (returns xt)
-        int err = ceux_call_pos(X2->S, ret, &out);        
-        
-        // X1: [xt]
-        // X2: [args,upvs,lovs,...,[err]]
-
-        if (err) {
-            ceux_pop(X1->S, 1);     // removes xt
-            for (int i=0; i<out; i++) {
-                ceux_push(X1->S, 1, ceux_peek(X2->S,XX2(-out)+i));                               
-            }
-            ceux_base(X2->S, 0);
+        if (ret > 0) {
+            // error
         } else {
-            // ok: [xt]
+            ret = 1;
+            ceux_push(X1->S, 1, exe);        // returns exe to caller
+            // X1: [exe]
         }
+        ceu_gc_dec(exe);    // dec after push above
         
-        // X1: [xt]
-        // X2: [...]
-        
-        return out;
+        return ret;
     }
 #endif
     """

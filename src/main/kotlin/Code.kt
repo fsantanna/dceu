@@ -85,7 +85,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         """}}
                         ${do_while(code)}
                         ${isexe.cond{"""
-                                    X->exe->status = CEU_EXE_STATUS_TERMINATED;
+                                    ceu_exe_term(X->exe);
                             }
                         """}}
                         return 1;
@@ -356,9 +356,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         }
                     }
                 #endif
-                    ${intsk.cond { """
-                        id_evt = ceux_peek(X->S, XX(-1));
-                    """ }}
                 }
                 """
             }
