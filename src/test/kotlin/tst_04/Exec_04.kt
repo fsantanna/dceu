@@ -396,7 +396,7 @@ class Exec_04 {
         //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 4, col 21) : set error : cannot hold alien reference\n") { out }
-        assert(out == ":ok\n") { out }
+        assert(out == ":in\t[]\n:out\t[]\n") { out }
     }
 
     // BROADCAST

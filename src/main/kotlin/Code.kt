@@ -375,29 +375,41 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             """
             }
             is Expr.Delay -> "X->exe_task->time = CEU_TIME_MAX;"
-            is Expr.Pub -> {
-                this.tsk.cond2({
-                    tsk as Expr
-                    it.code() + """ // PUB | ${this.dump()}
-                        CEU_Value ceu_tsk_$n = ceux_peek(X->S, XX(-1));
-                        if (!ceu_istask_val(ceu_tsk_$n)) {
-                            CEU_ERROR_THR_S(continue, "pub error : expected task", ${this.toerr()});
-                        }
-                    """
-                },{ """ // PUB | ${this.dump()}
-                    //CEU_Value ceu_tsk_$n = ceu_dyn_to_val((CEU_Dyn*)${up_task_real_c()});
-                    CEU_Value ceu_tsk_$n = ceu_dyn_to_val((CEU_Dyn*)X->exe_task);
-                """ }) +
-                when {
-                    this.isdst() -> {
-                        """
-                        ceu_gc_dec(ceu_tsk_$n.Dyn->Exe_Task.pub);
-                        ceu_tsk_$n.Dyn->Exe_Task.pub = ceux_peek(X->S, XX(${this.tsk.cond2({"-2"},{"-1"})}));;
-                        """
+            is Expr.Pub -> """
+            { // PUB | ${this.dump()}
+                ${this.tsk.cond { it.code() }}
+                CEU_Value tsk = ${this.tsk.cond2({"""
+                    ceux_peek(X->S, XX(-1))
+                """},{"""
+                    //ceu_dyn_to_val((CEU_Dyn*)${up_task_real_c()});
+                    ceu_dyn_to_val((CEU_Dyn*)X->exe_task)
+                """})}
+                ;
+                ${this.tsk.cond { """
+                    if (!ceu_istask_val(tsk)) {
+                        CEU_ERROR_THR_S(continue, "pub error : expected task", ${this.toerr()});
                     }
-                    else -> "ceux_push(X->S, 1, ceu_tsk_$n.Dyn->Exe_Task.pub);\n"
-                }
+                """ }}
+                ${this.isdst().cond2({ """
+                    // [v,(tsk)]
+                    CEU_Value v = ceux_peek(X->S, XX(${this.tsk.cond2({"-2"},{"-1"})}));
+                    ceu_gc_inc(v);
+                    ceu_gc_inc(v);
+                    ceu_gc_dec(tsk.Dyn->Exe_Task.pub);
+                    tsk.Dyn->Exe_Task.pub = v;
+                    ${this.tsk.cond { "ceux_pop(X->S, 1);" }}
+                    // [v]
+                """ },{ """
+                    // [(tsk)]
+                    ${this.tsk.cond2({"""
+                        ceux_repl(X->S, XX(-1), tsk.Dyn->Exe_Task.pub);                        
+                    """},{"""
+                        ceux_push(X->S, 1, tsk.Dyn->Exe_Task.pub);
+                    """})}
+                    // [pub]
+                """ })}
             }
+            """
             is Expr.Dtrack -> this.blk.code()
             is Expr.Toggle -> {
                 val tskc = this.idc("tsk")
