@@ -295,9 +295,12 @@ fun Coder.main (tags: Tags): String {
     // GLOBALS
     fun c_globals (): String {
         return """
+    #if CEU >= 4
     int CEU_TIME_N = 0;
     uint8_t CEU_TIME_MIN = 0;
     uint8_t CEU_TIME_MAX = 0;
+    CEU_Block* CEU_BLOCK_GLOBAL = NULL;
+    #endif
     int CEU_BREAK = 0;
     """
     }
@@ -874,7 +877,19 @@ fun Coder.main (tags: Tags): String {
     //  - enter: initialize all vars to nil (prevents garbage)
     //  - leave: gc locals
     
-    void ceux_block_enter (CEU_Stack* S, int base, int n) {
+    #if CEU >= 4
+    CEU_Block* ceux_block (CEU_Stack* S) {
+        for (int i = S->n-1; i>=0; i--) {
+            CEU_Value v = ceux_peek(S, i);
+            if (v.type == CEU_VALUE_BLOCK) {
+                return v.Block;
+            }
+        }
+        return NULL; //assert(0 && "bug found: no block found");
+    }
+    #endif
+    
+    void ceux_block_enter (CEU_Stack* S, int base, int n CEU4(COMMA CEU_Exe* exe)) {
         // clear locals
         // TODO: use memset=0
         for (int i=0; i<n; i++) {
@@ -883,27 +898,25 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 4
         CEU_Block* blk = malloc(sizeof(CEU_Block));
         *blk = (CEU_Block) { {NULL, {NULL,NULL}} };
+
+        if (CEU_BLOCK_GLOBAL == NULL) {
+            CEU_BLOCK_GLOBAL = blk;
+        }
+
+        if (exe!=NULL && exe->type==CEU_VALUE_EXE_TASK && ((CEU_Exe_Task*) exe)->blocks.dn==NULL) {
+            ((CEU_Exe_Task*) exe)->blocks.dn = blk;
+        }
+
+        CEU_Block* up = ceux_block(S);
+        if (up != NULL) {
+            up->dn.block = blk;
+        }
+
         ceux_push(S, 1, (CEU_Value) { CEU_VALUE_BLOCK, {.Block=blk} });
     #else
         ceux_push(S, 1, (CEU_Value) { CEU_VALUE_BLOCK });
     #endif
     }
-    
-    #if CEU >= 4
-    CEU_Block* ceux_block (CEU_Stack* S, int dir) {
-        for (
-            int i = (dir == 1) ? 0 : S->n-1;
-            (dir == 1) ? i<S->n : i>=0;
-            i = i + ((dir == 1) ? 1 : -1)
-        ) {
-            CEU_Value v = ceux_peek(S, i);
-            if (v.type == CEU_VALUE_BLOCK) {
-                return v.Block;
-            }
-        }
-        assert(0 && "bug found: no block found");
-    }
-    #endif
     
     void ceux_block_leave (CEU_Stack* S, int base, int n, int out) {
         // clear locals
@@ -1123,7 +1136,7 @@ fun Coder.main (tags: Tags): String {
             return ceu_error_s(X1->S, "spawn error : expected task");
         }
 
-        CEU_Value exe = ceu_create_exe_task(clo, ceux_block(X1->S,-1));
+        CEU_Value exe = ceu_create_exe_task(clo, ceux_block(X1->S));
         if (exe.type == CEU_VALUE_ERROR) {
             return ceu_error_e(X1->S, exe);
         }        
@@ -2075,8 +2088,6 @@ fun Coder.main (tags: Tags): String {
             // it would awake parents that actually need to
             // respond/catch the error (thus not awake)
             if (ret==0 && task2->status==CEU_EXE_STATUS_TERMINATED) {
-                ceux_push(X1->S, 1, ceu_dyn_to_val((CEU_Dyn*)task2));
-
                 assert(CEU_TIME_N < 255);
                 CEU_TIME_N++;
                 uint8_t now = ++CEU_TIME_MAX;
@@ -2095,8 +2106,6 @@ fun Coder.main (tags: Tags): String {
                 if (CEU_TIME_N == 0) {
                     CEU_TIME_MIN = now;
                 }
-                
-                ceux_pop(X1->S, 1);
                 
                 /* TODO: stack trace for error on task termination
                 do {
@@ -2146,10 +2155,10 @@ fun Coder.main (tags: Tags): String {
             int ret;
             if (xin.type == CEU_VALUE_TAG) {
                 if (xin.Tag == CEU_TAG_global) {
-                    ret = ceu_bcast_blocks(X, now, CEU_ACTION_RESUME, ceux_block(X->S,1));
+                    ret = ceu_bcast_blocks(X, now, CEU_ACTION_RESUME, CEU_BLOCK_GLOBAL);
                 } else if (xin.Tag == CEU_TAG_task) {
                     if (X->exe_task == NULL) {
-                        ret = ceu_bcast_blocks(X, now, CEU_ACTION_RESUME, ceux_block(X->S,1));
+                        ret = ceu_bcast_blocks(X, now, CEU_ACTION_RESUME, CEU_BLOCK_GLOBAL);
                     } else {
                         ret = ceu_bcast_task(X, now, CEU_ACTION_RESUME, X->exe_task);
                     }

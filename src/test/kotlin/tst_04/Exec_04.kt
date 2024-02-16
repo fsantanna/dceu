@@ -478,7 +478,7 @@ class Exec_04 {
         val out = test("""
             var tk
             set tk = task (v) {
-                val e =  yield(nil)
+                val e = yield(nil)
                 println(v, e)
             }
             var co1 = spawn tk(:1)
@@ -506,11 +506,30 @@ class Exec_04 {
         assert(out == ":bcast\n:2\n:1\n") { out }
     }
     @Test
+    fun dd_05y_bcast() {
+        val out = test("""
+            spawn (task () {
+                spawn (task () {
+                    println(:1)
+                    yield(nil)              ;; awakes from outer bcast
+                    println(:3)
+                }) ()
+                yield(nil)
+                yield(nil)
+                println(:no)
+            }) ()
+            println(:2)
+            broadcast(nil)
+            println(:4)
+        """)
+        assert(out == ":1\n:2\n:3\n:4\n") { out }
+    }
+    @Test
     fun dd_05x_bcast() {
         val out = test("""
             var co1 = spawn (task () {
                 var co2 = spawn (task () {
-                    yield(nil) ;;thus { it => nil }  ;; awakes from outer bcast
+                    yield(nil)  ;; awakes from outer bcast
                     println(2)
                 }) ()
                 spawn (task () {
@@ -531,8 +550,8 @@ class Exec_04 {
             var tk
             set tk = task (v) {
                 println(v)
-                ;;;val e =;;; yield(nil) ;;thus { it => it }
-                println(;;;e;;;evt)
+                val e = yield(nil) ;;thus { it => it }
+                println(e;;;evt;;;)
             }
             var co = spawn(tk)(1)
             broadcast(2)
@@ -570,8 +589,8 @@ class Exec_04 {
             var tk
             set tk = task () {
                 yield(nil) ;;thus { it => nil }
-                ;;;val e =;;; yield(nil) ;;thus { it => it }
-                println(;;;e;;;evt)                
+                val e = yield(nil) ;;thus { it => it }
+                println(e;;;evt;;;)                
             }
             var co1 = spawn (tk) ()
             var co2 = spawn tk ()
@@ -717,28 +736,32 @@ class Exec_04 {
         val out = test("""
             broadcast(1) in nil
         """)
-        assert(out == " v  anon : (lin 2, col 13) : broadcast'(1,nil) : invalid target\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : broadcast'(nil,1)\n" +
+                " v  broadcast error : invalid target\n") { out }
     }
     @Test
     fun de_02_bcast() {
         val out = test("""
             broadcast(1) in :x
         """)
-        assert(out == " v  anon : (lin 2, col 13) : broadcast'(1,:x) : invalid target\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : broadcast'(:x,1)\n" +
+                " v  broadcast error : invalid target\n") { out }
     }
     @Test
     fun de_03_bcast() {
         val out = test("""
             println(broadcast(1) in :global)
         """)
-        assert(out == "true\n") { out }
+        //assert(out == "true\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun de_04_bcast() {
         val out = test("""
             println(broadcast(1) in :task)
         """)
-        assert(out == "true\n") { out }
+        //assert(out == "true\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun de_05_bcast() {
@@ -746,7 +769,8 @@ class Exec_04 {
             val t = spawn (task () { nil }) ()
             println(broadcast(1) in t)
         """)
-        assert(out == "true\n") { out }
+        assert(out == "nil\n") { out }
+        //assert(out == "true\n") { out }
     }
 
     // BCAST / TARGETS

@@ -130,7 +130,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 """
                 { // BLOCK | ${this.dump()}
                     // do not clear upvs
-                    ceux_block_enter(X->S, X->base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size});
+                    ceux_block_enter(X->S, X->base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size} CEU4(COMMA X->exe));
                     
                     // GLOBALS (must be after ceux_block_enter)
                     ${(ups.pub[this] == outer.main()).cond { """
