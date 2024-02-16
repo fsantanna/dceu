@@ -827,16 +827,18 @@ class Exec_04 {
                 " |  anon : (lin 17, col 13) : broadcast'(nil,:task)\n" +
                 " |  anon : (lin 11, col 21) : broadcast'(nil,:global)\n" +
                 " |  anon : (lin 7, col 21) : error(:XXX)\n" +
-                " v  throw error : :XXX\n") { out }
+                " v  error : :XXX\n") { out }
     }
 
     // EVT
 
+    /*
     @Test
     fun de_01_evt() {
         val out = test("""
             println(evt)
         """)
+        assert(out == "nil\n") { out }
         assert(out == "nil\n") { out }
     }
     @Test
@@ -997,6 +999,7 @@ class Exec_04 {
         assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
                 " v  anon : (lin 4, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
+     */
 
     // THROW / CATCH
 
@@ -1023,34 +1026,34 @@ class Exec_04 {
             })()
         """)
         assert(out == " |  anon : (lin 2, col 13) : (spawn (task () { error(:err) })())\n" +
-                " |  anon : (lin 3, col 17) : throw(:err)\n" +
-                " v  throw error : :err\n") { out }
+                " |  anon : (lin 3, col 17) : error(:err)\n" +
+                " v  error : :err\n") { out }
     }
     @Test
     fun ee_03_throw() {
         val out = test("""
             spawn (task () {
                 yield(nil) ;;thus { it => nil }
-                throw(:err)
+                error(:err)
             })()
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 6, col 13) : broadcast'(nil,:task)\n" +
-                " |  anon : (lin 4, col 17) : throw(:err)\n" +
-                " v  throw error : :err\n") { out }
+        assert(out == " |  anon : (lin 6, col 13) : broadcast'(:task,nil)\n" +
+                " |  anon : (lin 4, col 17) : error(:err)\n" +
+                " v  error : :err\n") { out }
     }
     @Test
     fun ee_04_throw() {
         val out = test("""
             spawn (task () {
                 yield(nil) ;;thus { it => nil }
-                throw(:err)
+                error(:err)
             })()
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 6, col 13) : broadcast'(nil,:task)\n" +
-                " |  anon : (lin 4, col 17) : throw(:err)\n" +
-                " v  throw error : :err\n") { out }
+        assert(out == " |  anon : (lin 6, col 13) : broadcast'(:task,nil)\n" +
+                " |  anon : (lin 4, col 17) : error(:err)\n" +
+                " v  error : :err\n") { out }
     }
     @Test
     fun ee_05_throw() {
@@ -1058,22 +1061,22 @@ class Exec_04 {
             spawn (task () {
                 spawn( task () {
                     yield(nil) ;;thus { it => nil }
-                    throw(:err)
+                    error(:err)
                 })()
                 yield(nil) ;;thus { it => nil }
             })()
             broadcast(nil)
         """)
         assert(out == " |  anon : (lin 9, col 13) : broadcast'(nil,:task)\n" +
-                " |  anon : (lin 5, col 21) : throw(:err)\n" +
-                " v  throw error : :err\n") { out }
+                " |  anon : (lin 5, col 21) : error(:err)\n" +
+                " v  error : :err\n") { out }
     }
     @Test
     fun ee_06_throw() {
         val out = test("""
             spawn (task () {
                 yield(nil) ;;thus { it => nil }
-                throw(:err)
+                error(:err)
             })()
             spawn (task () {
                 nil
@@ -1081,11 +1084,11 @@ class Exec_04 {
             ;;broadcast(nil)
         """)
         //assert(out == " |  anon : (lin 9, col 13) : broadcast'(nil,:task)\n" +
-        //        " |  anon : (lin 4, col 17) : throw(:err)\n" +
-        //        " v  throw error : :err\n") { out }
+        //        " |  anon : (lin 4, col 17) : error(:err)\n" +
+        //        " v  error : :err\n") { out }
         assert(out == " |  anon : (lin 6, col 13) : (spawn (task () { nil })())\n" +
-                " |  anon : (lin 4, col 17) : throw(:err)\n" +
-                " v  throw error : :err\n") { out }
+                " |  anon : (lin 4, col 17) : error(:err)\n" +
+                " v  error : :err\n") { out }
     }
     @Test
     fun ee_08_throw() {
@@ -1097,29 +1100,29 @@ class Exec_04 {
             spawn (task () {
                 yield(nil) ;;thus { it => nil }
                 yield(nil) ;;thus { it => nil }
-                throw(:err)
+                error(:err)
             })()
             broadcast(nil)
             ;;broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 11, col 13) : broadcast'(nil,:task)\n" +
-                " |  anon : (lin 9, col 17) : throw(:err)\n" +
-                " v  throw error : :err\n") { out }
+        assert(out == " |  anon : (lin 11, col 13) : broadcast'(:task,nil)\n" +
+                " |  anon : (lin 9, col 17) : error(:err)\n" +
+                " v  error : :err\n") { out }
     }
     @Test
     fun ee_09_bcast() {
         val out = test("""
             val T = task () {
                 yield(nil) ;;thus { it => nil }
-                throw(:err)
+                error(:err)
             }
             spawn T()
             spawn T()
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 8, col 13) : broadcast'(nil,:task)\n" +
-                " |  anon : (lin 4, col 17) : throw(:err)\n" +
-                " v  throw error : :err\n") { out }
+        assert(out == " |  anon : (lin 8, col 13) : broadcast'(:task,nil)\n" +
+                " |  anon : (lin 4, col 17) : error(:err)\n" +
+                " v  error : :err\n") { out }
     }
     @Test
     fun ee_10_bcast() {
@@ -1204,11 +1207,11 @@ class Exec_04 {
                 broadcast (e)
             }
         """)
-        //assert(out == "[]\n") { out }
+        assert(out == "10\t[]\n") { out }
         //assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
+        //assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun ee_11_bcast() {
@@ -1234,7 +1237,7 @@ class Exec_04 {
             var co1 = spawn (task () {
                 var co2 = spawn (task () {
                     ${AWAIT()}
-                    throw(:error)
+                    error(:error)
                 })()
                 ${AWAIT()}
                 println(1)
@@ -1242,8 +1245,8 @@ class Exec_04 {
             broadcast(nil)
         """)
         assert(out == " |  anon : (lin 10, col 13) : broadcast'(nil,:task)\n" +
-                " |  anon : (lin 5, col 21) : throw(:error)\n" +
-                " v  throw error : :error\n") { out }
+                " |  anon : (lin 5, col 21) : error(:error)\n" +
+                " v  error : :error\n") { out }
     }
     @Test
     fun ee_14_throw() {     // catch from nesting and broadcast
@@ -1254,7 +1257,7 @@ class Exec_04 {
                     spawn (task () {
                         yield(nil) ;;thus { it => nil }
                         println(222)
-                        throw(:e1)                  ;; throw
+                        error(:e1)                  ;; error
                     }) ()
                     loop { yield(nil) } ;;thus { it => nil }
                 }
@@ -1285,7 +1288,7 @@ class Exec_04 {
                 println(999)
             }) ()
             catch ( it=>true) {
-                throw(nil)
+                error(nil)
             }
             println(:ok)
         """
@@ -1510,7 +1513,7 @@ class Exec_04 {
     @Test
     fun gg_05_bcast_tuple_func_no() {
         val out = test("""
-            var f = func (v) {
+            val f = func (v) {
                 func (x) {
                     set x[0] = v[0]
                     println(x[0])
@@ -1527,7 +1530,7 @@ class Exec_04 {
     @Test
     fun gg_05_bcast_tuple_func_xx() {
         val out = test("""
-            var f = func (v) {
+            val f = func (v) {
                 println(v[0])
             }
             var T = task () {
@@ -1541,7 +1544,7 @@ class Exec_04 {
     @Test
     fun gg_05_bcast_tuple_func_ok() {
         val out = test("""
-            var f = func (v) {
+            val f = func (v) {
                 func (x) {
                     set x[0] = v[0]
                     println(x[0])
@@ -1801,7 +1804,8 @@ class Exec_04 {
         val out = test("""
             broadcast (nil) in nil
         """)
-        assert(out == " v  anon : (lin 2, col 13) : broadcast'(nil,nil) : invalid target\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : broadcast'(nil,nil)\n" +
+                " v  broadcast error : invalid target\n") { out }
     }
     @Test
     fun jj_02_bcast_in_task() {
@@ -1853,7 +1857,7 @@ class Exec_04 {
             var t = spawn T()
             ;;println(:1111)
             var e = []
-            broadcast (drop(e))
+            broadcast (;;;drop;;;(e))
             println(e)
             """
         )
@@ -1908,8 +1912,8 @@ class Exec_04 {
         val out = test("""
             pub(nil)
         """)
-        //assert(out == " v  anon : (lin 2, col 13) : pub(nil) : pub error : expected task\n") { out }
-        assert(out == " v  anon : (lin 2, col 17) : pub error : expected task\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : pub(nil)\n" +
+                " v  pub error : expected task\n") { out }
     }
     @Test
     fun kk_02_pub_err_x() {
@@ -1979,7 +1983,8 @@ class Exec_04 {
             }
             println(pub(t))
         """)
-        assert(out == " v  anon : (lin 8, col 21) : set error : cannot hold alien reference\n") { out }
+        assert(out == "[]\n") { out }
+        //assert(out == " v  anon : (lin 8, col 21) : set error : cannot hold alien reference\n") { out }
     }
     @Test
     fun kk_07_pub_tag() {
@@ -2060,14 +2065,15 @@ class Exec_04 {
             }) ()
         """)
         assert(out == " |  anon : (lin 2, col 13) : (spawn (task () { (set pub()[:x] = 10) nil })...)\n" +
-                " v  anon : (lin 3, col 21) : index error : expected collection\n") { out }
+                " |  anon : (lin 3, col 21) : pub()[:x]\n" +
+                " v  index error : expected collection\n") { out }
     }
     @Test
     fun kk_14_pub() {
         val out = test("""
             spawn (task () {
-                yield(nil)
-                set pub() = evt
+                set pub() = yield(nil)
+                ;;set pub() = evt
                 nil
             }) ()
             do {
@@ -2353,7 +2359,8 @@ class Exec_04 {
                 }) ()
             }
         """)
-        assert(out == "anon : (lin 5, col 29) : access error : cannot access local across coro or task\n") { out }
+        //assert(out == "anon : (lin 5, col 29) : access error : cannot access local across coro or task\n") { out }
+        assert(out == "10\n") { out }
     }
     @Test
     fun ll_07_task_up_task() {
@@ -2535,7 +2542,7 @@ class Exec_04 {
                     println(:a)
                     yield(nil) ;;thus { it => nil }
                 }
-                var t = spawn T()
+                val t = spawn T()
                 spawn( task () {
                     println(:2)
                     yield(nil) ;;thus { it => nil }
@@ -2559,7 +2566,7 @@ class Exec_04 {
                     yield(nil) ;;thus { it => nil }
                     yield(nil) ;;thus { it => nil }
                 }
-                var t = spawn T()
+                val t = spawn T()
                 spawn( task () {
                     yield(nil) ;;thus { it => nil }
                     broadcast(nil) in t
@@ -2643,7 +2650,7 @@ class Exec_04 {
                     println(:a)
                     yield(nil)
                 }
-                var t = spawn T()
+                val t = spawn T()
                 spawn( task () {
                     println(:2)
                     yield(nil)
@@ -2668,7 +2675,7 @@ class Exec_04 {
                     yield(nil)
                     println(:2)
                 }
-                var t = spawn T()
+                val t = spawn T()
                 spawn( task () {
                     yield(nil)
                     do {
@@ -2696,7 +2703,7 @@ class Exec_04 {
                     yield(nil)
                     println(:2)
                 }
-                var t = spawn T()
+                val t = spawn T()
                 spawn( task () {
                     yield(nil)
                     do {
@@ -2727,7 +2734,7 @@ class Exec_04 {
                     yield(nil)
                     println(:2)
                 }
-                var t = spawn T()
+                val t = spawn T()
                 spawn( task () {
                     yield(nil)
                     do {
@@ -3586,7 +3593,7 @@ class Exec_04 {
             var tk = task (v) {
                 yield(nil) ;;thus { it => nil }
                 val v' = yield(nil) ;;thus { it => it }
-                throw(:1)
+                error(:1)
             }
             var co1 = spawn tk ()
             var co2 = spawn tk ()
@@ -3642,7 +3649,7 @@ class Exec_04 {
                 catch ( it => :e1 ) {
                     coroutine (coro () {
                         yield(nil) ;;thus { it => nil }
-                        throw(:e1)
+                        error(:e1)
                     })()
                     loop {
                         yield(nil) ;;thus { it => nil }
@@ -3650,7 +3657,7 @@ class Exec_04 {
                 }
                 println(:e1)
                 yield(nil) ;;thus { it => nil }
-                throw(:e2)
+                error(:e2)
             })()
             catch ( it => :e2 ) {
                 broadcast(nil)
@@ -3670,13 +3677,13 @@ class Exec_04 {
                 catch ( it => it==:e1 ) {
                     spawn( task () {
                         yield(nil) ;;thus { it => nil }
-                        throw(:e1)
+                        error(:e1)
                         println(:no)
                     }) ()
                     loop { yield(nil) } ;;thus { it => nil }
                 }
                 println(:ok1)
-                throw(:e2)
+                error(:e2)
                 println(:no)
             }
             spawn (task () {
@@ -3685,7 +3692,7 @@ class Exec_04 {
                     loop { yield(nil) } ;;thus { it => nil }
                 }
                 println(:ok2)
-                throw(:e3)
+                error(:e3)
                 println(:no)
             }) ()
             catch ( it => :e3 ) {
@@ -4071,7 +4078,7 @@ class Exec_04 {
                     println(3)
                     ${AWAIT()}
                     println(6)
-                    throw(:ok)
+                    error(:ok)
                 }) ()
                 spawn (task () {
                     println(4)
