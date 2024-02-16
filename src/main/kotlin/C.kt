@@ -343,7 +343,7 @@ fun Coder.main (tags: Tags): String {
     int ceu_isexe_val (CEU_Value val);
     #endif
     #if CEU >= 4
-    int ceu_bcast_task (CEUX* X1, uint8_t now, CEU_Exe_Task* task2);
+    int ceu_bcast_task (CEUX* X1, uint8_t now, CEU_ACTION act, CEU_Exe_Task* task2);
     CEU_Exe_Task* ceu_task_up_task (CEU_Exe_Task* task);
     int ceu_istask_dyn (CEU_Dyn* dyn);
     int ceu_istask_val (CEU_Value val);
@@ -2023,23 +2023,25 @@ fun Coder.main (tags: Tags): String {
         }
     """
     val c_bcast = """
-        int ceu_bcast_blocks (CEUX* X, uint8_t now, CEU_Block* blk);
-        int ceu_bcast_tasks (CEUX* X1, uint8_t now, CEU_Exe_Task* task2);
+        int ceu_bcast_blocks (CEUX* X, uint8_t now, CEU_ACTION act, CEU_Block* blk);
+        int ceu_bcast_tasks (CEUX* X1, uint8_t now, CEU_ACTION act, CEU_Exe_Task* task2);
         
-        int ceu_bcast_task (CEUX* X1, uint8_t now, CEU_Exe_Task* task2) {
+        int ceu_bcast_task (CEUX* X1, uint8_t now, CEU_ACTION act, CEU_Exe_Task* task2) {
             if (task2->status == CEU_EXE_STATUS_TERMINATED) {
                 return 0;
-            } else if (X1->action == CEU_ACTION_ABORT) {
-                task2->X->action = CEU_ACTION_ABORT;
-                return task2->clo.Dyn->Clo.proto(task2->X);
+            } else if (act == CEU_ACTION_ABORT) {
+                ceux_push(X1->S, 1, ceu_dyn_to_val((CEU_Dyn*)task2));
+                return ceux_resume(X1, 0, 0, CEU_ACTION_ABORT);
             } else if (task2->status == CEU_EXE_STATUS_TOGGLED) {
                 return 0;
             }
 
             int ret = 0;    // !=0 means error in nested bcast
+            CEUX* X2 = task2->X;
             
-            if (task2->status==CEU_EXE_STATUS_RESUMED || task2->pc!=0) {    // not initial spawn
-                ret = ceu_bcast_blocks(task2->X, now, task2->blocks.dn);
+            // awake nested blocks only if not initial spawn
+            if (task2->status==CEU_EXE_STATUS_RESUMED || task2->pc!=0) {
+                ret = ceu_bcast_blocks(X1, now, act, task2->blocks.dn);
             }
 
             #define ceu_time_lt(tsk,now) \
@@ -2049,12 +2051,17 @@ fun Coder.main (tags: Tags): String {
             if (task2->status == CEU_EXE_STATUS_YIELDED) {
                 if (ret != 0) {
                     // catch error from blocks above
-                    assert(ceux_peek(X1->S,XX1(-1)).type == CEU_VALUE_ERROR);
-                    task2->X->action = CEU_ACTION_ERROR;
-                    ret = task2->clo.Dyn->Clo.proto(task2->X);
-                } else if (X1->action!=CEU_ACTION_TOGGLE && (task2->pc==0 || ceu_time_lt(task2->time,now))) {
-                    task2->X->action = X1->action;
-                    ret = task2->clo.Dyn->Clo.proto(task2->X);
+                    assert(ceux_peek(X2->S,XX2(-1)).type == CEU_VALUE_ERROR);
+                    assert(0 && "TODO - copy errors X1 -> X2");
+                    ceux_push(X2->S, 1, ceu_dyn_to_val((CEU_Dyn*)task2));
+                    ret = ceux_resume(X1, 0, 0, CEU_ACTION_ERROR);
+                } else if (act!=CEU_ACTION_TOGGLE && (task2->pc==0 || ceu_time_lt(task2->time,now))) {
+                    // [xin,evt]
+                    ceux_push(X1->S, 1, ceu_dyn_to_val((CEU_Dyn*)task2));
+                    ceux_dup(X1->S, XX1(-2));
+                    // [xin,evt,tsk,evt]
+                    ret = ceux_resume(X1, 1 /* TODO-MULTI */, 0, CEU_ACTION_RESUME);
+                    // [xin,evt]
                 } else {
                     task2->time = CEU_TIME_MIN;
                 }
@@ -2074,10 +2081,10 @@ fun Coder.main (tags: Tags): String {
                 assert(0 && "TODO");
                 if (up_task != NULL) {
                     // enclosing coro of enclosing block
-                    ret = ceu_bcast_task(X1, now, up_task);
+                    ret = ceu_bcast_task(X1, now, CEU_ACTION_RESUME, up_task);
                 } else {
                     // enclosing block
-                    ret = ceu_bcast_blocks(X1, now, task2->blocks.up);
+                    ret = ceu_bcast_blocks(X1, now, CEU_ACTION_RESUME, task2->blocks.up);
                 }
                 
                 CEU_TIME_N--;
@@ -2097,30 +2104,29 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
 
-        int ceu_bcast_tasks (CEUX* X1, uint8_t now, CEU_Exe_Task* task2) {
+        int ceu_bcast_tasks (CEUX* X1, uint8_t now, CEU_ACTION act, CEU_Exe_Task* task2) {
             if (task2 == NULL) {
                 return 0;
             }
             int ret = 0;    // !=0 is error
             if (task2->status != CEU_EXE_STATUS_TERMINATED) {
-                task2->X->action = X1->action;
-                ret = ceu_bcast_task(X1, now, task2);
+                ret = ceu_bcast_task(X1, now, act, task2);
             }
             if (ret == 0) {
-                ret = ceu_bcast_tasks(X1, now, task2->tasks.nxt);
+                ret = ceu_bcast_tasks(X1, now, act, task2->tasks.nxt);
             }
             return ret;
         }
 
-        int ceu_bcast_blocks (CEUX* X, uint8_t now, CEU_Block* cur) {
+        int ceu_bcast_blocks (CEUX* X, uint8_t now, CEU_ACTION act, CEU_Block* cur) {
             if (cur == NULL) {
                 return 0;
             }
-            int ret = ceu_bcast_tasks(X, now, cur->dn.tasks.fst);
+            int ret = ceu_bcast_tasks(X, now, act, cur->dn.tasks.fst);
             if (ret != 0) {
                 return ret;
             }
-            return ceu_bcast_blocks(X, now, cur->dn.block);
+            return ceu_bcast_blocks(X, now, act, cur->dn.block);
         }
 
         int ceu_broadcast_plic__f (CEUX* X) {
@@ -2131,24 +2137,24 @@ fun Coder.main (tags: Tags): String {
             CEU_TIME_N++;
             uint8_t now = ++CEU_TIME_MAX;
 
-            CEU_Value evt = ceux_peek(X->S, ceux_arg(X,0));
-            CEU_Value xin = ceux_peek(X->S, ceux_arg(X,1));
+            CEU_Value xin = ceux_peek(X->S, ceux_arg(X,0));
+            CEU_Value evt = ceux_peek(X->S, ceux_arg(X,1));
             int ret;
             if (xin.type == CEU_VALUE_TAG) {
                 if (xin.Tag == CEU_TAG_global) {
-                    ret = ceu_bcast_blocks(X, now, ceux_block(X->S,1));
+                    ret = ceu_bcast_blocks(X, now, CEU_ACTION_RESUME, ceux_block(X->S,1));
                 } else if (xin.Tag == CEU_TAG_task) {
                     if (X->exe_task == NULL) {
-                        ret = ceu_bcast_blocks(X, now, ceux_block(X->S,1));
+                        ret = ceu_bcast_blocks(X, now, CEU_ACTION_RESUME, ceux_block(X->S,1));
                     } else {
-                        ret = ceu_bcast_task(X, now, X->exe_task);
+                        ret = ceu_bcast_task(X, now, CEU_ACTION_RESUME, X->exe_task);
                     }
                 } else {
                     ret = ceu_error_s(X->S, "broadcast error : invalid target");
                 }
             } else {
                 if (ceu_istask_val(xin)) {
-                    ret = ceu_bcast_task(X, now, &xin.Dyn->Exe_Task);
+                    ret = ceu_bcast_task(X, now, CEU_ACTION_RESUME, &xin.Dyn->Exe_Task);
                 } else {
                     ret = ceu_error_s(X->S, "broadcast error : invalid target");
                 }

@@ -456,10 +456,10 @@ class Exec_04 {
         val out = test("""
             var tk
             set tk = task (v) {
-                ;;;val e1 = ;;; yield(nil) ;;thus { it => it }
-                println(v,;;;e1;;;evt)
-                ;;;var e2 = ;;; yield(nil) ;;thus { it => it }
-                println(v,;;;e2;;;evt)
+                val e1 =  yield(nil) ;;thus { it => it }
+                println(v,e1;;;evt;;;)
+                var e2 = yield(nil) ;;thus { it => it }
+                println(v,e2;;;evt;;;)
             }
             var co1 = spawn tk(:1)
             var co2 = spawn tk(:2)
@@ -468,8 +468,23 @@ class Exec_04 {
             broadcast(3)
         """)
         //assert(out == "nil\n1\nnil\n1\nnil\n2\nnil\n2\n") { out }
-        assert(out.contains(":1\t1\n:2\t1\n:1\t2\n:2\texe-task: 0x")) { out }
-        //assert(out == (":1\t1\n:2\t1\n:1\t2\n:2\t2\n")) { out }
+        //assert(out.contains(":1\t1\n:2\t1\n:1\t2\n:2\texe-task: 0x")) { out }
+        assert(out == (":1\t1\n:2\t1\n:1\t2\n:2\t2\n")) { out }
+    }
+    @Test
+    fun dd_04x_bcast() {
+        val out = test("""
+            var tk
+            set tk = task (v) {
+                val e =  yield(nil)
+                println(v, e)
+            }
+            var co1 = spawn tk(:1)
+            var co2 = spawn tk(:2)
+            broadcast(1)
+        """)
+        //assert(out.contains(":1\t1\n:2\t1\n:1\t2\n:2\texe-task: 0x")) { out }
+        assert(out == (":1\t1\n:2\t1\n")) { out }
     }
     @Test
     fun dd_05_bcast() {

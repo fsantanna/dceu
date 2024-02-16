@@ -919,7 +919,7 @@ class Parser (lexer_: Lexer)
                 }
                 Expr.Call(tk0,
                     Expr.Acc(Tk.Id("broadcast'", tk0.pos)),
-                    listOf(evt,xin)
+                    listOf(xin,evt)
                 )
             }
             (CEU>=4 && this.acceptFix("delay")) -> {
