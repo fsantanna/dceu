@@ -1067,7 +1067,7 @@ class Exec_04 {
             })()
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 9, col 13) : broadcast'(nil,:task)\n" +
+        assert(out == " |  anon : (lin 9, col 13) : broadcast'(:task,nil)\n" +
                 " |  anon : (lin 5, col 21) : error(:err)\n" +
                 " v  error : :err\n") { out }
     }

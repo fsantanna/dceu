@@ -814,6 +814,11 @@ fun Coder.main (tags: Tags): String {
         }
         return v;
     }
+    void ceux_pop_n (CEU_Stack* S, int n) {
+        for (int i=0; i<n; i++) {
+            ceux_pop(S, 1);
+        }
+    }
     CEU_Value ceux_peek (CEU_Stack* S, int i) {
         assert(i>=0 && i<S->n && "TODO: stack error");
         return S->buf[i];
@@ -838,6 +843,11 @@ fun Coder.main (tags: Tags): String {
     }
     void ceux_dup (CEU_Stack* S, int i) {
         ceux_push(S, 1, ceux_peek(S,i));
+    }
+    void ceux_dup_n (CEU_Stack* S, int i, int n) {
+        for (int x=i; x<i+n; x++) {
+            ceux_dup(S, x);
+        }
     }
     void ceux_copy (CEU_Stack* S, int i, int j) {
         assert(i>=0 && i<S->n && "TODO: stack error");
@@ -1017,9 +1027,7 @@ fun Coder.main (tags: Tags): String {
                 ceux_push(S, 1, (CEU_Value) { CEU_VALUE_NIL });
             }
         } else if (ret > *out) {     // more rets than requested
-            for (int i=*out; i<ret; i++) {
-                ceux_pop(S, 1);
-            }
+            ceux_pop_n(S, ret-*out);
         } else { // ret == out      // exact rets requested
             // ok
         }
@@ -1068,7 +1076,7 @@ fun Coder.main (tags: Tags): String {
 #if CEU >= 3
     int ceux_resume (CEUX* X1, int inp, int out, CEU_ACTION act) {
         // X1: [exe,inps]
-        assert(inp<=1 && "TODO: varargs resume");
+        assert((inp<=1 || (ceux_peek(X1->S,XX1(-1)).type==CEU_VALUE_ERROR)) && "TODO: varargs resume");
 
         CEU_Value exe = ceux_peek(X1->S, XX1(-inp-1));
         if (!ceu_isexe_val(exe) || exe.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED) {
@@ -1079,10 +1087,15 @@ fun Coder.main (tags: Tags): String {
         
         // X1: [exe,inps]
         // X2: [...]
-        CEUX* X2 = exe.Dyn->Exe.X;                                        
-        for (int i=0; i<inp; i++) {                                                 
-            ceux_push(X2->S, 1, ceux_peek(X1->S,XX1(-i-1)));                               
+        CEUX* X2 = exe.Dyn->Exe.X;
+        
+        {
+            int n = XX1(-inp);
+            for (int i=n; i<n+inp; i++) {
+                ceux_push(X2->S, 1, ceux_peek(X1->S,i));
+            }
         }
+        
         ceu_gc_inc(exe);
         ceux_base(X1->S, XX1(-inp-1));
         // X1: []
@@ -2044,6 +2057,8 @@ fun Coder.main (tags: Tags): String {
         int ceu_bcast_tasks (CEUX* X1, uint8_t now, CEU_ACTION act, CEU_Exe_Task* task2);
         
         int ceu_bcast_task (CEUX* X1, uint8_t now, CEU_ACTION act, CEU_Exe_Task* task2) {
+            // X1: [evt]    // must keep as is at the end bc outer bcast pops it
+            
             if (task2->status == CEU_EXE_STATUS_TERMINATED) {
                 return 0;
             } else if (act == CEU_ACTION_ABORT) {
@@ -2054,8 +2069,7 @@ fun Coder.main (tags: Tags): String {
             }
 
             int ret = 0;    // !=0 means error in nested bcast
-            CEUX* X2 = task2->X;
-            
+
             // awake nested blocks only if not initial spawn
             if (task2->status==CEU_EXE_STATUS_RESUMED || task2->pc!=0) {
                 ret = ceu_bcast_blocks(X1, now, act, task2->blocks.dn);
@@ -2066,19 +2080,32 @@ fun Coder.main (tags: Tags): String {
                     (tsk < now) : (tsk > now))
 
             if (task2->status == CEU_EXE_STATUS_YIELDED) {
+                // either handle error or event
+                // never both
+                // even if error is caught, should not awake from past event
                 if (ret != 0) {
                     // catch error from blocks above
-                    assert(ceux_peek(X2->S,XX2(-1)).type == CEU_VALUE_ERROR);
-                    assert(0 && "TODO - copy errors X1 -> X2");
-                    ceux_push(X2->S, 1, ceu_dyn_to_val((CEU_Dyn*)task2));
-                    ret = ceux_resume(X1, 0, 0, CEU_ACTION_ERROR);
+                    assert(ceux_peek(X1->S,XX1(-1)).type == CEU_VALUE_ERROR);
+                    // [evt, (ret,err)]
+                    ceux_push(X1->S, 1, ceu_dyn_to_val((CEU_Dyn*)task2));
+                    int err = XX1(-ret-1);
+                    ceux_dup_n(X1->S, err, ret);
+                    // [evt, (ret,err), tsk, (ret,err)]
+                    int ret2 = ceux_resume(X1, ret, 0, CEU_ACTION_ERROR);
+                    if (ret2 == 0) {
+                        ceux_pop_n(X1->S, ret);
+                        // [evt]
+                    } else {
+                        // [evt, (ret,err)]
+                    }
+                    ret = ret2;
                 } else if (act!=CEU_ACTION_TOGGLE && (task2->pc==0 || ceu_time_lt(task2->time,now))) {
-                    // [xin,evt]
+                    // [evt]
                     ceux_push(X1->S, 1, ceu_dyn_to_val((CEU_Dyn*)task2));
                     ceux_dup(X1->S, XX1(-2));
-                    // [xin,evt,tsk,evt]
+                    // [evt,tsk,evt]
                     ret = ceux_resume(X1, 1 /* TODO-MULTI */, 0, CEU_ACTION_RESUME);
-                    // [xin,evt]
+                    // [evt]
                 } else {
                     task2->time = CEU_TIME_MIN;
                 }
@@ -2092,15 +2119,9 @@ fun Coder.main (tags: Tags): String {
                 CEU_TIME_N++;
                 uint8_t now = ++CEU_TIME_MAX;
 
-                CEU_Exe_Task* up_task = NULL; //ceu_task_up_task(task2);
-                assert(0 && "TODO");
-                if (up_task != NULL) {
-                    // enclosing coro of enclosing block
-                    ret = ceu_bcast_task(X1, now, CEU_ACTION_RESUME, up_task);
-                } else {
-                    // enclosing block
-                    ret = ceu_bcast_blocks(X1, now, CEU_ACTION_RESUME, task2->blocks.up);
-                }
+                ceux_push(X1->S, 1, ceu_dyn_to_val((CEU_Dyn*)task2));
+                ret = ceu_bcast_blocks(X1, now, CEU_ACTION_RESUME, task2->blocks.up);
+                ceux_pop(X1->S, 1);
                 
                 CEU_TIME_N--;
                 if (CEU_TIME_N == 0) {

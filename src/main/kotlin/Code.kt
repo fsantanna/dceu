@@ -66,7 +66,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
         return when (this) {
             is Expr.Proto -> {
                 val isexe = (this.tk.str != "func")
-                val istsk = (this.tk.str == "task")
                 val code = this.blk.code()
                 val id = this.idc()
 
@@ -338,12 +337,13 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         //CEU_REPL((CEU_Value) { CEU_VALUE_NIL }); // to be ignored in further move/checks
                         continue;
                     }
-                    assert(X->args <= 1 && "TODO: multiple arguments to resume");
                 #if CEU >= 4
                     if (X->action == CEU_ACTION_ERROR) {
+                        assert(X->args>1 && ceux_peek(X->S,XX(-1)).type==CEU_VALUE_ERROR && "TODO: varargs resume");
                         continue;
                     }
                 #endif
+                    assert(X->args<=1 && "TODO: varargs resume");
                 #if 0
                     // fill missing args with nils
                     {
