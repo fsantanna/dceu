@@ -322,7 +322,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             is Expr.Resume -> """
                 ${this.co.code()}
                 ${this.arg.code()}
-                ceux_resume(X, 1 /* TODO: MULTI */, ${rets.pub[this]!!});
+                ceux_resume(X, 1 /* TODO: MULTI */, ${rets.pub[this]!!}, CEU_ACTION_RESUME);
                 CEU_ERROR_CHK(continue, ${this.toerr()});
             """
             is Expr.Yield -> {

@@ -54,7 +54,9 @@ fun Coder.main (tags: Tags): String {
         return """
     #if CEU >= 3
     typedef enum CEU_ACTION {
+        CEU_ACTION_INVALID = -1,    // default to force set
         CEU_ACTION_CALL,
+        CEU_ACTION_RESUME,
         CEU_ACTION_ABORT,           // awake exe to finalize defers and release memory
     #if CEU >= 4
         CEU_ACTION_TOGGLE,          // restore time to CEU_TIME_MIN after toggle
@@ -593,12 +595,12 @@ fun Coder.main (tags: Tags): String {
                 if (dyn->Exe.status < CEU_EXE_STATUS_TERMINATED) {
                     // TODO - fake S/X - should propagate up to calling stack
                     CEU_Stack S = { 0, {} };
-                    CEUX _X = { &S, 0, 0, CEU_ACTION_ABORT, {.exe=NULL} };
+                    CEUX _X = { &S, -1, -1, CEU_ACTION_INVALID, {.exe=NULL} };
                     CEUX* X = &_X;
                     ceux_push(&S, 1, ceu_dyn_to_val(dyn));
                     dyn->Any.refs++;    // currently 0->1: needs ->2 to prevent double gc
                     // S: [co]
-                    int ret = ceux_resume(X, 0, 0);
+                    int ret = ceux_resume(X, 0, 0, CEU_ACTION_ABORT);
                     dyn->Any.refs--;
                     if (ret != 0) {
                         int iserr = ceux_peek(&S,XX(-1)).type == CEU_VALUE_ERROR;
@@ -773,8 +775,10 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceux_peek (CEU_Stack* S, int i);
     void ceux_repl (CEU_Stack* S, int i, CEU_Value v);
     void ceux_shift (CEU_Stack* S, int I);
-    void ceux_drop (CEU_Stack* S, int n);        
-    int ceux_resume (CEUX* X1, int inp, int out);
+    void ceux_drop (CEU_Stack* S, int n);
+    #if CEU >= 3
+    int ceux_resume (CEUX* X1, int inp, int out, CEU_ACTION act);
+    #endif
     """
     val c_ceux = """
     void ceux_dump (CEU_Stack* S, int n) {
@@ -1017,10 +1021,7 @@ fun Coder.main (tags: Tags): String {
         // [clo,args,upvs,locs]
         //           ^ base
 
-        CEUX X2 = *X1; {
-            X2.base = base;
-            X2.args = inp;
-        }
+        CEUX X2 = { X1->S, base, inp CEU3(COMMA CEU_ACTION_CALL COMMA {.exe=NULL}) };
         int ret = clo.Dyn->Clo.proto(&X2);
         
         // [clo,args,upvs,locs,rets]
@@ -1048,7 +1049,7 @@ fun Coder.main (tags: Tags): String {
     }
     
 #if CEU >= 3
-    int ceux_resume (CEUX* X1, int inp, int out) {
+    int ceux_resume (CEUX* X1, int inp, int out, CEU_ACTION act) {
         // X1: [exe,inps]
         assert(inp<=1 && "TODO: varargs resume");
 
@@ -1080,8 +1081,8 @@ fun Coder.main (tags: Tags): String {
             // X2: [args,upvs,locs,...,inps]
             //           ^ base
         }
-        X2->args = inp;
-        X2->action = X1->action;
+        X2->action = act;
+        X2->args   = inp;
 
         int ret = clo->proto(X2);
         
@@ -1128,7 +1129,7 @@ fun Coder.main (tags: Tags): String {
         // X1: [exe,inps]
         
         ceu_gc_inc(exe);    // keep exe alive to return it  
-        int ret = ceux_resume(X1, inp, 0);
+        int ret = ceux_resume(X1, inp, 0, CEU_ACTION_RESUME);
         // X1: []
         
         if (ret > 0) {
@@ -1658,11 +1659,7 @@ fun Coder.main (tags: Tags): String {
         assert(X!=NULL && S!=NULL);
         S->n = 0;
         //S->buf = <dynamic>    // TODO
-        X->S = S;
-        //X->base = <first resume>
-        //X->args = <first resume>
-        //X->action = <resume>
-        X->exe = ret;
+        *X = (CEUX) { S, -1, -1, CEU_ACTION_INVALID, {.exe=ret} };
 
         *ret = (CEU_Exe) {
             type, 0, NULL,
@@ -2189,7 +2186,7 @@ fun Coder.main (tags: Tags): String {
     #endif
     
         CEU_Stack S = { 0, {} };
-        CEUX _X = { &S, 0, 0 CEU3(COMMA CEU_ACTION_CALL COMMA {.exe=NULL}) };
+        CEUX _X = { &S, -1, -1 CEU3(COMMA CEU_ACTION_INVALID COMMA {.exe=NULL}) };
         CEUX* X = &_X;
         
         ${do_while(this.code)}
