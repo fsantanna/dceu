@@ -824,8 +824,8 @@ class Exec_04 {
             broadcast(nil)
         """)
         assert(out == ":ok\n" +
-                " |  anon : (lin 17, col 13) : broadcast'(nil,:task)\n" +
-                " |  anon : (lin 11, col 21) : broadcast'(nil,:global)\n" +
+                " |  anon : (lin 17, col 13) : broadcast'(:task,nil)\n" +
+                " |  anon : (lin 11, col 21) : broadcast'(:global,nil)\n" +
                 " |  anon : (lin 7, col 21) : error(:XXX)\n" +
                 " v  error : :XXX\n") { out }
     }

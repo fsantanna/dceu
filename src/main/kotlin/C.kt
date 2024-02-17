@@ -2193,14 +2193,12 @@ fun Coder.main (tags: Tags): String {
                     ret = ceu_error_s(X->S, "broadcast error : invalid target");
                 }
             }
-            if (evt.type > CEU_VALUE_DYNAMIC) {
-                ceu_gc_dec(evt);
-            }
 
             CEU_TIME_N--;
             if (CEU_TIME_N == 0) {
                 CEU_TIME_MIN = now;
             }
+            
             return ret;
         }        
     """
