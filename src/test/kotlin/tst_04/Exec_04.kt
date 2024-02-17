@@ -1075,11 +1075,14 @@ class Exec_04 {
     fun ee_06_throw() {
         val out = test("""
             spawn (task () {
+                ;;println(:0)
                 yield(nil) ;;thus { it => nil }
+                ;;println(:2)
                 error(:err)
             })()
             spawn (task () {
                 nil
+                ;;println(:1)
             })()
             ;;broadcast(nil)
         """)

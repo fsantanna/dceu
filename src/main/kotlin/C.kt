@@ -115,12 +115,13 @@ fun Coder.main (tags: Tags): String {
     val h_block = """
     typedef struct CEU_Block {
         struct {
-            struct CEU_Block* block;
-            struct {
-                struct CEU_Exe_Task* fst;   // bcast from here
-                struct CEU_Exe_Task* lst;   // link from here
-            } tasks;
-        } dn;
+            struct CEU_Block* up;       // relink up on leave5
+            struct CEU_Block* dn;       // bcast from here
+        } blocks;
+        struct {
+            struct CEU_Exe_Task* fst;   // bcast from here
+            struct CEU_Exe_Task* lst;   // link from here
+        } tasks;
     } CEU_Block;
     """
     fun h_value_dyn (): String {
@@ -346,7 +347,7 @@ fun Coder.main (tags: Tags): String {
     int ceu_isexe_val (CEU_Value val);
     #endif
     #if CEU >= 4
-    int ceu_bcast_task (CEUX* X1, uint8_t now, CEU_ACTION act, CEU_Exe_Task* task2);
+    int ceu_bcast_blocks (CEUX* X, uint8_t now, CEU_ACTION act, CEU_Block* blk);
     CEU_Exe_Task* ceu_task_up_task (CEU_Exe_Task* task);
     int ceu_istask_dyn (CEU_Dyn* dyn);
     int ceu_istask_val (CEU_Value val);
@@ -907,7 +908,7 @@ fun Coder.main (tags: Tags): String {
         }
     #if CEU >= 4
         CEU_Block* blk = malloc(sizeof(CEU_Block));
-        *blk = (CEU_Block) { {NULL, {NULL,NULL}} };
+        *blk = (CEU_Block) { {NULL,NULL}, {NULL,NULL} };
 
         if (CEU_BLOCK_GLOBAL == NULL) {
             CEU_BLOCK_GLOBAL = blk;
@@ -919,7 +920,8 @@ fun Coder.main (tags: Tags): String {
 
         CEU_Block* up = ceux_block(S);
         if (up != NULL) {
-            up->dn.block = blk;
+            up->blocks.dn = blk;
+            blk->blocks.up = up;
         }
 
         ceux_push(S, 1, (CEU_Value) { CEU_VALUE_BLOCK, {.Block=blk} });
@@ -941,11 +943,14 @@ fun Coder.main (tags: Tags): String {
             if (blk.type == CEU_VALUE_BLOCK) {
     #if CEU >= 4
                 for (
-                    CEU_Exe_Task* tsk = blk.Block->dn.tasks.fst;
+                    CEU_Exe_Task* tsk = blk.Block->tasks.fst;
                     tsk != NULL;
                     tsk = tsk->tasks.nxt
                 ) {
                     tsk->blocks.up = NULL;
+                }
+                if (blk.Block->blocks.up != NULL) {
+                    blk.Block->blocks.up->blocks.dn = NULL;
                 }
                 free(blk.Block);
     #endif
@@ -1116,12 +1121,36 @@ fun Coder.main (tags: Tags): String {
 
         int ret = clo->proto(X2);
         
-        // X2: [args,upvs,lovs,...,rets]
+        // X2: [args,upvs,locs,...,rets]
         
+    #if CEU >= 4
+        if (exe.type==CEU_VALUE_EXE_TASK && exe.Dyn->Exe_Task.status==CEU_EXE_STATUS_TERMINATED) {
+            int iserr = (ret>0 && ceux_peek(X2->S,XX2(-1)).type==CEU_VALUE_ERROR);
+            // do not bcast aborted task (only terminated) b/c
+            // it would awake parents that actually need to
+            // respond/catch the error (thus not awake)
+            if (!iserr) {
+                ceux_pop_n(X2->S, ret);
+                assert(CEU_TIME_N < 255);
+                CEU_TIME_N++;
+                uint8_t now = ++CEU_TIME_MAX;
+    
+                ceux_push(X2->S, 1, exe);
+                ret = ceu_bcast_blocks(X2, now, CEU_ACTION_RESUME, exe.Dyn->Exe_Task.blocks.up);
+                ceux_pop(X2->S, 1);
+                
+                CEU_TIME_N--;
+                if (CEU_TIME_N == 0) {
+                    CEU_TIME_MIN = now;
+                }
+            }
+        }
+    #endif
+
         int err = ceux_call_pos(X2->S, ret, &out);        
         
-        // X1: [exe]
-        // X2: [args,upvs,lovs,...,rets]
+        // X1: []
+        // X2: [args,upvs,locs,...,outs]
 
         for (int i=0; i<out; i++) {
             ceux_push(X1->S, 1, ceux_peek(X2->S,XX2(-out)+i));                               
@@ -1131,6 +1160,7 @@ fun Coder.main (tags: Tags): String {
         } else {
             ceux_base(X2->S, XX2(-out));
         }
+        
         // X1: [outs]
         // X2: []
         
@@ -1716,14 +1746,14 @@ fun Coder.main (tags: Tags): String {
         dyn->pub = (CEU_Value) { CEU_VALUE_NIL };
 
         ceu_gc_inc(ret);    // block holds a strong reference
-        if (block_up->dn.tasks.fst == NULL) {
-            block_up->dn.tasks.fst = dyn;
+        if (block_up->tasks.fst == NULL) {
+            block_up->tasks.fst = dyn;
         } else {
-            assert(block_up->dn.tasks.lst != NULL);
-            block_up->dn.tasks.lst->tasks.nxt = dyn;
-            dyn->tasks.prv = block_up->dn.tasks.lst;
+            assert(block_up->tasks.lst != NULL);
+            block_up->tasks.lst->tasks.nxt = dyn;
+            dyn->tasks.prv = block_up->tasks.lst;
         }
-        block_up->dn.tasks.lst = &ret.Dyn->Exe_Task;
+        block_up->tasks.lst = &ret.Dyn->Exe_Task;
 
         return ret;
     }
@@ -1770,7 +1800,11 @@ fun Coder.main (tags: Tags): String {
         }
         switch (v.type) {
             case CEU_VALUE_BLOCK:
+    #if CEU >= 4
+                printf("%p", v.Block);
+    #else
                 printf("(block sentinel)");
+    #endif
                 break;
             case CEU_VALUE_NIL:
                 printf("nil");
@@ -2031,11 +2065,11 @@ fun Coder.main (tags: Tags): String {
                     tsk->tasks.nxt->tasks.prv = tsk->tasks.prv;
                 }
                 if (tsk->blocks.up != NULL) {
-                    if (tsk->blocks.up->dn.tasks.fst == tsk) {
-                        tsk->blocks.up->dn.tasks.fst = tsk->tasks.nxt;
+                    if (tsk->blocks.up->tasks.fst == tsk) {
+                        tsk->blocks.up->tasks.fst = tsk->tasks.nxt;
                     }
-                    if (tsk->blocks.up->dn.tasks.lst == tsk) {
-                        tsk->blocks.up->dn.tasks.lst = tsk->tasks.prv;
+                    if (tsk->blocks.up->tasks.lst == tsk) {
+                        tsk->blocks.up->tasks.lst = tsk->tasks.prv;
                     }
                     // block held a strong reference
                     ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)exe));
@@ -2053,7 +2087,6 @@ fun Coder.main (tags: Tags): String {
         }
     """
     val c_bcast = """
-        int ceu_bcast_blocks (CEUX* X, uint8_t now, CEU_ACTION act, CEU_Block* blk);
         int ceu_bcast_tasks (CEUX* X1, uint8_t now, CEU_ACTION act, CEU_Exe_Task* task2);
         
         int ceu_bcast_task (CEUX* X1, uint8_t now, CEU_ACTION act, CEU_Exe_Task* task2) {
@@ -2110,31 +2143,6 @@ fun Coder.main (tags: Tags): String {
                     task2->time = CEU_TIME_MIN;
                 }
             }
-
-            // do not bcast aborted task (only terminated) b/c
-            // it would awake parents that actually need to
-            // respond/catch the error (thus not awake)
-            if (ret==0 && task2->status==CEU_EXE_STATUS_TERMINATED) {
-                assert(CEU_TIME_N < 255);
-                CEU_TIME_N++;
-                uint8_t now = ++CEU_TIME_MAX;
-
-                ceux_push(X1->S, 1, ceu_dyn_to_val((CEU_Dyn*)task2));
-                ret = ceu_bcast_blocks(X1, now, CEU_ACTION_RESUME, task2->blocks.up);
-                ceux_pop(X1->S, 1);
-                
-                CEU_TIME_N--;
-                if (CEU_TIME_N == 0) {
-                    CEU_TIME_MIN = now;
-                }
-                
-                /* TODO: stack trace for error on task termination
-                do {
-                    CEU_ERROR_CHK_VAL(BUPC, ceux_peek(XX(-1)), "FILE : (lin LIN, col COL) : ERR");
-                } while (0);
-                */
-            }
-
             return ret;
         }
 
@@ -2156,11 +2164,11 @@ fun Coder.main (tags: Tags): String {
             if (cur == NULL) {
                 return 0;
             }
-            int ret = ceu_bcast_tasks(X, now, act, cur->dn.tasks.fst);
+            int ret = ceu_bcast_tasks(X, now, act, cur->tasks.fst);
             if (ret != 0) {
                 return ret;
             }
-            return ceu_bcast_blocks(X, now, act, cur->dn.block);
+            return ceu_bcast_blocks(X, now, act, cur->blocks.dn);
         }
 
         int ceu_broadcast_plic__f (CEUX* X) {
@@ -2172,7 +2180,6 @@ fun Coder.main (tags: Tags): String {
             uint8_t now = ++CEU_TIME_MAX;
 
             CEU_Value xin = ceux_peek(X->S, ceux_arg(X,0));
-            CEU_Value evt = ceux_peek(X->S, ceux_arg(X,1));
             int ret;
             if (xin.type == CEU_VALUE_TAG) {
                 if (xin.Tag == CEU_TAG_global) {
