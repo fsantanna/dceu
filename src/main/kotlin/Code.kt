@@ -324,9 +324,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 ceux_resume(X, 1 /* TODO: MULTI */, ${rets.pub[this]!!}, CEU_ACTION_RESUME);
                 CEU_ERROR_CHK_STK(continue, ${this.toerr()});
             """
-            is Expr.Yield -> {
-                val intsk = ups.inexe(this, "task", true)
-                """
+
+            is Expr.Yield -> """
                 { // YIELD ${this.dump()}
                     ${this.arg.code()}
                     X->exe->status = CEU_EXE_STATUS_YIELDED;
@@ -334,7 +333,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     return 1;   // TODO: args MULTI
                 case $n: // YIELD ${this.dump()}
                     if (X->action == CEU_ACTION_ABORT) {
-                        //CEU_REPL((CEU_Value) { CEU_VALUE_NIL }); // to be ignored in further move/checks
+                        ceux_push(X->S, 1, (CEU_Value){CEU_VALUE_NIL}); // fake out=1
                         continue;
                     }
                 #if CEU >= 4
@@ -357,8 +356,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }
                 #endif
                 }
-                """
-            }
+            """
 
             is Expr.Spawn -> {
                 val dots = this.args.lastOrNull()

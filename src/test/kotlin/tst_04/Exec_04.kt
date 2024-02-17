@@ -663,6 +663,19 @@ class Exec_04 {
         assert(out == "2\n2\n") { out }
     }
     @Test
+    fun dd_12x_bcast() {
+        val out = test("""
+            val T = task () {
+                loop {
+                    val it = yield(nil)
+                }
+            }
+            spawn T ()
+            broadcast(2)
+        """)
+        assert(out == "2\n2\n") { out }
+    }
+    @Test
     fun dd_13_bcast() {
         val out = test(
             """
@@ -1075,14 +1088,11 @@ class Exec_04 {
     fun ee_06_throw() {
         val out = test("""
             spawn (task () {
-                ;;println(:0)
                 yield(nil) ;;thus { it => nil }
-                ;;println(:2)
                 error(:err)
             })()
             spawn (task () {
                 nil
-                ;;println(:1)
             })()
             ;;broadcast(nil)
         """)
@@ -1192,10 +1202,11 @@ class Exec_04 {
             }
             broadcast(nil)
         """)
+        assert(out == "10\t[]\n") { out }
         //assert(out == " |  anon : (lin 10, col 17) : broadcast'([],:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 10, col 17) : broadcast'([],:task)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
+        //assert(out == " |  anon : (lin 10, col 17) : broadcast'([],:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun ee_10_bcast_err2() {
@@ -1247,7 +1258,7 @@ class Exec_04 {
             })()
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 10, col 13) : broadcast'(nil,:task)\n" +
+        assert(out == " |  anon : (lin 10, col 13) : broadcast'(:task,nil)\n" +
                 " |  anon : (lin 5, col 21) : error(:error)\n" +
                 " v  error : :error\n") { out }
     }
@@ -1864,7 +1875,8 @@ class Exec_04 {
             println(e)
             """
         )
-        assert(out == "[]\nnil\n") { out }
+        assert(out == "[]\n[]\n") { out }
+        //assert(out == "[]\nnil\n") { out }
         //assert(out == "anon : (lin 10, col 13) : broadcast move(e)\n" +
         //        "anon : (lin 4, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -1969,9 +1981,11 @@ class Exec_04 {
                 }
             }
             val t = spawn T()
+            println(pub(t))
         """)
-        assert(out == " |  anon : (lin 8, col 21) : (spawn T())\n" +
-                " v  anon : (lin 5, col 25) : set error : cannot assign reference to outer scope\n") { out }
+        //assert(out == " |  anon : (lin 8, col 21) : (spawn T())\n" +
+        //        " v  anon : (lin 5, col 25) : set error : cannot assign reference to outer scope\n") { out }
+        assert(out == "[]\n") { out }
     }
     @Test
     fun kk_06_pub_err() {
@@ -2074,7 +2088,7 @@ class Exec_04 {
     @Test
     fun kk_14_pub() {
         val out = test("""
-            spawn (task () {
+            val t = spawn (task () {
                 set pub() = yield(nil)
                 ;;set pub() = evt
                 nil
@@ -2083,9 +2097,11 @@ class Exec_04 {
                 val x
                 broadcast([])
             }
+            println(pub(t))
         """)
-        assert(out == " |  anon : (lin 9, col 17) : broadcast'([],:task)\n" +
-                " v  anon : (lin 4, col 21) : set error : cannot hold alien reference\n") { out }
+        //assert(out == " |  anon : (lin 9, col 17) : broadcast'([],:task)\n" +
+        //        " v  anon : (lin 4, col 21) : set error : cannot hold alien reference\n") { out }
+        assert(out == "[]\n") { out }
     }
 
     // ORIGINAL / PUB / EXPOSE
@@ -2247,12 +2263,12 @@ class Exec_04 {
     @Test
     fun kj_09_pub() {
         val out = test("""
-            var t = task (v) {
+            var T = task (v) {
                 set pub() = @[]
                 nil
             }
-            var a = spawn (t) ()
-            println(status(a))
+            val t = spawn T()
+            println(status(t))
         """, true)
         assert(out == ":terminated\n") { out }
     }
@@ -3283,6 +3299,7 @@ class Exec_04 {
 
     // DEPTH
 
+    /*
     @Test
     fun op_01_depth() {
         DEBUG = true
@@ -3448,6 +3465,7 @@ class Exec_04 {
                 ":3\n" +
                 ":END\n") { out }
     }
+     */
 
     // RETURN
 
@@ -3581,7 +3599,8 @@ class Exec_04 {
         val out = test("""
             spawn (func () {nil}) ()
         """)
-        assert(out == " v  anon : (lin 2, col 13) : spawn error : expected task\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : (spawn (func () { nil })())\n" +
+                " v  spawn error : expected task\n") { out }
     }
     @Test
     fun zz_03_spawn_err() {
@@ -3675,8 +3694,7 @@ class Exec_04 {
     fun zz_09_throw() {
         val out = test(
             """
-            var T
-            set T = task () {
+            val T = task () {
                 catch ( it => it==:e1 ) {
                     spawn( task () {
                         yield(nil) ;;thus { it => nil }

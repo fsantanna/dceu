@@ -345,6 +345,7 @@ fun Coder.main (tags: Tags): String {
     #endif
     #if CEU >= 3
     int ceu_isexe_val (CEU_Value val);
+    void ceu_exe_kill (CEU_Exe* exe);
     #endif
     #if CEU >= 4
     int ceu_bcast_blocks (CEUX* X, uint8_t now, CEU_ACTION act, CEU_Block* blk);
@@ -600,22 +601,11 @@ fun Coder.main (tags: Tags): String {
             case CEU_VALUE_EXE_TASK:
 #endif
                 if (dyn->Exe.status < CEU_EXE_STATUS_TERMINATED) {
-                    // TODO - fake S/X - should propagate up to calling stack
-                    CEU_Stack S = { 0, {} };
-                    CEUX _X = { &S, -1, -1, CEU_ACTION_INVALID, {.exe=NULL} };
-                    CEUX* X = &_X;
-                    ceux_push(&S, 1, ceu_dyn_to_val(dyn));
-                    dyn->Any.refs++;    // currently 0->1: needs ->2 to prevent double gc
-                    // S: [co]
-                    int ret = ceux_resume(X, 0, 0, CEU_ACTION_ABORT);
+                    dyn->Any.refs++;            // currently 0->1: needs ->2 to prevent double gc
+                    ceu_exe_kill(&dyn->Exe);    // TODO: handle error
                     dyn->Any.refs--;
-                    if (ret != 0) {
-                        int iserr = ceux_peek(&S,XX(-1)).type == CEU_VALUE_ERROR;
-                        assert(iserr && "TODO: abort should not return");
-                        assert(0 && "TODO: error in ceu_exe_kill");
-                    }
                 }
-                ceux_base(dyn->Exe.X->S, 0);
+                ceux_top_set(dyn->Exe.X->S, 0);
                 ceu_gc_dec(dyn->Exe.clo);
                 free(dyn->Exe.X->S);
                 free(dyn->Exe.X);
@@ -961,6 +951,8 @@ fun Coder.main (tags: Tags): String {
                     tsk = tsk->tasks.nxt
                 ) {
                     tsk->blocks.up = NULL;
+                    ceu_exe_kill((CEU_Exe*)tsk);    // TODO: handle error
+                    ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)tsk));   // block held a strong reference
                 }
                 if (blk.Block->blocks.up != NULL) {
                     blk.Block->blocks.up->blocks.dn = NULL;
@@ -1148,9 +1140,9 @@ fun Coder.main (tags: Tags): String {
                 CEU_TIME_N++;
                 uint8_t now = ++CEU_TIME_MAX;
     
-                ceux_push(X2->S, 1, exe);
+                int i = ceux_push(X2->S, 1, exe);   // bcast myself
                 ret = ceu_bcast_blocks(X2, now, CEU_ACTION_RESUME, exe.Dyn->Exe_Task.blocks.up);
-                ceux_pop(X2->S, 1);
+                ceux_rem(X2->S, i);
                 
                 CEU_TIME_N--;
                 if (CEU_TIME_N == 0) {
@@ -2092,6 +2084,22 @@ fun Coder.main (tags: Tags): String {
                 }
             }
     #endif
+        }
+
+        void ceu_exe_kill (CEU_Exe* exe) {
+            assert(ceu_isexe_dyn((CEU_Dyn*)exe));
+            // TODO - fake S/X - should propagate up to calling stack
+            CEU_Stack S = { 0, {} };
+            CEUX _X = { &S, -1, -1, CEU_ACTION_INVALID, {.exe=NULL} };
+            CEUX* X = &_X;
+            ceux_push(&S, 1, ceu_dyn_to_val((CEU_Dyn*)exe));
+            // S: [co]
+            int ret = ceux_resume(X, 0, 0, CEU_ACTION_ABORT);
+            if (ret != 0) {
+                int iserr = (ceux_peek(&S,XX(-1)).type == CEU_VALUE_ERROR);
+                assert(iserr && "TODO: abort should not return");
+                assert(0 && "TODO: error in ceu_exe_kill");
+            }
         }
     """
     val c_task = """ // TASK

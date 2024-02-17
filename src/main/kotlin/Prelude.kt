@@ -50,9 +50,8 @@ fun AND (v1:String, v2:String): String {
 fun AWAIT (v:String="(type(it) /= :exe-task)"): String {
     return """
         loop {
-            break if func (it) {
-                ${AND(v, OR("it","true"))}
-            } (yield(nil))
+            val it = yield(nil)
+            break if ${AND(v, OR("it","true"))}
         }
     """.replace("\n", " ")
 }
