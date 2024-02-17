@@ -219,7 +219,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     if (CEU_BREAK) {
                         CEU_BREAK = 0;
                     } else {
-                        //ceux_pop(X->S, 1);
+                        ceux_pop(X->S, 1);  // HACK-01: remove last stmt result
                         goto CEU_LOOP_START_${this.n};
                     }
             """

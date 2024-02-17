@@ -14,7 +14,7 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
         when (this) {
             is Expr.Proto  -> this.blk.traverse(1 /*MULTI*/)
             is Expr.Export -> this.blk.traverse(N)
-            is Expr.Do     -> this.es.forEachIndexed { i,e -> e.traverse(if (i<this.es.lastIndex || ups.pub[this] is Expr.Loop) 0 else N) }
+            is Expr.Do     -> this.es.forEachIndexed { i,e -> e.traverse(if (i<this.es.lastIndex /*|| ups.pub[this] is Expr.Loop (see HACK-01)*/) 0 else N) }
             is Expr.Dcl    -> this.src?.traverse(1)
             is Expr.Set    -> {
                 this.dst.traverse(0)

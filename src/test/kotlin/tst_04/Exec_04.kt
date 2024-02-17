@@ -672,8 +672,9 @@ class Exec_04 {
             }
             spawn T ()
             broadcast(2)
+            println(:ok)
         """)
-        assert(out == "2\n2\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun dd_13_bcast() {
