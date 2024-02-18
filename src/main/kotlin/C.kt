@@ -1131,22 +1131,25 @@ fun Coder.main (tags: Tags): String {
         // X2: [args,upvs,locs,...,rets]
         
     #if CEU >= 4
-        // do not bcast aborted task (only terminated) b/c
-        // it would awake parents that actually need to
-        // respond/catch the error (thus not awake)
         if (exe.type==CEU_VALUE_EXE_TASK && exe.Dyn->Exe_Task.status==CEU_EXE_STATUS_TERMINATED) {
-            ceux_pop_n(X2->S, ret);
-            assert(CEU_TIME_N < 255);
-            CEU_TIME_N++;
-            uint8_t now = ++CEU_TIME_MAX;
+            int iserr = (ret>0 && ceux_peek(X2->S,XX2(-1)).type==CEU_VALUE_ERROR);
+            // do not bcast aborted task (only terminated) b/c
+            // it would awake parents that actually need to
+            // respond/catch the error (thus not awake)
+            if (!iserr) {
+                ceux_pop_n(X2->S, ret);
+                assert(CEU_TIME_N < 255);
+                CEU_TIME_N++;
+                uint8_t now = ++CEU_TIME_MAX;
 
-            int i = ceux_push(X2->S, 1, exe);   // bcast myself
-            ret = ceu_bcast_blocks(X2, now, CEU_ACTION_RESUME, exe.Dyn->Exe_Task.blocks.up);
-            ceux_rem(X2->S, i);
+                int i = ceux_push(X2->S, 1, exe);   // bcast myself
+                ret = ceu_bcast_blocks(X2, now, CEU_ACTION_RESUME, exe.Dyn->Exe_Task.blocks.up);
+                ceux_rem(X2->S, i);
             
-            CEU_TIME_N--;
-            if (CEU_TIME_N == 0) {
-                CEU_TIME_MIN = now;
+                CEU_TIME_N--;
+                if (CEU_TIME_N == 0) {
+                    CEU_TIME_MIN = now;
+                }
             }
         }
     #endif

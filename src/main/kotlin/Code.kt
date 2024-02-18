@@ -62,9 +62,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
     fun Expr.check_error_aborted (msg: String): String {
         val exe = ups.exe(this)
         return """
-            ${(CEU >= 2).cond { """
-                CEU_ERROR_CHK_STK(continue, $msg);
-            """ }}
+            CEU_ERROR_CHK_STK(continue, $msg);
             ${(CEU>=3 && exe!=null).cond { """
                 if (X->action==CEU_ACTION_ABORT ${(CEU>=4 && exe!!.tk.str=="task").cond { "|| (X->exe->type==CEU_VALUE_EXE_TASK && X->exe->status==CEU_EXE_STATUS_ABORTED)" }}) {
                     continue;
@@ -175,7 +173,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     int ceu_$n = ${(up is Expr.Loop).cond { "!CEU_BREAK ? 0 : " }} ${rets.pub[this]!!};
                     ceux_block_leave(X->S, X->base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size}, ceu_$n);
                     
-                    ${this.check_error_aborted("NULL")}
+                    ${(CEU >= 2).cond { this.check_error_aborted("NULL")} }
                 }
                 """
             }
