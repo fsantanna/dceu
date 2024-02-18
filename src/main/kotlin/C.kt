@@ -117,6 +117,7 @@ fun Coder.main (tags: Tags): String {
     // CEU_Frame, CEU_Block, CEU_Value, CEU_Dyn, CEU_Tags_*
     val h_block = """
     typedef struct CEU_Block {
+        //int idx;                        // index at outer task
         struct {
             struct CEU_Block* up;       // relink up on leave5
             struct CEU_Block* dn;       // bcast from here
@@ -919,7 +920,7 @@ fun Coder.main (tags: Tags): String {
         }
     #if CEU >= 4
         CEU_Block* blk = malloc(sizeof(CEU_Block));
-        *blk = (CEU_Block) { {NULL,NULL}, {NULL,NULL} };
+        *blk = (CEU_Block) { /*-1,*/ {NULL,NULL}, {NULL,NULL} };
 
         if (CEU_BLOCK_GLOBAL == NULL) {
             CEU_BLOCK_GLOBAL = blk;
@@ -935,6 +936,7 @@ fun Coder.main (tags: Tags): String {
             blk->blocks.up = up;
         }
 
+        //blk->idx = S->n;
         ceux_push(S, 1, (CEU_Value) { CEU_VALUE_BLOCK, {.Block=blk} });
     #else
         ceux_push(S, 1, (CEU_Value) { CEU_VALUE_BLOCK });
@@ -2155,6 +2157,7 @@ fun Coder.main (tags: Tags): String {
             int ret = 0;    // !=0 means error in nested bcast
 
             // awake nested blocks only if not initial spawn
+            ceu_gc_inc_dyn((CEU_Dyn*) task2);
             if (task2->status==CEU_EXE_STATUS_RESUMED || task2->pc!=0) {
                 ret = ceu_bcast_blocks(X1, now, act, task2->blocks.dn);
             }
@@ -2194,6 +2197,7 @@ fun Coder.main (tags: Tags): String {
                     task2->time = CEU_TIME_MIN;
                 }
             }
+            ceu_gc_dec_dyn((CEU_Dyn*) task2);
             return ret;
         }
 
@@ -2201,6 +2205,7 @@ fun Coder.main (tags: Tags): String {
             if (task2 == NULL) {
                 return 0;
             }
+            ceu_gc_inc_dyn((CEU_Dyn*) task2);
             int ret = 0;    // !=0 is error
             if (task2->status < CEU_EXE_STATUS_TERMINATED) {
                 ret = ceu_bcast_task(X1, now, act, task2);
@@ -2208,6 +2213,7 @@ fun Coder.main (tags: Tags): String {
             if (ret == 0) {
                 ret = ceu_bcast_tasks(X1, now, act, task2->tasks.nxt);
             }
+            ceu_gc_dec_dyn((CEU_Dyn*) task2);
             return ret;
         }
 
