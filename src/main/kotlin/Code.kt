@@ -171,7 +171,9 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     // defers execute
                     ${(CEU >= 2).cond { defers[this].cond { it.third } }}
                     
-                    ceux_block_leave(X->S, X->base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size}, ${rets.pub[this]!!});
+                    // out=0 when loop iterates (!CEU_BREAK)
+                    int ceu_$n = ${(up is Expr.Loop).cond { "!CEU_BREAK ? 0 : " }} ${rets.pub[this]!!};
+                    ceux_block_leave(X->S, X->base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size}, ceu_$n);
                     
                     ${this.check_error_aborted("NULL")}
                 }
@@ -225,7 +227,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     if (CEU_BREAK) {
                         CEU_BREAK = 0;
                     } else {
-                        ceux_pop(X->S, 1);  // HACK-01: remove last stmt result
+                        //ceux_pop(X->S, 1);
                         goto CEU_LOOP_START_${this.n};
                     }
             """
