@@ -106,6 +106,9 @@ fun Coder.main (tags: Tags): String {
         #endif
         CEU_EXE_STATUS_RESUMED,
         CEU_EXE_STATUS_TERMINATED,
+        #if CEU >= 4
+        CEU_EXE_STATUS_ABORTED,     // aborted while resumed
+        #endif
     } CEU_EXE_STATUS;
     #endif
     """
@@ -345,6 +348,7 @@ fun Coder.main (tags: Tags): String {
     #endif
     #if CEU >= 3
     int ceu_isexe_val (CEU_Value val);
+    void ceu_exe_free (CEU_Exe* exe);
     void ceu_exe_kill (CEU_Exe* exe);
     #endif
     #if CEU >= 4
@@ -605,10 +609,7 @@ fun Coder.main (tags: Tags): String {
                     ceu_exe_kill(&dyn->Exe);    // TODO: handle error
                     dyn->Any.refs--;
                 }
-                ceux_top_set(dyn->Exe.X->S, 0);
-                ceu_gc_dec(dyn->Exe.clo);
-                free(dyn->Exe.X->S);
-                free(dyn->Exe.X);
+                ceu_exe_free((CEU_Exe*)dyn);
                 break;
             }
 #endif
@@ -868,6 +869,7 @@ fun Coder.main (tags: Tags): String {
         for (int j=S->n; j>i; j--) {
             S->buf[j] = S->buf[j-1];
         }
+        ceu_gc_inc(v);
         S->buf[i] = v;
         S->n++;
         // [...,nil,x,...]
@@ -1129,25 +1131,22 @@ fun Coder.main (tags: Tags): String {
         // X2: [args,upvs,locs,...,rets]
         
     #if CEU >= 4
+        // do not bcast aborted task (only terminated) b/c
+        // it would awake parents that actually need to
+        // respond/catch the error (thus not awake)
         if (exe.type==CEU_VALUE_EXE_TASK && exe.Dyn->Exe_Task.status==CEU_EXE_STATUS_TERMINATED) {
-            int iserr = (ret>0 && ceux_peek(X2->S,XX2(-1)).type==CEU_VALUE_ERROR);
-            // do not bcast aborted task (only terminated) b/c
-            // it would awake parents that actually need to
-            // respond/catch the error (thus not awake)
-            if (!iserr) {
-                ceux_pop_n(X2->S, ret);
-                assert(CEU_TIME_N < 255);
-                CEU_TIME_N++;
-                uint8_t now = ++CEU_TIME_MAX;
-    
-                int i = ceux_push(X2->S, 1, exe);   // bcast myself
-                ret = ceu_bcast_blocks(X2, now, CEU_ACTION_RESUME, exe.Dyn->Exe_Task.blocks.up);
-                ceux_rem(X2->S, i);
-                
-                CEU_TIME_N--;
-                if (CEU_TIME_N == 0) {
-                    CEU_TIME_MIN = now;
-                }
+            ceux_pop_n(X2->S, ret);
+            assert(CEU_TIME_N < 255);
+            CEU_TIME_N++;
+            uint8_t now = ++CEU_TIME_MAX;
+
+            int i = ceux_push(X2->S, 1, exe);   // bcast myself
+            ret = ceu_bcast_blocks(X2, now, CEU_ACTION_RESUME, exe.Dyn->Exe_Task.blocks.up);
+            ceux_rem(X2->S, i);
+            
+            CEU_TIME_N--;
+            if (CEU_TIME_N == 0) {
+                CEU_TIME_MIN = now;
             }
         }
     #endif
@@ -2061,6 +2060,13 @@ fun Coder.main (tags: Tags): String {
             return 1;
         }
         
+        void ceu_exe_free (CEU_Exe* exe) {
+            ceux_top_set(exe->X->S, 0);
+            ceu_gc_dec(exe->clo);
+            free(exe->X->S);
+            free(exe->X);
+        }
+
         void ceu_exe_term (CEU_Exe* exe) {
             exe->status = CEU_EXE_STATUS_TERMINATED;
     #if CEU >= 4
@@ -2082,12 +2088,24 @@ fun Coder.main (tags: Tags): String {
                     // block held a strong reference
                     ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)exe));
                 }
+                if (exe->refs == 0) {
+                    ceu_exe_free(exe);
+                }
             }
     #endif
         }
-
+        
         void ceu_exe_kill (CEU_Exe* exe) {
             assert(ceu_isexe_dyn((CEU_Dyn*)exe));
+            assert(exe->status==CEU_EXE_STATUS_YIELDED CEU4(|| exe->status==CEU_EXE_STATUS_RESUMED));
+    #if CEU >= 4
+            // only possible from block_leave for tasks
+            if (exe->status == CEU_EXE_STATUS_RESUMED) {
+                assert(exe->type == CEU_VALUE_EXE_TASK);
+                exe->status = CEU_EXE_STATUS_ABORTED;
+                return;
+            }
+    #endif
             // TODO - fake S/X - should propagate up to calling stack
             CEU_Stack S = { 0, {} };
             CEUX _X = { &S, -1, -1, CEU_ACTION_INVALID, {.exe=NULL} };
@@ -2116,7 +2134,7 @@ fun Coder.main (tags: Tags): String {
         int ceu_bcast_task (CEUX* X1, uint8_t now, CEU_ACTION act, CEU_Exe_Task* task2) {
             // X1: [evt]    // must keep as is at the end bc outer bcast pops it
             
-            if (task2->status == CEU_EXE_STATUS_TERMINATED) {
+            if (task2->status >= CEU_EXE_STATUS_TERMINATED) {
                 return 0;
             } else if (act == CEU_ACTION_ABORT) {
                 ceux_push(X1->S, 1, ceu_dyn_to_val((CEU_Dyn*)task2));
@@ -2175,7 +2193,7 @@ fun Coder.main (tags: Tags): String {
                 return 0;
             }
             int ret = 0;    // !=0 is error
-            if (task2->status != CEU_EXE_STATUS_TERMINATED) {
+            if (task2->status < CEU_EXE_STATUS_TERMINATED) {
                 ret = ceu_bcast_task(X1, now, act, task2);
             }
             if (ret == 0) {

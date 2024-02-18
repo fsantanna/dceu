@@ -59,6 +59,20 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
         """ }
     }
 
+    fun Expr.check_error_aborted (msg: String): String {
+        val exe = ups.exe(this)
+        return """
+            ${(CEU >= 2).cond { """
+                CEU_ERROR_CHK_STK(continue, $msg);
+            """ }}
+            ${(CEU>=3 && exe!=null).cond { """
+                if (X->action==CEU_ACTION_ABORT ${(CEU>=4 && exe!!.tk.str=="task").cond { "|| (X->exe->type==CEU_VALUE_EXE_TASK && X->exe->status==CEU_EXE_STATUS_ABORTED)" }}) {
+                    continue;
+                }
+            """ }}
+        """
+    }
+
     fun Expr.code(): String {
         if (this.isdst()) {
             assert(this is Expr.Acc || this is Expr.Index || this is Expr.Pub)
@@ -153,21 +167,13 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         """ }}
                     """)}
 
+                    // BLOCK (escape) | ${this.dump()}
                     // defers execute
                     ${(CEU >= 2).cond { defers[this].cond { it.third } }}
                     
                     ceux_block_leave(X->S, X->base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size}, ${rets.pub[this]!!});
                     
-                    // check error
-                    ${(CEU >= 2).cond { """
-                        CEU_ERROR_CHK_STK(continue, NULL);
-                    """ }}
-                    // check free
-                    ${(CEU >= 3 /*&& inexe*/).cond { """
-                        if (X->action == CEU_ACTION_ABORT) {
-                            continue;   // do not execute next statement, instead free up block
-                        }
-                    """ }}
+                    ${this.check_error_aborted("NULL")}
                 }
                 """
             }
@@ -322,7 +328,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 ${this.co.code()}
                 ${this.arg.code()}
                 ceux_resume(X, 1 /* TODO: MULTI */, ${rets.pub[this]!!}, CEU_ACTION_RESUME);
-                CEU_ERROR_CHK_STK(continue, ${this.toerr()});
+                ${this.check_error_aborted(this.toerr())}
             """
 
             is Expr.Yield -> """
@@ -368,7 +374,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         ${e.code()}
                     """ }.joinToString("")}
                     ceux_spawn(X, CEU_TIME_MAX, ${this.args.size});
-                    CEU_ERROR_CHK_STK(continue, ${this.toerr()});
+                    ${this.check_error_aborted(this.toerr())}
                 } // SPAWN | ${this.dump()}
             """
             }
@@ -562,7 +568,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
 
                     ceux_call(X, ${this.args.size}, ${rets.pub[this]!!});
                     
-                    CEU_ERROR_CHK_STK(continue, ${this.toerr()});
+                    ${this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}
                 """
             }

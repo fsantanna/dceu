@@ -92,7 +92,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                         -> err(this.tk, "yield error : unexpected enclosing catch")
                     ups.first(this) { it is Expr.Proto }.let { it?.tk?.str=="func" && it!=outer.main() }
                         -> err(this.tk, "yield error : unexpected enclosing func")
-                    !ups.inexe(this, null, true)
+                    (ups.exe(this) == null)
                         -> err(this.tk, "yield error : expected enclosing coro" + (if (CEU <= 3) "" else " or task"))
                     //ups.any(this) { it is Expr.Do && it.arg!=null }
                     //    -> err(this.tk, "yield error : unexpected enclosing thus")
