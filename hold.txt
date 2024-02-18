@@ -124,9 +124,9 @@
                                 ceu_hold_set_rec($src, IMMUT, 0, NULL);
                             }
 
-                            ceu_gc_inc($src);
+                            ceu_gc_inc_val($src);
                         }                        
-                        ceu_gc_dec(ceu_acc.Dyn->Exe_Task.pub, 1);
+                        ceu_gc_dec_val(ceu_acc.Dyn->Exe_Task.pub, 1);
                         ceu_acc.Dyn->Exe_Task.pub = $src;
 
 

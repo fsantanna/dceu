@@ -122,7 +122,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     """
                     {
                         CEU_Value ceu_up = ceux_peek(X->S, ${vars.idx(dcl,ups.pub[this]!!)});
-                        ceu_gc_inc(ceu_up);
+                        ceu_gc_inc_val(ceu_up);
                         ceu_clo_$n.Dyn->Clo.upvs.buf[$i] = ceu_up;
                     }
                     """
@@ -191,7 +191,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         (i != -1).cond { """
                         {
                             CEU_Value clo = ceux_peek(X->S, XX(-1));
-                            ceu_gc_inc(clo);    // TODO: creates cycle, never collected
+                            ceu_gc_inc_val(clo);    // TODO: creates cycle, never collected
                             clo.Dyn->Clo.upvs.buf[$i] = clo;
                         }
                         """ }
@@ -288,7 +288,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                             // [...,n,pay,err]
                             CEU_Value cnd = ceux_pop(X->S, 1);
                             CEU_Value pay = ceux_peek(X->S, XX(-2));
-                            ceu_gc_inc(pay);
+                            ceu_gc_inc_val(pay);
                             CEU_Value n   = ceux_peek(X->S, XX(-3));
                             assert(n.type==CEU_VALUE_NUMBER && "bug found");
                             ceux_pop(X->S, n.Number+1+1+1);
@@ -397,9 +397,9 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 ${this.isdst().cond2({ """
                     // [v,(tsk)]
                     CEU_Value v = ceux_peek(X->S, XX(${this.tsk.cond2({"-2"},{"-1"})}));
-                    ceu_gc_inc(v);
-                    ceu_gc_inc(v);
-                    ceu_gc_dec(tsk.Dyn->Exe_Task.pub);
+                    ceu_gc_inc_val(v);
+                    ceu_gc_inc_val(v);
+                    ceu_gc_dec_val(tsk.Dyn->Exe_Task.pub);
                     tsk.Dyn->Exe_Task.pub = v;
                     ${this.tsk.cond { "ceux_pop(X->S, 1);" }}
                     // [v]
@@ -538,10 +538,10 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }
                     else -> this.PI0("""
                         CEU_Value ceu_$n = CEU_ERROR_CHK_VAL(continue, ceu_col_get(ceux_peek(X->S,XX(-1)),ceux_peek(X->S,XX(-2))), ${this.toerr()});
-                        ceu_gc_inc(ceu_$n);
+                        ceu_gc_inc_val(ceu_$n);
                         ceux_drop(X->S, 2);
                         ceux_push(X->S, 1, ceu_$n);
-                        ceu_gc_dec(ceu_$n);
+                        ceu_gc_dec_val(ceu_$n);
                     """)
                 } + """
                 }

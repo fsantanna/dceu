@@ -318,7 +318,7 @@ fun Coder.main (tags: Tags): String {
     char* ceu_tag_to_string (int tag);
     int ceu_type_to_size (int type);
 
-    void ceu_gc_inc (CEU_Value v);
+    void ceu_gc_inc_val (CEU_Value v);
 
     CEU_Value ceu_create_tuple   (int n);
     CEU_Value ceu_create_vector  (void);
@@ -540,24 +540,30 @@ fun Coder.main (tags: Tags): String {
 
     void ceu_gc_free (CEU_Dyn* dyn);
     
-    void ceu_gc_dec (CEU_Value v) {
-        if (v.type < CEU_VALUE_DYNAMIC)
-            return;
-        assert(v.Dyn->Any.refs > 0);
-        v.Dyn->Any.refs--;
-        if (v.Dyn->Any.refs == 0) {
-            ceu_gc_free(v.Dyn);
+    void ceu_gc_dec_dyn (CEU_Dyn* dyn) {
+        assert(dyn->Any.refs > 0);
+        dyn->Any.refs--;
+        if (dyn->Any.refs == 0) {
+            ceu_gc_free(dyn);
     #ifdef CEU_DEBUG
             CEU_GC.gc++;
     #endif
         }
     }
-
-    void ceu_gc_inc (CEU_Value v) {
-        if (v.type < CEU_VALUE_DYNAMIC)
+    void ceu_gc_dec_val (CEU_Value val) {
+        if (val.type < CEU_VALUE_DYNAMIC)
             return;
-        assert(v.Dyn->Any.refs < 255);
-        v.Dyn->Any.refs++;
+        ceu_gc_dec_dyn(val.Dyn);
+    }
+
+    void ceu_gc_inc_dyn (CEU_Dyn* dyn) {
+        assert(dyn->Any.refs < 255);
+        dyn->Any.refs++;
+    }
+    void ceu_gc_inc_val (CEU_Value val) {
+        if (val.type < CEU_VALUE_DYNAMIC)
+            return;
+        ceu_gc_inc_dyn(val.Dyn);
     }
 
     void ceu_gc_free (CEU_Dyn* dyn) {
@@ -575,27 +581,27 @@ fun Coder.main (tags: Tags): String {
             case CEU_VALUE_CLO_TASK:
 #endif
                 for (int i=0; i<dyn->Clo.upvs.its; i++) {
-                    ceu_gc_dec(dyn->Clo.upvs.buf[i]);
+                    ceu_gc_dec_val(dyn->Clo.upvs.buf[i]);
                 }
                 free(dyn->Clo.upvs.buf);
                 break;
             case CEU_VALUE_TUPLE:       // buf w/ dyn
                 for (int i=0; i<dyn->Tuple.its; i++) {
-                    ceu_gc_dec(dyn->Tuple.buf[i]);
+                    ceu_gc_dec_val(dyn->Tuple.buf[i]);
                 }
                 break;
             case CEU_VALUE_VECTOR:
                 for (int i=0; i<dyn->Vector.its; i++) {
                     CEU_Value ret = ceu_vector_get(&dyn->Vector, i);
                     assert(ret.type != CEU_VALUE_ERROR);
-                    ceu_gc_dec(ret);
+                    ceu_gc_dec_val(ret);
                 }
                 free(dyn->Vector.buf);
                 break;
             case CEU_VALUE_DICT:
                 for (int i=0; i<dyn->Dict.max; i++) {
-                    ceu_gc_dec((*dyn->Dict.buf)[i][0]);
-                    ceu_gc_dec((*dyn->Dict.buf)[i][1]);
+                    ceu_gc_dec_val((*dyn->Dict.buf)[i][0]);
+                    ceu_gc_dec_val((*dyn->Dict.buf)[i][1]);
                 }
                 free(dyn->Dict.buf);
                 break;
@@ -794,7 +800,7 @@ fun Coder.main (tags: Tags): String {
     int ceux_push (CEU_Stack* S, int inc, CEU_Value v) {
         assert(S->n<CEU_STACK_MAX && "TODO: stack error");
         if (inc) {
-            ceu_gc_inc(v);
+            ceu_gc_inc_val(v);
         }
         S->buf[S->n++] = v;
         return S->n-1;
@@ -803,7 +809,7 @@ fun Coder.main (tags: Tags): String {
         assert(S->n>0 && "TODO: stack error");
         CEU_Value v = S->buf[--S->n];
         if (dec) {
-            ceu_gc_dec(v);
+            ceu_gc_dec_val(v);
         }
         return v;
     }
@@ -819,19 +825,19 @@ fun Coder.main (tags: Tags): String {
     void ceux_drop (CEU_Stack* S, int n) {
         assert(n<=S->n && "BUG: index out of range");
         for (int i=0; i<n; i++) {
-            ceu_gc_dec(S->buf[--S->n]);
+            ceu_gc_dec_val(S->buf[--S->n]);
         }
     }
     void ceux_top_set (CEU_Stack* S, int top) {
         assert(top>=0 && top<=S->n && "TODO: stack error");
         for (int i=S->n; i>top; i--) {
-            ceu_gc_dec(S->buf[--S->n]);
+            ceu_gc_dec_val(S->buf[--S->n]);
         }
     }
     void ceux_repl (CEU_Stack* S, int i, CEU_Value v) {
         assert(i>=0 && i<S->n && "TODO: stack error");
-        ceu_gc_inc(v);
-        ceu_gc_dec(S->buf[i]);
+        ceu_gc_inc_val(v);
+        ceu_gc_dec_val(S->buf[i]);
         S->buf[i] = v;
     }
     void ceux_dup (CEU_Stack* S, int i) {
@@ -846,9 +852,9 @@ fun Coder.main (tags: Tags): String {
         assert(i>=0 && i<S->n && "TODO: stack error");
         assert(j>=0 && j<S->n && "TODO: stack error");
         assert(i!=j && "TODO: invalid move");
-        ceu_gc_dec(S->buf[i]);
+        ceu_gc_dec_val(S->buf[i]);
         S->buf[i] = S->buf[j];
-        ceu_gc_inc(S->buf[i]);
+        ceu_gc_inc_val(S->buf[i]);
     }
     void ceux_move (CEU_Stack* S, int i, int j) {
         assert(i>=0 && i<S->n && "TODO: stack error");
@@ -856,7 +862,7 @@ fun Coder.main (tags: Tags): String {
         if (i == j) {
             // nothing to change
         } else {
-            ceu_gc_dec(S->buf[i]);
+            ceu_gc_dec_val(S->buf[i]);
             S->buf[i] = S->buf[j];
             S->buf[j] = (CEU_Value) { CEU_VALUE_NIL };
         }
@@ -869,7 +875,7 @@ fun Coder.main (tags: Tags): String {
         for (int j=S->n; j>i; j--) {
             S->buf[j] = S->buf[j-1];
         }
-        ceu_gc_inc(v);
+        ceu_gc_inc_val(v);
         S->buf[i] = v;
         S->n++;
         // [...,nil,x,...]
@@ -880,7 +886,7 @@ fun Coder.main (tags: Tags): String {
         // [pre,x,pos]
         //      ^ i
         assert(i>=0 && i<S->n && "TODO: stack error");
-        ceu_gc_dec(S->buf[i]);
+        ceu_gc_dec_val(S->buf[i]);
         for (int j=i; j<S->n-1; j++) {
             S->buf[j] = S->buf[j+1];
         }
@@ -954,7 +960,7 @@ fun Coder.main (tags: Tags): String {
                 ) {
                     tsk->blocks.up = NULL;
                     ceu_exe_kill((CEU_Exe*)tsk);    // TODO: handle error
-                    ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)tsk));   // block held a strong reference
+                    ceu_gc_dec_dyn((CEU_Dyn*)tsk);   // block held a strong reference
                 }
                 if (blk.Block->blocks.up != NULL) {
                     blk.Block->blocks.up->blocks.dn = NULL;
@@ -1108,7 +1114,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        ceu_gc_inc(exe);
+        ceu_gc_inc_val(exe);
         ceux_top_set(X1->S, XX1(-inp-1));
         // X1: []
         // X2: [...,inps]
@@ -1171,7 +1177,7 @@ fun Coder.main (tags: Tags): String {
         // X1: [outs]
         // X2: []
         
-        ceu_gc_dec(exe);
+        ceu_gc_dec_val(exe);
         return out;
     }
 #endif
@@ -1195,7 +1201,7 @@ fun Coder.main (tags: Tags): String {
         ceux_repl(X1->S, XX1(-inp-1), exe);
         // X1: [exe,inps]
         
-        ceu_gc_inc(exe);    // keep exe alive to return it  
+        ceu_gc_inc_val(exe);    // keep exe alive to return it  
         int ret = ceux_resume(X1, inp, 0, CEU_ACTION_RESUME);
         // X1: []
         
@@ -1206,7 +1212,7 @@ fun Coder.main (tags: Tags): String {
             ceux_push(X1->S, 1, exe);        // returns exe to caller
             // X1: [exe]
         }
-        ceu_gc_dec(exe);    // dec after push above
+        ceu_gc_dec_val(exe);    // dec after push above
         
         return ret;
     }
@@ -1473,8 +1479,8 @@ fun Coder.main (tags: Tags): String {
     }
     
     void ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v) {
-        ceu_gc_inc(v);
-        ceu_gc_dec(tup->buf[i]);
+        ceu_gc_inc_val(v);
+        ceu_gc_dec_val(tup->buf[i]);
         tup->buf[i] = v;
     }
     
@@ -1493,7 +1499,7 @@ fun Coder.main (tags: Tags): String {
             assert(i == vec->its-1);
             CEU_Value ret = ceu_vector_get(vec, i);
             assert(ret.type != CEU_VALUE_ERROR);
-            ceu_gc_dec(ret);
+            ceu_gc_dec_val(ret);
             vec->its--;
         } else {
             if (vec->its == 0) {
@@ -1508,14 +1514,14 @@ fun Coder.main (tags: Tags): String {
                     vec->buf = realloc(vec->buf, vec->max*sz + 1);
                     assert(vec->buf != NULL);
                 }
-                ceu_gc_inc(v);
+                ceu_gc_inc_val(v);
                 vec->its++;
                 vec->buf[sz*vec->its] = '\0';
             } else {                            // set
                 CEU_Value ret = ceu_vector_get(vec, i);
                 assert(ret.type != CEU_VALUE_ERROR);
-                ceu_gc_inc(v);
-                ceu_gc_dec(ret);
+                ceu_gc_inc_val(v);
+                ceu_gc_dec_val(ret);
                 assert(i < vec->its);
             }
             memcpy(vec->buf + i*sz, (char*)&v.Number, sz);
@@ -1602,14 +1608,14 @@ fun Coder.main (tags: Tags): String {
         CEU_Value vv = ceu_dict_get(col, key);
         
         if (val.type == CEU_VALUE_NIL) {
-            ceu_gc_dec(vv);
-            ceu_gc_dec(key);
+            ceu_gc_dec_val(vv);
+            ceu_gc_dec_val(key);
             (*col->buf)[old][0] = (CEU_Value) { CEU_VALUE_NIL };
         } else {
-            ceu_gc_inc(val);
-            ceu_gc_dec(vv);
+            ceu_gc_inc_val(val);
+            ceu_gc_dec_val(vv);
             if (vv.type == CEU_VALUE_NIL) {
-                ceu_gc_inc(key);
+                ceu_gc_inc_val(key);
             }
             (*col->buf)[old][0] = key;
             (*col->buf)[old][1] = val;
@@ -1717,7 +1723,7 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_create_exe (int type, int sz, CEU_Value clo) {
         ceu_debug_add(type);
         assert(clo.type==CEU_VALUE_CLO_CORO CEU4(|| clo.type==CEU_VALUE_CLO_TASK));
-        ceu_gc_inc(clo);
+        ceu_gc_inc_val(clo);
         
         CEU_Exe* ret = malloc(sz);
         assert(ret != NULL);
@@ -1752,7 +1758,7 @@ fun Coder.main (tags: Tags): String {
         dyn->tasks.nxt = NULL;
         dyn->pub = (CEU_Value) { CEU_VALUE_NIL };
 
-        ceu_gc_inc(ret);    // block holds a strong reference
+        ceu_gc_inc_val(ret);    // block holds a strong reference
         if (block_up->tasks.fst == NULL) {
             block_up->tasks.fst = dyn;
         } else {
@@ -2065,7 +2071,7 @@ fun Coder.main (tags: Tags): String {
         
         void ceu_exe_free (CEU_Exe* exe) {
             ceux_top_set(exe->X->S, 0);
-            ceu_gc_dec(exe->clo);
+            ceu_gc_dec_val(exe->clo);
             free(exe->X->S);
             free(exe->X);
         }
@@ -2089,7 +2095,7 @@ fun Coder.main (tags: Tags): String {
                         tsk->blocks.up->tasks.lst = tsk->tasks.prv;
                     }
                     // block held a strong reference
-                    ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)exe));
+                    ceu_gc_dec_dyn((CEU_Dyn*)exe);
                 }
                 if (exe->refs == 0) {
                     ceu_exe_free(exe);
