@@ -64,7 +64,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
         return """
             CEU_ERROR_CHK_STK(continue, $msg);
             ${(CEU>=3 && exe!=null).cond { """
-                if (X->action==CEU_ACTION_ABORT ${(CEU>=4 && exe!!.tk.str=="task").cond { "|| (X->exe->type==CEU_VALUE_EXE_TASK && X->exe->status==CEU_EXE_STATUS_ABORTED)" }}) {
+                if (X->action==CEU_ACTION_ABORT) {
                     continue;
                 }
             """ }}
