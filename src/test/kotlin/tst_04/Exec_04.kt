@@ -513,8 +513,28 @@ class Exec_04 {
                     yield(nil)              ;; awakes from outer bcast
                     println(:3)
                 }) ()
-                yield(nil)
-                yield(nil)
+                yield(nil)                  ;; awakes from nested task
+                yield(nil)                  ;; awakes from outer bcast
+                println(:ok)
+            }) ()
+            println(:2)
+            broadcast(nil)
+            println(:4)
+        """)
+        assert(out == ":1\n:2\n:3\n:ok\n:4\n") { out }
+    }
+    @Test
+    fun dd_05z_bcast() {
+        val out = test("""
+            spawn (task () {
+                spawn (task () {
+                    println(:1)
+                    yield(nil)              ;; awakes from outer bcast
+                    println(:3)
+                }) ()
+                yield(nil)                  ;; awakes from nested task
+                delay
+                yield(nil)                  ;; does not awake from outer bcast
                 println(:no)
             }) ()
             println(:2)
@@ -782,8 +802,10 @@ class Exec_04 {
             val t = spawn (task () { nil }) ()
             println(broadcast(1) in t)
         """)
-        assert(out == "nil\n") { out }
+        //assert(out == "nil\n") { out }
         //assert(out == "true\n") { out }
+        assert(out == " |  anon : (lin 3, col 21) : broadcast'(t,1)\n" +
+                " v  broadcast error : invalid target\n") { out }
     }
 
     // BCAST / TARGETS
