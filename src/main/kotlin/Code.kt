@@ -99,7 +99,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                                     {
                                         int ret = ceu_exe_term(X);
                                         if (ret != 0) {
-                                            // TODO: remove return
+                                            // TODO: remove pending return in the stack
                                             return ret;
                                         }
                                     }

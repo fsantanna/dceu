@@ -550,20 +550,18 @@ class Exec_04 {
         val out = test("""
             spawn (task () {
                 spawn (task () {
-                    yield(nil)  ;; awakes from outer bcast
-                    println(2)
+                    println(:1, yield(nil)) ;; awakes from outer bcast
                 }) ()
                 spawn (task () {
                     loop {
                         yield(nil)
                     }
                 }) ()
-                yield(nil)      ;; awakes from co2 termination
-                println(1)
+                println(:2, yield(nil))      ;; awakes from :1 termination
             }) ()               ;; kill anon task which is pending on traverse
-            broadcast(nil)
+            broadcast(:out)
         """)
-        assert(out == "2\n1\n") { out }
+        assert(out.contains(":1\t:out\n:2\texe-task: 0x")) { out }
     }
     @Test
     fun dd_06_bcast() {
@@ -676,9 +674,7 @@ class Exec_04 {
             spawn T ()
             func () {
                  broadcast(1)
-                 ;;println(:aaa, 2)
                  broadcast(2)
-                 ;;println(:bbb, 3)
                  broadcast(3)
             }()
         """)
@@ -2902,7 +2898,7 @@ class Exec_04 {
             broadcast(nil)
             println(:ok)
         """)
-        assert(out == ":1\n:2\n:3\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun BUG_mp_02_bcast_func_defer() {

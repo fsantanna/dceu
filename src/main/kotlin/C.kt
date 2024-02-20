@@ -2114,7 +2114,7 @@ fun Coder.main (tags: Tags): String {
             
             // (1)
             if (!done) {
-                // maybe 0 was called before
+                // maybe term=0 was called before
                 if (tsk->up.tsk->dn.fst == tsk) {
                     assert(tsk->sd.prv == NULL);
                     tsk->up.tsk->dn.fst = tsk->sd.nxt;
@@ -2134,6 +2134,7 @@ fun Coder.main (tags: Tags): String {
                 if (tsk->sd.nxt != NULL) {
                     tsk->sd.nxt->sd.prv = tsk->sd.prv;
                 }
+                tsk->sd.prv = tsk->sd.nxt = NULL;
             }
             
             // (2) unlink tsk.dn, but with term=0
@@ -2173,17 +2174,18 @@ fun Coder.main (tags: Tags): String {
             if (task2 == NULL) {
                 return 0;
             }
-            ceu_gc_inc_dyn((CEU_Dyn*) task2);
-            int ret = ceu_bcast_task(X1, now, act, task2);
-            if (ret == 0) {
-                CEU_Exe_Task* nxt = task2->sd.nxt;
-                if (nxt != NULL) {
-        //ceu_dump_dyn((CEU_Dyn*)nxt);
+            CEU_Exe_Task* nxt = task2->sd.nxt;
+            if (nxt == NULL) {
+                return ceu_bcast_task(X1, now, act, task2);
+            } else {
+                ceu_gc_inc_dyn((CEU_Dyn*) nxt);
+                int ret = ceu_bcast_task(X1, now, act, task2);
+                if (ret == 0) {
                     ret = ceu_bcast_tasks(X1, now, act, nxt);
                 }
+                ceu_gc_dec_dyn((CEU_Dyn*) nxt);
+                return ret;
             }
-            ceu_gc_dec_dyn((CEU_Dyn*) task2);
-            return ret;
         }
         int ceu_bcast_task (CEUX* X1, uint8_t now, CEU_ACTION act, CEU_Exe_Task* task2) {            
             // bcast order: DN -> ME
