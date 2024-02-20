@@ -2091,10 +2091,20 @@ fun Coder.main (tags: Tags): String {
     """
     val c_task = """ // TASK
         void ceu_task_unlink (CEU_Exe_Task* tsk, int term) {
-            // both (but once): unlink ups/sds (1), gc_dec (4) myself and dns (3) 
-            //  - detect once ("done") by testing up.tsk==NULL
-            // term = 1: from task  termination, needs to also unlink from dn (2)
-            // term = 0: from block termination, keeps sd/dn bc it may relink
+            // * both (but once)
+            //  - (1) unlink tsk.up/tsk.sd
+            //  - (3) gc_dec - no graph reference reaching it
+            //  - detect once ("done") by testing up.tsk==NULL (from (1))
+            // * term = 1
+            //  - from task termination
+            //  - destroy task graph completely - never traversed again
+            //  - (2) unlink tsk.dn recursively, but now with term=0
+            //      - since term=0, only the immediate tsk.dn is affected (see both/term=0)
+            // * term = 0
+            //  - from block leave or parent unlink
+            //  - keep tsk.dn (2)
+            //  - only destroy tsk.up/tsk.sd (1)
+            //  - task remains alive - can be relinked or bcast explicitly
             // Possible to be called twice 0 -> 1:
             //  - (never 1 -> 0)
             //  - up is already unlinked
@@ -2126,24 +2136,27 @@ fun Coder.main (tags: Tags): String {
                 }
             }
             
-            // (2)
+            // (2) unlink tsk.dn, but with term=0
             if (term == 1) {
-                //assert(!done);
+                if (tsk->dn.fst == NULL) {
+                    assert(tsk->dn.lst == NULL);
+                } else {
+                    assert(tsk->dn.lst != NULL);
+                    {   // (2)
+                        CEU_Exe_Task* cur = tsk->dn.fst;
+                        while (cur != NULL) {
+                            ceu_gc_inc_dyn((CEU_Dyn*) cur);
+                            ceu_task_unlink(cur, 0);
+                            ceu_gc_dec_dyn((CEU_Dyn*) cur);
+                            cur = cur->sd.nxt;
+                        }
+                    }
+                    tsk->dn.fst = tsk->dn.lst = NULL;
+                }
             }
             
             if (!done) {
                 // (3)
-                {
-                    CEU_Exe_Task* cur = tsk->dn.fst;
-                    while (cur != NULL) {
-                        ceu_gc_inc_dyn((CEU_Dyn*) cur);
-                        ceu_gc_dec_dyn((CEU_Dyn*) cur);
-                        cur = cur->sd.nxt;
-                        ceu_gc_dec_dyn((CEU_Dyn*) cur);
-                    }
-                }
-                
-                // (4)
                 ceu_gc_dec_dyn((CEU_Dyn*)tsk);
             }
         }
