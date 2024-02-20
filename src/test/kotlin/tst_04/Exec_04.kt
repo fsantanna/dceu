@@ -477,6 +477,7 @@ class Exec_04 {
     fun dd_04x_bcast() {
         val out = test("""
             val T = task (v) {
+                ;;`printf(">>> %p\n", X->exe);`
                 val e = yield(nil)
                 println(v, e)
             }
@@ -510,11 +511,11 @@ class Exec_04 {
             spawn (task () {
                 spawn (task () {
                     println(:1)
-                    yield(nil)              ;; awakes from outer bcast
+                    yield(nil)              ;; 1. awakes from outer bcast
                     println(:3)
                 }) ()
-                yield(nil)                  ;; awakes from nested task
-                yield(nil)                  ;; awakes from outer bcast
+                println(yield(nil))                  ;; 2. awakes from nested task
+                yield(nil)                  ;; 3. awakes from outer bcast
                 println(:ok)
             }) ()
             println(:2)
