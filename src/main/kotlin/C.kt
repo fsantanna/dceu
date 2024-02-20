@@ -345,9 +345,10 @@ fun Coder.main (tags: Tags): String {
     #endif
     #if CEU >= 4
     int ceu_bcast_task (CEUX* X1, uint8_t now, CEU_ACTION act, CEU_Exe_Task* task2);
+    int ceu_bcast_tasks (CEUX* X1, uint8_t now, CEU_ACTION act, CEU_Exe_Task* task2);
     int ceu_istask_dyn (CEU_Dyn* dyn);
     int ceu_istask_val (CEU_Value val);
-    void ceu_task_unlink (CEU_Exe_Task* tsk);
+    void ceu_task_unlink (CEU_Exe_Task* tsk, int term);
     #endif
     """
     }
@@ -943,7 +944,7 @@ fun Coder.main (tags: Tags): String {
                     tsk = tsk->sd.nxt
                 ) {
                     //ceu_exe_kill((CEU_Exe*)tsk);   // OK: no kill in block leave
-                    ceu_task_unlink(tsk);
+                    ceu_task_unlink(tsk, 0);
                 }
     #endif
                 I = i;
@@ -2057,19 +2058,24 @@ fun Coder.main (tags: Tags): String {
             return 1;
         }
         
-        void ceu_exe_term (CEUX* X) {
+        int ceu_exe_term (CEUX* X) {
             X->exe->status = CEU_EXE_STATUS_TERMINATED;
+            int ret = 0;
     #if CEU >= 4
             if (X->exe->type == CEU_VALUE_EXE_TASK) {
-                {
+                // do not bcast aborted task b/c
+                // it would awake parents that actually need to
+                // respond/catch the error (thus not awake)
+                CEU_Exe_Task* up = ((CEU_Exe_Task*) X->exe)->up.tsk;
+                if (up!=NULL && ceux_peek(X->S,XX(-1)).type!=CEU_VALUE_ERROR) {
                     assert(CEU_TIME_N < 255);
                     CEU_TIME_N++;
                     uint8_t now = ++CEU_TIME_MAX;
     
                     int i = ceux_push(X->S, 1, ceu_dyn_to_val((CEU_Dyn*) X->exe));   // bcast myself
-                    int ret = ceu_bcast_task(X, now, CEU_ACTION_RESUME, ((CEU_Exe_Task*) X->exe)->up.tsk);
-                    assert(ret == 0);
-                    assert(X->exe->refs >= 2);  // ensures that the unlink below is safe
+                    ret = ceu_bcast_task(X, now, CEU_ACTION_RESUME, up);
+                    //assert(ret == 0);
+                    assert(X->exe->refs >= 2);  // ensures that the unlink below is safe (otherwise call gc_inc)
                     ceux_rem(X->S, i);
                 
                     CEU_TIME_N--;
@@ -2077,53 +2083,69 @@ fun Coder.main (tags: Tags): String {
                         CEU_TIME_MIN = now;
                     }
                 }
-                ceu_task_unlink((CEU_Exe_Task*) X->exe);
+                ceu_task_unlink((CEU_Exe_Task*) X->exe, 1);
             }
     #endif
+            return ret;
         }
     """
     val c_task = """ // TASK
-        void ceu_task_unlink (CEU_Exe_Task* tsk) {
-            if (tsk->up.tsk == NULL) {
-                // links already removed:
-                // - block_leave -> task_unlink -> gc_dec_dyn -> gc_free ->
-                //   resume(ABORT) -> exe_term -> task_unlink -> already unlinked
-                return;
-            }
-                
-            if (tsk->up.tsk->dn.fst == tsk) {
-                assert(tsk->sd.prv == NULL);
-                tsk->up.tsk->dn.fst = tsk->sd.nxt;
-            }
-            if (tsk->up.tsk->dn.lst == tsk) {
-                assert(tsk->sd.nxt == NULL);
-                tsk->up.tsk->dn.lst = tsk->sd.prv;
-            }
-            if (tsk->up.blk != NULL) {
-                *tsk->up.blk = tsk->sd.nxt;
-            }
-            if (tsk->sd.prv != NULL) {
-                tsk->sd.prv->sd.nxt = tsk->sd.nxt;
-            }
-            if (tsk->sd.nxt != NULL) {
-                tsk->sd.nxt->sd.prv = tsk->sd.prv;
-            }
-                
-            assert(tsk->up.tsk != NULL);
-            tsk->up.tsk = NULL;
-            tsk->up.blk = NULL;
+        void ceu_task_unlink (CEU_Exe_Task* tsk, int term) {
+            // both (but once): unlink ups/sds (1), gc_dec (4) myself and dns (3) 
+            //  - detect once ("done") by testing up.tsk==NULL
+            // term = 1: from task  termination, needs to also unlink from dn (2)
+            // term = 0: from block termination, keeps sd/dn bc it may relink
+            // Possible to be called twice 0 -> 1:
+            //  - (never 1 -> 0)
+            //  - up is already unlinked
+            //  - gc_dec is already called
+    
+            int done = (tsk->up.tsk == NULL);
             
-            {
-                CEU_Exe_Task* cur = tsk->dn.fst;
-                while (cur != NULL) {
-                    ceu_gc_inc_dyn((CEU_Dyn*) cur);
-                    ceu_gc_dec_dyn((CEU_Dyn*) cur);
-                    cur = cur->sd.nxt;
-                    ceu_gc_dec_dyn((CEU_Dyn*) cur);
+            // (1)
+            if (!done) {
+                // maybe 0 was called before
+                if (tsk->up.tsk->dn.fst == tsk) {
+                    assert(tsk->sd.prv == NULL);
+                    tsk->up.tsk->dn.fst = tsk->sd.nxt;
+                }
+                if (tsk->up.tsk->dn.lst == tsk) {
+                    assert(tsk->sd.nxt == NULL);
+                    tsk->up.tsk->dn.lst = tsk->sd.prv;
+                }
+                if (tsk->up.blk != NULL) {
+                    *tsk->up.blk = tsk->sd.nxt;
+                }
+                tsk->up.tsk = NULL;
+                tsk->up.blk = NULL;
+                if (tsk->sd.prv != NULL) {
+                    tsk->sd.prv->sd.nxt = tsk->sd.nxt;
+                }
+                if (tsk->sd.nxt != NULL) {
+                    tsk->sd.nxt->sd.prv = tsk->sd.prv;
                 }
             }
             
-            ceu_gc_dec_dyn((CEU_Dyn*)tsk);
+            // (2)
+            if (term == 1) {
+                //assert(!done);
+            }
+            
+            if (!done) {
+                // (3)
+                {
+                    CEU_Exe_Task* cur = tsk->dn.fst;
+                    while (cur != NULL) {
+                        ceu_gc_inc_dyn((CEU_Dyn*) cur);
+                        ceu_gc_dec_dyn((CEU_Dyn*) cur);
+                        cur = cur->sd.nxt;
+                        ceu_gc_dec_dyn((CEU_Dyn*) cur);
+                    }
+                }
+                
+                // (4)
+                ceu_gc_dec_dyn((CEU_Dyn*)tsk);
+            }
         }
         
         int ceu_istask_dyn (CEU_Dyn* dyn) {
@@ -2134,25 +2156,37 @@ fun Coder.main (tags: Tags): String {
         }
     """
     val c_bcast = """
-        int ceu_bcast_task (CEUX* X1, uint8_t now, CEU_ACTION act, CEU_Exe_Task* task2) {
+        int ceu_bcast_tasks (CEUX* X1, uint8_t now, CEU_ACTION act, CEU_Exe_Task* task2) {
             if (task2 == NULL) {
                 return 0;
             }
-            
-            // bcast order: DN -> ME -> NXT
+            ceu_gc_inc_dyn((CEU_Dyn*) task2);
+            int ret = ceu_bcast_task(X1, now, act, task2);
+            if (ret == 0) {
+                CEU_Exe_Task* nxt = task2->sd.nxt;
+                if (nxt != NULL) {
+        //ceu_dump_dyn((CEU_Dyn*)nxt);
+                    ret = ceu_bcast_tasks(X1, now, act, nxt);
+                }
+            }
+            ceu_gc_dec_dyn((CEU_Dyn*) task2);
+            return ret;
+        }
+        int ceu_bcast_task (CEUX* X1, uint8_t now, CEU_ACTION act, CEU_Exe_Task* task2) {            
+            // bcast order: DN -> ME
             //  - DN:  nested tasks
             //  - ME:  my yield point
-            //  - NXT: next task
             
             // X1: [evt]    // must keep as is at the end bc outer bcast pops it
             
+            assert(task2!=NULL && task2->type==CEU_VALUE_EXE_TASK);
             assert(act==CEU_ACTION_RESUME && "TODO: toggle");
             ceu_gc_inc_dyn((CEU_Dyn*) task2);
 
             int ret = 0; // !=0 means error
 
             // DN
-            ret = ceu_bcast_task(X1, now, act, task2->dn.fst);
+            ret = ceu_bcast_tasks(X1, now, act, task2->dn.fst);
 
             #define ceu_time_lt(tsk,now) \
                 ((CEU_TIME_MAX>=CEU_TIME_MIN || (tsk<CEU_TIME_MAX && now<CEU_TIME_MAX) || (tsk>CEU_TIME_MIN && now>CEU_TIME_MIN)) ? \
@@ -2191,11 +2225,6 @@ fun Coder.main (tags: Tags): String {
                 }
             }
             
-            // NXT
-            if (ret == 0) {
-                ret = ceu_bcast_task(X1, now, act, task2->sd.nxt);
-            }
-            
             ceu_gc_dec_dyn((CEU_Dyn*) task2);
             return ret;
         }
@@ -2212,10 +2241,10 @@ fun Coder.main (tags: Tags): String {
             int ret;
             if (xin.type == CEU_VALUE_TAG) {
                 if (xin.Tag == CEU_TAG_global) {
-                    ret = ceu_bcast_task(X, now, CEU_ACTION_RESUME, CEU_GLOBAL_TASK.dn.fst);
+                    ret = ceu_bcast_tasks(X, now, CEU_ACTION_RESUME, CEU_GLOBAL_TASK.dn.fst);
                 } else if (xin.Tag == CEU_TAG_task) {
                     if (X->exe_task == NULL) {
-                        ret = ceu_bcast_task(X, now, CEU_ACTION_RESUME, CEU_GLOBAL_TASK.dn.fst);
+                        ret = ceu_bcast_tasks(X, now, CEU_ACTION_RESUME, CEU_GLOBAL_TASK.dn.fst);
                     } else {
                         ret = ceu_bcast_task(X, now, CEU_ACTION_RESUME, X->exe_task);
                     }

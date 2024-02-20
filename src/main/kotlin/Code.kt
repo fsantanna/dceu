@@ -96,7 +96,13 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         """}}
                         ${do_while(code)}
                         ${isexe.cond{"""
-                                    ceu_exe_term(X);
+                                    {
+                                        int ret = ceu_exe_term(X);
+                                        if (ret != 0) {
+                                            // TODO: remove return
+                                            return ret;
+                                        }
+                                    }
                             }
                         """}}
                         return 1;

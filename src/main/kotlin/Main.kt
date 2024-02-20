@@ -5,8 +5,8 @@ import java.io.Reader
 import java.util.*
 
 var DUMP = true
-var DEBUG = true
-var CEU = 1
+var DEBUG = false
+var CEU = 4
     // 1: dyn-lex               ;; 7 normal  / 15 no dots / 9+X (:rec) valgrind errors // 52 "definitely lost"
     // 2: defer, throw/catch    ;; 6 "definitely lost"
     // 3: coro, yield, resume   ;; 0 "definitely lost"

@@ -546,20 +546,21 @@ class Exec_04 {
     }
     @Test
     fun dd_05x_bcast() {
+        DEBUG = true
         val out = test("""
-            var co1 = spawn (task () {
-                var co2 = spawn (task () {
+            spawn (task () {
+                spawn (task () {
                     yield(nil)  ;; awakes from outer bcast
                     println(2)
                 }) ()
                 spawn (task () {
                     loop {
-                        yield(nil) ;;thus { it => nil }
+                        yield(nil)
                     }
                 }) ()
-                yield(nil) ;;thus { it => nil }      ;; awakes from co2 termination
+                yield(nil)      ;; awakes from co2 termination
                 println(1)
-            }) ()                                ;; kill anon task which is pending on traverse
+            }) ()               ;; kill anon task which is pending on traverse
             broadcast(nil)
         """)
         assert(out == "2\n1\n") { out }
@@ -1877,12 +1878,11 @@ class Exec_04 {
         val out = test("""
             val T = task (v) {
                 ${AWAIT()}
-                ;;yield(nil)
                 println(v)
             }
             val t1 = spawn T (1)
             val t2 = spawn T (2)
-            broadcast (nil) in t1
+            broadcast (:x) in t1
         """)
         assert(out == "1\n") { out }
     }
