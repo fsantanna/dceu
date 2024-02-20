@@ -1119,30 +1119,6 @@ fun Coder.main (tags: Tags): String {
         
         // X2: [args,upvs,locs,...,rets]
         
-    #if CEU >= 4
-        if (exe.type==CEU_VALUE_EXE_TASK && exe.Dyn->Exe_Task.status==CEU_EXE_STATUS_TERMINATED) {
-            int iserr = (ret>0 && ceux_peek(X2->S,XX2(-1)).type==CEU_VALUE_ERROR);
-            // do not bcast aborted task (only terminated) b/c
-            // it would awake parents that actually need to
-            // respond/catch the error (thus not awake)
-            if (!iserr) {
-                ceux_pop_n(X2->S, ret);
-                assert(CEU_TIME_N < 255);
-                CEU_TIME_N++;
-                uint8_t now = ++CEU_TIME_MAX;
-
-                int i = ceux_push(X2->S, 1, exe);   // bcast myself
-                ret = ceu_bcast_task(X2, now, CEU_ACTION_RESUME, exe.Dyn->Exe_Task.up.tsk);
-                ceux_rem(X2->S, i);
-            
-                CEU_TIME_N--;
-                if (CEU_TIME_N == 0) {
-                    CEU_TIME_MIN = now;
-                }
-            }
-        }
-    #endif
-
         int err = ceux_call_pos(X2->S, ret, &out);        
         
         // X1: []
@@ -2081,11 +2057,27 @@ fun Coder.main (tags: Tags): String {
             return 1;
         }
         
-        void ceu_exe_term (CEU_Exe* exe) {
-            exe->status = CEU_EXE_STATUS_TERMINATED;
+        void ceu_exe_term (CEUX* X) {
+            X->exe->status = CEU_EXE_STATUS_TERMINATED;
     #if CEU >= 4
-            if (exe->type == CEU_VALUE_EXE_TASK) {
-                ceu_task_unlink((CEU_Exe_Task*) exe);
+            if (X->exe->type == CEU_VALUE_EXE_TASK) {
+                {
+                    assert(CEU_TIME_N < 255);
+                    CEU_TIME_N++;
+                    uint8_t now = ++CEU_TIME_MAX;
+    
+                    int i = ceux_push(X->S, 1, ceu_dyn_to_val((CEU_Dyn*) X->exe));   // bcast myself
+                    int ret = ceu_bcast_task(X, now, CEU_ACTION_RESUME, ((CEU_Exe_Task*) X->exe)->up.tsk);
+                    assert(ret == 0);
+                    assert(X->exe->refs >= 2);  // ensures that the unlink below is safe
+                    ceux_rem(X->S, i);
+                
+                    CEU_TIME_N--;
+                    if (CEU_TIME_N == 0) {
+                        CEU_TIME_MIN = now;
+                    }
+                }
+                ceu_task_unlink((CEU_Exe_Task*) X->exe);
             }
     #endif
         }
@@ -2146,13 +2138,6 @@ fun Coder.main (tags: Tags): String {
             if (task2 == NULL) {
                 return 0;
             }
-            if (task2->status == CEU_EXE_STATUS_TERMINATED) {
-                // possible with
-                //  - bcast -> awakes T1 -> terminates with pending ref
-                //  - T1 termination -> awakes T2 -> terminates with pending ref
-                //  - bcast -> awakes T2 (T1.sd.nxt) -> T2 is already terminated
-                return 0;
-            }
             
             // bcast order: DN -> ME -> NXT
             //  - DN:  nested tasks
@@ -2161,7 +2146,6 @@ fun Coder.main (tags: Tags): String {
             
             // X1: [evt]    // must keep as is at the end bc outer bcast pops it
             
-            assert(task2->status==CEU_EXE_STATUS_YIELDED || task2->status==CEU_EXE_STATUS_RESUMED);
             assert(act==CEU_ACTION_RESUME && "TODO: toggle");
             ceu_gc_inc_dyn((CEU_Dyn*) task2);
 

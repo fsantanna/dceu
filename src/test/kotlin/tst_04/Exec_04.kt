@@ -514,7 +514,7 @@ class Exec_04 {
                     yield(nil)              ;; 1. awakes from outer bcast
                     println(:3)
                 }) ()
-                println(yield(nil))                  ;; 2. awakes from nested task
+                yield(nil)                  ;; 2. awakes from nested task
                 yield(nil)                  ;; 3. awakes from outer bcast
                 println(:ok)
             }) ()
