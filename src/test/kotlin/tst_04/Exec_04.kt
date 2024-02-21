@@ -2886,6 +2886,23 @@ class Exec_04 {
         assert(out == ":1\n:2\n:3\n") { out }
     }
     @Test
+    fun mp_01y_abort() {
+        val out = test("""
+            spawn (task () {
+                spawn (task () {
+                    yield(nil)
+                    println(:1)
+                    broadcast(nil) in :global
+                    println(:999)
+                }) ()
+                yield(nil)
+                println(:2)
+            }) ()
+            broadcast(nil) in :global
+        """)
+        assert(out == ":1\n:2\n:3\n") { out }
+    }
+    @Test
     fun mp_01x_abort() {
         val out = test("""
             spawn (task () {
