@@ -45,8 +45,11 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             }
             is Expr.Break -> {
                 var up = ups.pub[this]
-                while (up is Expr.Do) {
-                    up = ups.pub[up]        // skip nested do's from late declarations
+                while (up is Expr.Do && up.es[0]==this) {
+                    up = ups.pub[up]    // skip nested do's from late declarations
+                }
+                if (up is Expr.Do) {
+                    up = ups.pub[up]
                 }
                 if (up is Expr.Loop) {
                     // ok

@@ -3104,10 +3104,22 @@ class Exec_01 {
     // LOOP
 
     @Test
-    fun oo_01_loop_err() {
+    fun TODO_oo_01_loop_err() {
         val out = test("""
             loop {
                 do {
+                    break if true   ;; should not be allowed
+                }   ;; currently allowed bc of late decls that nest blocks transparently
+            }
+            println(:out)
+        """)
+        assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
+    }
+    @Test
+    fun oo_01x_loop_err() {
+        val out = test("""
+            loop {
+                do { do(nil)
                     break if true
                 }
             }
@@ -3116,7 +3128,7 @@ class Exec_01 {
         assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
     }
     @Test
-    fun oo_01x_loop_err() {
+    fun oo_01y_loop_err() {
         val out = test("""
             loop {
                 do {
@@ -3128,7 +3140,7 @@ class Exec_01 {
         assert(out == "anon : (lin 4, col 21) : skip error : expected immediate parent loop\n") { out }
     }
     @Test
-    fun oo_01y_loop_err() {
+    fun oo_01z_loop_err() {
         val out = test("""
             var ok = false
             loop {

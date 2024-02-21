@@ -10,7 +10,7 @@ var CEU = 4
     // 1: dyn-lex               ;; 7 normal  / 15 no dots / 9+X (:rec) valgrind errors // 52 "definitely lost"
     // 2: defer, throw/catch    ;; 6 "definitely lost"
     // 3: coro, yield, resume   ;; 0 "definitely lost"
-    // 4: task, pub, bcast, toggle, ref, delay
+    // 4: task, pub, bcast, toggle, delay
     // 5: tasks, track, detrack (lambda)
     // 6: export
     // TODO: copy, underscore, self (coro/task)
