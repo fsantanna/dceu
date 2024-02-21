@@ -44,7 +44,11 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                 this.blk.traverse()
             }
             is Expr.Break -> {
-                if (ups.pub[this] is Expr.Do && ups.pub[ups.pub[this]] is Expr.Loop) {
+                var up = ups.pub[this]
+                while (up is Expr.Do) {
+                    up = ups.pub[up]        // skip nested do's from late declarations
+                }
+                if (up is Expr.Loop) {
                     // ok
                 } else {
                     err(this.tk, "break error : expected immediate parent loop")

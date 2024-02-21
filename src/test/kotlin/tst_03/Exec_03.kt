@@ -365,6 +365,23 @@ class Exec_03 {
         """)
         assert(out == "true\n") { out }
     }
+    @Test
+    fun cc_18_bug_stack() {
+        val out = test("""
+            val T = coroutine(coro () {
+                val x =
+                    do {
+                        val it = yield(nil)
+                        println(:in, it)
+                    }     
+                val y
+            })
+            resume T()
+            resume T(10)
+            println(:ok)
+        """)
+        assert(out == ":in\t10\n:ok\n") { out }
+    }
 
     // AS
 

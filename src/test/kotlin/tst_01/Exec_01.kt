@@ -3334,6 +3334,17 @@ class Exec_01 {
         """)
         assert(out == "1\n2\n2\n2\n") { out }
     }
+    @Test
+    fun oo_14_loop_break_error_bug() {
+        val out = test("""
+            loop {
+                do { nil }
+                break if true
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // NATIVE
 

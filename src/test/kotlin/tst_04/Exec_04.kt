@@ -722,6 +722,28 @@ class Exec_04 {
         assert(out == ":1\n10\n10\n:2\n20\n20\n:3\n30\n30\n") { out }
     }
     @Test
+    fun dd_13x_bcast() {
+        val out = test(
+            """
+            val T = task () {
+                val e1 =
+                    loop {
+                        val it = yield(nil)
+                        do {
+                            val x = it
+                            println(:in, it)    ;; TODO: 10
+                        }
+                        break if true
+                   }     
+                val x
+            }
+            spawn T()
+            broadcast(10)
+        """
+        )
+        assert(out == ":in\t10\n") { out }
+    }
+    @Test
     fun dd_15_bcast() {
         val out = test(
             """
@@ -1549,6 +1571,7 @@ class Exec_04 {
                     broadcast ([20])
                     println(:3)
                     broadcast (@[(30,30)])
+                    true
                 ;;}()
             }
             println(e)
