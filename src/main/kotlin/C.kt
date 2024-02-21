@@ -2077,20 +2077,30 @@ fun Coder.main (tags: Tags): String {
         }
 
         void ceu_exe_kill (CEU_Exe* exe) {
-            if (exe->status != CEU_EXE_STATUS_YIELDED) {
-                exe->status = CEU_EXE_STATUS_TERMINATED;
-            } else {
-                // TODO - fake S/X - should propagate up to calling stack
-                CEU_Stack S = { 0, {} };
-                CEUX _X = { CEU4(NULL COMMA) &S, -1, -1, CEU_ACTION_INVALID, {.exe=NULL} };
-                CEUX* X = &_X;
-                ceux_push(&S, 1, ceu_dyn_to_val((CEU_Dyn*) exe));
-                // S: [co]
-                int ret = ceux_resume(X, 0, 0, CEU_ACTION_ABORT);
-                if (ret != 0) {
-                    int iserr = (ceux_peek(&S,XX(-1)).type == CEU_VALUE_ERROR);
-                    assert(iserr && "TODO: abort should not return");
-                    assert(0 && "TODO: error in ceu_exe_kill");
+            switch (exe->status) {
+                case CEU_EXE_STATUS_TERMINATED:
+                    // do nothing;
+                    break;
+                case CEU_EXE_STATUS_RESUMED:
+                    exe->status = CEU_EXE_STATUS_TERMINATED;
+                    break;
+        #if CEU >= 4
+                case CEU_EXE_STATUS_TOGGLED:
+        #endif
+                case CEU_EXE_STATUS_YIELDED:
+                {
+                    // TODO - fake S/X - should propagate up to calling stack
+                    CEU_Stack S = { 0, {} };
+                    CEUX _X = { CEU4(NULL COMMA) &S, -1, -1, CEU_ACTION_INVALID, {.exe=NULL} };
+                    CEUX* X = &_X;
+                    ceux_push(&S, 1, ceu_dyn_to_val((CEU_Dyn*) exe));
+                    // S: [co]
+                    int ret = ceux_resume(X, 0, 0, CEU_ACTION_ABORT);
+                    if (ret != 0) {
+                        int iserr = (ceux_peek(&S,XX(-1)).type == CEU_VALUE_ERROR);
+                        assert(iserr && "TODO: abort should not return");
+                        assert(0 && "TODO: error in ceu_exe_kill");
+                    }
                 }
             }
         }
@@ -2216,20 +2226,34 @@ fun Coder.main (tags: Tags): String {
             // X1: [evt]    // must keep as is at the end bc outer bcast pops it
             
             assert(task2!=NULL && task2->type==CEU_VALUE_EXE_TASK);
-            assert(act==CEU_ACTION_RESUME && "TODO: toggle");
+            assert(act==CEU_ACTION_RESUME || act==CEU_ACTION_TOGGLE);
+            
+            if (task2->status == CEU_EXE_STATUS_TERMINATED) {
+                return 0;
+            }
+            
             ceu_gc_inc_dyn((CEU_Dyn*) task2);
-
             int ret = 0; // !=0 means error
 
             // DN
-            ret = ceu_bcast_tasks(X1, now, act, task2);
+            if (act==CEU_ACTION_RESUME && task2->status==CEU_EXE_STATUS_TOGGLED) {
+                // do nothing
+            } else {
+                ret = ceu_bcast_tasks(X1, now, act, task2);
+            }
 
             #define ceu_time_lt(tsk,now) \
                 ((CEU_TIME_MAX>=CEU_TIME_MIN || (tsk<CEU_TIME_MAX && now<CEU_TIME_MAX) || (tsk>CEU_TIME_MIN && now>CEU_TIME_MIN)) ? \
                     (tsk < now) : (tsk > now))
 
             // ME
-            if (task2!=&CEU_GLOBAL_TASK && task2->status==CEU_EXE_STATUS_YIELDED) {
+            if (task2->status != CEU_EXE_STATUS_YIELDED) {
+                // do nothing
+            } else if (task2 == &CEU_GLOBAL_TASK) {
+                // do nothing
+            } else if (act == CEU_ACTION_TOGGLE) {
+                task2->time = CEU_TIME_MIN;
+            } else {
                 // either handle error or event
                 // never both
                 // even if error is caught, should not awake from past event
@@ -2256,8 +2280,6 @@ fun Coder.main (tags: Tags): String {
                     // [evt,tsk,evt]
                     ret = ceux_resume(X1, 1 /* TODO-MULTI */, 0, CEU_ACTION_RESUME);
                     // [evt]
-                } else {
-                    task2->time = CEU_TIME_MIN;
                 }
             }
             

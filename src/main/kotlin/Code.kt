@@ -85,11 +85,10 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     // FUNC | ${this.dump()}
                     int ceu_f_$id (CEUX* X) {
                         ${isexe.cond{"""
-                            X->exe->status = CEU_EXE_STATUS_RESUMED;
+                            X->exe->status = (X->action == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
                             switch (X->exe->pc) {
                                 case 0:
                                     if (X->action == CEU_ACTION_ABORT) {
-                                        X->exe->status = CEU_EXE_STATUS_TERMINATED;
                                         ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
                                         return 1;
                                     }
@@ -426,22 +425,26 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             }
             """
             is Expr.Dtrack -> this.blk.code()
-            is Expr.Toggle -> {
-                val tskc = this.idc("tsk")
-                """
+            is Expr.Toggle -> """{  // TOGGLE | ${this.dump()}
                 ${this.tsk.code()}
-                CEU_Value $tskc;
-                $tskc = ceu_acc;
                 ${this.on.code()}
-                if (!ceu_istask_val($tskc) || $tskc.Dyn->Exe_Task.status>CEU_EXE_STATUS_TOGGLED) {                
-                    CEU_Value err = { CEU_VALUE_ERROR, {.Error="toggle error : expected yielded task"} };
-                    CEU_ERROR_THR_S("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                {   // TOGGLE | ${this.dump()}
+                    CEU_Value tsk = ceux_peek(X->S, XX(-2));
+                    int on = ceu_as_bool(ceux_peek(X->S, XX(-1)));
+                    if (!ceu_istask_val(tsk)) {
+                        CEU_ERROR_THR_S(continue, "toggle error : expected yielded task", ${this.toerr()});
+                    }
+                    if (on && tsk.Dyn->Exe_Task.status!=CEU_EXE_STATUS_TOGGLED) {                
+                        CEU_ERROR_THR_S(continue, "toggle error : expected toggled task", ${this.toerr()});
+                    }
+                    if (!on && tsk.Dyn->Exe_Task.status!=CEU_EXE_STATUS_YIELDED) {                
+                        CEU_ERROR_THR_S(continue, "toggle error : expected yielded task", ${this.toerr()});
+                    }
+                    tsk.Dyn->Exe_Task.status = (on ? CEU_EXE_STATUS_YIELDED : CEU_EXE_STATUS_TOGGLED);
+                    int ret = ceu_bcast_task(X, 0, CEU_ACTION_TOGGLE, &tsk.Dyn->Exe_Task);
+                    assert(ret == 0);
                 }
-                $tskc.Dyn->Exe_Task.status = (ceu_as_bool(ceu_acc) ? CEU_EXE_STATUS_YIELDED : CEU_EXE_STATUS_TOGGLED);
-                CEU_Value ceu_$n = ceu_bcast_task(0, &$tskc.Dyn->Exe_Task, CEU_ACTION_TOGGLE, NULL);
-                assert(ceu_$n.type==CEU_VALUE_BOOL && ceu_$n.Bool);
-                """
-            }
+            }"""
 
             is Expr.Nat -> {
                 val body = vars.nats[this]!!.let { (set, str) ->

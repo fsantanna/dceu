@@ -2173,6 +2173,18 @@ class Exec_04 {
         //        " v  anon : (lin 4, col 21) : set error : cannot hold alien reference\n") { out }
         assert(out == "[:x]\n") { out }
     }
+    @Test
+    fun kk_15_pub() {
+        val out = test("""
+            val t = spawn (task () {
+                set pub() = 0
+                yield(nil)
+            }) ()
+            set pub(t) = 10
+            println(pub(t))
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // ORIGINAL / PUB / EXPOSE
 
@@ -2686,6 +2698,24 @@ class Exec_04 {
             println(:ok)
         """)
         assert(out == ":A\ntrue\n:C\n:ok\n") { out }
+    }
+    @Test
+    fun mm_08_defer_loop() {
+        val out = test("""
+            val T = task () {
+                println(:1)
+                defer {
+                    println(:ok)
+                }
+                println(:2)
+                loop {
+                    yield(nil)
+                }
+                println(999)
+            }
+            spawn T()
+        """)
+        assert(out == ":1\n:2\n:ok\n") { out }
     }
 
     // NEW ABORTION
@@ -3596,13 +3626,7 @@ class Exec_04 {
         val out = test("""
             spawn (task () {
                 catch (it => it==:e1) {
-                    resume (coroutine (coro () {
-                        ;;yield(nil)
-                        error(:e1)
-                    })) ()
-                    loop {
-                        yield(nil)
-                    }
+                    error(:e1)
                 }
                 println(:e1)
                 yield(nil)
@@ -3624,7 +3648,7 @@ class Exec_04 {
             set co = spawn (task () {
                 catch (it => it==:e1) {
                     resume (coroutine (coro () {
-                        yield(nil) ;;thus { it => nil }
+                        ;;yield(nil) ;;thus { it => nil }
                         error(:e1)
                     })) ()
                     loop {
@@ -3635,7 +3659,7 @@ class Exec_04 {
                 yield(nil) ;;thus { it => nil }
                 error(:e2)
             })()
-            catch ( it => :e2 ) {
+            catch ( it => it==:e2 ) {
                 broadcast(nil)
                 broadcast(nil)
                 println(99)
@@ -3720,13 +3744,14 @@ class Exec_04 {
         val out = test("""
             toggle 1(true)
         """)
-        assert(out == " v  anon : (lin 2, col 13) : toggle error : expected yielded task\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : (toggle 1(true))\n" +
+                " v  toggle error : expected yielded task\n") { out }
     }
     @Test
     fun pp_02_toggle() {
         val out = test("""
             val T = task () {
-                yield(nil) ;;thus { it => nil }
+                yield(nil)
                 println(10)
             }
             val t = spawn T()
@@ -3769,7 +3794,8 @@ class Exec_04 {
             val t = spawn T()
             toggle t (false)
         """)
-        assert(out == " v  anon : (lin 6, col 13) : toggle error : expected yielded task\n") { out }
+        assert(out == " |  anon : (lin 6, col 13) : (toggle t(false))\n" +
+                " v  toggle error : expected yielded task\n") { out }
     }
     @Test
     fun pp_05_toggle_nest() {
@@ -3851,10 +3877,10 @@ class Exec_04 {
         val out = test("""
             val T = task (v) {
                 spawn (task () {
-                    yield(nil) ;;thus { it => nil }
+                    yield(nil)
                     println(:ok)
                 }) ()
-                broadcast (:ok)
+                broadcast (nil)
             }
             spawn T(2)
         """)

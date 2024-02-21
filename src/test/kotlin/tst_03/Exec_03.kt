@@ -595,6 +595,44 @@ class Exec_03 {
         """)
         assert(out == ":y\n") { out }
     }
+    @Test
+    fun ee_10_defer_loop() {
+        val out = test("""
+            val CO = coro () {
+                println(:1)
+                defer {
+                    println(:ok)
+                }
+                loop {
+                    println(:2)
+                    yield(nil)
+                }
+                println(999)
+            }
+            val co = coroutine(CO)
+            resume co ()
+        """)
+        assert(out == ":1\n:2\n:ok\n") { out }
+    }
+    @Test
+    fun ee_11_defer_do() {
+        val out = test("""
+            val CO = coro () {
+                println(:1)
+                defer {
+                    println(:ok)
+                }
+                do {
+                    println(:2)
+                    yield(nil)
+                }
+                println(999)
+            }
+            val co = coroutine(CO)
+            resume co ()
+        """)
+        assert(out == ":1\n:2\n:ok\n") { out }
+    }
 
     // DROP / MOVE / OUT
 

@@ -160,7 +160,7 @@ class Parser_04 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "broadcast'([],nil)\n") { e.tostr() }
+        assert(e.tostr() == "broadcast'(nil,[])\n") { e.tostr() }
     }
     @Test
     fun cc_06_bcast() {
@@ -169,7 +169,7 @@ class Parser_04 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "broadcast'(nil,t)\n") { e.tostr() }
+        assert(e.tostr() == "broadcast'(t,nil)\n") { e.tostr() }
     }
 
     // PUB

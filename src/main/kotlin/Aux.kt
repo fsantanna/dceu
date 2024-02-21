@@ -50,7 +50,7 @@ fun Expr.has_block (): Boolean {
         is Expr.Spawn -> this.args.any { it.has_block() }
         is Expr.Pub -> this.tsk?.has_block() ?: false
         is Expr.Dtrack -> TODO()
-        is Expr.Toggle -> TODO()
+        is Expr.Toggle -> this.tsk.has_block() || this.on.has_block()
         is Expr.Tuple -> this.args.any { it.has_block() }
         is Expr.Vector -> this.args.any { it.has_block() }
         is Expr.Dict -> this.args.any { it.first.has_block() || it.second.has_block()}
