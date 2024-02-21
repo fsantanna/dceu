@@ -3589,6 +3589,97 @@ class Exec_04 {
     }
      */
 
+    // THROW
+
+    @Test
+    fun pp_01_throw() {
+        val out = test("""
+            spawn (task () {
+                catch (it => it==:e1) {
+                    resume (coroutine (coro () {
+                        ;;yield(nil)
+                        error(:e1)
+                    })) ()
+                    loop {
+                        yield(nil)
+                    }
+                }
+                println(:e1)
+                yield(nil)
+                error(:e2)
+            })()
+            catch (it => :e2) {
+                broadcast(nil)
+                broadcast(nil)
+                println(99)
+            }
+            println(:e2)
+        """)
+        assert(out == ":e1\n:e2\n") { out }
+    }
+    @Test
+    fun pp_02_throw() {
+        val out = test("""
+            var co
+            set co = spawn (task () {
+                catch (it => it==:e1) {
+                    resume (coroutine (coro () {
+                        yield(nil) ;;thus { it => nil }
+                        error(:e1)
+                    })) ()
+                    loop {
+                        yield(nil)
+                    }
+                }
+                println(:e1)
+                yield(nil) ;;thus { it => nil }
+                error(:e2)
+            })()
+            catch ( it => :e2 ) {
+                broadcast(nil)
+                broadcast(nil)
+                println(99)
+            }
+            println(:e2)
+        """)
+        assert(out == ":e1\n:e2\n") { out }
+    }
+    @Test
+    fun pp_03_throw() {
+        val out = test(
+            """
+            val T = task () {
+                catch ( it => it==:e1 ) {
+                    spawn( task () {
+                        yield(nil) ;;thus { it => nil }
+                        error(:e1)
+                        println(:no)
+                    }) ()
+                    loop { yield(nil) } ;;thus { it => nil }
+                }
+                println(:ok1)
+                error(:e2)
+                println(:no)
+            }
+            spawn (task () {
+                catch ( it => :e2 ) {
+                    spawn T()
+                    loop { yield(nil) } ;;thus { it => nil }
+                }
+                println(:ok2)
+                error(:e3)
+                println(:no)
+            }) ()
+            catch ( it => :e3 ) {
+                broadcast(nil)
+                println(:no)
+            }
+            println(:ok3)
+        """
+        )
+        assert(out == ":ok1\n:ok2\n:ok3\n") { out }
+    }
+
     // RETURN
 
     @Test
@@ -3784,68 +3875,6 @@ class Exec_04 {
             println(1)
         """)
         assert(out == "1\n") { out }
-    }
-    @Test
-    fun zz_07_throw() {
-        val out = test("""
-            var co
-            set co = spawn (task () {
-                catch ( it => :e1 ) {
-                    coroutine (coro () {
-                        yield(nil) ;;thus { it => nil }
-                        error(:e1)
-                    })()
-                    loop {
-                        yield(nil) ;;thus { it => nil }
-                    }
-                }
-                println(:e1)
-                yield(nil) ;;thus { it => nil }
-                error(:e2)
-            })()
-            catch ( it => :e2 ) {
-                broadcast(nil)
-                broadcast(nil)
-                println(99)
-            }
-            println(:e2)
-        """)
-        assert(out == ":e1\n:e2\n") { out }
-    }
-    @Test
-    fun zz_09_throw() {
-        val out = test(
-            """
-            val T = task () {
-                catch ( it => it==:e1 ) {
-                    spawn( task () {
-                        yield(nil) ;;thus { it => nil }
-                        error(:e1)
-                        println(:no)
-                    }) ()
-                    loop { yield(nil) } ;;thus { it => nil }
-                }
-                println(:ok1)
-                error(:e2)
-                println(:no)
-            }
-            spawn (task () {
-                catch ( it => :e2 ) {
-                    spawn T()
-                    loop { yield(nil) } ;;thus { it => nil }
-                }
-                println(:ok2)
-                error(:e3)
-                println(:no)
-            }) ()
-            catch ( it => :e3 ) {
-                broadcast(nil)
-                println(:no)
-            }
-            println(:ok3)
-        """
-        )
-        assert(out == ":ok1\n:ok2\n:ok3\n") { out }
     }
     @Test
     fun zz_10_bcast() {

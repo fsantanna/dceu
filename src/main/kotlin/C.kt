@@ -1022,7 +1022,7 @@ fun Coder.main (tags: Tags): String {
     int ceux_call (CEUX* X1, int inp, int out) {
         // [clo,inps]
         CEU_Value clo = ceux_peek(X1->S, XX1(-inp-1));
-        if (CEU3(X1->exe==NULL &&) clo.type!=CEU_VALUE_CLO_FUNC) {
+        if (clo.type != CEU_VALUE_CLO_FUNC) {
             return ceu_error_s(X1->S, "call error : expected function");
         }
 

@@ -1518,4 +1518,20 @@ class Exec_03 {
         )
         assert(out == "10\n") { out }
     }
+    @Test
+    fun zz_04_valgrind() {
+        val out = test("""
+            val clo1 = coro () {
+                nil
+            }
+            val clo2 = coro () {
+                coroutine (clo1) ()
+            }
+            resume (coroutine (clo2)) ()
+            println(:ok)
+        """)
+        assert(out == " |  anon : (lin 8, col 13) : (resume (coroutine(clo2))(nil))\n" +
+                " |  anon : (lin 6, col 17) : coroutine(clo1)()\n" +
+                " v  call error : expected function\n") { out }
+    }
 }
