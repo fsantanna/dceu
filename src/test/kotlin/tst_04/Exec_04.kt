@@ -383,7 +383,7 @@ class Exec_04 {
                 val evt = yield(nil)
                 set pub() = evt
                 println(:in, pub())
-                nil
+                :ok
             }
             val t = spawn T() 
             do {
@@ -396,7 +396,7 @@ class Exec_04 {
         //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 4, col 21) : set error : cannot hold alien reference\n") { out }
-        assert(out == ":in\t[]\n:out\t[]\n") { out }
+        assert(out == ":in\t[]\n:out\t:ok\n") { out }
     }
 
     // BROADCAST
@@ -2161,17 +2161,17 @@ class Exec_04 {
             val t = spawn (task () {
                 set pub() = yield(nil)
                 ;;set pub() = evt
-                nil
+                pub()
             }) ()
             do {
                 val x
-                broadcast([])
+                broadcast([:x])
             }
             println(pub(t))
         """)
         //assert(out == " |  anon : (lin 9, col 17) : broadcast'([],:task)\n" +
         //        " v  anon : (lin 4, col 21) : set error : cannot hold alien reference\n") { out }
-        assert(out == "[]\n") { out }
+        assert(out == "[:x]\n") { out }
     }
 
     // ORIGINAL / PUB / EXPOSE
@@ -3352,8 +3352,7 @@ class Exec_04 {
             broadcast ([])
             println(`:number CEU_GC.gc`)
         """)
-        //assert(out == "0\n") { out }
-        assert(out == "1\n") { out }
+        assert(out == "2\n") { out }
         //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -3376,8 +3375,7 @@ class Exec_04 {
             broadcast( [])
             println(`:number CEU_GC.gc`)
         """)
-        assert(out == "1\n") { out }
-        //assert(out == "0\n") { out }
+        assert(out == "2\n") { out }
         //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -3402,8 +3400,7 @@ class Exec_04 {
             broadcast ([] )
             println(`:number CEU_GC.gc`)
         """)
-        assert(out == "1\n") { out }
-        //assert(out == "0\n") { out }
+        assert(out == "2\n") { out }
         //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -3967,7 +3964,7 @@ class Exec_04 {
         val out = test(
             """
             var T = task () {
-                var v = yield(nil) ;;thus { it => it }
+                var v = yield(nil)
                 println(v)
             }
             var t = spawn T()
@@ -3983,7 +3980,7 @@ class Exec_04 {
             }
             """
         )
-        //assert(out == ":1\n:2\n1\n") { out }
+        assert(out == "[]\n") { out }
         //assert(out == "anon : (lin 10, col 35) : broadcast error : incompatible scopes\n" +
         //        ":error\n") { out }
         //assert(out == " |  anon : (lin 9, col 13) : broadcast e\n" +
@@ -3994,8 +3991,8 @@ class Exec_04 {
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 13, col 25) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
+        //assert(out == " |  anon : (lin 13, col 25) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun zz_15_bcast_okr() {
@@ -4035,7 +4032,7 @@ class Exec_04 {
             ;;println(:2222)
             """
         )
-        //assert(out == ":1\n:2\n1\n") { out }
+        assert(out == "[]\n") { out }
         //assert(out == " |  anon : (lin 11, col 17) : broadcast e\n" +
         //        " v  anon : (lin 4, col 17) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
@@ -4045,8 +4042,8 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
         //        " |  anon : (lin 4, col 17) : (func (it) { it })(yield(nil))\n" +
         //        " v  anon : (lin 4, col 27) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
+        //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun zz_17_bcast() {
@@ -4077,9 +4074,7 @@ class Exec_04 {
             println(`:number CEU_GC.gc`)
             """
         )
-        //assert(out == "0\n") { out }
-        assert(out == "1\n") { out }
-        //assert(out == "2\n") { out }
+        assert(out == "2\n") { out }
         //assert(out == "anon : (lin 20, col 13) : broadcast []\n" +
         //        "anon : (lin 16, col 17) : declaration error : incompatible scopes\n" +
         //        ":2\n" +
@@ -4159,19 +4154,19 @@ class Exec_04 {
     @Test
     fun zz_20_bcast_tuple_func_no() {
         val out = test("""
-            var f = func (v) {
+            val f = func (v) {
                 func (x) {
                     val y = x
                     println(y)
                 } (v[0])
             }
             var T = task () {
-                f(yield(nil)) ;;thus { it => f(it) }
+                f(yield(nil))
             }
             spawn T()
             broadcast ([[1]])
         """)
-        assert(out == "[1]\n");
+        assert(out == "[1]\n") { out }
         //assert(out == " |  anon : (lin 12, col 13) : broadcast'([[1]])\n" +
         //        " |  anon : (lin 9, col 44) : f(it)\n" +
         //        " v  anon : (lin 4, col 21) : declaration error : cannot move pending reference in\n") { out }
@@ -4179,7 +4174,7 @@ class Exec_04 {
     @Test
     fun zz_20_bcast_tuple_func_nox() {
         val out = test("""
-            var f = func (v) {
+            val f = func (v) {
                 val g = func (x) {
                     println(x)
                     x
@@ -4201,7 +4196,7 @@ class Exec_04 {
     @Test
     fun zz_21_bcast_tuple_func_ok() {
         val out = test("""
-            var f = func (v) {
+            val f = func (v) {
                 val x = v[0]
                 println(x)
             }
@@ -4244,7 +4239,7 @@ class Exec_04 {
     fun zz_23_valgrind() {
         val out = test("""
             spawn( task () {
-                var t = []
+                val t = []
                 spawn( task () {
                     yield(nil) ;;thus { it => nil }
                     println(t)
@@ -4345,7 +4340,8 @@ class Exec_04 {
             } )()
             println(pub(t).y)
         """)
-        assert(out == " v  anon : (lin 5, col 21) : index error : expected collection\n") { out }
+        assert(out == " |  anon : (lin 5, col 21) : pub(t)[:y]\n" +
+                " v  index error : expected collection\n") { out }
     }
     @Test
     fun z1_06_data_pub() {

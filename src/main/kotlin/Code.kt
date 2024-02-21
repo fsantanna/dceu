@@ -96,14 +96,19 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         """}}
                         ${do_while(code)}
                         ${isexe.cond{"""
-                                    {
-                                        int ret = ceu_exe_term(X);
-                                        if (ret != 0) {
-                                            // TODO: remove pending return in the stack
-                                            return ret;
-                                        }
+                                ${(this.tk.str == "task").cond { """
+                                    ceu_gc_dec_val(X->exe_task->pub);
+                                    X->exe_task->pub = ceux_peek(X->S, XX(-1));
+                                    ceu_gc_inc_val(X->exe_task->pub);
+                                """ }}
+                                {
+                                    int ret = ceu_exe_term(X);
+                                    if (ret != 0) {
+                                        // TODO: remove pending return in the stack
+                                        return ret;
                                     }
-                            }
+                                }
+                            } // close switch
                         """}}
                         return 1;
                     }
