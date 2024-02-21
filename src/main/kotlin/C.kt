@@ -926,12 +926,27 @@ fun Coder.main (tags: Tags): String {
             CEU_Value blk = ceux_peek(S,i);
             if (blk.type == CEU_VALUE_BLOCK) {
     #if CEU >= 4
-                for (
-                    CEU_Exe_Task* tsk = blk.Block;
-                    tsk != NULL;
-                    tsk = tsk->sd.nxt
-                ) {
-                    ceu_exe_kill((CEU_Exe*)tsk);
+                { // INC
+                    CEU_Exe_Task* cur = blk.Block;
+                    while (cur != NULL) {
+                        ceu_gc_inc_dyn((CEU_Dyn*) cur);
+                        cur = cur->sd.nxt;
+                    }
+                }
+                { // KILL
+                    CEU_Exe_Task* cur = blk.Block;
+                    while (cur != NULL) {
+                        ceu_exe_kill((CEU_Exe*) cur);
+                        cur = cur->sd.nxt;
+                    }
+                }
+                { // DEC
+                    CEU_Exe_Task* cur = blk.Block;
+                    while (cur != NULL) {
+                        CEU_Exe_Task* nxt = cur->sd.nxt;
+                        ceu_gc_dec_dyn((CEU_Dyn*) cur);
+                        cur = nxt;
+                    }
                 }
     #endif
                 I = i;
@@ -2212,8 +2227,9 @@ fun Coder.main (tags: Tags): String {
             {   // DEC
                 CEU_Exe_Task* cur = task2->dn.fst;
                 while (cur != NULL) {
+                    CEU_Exe_Task* nxt = cur->sd.nxt;
                     ceu_gc_dec_dyn((CEU_Dyn*) cur);
-                    cur = cur->sd.nxt;
+                    cur = nxt;
                 }
             }
             return ret;
