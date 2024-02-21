@@ -2899,6 +2899,7 @@ class Exec_04 {
                 println(:2)
             }) ()
             broadcast(nil) in :global
+            println(:3)
         """)
         assert(out == ":1\n:2\n:3\n") { out }
     }
@@ -3148,7 +3149,28 @@ class Exec_04 {
                     }
                     println(:2)
                     yield(nil)
+                    println(:999)
                 })) ()
+                ;; refs=0 --> :ok
+                println(:3)
+            }) ()
+        """)
+        assert(out == ":1\n:2\n:ok\n:3\n") { out }
+    }
+    @Test
+    fun mq_01x_abort() {
+        val out = test("""
+            spawn (task () {
+                println(:1)
+                val co = (coroutine (coro () {
+                    defer {
+                        println(:ok)
+                    }
+                    println(:2)
+                    yield(nil)
+                    println(:999)
+                }))
+                resume co ()
                 println(:3)
             }) ()
         """)
@@ -3166,13 +3188,14 @@ class Exec_04 {
                     println(:2)
                     yield(nil)
                 })) ()
+                ;; refs=0 --> :ok
                 yield(nil)
                 println(:3)
             }) ()
             broadcast(nil)
             println(:4)
         """)
-        assert(out == ":1\n:2\n:3\n:ok\n:4\n") { out }
+        assert(out == ":1\n:2\n:ok\n:3\n:4\n") { out }
     }
     @Test
     fun mq_03_abort() {
@@ -3200,7 +3223,7 @@ class Exec_04 {
             broadcast(nil)
             println(:8)
         """)
-        assert(out == ":1\n:2\n:3\n:4\n:5\n:6\n:7\n:ok\n:8\n") { out }
+        assert(out == ":1\n:2\n:3\n:ok\n:4\n:5\n:6\n:7\n:8\n") { out }
     }
 
     // TASK / VOID
