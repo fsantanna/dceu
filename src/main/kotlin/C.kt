@@ -606,7 +606,7 @@ fun Coder.main (tags: Tags): String {
 #if CEU >= 4
             case CEU_VALUE_EXE_TASK:
 #endif
-                if (dyn->Exe.status < CEU_EXE_STATUS_TERMINATED) {
+                if (dyn->Exe.status != CEU_EXE_STATUS_TERMINATED) {
                     dyn->Any.refs++;            // currently 0->1: needs ->2 to prevent double gc
                     ceu_exe_kill((CEU_Exe*)dyn);
                     dyn->Any.refs--;
@@ -926,6 +926,11 @@ fun Coder.main (tags: Tags): String {
             CEU_Value blk = ceux_peek(S,i);
             if (blk.type == CEU_VALUE_BLOCK) {
     #if CEU >= 4
+                { // UNLINK
+                    if (blk.Block != NULL) {
+                        blk.Block->up.blk = NULL;
+                    }
+                }
                 { // INC
                     CEU_Exe_Task* cur = blk.Block;
                     while (cur != NULL) {
@@ -2159,6 +2164,9 @@ fun Coder.main (tags: Tags): String {
                 }
                 if (tsk->up.blk != NULL) {
                     *tsk->up.blk = tsk->sd.nxt;
+                    if (tsk->sd.nxt != NULL) {
+                        tsk->sd.nxt->up.blk = tsk->up.blk;
+                    }
                 }
                 tsk->up.tsk = NULL;
                 tsk->up.blk = NULL;
@@ -2327,7 +2335,7 @@ fun Coder.main (tags: Tags): String {
                     ret = ceu_error_s(X->S, "broadcast error : invalid target");
                 }
             } else {
-                if (ceu_istask_val(xin) && xin.Dyn->Exe_Task.status<CEU_EXE_STATUS_TERMINATED) {
+                if (ceu_istask_val(xin) && xin.Dyn->Exe_Task.status!=CEU_EXE_STATUS_TERMINATED) {
                     ret = ceu_bcast_task(X, now, CEU_ACTION_RESUME, &xin.Dyn->Exe_Task);
                 } else {
                     ret = ceu_error_s(X->S, "broadcast error : invalid target");

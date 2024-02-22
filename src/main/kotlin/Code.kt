@@ -383,14 +383,18 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             is Expr.Spawn -> {
                 val dots = this.args.lastOrNull()
                 assert(dots==null || dots !is Expr.Acc || dots.tk.str!="...") { "TODO" }
+                assert(rets.pub[this].let { it==0 || it==1 })
                 """
                 { // SPAWN | ${this.dump()}
                     ${this.tsk.code()}
                     ${this.args.mapIndexed { i, e -> """
                         ${e.code()}
                     """ }.joinToString("")}
-                    ceux_spawn(X, CEU_TIME_MAX, ${this.args.size});
-                    ${this.check_error_aborted(this.toerr())}
+                    {
+                        ceux_spawn(X, CEU_TIME_MAX, ${this.args.size});
+                        ${this.check_error_aborted(this.toerr())}
+                        ${(rets.pub[this] == 0).cond { "ceux_pop(X->S, 1);" }}
+                    }
                 } // SPAWN | ${this.dump()}
             """
             }

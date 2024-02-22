@@ -3446,7 +3446,7 @@ class Exec_04 {
             println(`:number CEU_GC.gc`)
             """
         )
-        assert(out == "0\n") { out }
+        assert(out == "2\n") { out }
     }
 
     // DEPTH
