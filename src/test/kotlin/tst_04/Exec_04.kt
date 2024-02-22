@@ -4510,4 +4510,12 @@ class Exec_04 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun z2_04_op_is() {
+        val out = test("""
+            println(is?(1,  :number))
+            println(is?(:x, :number))
+        """, true)
+        assert(out == "true\nfalse\n") { out }
+    }
 }

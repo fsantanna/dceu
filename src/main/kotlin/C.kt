@@ -1284,7 +1284,7 @@ fun Coder.main (tags: Tags): String {
     int ceu_tags_f (CEUX* X) {
         assert(X->args >= 1);
         CEU_Value dyn = ceux_peek(X->S, ceux_arg(X,0));
-        assert(dyn.type > CEU_VALUE_DYNAMIC);
+        CEU_Tags_List* tags = (dyn.type < CEU_VALUE_DYNAMIC) ? NULL : dyn.Dyn->Any.tags;
         CEU_Value tag; // = (CEU_Value) { CEU_VALUE_NIL };
         if (X->args >= 2) {
             tag = ceux_peek(X->S, ceux_arg(X,1));
@@ -1293,7 +1293,7 @@ fun Coder.main (tags: Tags): String {
         
         CEU_Value f_chk () {
             CEU_Value ret = { CEU_VALUE_BOOL, {.Bool=0} };
-            CEU_Tags_List* cur = dyn.Dyn->Any.tags;
+            CEU_Tags_List* cur = tags;
             while (cur != NULL) {
                 CEU_Value sub = { CEU_VALUE_TAG, {.Tag=cur->tag} };
                 ret = _ceu_sup_(tag, sub);
@@ -1306,6 +1306,7 @@ fun Coder.main (tags: Tags): String {
         }
         
         void f_set (int on) {
+            assert(dyn.type > CEU_VALUE_DYNAMIC);
             if (on) {   // add
                 CEU_Value has = f_chk();
                 if (!has.Bool) {

@@ -3116,7 +3116,7 @@ class Exec_01 {
         assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
     }
     @Test
-    fun oo_01x_loop_err() {
+    fun TODO_oo_01x_loop_err() {
         val out = test("""
             loop {
                 do { do(nil)
@@ -3283,7 +3283,7 @@ class Exec_01 {
         assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
     }
     @Test
-    fun oo_10_loop() {
+    fun TODO_oo_10_loop() {
         val out = test("""
             loop {
                 do {
@@ -3351,6 +3351,18 @@ class Exec_01 {
         val out = test("""
             loop {
                 do { nil }
+                break if true
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun oo_15_loop_break_immed() {
+        val out = test("""
+            loop {
+                do { nil }
+                val e = nil
                 break if true
             }
             println(:ok)
@@ -3726,6 +3738,14 @@ class Exec_01 {
             println({{+}})
         """)
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun oo_xx_op_is() {
+        val out = test("""
+            println(is?(1,  :number))
+            println(is?(:x, :number))
+        """, true)
+        assert(out == "true\nfalse\n") { out }
     }
 
     // ==, ===, /=, =/=
