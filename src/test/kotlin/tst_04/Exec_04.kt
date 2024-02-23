@@ -4407,7 +4407,7 @@ class Exec_04 {
                 yield(nil) ;;thus { it => nil }
             }) ()
             println(pub(t).y)
-        """, true)
+        """)
         assert(out == "20\n") { out }
     }
 
