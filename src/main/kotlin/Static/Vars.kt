@@ -172,7 +172,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 Pair(it.size, it.indexOf(dcl))
             }
         }
-        //println(listOf(dcl.id.str,upv))
+        //println(listOf(upvs, upv, src.tostr()))
 
         // enclosing proto of declaration block
         // all blocks in between declaration block and proto

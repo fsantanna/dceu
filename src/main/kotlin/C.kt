@@ -925,7 +925,7 @@ fun Coder.main (tags: Tags): String {
     void ceux_block_leave (CEU_Stack* S, int base, int n, int out) {
         // clear locals
         // TODO: use memset=0
-        for (int i=0; i<n; i++) {
+        for (int i=n-1; i>=0; i--) {
             ceux_repl(S, base+i, (CEU_Value) { CEU_VALUE_NIL });
         }
 
