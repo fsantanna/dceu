@@ -193,10 +193,10 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             is Expr.Dcl -> """
                 // DCL | ${this.dump()}
                 ${(this.src != null).cond {
-                    val idx = vars.idx(this,this)
+                    val (stk,idx) = vars.idx(this,this)
                     this.PI0("""
                     ${this.src!!.code()}
-                    ceux_copy(X->S, $idx, XX(-1));
+                    ceux_copy($stk, $idx, XX(-1));
                     
                     // recursive func requires its self ref upv to be reset to itself
                     ${this.src.let { proto -> (proto is Expr.Proto && proto.rec).cond {
@@ -319,7 +319,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             }
             is Expr.Defer -> {
                 val bup = ups.first_block(this)!!
-                val idx = vars.idx(this)
+                val (stk,idx) = vars.idx(this)
+                assert(stk == "X->S")
                 val (ns,ini,end) = defers.getOrDefault(bup, Triple(mutableListOf(),"",""))
                 val inix = """
                     ceux_repl(X->S, $idx, (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} });
@@ -462,9 +463,9 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 val body = vars.nats[this]!!.let { (set, str) ->
                     var x = str
                     for (dcl in set) {
-                        val idx = vars.idx(dcl,this)
+                        val (stk,idx) = vars.idx(dcl,this)
                         //println(setOf(x, v))
-                        x = x.replaceFirst("XXX", "ceux_peek(X->S,$idx)")
+                        x = x.replaceFirst("XXX", "ceux_peek($stk,$idx)")
                     }
                     x
                 }
@@ -480,13 +481,13 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 })
             }
             is Expr.Acc -> {
-                val idx = vars.idx(this)
+                val (stk,idx) = vars.idx(this)
                 when {
                     this.isdst() -> """
                         // ACC - SET | ${this.dump()}
-                        ceux_copy(X->S, $idx, XX(-1));  // peek keeps src at the top
+                        ceux_copy($stk, $idx, XX(-1));
                     """
-                    else -> this.PI0("ceux_push(X->S, 1, ceux_peek(X->S,$idx));\n")
+                    else -> this.PI0("ceux_push(X->S, 1, ceux_peek($stk,$idx));\n")
                 }
             }
             is Expr.Nil  -> this.PI0("ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });")

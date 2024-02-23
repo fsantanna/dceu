@@ -485,7 +485,7 @@ class Exec_03 {
                     println(3)
                 }
                 println(1)
-                yield(nil) ;;thus { it => nil }   ;; never awakes
+                yield(nil)  ;; never awakes
                 println(2)
             }
             println(0)

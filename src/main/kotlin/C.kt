@@ -289,6 +289,9 @@ fun Coder.main (tags: Tags): String {
     // GLOBALS
     fun c_globals (): String {
         return """
+    #if CEU >= 3
+    CEU_Stack* CEU_GLOBAL_S = NULL;
+    #endif
     #if CEU >= 4
     int CEU_TIME_N = 0;
     uint8_t CEU_TIME_MIN = 0;
@@ -2397,6 +2400,10 @@ fun Coder.main (tags: Tags): String {
         CEU_Stack S = { 0, {} };
         CEUX _X = { CEU4(NULL COMMA) &S, -1, -1 CEU3(COMMA CEU_ACTION_INVALID COMMA {.exe=NULL}) };
         CEUX* X = &_X;
+        
+    #if CEU >= 3
+        CEU_GLOBAL_S = &S;
+    #endif
         
         ${do_while(this.code)}
 

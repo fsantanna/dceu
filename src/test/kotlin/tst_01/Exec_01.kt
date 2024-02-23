@@ -2678,6 +2678,16 @@ class Exec_01 {
         assert(out == "10\n") { out }
     }
     @Test
+    fun oo_01x_func() {
+        val out = test("""
+            val f = func () {
+                println(:ok)
+            }
+            f()
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
     fun oo_02_func0_err() {
         val out = test(
             """

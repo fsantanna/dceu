@@ -5,6 +5,7 @@ import kotlin.math.max
 typealias LData = List<Pair<Tk.Id,Tk.Tag?>>
 
 class Vars (val outer: Expr.Call, val ups: Ups) {
+    val global = outer.clo as Expr.Proto
     val datas = mutableMapOf<String,LData>()
 
     // allow it to be redeclared as long as it is not accessed
@@ -97,7 +98,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         //      }
         //  }
         val enc = dcl_to_enc[dcl]!!
-        return /*(enc!=outer) &&*/ ups.all_until(src) { it == enc }.any { it is Expr.Proto && it!=enc }
+        return (enc!=global.blk) && ups.all_until(src) { it == enc }.any { it is Expr.Proto && it!=enc }
     }
 
     fun acc (e: Expr, id: String): Expr.Dcl {
@@ -146,13 +147,13 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         return dcl
     }
 
-    fun idx (acc: Expr.Acc): String {
+    fun idx (acc: Expr.Acc): Pair<String,String> {
         return this.idx(this.acc_to_dcl[acc]!!, acc)
     }
-    fun idx (def: Expr.Defer): String {
+    fun idx (def: Expr.Defer): Pair<String,String> {
         return this.idx(def, def)
     }
-    fun idx (dcl: Expr, src: Expr): String {
+    fun idx (dcl: Expr, src: Expr): Pair<String,String> {
         val enc  = this.dcl_to_enc[dcl]!!
         val dcls = this.enc_to_dcls[enc]!!
 
@@ -191,17 +192,18 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         }
         return when {
             isupv(dcl,src) -> {                // upval
-                "(X->base + $upv) /* upval $id */"
+                Pair("X->S", "(X->base + $upv) /* upval $id */")
             }
-            (proto_blk == null) -> {        // global
-                "($locs + $I) /* global $id */"
+            (proto_blk == global) -> {        // global
+                val s = if (CEU >= 3) "CEU_GLOBAL_S" else "X->S"
+                Pair(s, "(1 + $locs + $I) /* global $id */")
             }
             (enc is Expr.Proto) -> {        // argument
                 assert(locs == 0)
-                "ceux_arg(X, $I) /* arg $id */"
+                Pair("X->S", "ceux_arg(X, $I) /* arg $id */")
             }
             else -> {                       // local
-                "(X->base + $upvs + $locs + $I) /* local $id */"
+                Pair("X->S", "(X->base + $upvs + $locs + $I) /* local $id */")
             }
         }
     }
