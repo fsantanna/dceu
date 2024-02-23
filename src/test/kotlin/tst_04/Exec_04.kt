@@ -2193,7 +2193,7 @@ class Exec_04 {
         val out = test("""
             var t = task () {
                 set pub() = []
-                yield(nil) ;;thus { it => nil }
+                yield(nil)
                 nil
             }
             var a = spawn (t) ()
@@ -2351,7 +2351,7 @@ class Exec_04 {
             }
             val t = spawn T()
             println(status(t))
-        """, true)
+        """)
         assert(out == ":terminated\n") { out }
     }
     @Test

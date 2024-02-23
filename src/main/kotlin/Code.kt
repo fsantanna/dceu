@@ -92,15 +92,18 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         ${do_while(code)}
                         ${isexe.cond{"""
                                 ${(this.tk.str == "task").cond { """
+                                    // task return value in pub(t)
                                     ceu_gc_dec_val(X->exe_task->pub);
                                     X->exe_task->pub = ceux_peek(X->S, XX(-1));
                                     ceu_gc_inc_val(X->exe_task->pub);
                                 """ }}
                                 {
+                                    int top = ceux_n_get(X->S);
+                                    int err = (top>0 && ceux_peek(X->S,XX(-1)).type==CEU_VALUE_ERROR);
                                     int ret = ceu_exe_term(X);
-                                    if (ret != 0) {
-                                        // TODO: remove pending return in the stack
-                                        return ret;
+                                    if (!err && ret!=0) {
+                                        // nrm->err: remove pending return in the stack
+                                        ceux_rem(X->S, top-1);
                                     }
                                 }
                             } // close switch
@@ -347,7 +350,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 ${this.check_error_aborted(this.toerr())}
             """
 
-            is Expr.Yield -> """
+            is Expr.Yield -> this.PI0("""
                 { // YIELD ${this.dump()}
                     ${this.arg.code()}
                     X->exe->status = CEU_EXE_STATUS_YIELDED;
@@ -378,7 +381,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }
                 #endif
                 }
-            """
+            """)
 
             is Expr.Spawn -> {
                 val dots = this.args.lastOrNull()
@@ -417,7 +420,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 ${this.isdst().cond2({ """
                     // [v,(tsk)]
                     CEU_Value v = ceux_peek(X->S, XX(${this.tsk.cond2({"-2"},{"-1"})}));
-                    ceu_gc_inc_val(v);
                     ceu_gc_inc_val(v);
                     ceu_gc_dec_val(tsk.Dyn->Exe_Task.pub);
                     tsk.Dyn->Exe_Task.pub = v;
