@@ -339,7 +339,7 @@ class Exec_04 {
     @Test
     fun cd_01_every() {
         val out = test("""
-            spawn (task :nested () {
+            spawn (task () {
                 val it = yield(nil)
                 println(it;;;, evt;;;)
                 yield(nil)
@@ -1990,7 +1990,8 @@ class Exec_04 {
             }
         """)
         //assert(out == " v  anon : (lin 2, col 13) : pub() : pub error : expected task\n") { out }
-        assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task\n") { out }
+        assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing task\n") { out }
     }
     @Test
     fun kk_02_pub_err() {
@@ -2302,12 +2303,12 @@ class Exec_04 {
             val x = f(a)
             println(x)
         """)
-        //assert(out == "[]\n") { out }
+        assert(out == "[]\n") { out }
         //assert(out == "anon : (lin 12, col 13) : f(a)\n" +
         //        "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
         //        ":error\n") { out }
-        assert(out == " |  anon : (lin 12, col 21) : f(a)\n" +
-                " v  anon : (lin 4, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        //assert(out == " |  anon : (lin 12, col 21) : f(a)\n" +
+        //        " v  anon : (lin 4, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun kj_07_pub_func() {
@@ -2406,8 +2407,8 @@ class Exec_04 {
         val out = test("""
             spawn (task () {
                 var xxx = 1
-                yield(nil) ;;thus { it => nil }
-                spawn( task :nested () {
+                yield(nil)
+                spawn(task :nested () {
                     set xxx = 10
                 }) ()
                 println(xxx)
@@ -2421,7 +2422,7 @@ class Exec_04 {
         val out = test("""
             spawn (task () {
                 var xxx = 1
-                yield(nil) ;;thus { it => nil }
+                yield(nil)
                 spawn( task () {
                     set xxx = 10
                 }) ()
@@ -2480,6 +2481,32 @@ class Exec_04 {
             println(:ok)
         """)
         assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun ll_08_nested_err() {
+        val out = test("""
+            spawn (task () {
+                var xxx = 1
+                yield(nil)
+                spawn(task () {     ;; ERROR: crosses non :nested
+                    spawn(task :nested () {
+                        set xxx = 10
+                    }) ()
+                    println(xxx)
+                }) ()
+            } )()
+            broadcast(nil)
+        """)
+        assert(out == "ERROR\n") { out }
+    }
+    @Test
+    fun ll_09_nested_err() {
+        val out = test("""
+            spawn (task :nested () {
+                nil
+            } )()
+        """)
+        assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
     }
 
     // ABORTION
@@ -4416,7 +4443,7 @@ class Exec_04 {
     @Test
     fun z2_01_valgrind() {
         val out = test("""
-            spawn (task :nested () {
+            spawn (task () {
                 spawn (task () {
                     yield(nil)
                     yield(nil)

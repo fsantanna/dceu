@@ -316,7 +316,7 @@ class Exec_01 {
                 nil
             }
         """)
-        assert(out == "anon : (lin 2, col 13) : func :rec error : requires enclosing val declaration\n") { out }
+        assert(out == "anon : (lin 2, col 13) : func :rec error : expected enclosing val declaration\n") { out }
     }
     @Test
     fun be_02_rec() {

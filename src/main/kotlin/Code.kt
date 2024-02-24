@@ -74,11 +74,12 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
         return when (this) {
             is Expr.Proto -> {
                 val isexe = (this.tk.str != "func")
+                val istsk = (this.tk.str == "task")
                 val code = this.blk.code()
                 val id = this.idc()
 
                 pres.add("""
-                    // FUNC | ${this.dump()}
+                    // PROTO | ${this.dump()}
                     int ceu_f_$id (CEUX* X) {
                         ${isexe.cond{"""
                             X->exe->status = (X->action == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
@@ -112,14 +113,16 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }
                 """)
 
-                this.PI0(""" // CLO | ${this.dump()}
+                this.PI0(""" // CREATE | ${this.dump()}
                 {
-                    CEU_Value clo = ceu_create_clo (
-                        CEU_VALUE_CLO_${this.tk.str.uppercase()},
+                    ${this.nst.cond { "assert(X->exe!=NULL && X->exe->type==CEU_VALUE_EXE_TASK);" }}
+                    CEU_Value clo = ceu_create_clo${istsk.cond { "_task" }} (
+                        ${(!istsk).cond { "CEU_VALUE_CLO_${this.tk.str.uppercase()}," }}
                         ceu_f_$id,
                         ${this.args.let { assert(it.lastOrNull()?.first?.str!="...") { "TODO: ..." }; it.size }},  // TODO: remove assert
                         ${vars.proto_to_locs[this]!!},
                         ${vars.proto_to_upvs[this]!!.size}
+                        ${istsk.cond { ", ${if (this.nst) "X->exe_task" else "NULL"}" }}
                     );
                     ceux_push(X->S, 1, clo);
                     ${isexe.cond { """
@@ -485,7 +488,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 when {
                     this.isdst() -> """
                         // ACC - SET | ${this.dump()}
-                        ceux_copy($stk, $idx, XX(-1));
+                        ceux_repl($stk, $idx, ceux_peek(X->S,XX(-1)));
                     """
                     else -> this.PI0("ceux_push(X->S, 1, ceux_peek($stk,$idx));\n")
                 }

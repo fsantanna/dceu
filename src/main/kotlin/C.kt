@@ -1712,10 +1712,10 @@ fun Coder.main (tags: Tags): String {
     }
 
     #if CEU >= 4
-    CEU_Value ceu_create_clo_task (CEU_Proto proto, int args, int locs, int upvs) {
+    CEU_Value ceu_create_clo_task (CEU_Proto proto, int args, int locs, int upvs, CEU_Exe_Task* up_tsk) {
         CEU_Value clo = ceu_create_clo(CEU_VALUE_CLO_TASK, proto, args, locs, upvs);
         assert(clo.type == CEU_VALUE_CLO_TASK);
-        clo.Dyn->Clo_Task.up_tsk = TODO;
+        clo.Dyn->Clo_Task.up_tsk = up_tsk;
         return clo;
     }
     #endif

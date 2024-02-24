@@ -97,7 +97,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             (enc == global.blk) -> Type.GLOBAL
             xups.all { it !is Expr.Proto } -> Type.LOCAL
             xups.all { it !is Expr.Proto || it==enc } -> Type.ARG
-            xups.none { it is Expr.Proto && !it.nst } -> Type.NESTED
+            xups.all { it !is Expr.Proto || it.nst || it==enc } -> Type.NESTED
             else -> Type.UPVAL
         }
     }
@@ -204,7 +204,11 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 Pair("X->S", "ceux_arg(X, $I) /* arg $id */")
             }
             Type.NESTED -> {
-                TODO()
+                val xups = ups.all_until(src) { it == enc } // all ups between src -> dcl
+                val n = xups.count { it is Expr.Proto }
+                println(n)
+                val (_,idx) = this.idx(dcl,dcl)
+                Pair("X${"->exe->X".repeat(n)}->S /* nested */", idx)
             }
             Type.UPVAL -> {
                 Pair("X->S", "(X->base + $upv) /* upval $id */")

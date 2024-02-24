@@ -15,9 +15,15 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.Proto  -> {
                 if (this.rec) {
                     if (ups.pub[this].let { it !is Expr.Dcl || it.tk.str!="val" }) {
-                        err(this.tk, "${this.tk.str} :rec error : requires enclosing val declaration")
+                        err(this.tk, "${this.tk.str} :rec error : expected enclosing val declaration")
                     }
-
+                }
+                if (this.nst) {
+                    if (ups.first(ups.pub[this]!!) { it is Expr.Proto }.let { it!=null && it.tk.str=="task" }) {
+                        // ok
+                    } else {
+                        err(this.tk, "task :nested error : expected enclosing task")
+                    }
                 }
                 this.blk.traverse()
             }
