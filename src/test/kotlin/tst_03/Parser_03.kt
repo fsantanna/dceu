@@ -35,8 +35,9 @@ class Parser_03 {
         """
         )
         val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr() == "(coro :nested () {\nnil\n})") { e.tostr() }
+        //val e = parser.expr()
+        //assert(e.tostr() == "(coro :nested () {\nnil\n})") { e.tostr() }
+        assert(trap { parser.expr() } == "anon : (lin 2, col 18) : expected \"(\" : have \":nested\"")
     }
 
     // COROUTINE / YIELD / RESUME

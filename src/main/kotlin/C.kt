@@ -170,9 +170,8 @@ fun Coder.main (tags: Tags): String {
     struct CEUX;
     typedef int (*CEU_Proto) (struct CEUX* X);
 
-    typedef struct CEU_Clo {
+    #define _CEU_Clo_                   \
         _CEU_Dyn_                       \
-        /*struct CEU_Frame* up_frame;*/ \
         CEU_Proto proto;                \
         int args;                       \
         int locs;                       \
@@ -180,7 +179,17 @@ fun Coder.main (tags: Tags): String {
             int its;                    \
             CEU_Value* buf;             \
         } upvs;
+
+    typedef struct CEU_Clo {
+        _CEU_Clo_
     } CEU_Clo;
+    
+    #if CEU >= 4
+    typedef struct CEU_Clo_Task {
+        _CEU_Clo_                       \
+        struct CEU_Exe_Task* up_tsk;    \
+    } CEU_Clo_Task;
+    #endif
     
     #if CEU >= 2
     typedef struct CEU_Throw {
@@ -244,6 +253,9 @@ fun Coder.main (tags: Tags): String {
         struct CEU_Clo      Clo;
     #if CEU >= 2
         struct CEU_Throw    Throw;
+    #endif
+    #if CEU >= 4
+        struct CEU_Clo_Task Clo_Task;
     #endif
     #if CEU >= 3
         struct CEU_Exe      Exe;
@@ -1684,7 +1696,7 @@ fun Coder.main (tags: Tags): String {
     
     CEU_Value ceu_create_clo (CEU_VALUE type, CEU_Proto proto, int args, int locs, int upvs) {
         ceu_debug_add(type);
-        CEU_Clo* ret = malloc(sizeof(CEU_Clo));
+        CEU_Clo* ret = malloc(CEU4(type==CEU_VALUE_CLO_TASK ? sizeof(CEU_Clo_Task) :) sizeof(CEU_Clo));
         assert(ret != NULL);
         CEU_Value* buf = malloc(upvs * sizeof(CEU_Value));
         assert(buf != NULL);
@@ -1699,6 +1711,15 @@ fun Coder.main (tags: Tags): String {
         return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
     }
 
+    #if CEU >= 4
+    CEU_Value ceu_create_clo_task (CEU_Proto proto, int args, int locs, int upvs) {
+        CEU_Value clo = ceu_create_clo(CEU_VALUE_CLO_TASK, proto, args, locs, upvs);
+        assert(clo.type == CEU_VALUE_CLO_TASK);
+        clo.Dyn->Clo_Task.up_tsk = TODO;
+        return clo;
+    }
+    #endif
+    
     #if CEU >= 3
     CEU_Value ceu_create_exe (int type, int sz, CEU_Value clo) {
         ceu_debug_add(type);

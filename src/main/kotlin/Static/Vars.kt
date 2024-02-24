@@ -203,7 +203,9 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 assert(locs == 0)
                 Pair("X->S", "ceux_arg(X, $I) /* arg $id */")
             }
-            Type.NESTED -> TODO()
+            Type.NESTED -> {
+                TODO()
+            }
             Type.UPVAL -> {
                 Pair("X->S", "(X->base + $upv) /* upval $id */")
             }

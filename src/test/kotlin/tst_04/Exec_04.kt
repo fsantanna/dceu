@@ -2407,7 +2407,7 @@ class Exec_04 {
             spawn (task () {
                 var xxx = 1
                 yield(nil) ;;thus { it => nil }
-                spawn( task () {
+                spawn( task :nested () {
                     set xxx = 10
                 }) ()
                 println(xxx)
