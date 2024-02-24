@@ -25,7 +25,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
 
     fun Expr.up_task_real_c (): String {
         val n = ups.all_until(this) {
-                it is Expr.Proto && it.tk.str=="task" && it.tag?.str!=":nested" && TODO()
+                it is Expr.Proto && it.tk.str=="task" && !it.nst
             }
             .filter { it is Expr.Proto } // but count all protos in between
             .count()

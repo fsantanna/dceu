@@ -4,6 +4,10 @@ import kotlin.math.max
 
 typealias LData = List<Pair<Tk.Id,Tk.Tag?>>
 
+enum class Type {
+    GLOBAL, LOCAL, ARG, NESTED, UPVAL
+}
+
 class Vars (val outer: Expr.Call, val ups: Ups) {
     val global = outer.clo as Expr.Proto
     val datas = mutableMapOf<String,LData>()
@@ -86,19 +90,16 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         }
     }
 
-    fun isupv (dcl: Expr, src: Expr): Boolean {
-        // 1. <src> -> <dcl> must cross proto
-        // 2. but <dcl> must not be in outer block
-        //  ...             ;; NO: not up (outer block)
-        //  do {
-        //      <dcl>       ;; OK: is up
-        //      func () {
-        //          ...     ;; NO: not up (same proto)
-        //          <src>
-        //      }
-        //  }
+    fun type (dcl: Expr, src: Expr): Type {
         val enc = dcl_to_enc[dcl]!!
-        return (enc!=global.blk) && ups.all_until(src) { it == enc }.any { it is Expr.Proto && it!=enc }
+        val xups = ups.all_until(src) { it == enc } // all ups between src -> dcl
+        return when {
+            (enc == global.blk) -> Type.GLOBAL
+            xups.all { it !is Expr.Proto } -> Type.LOCAL
+            xups.all { it !is Expr.Proto || it==enc } -> Type.ARG
+            xups.none { it is Expr.Proto && !it.nst } -> Type.NESTED
+            else -> Type.UPVAL
+        }
     }
 
     fun acc (e: Expr, id: String): Expr.Dcl {
@@ -111,7 +112,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         // add upval to all protos upwards
         // stop at declaration (orig)
         // use blk bc of args
-        if (isupv(dcl,e)) {
+        if (type(dcl,e) == Type.UPVAL) {
             if (dcl.tk.str != "val") {
                 err(e.tk, "access error : outer variable \"${dcl.idtag.first.str}\" must be immutable")
             }
@@ -190,20 +191,21 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             is Expr.Defer -> "defer"
             else -> error("impossible case")
         }
-        return when {
-            isupv(dcl,src) -> {                // upval
-                Pair("X->S", "(X->base + $upv) /* upval $id */")
-            }
-            (proto_blk == global) -> {        // global
+        return when (type(dcl,src)) {
+            Type.GLOBAL -> {
                 val s = if (CEU >= 3) "CEU_GLOBAL_S" else "X->S"
                 Pair(s, "(1 + $locs + $I) /* global $id */")
             }
-            (enc is Expr.Proto) -> {        // argument
+            Type.LOCAL -> {
+                Pair("X->S", "(X->base + $upvs + $locs + $I) /* local $id */")
+            }
+            Type.ARG -> {
                 assert(locs == 0)
                 Pair("X->S", "ceux_arg(X, $I) /* arg $id */")
             }
-            else -> {                       // local
-                Pair("X->S", "(X->base + $upvs + $locs + $I) /* local $id */")
+            Type.NESTED -> TODO()
+            Type.UPVAL -> {
+                Pair("X->S", "(X->base + $upv) /* upval $id */")
             }
         }
     }
