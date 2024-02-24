@@ -1780,7 +1780,7 @@ class Exec_04 {
     @Test
     fun gh_03_set() {
         val out = test("""
-            spawn( task :nested () {
+            spawn( task () {
                 val t = [1]
                 ;;func () {
                     set t[0] = 2
@@ -2312,23 +2312,24 @@ class Exec_04 {
         //        " v  anon : (lin 4, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
     @Test
-    fun kj_07_pub_func() {
+    fun TODO_kj_07_pub_func() {
         val out = test("""
             var t
             set t = task (v) {
                 set pub() = v
                 var f
                 set f = func () {
-                    pub()
+                    pub()           ;; TODO: crosses func
                 }
                 println(f())
             }
             var a = spawn (t)(1)
         """)
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "anon : (lin 7, col 21) : pub error : expected enclosing task\n") { out }
     }
     @Test
-    fun kj_08_pub_func_expose() {
+    fun TODO_kj_08_pub_func_expose() {
         val out = test("""
             var t = task (v) {
                 set pub() = v
@@ -2339,7 +2340,8 @@ class Exec_04 {
             }
             var a = spawn (t) ([1])
         """)
-        assert(out == "[1]\n") { out }
+        assert(out == "anon : (lin 5, col 21) : pub error : expected enclosing task\n") { out }
+        //assert(out == "[1]\n") { out }
         //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
         //        "anon : (lin 9, col 25) : f()\n" +
         //        "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }

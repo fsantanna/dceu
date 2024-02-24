@@ -132,11 +132,15 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                 }
             }
             is Expr.Pub    -> {
-                this.tsk?.traverse()
-                when {
-                    (this.tsk != null) -> {}
-                    (ups.first_task_outer(this) == null) -> err(this.tk, "pub error : expected enclosing task")
-                    else -> {}
+                if (this.tsk == null) {
+                    val outer = ups.first_task_outer(this)
+                    val ok = (outer != null) && ups.all_until(this) { it == outer }.none { it is Expr.Proto && it.tk.str!="task" }
+                    if (!ok) {
+                        err(this.tk, "pub error : expected enclosing task")
+                    }
+                    //(ups.first_task_outer(this) == null) -> err(this.tk, "pub error : expected enclosing task")
+                } else {
+                    this.tsk.traverse()
                 }
             }
             is Expr.Dtrack -> this.blk.traverse()
