@@ -213,7 +213,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             is Expr.Proto  -> {
                 enc_to_dcls[this] = mutableListOf()
                 proto_to_upvs[this] = mutableSetOf()
-                if (this.tag !=null && this.tag.str!=":void" && !datas.containsKey(this.tag.str)) {
+                if (this.tag !=null && this.tag.str!=":nested" && !datas.containsKey(this.tag.str)) {
                     //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
                 this.args.forEach { (id,tag) ->

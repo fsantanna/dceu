@@ -265,10 +265,10 @@ class Parser_04 {
     @Test
     fun ee_01_err() {
         val l = lexer("""
-            func () :void {}
+            func () :nested {}
         """)
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 2, col 21) : expected \"{\" : have \":void\"")
+        assert(trap { parser.expr() } == "anon : (lin 2, col 21) : expected \"{\" : have \":nested\"")
     }
     @Test
     fun ee_02_task_err() {
@@ -281,16 +281,16 @@ class Parser_04 {
     }
     @Test
     fun ee_03_coro_err() {
-        val l = lexer("coro (a,b) :void { 10 }")
+        val l = lexer("coro (a,b) :nested { 10 }")
         val parser = Parser(l)
-        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 12) : expected \"{\" : have \":void\"")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 12) : expected \"{\" : have \":nested\"")
     }
     @Test
     fun ee_04_task() {
-        val l = lexer("task (a,b) :void { 10 }")
+        val l = lexer("task (a,b) :nested { 10 }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(task (a,b) :void {\n10\n})") { e.tostr() }
+        assert(e.tostr() == "(task (a,b) :nested {\n10\n})") { e.tostr() }
     }
 
     // TOGGLE

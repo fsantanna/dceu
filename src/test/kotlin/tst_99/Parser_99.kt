@@ -815,7 +815,7 @@ class Parser_99 {
         val l = lexer("spawn task {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(spawn (task () :void {\n" +
+        assert(e.tostr() == "(spawn (task () :nested {\n" +
                 "nil\n" +
                 "})())") { e.tostr() }
     }
@@ -837,7 +837,7 @@ class Parser_99 {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(spawn (task () :void {\n" +
+        assert(e.tostr() == "(spawn (task () :nested {\n" +
                 "broadcast'(nil,nil)\n" +
                 "})())") { e.tostr() }
     }
@@ -851,10 +851,10 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(spawn (task () :void {\n" +
+                "(spawn (task () :nested {\n" +
                 "nil\n" +
                 "})())\n" +
-                "(spawn (task () :void {\n" +
+                "(spawn (task () :nested {\n" +
                 "nil\n" +
                 "})())\n" +
                 "loop {\n" +

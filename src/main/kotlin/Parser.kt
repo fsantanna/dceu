@@ -877,7 +877,7 @@ class Parser (lexer_: Lexer)
                     }
                     this.acceptFix("task") -> {
                         return this.nest("""
-                            ${this.tk0.pos.pre()}(spawn (task () :void {
+                            ${this.tk0.pos.pre()}(spawn (task () :nested {
                                 ${this.block().es.tostr(true)}
                             }) ())
                         """)

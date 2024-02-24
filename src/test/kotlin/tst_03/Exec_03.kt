@@ -1365,13 +1365,14 @@ class Exec_03 {
             resume co()
             resume co()
         """)
-        assert(out == "10\n") { out }
+        //assert(out == "10\n") { out }
+        assert(out == "anon : (lin 6, col 25) : access error : outer variable \"xxx\" must be immutable\n") { out }
     }
     @Test
     fun mm_04_nested() {
         val out = test("""
             val a = coroutine(coro () {
-                var t = []
+                val t = []
                 val b = coroutine(coro () {
                     val x = []
                     yield(nil) ;;thus { it => nil }
@@ -1390,7 +1391,7 @@ class Exec_03 {
     fun mm_05_nested() {
         val out = test("""
             val a = coroutine(coro () {
-                var t = []
+                val t = []
                 val b = coroutine(coro () {
                     val x = []
                     yield(nil) ;;thus { it => nil }
@@ -1470,16 +1471,16 @@ class Exec_03 {
     fun mm_11_nst() {
         val out = test("""
             val T = coro (t) {
-                var ang
+                val ang = [0]
                 val C2 = coro () {
-                    set ang = 10
+                    set ang[0] = 10
                 }
                 resume (coroutine(C2)) ()
                 println(ang)
             }
             resume (coroutine(T)) ()
         """)
-        assert(out == "10\n") { out }
+        assert(out == "[10]\n") { out }
     }
 
     // YIELD / ENCLOSING / ERROR
