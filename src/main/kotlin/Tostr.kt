@@ -26,7 +26,7 @@ fun Expr.tostr (pre: Boolean = false): String {
     return when (this) {
         is Expr.Proto  -> {
             val args = this.args.map { it.tostr(pre) }.joinToString(",")
-            "(" + this.tk.str + " (" + args + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
+            "(" + this.tk.str + this.nst.cond { " :nested" } + this.rec.cond { " :rec" } + " (" + args + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
         }
         is Expr.Export -> "export [" + this.ids.joinToString(",") + "] {\n" + this.blk.es.tostr(pre) + "}"
         is Expr.Do     -> {

@@ -27,6 +27,17 @@ class Parser_03 {
         assert(e is Expr.Proto && e.args.size==2)
         assert(e.tostr() == "(coro (a,b) {\n10\n})") { e.tostr() }
     }
+    @Test
+    fun aa_04_coro_nested() {
+        val l = tst_04.lexer(
+            """
+            coro :nested () { nil }
+        """
+        )
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "(coro :nested () {\nnil\n})") { e.tostr() }
+    }
 
     // COROUTINE / YIELD / RESUME
 

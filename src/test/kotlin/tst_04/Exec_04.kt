@@ -339,7 +339,7 @@ class Exec_04 {
     @Test
     fun cd_01_every() {
         val out = test("""
-            spawn (task () :nested {
+            spawn (task :nested () {
                 val it = yield(nil)
                 println(it;;;, evt;;;)
                 yield(nil)
@@ -1985,7 +1985,7 @@ class Exec_04 {
     @Test
     fun kk_01_pub_err() {
         val out = test("""
-            task () :nested {
+            task :nested () {
                 pub()
             }
         """)
@@ -3287,7 +3287,7 @@ class Exec_04 {
             data :X = [x]
             val T = task () :X {
                 set pub() = [10]
-                spawn (task () :nested {
+                spawn (task :nested () {
                     println(pub().x)
                 }) ()
                 nil
@@ -3302,7 +3302,7 @@ class Exec_04 {
             spawn (task () {
                 do {
                     println(:xxx, pub())
-                    spawn (task () :nested {
+                    spawn (task :nested () {
                         println(:yyy, pub())
                         yield(nil) ;;thus { it => nil }
                     }) ()
@@ -3318,7 +3318,7 @@ class Exec_04 {
         val out = test("""
             var T
             set T = task () {
-                spawn (task () :nested {
+                spawn (task :nested () {
                     println(1)
                     nil
                 }) ()
@@ -3339,7 +3339,7 @@ class Exec_04 {
         val out = test("""
             var T
             set T = task () {
-                spawn (task () :nested {
+                spawn (task :nested () {
                     (999)
                 })()
                 nil
@@ -4416,7 +4416,7 @@ class Exec_04 {
     @Test
     fun z2_01_valgrind() {
         val out = test("""
-            spawn (task () :nested {
+            spawn (task :nested () {
                 spawn (task () {
                     yield(nil)
                     yield(nil)

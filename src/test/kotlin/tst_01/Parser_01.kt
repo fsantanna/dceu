@@ -551,6 +551,17 @@ class Parser_01 {
         //assert(e.tostr() == "set ... = 10") { e.tostr() }
         assert(trap { parser.expr() } == "anon : (lin 1, col 5) : set error : unexpected ...")
     }
+    @Test
+    fun pp_12_func_nested() {
+        val l = tst_04.lexer(
+            """
+            func :nested () { nil }
+        """
+        )
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "(func :nested () {\nnil\n})") { e.tostr() }
+    }
 
     // LOOP
 

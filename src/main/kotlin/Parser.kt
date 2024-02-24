@@ -712,6 +712,7 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("func") || (CEU>=3 && this.acceptFix("coro")) || (CEU>=4 && this.acceptFix("task")) -> {
                 val tk0 = this.tk0 as Tk.Fix
+                val nst = this.acceptTag(":nested")
                 val rec = this.acceptTag(":rec")
                 val dcl = if (CEU>=99 && this.acceptEnu("Id")) {
                     this.tk0
@@ -727,7 +728,7 @@ class Parser (lexer_: Lexer)
                     else -> this.tk0 as Tk.Tag
                 }
                 val blk = this.block(this.tk1)
-                val proto = Expr.Proto(tk0, rec, tag, args, blk)
+                val proto = Expr.Proto(tk0, nst, rec, tag, args, blk)
                 if (dcl == null) {
                     proto
                 } else {
@@ -877,7 +878,7 @@ class Parser (lexer_: Lexer)
                     }
                     this.acceptFix("task") -> {
                         return this.nest("""
-                            ${this.tk0.pos.pre()}(spawn (task () :nested {
+                            ${this.tk0.pos.pre()}(spawn (task :nested () {
                                 ${this.block().es.tostr(true)}
                             }) ())
                         """)
