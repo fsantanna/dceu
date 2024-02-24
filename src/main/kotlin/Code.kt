@@ -134,7 +134,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
                     """
                     {
-                        CEU_Value up = ceux_peek(X->S, ${vars.idx(dcl,ups.pub[this]!!)});
+                        CEU_Value up = ceux_peek(X->S, ${vars.idx("X",dcl,ups.pub[this]!!)});
                         ceu_gc_inc_val(up);
                         clo.Dyn->Clo.upvs.buf[$i] = up;
                     }
@@ -196,7 +196,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             is Expr.Dcl -> """
                 // DCL | ${this.dump()}
                 ${(this.src != null).cond {
-                    val (stk,idx) = vars.idx(this,this)
+                    val (stk,idx) = vars.idx("X",this,this)
                     this.PI0("""
                     ${this.src!!.code()}
                     ceux_copy($stk, $idx, XX(-1));
@@ -322,7 +322,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             }
             is Expr.Defer -> {
                 val bup = ups.first_block(this)!!
-                val (stk,idx) = vars.idx(this)
+                val (stk,idx) = vars.idx("X",this)
                 assert(stk == "X->S")
                 val (ns,ini,end) = defers.getOrDefault(bup, Triple(mutableListOf(),"",""))
                 val inix = """
@@ -466,7 +466,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 val body = vars.nats[this]!!.let { (set, str) ->
                     var x = str
                     for (dcl in set) {
-                        val (stk,idx) = vars.idx(dcl,this)
+                        val (stk,idx) = vars.idx("X",dcl,this)
                         //println(setOf(x, v))
                         x = x.replaceFirst("XXX", "ceux_peek($stk,$idx)")
                     }
@@ -484,7 +484,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 })
             }
             is Expr.Acc -> {
-                val (stk,idx) = vars.idx(this)
+                val (stk,idx) = vars.idx("X",this)
                 when {
                     this.isdst() -> """
                         // ACC - SET | ${this.dump()}

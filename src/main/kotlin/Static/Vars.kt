@@ -99,6 +99,9 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             xups.all { it !is Expr.Proto || it==enc } -> Type.ARG
             xups.all { it !is Expr.Proto || it.nst || it==enc } -> Type.NESTED
             else -> Type.UPVAL
+        }.let {
+            //println(listOf(src.tk.pos, src.tostr(), it))
+            it
         }
     }
 
@@ -148,13 +151,14 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         return dcl
     }
 
-    fun idx (acc: Expr.Acc): Pair<String,String> {
-        return this.idx(this.acc_to_dcl[acc]!!, acc)
+    fun idx (X: String, acc: Expr.Acc): Pair<String,String> {
+        return this.idx(X, this.acc_to_dcl[acc]!!, acc)
     }
-    fun idx (def: Expr.Defer): Pair<String,String> {
-        return this.idx(def, def)
+    fun idx (X: String, def: Expr.Defer): Pair<String,String> {
+        assert(X == "X->S")
+        return this.idx(X, def, def)
     }
-    fun idx (dcl: Expr, src: Expr): Pair<String,String> {
+    fun idx (X: String, dcl: Expr, src: Expr): Pair<String,String> {
         val enc  = this.dcl_to_enc[dcl]!!
         val dcls = this.enc_to_dcls[enc]!!
 
@@ -193,25 +197,25 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         }
         return when (type(dcl,src)) {
             Type.GLOBAL -> {
-                val s = if (CEU >= 3) "CEU_GLOBAL_S" else "X->S"
+                val s = if (CEU >= 3) "CEU_GLOBAL_S" else X
                 Pair(s, "(1 + $locs + $I) /* global $id */")
             }
             Type.LOCAL -> {
-                Pair("X->S", "(X->base + $upvs + $locs + $I) /* local $id */")
+                Pair("$X->S", "($X->base + $upvs + $locs + $I) /* local $id */")
             }
             Type.ARG -> {
                 assert(locs == 0)
-                Pair("X->S", "ceux_arg(X, $I) /* arg $id */")
+                Pair("$X->S", "ceux_arg($X, $I) /* arg $id */")
             }
             Type.NESTED -> {
                 val xups = ups.all_until(src) { it == enc } // all ups between src -> dcl
                 val n = xups.count { it is Expr.Proto }
-                println(n)
-                val (_,idx) = this.idx(dcl,dcl)
-                Pair("X${"->exe->X".repeat(n)}->S /* nested */", idx)
+                val XX = "$X${"->exe->clo.Dyn->Clo_Task.up_tsk->X".repeat(n)}"
+                val (_,idx) = this.idx(XX,dcl,dcl)
+                Pair("$XX->S /* nested */", idx)
             }
             Type.UPVAL -> {
-                Pair("X->S", "(X->base + $upv) /* upval $id */")
+                Pair("$X->S", "($X->base + $upv) /* upval $id */")
             }
         }
     }

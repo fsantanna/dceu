@@ -1753,7 +1753,7 @@ class Exec_04 {
         val out = test("""
             spawn( task () {
                 var t = [1]
-                spawn( task () {
+                spawn( task :nested () {
                     set t = [2]
                 }) ()
                 println(t)
@@ -1766,7 +1766,7 @@ class Exec_04 {
         val out = test("""
             spawn( task () {
                 var t = [1]
-                spawn (task () {
+                spawn (task :nested () {
                     yield(nil) ;;thus { it => nil }
                     set t = [2]
                 } )()
@@ -1780,7 +1780,7 @@ class Exec_04 {
     @Test
     fun gh_03_set() {
         val out = test("""
-            spawn( task () {
+            spawn( task :nested () {
                 var t = [1]
                 func () {
                     set t = [2]
@@ -1795,7 +1795,7 @@ class Exec_04 {
         val out = test("""
             spawn (task () {
                 var t = [1]
-                spawn( task () {
+                spawn( task :nested () {
                     func (it) {
                         set t = copy(it)
                     } (yield(nil))
@@ -1812,7 +1812,7 @@ class Exec_04 {
         val out = test("""
             spawn (task () {
                 var t = [1]
-                spawn( task () {
+                spawn( task :nested () {
                     set t = copy(yield(nil))
                 }) ()
                 yield(nil) ;;thus { it => nil }
@@ -1837,7 +1837,7 @@ class Exec_04 {
         val out = test("""
             val T = task (t) {
                 var ang = 0
-                spawn (task () {
+                spawn (task :nested () {
                     set ang = 10
                 })()
                 println(ang)
@@ -2423,7 +2423,7 @@ class Exec_04 {
             spawn (task () {
                 var xxx = 1
                 yield(nil)
-                spawn( task () {
+                spawn( task :nested () {
                     set xxx = 10
                 }) ()
                 println(xxx)
@@ -2492,12 +2492,13 @@ class Exec_04 {
                     spawn(task :nested () {
                         set xxx = 10
                     }) ()
-                    println(xxx)
                 }) ()
+                println(xxx)
             } )()
             broadcast(nil)
         """)
-        assert(out == "ERROR\n") { out }
+        //assert(out == "ERROR\n") { out }
+        assert(out == "anon : (lin 7, col 29) : access error : outer variable \"xxx\" must be immutable\n") { out }
     }
     @Test
     fun ll_09_nested_err() {
