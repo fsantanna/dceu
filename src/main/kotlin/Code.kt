@@ -499,7 +499,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         // ACC - SET | ${this.dump()}
                         ceux_repl($stk, $idx, ceux_peek(X->S,XX(-1)));
                     """
-                    else -> this.PI0("ceux_push(X->S, 1, ceux_peek($stk,$idx));\n")
+                    else -> this.PI0("ceux_push(X->S, 1, ceux_peek($stk, $idx));\n")
                 }
             }
             is Expr.Nil  -> this.PI0("ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });")
