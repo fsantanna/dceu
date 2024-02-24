@@ -35,7 +35,7 @@ class Ups (outer: Expr.Call) {
     fun first_block (e: Expr): Expr.Do? {
         return this.first(e) { it is Expr.Do && this.pub[it] !is Expr.Export } as Expr.Do?
     }
-    fun first_task_real (e: Expr): Expr.Proto? {
+    fun first_task_outer (e: Expr): Expr.Proto? {
         return this.first(e) { it is Expr.Proto && it.tk.str=="task" && !it.nst } as Expr.Proto?
     }
     fun exe (e: Expr, tp: String?=null): Expr.Proto? {

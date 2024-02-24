@@ -135,7 +135,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                 this.tsk?.traverse()
                 when {
                     (this.tsk != null) -> {}
-                    (ups.first_task_real(this) == null) -> err(this.tk, "pub error : expected enclosing task")
+                    (ups.first_task_outer(this) == null) -> err(this.tk, "pub error : expected enclosing task")
                     else -> {}
                 }
             }

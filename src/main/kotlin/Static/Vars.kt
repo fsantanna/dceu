@@ -54,7 +54,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             is Expr.Pub -> {
                 when {
                     (e.tsk == null) -> {
-                        val task = ups.first_task_real(e)
+                        val task = ups.first_task_outer(e)
                         if (task?.tag == null) null else {
                             Pair(null, this.datas[task.tag.str]!!)
                         }
@@ -155,7 +155,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         return this.idx(X, this.acc_to_dcl[acc]!!, acc)
     }
     fun idx (X: String, def: Expr.Defer): Pair<String,String> {
-        assert(X == "X->S")
+        assert(X == "X")
         return this.idx(X, def, def)
     }
     fun idx (X: String, dcl: Expr, src: Expr): Pair<String,String> {

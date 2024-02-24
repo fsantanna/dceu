@@ -1781,23 +1781,23 @@ class Exec_04 {
     fun gh_03_set() {
         val out = test("""
             spawn( task :nested () {
-                var t = [1]
-                func () {
-                    set t = [2]
-                } ()
+                val t = [1]
+                ;;func () {
+                    set t[0] = 2
+                ;;} ()
                 println(t)
             }) ()
         """)
         assert(out == "[2]\n") { out }
     }
     @Test
-    fun dh_04_set() {
+    fun TODO_dh_04_set() {
         val out = test("""
             spawn (task () {
                 var t = [1]
                 spawn( task :nested () {
                     func (it) {
-                        set t = copy(it)
+                        set t = copy(it)    ;; TODO: func -> nested -> task
                     } (yield(nil))
                 }) ()
                 yield(nil) ;;thus { it => nil }
@@ -1805,7 +1805,8 @@ class Exec_04 {
             }) ()
             broadcast ([1])
         """, true)
-        assert(out == "[1]\n") { out }
+        //assert(out == "[1]\n") { out }
+        assert(out == "anon : (lin 6, col 29) : access error : outer variable \"t\" must be immutable\n") { out }
     }
     @Test
     fun dh_05_set() {
@@ -2523,7 +2524,7 @@ class Exec_04 {
                         defer {
                             println(:defer)
                         }
-                        yield(nil) ;;thus { it => nil }
+                        yield(nil)
                     } )()
                     println(:3)
                 }

@@ -406,14 +406,22 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             """
             }
             is Expr.Delay -> "X->exe_task->time = CEU_TIME_MAX;"
-            is Expr.Pub -> """
+            is Expr.Pub -> {
+                val exe = if (this.tsk != null) "" else {
+                    ups.first_task_outer(this).let { outer ->
+                        val xups = ups.all_until(this) { it == outer } // all ups between this -> outer
+                        val n = xups.count { it is Expr.Proto }
+                        "X${"->exe_task->clo.Dyn->Clo_Task.up_tsk->X".repeat(n-1)}->exe_task"
+                    }
+                }
+            """
             { // PUB | ${this.dump()}
                 ${this.tsk.cond { it.code() }}
                 CEU_Value tsk = ${this.tsk.cond2({"""
                     ceux_peek(X->S, XX(-1))
                 """},{"""
                     //ceu_dyn_to_val((CEU_Dyn*)${up_task_real_c()});
-                    ceu_dyn_to_val((CEU_Dyn*)X->exe_task)
+                    ceu_dyn_to_val((CEU_Dyn*)$exe)
                 """})}
                 ;
                 ${this.tsk.cond { """
@@ -440,6 +448,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 """ })}
             }
             """
+            }
             is Expr.Dtrack -> this.blk.code()
             is Expr.Toggle -> """{  // TOGGLE | ${this.dump()}
                 ${this.tsk.code()}
