@@ -114,8 +114,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
 
                 this.PI0(""" // CLO | ${this.dump()}
                 {
-                    CEU_Value clo = ceu_create_clo${isexe.cond{"_exe"}} (
-                        ${isexe.cond{"CEU_VALUE_CLO_${this.tk.str.uppercase()},"}}
+                    CEU_Value clo = ceu_create_clo (
+                        CEU_VALUE_CLO_${this.tk.str.uppercase()},
                         ceu_f_$id,
                         ${this.args.let { assert(it.lastOrNull()?.first?.str!="...") { "TODO: ..." }; it.size }},  // TODO: remove assert
                         ${vars.proto_to_locs[this]!!},
@@ -159,7 +159,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     {
                         ${GLOBALS.mapIndexed { i,id -> """
                         {
-                            CEU_Value clo = ceu_create_clo(ceu_${id.idc()}_f, 0, 0, 0);
+                            CEU_Value clo = ceu_create_clo(CEU_VALUE_CLO_FUNC, ceu_${id.idc()}_f, 0, 0, 0);
                             ceux_repl(X->S, X->base + $i, clo);
                         }
                         """ }.joinToString("")}
