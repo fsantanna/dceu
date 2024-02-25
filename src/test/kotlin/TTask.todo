@@ -1095,7 +1095,7 @@ class TTask {
             }
             var co = spawn(tk)()
             broadcast []
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """
         )
         assert(out == "1\n") { out }
@@ -1118,7 +1118,7 @@ class TTask {
             }
             spawn (tk) ()
             broadcast [[]]
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """
         )
         //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
@@ -1142,7 +1142,7 @@ class TTask {
             }
             var co = spawn (tk) (1)
             broadcast []
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """
         )
         assert(out == "1\n") { out }
@@ -1166,7 +1166,7 @@ class TTask {
             }
             var co = spawn (tk)(1)
             broadcast []
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """
         )
         assert(out == "1\n") { out }
@@ -1298,7 +1298,7 @@ class TTask {
             }
             var co = spawn (tk) ()
             broadcast #[[]]
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """
         )
         assert(out == "2\n") { out }
@@ -1319,7 +1319,7 @@ class TTask {
             }
             var co = spawn (tk) ()
             broadcast @[(1,[])]
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """
         )
         assert(out == "2\n") { out }

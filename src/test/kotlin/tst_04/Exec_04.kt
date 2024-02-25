@@ -3390,7 +3390,7 @@ class Exec_04 {
         DEBUG = true
         val out = test("""
             broadcast([])
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """)
         assert(out == "1\n") { out }
         //assert(out == "0\n") { out }
@@ -3411,7 +3411,7 @@ class Exec_04 {
             }
             var co = spawn tk ()
             broadcast ([])
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """)
         assert(out == "2\n") { out }
         //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
@@ -3434,7 +3434,7 @@ class Exec_04 {
             }
             var co = spawn tk ()
             broadcast( [])
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """)
         assert(out == "2\n") { out }
         //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
@@ -3459,7 +3459,7 @@ class Exec_04 {
             }
             var co = spawn tk ()
             broadcast ([] )
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """)
         assert(out == "2\n") { out }
         //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
@@ -3474,7 +3474,7 @@ class Exec_04 {
             spawn (task () {    ;; not gc'd b/c task remains in memory
                 nil             ;; see task in @ ab_01_spawn
             }) ()
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
             """
         )
         assert(out == "2\n") { out }
@@ -4157,7 +4157,7 @@ class Exec_04 {
             }
             var t2 = spawn T2()
             broadcast ([])                      ;; GC = []
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
             """
         )
         assert(out == "2\n") { out }

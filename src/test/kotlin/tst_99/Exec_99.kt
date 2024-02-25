@@ -910,7 +910,7 @@ class Exec_99 {
             }
             var co = spawn tk ()
             broadcast ([])
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """)
         //assert(out == "0\n") { out }
         assert(out == "1\n") { out }

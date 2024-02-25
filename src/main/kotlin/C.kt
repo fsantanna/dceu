@@ -361,14 +361,12 @@ fun Coder.main (tags: Tags): String {
     struct {
         int alloc;
         int free;
-        int gc;
-    } CEU_GC = { 0, 0, 0 };
+    } CEU_GC = { 0, 0 };
     
     void ceu_dump_gc (void) {
         printf(">>> GC: %d\n", CEU_GC.alloc - CEU_GC.free);
         printf("    alloc = %d\n", CEU_GC.alloc);
         printf("    free  = %d\n", CEU_GC.free);
-        printf("    gc    = %d\n", CEU_GC.gc);
     }
     #if 0
     void ceu_dump_frame (CEU_Frame* frame) {
@@ -543,9 +541,6 @@ fun Coder.main (tags: Tags): String {
         dyn->Any.refs--;
         if (dyn->Any.refs == 0) {
             ceu_gc_free(dyn);
-    #ifdef CEU_DEBUG
-            CEU_GC.gc++;
-    #endif
         }
     }
     void ceu_gc_dec_val (CEU_Value val) {

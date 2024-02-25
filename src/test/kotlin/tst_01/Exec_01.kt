@@ -3045,7 +3045,7 @@ class Exec_01 {
                 println(...)
             }
             f(1,2,3)
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """
         )
         assert(out == "1\t2\t3\n1\n") { out }
@@ -4153,10 +4153,10 @@ class Exec_01 {
                 println(ts)
             }
             f(tags(t))
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """
         )
-        assert(out == "[:Z,:Y,:X]\n1\n") { out }
+        assert(out == "[:Z,:Y,:X]\n2\n") { out }
     }
     @Test
     fun tags13x() {
@@ -4707,13 +4707,12 @@ class Exec_01 {
                 nil
             }
             `ceu_dump_gc();`
-            ;;println(`:number CEU_GC.gc`)
+            ;;println(`:number CEU_GC.free`)
         """
         )
         assert(out == ">>> GC: 14\n" +
                 "    alloc = 15\n" +
-                "    free  = 1\n" +
-                "    gc    = 1\n"       // = 0
+                "    free  = 1\n"
         ) { out }
 
     }
@@ -4725,14 +4724,13 @@ class Exec_01 {
             var xxx = []
             set xxx = []
             `ceu_dump_gc();`
-            ;;println(`:number CEU_GC.gc`)
+            ;;println(`:number CEU_GC.free`)
         """
         )
         //assert(out == "1\n") { out }
         assert(out == ">>> GC: 15\n" +
                 "    alloc = 16\n" +
-                "    free  = 1\n" +
-                "    gc    = 1\n") { out }
+                "    free  = 1\n") { out }
     }
     @Test
     fun gc2() {
@@ -4743,15 +4741,14 @@ class Exec_01 {
             do []  ;; ;;;not;;; checked
             nil
             `ceu_dump_gc();`
-            ;;println(`:number CEU_GC.gc`)
+            ;;println(`:number CEU_GC.free`)
         """
         )
         //assert(out == "2\n") { out }
         //assert(out == "0\n") { out }
         assert(out == ">>> GC: 14\n" +
                 "    alloc = 16\n" +
-                "    free  = 2\n" +
-                "    gc    = 2\n") { out }
+                "    free  = 2\n") { out }
     }
     @Test
     fun gc3_cycle() {
@@ -4764,14 +4761,13 @@ class Exec_01 {
             set x = nil
             set y = nil
             `ceu_dump_gc();`
-            ;;println(`:number CEU_GC.gc`)
+            ;;println(`:number CEU_GC.free`)
         """
         )
         //assert(out == "0\n") { out }
         assert(out == ">>> GC: 16\n" +
                 "    alloc = 16\n" +
-                "    free  = 0\n" +
-                "    gc    = 0\n") { out }
+                "    free  = 0\n") { out }
     }
     @Test
     fun gc4() {
@@ -4781,9 +4777,9 @@ class Exec_01 {
             var x = []
             var y = [x]
             set x = nil
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
             set y = nil
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """
         )
         assert(out == "0\n2\n") { out }
@@ -4798,7 +4794,7 @@ class Exec_01 {
                 var y = x
             }
             set x = nil
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """
         )
         assert(out == "1\n") { out }
@@ -4810,7 +4806,7 @@ class Exec_01 {
             """
             var x = [[],[]]
             set x = nil
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """
         )
         assert(out == "3\n") { out }
@@ -4825,7 +4821,7 @@ class Exec_01 {
             }
             #( #[ f([1]) ] )
             nil
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """
         )
         assert(out == "2\n") { out }
@@ -4838,7 +4834,7 @@ class Exec_01 {
             """
             do #[ [1] ]
             do nil
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """
         )
         assert(out == "2\n") { out }
@@ -4854,7 +4850,7 @@ class Exec_01 {
             }
             f([1])
             nil
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """
         )
         assert(out == "2\n") { out }
@@ -4869,9 +4865,9 @@ class Exec_01 {
                     val ins = [1,2,3]
                     ;;;drop;;;(ins)
                 }   ;; gc'd by block
-                println(`:number CEU_GC.gc`, `:number CEU_GC.free`)
+                println(`:number CEU_GC.free`, `:number CEU_GC.free`)
             }
-            println(`:number CEU_GC.gc`, `:number CEU_GC.free`)
+            println(`:number CEU_GC.free`, `:number CEU_GC.free`)
         """
         )
         //assert(out == "0\n1\n") { out }
@@ -4906,9 +4902,9 @@ class Exec_01 {
                     var v = []
                     ;;;drop;;;(v)
                 }
-                println(`:number CEU_GC.gc`)
+                println(`:number CEU_GC.free`)
             }
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """, true
         )
         assert(out == "1\n1\n") { out }
@@ -4923,7 +4919,7 @@ class Exec_01 {
             }
             f([])   ;; v is not captured
             ;; [] not captured, should be checked 
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """
         )
         //assert(out == "anon : (lin 7, col 21) : f([10])\nanon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
@@ -4934,11 +4930,11 @@ class Exec_01 {
     fun gc12() {
         val out = test(
             """
-            println([]) ;; println does ~not~ check
-            println(`:number CEU_GC.gc`)
+            println([])
+            println(`:number CEU_GC.free`)
         """
         )
-        assert(out == "[]\n1\n") { out }
+        assert(out == "[]\n2\n") { out }
     }
     @Test
     fun gc15_arg() {
@@ -4948,7 +4944,7 @@ class Exec_01 {
                 nil
             }
             f([])
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """
         )
         assert(out == "1\n") { out }

@@ -159,9 +159,9 @@ class Exec_05 {
         DEBUG = true
         val out = test("""
             val ts = tasks()
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
             spawn (task () { nil }) () in ts
-            println(`:number CEU_GC.gc`)
+            println(`:number CEU_GC.free`)
         """)
         assert(out == "0\n1\n") { out }
     }
