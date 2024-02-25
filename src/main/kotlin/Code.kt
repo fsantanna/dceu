@@ -405,7 +405,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 } // SPAWN | ${this.dump()}
             """
             }
-            is Expr.Delay -> "X->exe_task->time = CEU_TIME_MAX;"
             is Expr.Pub -> {
                 val exe = if (this.tsk != null) "" else {
                     ups.first_task_outer(this).let { outer ->

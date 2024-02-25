@@ -481,7 +481,6 @@ class Parser (lexer_: Lexer)
                     ;; task terminated
                 } else {
                     $it
-                    delay
                 }
                 """
             } else {
@@ -489,7 +488,6 @@ class Parser (lexer_: Lexer)
                 do {
                     ${kdcl()}
                     $it
-                    delay
                 }
                 """
             }
@@ -904,7 +902,6 @@ class Parser (lexer_: Lexer)
                 call as Expr.Call
                 Expr.Spawn(tk0, call.clo, call.args)
             }
-            (CEU>=4 && this.acceptFix("delay")) -> Expr.Delay(this.tk0 as Tk.Fix)
             (CEU>=4 && this.acceptFix("pub")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val tsk = this.expr_in_parens(true)
@@ -921,12 +918,6 @@ class Parser (lexer_: Lexer)
                 Expr.Call(tk0,
                     Expr.Acc(Tk.Id("broadcast'", tk0.pos)),
                     listOf(xin,evt)
-                )
-            }
-            (CEU>=4 && this.acceptFix("delay")) -> {
-                Expr.Call(this.tk0 as Tk.Fix,
-                    Expr.Acc(Tk.Id("delay'", this.tk0.pos)),
-                    listOf()
                 )
             }
             (CEU>=4 && this.acceptFix("toggle")) -> {
