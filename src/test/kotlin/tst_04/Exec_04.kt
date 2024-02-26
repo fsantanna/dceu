@@ -120,8 +120,8 @@ class Exec_04 {
                 }
             }
         """)
-        //assert(out.contains("anon : (lin 4, col 21) : delay error : expected enclosing task\n")) { out }
-        assert(out == ("anon : (lin 4, col 21) : access error : variable \"delay\" is not declared\n")) { out }
+        assert(out.contains("anon : (lin 4, col 21) : delay error : expected enclosing task\n")) { out }
+        //assert(out == ("anon : (lin 4, col 21) : access error : variable \"delay\" is not declared\n")) { out }
     }
     @Test
     fun bj_02_delay() {
@@ -161,16 +161,16 @@ class Exec_04 {
             broadcast(nil)
             println(:ok)
         """)
-        assert(out == "2\n3\n1\n:ok\n") { out }
+        assert(out == "2\n3\n:ok\n") { out }
     }
     @Test
     fun bj_03_delay() {
         val out = test("""
             spawn (task () {
                 yield(nil)
-                ;;delay
+                delay
                 yield(nil)
-                ;;delay
+                delay
                 yield(nil)
                 println(1)
             }) ()
@@ -180,7 +180,7 @@ class Exec_04 {
             }) ()
             spawn (task () {
                 yield(nil)
-                ;;delay
+                delay
                 yield(nil)
                 println(3)
             }) ()
@@ -221,7 +221,7 @@ class Exec_04 {
             val t = spawn (task () {
                 println(`:number CEU_TIME`)
                 yield(nil)
-                ;;delay
+                delay
                 println(:ok)
             }) ()
             toggle t (false)
@@ -551,7 +551,7 @@ class Exec_04 {
                     println(:3)
                 }) ()
                 yield(nil)                  ;; awakes from nested task
-                ;;delay
+                delay
                 yield(nil)                  ;; does not awake from outer bcast
                 println(:no)
             }) ()

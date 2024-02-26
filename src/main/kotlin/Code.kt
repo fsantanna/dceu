@@ -83,9 +83,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     int ceu_f_$id (CEUX* X) {
                         ${isexe.cond{"""
                             X->exe->status = (X->action == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
-                            ${istsk.cond { """
-                                X->exe_task->time = X->now;
-                            """ }}
                             switch (X->exe->pc) {
                                 case 0:
                                     if (X->action == CEU_ACTION_ABORT) {
@@ -408,6 +405,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 } // SPAWN | ${this.dump()}
             """
             }
+            is Expr.Delay -> "X->exe_task->time = X->now;"
             is Expr.Pub -> {
                 val exe = if (this.tsk != null) "" else {
                     ups.first_task_outer(this).let { outer ->

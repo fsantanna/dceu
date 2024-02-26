@@ -73,6 +73,7 @@ class Ups (outer: Expr.Call) {
             is Expr.Resume -> this.map(listOf(this.co, this.arg))
 
             is Expr.Spawn  -> this.map(listOf(this.tsk) + this.args)
+            is Expr.Delay  -> emptyMap()
             is Expr.Pub    -> this.map(listOfNotNull(this.tsk))
             is Expr.Dtrack -> this.map(listOf(this.blk))
             is Expr.Toggle -> this.map(listOf(this.tsk, this.on))

@@ -35,7 +35,7 @@ fun Expr.Call.main (): Expr.Proto {
 
 fun Expr.has_block (): Boolean {
     return when (this) {
-        is Expr.Proto, is Expr.Enum, is Expr.Data -> false
+        is Expr.Proto, is Expr.Enum, is Expr.Data, is Expr.Delay -> false
         is Expr.Nat, is Expr.Acc, is Expr.Nil -> false
         is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> false
         is Expr.Do, is Expr.If, is Expr.Loop, is Expr.Catch, is Expr.Defer -> true

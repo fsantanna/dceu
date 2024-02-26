@@ -57,6 +57,7 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
                     arg.traverse(/*if (i==this.args.lastIndex) MULTI else*/ 1)
                 }
             }
+            is Expr.Delay  -> {}
             is Expr.Pub    -> this.tsk?.traverse(1)
             is Expr.Dtrack -> this.blk.traverse(TODO())
             is Expr.Toggle -> { this.tsk.traverse(1) ; this.on.traverse(1) }

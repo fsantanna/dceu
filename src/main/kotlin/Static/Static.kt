@@ -126,6 +126,11 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                 }
                  */
             }
+            is Expr.Delay  -> {
+                if (!ups.first(this) { it is Expr.Proto }.let { it?.tk?.str=="task" }) {
+                    err(this.tk, "delay error : expected enclosing task")
+                }
+            }
             is Expr.Pub    -> {
                 if (this.tsk == null) {
                     val outer = ups.first_task_outer(this)
