@@ -1751,6 +1751,8 @@ fun Coder.main (tags: Tags): String {
 
         CEU_Value ret = ceu_create_exe(CEU_VALUE_EXE_TASK, sizeof(CEU_Exe_Task), clo);
         CEU_Exe_Task* dyn = &ret.Dyn->Exe_Task;
+        
+        assert(up_blk != NULL);
         ceu_gc_inc_dyn((CEU_Dyn*) dyn);    // block holds a strong reference
 
         dyn->time = CEU_TIME;
@@ -2080,19 +2082,21 @@ fun Coder.main (tags: Tags): String {
             X->exe->status = CEU_EXE_STATUS_TERMINATED;
             int ret = 0;
     #if CEU >= 4
-            if (X->exe->type==CEU_VALUE_EXE_TASK && X->action!=CEU_ACTION_ABORT) {
+            if (X->exe->type == CEU_VALUE_EXE_TASK) {
                 // do not bcast aborted task b/c
                 // it would awake parents that actually need to
                 // respond/catch the error (thus not awake)
-                CEU_Exe_Task* up = ((CEU_Exe_Task*) X->exe)->up.tsk;
-                if (up!=NULL && ceux_peek(X->S,XX(-1)).type!=CEU_VALUE_ERROR) {
-                    assert(CEU_TIME < UINT32_MAX);
-                    CEU_TIME++;
-                    int i = ceux_push(X->S, 1, ceu_dyn_to_val((CEU_Dyn*) X->exe));   // bcast myself
-                    ret = ceu_bcast_task(X, CEU_ACTION_RESUME, CEU_TIME, up);
-                    //assert(ret == 0);
-                    assert(X->exe->refs >= 2);  // ensures that the unlink below is safe (otherwise call gc_inc)
-                    ceux_rem(X->S, i);
+                if (X->action != CEU_ACTION_ABORT) {
+                    CEU_Exe_Task* up = ((CEU_Exe_Task*) X->exe)->up.tsk;
+                    if (up!=NULL && ceux_peek(X->S,XX(-1)).type!=CEU_VALUE_ERROR) {
+                        assert(CEU_TIME < UINT32_MAX);
+                        CEU_TIME++;
+                        int i = ceux_push(X->S, 1, ceu_dyn_to_val((CEU_Dyn*) X->exe));   // bcast myself
+                        ret = ceu_bcast_task(X, CEU_ACTION_RESUME, CEU_TIME, up);
+                        //assert(ret == 0);
+                        assert(X->exe->refs >= 2);  // ensures that the unlink below is safe (otherwise call gc_inc)
+                        ceux_rem(X->S, i);
+                    }
                 }
                 ceu_task_unlink((CEU_Exe_Task*) X->exe, 1);
             }
