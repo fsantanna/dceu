@@ -83,6 +83,9 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     int ceu_f_$id (CEUX* X) {
                         ${isexe.cond{"""
                             X->exe->status = (X->action == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
+                            ${istsk.cond { """
+                                X->exe_task->time = X->now;
+                            """ }}
                             switch (X->exe->pc) {
                                 case 0:
                                     if (X->action == CEU_ACTION_ABORT) {
@@ -350,7 +353,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             is Expr.Resume -> """
                 ${this.co.code()}
                 ${this.arg.code()}
-                ceux_resume(X, 1 /* TODO: MULTI */, ${rets.pub[this]!!}, CEU_ACTION_RESUME);
+                ceux_resume(X, 1 /* TODO: MULTI */, ${rets.pub[this]!!}, CEU_ACTION_RESUME CEU4(COMMA X->now));
                 ${this.check_error_aborted(this.toerr())}
             """
 
@@ -398,7 +401,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         ${e.code()}
                     """ }.joinToString("")}
                     {
-                        ceux_spawn(X, CEU_TIME_MAX, ${this.args.size});
+                        ceux_spawn(X, ${this.args.size}, X->now);
                         ${this.check_error_aborted(this.toerr())}
                         ${(rets.pub[this] == 0).cond { "ceux_pop(X->S, 1);" }}
                     }
@@ -465,8 +468,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         CEU_ERROR_THR_S(continue, "toggle error : expected yielded task", ${this.toerr()});
                     }
                     tsk.Dyn->Exe_Task.status = (on ? CEU_EXE_STATUS_YIELDED : CEU_EXE_STATUS_TOGGLED);
-                    int ret = ceu_bcast_task(X, 0, CEU_ACTION_TOGGLE, &tsk.Dyn->Exe_Task);
-                    assert(ret == 0);
                 }
             }"""
 
