@@ -69,13 +69,15 @@ val IS = """
 """.replace("\n", " ")
 
 val DETRACK = """
+    ;;;
     val detrack'' = func (trk) {
         if detrack'(trk) {
             true
         } else {
             false
         }
-    }    
+    }
+    ;;;
 """.replace("\n", " ")
 
 val XAWAIT = """

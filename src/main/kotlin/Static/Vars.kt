@@ -371,7 +371,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             is Expr.Yield  -> this.arg.traverse()
             is Expr.Resume -> { this.co.traverse() ; this.arg.traverse() }
 
-            is Expr.Spawn  -> { this.tsk.traverse() ; this.args.forEach { it.traverse() } }
+            is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.args.forEach { it.traverse() } }
             is Expr.Delay  -> {}
             is Expr.Pub    -> this.tsk?.traverse()
             is Expr.Dtrack -> this.blk.traverse()

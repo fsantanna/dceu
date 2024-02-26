@@ -40,7 +40,7 @@ class Tags (outer: Expr.Call) {
                 }
                 var E = ""
                 var I = 0
-                this.tags.forEachIndexed { i, (tag,nat) ->
+                this.tags.forEach { (tag,nat) ->
                     val n = if (nat == null) {
                         I++
                         "($E) + $I"
@@ -55,13 +55,13 @@ class Tags (outer: Expr.Call) {
             is Expr.Data -> add(this.tk, this.tk.str, this.tk.str.tag2c(), null)
             is Expr.Pass   -> this.e.traverse()
 
-            is Expr.Catch  -> { this.cnd?.traverse() ; this.blk.traverse() }
+            is Expr.Catch  -> { this.cnd.traverse() ; this.blk.traverse() }
             is Expr.Defer  -> this.blk.traverse()
 
             is Expr.Yield  -> this.arg.traverse()
             is Expr.Resume -> { this.co.traverse() ; this.arg.traverse() }
 
-            is Expr.Spawn  -> { this.tsk.traverse() ; this.args.forEach { it.traverse() } }
+            is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.args.forEach { it.traverse() } }
             is Expr.Delay  -> {}
             is Expr.Pub    -> this.tsk?.traverse()
             is Expr.Dtrack -> this.blk.traverse()

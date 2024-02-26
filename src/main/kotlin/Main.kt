@@ -51,7 +51,7 @@ val KEYWORDS: SortedSet<String> = (
     )) + (if (CEU < 4) setOf() else setOf(
         "broadcast", "delay", "in", "pub", "spawn", "task", "toggle",
     )) + (if (CEU < 5) setOf() else setOf(
-        "as", "detrack",
+        "as", //"detrack",
     )) + (if (CEU < 6) setOf() else setOf(
         "export",
     )) + (if (CEU < 99) setOf() else setOf(
@@ -81,7 +81,7 @@ val TAGS = listOf (
 )) + (if (CEU < 4) listOf() else listOf(
     ":exe-task",
 )) + (if (CEU < 5) listOf() else listOf(
-    ":exe-task-in", ":tasks", ":track"
+    ":tasks", //":track"
 )) + (if (CEU < 3) listOf() else listOfNotNull(
     ":yielded", (if (CEU<4) null else ":toggled"), ":resumed", ":terminated"
 )) + (if (CEU < 4) listOf() else listOf(
@@ -103,7 +103,7 @@ val GLOBALS = setOf (
 )) + (if (CEU < 4) setOf() else setOf(
     "broadcast'"
 )) + (if (CEU < 5) setOf() else setOf(
-    "detrack'", "next-tasks", "tasks", "track"
+    /*"detrack'",*/ "next-tasks", "tasks", //"track"
 ))
 
 sealed class Tk (val str: String, val pos: Pos) {
@@ -137,7 +137,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val co: Expr, val arg: Expr): Expr(N++, tk_)
 
-    data class Spawn  (val tk_: Tk.Fix, val tsk: Expr, val args: List<Expr>): Expr(N++, tk_)
+    data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val tsk: Expr, val args: List<Expr>): Expr(N++, tk_)
     data class Delay  (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Pub    (val tk_: Tk.Fix, val tsk: Expr?): Expr(N++, tk_)
     data class Dtrack (val tk_: Tk.Fix, val blk: Expr.Call): Expr(N++, tk_)

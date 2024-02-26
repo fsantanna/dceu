@@ -393,6 +393,12 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 assert(rets.pub[this].let { it==0 || it==1 })
                 """
                 { // SPAWN | ${this.dump()}
+                    ${this.tsks.cond2({
+                        it.code()
+                      },{
+                          "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });"
+                      }
+                    )}
                     ${this.tsk.code()}
                     ${this.args.mapIndexed { i, e -> """
                         ${e.code()}

@@ -69,7 +69,8 @@ class Exec_05 {
             val ok2 = spawn T() in ts
             println(ok1, ok2)
         """)
-        assert(out == "true\ttrue\n") { out }
+        assert(out.contains("exe-task: 0x")) { out }
+        assert(!out.contains("nil")) { out }
     }
     @Test
     fun aa_07_tasks() {
@@ -81,7 +82,7 @@ class Exec_05 {
             val ok = spawn T() in ts
             println(ok)
         """)
-        assert(out == "true\n") { out }
+        assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun aa_08_tasks() {
@@ -163,7 +164,7 @@ class Exec_05 {
             spawn (task () { nil }) () in ts
             println(`:number CEU_GC.free`)
         """)
-        assert(out == "0\n1\n") { out }
+        assert(out == "0\n2\n") { out }
     }
 
     // TASKS / PROTO / SCOPE
@@ -194,7 +195,8 @@ class Exec_05 {
             println(:ok)
        """)
         //assert(out == " v  anon : (lin 7, col 17) : spawn error : cannot copy reference out\n") { out }
-        assert(out == " v  anon : (lin 7, col 17) : spawn error : task pool outlives task prototype\n") { out }
+        //assert(out == " v  anon : (lin 7, col 17) : spawn error : task pool outlives task prototype\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun ab_03_tasks_proto() {
@@ -246,7 +248,8 @@ class Exec_05 {
         val out = test("""
             track(nil)
         """)
-        assert(out == " v  anon : (lin 2, col 13) : track(nil) : track error : expected task\n") { out }
+        //assert(out == " v  anon : (lin 2, col 13) : track(nil) : track error : expected task\n") { out }
+        assert(out == "anon : (lin 2, col 13) : access error : variable \"track\" is not declared\n") { out }
     }
     @Test
     fun bb_02_track_err() {
@@ -255,10 +258,11 @@ class Exec_05 {
                 nil
             }
             val t = spawn T()
-            val x = track(t)
+            val x = ;;;track;;;(t)
             println(t, x)
         """)
-        assert(out == " v  anon : (lin 6, col 21) : track(t) : track error : expected unterminated task\n") { out }
+        assert(out.contains(Regex("exe-task: 0x.*exe-task: 0x"))) { out }
+        //assert(out == " v  anon : (lin 6, col 21) : track(t) : track error : expected unterminated task\n") { out }
         //assert(out == " v  anon : (lin 6, col 21) : track(t) : track error : expected task\n") { out }
     }
     @Test
@@ -268,22 +272,24 @@ class Exec_05 {
                 yield(nil) ;;thus { it => nil }
             }
             val t = spawn T()
-            val x = track(t)
+            val x = ;;;track;;;(t)
             println(x)
         """)
-        assert(out.contains("track: 0x")) { out }
+        //assert(out.contains("track: 0x")) { out }
+        assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun bb_04_track() {
         val out = test("""
             val T = task () { yield(nil);nil }
             val t = spawn T ()
-            val x = track(t)
-            val y = track(t)
+            val x = ;;;track;;;(t)
+            val y = ;;;track;;;(t)
             var z = y
             println(x==y, y==z)
         """)
-        assert(out == ("false\ttrue\n")) { out }
+        //assert(out == ("false\ttrue\n")) { out }
+        assert(out == ("true\ttrue\n")) { out }
     }
     @Test
     fun bb_05_bcast_in_task_err() {
@@ -294,11 +300,12 @@ class Exec_05 {
                 println(v)
             }
             val t1 = spawn T (1)
-            val x1 = track(t1)
+            val x1 = ;;;track;;;(t1)
             val t2 = spawn T (2)
             broadcast (nil) in x1
         """)
-        assert(out == " v  anon : (lin 10, col 13) : broadcast'(nil,x1) : invalid target\n") { out }
+        //assert(out == " v  anon : (lin 10, col 13) : broadcast'(nil,x1) : invalid target\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun bb_05_bcast_in_task_ok() {
@@ -309,9 +316,10 @@ class Exec_05 {
                 println(v)
             }
             val t1 = spawn T (1)
-            val x1 = track(t1)
+            val x1 = ;;;track;;;(t1)
             val t2 = spawn T (2)
-            detrack(x1) { it => broadcast (nil) in it }
+            ;;detrack(x1) { it => broadcast (nil) in it }
+            broadcast (nil) in x1
         """)
         assert(out == "1\n") { out }
     }
@@ -324,11 +332,11 @@ class Exec_05 {
                 println(v)
             }
             val t1 = spawn T (1)
-            val x1 = track(t1)
+            val x1 = ;;;track;;;(t1)
             val t2 = spawn T (2)
-            detrack(x1) { y1 =>
-                broadcast (nil) in y1
-            }
+            ;;detrack(x1) { y1 =>
+                broadcast (nil) in x1 ;;y1
+            ;;}
         """)
         assert(out == "1\n") { out }
     }
@@ -353,7 +361,7 @@ class Exec_05 {
                         broadcast(nil) in :global
                         ;;dump(t)                    
                     }
-                    println(detrack(t))
+                    println(;;;detrack;;;(t))
                 }
             }) ()
             println(:ok)
@@ -371,9 +379,9 @@ class Exec_05 {
             var x
             do {
                 val t = spawn (T) ()
-                set x = track(t)         ;; error scope
+                set x = ;;;track;;;(t)         ;; error scope
             }
-            ;;println(status(detrack(x)))
+            println(status(;;;detrack;;;(x)))
             println(x)
         """)
         //assert(out.contains("terminated\nx-track: 0x")) { out }
@@ -388,15 +396,16 @@ class Exec_05 {
             set T = task () { yield(nil) }
             val x = do {
                 val t = spawn (T) ()
-                track(t)         ;; error scope
+                ;;;track;;;(t)         ;; error scope
             }
-            ;;println(status(detrack(x)))
+            println(status(;;;detrack;;;(x)))
             println(x)
         """)
+        assert(out.contains("terminated\nexe-task: 0x")) { out }
         //assert(out.contains("terminated\nx-track: 0x")) { out }
         //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
         //        ":error\n") { out }
-        assert(out == (" v  anon : (lin 4, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == (" v  anon : (lin 4, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
     }
     @Test
     fun bd_03_track_err() {
@@ -407,17 +416,18 @@ class Exec_05 {
             val t1 = spawn T()
             do {
                 val t2 = spawn T()
-                set pub(t1) = track(t2)         ;; error scope
+                set pub(t1) = ;;;track;;;(t2)         ;; error scope
                 nil
             }
-            println(detrack(pub(t1)))
+            println(;;;detrack;;;(pub(t1)))
         """)
+        assert(out.contains("exe-task: 0x")) { out }
         //assert(out.contains("terminated\nx-track: 0x")) { out }
         //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
         //        ":error\n") { out }
         //assert(out == (" v  anon : (lin 5, col 13) : block escape error : reference has immutable scope\n")) { out }
         //assert(out == (" v  anon : (lin 5, col 13) : block escape error : cannot expose track outside its task scope\n")) { out }
-        assert(out == (" v  anon : (lin 8, col 21) : set error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == (" v  anon : (lin 8, col 21) : set error : cannot expose track outside its task scope\n")) { out }
     }
     @Test
     fun bd_04_track_err() {
@@ -447,12 +457,13 @@ class Exec_05 {
             val T = task () { yield(nil) }
             val t = spawn T ()
             val y = do {
-                val x = track(t)
-                drop(x)
+                val x = ;;;track;;;(t)
+                ;;;drop;;;(x)
             }
             println(y)
         """)
-        assert(out.contains("track: 0x")) { out }
+        //assert(out.contains("track: 0x")) { out }
+        assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun bc_02_track_drop_err() {
@@ -460,11 +471,12 @@ class Exec_05 {
             val T = task () { yield(nil) }
             val y = do {
                 val t = spawn T ()
-                track(t)
+                ;;;track;;;(t)
             }
             println(y)
         """)
-        assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+        assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun bc_02x_track_drop_err() {
@@ -472,12 +484,13 @@ class Exec_05 {
             val T = task () { yield(nil) }
             val y = do {
                 val t = spawn T ()
-                val x = track(t)
-                drop(x)
+                val x = ;;;track;;;(t)
+                ;;;drop;;;(x)
             }
             println(y)
         """)
-        assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+        assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun bc_03_track_drop() {
@@ -487,7 +500,7 @@ class Exec_05 {
             val y = do {
                 spawn T () in ts
                 println()
-                drop(next-tasks(ts))
+                ;;;drop;;;(next-tasks(ts))
             }
             println(y)
         """)
@@ -500,7 +513,7 @@ class Exec_05 {
             val y = do {
                 val ts = tasks()
                 spawn T () in ts
-                drop(next-tasks(ts))
+                ;;;drop;;;(next-tasks(ts))
             }
             println(y)
         """)
@@ -1302,9 +1315,13 @@ class Exec_05 {
             println(next-tasks(ts, :err))
         """
         )
+        //assert(out == "nil\n" +
+        //        "nil\n" +
+        //        " v  anon : (lin 8, col 21) : next-tasks(ts,:err) : next-tasks error : expected task-in-pool track\n") { out }
         assert(out == "nil\n" +
                 "nil\n" +
-                " v  anon : (lin 8, col 21) : next-tasks(ts,:err) : next-tasks error : expected task-in-pool track\n") { out }
+                " |  anon : (lin 8, col 21) : next-tasks(ts,:err)\n" +
+                " v  next-tasks error : expected task\n") { out }
     }
     @Test
     fun hh_02_next() {

@@ -52,6 +52,7 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
             }
 
             is Expr.Spawn  -> {
+                this.tsks?.traverse(1)
                 this.tsk.traverse(1)
                 this.args.forEachIndexed { i,arg ->
                     arg.traverse(/*if (i==this.args.lastIndex) MULTI else*/ 1)
