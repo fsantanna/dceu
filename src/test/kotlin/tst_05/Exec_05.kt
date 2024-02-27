@@ -48,7 +48,7 @@ class Exec_05 {
     fun aa_05_tasks() {
         val out = test("""
             val T = task () {
-                yield(nil) ;;thus { it => nil }
+                yield(nil)
                 println(:in)
             }
             val ts = tasks()

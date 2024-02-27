@@ -1802,14 +1802,15 @@ fun Coder.main (tags: Tags): String {
         dyn->time = CEU_TIME;
         dyn->pub = (CEU_Value) { CEU_VALUE_NIL };
 
+        dyn->lnks = (CEU_Links) { CEU5(0 COMMA) {up_tsk,{.blk=NULL}}, {NULL,NULL}, {NULL,NULL} };
+
     #if CEU >= 5
         if (up_tsks != NULL) {
-            dyn->lnks = (CEU_Links) { 1, {up_tsk,{.tsks=up_tsks}}, {NULL,NULL}, {NULL,NULL} };
-            assert(0 && "TODO");
+            dyn->lnks.pool = 1;
+            dyn->lnks.x.tsks = up_tsks;
         } else
     #endif
         {
-            dyn->lnks = (CEU_Links) { CEU5(0 COMMA) {up_tsk,{.blk=NULL}}, {NULL,NULL}, {NULL,NULL} };
             if (*up_blk == NULL) {
                 dyn->lnks.up.x.blk = up_blk;    // only the first task points up
                 *up_blk = dyn;
