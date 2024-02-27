@@ -1304,6 +1304,21 @@ class Exec_05 {
     // NEXT
 
     @Test
+    fun hh_00_next() {
+        val out = test("""
+            val T = task () {
+                nil
+            }
+            val ts = tasks()
+            val t = spawn T() in ts
+            println(t   /= nil)
+            println(t   == next-tasks(ts))
+            println(nil == next-tasks(ts,t))
+        """
+        )
+        assert(out == "false\ntrue\ntrue\n") { out }
+    }
+    @Test
     fun hh_01_next() {
         val out = test("""
             val T = task () {

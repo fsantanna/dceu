@@ -215,13 +215,10 @@ fun Coder.main (tags: Tags): String {
     #endif
     
     #if CEU >= 4
-    typedef struct CEU_Exe_Task {
-        _CEU_Exe_
-        uint32_t time;      // last sleep time, only awakes if CEU_TIME>time 
-        CEU_Value pub;
+    typedef struct CEU_Links {
         struct {
             struct CEU_Exe_Task* tsk;
-            CEU_Block* blk;
+            void* blk_or_tsks;
         } up;
         struct {
             struct CEU_Exe_Task* prv;
@@ -231,6 +228,13 @@ fun Coder.main (tags: Tags): String {
             struct CEU_Exe_Task* fst;
             struct CEU_Exe_Task* lst;
         } dn;
+    } CEU_Links;
+
+    typedef struct CEU_Exe_Task {
+        _CEU_Exe_
+        uint32_t time;      // last sleep time, only awakes if CEU_TIME>time 
+        CEU_Value pub;
+        CEU_Links lnks;
     } CEU_Exe_Task;
     #endif
     
@@ -298,7 +302,7 @@ fun Coder.main (tags: Tags): String {
     CEU_Exe_Task CEU_GLOBAL_TASK = {
         CEU_VALUE_EXE_TASK, 1, NULL,
         CEU_EXE_STATUS_YIELDED, {}, 0, NULL,
-        0, {}, {NULL,NULL}, {NULL,NULL}, {NULL,NULL}
+        0, {}, { {NULL,NULL}, {NULL,NULL}, {NULL,NULL} }
     };
     #endif
     int CEU_BREAK = 0;
@@ -321,7 +325,7 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_create_dict    (void);
     CEU_Value ceu_create_clo     (CEU_VALUE type, CEU_Proto proto, int args, int locs, int upvs);
     #if CEU >= 4
-    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU5(CEU_Tasks* COMMA) CEU_Exe_Task* up_tsk, CEU_Block* up_blk);
+    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Exe_Task* up_tsk, CEU_Block* up_blk CEU5(COMMA CEU_Tasks* up_tsks));
     CEU_Value ceu_create_track   (CEU_Exe_Task* task);
     #endif
 
@@ -628,7 +632,7 @@ fun Coder.main (tags: Tags): String {
                         CEU_Exe_Task* cur = dyn->Tasks.dn_tsk;
                         while (cur != NULL) {
                             N++;
-                            cur = cur->sd.nxt;
+                            cur = cur->lnks.sd.nxt;
                         }
                     }
                     CEU_Exe_Task* tsks[N];
@@ -638,7 +642,7 @@ fun Coder.main (tags: Tags): String {
                         while (cur != NULL) {
                             ceu_gc_inc_dyn((CEU_Dyn*) cur);
                             tsks[i++] = cur;
-                            cur = cur->sd.nxt;
+                            cur = cur->lnks.sd.nxt;
                         }
                         assert(i == N);
                     }
@@ -958,7 +962,7 @@ fun Coder.main (tags: Tags): String {
                         CEU_Exe_Task* cur = blk.Block;
                         while (cur != NULL) {
                             N++;
-                            cur = cur->sd.nxt;
+                            cur = cur->lnks.sd.nxt;
                         }
                     }
                     CEU_Exe_Task* tsks[N];
@@ -968,7 +972,7 @@ fun Coder.main (tags: Tags): String {
                         while (cur != NULL) {
                             ceu_gc_inc_dyn((CEU_Dyn*) cur);
                             tsks[i++] = cur;
-                            cur = cur->sd.nxt;
+                            cur = cur->lnks.sd.nxt;
                         }
                         assert(i == N);
                     }
@@ -1194,11 +1198,11 @@ fun Coder.main (tags: Tags): String {
         assert(inp<=1 && "TODO: varargs spawn");
 
         #if CEU >= 5
-        CEU_Value tsks = ceux_peek(X1->S, XX1(-inp-2));
-        if (tsks.type!=CEU_VALUE_NIL && tsks.type!=CEU_VALUE_TASKS) {
+        CEU_Value up_tsks = ceux_peek(X1->S, XX1(-inp-2));
+        if (up_tsks.type!=CEU_VALUE_NIL && up_tsks.type!=CEU_VALUE_TASKS) {
             return ceu_error_s(X1->S, "spawn error : invalid pool");
         }
-        CEU_Tasks* xtsks = (tsks.type == CEU_VALUE_NIL) ? NULL : &tsks.Dyn->Tasks;
+        CEU_Tasks* xup_tsks = (up_tsks.type == CEU_VALUE_NIL) ? NULL : &up_tsks.Dyn->Tasks;
         #endif
 
         CEU_Value clo = ceux_peek(X1->S, XX1(-inp-1));
@@ -1226,7 +1230,12 @@ fun Coder.main (tags: Tags): String {
             }
         }
 
-        CEU_Value exe = ceu_create_exe_task(clo, CEU5(xtsks COMMA) up_tsk(X1), up_blk());
+        #if CEU >= 5
+        CEU_Value exe = ceu_create_exe_task(clo, up_tsk(X1), (xup_tsks==NULL ? up_blk() : NULL), xup_tsks);
+        #else
+        CEU_Value exe = ceu_create_exe_task(clo, up_tsk(X1), up_blk());
+        #endif
+        
         if (exe.type == CEU_VALUE_ERROR) {
             return ceu_error_e(X1->S, exe);
         }        
@@ -1778,7 +1787,8 @@ fun Coder.main (tags: Tags): String {
     #endif
     
     #if CEU >= 4
-    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU5(CEU_Tasks* COMMA) CEU_Exe_Task* up_tsk, CEU_Block* up_blk) {
+    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Exe_Task* up_tsk, CEU_Block* up_blk CEU5(COMMA CEU_Tasks* up_tsks)) {
+        assert((up_blk==NULL || up_tsks==NULL) && (up_blk!=NULL || up_tsks!=NULL));  // A xor B
         if (clo.type != CEU_VALUE_CLO_TASK) {
             return (CEU_Value) { CEU_VALUE_ERROR, {.Error="spawn error : expected task"} };
         }
@@ -1786,8 +1796,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ret = ceu_create_exe(CEU_VALUE_EXE_TASK, sizeof(CEU_Exe_Task), clo);
         CEU_Exe_Task* dyn = &ret.Dyn->Exe_Task;
         
-        assert(up_blk != NULL);
-        ceu_gc_inc_dyn((CEU_Dyn*) dyn);    // block holds a strong reference
+        ceu_gc_inc_dyn((CEU_Dyn*) dyn);    // up_blk/tsks holds a strong reference
 
         dyn->time = CEU_TIME;
         dyn->pub = (CEU_Value) { CEU_VALUE_NIL };
@@ -1806,7 +1815,7 @@ fun Coder.main (tags: Tags): String {
             up_tsk->dn.lst->sd.nxt = dyn;
             dyn->sd.prv = up_tsk->dn.lst;
         }
-        up_tsk->dn.lst = dyn;
+        up_tsk->lnks.dn.lst = dyn;
         if (*up_blk == NULL) {
             *up_blk = dyn;
         }
@@ -2134,7 +2143,7 @@ fun Coder.main (tags: Tags): String {
                 // it would awake parents that actually need to
                 // respond/catch the error (thus not awake)
                 if (X->action != CEU_ACTION_ABORT) {
-                    CEU_Exe_Task* up = ((CEU_Exe_Task*) X->exe)->up.tsk;
+                    CEU_Exe_Task* up = ((CEU_Exe_Task*) X->exe)->lnks.up.tsk;
                     if (up!=NULL && ceux_peek(X->S,XX(-1)).type!=CEU_VALUE_ERROR) {
                         assert(CEU_TIME < UINT32_MAX);
                         CEU_TIME++;
@@ -2184,18 +2193,18 @@ fun Coder.main (tags: Tags): String {
     val c_task = """ // TASK
         void ceu_task_unlink (CEU_Exe_Task* tsk, int term) {
             // * both (but once)
-            //  - (1) unlink tsk.up/tsk.sd
+            //  - (1) unlink tsk.up/tsk.lnks.sd
             //  - (3) gc_dec - no graph reference reaching it
             //  - detect once ("done") by testing up.tsk==NULL (from (1))
             // * term = 1
             //  - from task termination
             //  - destroy task graph completely - never traversed again
-            //  - (2) unlink tsk.dn recursively, but now with term=0
-            //      - since term=0, only the immediate tsk.dn is affected (see both/term=0)
+            //  - (2) unlink tsk.lnks.dn recursively, but now with term=0
+            //      - since term=0, only the immediate tsk.lnks.dn is affected (see both/term=0)
             // * term = 0
             //  - from block leave or parent unlink
-            //  - keep tsk.dn (2)
-            //  - only destroy tsk.up/tsk.sd (1)
+            //  - keep tsk.lnks.dn (2)
+            //  - only destroy tsk.up/tsk.lnks.sd (1)
             //  - task remains alive - can be relinked or bcast explicitly
             // Possible to be called twice 0 -> 1:
             // - block_leave -> task_unlink -> gc_dec_dyn -> gc_free ->
@@ -2204,18 +2213,18 @@ fun Coder.main (tags: Tags): String {
             //  - up is already unlinked
             //  - gc_dec is already called
 
-            int done = (tsk->up.tsk == NULL);
+            int done = (tsk->lnks.up.tsk == NULL);
             
             // (1)
             if (!done) {
                 // maybe term=0 was called before
-                if (tsk->up.tsk->dn.fst == tsk) {
-                    assert(tsk->sd.prv == NULL);
-                    tsk->up.tsk->dn.fst = tsk->sd.nxt;
+                if (tsk->lnks.up.tsk->lnks.dn.fst == tsk) {
+                    assert(tsk->lnks.sd.prv == NULL);
+                    tsk->lnks.up.tsk->lnks.dn.fst = tsk->lnks.sd.nxt;
                 }
-                if (tsk->up.tsk->dn.lst == tsk) {
-                    assert(tsk->sd.nxt == NULL);
-                    tsk->up.tsk->dn.lst = tsk->sd.prv;
+                if (tsk->lnks.up.tsk->lnks.dn.lst == tsk) {
+                    assert(tsk->lnks.sd.nxt == NULL);
+                    tsk->lnks.up.tsk->lnks.dn.lst = tsk->lnks.sd.prv;
                 }
                 if (tsk->up.blk != NULL) {
                     *tsk->up.blk = tsk->sd.nxt;
@@ -2228,32 +2237,32 @@ fun Coder.main (tags: Tags): String {
                 if (tsk->sd.prv != NULL) {
                     tsk->sd.prv->sd.nxt = tsk->sd.nxt;
                 }
-                if (tsk->sd.nxt != NULL) {
-                    tsk->sd.nxt->sd.prv = tsk->sd.prv;
+                if (tsk->lnks.sd.nxt != NULL) {
+                    tsk->lnks.sd.nxt->lnks.sd.prv = tsk->lnks.sd.prv;
                 }
-                //tsk->sd.prv = tsk->sd.nxt = NULL;
+                //tsk->lnks.sd.prv = tsk->lnks.sd.nxt = NULL;
                     // prv/nxt are never reached again:
                     //  - it is not a problem to keep the dangling pointers
                     // but we actually should not set them NULL:
                     //  - tsk might be in bcast_tasks which must call nxt
             }
             
-            // (2) unlink tsk.dn, but with term=0
+            // (2) unlink tsk.lnks.dn, but with term=0
             if (term == 1) {
-                if (tsk->dn.fst == NULL) {
-                    assert(tsk->dn.lst == NULL);
+                if (tsk->lnks.dn.fst == NULL) {
+                    assert(tsk->lnks.dn.lst == NULL);
                 } else {
-                    assert(tsk->dn.lst != NULL);
+                    assert(tsk->lnks.dn.lst != NULL);
                     {   // (2)
-                        CEU_Exe_Task* cur = tsk->dn.fst;
+                        CEU_Exe_Task* cur = tsk->lnks.dn.fst;
                         while (cur != NULL) {
                             ceu_gc_inc_dyn((CEU_Dyn*) cur);
                             ceu_task_unlink(cur, 0);
                             ceu_gc_dec_dyn((CEU_Dyn*) cur);
-                            cur = cur->sd.nxt;
+                            cur = cur->lnks.sd.nxt;
                         }
                     }
-                    tsk->dn.fst = tsk->dn.lst = NULL;
+                    tsk->lnks.dn.fst = tsk->lnks.dn.lst = NULL;
                 }
             }
             
@@ -2277,20 +2286,20 @@ fun Coder.main (tags: Tags): String {
             {
                 int N = 0;
                 { // N
-                    CEU_Exe_Task* cur = task2->dn.fst;
+                    CEU_Exe_Task* cur = task2->lnks.dn.fst;
                     while (cur != NULL) {
                         N++;
-                        cur = cur->sd.nxt;
+                        cur = cur->lnks.sd.nxt;
                     }
                 }
                 CEU_Exe_Task* tsks[N];
                 { // VEC / INC
                     int i = 0;
-                    CEU_Exe_Task* cur = task2->dn.fst;
+                    CEU_Exe_Task* cur = task2->lnks.dn.fst;
                     while (cur != NULL) {
                         ceu_gc_inc_dyn((CEU_Dyn*) cur);
                         tsks[i++] = cur;
-                        cur = cur->sd.nxt;
+                        cur = cur->lnks.sd.nxt;
                     }
                     assert(i == N);
                 }
@@ -2416,7 +2425,7 @@ fun Coder.main (tags: Tags): String {
                     nxt = tsks.Dyn->Tasks.dn_tsk;
                     break;
                 case CEU_VALUE_EXE_TASK:
-                    nxt = key.Dyn->Exe_Task.sd.nxt;
+                    nxt = key.Dyn->Exe_Task.lnks.sd.nxt;
                     break;
                 default:
                     return ceu_error_s(X->S, "next-tasks error : expected task");
