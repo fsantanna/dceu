@@ -953,7 +953,7 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 4
                 { // UNLINK
                     if (blk.Block != NULL) {
-                        blk.Block->up.blk = NULL;
+                        blk.Block->lnks.up.blk_or_tsks = NULL;
                     }
                 }
                 {
@@ -1801,19 +1801,25 @@ fun Coder.main (tags: Tags): String {
         dyn->time = CEU_TIME;
         dyn->pub = (CEU_Value) { CEU_VALUE_NIL };
 
-        dyn->up.tsk = up_tsk;
-        dyn->up.blk = (*up_blk == NULL) ? up_blk : NULL;    // only the first task points up
-        dyn->sd.prv = NULL;
-        dyn->sd.nxt = NULL;
-        dyn->dn.fst = NULL;
-        dyn->dn.lst = NULL;
+    #if CEU >= 5
+        dyn->lnks.up.blk_or_tsks = (*up_blk == NULL) ? up_blk : NULL;    // only the first task points up
+    #else
+        dyn->lnks.up.blk_or_tsks = (*up_blk == NULL) ? up_blk : NULL;    // only the first task points up
+    #endif
+
+        dyn->lnks.up.tsk = up_tsk;
+        dyn->lnks.up.blk_or_tsks = (*up_blk == NULL) ? up_blk : NULL;    // only the first task points up
+        dyn->lnks.sd.prv = NULL;
+        dyn->lnks.sd.nxt = NULL;
+        dyn->lnks.dn.fst = NULL;
+        dyn->lnks.dn.lst = NULL;
         
-        if (up_tsk->dn.fst == NULL) {
-            assert(up_tsk->dn.lst == NULL);
-            up_tsk->dn.fst = dyn;
-        } else if (up_tsk->dn.lst != NULL) {
-            up_tsk->dn.lst->sd.nxt = dyn;
-            dyn->sd.prv = up_tsk->dn.lst;
+        if (up_tsk->lnks.dn.fst == NULL) {
+            assert(up_tsk->lnks.dn.lst == NULL);
+            up_tsk->lnks.dn.fst = dyn;
+        } else if (up_tsk->lnks.dn.lst != NULL) {
+            up_tsk->lnks.dn.lst->lnks.sd.nxt = dyn;
+            dyn->lnks.sd.prv = up_tsk->lnks.dn.lst;
         }
         up_tsk->lnks.dn.lst = dyn;
         if (*up_blk == NULL) {
@@ -2226,16 +2232,16 @@ fun Coder.main (tags: Tags): String {
                     assert(tsk->lnks.sd.nxt == NULL);
                     tsk->lnks.up.tsk->lnks.dn.lst = tsk->lnks.sd.prv;
                 }
-                if (tsk->up.blk != NULL) {
-                    *tsk->up.blk = tsk->sd.nxt;
-                    if (tsk->sd.nxt != NULL) {
-                        tsk->sd.nxt->up.blk = tsk->up.blk;
+                if (tsk->lnks.up.blk_or_tsks != NULL) {
+                    *tsk->lnks.up.blk_or_tsks = tsk->lnks.sd.nxt;
+                    if (tsk->lnks.sd.nxt != NULL) {
+                        tsk->lnks.sd.nxt->lnks.up.blk_or_tsks = tsk->lnks.up.blk_or_tsks;
                     }
                 }
-                tsk->up.tsk = NULL;
-                tsk->up.blk = NULL;
-                if (tsk->sd.prv != NULL) {
-                    tsk->sd.prv->sd.nxt = tsk->sd.nxt;
+                tsk->lnks.up.tsk = NULL;
+                tsk->lnks.up.blk_or_tsks = NULL;
+                if (tsk->lnks.sd.prv != NULL) {
+                    tsk->lnks.sd.prv->lnks.sd.nxt = tsk->lnks.sd.nxt;
                 }
                 if (tsk->lnks.sd.nxt != NULL) {
                     tsk->lnks.sd.nxt->lnks.sd.prv = tsk->lnks.sd.prv;
