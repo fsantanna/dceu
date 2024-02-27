@@ -216,9 +216,17 @@ fun Coder.main (tags: Tags): String {
     
     #if CEU >= 4
     typedef struct CEU_Links {
+    #if CEU >= 5
+        char pool;  // up.x is tsks?
+    #endif
         struct {
             struct CEU_Exe_Task* tsk;
-            struct CEU_Exe_Task** blk_or_tsks;
+            union {
+                CEU_Block* blk;
+    #if CEU >= 5
+                struct CEU_Tasks* tsks;
+    #endif
+            } x;
         } up;
         struct {
             struct CEU_Exe_Task* prv;
@@ -242,8 +250,7 @@ fun Coder.main (tags: Tags): String {
     typedef struct CEU_Tasks {
         _CEU_Dyn_
         int max;
-        CEU_Exe_Task** up_blk;
-        CEU_Exe_Task* dn_tsk;
+        CEU_Links lnks;
     } CEU_Tasks;
     typedef struct CEU_Track {
         _CEU_Dyn_
@@ -302,7 +309,7 @@ fun Coder.main (tags: Tags): String {
     CEU_Exe_Task CEU_GLOBAL_TASK = {
         CEU_VALUE_EXE_TASK, 1, NULL,
         CEU_EXE_STATUS_YIELDED, {}, 0, NULL,
-        0, {}, { {NULL,NULL}, {NULL,NULL}, {NULL,NULL} }
+        0, {}, { 0, {NULL,{.blk=NULL}}, {NULL,NULL}, {NULL,NULL} }
     };
     #endif
     int CEU_BREAK = 0;
@@ -325,7 +332,7 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_create_dict    (void);
     CEU_Value ceu_create_clo     (CEU_VALUE type, CEU_Proto proto, int args, int locs, int upvs);
     #if CEU >= 4
-    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Exe_Task* up_tsk, CEU_Exe_Task** up_blk_or_tsks);
+    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Exe_Task* up_tsk, CEU_Block* up_blk CEU5(COMMA CEU_Tasks* up_tsks));
     CEU_Value ceu_create_track   (CEU_Exe_Task* task);
     #endif
 
@@ -402,8 +409,8 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 5
                 case CEU_VALUE_TASKS:
-                    printf("    up_blk = %p\n", v.Dyn->Tasks.up_blk);
-                    printf("    dn_tsk = %p\n", v.Dyn->Tasks.dn_tsk);
+                    //printf("    up_blk = %p\n", v.Dyn->Tasks.up_blk);
+                    //printf("    dn_tsk = %p\n", v.Dyn->Tasks.dn_tsk);
                     break;
                 case CEU_VALUE_TRACK:
                     printf("    task   = %p\n", v.Dyn->Track.task);
@@ -629,7 +636,7 @@ fun Coder.main (tags: Tags): String {
                 {
                     int N = 0;
                     { // N
-                        CEU_Exe_Task* cur = dyn->Tasks.dn_tsk;
+                        CEU_Exe_Task* cur = dyn->Tasks.lnks.dn.fst;
                         while (cur != NULL) {
                             N++;
                             cur = cur->lnks.sd.nxt;
@@ -638,7 +645,7 @@ fun Coder.main (tags: Tags): String {
                     CEU_Exe_Task* tsks[N];
                     { // VEC / INC
                         int i = 0;
-                        CEU_Exe_Task* cur = dyn->Tasks.dn_tsk;
+                        CEU_Exe_Task* cur = dyn->Tasks.lnks.dn.fst;
                         while (cur != NULL) {
                             ceu_gc_inc_dyn((CEU_Dyn*) cur);
                             tsks[i++] = cur;
@@ -953,7 +960,7 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 4
                 { // UNLINK
                     if (blk.Block != NULL) {
-                        blk.Block->lnks.up.blk_or_tsks = NULL;
+                        blk.Block->lnks.up.x.blk = NULL;
                     }
                 }
                 {
@@ -1202,7 +1209,7 @@ fun Coder.main (tags: Tags): String {
         if (up_tsks.type!=CEU_VALUE_NIL && up_tsks.type!=CEU_VALUE_TASKS) {
             return ceu_error_s(X1->S, "spawn error : invalid pool");
         }
-        CEU_Exe_Task** xup_tsks = (up_tsks.type == CEU_VALUE_NIL) ? NULL : &up_tsks.Dyn->Tasks.lnks.dn.fst;
+        CEU_Tasks* xup_tsks = (up_tsks.type == CEU_VALUE_NIL) ? NULL : &up_tsks.Dyn->Tasks;
         #endif
 
         CEU_Value clo = ceux_peek(X1->S, XX1(-inp-1));
@@ -1230,7 +1237,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
 
-        CEU_Value exe = ceu_create_exe_task(clo, up_tsk(X1), CEU5(xup_tsks!=NULL ? xup_tsks :) up_blk());
+        CEU_Value exe = ceu_create_exe_task(clo, up_tsk(X1), up_blk() CEU5(COMMA xup_tsks));
         if (exe.type == CEU_VALUE_ERROR) {
             return ceu_error_e(X1->S, exe);
         }        
@@ -1782,7 +1789,7 @@ fun Coder.main (tags: Tags): String {
     #endif
     
     #if CEU >= 4
-    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Exe_Task* up_tsk, CEU_Exe_Task* up_blk_or_tsks) {
+    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Exe_Task* up_tsk, CEU_Block* up_blk CEU5(COMMA CEU_Tasks* up_tsks)) {
         if (clo.type != CEU_VALUE_CLO_TASK) {
             return (CEU_Value) { CEU_VALUE_ERROR, {.Error="spawn error : expected task"} };
         }
@@ -1790,18 +1797,22 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ret = ceu_create_exe(CEU_VALUE_EXE_TASK, sizeof(CEU_Exe_Task), clo);
         CEU_Exe_Task* dyn = &ret.Dyn->Exe_Task;
         
-        assert(up_blk_or_tsks != NULL);
         ceu_gc_inc_dyn((CEU_Dyn*) dyn);    // up_blk/tsks holds a strong reference
 
         dyn->time = CEU_TIME;
         dyn->pub = (CEU_Value) { CEU_VALUE_NIL };
 
-        dyn->lnks.up.tsk = up_tsk;
-        dyn->lnks.up.blk_or_tsks = (*up_blk_or_tsks == NULL) ? up_blk_or_tsks : NULL;    // only the first task points up
-        dyn->lnks.sd.prv = NULL;
-        dyn->lnks.sd.nxt = NULL;
-        dyn->lnks.dn.fst = NULL;
-        dyn->lnks.dn.lst = NULL;
+    #if CEU >= 5
+        if (up_tsks != NULL) {
+            dyn->lnks = (CEU_Links) { 1, {up_tsk,{.tsks=up_tsks}}, {NULL,NULL}, {NULL,NULL} };
+        } else
+    #endif
+        {
+            dyn->lnks = (CEU_Links) { 0, {up_tsk,{.blk=NULL}}, {NULL,NULL}, {NULL,NULL} };
+            if (*up_blk == NULL) {
+                dyn->lnks.up.x.blk = up_blk;    // only the first task points up
+            }
+        }
         
         if (up_tsk->lnks.dn.fst == NULL) {
             assert(up_tsk->lnks.dn.lst == NULL);
@@ -1811,8 +1822,8 @@ fun Coder.main (tags: Tags): String {
             dyn->lnks.sd.prv = up_tsk->lnks.dn.lst;
         }
         up_tsk->lnks.dn.lst = dyn;
-        if (*up_blk == NULL) {
-            *up_blk = dyn;
+        if (*up_blk_or_tsks == NULL) {
+            *up_blk_or_tsks = dyn;
         }
 
         return ret;
@@ -1826,7 +1837,7 @@ fun Coder.main (tags: Tags): String {
 
         *ret = (CEU_Tasks) {
             CEU_VALUE_TASKS, 1, NULL,
-            max, up_blk, NULL
+            max, { 0, {NULL,{.blk=up_blk}}, {NULL,NULL}, {NULL,NULL} }
         };
         
         return (CEU_Value) { CEU_VALUE_TASKS, {.Dyn=(CEU_Dyn*)ret} };
@@ -2221,14 +2232,24 @@ fun Coder.main (tags: Tags): String {
                     assert(tsk->lnks.sd.nxt == NULL);
                     tsk->lnks.up.tsk->lnks.dn.lst = tsk->lnks.sd.prv;
                 }
-                if (tsk->lnks.up.blk_or_tsks != NULL) {
-                    *tsk->lnks.up.blk_or_tsks = tsk->lnks.sd.nxt;
-                    if (tsk->lnks.sd.nxt != NULL) {
-                        tsk->lnks.sd.nxt->lnks.up.blk_or_tsks = tsk->lnks.up.blk_or_tsks;
+        #if CEU >= 5
+                if (tsk->lnks.pool) {
+                    assert(tsk->lnks.up.x.tsks != NULL);
+                    assert(0 && "TODO");
+                    tsk->lnks.up.x.tsks = NULL;
+                }
+                else
+        #endif
+                {
+                    if (tsk->lnks.up.x.blk != NULL) {
+                        *tsk->lnks.up.x.blk = tsk->lnks.sd.nxt;
+                        if (tsk->lnks.sd.nxt != NULL) {
+                            tsk->lnks.sd.nxt->lnks.up.x.blk = tsk->lnks.up.x.blk;
+                        }
+                        tsk->lnks.up.x.blk = NULL;
                     }
                 }
                 tsk->lnks.up.tsk = NULL;
-                tsk->lnks.up.blk_or_tsks = NULL;
                 if (tsk->lnks.sd.prv != NULL) {
                     tsk->lnks.sd.prv->lnks.sd.nxt = tsk->lnks.sd.nxt;
                 }
@@ -2417,7 +2438,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Exe_Task* nxt = NULL;
             switch (key.type) {
                 case CEU_VALUE_NIL:
-                    nxt = tsks.Dyn->Tasks.dn_tsk;
+                    nxt = tsks.Dyn->Tasks.lnks.dn.fst;
                     break;
                 case CEU_VALUE_EXE_TASK:
                     nxt = key.Dyn->Exe_Task.lnks.sd.nxt;
