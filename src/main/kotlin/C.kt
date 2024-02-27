@@ -219,14 +219,12 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 5
         char pool;  // up.x is tsks?
     #endif
-        struct {
-            struct CEU_Exe_Task* tsk;
-            union {
+        union {
+            struct {
+                struct CEU_Exe_Task* tsk;
                 CEU_Block* blk;
-    #if CEU >= 5
-                struct CEU_Tasks* tsks;
-    #endif
             } x;
+            CEU5(CEU_Tasks* tsks;)
         } up;
         struct {
             struct CEU_Exe_Task* prv;
@@ -309,7 +307,7 @@ fun Coder.main (tags: Tags): String {
     CEU_Exe_Task CEU_GLOBAL_TASK = {
         CEU_VALUE_EXE_TASK, 1, NULL,
         CEU_EXE_STATUS_YIELDED, {}, 0, NULL,
-        0, {}, { CEU5(0 COMMA) {NULL,{.blk=NULL}}, {NULL,NULL}, {NULL,NULL} }
+        0, {}, { CEU5(0 COMMA) {.x={NULL,NULL}}, {NULL,NULL}, {NULL,NULL} }
     };
     #endif
     int CEU_BREAK = 0;
@@ -1790,6 +1788,13 @@ fun Coder.main (tags: Tags): String {
     
     #if CEU >= 4
     CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Exe_Task* up_tsk, CEU_Block* up_blk CEU5(COMMA CEU_Tasks* up_tsks)) {
+    #if CEU >= 5
+        assert(up_tsk==NULL && up_blk==NULL && up_tsks!=NULL ||
+               up_tsk!=NULL && up_blk!=NULL && up_tsks==NULL);
+    #else
+        assert(up_tsk!=NULL && up_blk!=NULL);
+    #endif
+               
         if (clo.type != CEU_VALUE_CLO_TASK) {
             return (CEU_Value) { CEU_VALUE_ERROR, {.Error="spawn error : expected task"} };
         }
@@ -1802,7 +1807,7 @@ fun Coder.main (tags: Tags): String {
         dyn->time = CEU_TIME;
         dyn->pub = (CEU_Value) { CEU_VALUE_NIL };
 
-        dyn->lnks = (CEU_Links) { CEU5(0 COMMA) {up_tsk,{.blk=NULL}}, {NULL,NULL}, {NULL,NULL} };
+        dyn->lnks = (CEU_Links) { CEU5(0 COMMA) {.x={up_tsk,up_blk}}, {NULL,NULL}, {NULL,NULL} };
 
     #if CEU >= 5
         if (up_tsks != NULL) {
@@ -1837,7 +1842,7 @@ fun Coder.main (tags: Tags): String {
 
         *ret = (CEU_Tasks) {
             CEU_VALUE_TASKS, 1, NULL,
-            max, { CEU5(0 COMMA) {NULL,{.blk=up_blk}}, {NULL,NULL}, {NULL,NULL} }
+            max, { CEU5(0 COMMA) {.x={NULL,NULL}}, {NULL,NULL}, {NULL,NULL} }
         };
         
         return (CEU_Value) { CEU_VALUE_TASKS, {.Dyn=(CEU_Dyn*)ret} };
@@ -2149,7 +2154,8 @@ fun Coder.main (tags: Tags): String {
                 // it would awake parents that actually need to
                 // respond/catch the error (thus not awake)
                 if (X->action != CEU_ACTION_ABORT) {
-                    CEU_Exe_Task* up = ((CEU_Exe_Task*) X->exe)->lnks.up.tsk;
+                    CEU_Exe_Task* up = ((CEU_Exe_Task*) X->exe)->lnks.up.x.tsk;
+                    CEU5(TODO)
                     if (up!=NULL && ceux_peek(X->S,XX(-1)).type!=CEU_VALUE_ERROR) {
                         assert(CEU_TIME < UINT32_MAX);
                         CEU_TIME++;
@@ -2219,18 +2225,19 @@ fun Coder.main (tags: Tags): String {
             //  - up is already unlinked
             //  - gc_dec is already called
 
-            int done = (tsk->lnks.up.tsk == NULL);
+            int done = (tsk->lnks.up.x.tsk == NULL);
+            CEU5(TODO)
             
             // (1)
             if (!done) {
                 // maybe term=0 was called before
-                if (tsk->lnks.up.tsk->lnks.dn.fst == tsk) {
+                if (tsk->lnks.up.x.tsk->lnks.dn.fst == tsk) {
                     assert(tsk->lnks.sd.prv == NULL);
-                    tsk->lnks.up.tsk->lnks.dn.fst = tsk->lnks.sd.nxt;
+                    tsk->lnks.up.x.tsk->lnks.dn.fst = tsk->lnks.sd.nxt;
                 }
-                if (tsk->lnks.up.tsk->lnks.dn.lst == tsk) {
+                if (tsk->lnks.up.x.tsk->lnks.dn.lst == tsk) {
                     assert(tsk->lnks.sd.nxt == NULL);
-                    tsk->lnks.up.tsk->lnks.dn.lst = tsk->lnks.sd.prv;
+                    tsk->lnks.up.x.tsk->lnks.dn.lst = tsk->lnks.sd.prv;
                 }
         #if CEU >= 5
                 if (tsk->lnks.pool) {
@@ -2249,7 +2256,7 @@ fun Coder.main (tags: Tags): String {
                         tsk->lnks.up.x.blk = NULL;
                     }
                 }
-                tsk->lnks.up.tsk = NULL;
+                tsk->lnks.up.x.tsk = NULL;
                 if (tsk->lnks.sd.prv != NULL) {
                     tsk->lnks.sd.prv->lnks.sd.nxt = tsk->lnks.sd.nxt;
                 }
