@@ -309,7 +309,7 @@ fun Coder.main (tags: Tags): String {
     CEU_Exe_Task CEU_GLOBAL_TASK = {
         CEU_VALUE_EXE_TASK, 1, NULL,
         CEU_EXE_STATUS_YIELDED, {}, 0, NULL,
-        0, {}, { 0, {NULL,{.blk=NULL}}, {NULL,NULL}, {NULL,NULL} }
+        0, {}, { CEU5(0 COMMA) {NULL,{.blk=NULL}}, {NULL,NULL}, {NULL,NULL} }
     };
     #endif
     int CEU_BREAK = 0;
@@ -1805,12 +1805,14 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 5
         if (up_tsks != NULL) {
             dyn->lnks = (CEU_Links) { 1, {up_tsk,{.tsks=up_tsks}}, {NULL,NULL}, {NULL,NULL} };
+            assert(0 && "TODO");
         } else
     #endif
         {
-            dyn->lnks = (CEU_Links) { 0, {up_tsk,{.blk=NULL}}, {NULL,NULL}, {NULL,NULL} };
+            dyn->lnks = (CEU_Links) { CEU5(0 COMMA) {up_tsk,{.blk=NULL}}, {NULL,NULL}, {NULL,NULL} };
             if (*up_blk == NULL) {
                 dyn->lnks.up.x.blk = up_blk;    // only the first task points up
+                *up_blk = dyn;
             }
         }
         
@@ -1822,9 +1824,6 @@ fun Coder.main (tags: Tags): String {
             dyn->lnks.sd.prv = up_tsk->lnks.dn.lst;
         }
         up_tsk->lnks.dn.lst = dyn;
-        if (*up_blk_or_tsks == NULL) {
-            *up_blk_or_tsks = dyn;
-        }
 
         return ret;
     }
@@ -1837,7 +1836,7 @@ fun Coder.main (tags: Tags): String {
 
         *ret = (CEU_Tasks) {
             CEU_VALUE_TASKS, 1, NULL,
-            max, { 0, {NULL,{.blk=up_blk}}, {NULL,NULL}, {NULL,NULL} }
+            max, { CEU5(0 COMMA) {NULL,{.blk=up_blk}}, {NULL,NULL}, {NULL,NULL} }
         };
         
         return (CEU_Value) { CEU_VALUE_TASKS, {.Dyn=(CEU_Dyn*)ret} };
