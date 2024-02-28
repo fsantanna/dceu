@@ -961,10 +961,10 @@ fun Coder.main (tags: Tags): String {
                     CEU_Block cur = blk.Block;
                     CEU_Dyn* prv = NULL;
                     while (cur != NULL) {
+                        ceu_gc_inc_dyn(CEU4((CEU_Dyn*)) cur);
                         if (prv != NULL) {
                             ceu_gc_dec_dyn(prv);
                         }
-                        ceu_gc_inc_dyn(CEU4((CEU_Dyn*)) cur);
                         ceu_kill_dyn(CEU45((CEU_Exe*),) cur);
                         prv = CEU4((CEU_Dyn*)) cur;
                         cur = CEU_LNKS(cur)->sd.nxt;
@@ -2180,10 +2180,10 @@ fun Coder.main (tags: Tags): String {
             CEU_Dyn* cur = tsks->lnks.dn.fst;
             CEU_Dyn* prv = NULL;
             while (cur != NULL) {
+                ceu_gc_inc_dyn(cur);
                 if (prv != NULL) {
                     ceu_gc_dec_dyn(prv);
                 }
-                ceu_gc_inc_dyn(cur);
                 ceu_kill_exe((CEU_Exe*) cur);
                 prv = cur;
                 cur = CEU_LNKS(cur)->sd.nxt;
@@ -2310,10 +2310,10 @@ fun Coder.main (tags: Tags): String {
                         CEU45(CEU_Exe_Task,CEU_Dyn)* cur = tsk->lnks.dn.fst;
                         CEU_Dyn* prv = NULL;
                         while (cur != NULL) {
+                            ceu_gc_inc_dyn((CEU_Dyn*) cur);
                             if (prv != NULL) {
                                 ceu_gc_dec_dyn(prv);
                             }
-                            ceu_gc_inc_dyn((CEU_Dyn*) cur);
         #if CEU >= 5
                             if (cur->Any.type == CEU_VALUE_EXE_TASK)
         #endif
@@ -2354,15 +2354,15 @@ fun Coder.main (tags: Tags): String {
             CEU45(CEU_Exe_Task,CEU_Dyn)* cur = lnks->dn.fst;
             CEU_Dyn* prv = NULL;
             while (cur != NULL) {
+                ceu_gc_inc_dyn(CEU4((CEU_Dyn*)) cur);
                 if (prv != NULL) {
                     ceu_gc_dec_dyn(prv);
                 }
-                ceu_gc_inc_dyn(CEU4((CEU_Dyn*)) cur);
                 ret = ceu_bcast_dyn(X1, act, now, cur);
+                prv = CEU4((CEU_Dyn*)) cur;
                 if (ret != 0) {
                     break;
                 }
-                prv = CEU4((CEU_Dyn*)) cur;
                 cur = CEU_LNKS(cur)->sd.nxt;
             }
             if (prv != NULL) {
