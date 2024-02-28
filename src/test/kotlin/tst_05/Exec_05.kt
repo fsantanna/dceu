@@ -37,6 +37,14 @@ class Exec_05 {
         assert(out == ":in\n:out\n") { out }
     }
     @Test
+    fun aa_03x_tasks() {
+        val out = test("""
+            val ts = tasks()
+            println(:ok)
+        """)
+        assert(out == ":in\n:out\n") { out }
+    }
+    @Test
     fun aa_04_tasks() {
         val out = test("""
             spawn (task () { println(:in) })() in tasks()

@@ -1792,7 +1792,7 @@ fun Coder.main (tags: Tags): String {
 
         dyn->lnks = (CEU_Links) { {up_dyn,up_blk}, {NULL,NULL}, {NULL,NULL} };
 
-        if (CEU5(ceu_isexe_dyn(up_dyn) &&) *up_blk==NULL) {
+        if (CEU5(dyn!=NULL && ceu_isexe_dyn(up_dyn) &&) *up_blk==NULL) {
             dyn->lnks.up.blk = up_blk;    // only the first task points up
             *up_blk = CEU5((CEU_Dyn*)) dyn;
         }
@@ -1823,6 +1823,8 @@ fun Coder.main (tags: Tags): String {
             max, { {NULL,NULL}, {NULL,NULL}, {NULL,NULL} }
         };
         
+        ceu_gc_inc_dyn((CEU_Dyn*) ret);    // up_blk/tsks holds a strong reference
+
         {
             if (*up_blk == NULL) {
                 ret->lnks.up.blk = up_blk;    // only the first task points up
@@ -2272,7 +2274,6 @@ fun Coder.main (tags: Tags): String {
                     if (tsk->lnks.up.dyn->Tasks.lnks.dn.lst == CEU5((CEU_Dyn*)) tsk) {
                         tsk->lnks.up.dyn->Tasks.lnks.dn.lst = tsk->lnks.sd.prv;
                     }
-                    ceu_gc_dec_dyn(tsk->lnks.up.dyn);
                     tsk->lnks.up.dyn = NULL;
                 }
                 else
