@@ -965,7 +965,7 @@ fun Coder.main (tags: Tags): String {
                             ceu_gc_dec_dyn(prv);
                         }
                         ceu_gc_inc_dyn(CEU4((CEU_Dyn*)) cur);
-                        ceu_kill_dyn(CEU4((CEU_Exe*)) cur);
+                        ceu_kill_dyn(CEU45((CEU_Exe*),) cur);
                         prv = CEU4((CEU_Dyn*)) cur;
                         cur = CEU_LNKS(cur)->sd.nxt;
                     }

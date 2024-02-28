@@ -5,8 +5,8 @@ import java.io.Reader
 import java.util.*
 
 var DUMP = true
-var DEBUG = false
-var CEU = 1
+var DEBUG = true
+var CEU = 5
     // 1: dyn-lex               ;; 17 (no dots) / 7 "definitely lost"
     // 2: defer, throw/catch    ;; 6 "definitely lost"
     // 3: coro, yield, resume   ;; 0 "definitely lost"
@@ -27,7 +27,7 @@ val THROW = false
 
 var N = 1
 val D = "\$"
-var STACK = 64
+var STACK = 128
 val MULTI = -1
 
 // VERSION
