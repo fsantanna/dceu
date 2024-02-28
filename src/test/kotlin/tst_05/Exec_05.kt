@@ -151,6 +151,7 @@ class Exec_05 {
             println(:ok)
         """)
         assert(out == ":ok\n") { out }
+        //assert(out.contains("ceu_gc_inc_dyn: Assertion `dyn->Any.refs < 255'")) { out }
     }
 
     // GC
@@ -1310,19 +1311,31 @@ class Exec_05 {
                 nil
             }
             val ts = tasks()
-            val t = spawn T() in ts
-            println(t   /= nil)
-            println(t   == next-tasks(ts))
-            println(nil == next-tasks(ts,t))
+            spawn T() in ts
+            println(next-tasks(ts))
         """
         )
-        assert(out == "false\ntrue\ntrue\n") { out }
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun hh_00x_next() {
+        val out = test("""
+            val T = task () {
+                yield(nil)
+            }
+            val ts = tasks()
+            val t = spawn T() in ts
+            println(next-tasks(ts))
+            println(next-tasks(ts,t))
+        """
+        )
+        assert(out.contains(Regex("exe-task: 0x.*\nnil\n"))) { out }
     }
     @Test
     fun hh_01_next() {
         val out = test("""
             val T = task () {
-                yield(nil) ;;thus { it => nil }
+                yield(nil)
             }
             val ts = tasks()
             println(next-tasks(ts))
@@ -1342,7 +1355,7 @@ class Exec_05 {
     fun hh_02_next() {
         val out = test("""
             val T = task () {
-                yield(nil) ;;thus { it => nil }
+                yield(nil)
             }
             val ts = tasks()
             spawn T() in ts
@@ -1357,7 +1370,7 @@ class Exec_05 {
             println(x2)
         """
         )
-        assert(out.contains("true\ntrue\ntrue\ntrue\ntrack: 0x")) { out }
+        assert(out.contains("true\ntrue\ntrue\ntrue\nexe-task: 0x")) { out }
     }
     @Test
     fun hh_03_next() {
