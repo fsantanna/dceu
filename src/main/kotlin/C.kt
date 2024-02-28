@@ -238,11 +238,11 @@ fun Coder.main (tags: Tags): String {
     } CEU_Links;
     
     #if CEU >= 5
-        #define CEU_LNKS(dyn) (dyn->Any.type==CEU_VALUE_TASKS ? &dyn->Tasks.lnks : &dyn->Exe_Task.lnks)
-        #define CEU_TSK_UP(tsk) (tsk->lnks.pool ? (CEU_Dyn*)tsk->lnks.up.tsks : (CEU_Dyn*)tsk->lnks.up.x.tsk)
+        #define CEU_LNKS(dyn) ((dyn)->Any.type==CEU_VALUE_TASKS ? &(dyn)->Tasks.lnks : &(dyn)->Exe_Task.lnks)
+        #define CEU_TSK_UP(tsk) ((tsk)->lnks.pool ? (CEU_Dyn*)(tsk)->lnks.up.tsks : (CEU_Dyn*)(tsk)->lnks.up.x.tsk)
     #else
-        #define CEU_LNKS(dyn) (&dyn->Exe_Task.lnks)
-        #define CEU_TSK_UP(tsk) ((CEU_Dyn*)tsk->lnks.up.x.tsk)
+        #define CEU_LNKS(dyn) (&(dyn)->Exe_Task.lnks)
+        #define CEU_TSK_UP(tsk) ((CEU_Dyn*)(tsk)->lnks.up.x.tsk)
     #endif
 
     typedef struct CEU_Exe_Task {
@@ -633,6 +633,7 @@ fun Coder.main (tags: Tags): String {
                     ceu_gc_dec_val(((CEU_Exe_Task*)dyn)->pub);
                 }
 #endif
+                
                 free(dyn->Exe.X->S);
                 free(dyn->Exe.X);
                 break;
@@ -1790,20 +1791,12 @@ fun Coder.main (tags: Tags): String {
             CEU_EXE_STATUS_YIELDED, clo, 0, X
         };
         
-        //ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA dyns));
         return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
     }
     #endif
     
     #if CEU >= 4
     CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Exe_Task* up_tsk, CEU_Block* up_blk CEU5(COMMA CEU_Tasks* up_tsks)) {
-    #if CEU >= 5
-        assert(up_tsk==NULL && up_blk==NULL && up_tsks!=NULL ||
-               up_tsk!=NULL && up_blk!=NULL && up_tsks==NULL);
-    #else
-        assert(up_tsk!=NULL && up_blk!=NULL);
-    #endif
-               
         if (clo.type != CEU_VALUE_CLO_TASK) {
             return (CEU_Value) { CEU_VALUE_ERROR, {.Error="spawn error : expected task"} };
         }
@@ -2241,7 +2234,7 @@ fun Coder.main (tags: Tags): String {
             //  - gc_dec is already called
 
             CEU_Dyn* up = CEU_TSK_UP(tsk);
-            CEU_Links* up_lnks = CEU_LNKS(up);
+            CEU_Links* up_lnks = (up == NULL) ? NULL : CEU_LNKS(up);
             
             int done = (up == NULL);
 
@@ -2259,7 +2252,13 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
                 if (tsk->lnks.pool) {
                     assert(tsk->lnks.up.tsks != NULL);
-                    assert(0 && "TODO");
+                    if (tsk->lnks.up.tsks->lnks.dn.fst == tsk) {
+                        tsk->lnks.up.tsks->lnks.dn.fst = tsk->lnks.sd.nxt;
+                    }
+                    if (tsk->lnks.up.tsks->lnks.dn.lst == tsk) {
+                        tsk->lnks.up.tsks->lnks.dn.lst = tsk->lnks.sd.prv;
+                    }
+                    ceu_gc_dec_dyn((CEU_Dyn*) tsk->lnks.up.tsks);
                     tsk->lnks.up.tsks = NULL;
                 }
                 else
@@ -2321,12 +2320,13 @@ fun Coder.main (tags: Tags): String {
     """
     val c_bcast = """
         int ceu_bcast_tasks (CEUX* X1, CEU_ACTION act, uint32_t now, CEU_Exe_Task* task2) {
-            assert(task2!=NULL && task2->type==CEU_VALUE_EXE_TASK);
+            assert(task2!=NULL && (task2->type==CEU_VALUE_EXE_TASK || task2->type==CEU_VALUE_TASKS));
             int ret = 0;            
             {
+                CEU_Links* lnks = CEU_LNKS((CEU_Dyn*)task2);
                 int N = 0;
                 { // N
-                    CEU_Exe_Task* cur = task2->lnks.dn.fst;
+                    CEU_Exe_Task* cur = lnks->dn.fst;
                     while (cur != NULL) {
                         N++;
                         cur = cur->lnks.sd.nxt;
@@ -2335,7 +2335,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_Exe_Task* tsks[N];
                 { // VEC / INC
                     int i = 0;
-                    CEU_Exe_Task* cur = task2->lnks.dn.fst;
+                    CEU_Exe_Task* cur = lnks->dn.fst;
                     while (cur != NULL) {
                         ceu_gc_inc_dyn((CEU_Dyn*) cur);
                         tsks[i++] = cur;
@@ -2363,8 +2363,12 @@ fun Coder.main (tags: Tags): String {
             
             // X1: [evt]    // must keep as is at the end bc outer bcast pops it
             
-            assert(task2!=NULL && task2->type==CEU_VALUE_EXE_TASK);
+            assert(task2!=NULL && (task2->type==CEU_VALUE_EXE_TASK || task2->type==CEU_VALUE_TASKS));
             assert(act == CEU_ACTION_RESUME);
+            
+            if (task2->type == CEU_VALUE_TASKS) {
+                return ceu_bcast_tasks(X1, act, now, task2);
+            }
             
             if (task2->status == CEU_EXE_STATUS_TERMINATED) {
                 return 0;
