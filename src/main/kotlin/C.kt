@@ -953,40 +953,24 @@ fun Coder.main (tags: Tags): String {
             CEU_Value blk = ceux_peek(S,i);
             if (blk.type == CEU_VALUE_BLOCK) {
     #if CEU >= 4
-                { // UNLINK
-                    if (blk.Block != NULL) {
-                        CEU_LNKS(blk.Block)->up.blk = NULL;
-                    }
+                if (blk.Block != NULL) {
+                    CEU_LNKS(blk.Block)->up.blk = NULL;
                 }
+
                 {
-                    int N = 0;
-                    { // N
-                        CEU_Block cur = blk.Block;
-                        while (cur != NULL) {
-                            N++;
-                            cur = CEU_LNKS(cur)->sd.nxt;
+                    CEU_Block cur = blk.Block;
+                    CEU_Dyn* prv = NULL;
+                    while (cur != NULL) {
+                        if (prv != NULL) {
+                            ceu_gc_dec_dyn(prv);
                         }
+                        ceu_gc_inc_dyn(CEU4((CEU_Dyn*)) cur);
+                        ceu_kill_dyn(CEU4((CEU_Exe*)) cur);
+                        prv = CEU4((CEU_Dyn*)) cur;
+                        cur = CEU_LNKS(cur)->sd.nxt;
                     }
-                    CEU45(CEU_Exe_Task,CEU_Dyn)* dyns[N];
-                    { // VEC / INC
-                        int i = 0;
-                        CEU_Block cur = blk.Block;
-                        while (cur != NULL) {
-                            ceu_gc_inc_dyn((CEU_Dyn*) cur);
-                            dyns[i++] = cur;
-                            cur = CEU_LNKS(cur)->sd.nxt;
-                        }
-                        assert(i == N);
-                    }
-                    { // KILL
-                        for (int i=0; i<N; i++) {
-                            ceu_kill_dyn(CEU45((CEU_Exe*),) dyns[i]);
-                        }
-                    }
-                    { // DEC
-                        for (int i=0; i<N; i++) {
-                            ceu_gc_dec_dyn((CEU_Dyn*) dyns[i]);
-                        }
+                    if (prv != NULL) {
+                        ceu_gc_dec_dyn(prv);
                     }
                 }
     #endif
@@ -2193,34 +2177,19 @@ fun Coder.main (tags: Tags): String {
 
         #if CEU >= 5
         void ceu_kill_tasks (CEU_Tasks* tsks) {
-            int N = 0;
-            { // N
-                CEU_Dyn* cur = tsks->lnks.dn.fst;
-                while (cur != NULL) {
-                    N++;
-                    cur = CEU_LNKS(cur)->sd.nxt;
+            CEU_Dyn* cur = tsks->lnks.dn.fst;
+            CEU_Dyn* prv = NULL;
+            while (cur != NULL) {
+                if (prv != NULL) {
+                    ceu_gc_dec_dyn(prv);
                 }
+                ceu_gc_inc_dyn(cur);
+                ceu_kill_exe((CEU_Exe*) cur);
+                prv = cur;
+                cur = CEU_LNKS(cur)->sd.nxt;
             }
-            CEU_Dyn* dyns[N];
-            { // VEC / INC
-                int i = 0;
-                CEU_Dyn* cur = tsks->lnks.dn.fst;
-                while (cur != NULL) {
-                    ceu_gc_inc_dyn(cur);
-                    dyns[i++] = cur;
-                    cur = CEU_LNKS(cur)->sd.nxt;
-                }
-                assert(i == N);
-            }
-            { // KILL
-                for (int i=0; i<N; i++) {
-                    ceu_kill_exe((CEU_Exe*) dyns[i]);
-                }
-            }
-            { // DEC
-                for (int i=0; i<N; i++) {
-                    ceu_gc_dec_dyn(dyns[i]);
-                }
+            if (prv != NULL) {
+                ceu_gc_dec_dyn(prv);
             }
         }
         #endif
@@ -2339,7 +2308,11 @@ fun Coder.main (tags: Tags): String {
                     assert(tsk->lnks.dn.lst != NULL);
                     {   // (2)
                         CEU45(CEU_Exe_Task,CEU_Dyn)* cur = tsk->lnks.dn.fst;
+                        CEU_Dyn* prv = NULL;
                         while (cur != NULL) {
+                            if (prv != NULL) {
+                                ceu_gc_dec_dyn(prv);
+                            }
                             ceu_gc_inc_dyn((CEU_Dyn*) cur);
         #if CEU >= 5
                             if (cur->Any.type == CEU_VALUE_EXE_TASK)
@@ -2347,8 +2320,11 @@ fun Coder.main (tags: Tags): String {
                             {
                                 ceu_task_unlink(CEU5((CEU_Exe_Task*)) cur, 0);
                             }
-                            ceu_gc_dec_dyn((CEU_Dyn*) cur);
+                            prv = (CEU_Dyn*) cur;
                             cur = CEU_LNKS(cur)->sd.nxt;
+                        }
+                        if (prv != NULL) {
+                            ceu_gc_dec_dyn(prv);
                         }
                     }
                     tsk->lnks.dn.fst = tsk->lnks.dn.lst = NULL;
@@ -2371,38 +2347,26 @@ fun Coder.main (tags: Tags): String {
     val c_bcast = """
         int ceu_bcast_tasks (CEUX* X1, CEU_ACTION act, uint32_t now, CEU45(CEU_Exe_Task,CEU_Dyn)* dyn2) {
             //assert(dyn2!=NULL && (dyn2->type==CEU_VALUE_EXE_TASK CEU5(|| dyn2->type==CEU_VALUE_TASKS)));
-            int ret = 0;            
-            {
-                CEU_Links* lnks = CEU_LNKS(dyn2);
-                int N = 0;
-                { // N
-                    CEU45(CEU_Exe_Task,CEU_Dyn)* cur = lnks->dn.fst;
-                    while (cur != NULL) {
-                        N++;
-                        cur = CEU_LNKS(cur)->sd.nxt;
-                    }
+            int ret = 0;     
+                   
+            CEU_Links* lnks = CEU_LNKS(dyn2);
+
+            CEU45(CEU_Exe_Task,CEU_Dyn)* cur = lnks->dn.fst;
+            CEU_Dyn* prv = NULL;
+            while (cur != NULL) {
+                if (prv != NULL) {
+                    ceu_gc_dec_dyn(prv);
                 }
-                CEU45(CEU_Exe_Task,CEU_Dyn)* dyns[N];
-                { // VEC / INC
-                    int i = 0;
-                    CEU45(CEU_Exe_Task,CEU_Dyn)* cur = lnks->dn.fst;
-                    while (cur != NULL) {
-                        ceu_gc_inc_dyn((CEU_Dyn*) cur);
-                        dyns[i++] = cur;
-                        cur = CEU_LNKS(cur)->sd.nxt;
-                    }
-                    assert(i == N);
+                ceu_gc_inc_dyn(CEU4((CEU_Dyn*)) cur);
+                ret = ceu_bcast_dyn(X1, act, now, cur);
+                if (ret != 0) {
+                    break;
                 }
-                { // BCAST
-                    for (int i=0; i<N && ret==0; i++) {
-                        ret = ceu_bcast_dyn(X1, act, now, dyns[i]);
-                    }
-                }
-                { // DEC
-                    for (int i=0; i<N; i++) {
-                        ceu_gc_dec_dyn((CEU_Dyn*) dyns[i]);
-                    }
-                }
+                prv = CEU4((CEU_Dyn*)) cur;
+                cur = CEU_LNKS(cur)->sd.nxt;
+            }
+            if (prv != NULL) {
+                ceu_gc_dec_dyn(prv);
             }
             return ret;
         }
