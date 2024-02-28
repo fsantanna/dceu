@@ -362,12 +362,12 @@ class Exec_05 {
                         broadcast(nil) in :global
                         ;;dump(t)                    
                     }
-                    println(;;;detrack;;;(t))
+                    println(;;;detrack;;;status(t))
                 }
             }) ()
             println(:ok)
         """)
-        assert(out == ("false\n:ok\n")) { out }
+        assert(out == (":terminated\n:ok\n")) { out }
     }
 
     // TRACK / SCOPE / ERROR

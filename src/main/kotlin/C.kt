@@ -368,6 +368,7 @@ fun Coder.main (tags: Tags): String {
     int ceu_pointer_dash_to_dash_string_f (CEUX* X);
     #endif
     #if CEU >= 3
+    int ceu_isexe_dyn (CEU_Dyn* dyn);
     int ceu_isexe_val (CEU_Value val);
     void ceu_kill_exe (CEU_Exe* exe);
     #endif
@@ -1234,7 +1235,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value exe; {
         #if CEU >= 5
             if (xup_tsks != NULL) {
-                exe = ceu_create_exe_task(clo, (CEU_Dyn*) xup_tsks, ceu_up_blk(X1->S));
+                exe = ceu_create_exe_task(clo, (CEU_Dyn*) xup_tsks, NULL);
             } else {
                 exe = ceu_create_exe_task(clo, (CEU_Dyn*) ceu_up_tsk(X1), ceu_up_blk(X1->S));
             }
@@ -1807,7 +1808,7 @@ fun Coder.main (tags: Tags): String {
 
         dyn->lnks = (CEU_Links) { {up_dyn,up_blk}, {NULL,NULL}, {NULL,NULL} };
 
-        if (*up_blk == NULL) {
+        if (CEU5(ceu_isexe_dyn(up_dyn) &&) *up_blk==NULL) {
             dyn->lnks.up.blk = up_blk;    // only the first task points up
             *up_blk = CEU5((CEU_Dyn*)) dyn;
         }
