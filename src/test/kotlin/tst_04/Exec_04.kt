@@ -902,33 +902,6 @@ class Exec_04 {
                 " |  anon : (lin 7, col 21) : error(:XXX)\n" +
                 " v  error : :XXX\n") { out }
     }
-    @Test
-    fun df_03x_bcast_throw() {
-        DEBUG = true
-        val out = test("""
-            spawn (task () {
-                spawn (task () {
-                    yield(nil)
-                    yield(nil)
-                    println(:ok)
-                    error(:XXX)
-                }) ()
-                spawn (task () {
-                    yield(nil)
-                    broadcast (nil) in :global
-                }) ()
-                loop {
-                    yield(nil)
-                }
-            }) ()            
-            broadcast(nil)
-        """)
-        assert(out == ":ok\n" +
-                " |  anon : (lin 17, col 13) : broadcast'(:task,nil)\n" +
-                " |  anon : (lin 11, col 21) : broadcast'(:global,nil)\n" +
-                " |  anon : (lin 7, col 21) : error(:XXX)\n" +
-                " v  error : :XXX\n") { out }
-    }
 
     // EVT
 

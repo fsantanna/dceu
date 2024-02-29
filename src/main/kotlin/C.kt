@@ -469,31 +469,31 @@ fun Coder.main (tags: Tags): String {
     // EXIT / ERROR / ASSERT
     val c_error = """
     #define CEU_ERROR_CHK_VAL(cmd,v,pre) ({     \
-        if (v.type == CEU_VALUE_ERROR) {    \
-            ceu_error_e(X->S,v);            \
+        if (v.type == CEU_VALUE_ERROR) {        \
+            ceu_error_e(X->S,v);                \
             CEU_ERROR_CHK_STK(cmd,pre);         \
-        };                                  \
-        v;                                  \
+        };                                      \
+        v;                                      \
     })
-    #define CEU_ERROR_THR_S(cmd,msg,pre) {    \
-        ceu_error_s(X->S, msg);             \
+    #define CEU_ERROR_THR_S(cmd,msg,pre) {      \
+        ceu_error_s(X->S, msg);                 \
         CEU_ERROR_CHK_STK(cmd,pre);             \
     }
 
     #if CEU <= 1
-    #define CEU_ERROR_CHK_STK(cmd,pre) {                    \
-        if (ceux_n_get(X->S)>0 && ceux_peek(X->S,XX(-1)).type==CEU_VALUE_ERROR) {     \
-            CEU_Value msg = ceux_peek(X->S, XX(-2));    \
-            assert(msg.type == CEU_VALUE_POINTER);      \
+    #define CEU_ERROR_CHK_STK(cmd,pre) {                                            \
+        if (ceux_n_get(X->S)>0 && ceux_peek(X->S,XX(-1)).type==CEU_VALUE_ERROR) {   \
+            CEU_Value msg = ceux_peek(X->S, XX(-2));                                \
+            assert(msg.type==CEU_VALUE_POINTER && msg.Pointer!=NULL);               \
             fprintf(stderr, " |  %s\n v  error : %s\n", pre, (char*) msg.Pointer);  \
-            ceux_n_set(X->S, 0);                         \
-            exit(0);                                    \
-        }                                               \
+            ceux_n_set(X->S, 0);                                                    \
+            exit(0);                                                                \
+        }                                                                           \
     }
     #else
     #define CEU_ERROR_CHK_STK(cmd,pre)      \
         if (ceu_error_chk_stk(X->S, pre)) { \
-            cmd;                        \
+            cmd;                            \
         }
     int ceu_error_chk_stk (CEU_Stack* S, char* pre) {
         CEU_Value err = ceux_peek(S, SS(-1));
@@ -514,13 +514,14 @@ fun Coder.main (tags: Tags): String {
     #endif
 
     int ceu_error_e (CEU_Stack* S, CEU_Value e) {
-        assert(e.type == CEU_VALUE_ERROR);
+        assert(e.type==CEU_VALUE_ERROR && e.Error!=NULL);
         ceux_push(S, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=0} });
         ceux_push(S, 1, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=e.Error} });
         ceux_push(S, 1, (CEU_Value) { CEU_VALUE_ERROR, {.Error=NULL} });
         return 3;
     }
     int ceu_error_s (CEU_Stack* S, char* s) {
+        assert(s != NULL);
         ceux_push(S, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=0} });
         ceux_push(S, 1, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=s} });
         ceux_push(S, 1, (CEU_Value) { CEU_VALUE_ERROR });
@@ -2557,11 +2558,12 @@ fun Coder.main (tags: Tags): String {
             for (int i=1; i<n.Number; i++) {
                 printf(" |  ");
                 CEU_Value pre = ceux_peek(X->S, XX(-4-i));
-                assert(pre.type == CEU_VALUE_POINTER);
+                assert(pre.type==CEU_VALUE_POINTER && pre.Pointer!=NULL);
                 printf("%s\n", (char*) pre.Pointer);
             }
             CEU_Value pay = ceux_peek(X->S, XX(-2));
             if (pay.type == CEU_VALUE_POINTER) {
+                assert(pay.Pointer != NULL);
                 printf(" v  %s\n", (char*) pay.Pointer);     // payload is primitive error
             } else {
                 printf(" v  error : ");
