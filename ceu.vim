@@ -14,7 +14,7 @@ let s:ft = matchstr(&ft, '^\([^.]\)\+')
 
 syn keyword Statement   as break data do drop else evt
 syn keyword Statement   enum false func if
-syn keyword Statement   loop nil pass set skip
+syn keyword Statement   loop nested nil pass set skip
 syn keyword Statement   thus true val var
 syn keyword Statement   catch defer
 syn keyword Statement   coro resume yield
@@ -28,7 +28,6 @@ syn keyword Statement   pointer-to-string throw
 syn keyword Statement   coroutine status
 syn keyword Statement   pub
 syn keyword Statement   tasks track
-
 
 syn keyword Statement   native copy it export
 syn keyword Statement   is is-not

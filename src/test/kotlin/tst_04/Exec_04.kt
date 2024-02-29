@@ -2125,8 +2125,8 @@ class Exec_04 {
             }
             println(:ok)
         """)
-        //assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared\n") { out }
-        assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared\n") { out }
+        //assert(out == ":ok\n") { out }
     }
     @Test
     fun kk_12_pub() {
@@ -2501,6 +2501,16 @@ class Exec_04 {
             } )()
         """)
         assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
+    }
+    @Test
+    fun ll_10_nested() {
+        val out = test("""
+            spawn (task () :X {
+                set pub().x = nil
+            }) ()
+            println(:ok)
+        """)
+        assert(out == "anon : (lin 2, col 28) : declaration error : data :X is not declared\n") { out }
     }
 
     // ABORTION

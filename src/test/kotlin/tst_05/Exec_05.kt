@@ -52,7 +52,7 @@ class Exec_05 {
             }
             println(:ok)
         """)
-        assert(out == ":in\n:out\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun aa_04_tasks() {
