@@ -955,8 +955,7 @@ fun Coder.main (tags: Tags): String {
             if (blk.type == CEU_VALUE_BLOCK) {
     #if CEU >= 4
                 if (blk.Block != NULL) {
-                    // TODO: kill does this
-                    //CEU_LNKS(blk.Block)->up.blk = NULL;
+                    CEU_LNKS(blk.Block)->up.blk = NULL; // also on ceu_task_unlink (if unlinked before leave)
                 }
 
                 {
@@ -1435,6 +1434,7 @@ fun Coder.main (tags: Tags): String {
 
 
     CEU_Value ceu_pointer_dash_to_dash_string (const char* ptr) {
+        assert(ptr != NULL);
         CEU_Value str = ceu_create_vector();
         int len = strlen(ptr);
         for (int i=0; i<len; i++) {
@@ -1448,7 +1448,7 @@ fun Coder.main (tags: Tags): String {
     int ceu_pointer_dash_to_dash_string_f (CEUX* X) {
         assert(X->args == 1);
         CEU_Value ptr = ceux_peek(X->S, ceux_arg(X,0));
-        assert(ptr.type == CEU_VALUE_POINTER);
+        assert(ptr.type==CEU_VALUE_POINTER && ptr.Pointer!=NULL);
         ceux_push(X->S, 1, ceu_pointer_dash_to_dash_string(ptr.Pointer));
         return 1;
     }
@@ -2294,7 +2294,7 @@ fun Coder.main (tags: Tags): String {
                         if (tsk->lnks.sd.nxt != NULL) {
                             CEU_LNKS(tsk->lnks.sd.nxt)->up.blk = tsk->lnks.up.blk;
                         }
-                        tsk->lnks.up.blk = NULL;
+                        tsk->lnks.up.blk = NULL; // also on ceux_block_leave (to prevent dangling pointer)
                     }
                     tsk->lnks.up.dyn = NULL;
                 }
