@@ -954,7 +954,8 @@ fun Coder.main (tags: Tags): String {
             if (blk.type == CEU_VALUE_BLOCK) {
     #if CEU >= 4
                 if (blk.Block != NULL) {
-                    CEU_LNKS(blk.Block)->up.blk = NULL;
+                    // TODO: kill does this
+                    //CEU_LNKS(blk.Block)->up.blk = NULL;
                 }
 
                 {
@@ -1819,7 +1820,7 @@ fun Coder.main (tags: Tags): String {
         assert(ret != NULL);
 
         *ret = (CEU_Tasks) {
-            CEU_VALUE_TASKS, 1, NULL,
+            CEU_VALUE_TASKS, 0, NULL,
             max, { {NULL,NULL}, {NULL,NULL}, {NULL,NULL} }
         };
         
@@ -2192,6 +2193,15 @@ fun Coder.main (tags: Tags): String {
             }
             if (prv != NULL) {
                 ceu_gc_dec_dyn(prv);
+            }
+            // unlink
+            if (tsks->lnks.up.blk != NULL) {
+                *tsks->lnks.up.blk = tsks->lnks.sd.nxt;
+                if (tsks->lnks.sd.nxt != NULL) {
+                    CEU_LNKS(tsks->lnks.sd.nxt)->up.blk = tsks->lnks.up.blk;
+                }
+                tsks->lnks.up.blk = NULL;
+                ceu_gc_dec_dyn((CEU_Dyn*)tsks);
             }
         }
         #endif
