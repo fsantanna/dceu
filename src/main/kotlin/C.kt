@@ -1822,7 +1822,7 @@ fun Coder.main (tags: Tags): String {
 
         *ret = (CEU_Tasks) {
             CEU_VALUE_TASKS, 0, NULL,
-            max, { {NULL,NULL}, {NULL,NULL}, {NULL,NULL} }
+            max, { {(CEU_Dyn*)up_tsk,NULL}, {NULL,NULL}, {NULL,NULL} }
         };
         
         ceu_gc_inc_dyn((CEU_Dyn*) ret);    // up_blk/tsks holds a strong reference
@@ -2181,6 +2181,9 @@ fun Coder.main (tags: Tags): String {
 
         #if CEU >= 5
         void ceu_kill_tasks (CEU_Tasks* tsks) {
+            if (tsks->lnks.up.dyn == NULL) {
+                return;     // already unlinked/killed
+            }
             CEU_Dyn* cur = tsks->lnks.dn.fst;
             CEU_Dyn* prv = NULL;
             while (cur != NULL) {
@@ -2196,14 +2199,44 @@ fun Coder.main (tags: Tags): String {
                 ceu_gc_dec_dyn(prv);
             }
             // unlink
-            if (tsks->lnks.up.blk != NULL) {
-                *tsks->lnks.up.blk = tsks->lnks.sd.nxt;
-                if (tsks->lnks.sd.nxt != NULL) {
-                    CEU_LNKS(tsks->lnks.sd.nxt)->up.blk = tsks->lnks.up.blk;
+            {
+                {   // UP-DYN-DN
+                    CEU_Links* up_lnks = CEU_LNKS(tsks->lnks.up.dyn);
+                    if (up_lnks->dn.fst == CEU5((CEU_Dyn*)) tsks) {
+                        assert(tsks->lnks.sd.prv == NULL);
+                        up_lnks->dn.fst = tsks->lnks.sd.nxt;
+                    }
+                    if (up_lnks->dn.lst == CEU5((CEU_Dyn*)) tsks) {
+                        assert(tsks->lnks.sd.nxt == NULL);
+                        up_lnks->dn.lst = tsks->lnks.sd.prv;
+                    }
                 }
-                tsks->lnks.up.blk = NULL;
-                ceu_gc_dec_dyn((CEU_Dyn*)tsks);
+                {   // UP-BLK & UP-DYN
+                    if (tsks->lnks.up.blk != NULL) {
+                        *tsks->lnks.up.blk = tsks->lnks.sd.nxt;
+                        if (tsks->lnks.sd.nxt != NULL) {
+                            CEU_LNKS(tsks->lnks.sd.nxt)->up.blk = tsks->lnks.up.blk;
+                        }
+                        tsks->lnks.up.blk = NULL;
+                    }
+                    tsks->lnks.up.dyn = NULL;
+                }
+                {   // SD
+                    if (tsks->lnks.sd.prv != NULL) {
+                        CEU_LNKS(tsks->lnks.sd.prv)->sd.nxt = tsks->lnks.sd.nxt;
+                    }
+                    if (tsks->lnks.sd.nxt != NULL) {
+                        CEU_LNKS(tsks->lnks.sd.nxt)->sd.prv = tsks->lnks.sd.prv;
+                    }
+                    //tsk->lnks.sd.prv = tsk->lnks.sd.nxt = NULL;
+                        // prv/nxt are never reached again:
+                        //  - it is not a problem to keep the dangling pointers
+                        // but we actually should not set them NULL:
+                        //  - tsk might be in bcast_tasks which must call nxt
+                }
             }
+            
+            ceu_gc_dec_dyn((CEU_Dyn*)tsks);
         }
         #endif
 
@@ -2261,61 +2294,63 @@ fun Coder.main (tags: Tags): String {
             //  - up is already unlinked
             //  - gc_dec is already called
 
-            CEU_Links* up_lnks = (tsk->lnks.up.dyn == NULL) ? NULL : CEU_LNKS(tsk->lnks.up.dyn);
-            
             int done = (tsk->lnks.up.dyn == NULL);
 
             // (1)
             if (!done) { // maybe term=0 was called before
-                if (up_lnks->dn.fst == CEU5((CEU_Dyn*)) tsk) {
-                    assert(tsk->lnks.sd.prv == NULL);
-                    up_lnks->dn.fst = tsk->lnks.sd.nxt;
+                {   // UP-DYN-DN
+                    CEU_Links* up_lnks = CEU_LNKS(tsk->lnks.up.dyn);
+                    if (up_lnks->dn.fst == CEU5((CEU_Dyn*)) tsk) {
+                        assert(tsk->lnks.sd.prv == NULL);
+                        up_lnks->dn.fst = tsk->lnks.sd.nxt;
+                    }
+                    if (up_lnks->dn.lst == CEU5((CEU_Dyn*)) tsk) {
+                        assert(tsk->lnks.sd.nxt == NULL);
+                        up_lnks->dn.lst = tsk->lnks.sd.prv;
+                    }
                 }
-                if (up_lnks->dn.lst == CEU5((CEU_Dyn*)) tsk) {
-                    assert(tsk->lnks.sd.nxt == NULL);
-                    up_lnks->dn.lst = tsk->lnks.sd.prv;
-                }
+                {   // UP-BLK & UP-DYN (TSK,TSKS)
         #if CEU >= 5
-                if (tsk->lnks.up.dyn->Any.type == CEU_VALUE_TASKS) {
-                    assert(tsk->lnks.up.dyn != NULL);
-                    if (tsk->lnks.up.dyn->Tasks.lnks.dn.fst == CEU5((CEU_Dyn*)) tsk) {
-                        tsk->lnks.up.dyn->Tasks.lnks.dn.fst = tsk->lnks.sd.nxt;
-                    }
-                    if (tsk->lnks.up.dyn->Tasks.lnks.dn.lst == CEU5((CEU_Dyn*)) tsk) {
-                        tsk->lnks.up.dyn->Tasks.lnks.dn.lst = tsk->lnks.sd.prv;
-                    }
-                    tsk->lnks.up.dyn = NULL;
-                }
-                else
-        #endif
-                {
-                    if (tsk->lnks.up.blk != NULL) {
-                        *tsk->lnks.up.blk = tsk->lnks.sd.nxt;
-                        if (tsk->lnks.sd.nxt != NULL) {
-                            CEU_LNKS(tsk->lnks.sd.nxt)->up.blk = tsk->lnks.up.blk;
+                    if (tsk->lnks.up.dyn->Any.type == CEU_VALUE_TASKS) {
+                        assert(tsk->lnks.up.dyn != NULL);
+                        if (tsk->lnks.up.dyn->Tasks.lnks.dn.fst == CEU5((CEU_Dyn*)) tsk) {
+                            tsk->lnks.up.dyn->Tasks.lnks.dn.fst = tsk->lnks.sd.nxt;
                         }
-                        tsk->lnks.up.blk = NULL; // also on ceux_block_leave (to prevent dangling pointer)
+                        if (tsk->lnks.up.dyn->Tasks.lnks.dn.lst == CEU5((CEU_Dyn*)) tsk) {
+                            tsk->lnks.up.dyn->Tasks.lnks.dn.lst = tsk->lnks.sd.prv;
+                        }
+                    }
+                    else
+        #endif
+                    {
+                        if (tsk->lnks.up.blk != NULL) {
+                            *tsk->lnks.up.blk = tsk->lnks.sd.nxt;
+                            if (tsk->lnks.sd.nxt != NULL) {
+                                CEU_LNKS(tsk->lnks.sd.nxt)->up.blk = tsk->lnks.up.blk;
+                            }
+                            tsk->lnks.up.blk = NULL; // also on ceux_block_leave (to prevent dangling pointer)
+                        }
                     }
                     tsk->lnks.up.dyn = NULL;
                 }
-                if (tsk->lnks.sd.prv != NULL) {
-                    CEU_LNKS(tsk->lnks.sd.prv)->sd.nxt = tsk->lnks.sd.nxt;
+                {   // SD
+                    if (tsk->lnks.sd.prv != NULL) {
+                        CEU_LNKS(tsk->lnks.sd.prv)->sd.nxt = tsk->lnks.sd.nxt;
+                    }
+                    if (tsk->lnks.sd.nxt != NULL) {
+                        CEU_LNKS(tsk->lnks.sd.nxt)->sd.prv = tsk->lnks.sd.prv;
+                    }
+                    //tsk->lnks.sd.prv = tsk->lnks.sd.nxt = NULL;
+                        // prv/nxt are never reached again:
+                        //  - it is not a problem to keep the dangling pointers
+                        // but we actually should not set them NULL:
+                        //  - tsk might be in bcast_tasks which must call nxt
                 }
-                if (tsk->lnks.sd.nxt != NULL) {
-                    CEU_LNKS(tsk->lnks.sd.nxt)->sd.prv = tsk->lnks.sd.prv;
-                }
-                //tsk->lnks.sd.prv = tsk->lnks.sd.nxt = NULL;
-                    // prv/nxt are never reached again:
-                    //  - it is not a problem to keep the dangling pointers
-                    // but we actually should not set them NULL:
-                    //  - tsk might be in bcast_tasks which must call nxt
             }
             
             // (2) unlink tsk.lnks.dn, but with term=0
             if (term == 1) {
-                if (tsk->lnks.dn.fst == NULL) {
-                    assert(tsk->lnks.dn.lst == NULL);
-                } else {
+                if (tsk->lnks.dn.fst != NULL) {
                     assert(tsk->lnks.dn.lst != NULL);
                     {   // (2)
                         CEU45(CEU_Exe_Task,CEU_Dyn)* cur = tsk->lnks.dn.fst;
