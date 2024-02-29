@@ -1791,7 +1791,7 @@ fun Coder.main (tags: Tags): String {
         dyn->time = CEU_TIME;
         dyn->pub = (CEU_Value) { CEU_VALUE_NIL };
 
-        dyn->lnks = (CEU_Links) { {up_dyn,up_blk}, {NULL,NULL}, {NULL,NULL} };
+        dyn->lnks = (CEU_Links) { {up_dyn,NULL}, {NULL,NULL}, {NULL,NULL} };
 
         if (CEU5(dyn!=NULL && ceu_isexe_dyn(up_dyn) &&) *up_blk==NULL) {
             dyn->lnks.up.blk = up_blk;    // only the first task points up
@@ -2265,8 +2265,7 @@ fun Coder.main (tags: Tags): String {
             int done = (tsk->lnks.up.dyn == NULL);
 
             // (1)
-            if (!done) {
-                // maybe term=0 was called before
+            if (!done) { // maybe term=0 was called before
                 if (up_lnks->dn.fst == CEU5((CEU_Dyn*)) tsk) {
                     assert(tsk->lnks.sd.prv == NULL);
                     up_lnks->dn.fst = tsk->lnks.sd.nxt;
