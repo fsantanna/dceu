@@ -883,9 +883,9 @@ class Exec_99 {
             }
             resume t()
         """)
-        //assert(out == "[]\n10\n") { out }
-        assert(out == " |  anon : (lin 14, col 17) : (resume (t)(v))\n" +
-                " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
+        assert(out == "[]\n10\n") { out }
+        //assert(out == " |  anon : (lin 14, col 17) : (resume (t)(v))\n" +
+        //        " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
     }
     @Test
     fun mm_24_yield() {
@@ -962,7 +962,7 @@ class Exec_99 {
             ;;println(:2222)
             """
         )
-        //assert(out == ":1\n:2\n1\n") { out }
+        assert(out == "[]\n") { out }
         //assert(out == " |  anon : (lin 11, col 17) : broadcast e\n" +
         //        " v  anon : (lin 4, col 17) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
@@ -972,8 +972,8 @@ class Exec_99 {
         //        " v  anon : (lin 4, col 33) : block escape error : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 4, col 33) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 4, col 35) : declaration error : cannot hold alien reference\n") { out }
+        //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 35) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun mm_28_data_await() {
@@ -1128,12 +1128,13 @@ class Exec_99 {
             val ts = tasks()
             spawn T() in ts
             val x = loop t in ts {
-                break(drop(t)) if true
+                break(;;;drop;;;(t)) if true
             }
             println(x)
         """, true)
         //assert(out == (" v  anon : (lin 7, col 13) : declaration error : cannot copy reference out\n")) { out }
-        assert(out.contains("track: 0x")) { out }
+        //assert(out.contains("track: 0x")) { out }
+        assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun fj_02_iter() {
@@ -1755,6 +1756,44 @@ class Exec_99 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun jj_13x_paror_dyn() {
+        val out = test("""
+            spawn task {
+                par-or {
+                    yield()
+                    yield()
+                } with {
+                    yield()
+                    yield()
+                }
+            }
+            do {
+                val now
+                broadcast([])
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun jj_13y_paror_dyn() {
+        val out = test("""
+            spawn task {
+                par-or {
+                    yield()
+                } with {
+                    yield()
+                }
+            }
+            do {
+                val now
+                broadcast([])
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // AWAIT
 
@@ -1940,7 +1979,7 @@ class Exec_99 {
             val t = spawn task {
                 yield()
             }
-            val x = track(t)
+            val x = ;;;track;;;(t)
             spawn task {
                 await(x)
                 println(:1)
@@ -2009,7 +2048,7 @@ class Exec_99 {
                 println(:1)
                 every true {
                     until true
-                    throw(999)
+                    error(999)
                 }
                 println(:2)
             }

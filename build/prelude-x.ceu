@@ -1,9 +1,5 @@
 data :Clock = [ms]
 
-func detrack'' (trk) {
-    not not detrack'(trk)
-}
-
 func debug (v) {
     println(v)
     v
@@ -283,7 +279,7 @@ func c-to-string (v) {
         val c = `:char ((char*)$v.Pointer)[(int)$i.Number]`
         set str[+] = c
     }
-    drop(str)
+    str
 }
 
 func :rec to-string (v) {
@@ -349,10 +345,7 @@ func :rec copy (v) {
             loop i in {0 => #v{ {
                 set ret[i] = copy(v[i])
             }
-            drop(ret)
-        }
-        == :track {
-            detrack(v) { track(it) }
+            ret
         }
         else {
             error(:TODO)
@@ -365,25 +358,25 @@ func to-vector (col, tp) {
     loop v in iter(col,tp) {
         set ret[+] = copy(v)
     }
-    drop(ret)
+    ret
 }
 
-func to-tracks (...) {
+func to-tasks (...) {
     val ret = #[]
     val args = ...
     loop v in iter(args) {
         ifs v {
             is? :exe-task {
-                set ret[+] = track(v)
+                set ret[+] = v
             }
             is? :tasks {
                 loop i in v {
-                    set ret[+] = drop(i)
+                    set ret[+] = i
                 }
             }
         }
     }
-    drop(ret)
+    ret
 }
 
 func iterable-to-dict (itr) {
@@ -391,7 +384,7 @@ func iterable-to-dict (itr) {
     loop in iter(itr) {
         set dict[it] = true
     }
-    drop(dict)
+    dict
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -415,9 +408,9 @@ func {{++}} (v1, v2) {
 
 ;; composition
 
-func {{<|<}} (^f,^g) {
+func {{<|<}} (f,g) {
     func (v) {
-        ^^f(^^g(v))
+        f(g(v))
     }
 }
 
@@ -455,7 +448,6 @@ func await-chk (e, cnd) {
     ifs {
         (type(cnd) == :tag)      => (e is? cnd)
         (type(cnd) == :exe-task) => (status(cnd) == :terminated)
-        (type(cnd) == :track)    => (not detrack(cnd))
         else => false
     }
 }

@@ -441,19 +441,19 @@ class Parser (lexer_: Lexer)
         return this.nest(when (type) {
             "await" -> """
                 ${pre0}loop {
-                    ${pre0}yield()
-                    ${pre0}until (evt --> \{ ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
+                    val ceu_$N = ${pre0}yield()
+                    ${pre0}until (ceu_$N --> \{ ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
                         ${pre0}$xcnd ${cnt.cond { "and (do { ${it.tostr(true)} } or true)" }}
                     })
                 }
             """ //.let { println(it);it }
             "every" -> """
                 ${pre0}loop {
-                    ${pre0}yield()
-                    skip if not (evt --> \{ ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
+                    val ceu_$N = ${pre0}yield()
+                    skip if not (ceu_$N --> \{ ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
                         ${pre0}$xcnd
                     })
-                    until evt --> \{ ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
+                    until ceu_$N --> \{ ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
                         loop {
                             ${cnt!!.tostr(true)}
                             break (false) if true
@@ -464,8 +464,8 @@ class Parser (lexer_: Lexer)
             "watching" -> """
                 ${pre0}par-or {
                     ${pre0}loop {
-                        ${pre0}yield()
-                        ${pre0}until (evt --> \{ ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
+                        val ceu_$N = ${pre0}yield()
+                        ${pre0}until (ceu_$N --> \{ ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
                             ${pre0}$xcnd
                         })
                     }

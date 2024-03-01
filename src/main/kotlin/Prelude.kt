@@ -85,7 +85,7 @@ func await-chk (e, cnd) {
     ifs {
         (type(cnd) == :tag)      { e is? cnd }
         (type(cnd) == :exe-task) { status(cnd) == :terminated }
-        (type(cnd) == :track)    { not detrack(cnd) }
+        ;;;(type(cnd) == :track)    { not detrack(cnd) };;;
         else { false }
     }
 }
