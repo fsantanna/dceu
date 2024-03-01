@@ -91,6 +91,13 @@ class Exec_99 {
     @Test
     fun bb_02_op_not() {
         val out = test("""
+            println(true and (not false))
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun bb_02x_op_not() {
+        val out = test("""
             println(not nil and not false)
         """)
         assert(out == "true\n") { out }
@@ -116,22 +123,22 @@ class Exec_99 {
     @Test
     fun bb_03_or_and_ok() {
         val out = test("""
-^[2,13]^[2,13]println(^[2,23](^[2,21]1 thus { ceu_6 =>
-^[3,25](if ^[3,28]ceu_6 ^[3,34]{
-^[4,29]ceu_6
-} else ^[5,32]{
-^[2,26]^[2,26]error(^[2,32]5)
-})
-})
-)
-^[3,13]^[3,13]println(^[3,25](^[3,21]nil thus { ceu_41 =>
-^[4,25](if ^[4,28]ceu_41 ^[4,35]{
-^[5,29]ceu_41
-} else ^[6,32]{
-^[3,28]2
-})
-})
-)
+            println(
+                (1 thus { ceu_6 =>
+                    (if ceu_6 {
+                       ceu_6
+                    } else {
+                        error(5)
+                    })
+                })
+            )
+            println((nil thus { ceu_41 =>
+                (if ceu_41 {
+                    ceu_41
+                } else {
+                    2
+                })
+            }))
         """)
         assert(out == "1\n2\n") { out }
     }
@@ -1240,13 +1247,14 @@ class Exec_99 {
                 yield(nil)
             }
             var t = spawn T ()
-            var x = track(t)
-            detrack(x) { println(:1) }
+            ;;var x = track(t)
+            ;;;detrack(x);;; do { println(:1) }
             broadcast( nil )
-            detrack(x) { println(999) }
+            ;;detrack(x) { println(999) }
+            println(status(t))
             println(:2)
         """)
-        assert(out == ":1\n:2\n") { out }
+        assert(out == ":1\n:terminated\n:2\n") { out }
     }
 
     // RESUME-YIELD-ALL

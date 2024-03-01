@@ -1385,50 +1385,26 @@ class Parser (lexer_: Lexer)
         val e2 = this.expr_2_pre()
         return this.expr_1_bin(op.str,
             when (op.str) {
-                "and" -> {
-                    if (e1.is_evaled()) {
-                        this.nest("""
-                            if ${e1.tostr(true)} {
-                                ${e2.tostr(true)}
-                            } else {
-                                ${e1.tostr(true)}
-                            }
-                    """)
-                    } else {
-                        this.nest("""
-                            do {
-                                val ceu_${e1.n} = ${e1.tostr(true)}
-                                if ceu_${e1.n} {
-                                    ${e2.tostr(true)}
-                                } else {
-                                    ceu_${e1.n}
-                                }
-                            }
-                    """)
+                "and" -> this.nest("""
+                    do {
+                        val ceu_${e1.n} = ${e1.tostr(true)}
+                        if ceu_${e1.n} {
+                            ${e2.tostr(true)}
+                        } else {
+                            ceu_${e1.n}
+                        }
                     }
-                }
-                "or" -> {
-                    if (e1.is_evaled()) {
-                        this.nest("""
-                            if ${e1.tostr(true)} {
-                                ${e1.tostr(true)}
-                            } else {
-                                ${e2.tostr(true)}
-                            }
-                        """)
-                    } else {
-                        this.nest("""
-                            do {
-                                val ceu_${e1.n} = ${e1.tostr(true)}
-                                if ceu_${e1.n} {
-                                    ceu_${e1.n}
-                                } else {
-                                    ${e2.tostr(true)}
-                                }
-                            }
-                        """)
+                """)
+                "or" -> this.nest("""
+                    do {
+                        val ceu_${e1.n} = ${e1.tostr(true)}
+                        if ceu_${e1.n} {
+                            ceu_${e1.n}
+                        } else {
+                            ${e2.tostr(true)}
+                        }
                     }
-                }
+                """)
                 "is?" -> this.nest("is'(${e1.tostr(true)}, ${e2.tostr(true)})")
                 "is-not?" -> this.nest("is-not'(${e1.tostr(true)}, ${e2.tostr(true)})")
                 "in?" -> this.nest("in'(${e1.tostr(true)}, ${e2.tostr(true)})")
@@ -1489,12 +1465,11 @@ class Parser (lexer_: Lexer)
                 break
             }
         }
-        if (ret.size == 0) {
-            if (CEU >= 99) {
-                ret.add(Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy())))
-            } else if (!empty) {
-                err_expected(this.tk1, "expression")
-            }
+        when {
+            (ret.size > 0) -> {}
+            empty -> {}
+            (CEU >= 99) -> ret.add(Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy())))
+            else -> err_expected(this.tk1, "expression")
         }
         ret.forEachIndexed { i,e ->
             val ok = (i == ret.lastIndex) || !e.is_innocuous()

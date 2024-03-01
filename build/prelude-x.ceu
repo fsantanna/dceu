@@ -35,7 +35,7 @@ export [{{+}}, {{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}]
 {
     func {{+}} (v1, v2) {
         if (v1 is-not? :number) or (v2 is-not? :number) {
-            throw(:error)
+            error(:error)
         }
         `:number ($v1.Number + $v2.Number)`
     }
@@ -43,42 +43,42 @@ export [{{+}}, {{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}]
     func {{-}} (v1, v2) {
         ifs {
             (v1 is? :number) and (v2 is? :nil)           => `:number (- $v1.Number)`
-            (v1 is-not? :number) or (v2 is-not? :number) => throw(:error)
+            (v1 is-not? :number) or (v2 is-not? :number) => error(:error)
             else                                         => `:number ($v1.Number - $v2.Number)`
         }
     }
 
     func {{*}} (v1, v2) {
         if (v1 is-not? :number) or (v2 is-not? :number) {
-            throw(:error)
+            error(:error)
         }
         `:number ($v1.Number * $v2.Number)`
     }
 
     func {{**}} (v1, v2) {
         if (v1 is-not? :number) or (v2 is-not? :number) {
-            throw(:error)
+            error(:error)
         }
         `:number powf($v1.Number, $v2.Number)`
     }
 
     func {{/}} (v1, v2) {
         if (v1 is-not? :number) or (v2 is-not? :number) {
-            throw(:error)
+            error(:error)
         }
         `:number ($v1.Number / $v2.Number)`
     }
 
     func {{//}} (v1, v2) {
         if (v1 is-not? :number) or (v2 is-not? :number) {
-            throw(:error)
+            error(:error)
         }
         `:number powf($v1.Number, 1/$v2.Number)`
     }
 
     func {{%}} (v1, v2) {
         if (v1 is-not? :number) or (v2 is-not? :number) {
-            throw(:error)
+            error(:error)
         }
         `:number fmod($v1.Number, $v2.Number)`
     }
@@ -91,7 +91,7 @@ export [{{>}}, {{<}}, {{>=}}, {{<=}}] {
         ifs {
             (v1 is? :tag)    and (v2 is? :tag)    => `:bool ($v1.Tag    > $v2.Tag)`
             (v1 is? :number) and (v2 is? :number) => `:bool ($v1.Number > $v2.Number)`
-            else => throw(:error)
+            else => error(:error)
         }
     }
 
@@ -114,7 +114,7 @@ func assert (v, msg) {
     if not v {
         print("assertion error : ")
         println(msg or "no reason given")
-        throw(:assert)
+        error(:assert)
     }
 }
 
@@ -197,7 +197,7 @@ export [iter] {
     }
 
     func iter-tasks (itr :Iterator) {
-        ;;throw(:TODO)
+        ;;error(:TODO)
         set itr.i = next-tasks(itr.s,itr.i)
         itr.i
     }
@@ -221,7 +221,7 @@ func next (v, ...) {
         is? :x-coro   => resume v(...)
         is? :dict     => next-dict(v, ...)
         is? :Iterator => v.f(v)
-        else          => throw(:error)
+        else          => error(:error)
     }
 }
 
@@ -355,7 +355,7 @@ func :rec copy (v) {
             detrack(v) { track(it) }
         }
         else {
-            throw(:TODO)
+            error(:TODO)
         }
     }
 }
