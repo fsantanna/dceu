@@ -1458,9 +1458,10 @@ class Parser (lexer_: Lexer)
             ret.add(e)
             if (e.has_block()) {
                 // a ; { b } ; c ; d  -->  a ; { b } ; { c ; d }
+                val tk1 = this.tk1
                 val es = this.exprs(true)
                 if (es.size > 0) {
-                    ret.add(Expr.Do(e.tk, es))
+                    ret.add(Expr.Do(Tk.Fix("do",tk1.pos), es))
                 }
                 break
             }
