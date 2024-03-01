@@ -2154,7 +2154,7 @@ fun Coder.main (tags: Tags): String {
                     CEU_Exe_Task* tsk = ((CEU_Exe_Task*) X->exe);
                     CEU45(CEU_Exe_Task,CEU_Dyn)* up;
     #if CEU >= 5
-                    if (tsk->lnks.up.dyn->Any.type == CEU_VALUE_TASKS) {
+                    if (tsk->lnks.up.dyn!=NULL && tsk->lnks.up.dyn->Any.type==CEU_VALUE_TASKS) {
                         // tsk <- pool <- tsk
                         up = CEU_LNKS(tsk->lnks.up.dyn)->up.dyn;
                     } else
