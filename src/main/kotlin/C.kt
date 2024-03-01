@@ -1230,20 +1230,32 @@ fun Coder.main (tags: Tags): String {
         }
         if (exe.type == CEU_VALUE_ERROR) {
             return ceu_error_e(X1->S, exe);
-        }        
+        }
+    #if CEU >= 5
+        else if (exe.type == CEU_VALUE_NIL) {
+            // X1: [tsks,clo,inps]
+            ceux_pop_n(X1->S, 2+inp);
+            ceux_push(X1->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+            // X1: [nil]
+            return 1;
+        }
+    #endif
         assert(exe.Dyn->Exe_Task.clo.type == CEU_VALUE_CLO_TASK);
         
         ceux_repl(X1->S, XX1(-inp-1), exe);
-        // X1: [exe,inps]
+        // X1: [tsks,exe,inps]
         
         ceu_gc_inc_val(exe);    // keep exe alive to return it  
         int ret = ceux_resume(X1, inp, 0, CEU_ACTION_RESUME CEU4(COMMA now));
-        // X1: []
+        // X1: [tsks]
         
         if (ret > 0) {
             // error
         } else {
             ret = 1;
+    #if CEU >+ 5
+            ceux_pop(X1->S, 1); // [tsks]
+    #endif
             ceux_push(X1->S, 1, exe);        // returns exe to caller
             // X1: [exe]
         }
@@ -1780,6 +1792,24 @@ fun Coder.main (tags: Tags): String {
     
     #if CEU >= 4
     CEU_Value ceu_create_exe_task (CEU_Value clo, CEU45(CEU_Exe_Task*,CEU_Dyn*) up_dyn, CEU_Block* up_blk) {
+    #if CEU >= 5
+        int ceu_tasks_n (CEU_Tasks* tsks) {
+            int n = 0;
+            CEU_Exe_Task* cur = (CEU_Exe_Task*) tsks->lnks.dn.fst;
+            while (cur != NULL) {
+                n++;
+                cur = (CEU_Exe_Task*) cur->lnks.sd.nxt;
+            }
+            return n;
+        }
+        if (!ceu_isexe_dyn(up_dyn)) {
+            CEU_Tasks* tsks = (CEU_Tasks*) up_dyn;
+            if (tsks->max!=0 && ceu_tasks_n(tsks)>=tsks->max) {
+                return (CEU_Value) { CEU_VALUE_NIL };
+            }
+        }
+    #endif
+        
         if (clo.type != CEU_VALUE_CLO_TASK) {
             return (CEU_Value) { CEU_VALUE_ERROR, {.Error="spawn error : expected task"} };
         }

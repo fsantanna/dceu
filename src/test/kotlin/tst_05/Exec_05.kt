@@ -87,8 +87,7 @@ class Exec_05 {
             val ok2 = spawn T() in ts
             println(ok1, ok2)
         """)
-        assert(out.contains("exe-task: 0x")) { out }
-        assert(!out.contains("nil")) { out }
+        assert(out.contains(Regex("exe-task: 0x.*nil\n"))) { out }
     }
     @Test
     fun aa_07_tasks() {
@@ -106,14 +105,14 @@ class Exec_05 {
     fun aa_08_tasks() {
         val out = test("""
             val T = task () {
-                yield(nil) ;;thus { it => nil }
+                yield(nil)
             }
             val ts = tasks(1)
-            val ok1 = spawn T() in ts
-            val ok2 = spawn T() in ts
-            println(ok1, ok2)
+            val t1 = spawn T() in ts
+            val t2 = spawn T() in ts
+            println(t1, t2)
         """)
-        assert(out == "true\tfalse\n") { out }
+        assert(out.contains(Regex("exe-task: 0x.*nil\n"))) { out }
     }
     @Test
     fun aa_09_gc() {
