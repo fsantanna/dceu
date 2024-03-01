@@ -6,7 +6,7 @@ import java.util.*
 
 var DUMP = true
 var DEBUG = true
-var CEU = 5
+var CEU = 99
     // 1: dyn-lex               ;; 17 (no dots) / 7 "definitely lost"
     // 2: defer, throw/catch    ;; 6 "definitely lost"
     // 3: coro, yield, resume   ;; 0 "definitely lost"
@@ -27,7 +27,7 @@ val THROW = false
 
 var N = 1
 val D = "\$"
-var STACK = 128
+var STACK = 256
 val MULTI = -1
 
 // VERSION

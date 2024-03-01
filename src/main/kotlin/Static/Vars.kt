@@ -97,7 +97,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             (enc == global.blk) -> Type.GLOBAL
             xups.all { it !is Expr.Proto } -> Type.LOCAL
             xups.all { it !is Expr.Proto || it==enc } -> Type.ARG
-            xups.all { it !is Expr.Proto || it.nst || it==enc } -> Type.NESTED
+            xups.all { it !is Expr.Proto || ups.isnst(it) || it==enc } -> Type.NESTED
             else -> Type.UPVAL
         }.let {
             //println(listOf(src.tk.pos, src.tostr(), it))

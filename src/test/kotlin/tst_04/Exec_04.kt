@@ -2369,6 +2369,16 @@ class Exec_04 {
     // NESTED
 
     @Test
+    fun ll_00_nested() {
+        val out = test("""
+            task :nested () {
+                nil
+            }
+            println(:ok)
+        """)
+        assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing task\n") { out }
+    }
+    @Test
     fun ll_01_nested() {
         val out = test("""
             spawn (task () {

@@ -502,8 +502,8 @@ class Exec_99 {
             println(x)
         """
         )
-        //assert(out == "[1,2,3]\n") { out }
-        assert(out == " v  anon : (lin 5, col 25) : set error : cannot assign reference to outer scope\n") { out }
+        assert(out == "[1,2,3]\n") { out }
+        //assert(out == " v  anon : (lin 5, col 25) : set error : cannot assign reference to outer scope\n") { out }
         //assert(out == " |  anon : (lin 4, col 30) : (func (a) { (set x = a) })([1,2,3])\n" +
         //        " v  anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
     }
@@ -514,7 +514,7 @@ class Exec_99 {
             var x
             do {
                 [1,2,3] thus { a =>
-                    set x = drop(a)
+                    set x = ;;;drop;;;(a)
                 }
             }
             println(x)
@@ -592,7 +592,7 @@ class Exec_99 {
         val out = test("""
             val v = do {
                 [] thus { x =>
-                    if x { drop(x) } else { [] }
+                    if x { ;;;drop;;;(x) } else { [] }
                 }
             }
             println(v)
@@ -1335,6 +1335,17 @@ class Exec_99 {
     }
 
     // SPAWN
+
+    @Test
+    fun ii_00_nested() {
+        val out = test("""
+            task :nested () {
+                nil
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     @Test
     fun ii_01_spawn_task() {
@@ -2659,6 +2670,19 @@ class Exec_99 {
             println(10 in? [1,10,3])
         """, true)
         assert(out == "false\ntrue\n") { out }
+    }
+    @Test
+    fun zz_04_or() {
+        val out = test("""
+            func f () {
+                if nil {
+                    nil
+                }
+                nil
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
     }
 
     // TYPE-*

@@ -19,7 +19,10 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                     }
                 }
                 if (this.nst) {
-                    if (ups.first(ups.pub[this]!!) { it is Expr.Proto }.let { it!=null && it.tk.str=="task" }) {
+                    if (ups.first(ups.pub[this]!!) { it is Expr.Proto }.let {
+                        (CEU>=99 && it==outer.clo) /* bc of top-level spawn {...} */ ||
+                        (it!=null && it.tk.str=="task") })
+                    {
                         // ok
                     } else {
                         err(this.tk, "task :nested error : expected enclosing task")

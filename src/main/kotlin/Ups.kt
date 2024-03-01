@@ -36,7 +36,7 @@ class Ups (outer: Expr.Call) {
         return this.first(e) { it is Expr.Do && this.pub[it] !is Expr.Export } as Expr.Do?
     }
     fun first_task_outer (e: Expr): Expr.Proto? {
-        return this.first(e) { it is Expr.Proto && it.tk.str=="task" && !it.nst } as Expr.Proto?
+        return this.first(e) { it is Expr.Proto && it.tk.str=="task" && !this.isnst(it) } as Expr.Proto?
     }
     fun exe (e: Expr, tp: String?=null): Expr.Proto? {
         return this.first(e) { it is Expr.Proto }.let {
@@ -47,6 +47,11 @@ class Ups (outer: Expr.Call) {
             }
         }
     }
+    fun isnst (proto: Expr.Proto): Boolean {
+        return proto.nst && (CEU<99 || this.none(this.pub[proto]!!) { it is Expr.Proto } )
+    }
+
+
 
     fun Expr.traverse (): Map<Expr,Expr> {
         fun Expr.map (l: List<Expr>): Map<Expr,Expr> {

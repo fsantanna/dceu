@@ -25,7 +25,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
 
     fun Expr.up_task_real_c (): String {
         val n = ups.all_until(this) {
-                it is Expr.Proto && it.tk.str=="task" && !it.nst
+                it is Expr.Proto && it.tk.str=="task" && !ups.isnst(it)
             }
             .filter { it is Expr.Proto } // but count all protos in between
             .count()
@@ -75,6 +75,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             is Expr.Proto -> {
                 val isexe = (this.tk.str != "func")
                 val istsk = (this.tk.str == "task")
+                val isnst = ups.isnst(this)
                 val code = this.blk.code()
                 val id = this.idc()
 
@@ -115,14 +116,14 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
 
                 this.PI0(""" // CREATE | ${this.dump()}
                 {
-                    ${this.nst.cond { "assert(X->exe!=NULL && X->exe->type==CEU_VALUE_EXE_TASK);" }}
+                    ${isnst.cond { "assert(X->exe!=NULL && X->exe->type==CEU_VALUE_EXE_TASK);" }}
                     CEU_Value clo = ceu_create_clo${istsk.cond { "_task" }} (
                         ${(!istsk).cond { "CEU_VALUE_CLO_${this.tk.str.uppercase()}," }}
                         ceu_f_$id,
                         ${this.args.let { assert(it.lastOrNull()?.first?.str!="...") { "TODO: ..." }; it.size }},  // TODO: remove assert
                         ${vars.proto_to_locs[this]!!},
                         ${vars.proto_to_upvs[this]!!.size}
-                        ${istsk.cond { ", ${if (this.nst) "X->exe_task" else "NULL"}" }}
+                        ${istsk.cond { ", ${if (isnst) "X->exe_task" else "NULL"}" }}
                     );
                     ceux_push(X->S, 1, clo);
                     ${isexe.cond { """
