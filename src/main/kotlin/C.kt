@@ -40,14 +40,8 @@ fun Coder.main (tags: Tags): String {
     #endif
     #if CEU >= 4
     #define CEU4(x) x
-    #if CEU >= 5
-    #define CEU45(x,y) y
-    #else
-    #define CEU45(x,y) x
-    #endif
     #else
     #define CEU4(x)
-    #define CEU45(x)
     #endif
     #if CEU >= 5
     #define CEU5(x) x
@@ -122,12 +116,10 @@ fun Coder.main (tags: Tags): String {
         return """
     #if CEU >= 4
     struct CEU_Exe_Task;
-    #if CEU < 5
-    typedef struct CEU_Exe_Task* CEU_Block;
-    #else
     typedef union CEU_Dyn* CEU_Block;
-    struct CEU_Tasks;
     #endif
+    #if CEU >= 5
+    struct CEU_Tasks;
     #endif
     
     typedef struct CEU_Value {
@@ -231,16 +223,16 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 4
     typedef struct CEU_Links {
         struct {
-            CEU45(struct CEU_Exe_Task,union CEU_Dyn)* dyn;
+            union CEU_Dyn* dyn;
             CEU_Block* blk;
         } up;
         struct {
-            CEU45(struct CEU_Exe_Task,union CEU_Dyn)* prv;
-            CEU45(struct CEU_Exe_Task,union CEU_Dyn)* nxt;
+            union CEU_Dyn* prv;
+            union CEU_Dyn* nxt;
         } sd;
         struct {
-            CEU45(struct CEU_Exe_Task,union CEU_Dyn)* fst;
-            CEU45(struct CEU_Exe_Task,union CEU_Dyn)* lst;
+            union CEU_Dyn* fst;
+            union CEU_Dyn* lst;
         } dn;
     } CEU_Links;
     #endif
@@ -248,7 +240,7 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 5
         #define CEU_LNKS(dyn) ((dyn)->Any.type==CEU_VALUE_TASKS ? &(dyn)->Tasks.lnks : &(dyn)->Exe_Task.lnks)
     #else
-        #define CEU_LNKS(tsk) (&((CEU_Exe_Task*)tsk)->lnks)
+        #define CEU_LNKS(dyn) (&((CEU_Exe_Task*) dyn)->lnks)
     #endif
 
     #if CEU >= 4
@@ -346,7 +338,7 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_create_dict    (void);
     CEU_Value ceu_create_clo     (CEU_VALUE type, CEU_Proto proto, int args, int locs, int upvs);
     #if CEU >= 4
-    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU45(CEU_Exe_Task*,CEU_Dyn*) up_dyn, CEU_Block* up_blk);
+    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Dyn* up_dyn, CEU_Block* up_blk);
     CEU_Value ceu_create_track   (CEU_Exe_Task* task);
     #endif
 
@@ -373,10 +365,10 @@ fun Coder.main (tags: Tags): String {
     void ceu_abort_exe (CEU_Exe* exe);
     #endif
     #if CEU >= 4
-    #define ceu_abort_dyn(a) ceu_abort_exe(a)
-    #define ceu_bcast_dyn(a,b,c,d) ceu_bcast_task(a,b,c,d)
+    #define ceu_abort_dyn(a) ceu_abort_exe((CEU_Exe*)a)
+    #define ceu_bcast_dyn(a,b,c,d) ceu_bcast_task(a,b,c,(CEU_Exe_Task*)d)
     int ceu_bcast_task (CEUX* X1, CEU_ACTION act, uint32_t now, CEU_Exe_Task* tsk2);
-    int ceu_bcast_tasks (CEUX* X1, CEU_ACTION act, uint32_t now, CEU45(CEU_Exe_Task,CEU_Dyn)* dyn2);
+    int ceu_bcast_tasks (CEUX* X1, CEU_ACTION act, uint32_t now, CEU_Dyn* dyn2);
     int ceu_istask_dyn (CEU_Dyn* dyn);
     int ceu_istask_val (CEU_Value val);
     void ceu_dyn_unlink (CEU_Dyn* dyn);
@@ -962,8 +954,8 @@ fun Coder.main (tags: Tags): String {
                 {
                     CEU_Block cur = blk.Block;
                     while (cur != NULL) {
-                        ceu_abort_dyn(CEU45((CEU_Exe*),) cur);
-                        CEU45(CEU_Exe_Task,CEU_Dyn)* nxt = CEU_LNKS(cur)->sd.nxt;
+                        ceu_abort_dyn(cur);
+                        CEU_Dyn* nxt = CEU_LNKS(cur)->sd.nxt;
                         ceu_gc_dec_dyn((CEU_Dyn*) cur);
                         cur = nxt;
                     }
@@ -1219,7 +1211,7 @@ fun Coder.main (tags: Tags): String {
                 exe = ceu_create_exe_task(clo, (CEU_Dyn*) ceu_up_tsk(X1), ceu_up_blk(X1->S));
             }
         #else
-            exe = ceu_create_exe_task(clo, ceu_up_tsk(X1), ceu_up_blk(X1->S));
+            exe = ceu_create_exe_task(clo, (CEU_Dyn*) ceu_up_tsk(X1), ceu_up_blk(X1->S));
         #endif
         }
         if (exe.type == CEU_VALUE_ERROR) {
@@ -1785,7 +1777,7 @@ fun Coder.main (tags: Tags): String {
     #endif
     
     #if CEU >= 4
-    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU45(CEU_Exe_Task*,CEU_Dyn*) up_dyn, CEU_Block* up_blk) {
+    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Dyn* up_dyn, CEU_Block* up_blk) {
     #if CEU >= 5
         int ceu_tasks_n (CEU_Tasks* tsks) {
             int n = 0;
@@ -1820,19 +1812,19 @@ fun Coder.main (tags: Tags): String {
 
         if (CEU5(dyn!=NULL && ceu_isexe_dyn(up_dyn) &&) *up_blk==NULL) {
             dyn->lnks.up.blk = up_blk;    // only the first task points up
-            *up_blk = CEU5((CEU_Dyn*)) dyn;
+            *up_blk = (CEU_Dyn*) dyn;
         }
         
         if (up_dyn != NULL) {
             CEU_Links* up_lnks = CEU_LNKS(up_dyn);        
             if (up_lnks->dn.fst == NULL) {
                 assert(up_lnks->dn.lst == NULL);
-                up_lnks->dn.fst = CEU5((CEU_Dyn*)) dyn;
+                up_lnks->dn.fst = (CEU_Dyn*) dyn;
             } else if (up_lnks->dn.lst != NULL) {
-                CEU_LNKS(up_lnks->dn.lst)->sd.nxt = CEU5((CEU_Dyn*)) dyn;
+                CEU_LNKS(up_lnks->dn.lst)->sd.nxt = (CEU_Dyn*) dyn;
                 dyn->lnks.sd.prv = up_lnks->dn.lst;
             }
-            up_lnks->dn.lst = CEU5((CEU_Dyn*)) dyn;
+            up_lnks->dn.lst = (CEU_Dyn*) dyn;
         }
 
         return ret;
@@ -2176,7 +2168,7 @@ fun Coder.main (tags: Tags): String {
                 // respond/catch the error (thus not awake)
                 if (X->action != CEU_ACTION_ABORT) {
                     CEU_Exe_Task* tsk = ((CEU_Exe_Task*) X->exe);
-                    CEU45(CEU_Exe_Task,CEU_Dyn)* up;
+                    CEU_Dyn* up;
     #if CEU >= 5
                     if (tsk->lnks.up.dyn!=NULL && tsk->lnks.up.dyn->Any.type==CEU_VALUE_TASKS) {
                         // tsk <- pool <- tsk
@@ -2212,7 +2204,7 @@ fun Coder.main (tags: Tags): String {
             while (cur != NULL) {
                 ceu_gc_inc_dyn(cur);
                 ceu_abort_exe((CEU_Exe*) cur);
-                CEU45(CEU_Exe_Task,CEU_Dyn)* nxt = CEU_LNKS(cur)->sd.nxt;
+                CEU_Dyn* nxt = CEU_LNKS(cur)->sd.nxt;
                 ceu_gc_dec_dyn(cur);
                 cur = nxt;
             }
@@ -2256,11 +2248,11 @@ fun Coder.main (tags: Tags): String {
             {   // UP-DYN-DN
                 CEU_Links* up_lnks = CEU_LNKS(me_lnks->up.dyn);
                 me_lnks->up.dyn = NULL;
-                if (up_lnks->dn.fst == CEU45((CEU_Exe_Task*),) dyn) {
+                if (up_lnks->dn.fst == dyn) {
                     assert(me_lnks->sd.prv == NULL);
                     up_lnks->dn.fst = me_lnks->sd.nxt;
                 }
-                if (up_lnks->dn.lst == CEU45((CEU_Exe_Task*),) dyn) {
+                if (up_lnks->dn.lst == dyn) {
                     assert(me_lnks->sd.nxt == NULL);
                     up_lnks->dn.lst = me_lnks->sd.prv;
                 }
@@ -2297,15 +2289,15 @@ fun Coder.main (tags: Tags): String {
         }
     """
     val c_bcast = """
-        int ceu_bcast_tasks (CEUX* X1, CEU_ACTION act, uint32_t now, CEU45(CEU_Exe_Task,CEU_Dyn)* dyn2) {
+        int ceu_bcast_tasks (CEUX* X1, CEU_ACTION act, uint32_t now, CEU_Dyn* dyn2) {
             //assert(dyn2!=NULL && (dyn2->type==CEU_VALUE_EXE_TASK CEU5(|| dyn2->type==CEU_VALUE_TASKS)));
             int ret = 0;
             CEU_Links* lnks = CEU_LNKS(dyn2);
-            CEU45(CEU_Exe_Task,CEU_Dyn)* cur = lnks->dn.fst;
+            CEU_Dyn* cur = lnks->dn.fst;
             while (cur != NULL) {
                 ceu_gc_inc_dyn(CEU4((CEU_Dyn*)) cur);
                 ret = ceu_bcast_dyn(X1, act, now, cur);
-                CEU45(CEU_Exe_Task,CEU_Dyn)* nxt = CEU_LNKS(cur)->sd.nxt;
+                CEU_Dyn* nxt = CEU_LNKS(cur)->sd.nxt;
                 ceu_gc_dec_dyn((CEU_Dyn*)cur);
                 if (ret != 0) {
                     break;
@@ -2335,7 +2327,7 @@ fun Coder.main (tags: Tags): String {
             if (act==CEU_ACTION_RESUME && tsk2->status==CEU_EXE_STATUS_TOGGLED) {
                 // do nothing
             } else {
-                ret = ceu_bcast_tasks(X1, act, now, CEU5((CEU_Dyn*)) tsk2);
+                ret = ceu_bcast_tasks(X1, act, now, (CEU_Dyn*) tsk2);
             }
 
             // ME
@@ -2388,10 +2380,10 @@ fun Coder.main (tags: Tags): String {
             int ret;
             if (xin.type == CEU_VALUE_TAG) {
                 if (xin.Tag == CEU_TAG_global) {
-                    ret = ceu_bcast_tasks(X, CEU_ACTION_RESUME, CEU_TIME, CEU5((CEU_Dyn*)) &CEU_GLOBAL_TASK);
+                    ret = ceu_bcast_tasks(X, CEU_ACTION_RESUME, CEU_TIME, (CEU_Dyn*) &CEU_GLOBAL_TASK);
                 } else if (xin.Tag == CEU_TAG_task) {
                     if (X->exe_task == NULL) {
-                        ret = ceu_bcast_tasks(X, CEU_ACTION_RESUME, CEU_TIME, CEU5((CEU_Dyn*)) &CEU_GLOBAL_TASK);
+                        ret = ceu_bcast_tasks(X, CEU_ACTION_RESUME, CEU_TIME, (CEU_Dyn*) &CEU_GLOBAL_TASK);
                     } else {
                         ret = ceu_bcast_task(X, CEU_ACTION_RESUME, CEU_TIME, X->exe_task);
                     }
