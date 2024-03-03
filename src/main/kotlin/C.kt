@@ -954,20 +954,11 @@ fun Coder.main (tags: Tags): String {
                 {
                     CEU_Block cur = blk.Block;
                     while (cur != NULL) {
+                        int term = (CEU5(cur->Any.type==CEU_VALUE_EXE_TASK &&) cur->Exe_Task.status==CEU_EXE_STATUS_TERMINATED);
                         ceu_abort_dyn(cur);
                         CEU_Dyn* nxt = CEU_LNKS(cur)->sd.nxt;
-                        if (nxt != NULL) {
-                            ceu_gc_inc_dyn(nxt);
-                        }
-                        if (CEU5(cur->Any.type==CEU_VALUE_EXE_TASK &&) cur->Exe_Task.status!=CEU_EXE_STATUS_TERMINATED) {
-                            ceu_gc_dec_dyn(cur);
-                        }
-                        if (nxt != NULL) {
-                            assert(nxt->Any.refs >= 2);
-                                // nxt is guaranteed to be still alive bc
-                                // this leaving block has a strong ref to it
-                                // TODO: no bc of natural termination
-                            ceu_gc_dec_dyn(nxt);
+                        if (!term) {
+                            ceu_gc_dec_dyn(cur); // TODO: could affect nxt?
                         }
                         cur = nxt;
                     }
@@ -2171,6 +2162,10 @@ fun Coder.main (tags: Tags): String {
         }
         
         int ceu_exe_term (CEUX* X) {
+            if (X->exe->status == CEU_EXE_STATUS_TERMINATED) {
+                // leave -> outer ref -> gc_dec -> term
+                return 0;
+            }
             X->exe->status = CEU_EXE_STATUS_TERMINATED;
             int ret = 0;
     #if CEU >= 4
@@ -2200,8 +2195,8 @@ fun Coder.main (tags: Tags): String {
                         assert(X->exe->refs >= 2);  // ensures that the unlink below is safe (otherwise call gc_inc)
                         ceux_rem(X->S, i);
                     }
+                    ceu_gc_dec_dyn((CEU_Dyn*) X->exe);  // only if natural termination
                 }
-                ceu_gc_dec_dyn((CEU_Dyn*) X->exe);
             }
     #endif
             return ret;
@@ -2217,7 +2212,7 @@ fun Coder.main (tags: Tags): String {
                 ceu_gc_inc_dyn(cur);
                 ceu_abort_exe((CEU_Exe*) cur);
                 CEU_Dyn* nxt = CEU_LNKS(cur)->sd.nxt;
-                ceu_gc_dec_dyn(cur);
+                ceu_gc_dec_dyn(cur); // TODO: could affect nxt?
                 cur = nxt;
             }
         }
@@ -2307,10 +2302,10 @@ fun Coder.main (tags: Tags): String {
             CEU_Links* lnks = CEU_LNKS(dyn2);
             CEU_Dyn* cur = lnks->dn.fst;
             while (cur != NULL) {
-                ceu_gc_inc_dyn(CEU4((CEU_Dyn*)) cur);
+                ceu_gc_inc_dyn(cur);
                 ret = ceu_bcast_dyn(X1, act, now, cur);
                 CEU_Dyn* nxt = CEU_LNKS(cur)->sd.nxt;
-                ceu_gc_dec_dyn((CEU_Dyn*)cur);
+                ceu_gc_dec_dyn(cur); // TODO: could affect nxt?
                 if (ret != 0) {
                     break;
                 }

@@ -325,11 +325,11 @@ class Exec_04 {
             val x = do {
                 spawn (task() { yield(nil) ; nil }) ()
             }
-            println(2)
+            println(:ok)
         """
         )
         //assert(out == "anon : (lin 3, col 21) : block escape error : incompatible scopes\n:error\n") { out }
-        assert(out == "2\n") { out }
+        assert(out == ":ok\n") { out }
         //assert(out == " v  anon : (lin 2, col 21) : block escape error : cannot assign running coro or task to outer scope\n") { out }
     }
 
