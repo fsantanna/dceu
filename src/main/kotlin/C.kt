@@ -956,7 +956,19 @@ fun Coder.main (tags: Tags): String {
                     while (cur != NULL) {
                         ceu_abort_dyn(cur);
                         CEU_Dyn* nxt = CEU_LNKS(cur)->sd.nxt;
-                        ceu_gc_dec_dyn((CEU_Dyn*) cur);
+                        if (nxt != NULL) {
+                            ceu_gc_inc_dyn(nxt);
+                        }
+                        if (CEU5(cur->Any.type==CEU_VALUE_EXE_TASK &&) cur->Exe_Task.status!=CEU_EXE_STATUS_TERMINATED) {
+                            ceu_gc_dec_dyn(cur);
+                        }
+                        if (nxt != NULL) {
+                            assert(nxt->Any.refs >= 2);
+                                // nxt is guaranteed to be still alive bc
+                                // this leaving block has a strong ref to it
+                                // TODO: no bc of natural termination
+                            ceu_gc_dec_dyn(nxt);
+                        }
                         cur = nxt;
                     }
                 }
@@ -2189,8 +2201,8 @@ fun Coder.main (tags: Tags): String {
                         ceux_rem(X->S, i);
                     }
                 }
+                ceu_gc_dec_dyn((CEU_Dyn*) X->exe);
             }
-            ceu_gc_dec_dyn((CEU_Dyn*) X->exe);
     #endif
             return ret;
         }

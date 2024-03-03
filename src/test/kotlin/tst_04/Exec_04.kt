@@ -586,6 +586,20 @@ class Exec_04 {
         assert(out.contains(":1\t1\n:2\t1\n:1\t2\n:2\texe-task: 0x")) { out }
         //assert(out == (":1\t1\n:2\t1\n:1\t2\n:2\t2\n")) { out }
     }
+    @Test
+    fun dd_04y_bcast() {
+        val out = test(
+            """
+            val T = task (v) {
+                yield(nil)
+            }
+            val t = spawn T()
+            broadcast(nil)
+            println(:ok)
+        """
+        )
+        assert(out.contains(":ok\n")) { out }
+    }
 
     @Test
     fun dd_04x_bcast() {
