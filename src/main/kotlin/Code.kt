@@ -111,7 +111,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                                 }
                             } // close switch
                         """}}
-                        return 1;
+                        return CEU3(X->action==CEU_ACTION_ABORT ? 0) : 1;
                     }
                 """)
 
@@ -187,7 +187,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     
                     // out=0 when loop iterates (!CEU_BREAK)
                     {
-                        int out = ${(up is Expr.Loop).cond { "!CEU_BREAK ? 0 : " }} ${rets.pub[this]!!};
+                        int out = CEU3(X->action==CEU_ACTION_ABORT ? 0 : ) ${(up is Expr.Loop).cond { "!CEU_BREAK ? 0 : " }} ${rets.pub[this]!!};
                         ceux_block_leave(X->S, X->base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size}, out);
                     }
                     
@@ -364,7 +364,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     return 1;   // TODO: args MULTI
                 case $n: // YIELD ${this.dump()}
                     if (X->action == CEU_ACTION_ABORT) {
-                        ceux_push(X->S, 1, (CEU_Value){CEU_VALUE_NIL}); // fake out=1
+                        //ceux_push(X->S, 1, (CEU_Value){CEU_VALUE_NIL}); // fake out=1
                         continue;
                     }
                 #if CEU >= 4
