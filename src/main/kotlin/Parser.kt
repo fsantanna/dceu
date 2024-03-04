@@ -530,7 +530,7 @@ class Parser (lexer_: Lexer)
                     Expr.Pass(this.tk0 as Tk.Fix, this.expr())
                 }
             }
-            (CEU>=6 && this.acceptFix("export")) -> {
+            (false && CEU>=6 && this.acceptFix("export")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val ids = if (CEU>=99 && this.checkFix("{")) emptyList() else {
                     this.acceptFix_err("[")
@@ -1431,7 +1431,7 @@ class Parser (lexer_: Lexer)
                 val body = this.block()
                 this.expr_0_out(op.str,
                     this.nest("""
-                        ${op.pos.pre()}export [] {
+                        ${op.pos.pre()}do {
                             ${body.es.tostr(true)}
                             ${e.tostr(true)}
                         }

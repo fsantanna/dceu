@@ -27,8 +27,8 @@ func is-not' (v1,v2) {
 
 ;; ARITHMETIC
 
-export [{{+}}, {{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}]
-{
+;;export [{{+}}, {{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}]
+;;{
     func {{+}} (v1, v2) {
         if (v1 is-not? :number) or (v2 is-not? :number) {
             error(:error)
@@ -78,11 +78,11 @@ export [{{+}}, {{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}]
         }
         `:number fmod($v1.Number, $v2.Number)`
     }
-}
+;;}
 
 ;; RELATIONAL:  >=  >  <=  <
 
-export [{{>}}, {{<}}, {{>=}}, {{<=}}] {
+;;export [{{>}}, {{<}}, {{>=}}, {{<=}}] {
     func {{>}} (v1,v2) {
         ifs {
             (v1 is? :tag)    and (v2 is? :tag)    => `:bool ($v1.Tag    > $v2.Tag)`
@@ -102,7 +102,7 @@ export [{{>}}, {{<}}, {{>=}}, {{<=}}] {
     func {{<=}} (v1,v2) {
         (v1 == v2) or (v1 < v2)
     }
-}
+;;}
 
 ;; ASSERT
 
@@ -144,7 +144,7 @@ func between (min_max, v) {
 
 data :Iterator = [f,s,tp,i]
 
-export [iter] {
+;;export [iter] {
     func iter-tuple (itr :Iterator) {
         val i = itr.i
         if i >= #itr.s {
@@ -210,7 +210,7 @@ export [iter] {
             is? :tasks    => :Iterator [iter-tasks, v, nil, nil]
         }
     }
-}
+;;}
 
 func next (v, ...) {
     ifs v {
