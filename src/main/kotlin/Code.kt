@@ -93,17 +93,18 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         """}}
                         ${do_while(code)}
                         ${isexe.cond{"""
+                                {
+                                    int top = ceux_n_get(X->S);
                                 ${(this.tk.str == "task").cond { """
                                     // task return value in pub(t)
                                     ceu_gc_dec_val(X->exe_task->pub);
-                                    X->exe_task->pub = ceux_peek(X->S, XX(-1));
+                                    if (top > 0) {
+                                        X->exe_task->pub = ceux_peek(X->S, XX(-1));
+                                    }
                                     ceu_gc_inc_val(X->exe_task->pub);
                                 """ }}
-                                {
-                                    int top = ceux_n_get(X->S);
-                                    int err = (top>0 && ceux_peek(X->S,XX(-1)).type==CEU_VALUE_ERROR);
                                     int ret = ceu_exe_term(X);
-                                    if (!err && ret!=0) {
+                                    if (!CEU_ERROR_IS(X->S) && ret!=0) {
                                         // nrm->err: remove pending return in the stack
                                         ceux_rem(X->S, top-1);
                                     }
@@ -298,12 +299,12 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                             continue;   // do not execute next statement, instead free up block
                         }
                     """ }}
-                    if (ceux_peek(X->S, XX(-1)).type == CEU_VALUE_ERROR) {      // caught internal throw
+                    if (CEU_ERROR_IS(X->S)) {      // caught internal throw
                         // [msgs,val,err]
                         do {
                             ${this.cnd.code()}  // ceu_ok = 1|0
                         } while (0);
-                        assert(ceux_peek(X->S, XX(-1)).type!=CEU_VALUE_ERROR && "TODO: throw in catch condition");
+                        assert(!CEU_ERROR_IS(X->S) && "TODO: throw in catch condition");
                         if (!ceu_as_bool(ceux_peek(X->S, XX(-1)))) {  // condition fail: rethrow error, escape catch block
                             ceux_pop(X->S, 1);
                             continue;
@@ -335,7 +336,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         do {
                             ${this.blk.code()}
                         } while (0);    // catch throw
-                        assert(ceux_peek(X->S,XX(-1)).type!=CEU_VALUE_ERROR && "TODO: error in defer");
+                        assert(!CEU_ERROR_IS(X->S) && "TODO: error in defer");
                         ceux_pop(X->S, 1);
                     }
                 """
@@ -368,7 +369,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }
                 #if CEU >= 4
                     if (X->action == CEU_ACTION_ERROR) {
-                        assert(X->args>1 && ceux_peek(X->S,XX(-1)).type==CEU_VALUE_ERROR && "TODO: varargs resume");
+                        assert(X->args>1 && CEU_ERROR_IS(X->S) && "TODO: varargs resume");
                         continue;
                     }
                 #endif

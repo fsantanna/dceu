@@ -60,7 +60,7 @@ fun Coder.main (tags: Tags): String {
         CEU_ACTION_ABORT,           // awake exe to finalize defers and release memory
     #if CEU >= 4
         //CEU_ACTION_TOGGLE,          // restore time to CEU_TIME_MIN after toggle
-        CEU_ACTION_ERROR ,          // awake task to catch error from nested task
+        CEU_ACTION_ERROR,           // awake task to catch error from nested task
     #endif
     } CEU_ACTION;
     #endif
@@ -460,6 +460,7 @@ fun Coder.main (tags: Tags): String {
 
     // EXIT / ERROR / ASSERT
     val c_error = """
+    #define CEU_ERROR_IS(S) ((S)->n>0 && ceux_peek((S),(S)->n-1).type==CEU_VALUE_ERROR)
     #define CEU_ERROR_CHK_VAL(cmd,v,pre) ({     \
         if (v.type == CEU_VALUE_ERROR) {        \
             ceu_error_e(X->S,v);                \
@@ -474,7 +475,7 @@ fun Coder.main (tags: Tags): String {
 
     #if CEU <= 1
     #define CEU_ERROR_CHK_STK(cmd,pre) {                                            \
-        if (ceux_n_get(X->S)>0 && ceux_peek(X->S,XX(-1)).type==CEU_VALUE_ERROR) {   \
+        if (CEU_ERROR_IS(X->S) {                                                    \
             CEU_Value msg = ceux_peek(X->S, XX(-2));                                \
             assert(msg.type==CEU_VALUE_POINTER && msg.Pointer!=NULL);               \
             fprintf(stderr, " |  %s\n v  error : %s\n", pre, (char*) msg.Pointer);  \
@@ -488,8 +489,7 @@ fun Coder.main (tags: Tags): String {
             cmd;                            \
         }
     int ceu_error_chk_stk (CEU_Stack* S, char* pre) {
-        CEU_Value err = ceux_peek(S, SS(-1));
-        if (ceux_n_get(S)==0 || err.type!=CEU_VALUE_ERROR) {
+        if (!CEU_ERROR_IS(S)) {
             return 0;
         } else {
             if (pre != NULL) {      // blocks check but do not add a message
@@ -983,7 +983,7 @@ fun Coder.main (tags: Tags): String {
         //  - n   - number of error messages
         //  - pay - error payload
         //  - err - error value
-        if (ceux_peek(S,SS(-1)).type == CEU_VALUE_ERROR) {
+        if (CEU_ERROR_IS(S)) {
             CEU_Value n = ceux_peek(S,SS(-3));
             assert(n.type == CEU_VALUE_NUMBER);
             out = n.Number + 1 + 1 + 1;
@@ -1033,7 +1033,7 @@ fun Coder.main (tags: Tags): String {
         //  - n   - number of error messages
         //  - pay - error payload
         //  - err - error value
-        if (ret>0 && ceux_peek(S,SS(-1)).type == CEU_VALUE_ERROR) {
+        if (ret>0 && CEU_ERROR_IS(S)) {
             CEU_Value n = ceux_peek(S,SS(-3));
             assert(n.type == CEU_VALUE_NUMBER);
             *out = n.Number + 1 + 1 + 1;
@@ -1097,7 +1097,7 @@ fun Coder.main (tags: Tags): String {
 #if CEU >= 3
     int ceux_resume (CEUX* X1, int inp, int out, CEU_ACTION act CEU4(COMMA uint32_t now)) {
         // X1: [exe,inps]
-        assert((inp<=1 || (ceux_peek(X1->S,XX1(-1)).type==CEU_VALUE_ERROR)) && "TODO: varargs resume");
+        assert((inp<=1 || CEU_ERROR_IS(X1->S)) && "TODO: varargs resume");
 
         CEU_Value exe = ceux_peek(X1->S, XX1(-inp-1));
         if (!(ceu_isexe_val(exe) && (exe.Dyn->Exe.status==CEU_EXE_STATUS_YIELDED || act==CEU_ACTION_ABORT))) {
@@ -2187,7 +2187,7 @@ fun Coder.main (tags: Tags): String {
                         // tsk <- tsk
                         up = tsk->lnks.up.dyn;
                     }
-                    if (up!=NULL && ceux_peek(X->S,XX(-1)).type!=CEU_VALUE_ERROR) {
+                    if (up!=NULL && !CEU_ERROR_IS(X->S)) {
                         assert(CEU_TIME < UINT32_MAX);
                         CEU_TIME++;
                         int i = ceux_push(X->S, 1, ceu_dyn_to_val((CEU_Dyn*) X->exe));   // bcast myself
@@ -2246,8 +2246,7 @@ fun Coder.main (tags: Tags): String {
                     // S: [co]
                     int ret = ceux_resume(X, 0, 0, CEU_ACTION_ABORT CEU4(COMMA CEU_TIME));
                     if (ret != 0) {
-                        int iserr = (ceux_peek(&S,XX(-1)).type == CEU_VALUE_ERROR);
-                        assert(iserr && "TODO: abort should not return");
+                        assert(CEU_ERROR_IS(&S) && "TODO: abort should not return");
                         assert(0 && "TODO: error in ceu_exe_kill");
                     }
                 }
@@ -2371,7 +2370,7 @@ fun Coder.main (tags: Tags): String {
                 // even if error is caught, should not awake from past event
                 if (ret != 0) {
                     // catch error from blocks above
-                    assert(ceux_peek(X1->S,XX1(-1)).type == CEU_VALUE_ERROR);
+                    assert(CEU_ERROR_IS(X1->S));
                     // [evt, (ret,err)]
                     ceux_push(X1->S, 1, ceu_dyn_to_val((CEU_Dyn*)tsk2));
                     int err = XX1(-ret-1);
@@ -2508,7 +2507,7 @@ fun Coder.main (tags: Tags): String {
 
         // uncaught throw
     #if CEU >= 2
-        if (ceux_peek(X->S,XX(-1)).type == CEU_VALUE_ERROR) {
+        if (CEU_ERROR_IS(X->S)) {
             // [...,n,pay,err]
             CEU_Value n = ceux_peek(X->S, XX(-3));
             assert(n.type == CEU_VALUE_NUMBER);
