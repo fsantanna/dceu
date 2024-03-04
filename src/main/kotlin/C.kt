@@ -1242,7 +1242,7 @@ fun Coder.main (tags: Tags): String {
             // error
         } else {
             ret = 1;
-    #if CEU >+ 5
+    #if CEU >= 5
             ceux_pop(X1->S, 1); // [tsks]
     #endif
             ceux_push(X1->S, 1, exe);        // returns exe to caller
@@ -2125,6 +2125,7 @@ fun Coder.main (tags: Tags): String {
     }
 
     val c_exes = """
+        #if CEU >= 3
         int ceu_isexe_val (CEU_Value val) {
             return (val.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask_val(val)));
         }
@@ -2252,8 +2253,10 @@ fun Coder.main (tags: Tags): String {
                 }
             }
         }
+        #endif
     """
     val c_task = """ // TASK
+        #if CEU >= 4
         void ceu_dyn_unlink (CEU_Dyn* dyn) {
             CEU_Links* me_lnks = CEU_LNKS(dyn);
             {   // UP-DYN-DN
@@ -2312,8 +2315,10 @@ fun Coder.main (tags: Tags): String {
         int ceu_istask_val (CEU_Value val) {
             return (val.type>CEU_VALUE_DYNAMIC) && ceu_istask_dyn(val.Dyn);
         }
+        #endif
     """
     val c_bcast = """
+        #if CEU >= 4
         int ceu_bcast_tasks (CEUX* X1, CEU_ACTION act, uint32_t now, CEU_Dyn* dyn2) {
             //assert(dyn2!=NULL && (dyn2->type==CEU_VALUE_EXE_TASK CEU5(|| dyn2->type==CEU_VALUE_TASKS)));
             int ret = 0;
@@ -2424,9 +2429,11 @@ fun Coder.main (tags: Tags): String {
             }
 
             return ret;
-        }        
+        }
+        #endif
     """
     val c_tasks = """
+        #if CEU >= 5
         int ceu_next_dash_tasks_f (CEUX* X) {
             assert(X->args==1 || X->args==2);
             CEU_Value tsks = ceux_peek(X->S, ceux_arg(X,0));
@@ -2466,6 +2473,7 @@ fun Coder.main (tags: Tags): String {
             ceux_push(X->S, 1, ret);
             return 1;
         }
+        #endif
     """
 
     // MAIN

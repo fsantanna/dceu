@@ -1986,4 +1986,21 @@ class Exec_05 {
                 " |  anon : (lin 7, col 21) : error(:XXX)\n" +
                 " v  error : :XXX\n") { out }
     }
+    @Test
+    fun zz_05_99() {
+        val out = test("""
+            (spawn (task () {
+                do {
+                    spawn (task () {
+                        yield(nil)
+                    }) ()
+                    loop {
+                        yield(nil)
+                    }
+                }
+            })())
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 }

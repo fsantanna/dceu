@@ -1759,19 +1759,13 @@ class Exec_99 {
     @Test
     fun jj_13x_paror_dyn() {
         val out = test("""
-            spawn task {
+            spawn (task () {
                 par-or {
-                    yield()
                     yield()
                 } with {
                     yield()
-                    yield()
                 }
-            }
-            do {
-                val now
-                broadcast([])
-            }
+            }) ()
             println(:ok)
         """)
         assert(out == ":ok\n") { out }
