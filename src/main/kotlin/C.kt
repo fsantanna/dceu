@@ -2209,10 +2209,14 @@ fun Coder.main (tags: Tags): String {
             }
             CEU_Dyn* cur = tsks->lnks.dn.fst;
             while (cur != NULL) {
-                ceu_gc_inc_dyn(cur);
-                ceu_abort_exe((CEU_Exe*) cur);
+                int term = (cur->Exe_Task.status == CEU_EXE_STATUS_TERMINATED);
+                if (!term) {
+                    ceu_abort_exe((CEU_Exe*) cur);
+                }
                 CEU_Dyn* nxt = CEU_LNKS(cur)->sd.nxt;
-                ceu_gc_dec_dyn(cur); // TODO: could affect nxt?
+                if (!term) {
+                    ceu_gc_dec_dyn(cur); // remove strong ref // TODO: could affect nxt?
+                }
                 cur = nxt;
             }
         }
@@ -2253,15 +2257,17 @@ fun Coder.main (tags: Tags): String {
         void ceu_dyn_unlink (CEU_Dyn* dyn) {
             CEU_Links* me_lnks = CEU_LNKS(dyn);
             {   // UP-DYN-DN
-                CEU_Links* up_lnks = CEU_LNKS(me_lnks->up.dyn);
-                me_lnks->up.dyn = NULL;
-                if (up_lnks->dn.fst == dyn) {
-                    assert(me_lnks->sd.prv == NULL);
-                    up_lnks->dn.fst = me_lnks->sd.nxt;
-                }
-                if (up_lnks->dn.lst == dyn) {
-                    assert(me_lnks->sd.nxt == NULL);
-                    up_lnks->dn.lst = me_lnks->sd.prv;
+                if (me_lnks->up.dyn != NULL) {
+                    CEU_Links* up_lnks = CEU_LNKS(me_lnks->up.dyn);
+                    me_lnks->up.dyn = NULL;
+                    if (up_lnks->dn.fst == dyn) {
+                        assert(me_lnks->sd.prv == NULL);
+                        up_lnks->dn.fst = me_lnks->sd.nxt;
+                    }
+                    if (up_lnks->dn.lst == dyn) {
+                        assert(me_lnks->sd.nxt == NULL);
+                        up_lnks->dn.lst = me_lnks->sd.prv;
+                    }
                 }
             }
             {   // UP-BLK-DN
@@ -2285,6 +2291,18 @@ fun Coder.main (tags: Tags): String {
                     //  - it is not a problem to keep the dangling pointers
                     // but we actually should not set them NULL:
                     //  - tsk might be in bcast_tasks which must call nxt
+            }
+            {   // DN
+                CEU_Dyn* cur = me_lnks->dn.fst;
+                if (me_lnks->dn.fst == NULL) {
+                    assert(me_lnks->dn.lst == NULL);
+                }
+                while (cur != NULL) {
+                    CEU_Links* dn_lnks = CEU_LNKS(cur);
+                    dn_lnks->up.dyn = NULL;
+                    cur = dn_lnks->sd.nxt;
+                }
+                me_lnks->dn.fst = me_lnks->dn.lst = NULL;
             }
         }
         

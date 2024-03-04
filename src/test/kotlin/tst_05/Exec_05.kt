@@ -1107,8 +1107,9 @@ class Exec_05 {
                 spawn T() in ts 
                 next-tasks(ts)
             }
+            println(x)
         """)
-        assert(out == " v  anon : (lin 5, col 21) : block escape error : cannot expose track outside its task scope\n") { out }
+        assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun ff_07_track_err() {
