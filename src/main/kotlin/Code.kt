@@ -97,11 +97,11 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                                     int top = ceux_n_get(X->S);
                                 ${(this.tk.str == "task").cond { """
                                     // task return value in pub(t)
-                                    ceu_gc_dec_val(X->exe_task->pub);
                                     if (top > 0) {
+                                        ceu_gc_dec_val(X->exe_task->pub);
                                         X->exe_task->pub = ceux_peek(X->S, XX(-1));
+                                        ceu_gc_inc_val(X->exe_task->pub);
                                     }
-                                    ceu_gc_inc_val(X->exe_task->pub);
                                 """ }}
                                     int ret = ceu_exe_term(X);
                                     if (!CEU_ERROR_IS(X->S) && ret!=0) {
