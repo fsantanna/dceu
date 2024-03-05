@@ -475,7 +475,7 @@ fun Coder.main (tags: Tags): String {
 
     #if CEU <= 1
     #define CEU_ERROR_CHK_STK(cmd,pre) {                                            \
-        if (CEU_ERROR_IS(X->S) {                                                    \
+        if (CEU_ERROR_IS(X->S)) {                                                   \
             CEU_Value msg = ceux_peek(X->S, XX(-2));                                \
             assert(msg.type==CEU_VALUE_POINTER && msg.Pointer!=NULL);               \
             fprintf(stderr, " |  %s\n v  error : %s\n", pre, (char*) msg.Pointer);  \

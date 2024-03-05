@@ -111,7 +111,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                                 }
                             } // close switch
                         """}}
-                        return CEU3(X->action==CEU_ACTION_ABORT ? 0) : 1;
+                        return CEU3(X->action==CEU_ACTION_ABORT ? 0 :) 1;
                     }
                 """)
 
