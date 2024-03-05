@@ -212,6 +212,7 @@ data :Iterator = [f,s,tp,i]
     }
 ;;}
 
+;;;
 func next (v, ...) {
     ifs v {
         is? :x-coro   => resume v(...)
@@ -220,6 +221,7 @@ func next (v, ...) {
         else          => error(:error)
     }
 }
+;;;
 
 ;; IN, IN-NOT, DEEP-EQUALS === =/=
 
@@ -361,6 +363,7 @@ func to-vector (col, tp) {
     ret
 }
 
+;;;
 func to-tasks (...) {
     val ret = #[]
     val args = ...
@@ -378,6 +381,7 @@ func to-tasks (...) {
     }
     ret
 }
+;;;
 
 func iterable-to-dict (itr) {
     val dict = @[]

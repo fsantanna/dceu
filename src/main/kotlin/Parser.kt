@@ -441,33 +441,25 @@ class Parser (lexer_: Lexer)
         return this.nest(when (type) {
             "await" -> """
                 ${pre0}loop {
-                    val ceu_$N = ${pre0}yield()
-                    ${pre0}until (ceu_$N --> \{ ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
-                        ${pre0}$xcnd ${cnt.cond { "and (do { ${it.tostr(true)} } or true)" }}
-                    })
+                    val ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} = ${pre0}yield()
+                    ${pre0}until ${pre0}$xcnd ${cnt.cond { "and (do { ${it.tostr(true)} } or true)" }}
                 }
             """ //.let { println(it);it }
             "every" -> """
                 ${pre0}loop {
-                    val ceu_$N = ${pre0}yield()
-                    skip if not (ceu_$N --> \{ ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
-                        ${pre0}$xcnd
-                    })
-                    until ceu_$N --> \{ ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
-                        loop {
-                            ${cnt!!.tostr(true)}
-                            break (false) if true
-                        }
+                    val ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} = ${pre0}yield()
+                    skip if not (${pre0}$xcnd)
+                    until loop {
+                        ${cnt!!.tostr(true)}
+                        break (false) if true
                     }
                 }
             """
             "watching" -> """
                 ${pre0}par-or {
                     ${pre0}loop {
-                        val ceu_$N = ${pre0}yield()
-                        ${pre0}until (ceu_$N --> \{ ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
-                            ${pre0}$xcnd
-                        })
+                        val ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} = ${pre0}yield()
+                        ${pre0}until ${pre0}$xcnd
                     }
                 } with {
                     ${this.block().es.tostr(true)}

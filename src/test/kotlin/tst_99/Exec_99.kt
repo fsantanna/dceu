@@ -750,6 +750,7 @@ class Exec_99 {
             }
             resume t()
         """)
+        assert(out == "[]\n") { out }
         //assert(out == " |  anon : (lin 11, col 24) : t(v)\n" +
         //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
@@ -759,8 +760,8 @@ class Exec_99 {
         //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
         //        " |  anon : (lin 3, col 41) : (func (x) { x })(yield(nil))\n" +
         //        " v  anon : (lin 3, col 41) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
-                " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
+        //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
+        //        " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
     }
     @Test
     fun mm_17_catch_yield_err() {
@@ -1062,7 +1063,8 @@ class Exec_99 {
                 println(t)
             }
         """, true)
-        assert(out.contains("track: 0x")) { out }
+        //assert(out.contains("track: 0x")) { out }
+        assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun fh_02_num() {
@@ -2105,6 +2107,35 @@ class Exec_99 {
         //assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 4, col 28) : argument error : cannot copy reference out\n") { out }
         //assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun km_05_every() {
+        val out = test("""
+            $IS ; $DETRACK ; $XAWAIT
+            spawn task {
+                var rect = []
+                spawn task {
+                    every :X {
+                        do rect
+                    }
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun km_05x_every() {
+        val out = test("""
+            spawn (task () {
+                var rect = []
+                spawn (task :nested () {
+                    println(rect)
+                }) ()
+            }) ()
+            println(:ok)
+        """)
+        assert(out == ":ok\n[]\n") { out }
     }
 
     // CLOCK

@@ -1,6 +1,6 @@
 package dceu
 
-class Ups (outer: Expr.Call) {
+class Ups (val outer: Expr.Call) {
     val pub = outer.traverse()
 
     fun all_until (e: Expr, cnd: (Expr)->Boolean): List<Expr> {
@@ -48,10 +48,8 @@ class Ups (outer: Expr.Call) {
         }
     }
     fun isnst (proto: Expr.Proto): Boolean {
-        return proto.nst && (CEU<99 || this.none(this.pub[proto]!!) { it is Expr.Proto } )
+        return (proto.nst && (CEU<99 || this.any(this.pub[proto]!!) { it is Expr.Proto && it!=outer.clo }))
     }
-
-
 
     fun Expr.traverse (): Map<Expr,Expr> {
         fun Expr.map (l: List<Expr>): Map<Expr,Expr> {
