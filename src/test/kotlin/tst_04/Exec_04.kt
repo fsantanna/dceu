@@ -161,7 +161,6 @@ class Exec_04 {
         assert(out.contains("anon : (lin 4, col 21) : delay error : expected enclosing task\n")) { out }
         //assert(out == ("anon : (lin 4, col 21) : access error : variable \"delay\" is not declared\n")) { out }
     }
-
     @Test
     fun bj_02_delay() {
         val out = test(
@@ -187,7 +186,6 @@ class Exec_04 {
         )
         assert(out == "2\n3\n1\n:ok\n") { out }
     }
-
     @Test
     fun bj_02x_delay() {
         val out = test(
@@ -207,7 +205,6 @@ class Exec_04 {
         )
         assert(out == "2\n3\n:ok\n") { out }
     }
-
     @Test
     fun bj_03_delay() {
         val out = test(
@@ -239,7 +236,6 @@ class Exec_04 {
         )
         assert(out == ":a\n2\n:b\n1\n3\n:ok\n") { out }
     }
-
     @Test
     fun bj_03_par() {
         val out = test(
@@ -257,7 +253,6 @@ class Exec_04 {
         )
         assert(out == "1\n2\n3\n") { out }
     }
-
     @Test
     fun bj_04_toggle() {
         DEBUG = true
@@ -284,7 +279,6 @@ class Exec_04 {
         )
         assert(out == "255\n:ok\n") { out }
     }
-
     @Test
     fun bj_05_spawn_spawn() {
         val out = test(
@@ -298,6 +292,36 @@ class Exec_04 {
         """
         )
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun bj_06_delay() {
+        val out = test("""
+            spawn (task () {
+                val v = do {
+                    do 100
+                    delay
+                }
+                println(v)
+            }) ()
+        """)
+        assert(out == "100\n") { out }
+    }
+    @Test
+    fun bj_07_delay() {
+        DEBUG = true
+        val out = test("""
+            spawn (task :nested () {
+                val v = do {
+                    loop {
+                        (break (100) if true)
+                    }
+                    delay
+                }
+                println(v)
+                dump(v)
+            }) ()
+        """)
+        assert(out == ":1\n:2\n") { out }
     }
 
     // SCOPE

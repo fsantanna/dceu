@@ -1985,6 +1985,22 @@ class Exec_99 {
         """)
         assert(out == ":1\n:2\n") { out }
     }
+    @Test
+    fun kk_13_await_drag() {
+        val out = test("""
+            $IS ; $XAWAIT
+            spawn task {
+                val click = await(:X) {
+                    println(:it, it)
+                    it
+                }
+                println(:click, click)
+            }            
+            broadcast(:X [1,2])
+            println(nil)
+        """)
+        assert(out == ":1\n:2\n") { out }
+    }
 
     // AWAIT / TASK
 

@@ -14,7 +14,15 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
         when (this) {
             is Expr.Proto  -> this.blk.traverse(1 /*MULTI*/)
             is Expr.Export -> this.blk.traverse(N)
-            is Expr.Do     -> this.es.forEachIndexed { i,e -> e.traverse(if (i<this.es.lastIndex || ups.pub[this] is Expr.Loop) 0 else N) }
+            is Expr.Do     -> this.es.forEachIndexed { i,e ->
+                val n = when {
+                    (ups.pub[this] is Expr.Loop) -> 0
+                    (i == this.es.lastIndex) -> N
+                    (this.es[i+1] is Expr.Delay) -> if (i+1==this.es.lastIndex) N else 1
+                    else -> 0
+                }
+                e.traverse(n)
+            }
             is Expr.Dcl    -> this.src?.traverse(1)
             is Expr.Set    -> {
                 this.dst.traverse(0)
@@ -35,7 +43,7 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
             is Expr.Skip   -> this.cnd.traverse(1)
             is Expr.Enum   -> {}
             is Expr.Data   -> {}
-            is Expr.Pass   -> this.e.traverse(0)
+            is Expr.Pass   -> this.e.traverse(N)
 
             is Expr.Catch  -> {
                 this.cnd.traverse(1)

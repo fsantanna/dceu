@@ -1906,7 +1906,7 @@ fun Coder.main (tags: Tags): String {
         switch (v.type) {
             case CEU_VALUE_BLOCK:
     #if CEU >= 4
-                printf("%p", v.Block);
+                printf("block: %p", v.Block);
     #else
                 printf("(block sentinel)");
     #endif
