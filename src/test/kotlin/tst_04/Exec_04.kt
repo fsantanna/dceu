@@ -310,7 +310,7 @@ class Exec_04 {
     fun bj_07_delay() {
         DEBUG = true
         val out = test("""
-            spawn (task :nested () {
+            spawn (task () {
                 val v = do {
                     loop {
                         (break (100) if true)
