@@ -32,17 +32,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             }
             is Expr.Export -> this.blk.traverse()
             is Expr.Do     -> this.es.forEach { it.traverse() }
-            is Expr.Dcl    -> {
-                val blk = ups.pub[this] as Expr.Do
-                for (e in blk.es) {
-                    when {
-                        (e == this) -> break
-                        (e.has_block()) -> err(this.tk, "declaration error : cannot cross block (${e.tk.pos.file + " : (lin ${e.tk.pos.lin}, col ${e.tk.pos.col})"})")
-                        else -> {}
-                    }
-                }
-                this.src?.traverse()
-            }
+            is Expr.Dcl    -> this.src?.traverse()
             is Expr.Set    -> {
                 this.dst.traverse()
                 this.src.traverse()
