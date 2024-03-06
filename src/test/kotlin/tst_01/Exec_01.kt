@@ -246,7 +246,8 @@ class Exec_01 {
             val x
             println(x)
         """)
-        assert(out == "2\nnil\n") { out }
+        //assert(out == "2\nnil\n") { out }
+        assert(out == "anon : (lin 6, col 13) : declaration error : cannot cross block (anon : (lin 2, col 13))\n") { out }
     }
 
     // DCL
