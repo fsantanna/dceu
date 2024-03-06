@@ -1097,7 +1097,7 @@ fun Coder.main (tags: Tags): String {
 #if CEU >= 3
     int ceux_resume (CEUX* X1, int inp, int out, CEU_ACTION act CEU4(COMMA uint32_t now)) {
         // X1: [exe,inps]
-        assert((inp<=1 || CEU_ERROR_IS(X1->S)) && "TODO: varargs resume");
+        //assert((inp<=1 || CEU_ERROR_IS(X1->S)) && "TODO: varargs resume");
 
         CEU_Value exe = ceux_peek(X1->S, XX1(-inp-1));
         if (!(ceu_isexe_val(exe) && (exe.Dyn->Exe.status==CEU_EXE_STATUS_YIELDED || act==CEU_ACTION_ABORT))) {
@@ -1191,7 +1191,6 @@ fun Coder.main (tags: Tags): String {
 
     int ceux_spawn (CEUX* X1, int inp, uint8_t now) {
         // X1: [tsks,clo,inps]
-        assert(inp<=1 && "TODO: varargs spawn");
 
         #if CEU >= 5
         CEU_Value up_tsks = ceux_peek(X1->S, XX1(-inp-2));
