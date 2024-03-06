@@ -488,10 +488,8 @@ class Parser_01 {
                 "do {\n" +
                 "nil\n" +
                 "}\n" +
-                "do {\n" +
                 "(val x)\n" +
                 "(val y)\n" +
-                "}\n" +
                 "}") { e.tostr() }
     }
 

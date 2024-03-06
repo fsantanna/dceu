@@ -9,7 +9,7 @@ enum class Type {
 }
 
 class Vars (val outer: Expr.Call, val ups: Ups) {
-    val global = outer.clo as Expr.Proto
+    val global = (outer.clo as Expr.Proto).blk
     val datas = mutableMapOf<String,LData>()
 
     // allow it to be redeclared as long as it is not accessed
@@ -26,16 +26,14 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
     public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
     public val proto_to_upvs: MutableMap<Expr.Proto,MutableSet<Expr.Dcl>> = mutableMapOf()
 
-    // proto_to_locs: max number of locals in proto
-    //  - must allocate this space on call
     // enc_to_base: base stack index at beginning of block
     //  - must pop down to it on leave
     //  - proto base is required bc block must be relative to it
     //      - proto also has upvs at bebinning
-    public val proto_to_locs: MutableMap<Expr.Proto,Int> = mutableMapOf()
     public val enc_to_base: MutableMap<Expr,Int> = mutableMapOf()
 
     init {
+        this.outer.locs()
         this.outer.traverse()
     }
 
@@ -94,7 +92,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         val enc = dcl_to_enc[dcl]!!
         val xups = ups.all_until(src) { it == enc } // all ups between src -> dcl
         return when {
-            (enc == global.blk) -> Type.GLOBAL
+            (enc == global) -> Type.GLOBAL
             xups.all { it !is Expr.Proto } -> Type.LOCAL
             xups.all { it !is Expr.Proto || it==enc } -> Type.ARG
             xups.all { it !is Expr.Proto || ups.isnst(it) || it==enc } -> Type.NESTED
@@ -220,6 +218,45 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         }
     }
 
+    fun Expr.locs (): Int {
+        return when (this) {
+            is Expr.Proto  -> {
+                val n = this.blk.locs()
+                enc_to_locs[this] = n
+                0
+            }
+            is Expr.Do     -> {
+                val n = this.es.count { it is Expr.Dcl || it is Expr.Defer } +
+                        this.es.maxOf { it.locs() }
+                enc_to_locs[this] = n
+                0
+            }
+            is Expr.Export -> this.blk.locs()
+            is Expr.Dcl    -> (this.src?.locs() ?: 0)
+            is Expr.Set    -> this.dst.locs() + this.src.locs()
+            is Expr.If     -> this.cnd.locs() + max(this.t.locs(), this.f.locs())
+            is Expr.Loop   -> this.blk.locs()
+            is Expr.Break  -> this.cnd.locs() + (this.e?.locs() ?: 0)
+            is Expr.Skip   -> this.cnd.locs()
+            is Expr.Pass   -> this.e.locs()
+            is Expr.Catch  -> this.cnd.locs() + this.blk.locs()
+            is Expr.Defer  -> this.blk.locs()
+            is Expr.Yield  -> this.arg.locs()
+            is Expr.Resume -> this.co.locs() + this.arg.locs()
+            is Expr.Spawn  -> (this.tsks?.locs() ?: 0) + this.tsk.locs() + this.args.sumOf { it.locs() }
+            is Expr.Pub    -> this.tsk?.locs() ?: 0
+            is Expr.Dtrack -> this.blk.locs()
+            is Expr.Toggle -> this.tsk.locs() + this.on.locs()
+            is Expr.Tuple  -> this.args.sumOf { it.locs() }
+            is Expr.Vector -> this.args.sumOf { it.locs() }
+            is Expr.Dict   -> this.args.sumOf { it.first.locs() ; it.second.locs() }
+            is Expr.Index  -> this.col.locs() + this.idx.locs()
+            is Expr.Call   -> this.clo.locs() + this.args.sumOf { it.locs() }
+            is Expr.Enum, is Expr.Data, is Expr.Delay, is Expr.Nat, is Expr.Acc -> 0
+            is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> 0
+        }
+    }
+
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
@@ -280,7 +317,16 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 val proto = ups.first(this) { it is Expr.Proto } as Expr.Proto
                 enc_to_dcls[this] = mutableListOf()
                 //println(listOf(this.tk,dcls.size,enc_to_base[proto]))
-                enc_to_base[this] = dcls.size - enc_to_base[proto]!!
+
+                ups.first(ups.pub[this]!!) { it is Expr.Do || it is Expr.Proto }.let {
+                    enc_to_base[this] = if (it==null || it is Expr.Proto) 0 else {
+                        //println(listOf("yyy", enc_to_base[it], enc_to_locs[it], this, it))
+                        (enc_to_base[it]!! + enc_to_locs[it]!!)
+                    }
+                }
+                //println(listOf(enc_to_base[this], dcls.size - enc_to_base[proto]!!, dcls.size, enc_to_base[proto]))
+                //enc_to_base[this] = dcls.size - enc_to_base[proto]!!
+                //println(listOf("yyy", enc_to_base[this]))
 
                 // X. restore this size after nested block
                 val size = dcls.size
