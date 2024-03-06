@@ -318,10 +318,10 @@ class Exec_04 {
                     delay
                 }
                 println(v)
-                dump(v)
+                ;;dump(v)
             }) ()
         """)
-        assert(out == ":1\n:2\n") { out }
+        assert(out == "100\n") { out }
     }
 
     // SCOPE

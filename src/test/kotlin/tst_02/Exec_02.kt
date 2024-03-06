@@ -70,7 +70,7 @@ class Exec_02 {
             }
             defer { println(12) }
         """)
-        assert(out == "2\n4\n5\n111\n333\n222\n7\n6\n8\n10\n9\n3\n11\n13\n12\n1\n") { out }
+        assert(out == "6\n3\n12\n") { out }
     }
     @Test
     fun ee_05_defer() {

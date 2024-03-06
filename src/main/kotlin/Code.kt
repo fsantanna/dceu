@@ -122,7 +122,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         ${(!istsk).cond { "CEU_VALUE_CLO_${this.tk.str.uppercase()}," }}
                         ceu_f_$id,
                         ${this.args.let { assert(it.lastOrNull()?.first?.str!="...") { "TODO: ..." }; it.size }},  // TODO: remove assert
-                        ${vars.proto_to_locs[this]!!},
+                        ${vars.blk_to_locs[this.blk]!!.second},
                         ${vars.proto_to_upvs[this]!!.size}
                         ${istsk.cond { ", ${if (isnst) "X->exe_task" else "NULL"}" }}
                     );

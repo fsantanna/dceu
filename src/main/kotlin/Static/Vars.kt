@@ -32,6 +32,13 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
     //      - proto also has upvs at bebinning
     public val enc_to_base: MutableMap<Expr,Int> = mutableMapOf()
 
+    // Proto/Do
+    //  - max number of simultaneous locals
+    //  - only locals, does not include Proto args/upvs
+    public val blk_to_locs: MutableMap<Expr.Do,Pair<Int,Int>> = mutableMapOf()
+    // proto_to_locs: max number of locals in proto
+    //  - must allocate this space on call
+
     init {
         this.outer.locs()
         this.outer.traverse()
@@ -220,16 +227,13 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
 
     fun Expr.locs (): Int {
         return when (this) {
-            is Expr.Proto  -> {
-                val n = this.blk.locs()
-                enc_to_locs[this] = n
-                0
-            }
+            is Expr.Proto  -> this.blk.locs()
             is Expr.Do     -> {
-                val n = this.es.count { it is Expr.Dcl || it is Expr.Defer } +
-                        this.es.maxOf { it.locs() }
-                enc_to_locs[this] = n
-                0
+                val n = this.es.count { it is Expr.Dcl || it is Expr.Defer }
+                val nn = n + this.es.maxOf { it.locs() }
+                blk_to_locs[this] = Pair(n, nn)
+                //println(listOf(n, this.es.maxOf { it.locs() }, this))
+                nn
             }
             is Expr.Export -> this.blk.locs()
             is Expr.Dcl    -> (this.src?.locs() ?: 0)
@@ -291,11 +295,9 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
 
                 val base = dcls.size                                // 1. base before proto
                 enc_to_base[this] = base                            //    and after args
-                proto_to_locs[this] = 0                             // 2. blk.traverse max
+                //println(listOf("xxx", base))
 
                 this.blk.traverse()
-
-                proto_to_locs[this] = proto_to_locs[this]!! - base  // 3. then we subtract base from max
 
                 repeat(this.args.size) {
                     dcls.removeLast()   // dropLast(n) copies the list
@@ -321,7 +323,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 ups.first(ups.pub[this]!!) { it is Expr.Do || it is Expr.Proto }.let {
                     enc_to_base[this] = if (it==null || it is Expr.Proto) 0 else {
                         //println(listOf("yyy", enc_to_base[it], enc_to_locs[it], this, it))
-                        (enc_to_base[it]!! + enc_to_locs[it]!!)
+                        (enc_to_base[it]!! + blk_to_locs[it]!!.first)
                     }
                 }
                 //println(listOf(enc_to_base[this], dcls.size - enc_to_base[proto]!!, dcls.size, enc_to_base[proto]))
@@ -333,10 +335,6 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
 
                 // nest into expressions
                 this.es.forEach { it.traverse() }
-
-                // brefore (X)
-                // max number of simultaneous locals in outer proto
-                proto_to_locs[proto] = max(proto_to_locs[proto]!!, dcls.size)
 
                 // X. restore size
                 // do not remove ids listed in outer export
@@ -363,11 +361,6 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 dcls.add(this)
                 dcl_to_enc[this] = blk
                 enc_to_dcls[blk]!!.add(this)
-
-                val proto = ups.first(this) { it is Expr.Proto } as Expr.Proto?
-                if (proto != null) {
-                    proto_to_locs[proto] = max(proto_to_locs[proto]!!, dcls.size)
-                }
 
                 this.idtag.second.let {
                     if (it !=null && !datas.containsKey(it.str)) {
