@@ -5327,5 +5327,82 @@ class Exec_04 {
         """)
         assert(out == ":a\t1\n:b\t1\n") { out }
     }
+    @Test
+    fun zz_09_99_double_awake() {
+        val out = test("""
+            (spawn (task () {
+                loop {
+                    yield(nil)
+                    delay
+                    println(false)
+                    if false {
+                        nil
+                    } else {
+                        do {
+                            val ceu_0_1322 = spawn (task () {
+                                (val ceu_1121 :X = yield(nil))
+                                delay ;; TODO?
+                            }) ()
+                            val ceu_1_1322 = spawn (task () {
+                                loop {
+                                    yield(nil)
+                                }
+                            }) ()
+                                        
+                            loop {
+                                (break if do {
+                                    (val ceu_1871 = do {
+                                        (val ceu_1753 = {{==}}(status(ceu_0_1322),:terminated))
+                                        if ceu_1753 {
+                                            do {
+                                                (val ceu_1762 = pub(ceu_0_1322))
+                                                true
+                                            }
+                                        } else {
+                                            ceu_1753
+                                        }
+                                    })
+            if ceu_1871 {
+            ceu_1871
+            } else {
+            do {
+            (val ceu_2007 = do {
+            (val ceu_1889 = {{==}}(status(ceu_1_1322),:terminated))
+            if ceu_1889 {
+            do {
+            (val ceu_1898 = pub(ceu_1_1322))
+            if ceu_1898 {
+            ceu_1898
+            } else {
+            true
+            }
+            }
+            } else {
+            ceu_1889
+            }
+            })
+            if ceu_2007 {
+            ceu_2007
+            } else {
+            false
+            }
+            }
+            }
+            })
+            yield(nil) ; delay
+            nil
+            }
+            }
+            delay
+            }
+            println(true)
+            broadcast'(:task,:Y)
+            }
+            })())
+            broadcast'(:task,:X)
+            broadcast'(:task,:X)
+        """)
+        assert(out == ":a\t1\n:b\t1\n") { out }
+    }
 }
 

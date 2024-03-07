@@ -2837,4 +2837,25 @@ class Exec_99 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun zz_05_double_awake() {
+        val out = test("""
+            $IS ; $XAWAIT
+            spawn task {
+                loop {
+                    await (:X)
+                    println(false)
+                    val t = spawn task {
+                        await(:X)
+                    }
+                    await(t)
+                    println(true)
+                    broadcast(:Y)
+                }
+            }
+            broadcast(:X)
+            broadcast(:X)
+        """)
+        assert(out == "false\ntrue\n") { out }
+    }
 }
