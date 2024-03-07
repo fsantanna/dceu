@@ -358,7 +358,7 @@ func :rec copy (v) {
 func to-vector (col, tp) {
     val ret = #[]
     loop v in iter(col,tp) {
-        set ret[+] = copy(v)
+        set ret[+] = v
     }
     ret
 }

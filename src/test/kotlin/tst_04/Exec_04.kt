@@ -1037,12 +1037,12 @@ class Exec_04 {
             println(broadcast(1) in t)
         """
         )
-        //assert(out == "nil\n") { out }
+        assert(out == "nil\n") { out }
         //assert(out == "true\n") { out }
-        assert(
-            out == " |  anon : (lin 3, col 21) : broadcast'(t,1)\n" +
-                    " v  broadcast error : invalid target\n"
-        ) { out }
+        //assert(
+        //    out == " |  anon : (lin 3, col 21) : broadcast'(t,1)\n" +
+        //            " v  broadcast error : invalid target\n"
+        //) { out }
     }
 
     // BCAST / TARGETS

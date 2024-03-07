@@ -2419,10 +2419,14 @@ fun Coder.main (tags: Tags): String {
                     ret = ceu_error_s(X->S, "broadcast error : invalid target");
                 }
             } else {
-                if (ceu_istask_val(xin) && xin.Dyn->Exe_Task.status!=CEU_EXE_STATUS_TERMINATED) {
-                    ret = ceu_bcast_task(X, CEU_ACTION_RESUME, CEU_TIME, &xin.Dyn->Exe_Task);
+                if (ceu_istask_val(xin)) {
+                    if (xin.Dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {
+                        ret = 0;
+                    } else {
+                        ret = ceu_bcast_task(X, CEU_ACTION_RESUME, CEU_TIME, &xin.Dyn->Exe_Task);
+                    }
                 } else {
-                    ret = ceu_error_s(X->S, "broadcast error : invalid target");
+                    ceu_error_s(X->S, "broadcast error : invalid target");
                 }
             }
 
