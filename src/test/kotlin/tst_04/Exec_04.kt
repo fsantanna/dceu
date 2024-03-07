@@ -5319,7 +5319,7 @@ class Exec_04 {
         val out = test("""
             val T = task (x, y) {
                 println(:a, x)
-                yield()
+                yield(nil)
                 println(:b, x)
             }            
             spawn T(1, 2)

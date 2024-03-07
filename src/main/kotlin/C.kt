@@ -2383,7 +2383,7 @@ fun Coder.main (tags: Tags): String {
                         // [evt, (ret,err)]
                     }
                     ret = ret2;
-                } else if (tsk2->pc==0 || CEU_TIME>tsk2->time) {
+                } else if (tsk2->pc==0 || now>tsk2->time) {
                     // [evt]
                     ceux_push(X1->S, 1, ceu_dyn_to_val((CEU_Dyn*)tsk2));
                     ceux_dup(X1->S, XX1(-2));
