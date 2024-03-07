@@ -5302,5 +5302,30 @@ class Exec_04 {
         )
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun zz_06_99() {
+        val out = test("""
+            spawn (task (v) {
+                spawn (task :nested () {
+                    println(v)
+                }) ()
+            }) (100)
+            println(:ok)
+        """)
+        assert(out == "100\n:ok\n") { out }
+    }
+    @Test
+    fun zz_08_99() {
+        val out = test("""
+            val T = task (x, y) {
+                println(:a, x)
+                yield()
+                println(:b, x)
+            }            
+            spawn T(1, 2)
+            broadcast(10)
+        """)
+        assert(out == ":a\t1\n:b\t1\n") { out }
+    }
 }
 

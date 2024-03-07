@@ -1129,6 +1129,7 @@ fun Coder.main (tags: Tags): String {
         // first resume: place upvs+locs
         if (exe.Dyn->Exe.pc == 0) {
             X2->base = ceux_call_pre(X2->S, clo, &inp);
+            X2->args = inp;
             // X2: [args,upvs,locs]
             //           ^ base
         } else {
@@ -1137,9 +1138,8 @@ fun Coder.main (tags: Tags): String {
             //           ^ base
         }
         X2->action = act;
-        X2->args   = inp;
     #if CEU >= 4
-        X2->now    = now;
+        X2->now = now;
     #endif
 
         int ret = clo->proto(X2);

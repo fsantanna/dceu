@@ -369,11 +369,11 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }
                 #if CEU >= 4
                     if (X->action == CEU_ACTION_ERROR) {
-                        assert(X->args>1 && CEU_ERROR_IS(X->S) && "TODO: varargs resume");
+                        //assert(X->args>1 && CEU_ERROR_IS(X->S) && "TODO: varargs resume");
                         continue;
                     }
                 #endif
-                    assert(X->args<=1 && "TODO: varargs resume");
+                    //assert(X->args<=1 && "TODO: varargs resume");
                 #if 0
                     // fill missing args with nils
                     {

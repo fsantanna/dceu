@@ -214,9 +214,10 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             }
             Type.NESTED -> {
                 val xups = ups.all_until(src) { it == enc } // all ups between src -> dcl
-                val n = xups.count { it is Expr.Proto }
+                val n = xups.count { it is Expr.Proto && it!=enc }
                 val XX = "$X${"->exe->clo.Dyn->Clo_Task.up_tsk->X".repeat(n)}"
-                val (_,idx) = this.idx(XX,dcl,dcl)
+                val (_,idx) = this.idx(XX,dcl,if (enc is Expr.Proto) enc.blk else dcl)
+                //println(listOf(n,id,XX,idx,dcl,src))
                 Pair("$XX->S /* nested */", idx)
             }
             Type.UPVAL -> {

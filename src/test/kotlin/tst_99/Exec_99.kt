@@ -2231,7 +2231,7 @@ class Exec_99 {
     @Test
     fun mm_01_toggle() {
         val out = test("""
-            task T (v) {
+            task T (v) {\
                 set pub() = v
                 toggle :Show {
                     println(pub())
@@ -2765,10 +2765,10 @@ class Exec_99 {
         assert(out == ":ok\n") { out }
     }
 
-    // TYPE-*
+    // MISC
 
     @Test
-    fun zz_04_type() {
+    fun zz_01_type() {
         val out = test("""
             println(type-static?(:number))
             println(type-static?(type([])))
@@ -2777,9 +2777,8 @@ class Exec_99 {
         """, true)
         assert(out == "true\nfalse\nfalse\ntrue\n") { out }
     }
-
     @Test
-    fun BUG_zz_05_track_bcast() {
+    fun BUG_zz_02_track_bcast() {
         DEBUG = true
         val out = test("""
             $IS ; $DETRACK ; $XAWAIT
@@ -2797,7 +2796,7 @@ class Exec_99 {
         assert(out == "true\nfalse\nfalse\ntrue\n") { out }
     }
     @Test
-    fun TODO_zz_06_double_awake() {
+    fun TODO_zz_03_double_awake() {
         DEBUG = true
         val out = test("""
             spawn task {
@@ -2819,5 +2818,23 @@ class Exec_99 {
             broadcast(true)
         """)
         assert(out == "true\nfalse\nfalse\ntrue\n") { out }
+    }
+    @Test
+    fun zz_04_par_arg() {
+        val out = test("""
+            $IS ; $XAWAIT
+            task T (v) {
+                par {
+                    every :X {
+                        do v
+                    }
+                } with {
+                }
+            }
+            spawn T(100)
+            broadcast(:X)
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
     }
 }
