@@ -2231,7 +2231,7 @@ class Exec_99 {
     @Test
     fun mm_01_toggle() {
         val out = test("""
-            task T (v) {\
+            task T (v) {
                 set pub() = v
                 toggle :Show {
                     println(pub())
