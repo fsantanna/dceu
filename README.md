@@ -1,23 +1,17 @@
 # The Programming Language Ceu
 
 Ceu is a [synchronous programming language][1] that reconciles *[Structured
-Concurrency][2]* with *[Event-Driven Programming][3]*.
-Ceu extends classical structured programming with three main functionalities:
+Concurrency][2]* with *[Event-Driven Programming][3]* to extend classical
+structured programming:
 
 - Structured Deterministic Concurrency:
-    - A set of structured primitives to compose concurrent tasks (e.g.,
-      `spawn`, `par-or`, `toggle`).
+    - A set of structured primitives to lexically compose concurrent tasks
+      (e.g., `spawn`, `par-or`, `toggle`).
     - A synchronous and deterministic scheduling policy, which provides
       predictable behavior and safe abortion of tasks.
-    - A container primitive to hold dynamic tasks, which automatically releases
-      them as they terminate.
 - Event Signaling Mechanisms:
     - An `await` primitive to suspend a task and wait for events.
     - A `broadcast` primitive to signal events and awake awaiting tasks.
-- Lexical Memory Management:
-    - Even dynamic allocation is attached to lexical blocks.
-    - Strict escaping rules to preserve structure reasoning.
-    - Garbage collection restricted to local references only.
 
 Ceu is inspired by [Esterel][4] and [Lua][5].
 
@@ -31,7 +25,7 @@ Follows an extended list of functionalities in Ceu:
 - Statements as expressions
 - Dynamic collections (tuples, vectors, and dictionaries)
 - Stackless coroutines (the basis of tasks)
-- Restricted closures (upvalues must be explicit and final)
+- Restricted closures (upvalues must be final)
 - Deferred statements (for finalization)
 - Exception handling (throw & catch)
 - Hierarchical tuple templates (for data description)
@@ -52,8 +46,8 @@ Displays `Hello World!` every second, until 10 seconds elapse:
 
 ```
 spawn {
-    awaiting 10:s {
-        every 1:s {
+    awaiting :10:s {
+        every :1:s {
             println("Hello World!")
         }
     }

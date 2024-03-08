@@ -1,3 +1,12 @@
+v0.3 (mar'24)
+-------------
+
+- Additions
+- Changes
+- Removals
+    - lexical memory management for dynamic allocation
+- Full re-implementation
+
 v0.2 (may'23)
 -------------
 
