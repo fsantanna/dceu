@@ -1194,17 +1194,17 @@ class Parser (lexer_: Lexer)
         }
     }
 
-    // expr_0_out : v --> f     f <-- v    v where {...}
+    // expr_0_out : v --> f     f <-- v    v where {...}    v thus {...}
     // expr_1_bin : a + b
     // expr_2_pre : -a    :T [...]
     // expr_3_met : v->f    f<-v
-    // expr_4_suf : v[0]    v.x    v.1    v.(:T).x    f()    f \{...}    v thus {...}
+    // expr_4_suf : v[0]    v.x    v.1    v.(:T).x    f()
     // expr_prim
 
     fun expr_4_suf (xe: Expr? = null): Expr {
         val e = if (xe != null) xe else this.expr_prim()
         val ok = this.tk0.pos.isSameLine(this.tk1.pos) && (
-                (CEU>=99 && this.acceptFix("thus")) || this.acceptFix("[") || this.acceptFix(".") || this.acceptFix("(")
+                    this.acceptFix("[") || this.acceptFix(".") || this.acceptFix("(")
                  )
         if (!ok) {
             return e
@@ -1289,15 +1289,6 @@ class Parser (lexer_: Lexer)
                         }
                         else -> Expr.Call(e.tk, e, args)
                     }
-                }
-                "thus" -> {
-                    val (id_tag,es) = lambda(N)
-                    this.nest( """
-                        do {
-                            ${id_tag.first.pos.pre()}val ${id_tag.tostr(true)} = ${e.tostr(true)}
-                            ${es.tostr(true)}
-                        }
-                    """)
                 }
                 else -> error("impossible case")
             }
@@ -1390,7 +1381,7 @@ class Parser (lexer_: Lexer)
     }
     fun expr_0_out (xop: String? = null, xe: Expr? = null): Expr {
         val e = if (xe != null) xe else this.expr_1_bin()
-        val ok = (CEU>=99 && (this.acceptFix("where")) || this.acceptFix("-->") || this.acceptFix("<--"))
+        val ok = (CEU>=99 && (this.acceptFix("where") || this.acceptFix("thus") || this.acceptFix("-->") || this.acceptFix("<--")))
         if (!ok) {
             return e
         }
@@ -1409,6 +1400,15 @@ class Parser (lexer_: Lexer)
                         }
                     """)
                 )
+            }
+            "thus" -> {
+                val (id_tag,es) = lambda(N)
+                this.nest( """
+                        do {
+                            ${id_tag.first.pos.pre()}val ${id_tag.tostr(true)} = ${e.tostr(true)}
+                            ${es.tostr(true)}
+                        }
+                    """)
             }
             "-->" -> this.expr_0_out(op.str, method(this.expr_1_bin(), e, true))
             "<--" -> method(e, this.expr_0_out(op.str), false)

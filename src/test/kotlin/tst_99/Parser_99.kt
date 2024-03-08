@@ -1072,7 +1072,7 @@ class Parser_99 {
         assert(trap { parser.expr() } == "anon : (lin 1, col 12) : sufix operation error : expected surrounding parentheses")
     }
     @Test
-    fun op_05_where() {
+    fun todo_op_05_where() {    // export (not do)
         val l = lexer("10+1 where { }")
         val parser = Parser(l)
         val e = parser.expr()
