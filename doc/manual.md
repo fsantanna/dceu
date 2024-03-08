@@ -1073,8 +1073,8 @@ A `defer` block executes only when its enclosing block terminates:
 Defer : `defer´ Block
 ```
 
-Deferred statements execute in reverse order in which they appear in the
-source code.
+Deferred blocks execute in reverse order in which they appear in the source
+code.
 
 Examples:
 
@@ -1137,8 +1137,7 @@ that [dynamic values](#dynamic-values) are modified.
 Optionally, a declaration can be associated with a
 [tuple template](#tag-enumerations-and-tuple-templates) tag, which allows the
 variable to be indexed by a field name, instead of a numeric position.
-Note that the variable is not guaranteed to hold a value matching the template,
-not even a tuple is guaranteed.
+Note that the variable is not guaranteed to hold a value matching the template.
 The template association is static but with no runtime guarantees.
 
 If the declaration omits the template tag, but the initialization expression is
@@ -1155,11 +1154,11 @@ val y = [10]
 set y = 0               ;; ERR: cannot reassign `y`
 set y[0] = 20           ;; OK
 
-val pos1 :Pos = [10,20] ;; (assumes :Pos has fields [x,y])
-println(pos1.x)         ;; --> 10
+val p1 :Pos = [10,20]   ;; (assumes :Pos has fields [x,y])
+println(p1.x)           ;; --> 10
 
-val pos2 = :Pos [10,20] ;; (assumes :Pos has fields [x,y])
-println(pos2.y)         ;; --> 20
+val p2 = :Pos [10,20]   ;; (assumes :Pos has fields [x,y])
+println(p2.y)           ;; --> 20
 ```
 
 ## Tag Enumerations and Tuple Templates
@@ -1171,14 +1170,16 @@ templates.
 ### Tag Enumerations
 
 An `enum` groups related tags in sequence so that they are associated with
-numbers in the same order:
+incrementing numbers:
 
 ```
 Enum : `enum´ `{´ List(TAG [`=´ Expr]) `}´
 ```
 
-Optionally, a tag may receive an explicit numeric value, which is implicitly
+Optionally, a tag may receive an explicit constant numeric value, which is
 incremented for tags in sequence.
+
+`TODO: currently requires a native expression`
 
 Enumerations can be used to interface with external libraries that use
 constants to represent a group of related values (e.g., key symbols).
@@ -1187,10 +1188,10 @@ Examples:
 
 ```
 enum {
-    :Key-Left = `:number KEY_LEFT`  ;; explicitly associates with C enumeration
-    :Key-Right                      ;; implicitly associates with remaining
-    :Key-Up                         ;;  keys in sequence
-    :Key-Down
+    :Key-Left = `:number KEY_LEFT`, ;; associates with C enumeration
+    :Key-Right,                     ;; KEY_LEFT+1
+    :Key-Up,                        ;; KEY_LEFT+2
+    :Key-Down,                      ;; KEY_LEFT+3
 }
 if lib-key-pressed() == :Key-Up {
     ;; lib-key-pressed is an external library
@@ -1204,8 +1205,8 @@ A `data` declaration associates a tag with a tuple template, which associates
 tuple positions with field identifiers:
 
 ```
-Temp : `data´ Data
-            Data : TAG `=´ `[´ List(ID [TAG]) `]´
+Template : `data´ Data
+                Data : TAG `=´ `[´ List(ID [TAG]) `]´
                     [`{´ { Data } `}´]
 ```
 
@@ -1215,8 +1216,8 @@ A template is surrounded by brackets (`[´ and `]´) to represent the tuple, and
 includes a list of identifiers, each mapping an index into a field.
 Each field can be followed by a tag to represent nested templates.
 
-Then, a [variable declaration](#declarations-and-assignments) can specify a
-tuple template and hold a tuple that can be accessed by field.
+A [variable declaration](#declarations-and-assignments) can specify a tuple
+template and hold a tuple that can be accessed by field.
 
 Examples:
 
@@ -1259,23 +1260,6 @@ val evt :Event = but
 println(evt.ts, but.pos.y)      ;; --> 0, 20
 ```
 
-#### Template Casting
-
-An expression can be prefixed with a tag such that the expression base is
-casted into the tag template:
-
-```
-Cast : TAG Expr
-```
-
-Examples:
-
-```
-data :Pos = [x,y]
-val p = <...>
-println(:Pos p.x)       ;; `p` is casted to `:Pos`
-```
-
 ## Calls, Operations and Indexing
 
 ### Calls and Operations
@@ -1312,6 +1296,8 @@ x - 10          ;; binary operation
 {{-}}(x,10)     ;; operation as call
 f(10,20)        ;; normal call
 ```
+
+#### Methods and Pipes
 
 ### Indexes and Fields
 
@@ -1361,6 +1347,23 @@ t.pub       ;; task public field
 
 val t :T    ;; tuple template
 t.x
+```
+
+#### Template Casting
+
+An expression can be sufixed with a tag such that the expression base is
+cast into the tag template:
+
+```
+Cast : TAG Expr
+```
+
+Examples:
+
+```
+data :Pos = [x,y]
+val p = <...>
+println(:Pos p.x)       ;; `p` is cast to `:Pos`
 ```
 
 #### Peek, Push, Pop
