@@ -29,8 +29,6 @@
 * STATEMENTS
     * Program, Sequences and Blocks
         - `;` `do` `defer` `pass`
-    * Where and Thus Clauses
-        - `where` `thus`
     * Variables, Declarations and Assignments
         - `val` `var` `set` `...` `err` `evt`
     * Tag Enumerations and Tuple Templates
@@ -39,6 +37,8 @@
         - `f(...)` `x+y` `t[...]` `t.x`
     * Conditionals and Loops
         - `if` `ifs` `loop` `loop if` `loop until` `loop in`
+    * Where and Thus Clauses
+        - `where` `thus`
     * Exceptions
         - `throw` `catch`
     * Coroutine Operations
@@ -1105,28 +1105,6 @@ do {
 ```
 -->
 
-## Where and Thus Clauses
-
-Any expression can be suffixed by `where` and `thus` clauses:
-
-```
-Expr : Expr [`where´ Block | `thus´ [ID] Block]
-```
-
-A `where` clause executes its block before the prefix expression and is allowed
-to declare variables that can be used by the expression.
-
-A `thus` clause captures the result of the prefix expression into the given
-identifier, and then executes its block.
-If the identifier is omitted, it assumes the implicit identifier `it`.
-
-Examples:
-
-```
-var x = (2 * y) where { var y=10 }      ;; x=20
-(x * x) thus x2 { println(x2) }         ;; --> 400
-```
-
 ## Variables, Declarations and Assignments
 
 Regardless of being dynamically typed, all variables in Ceu must be declared
@@ -1628,6 +1606,28 @@ loop in iter([10,20,30]) {
 loop in [10 -> 0), :step -2 {
     println(it)                 ;; --> 10, 8, 6, 4, 2
 }
+```
+
+## Where and Thus Clauses
+
+Any expression can be suffixed by `where` and `thus` clauses:
+
+```
+Expr : Expr [`where´ Block | `thus´ [ID] Block]
+```
+
+A `where` clause executes its block before the prefix expression and is allowed
+to declare variables that can be used by the expression.
+
+A `thus` clause captures the result of the prefix expression into the given
+identifier, and then executes its block.
+If the identifier is omitted, it assumes the implicit identifier `it`.
+
+Examples:
+
+```
+var x = (2 * y) where { var y=10 }      ;; x=20
+(x * x) thus x2 { println(x2) }         ;; --> 400
 ```
 
 ## Exceptions
