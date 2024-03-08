@@ -323,7 +323,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 """
             }
             is Expr.Defer -> {
-                val bup = ups.first_block(this)!!
+                val bup = ups.first(this) { it is Expr.Do } as Expr.Do
                 val (stk,idx) = vars.idx("X",this)
                 assert(stk=="X->S" || stk=="CEU_GLOBAL_S") { stk }
                 val (ns,ini,end) = defers.getOrDefault(bup, Triple(mutableListOf(),"",""))

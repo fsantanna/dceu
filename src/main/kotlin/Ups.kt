@@ -32,9 +32,6 @@ class Ups (val outer: Expr.Call) {
     fun none (e: Expr, cnd: (Expr)->Boolean): Boolean {
         return this.first(e,cnd) == null
     }
-    fun first_block (e: Expr): Expr.Do? {
-        return this.first(e) { it is Expr.Do && this.pub[it] !is Expr.Export } as Expr.Do?
-    }
     fun first_task_outer (e: Expr): Expr.Proto? {
         return this.first(e) { it is Expr.Proto && it.tk.str=="task" && !this.isnst(it) } as Expr.Proto?
     }

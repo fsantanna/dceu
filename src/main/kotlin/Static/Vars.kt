@@ -358,7 +358,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                     err(this.idtag.first, "declaration error : variable \"${this.idtag.first.str}\" is already declared")
                 }
 
-                val blk = ups.first_block(this)!!
+                val blk = ups.first(this) { it is Expr.Do }!!
                 dcls.add(this)
                 dcl_to_enc[this] = blk
                 enc_to_dcls[blk]!!.add(this)
@@ -401,7 +401,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
 
             is Expr.Catch  -> { this.cnd.traverse() ; this.blk.traverse() }
             is Expr.Defer  -> {
-                val blk = ups.first_block(this)!!
+                val blk = ups.first(this) { it is Expr.Do }!!
                 dcls.add(this)
                 dcl_to_enc[this] = blk
                 enc_to_dcls[blk]!!.add(this)
