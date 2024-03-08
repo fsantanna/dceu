@@ -29,8 +29,8 @@
 * STATEMENTS
     * Program, Sequences and Blocks
         - `;` `do` `defer` `pass`
-    * Variables, Declarations and Assignments
-        - `val` `var` `set` `...` `err` `evt`
+    * Declarations and Assignments
+        - `val` `var` `set`
     * Tag Enumerations and Tuple Templates
         - `enum` `data`
     * Calls, Operations and Indexing
@@ -105,9 +105,8 @@ structure of the source code in blocks.
 In this sense, tasks in Ceu are treated in the same way as local variables in
 structured programming:
 When a [block](#blocks) of code terminates or goes out of scope, all of its
-[local variables](#variables-declarations-and-assignments) and
-[tasks](#active-values) are deallocated and become inaccessible to enclosing
-blocks.
+[local variables](#declarations-and-assignments) and [tasks](#active-values)
+are deallocated and become inaccessible to enclosing blocks.
 In addition, tasks are properly aborted and finalized by [deferred
 statements](#defer).
 
@@ -847,8 +846,8 @@ Task : `task´ [:rec] `(´ [List(ID [TAG])] [`...´] `)´ Block
 Each prototype keyword is followed by an optional `:rec` modifier and a list of
 identifiers as parameters enclosed by parenthesis.
 Parameter declarations are equivalent to immutable `val`
-[declarations](#variables-declarations-and-assignments) and can also be
-assiociated with [tuple template](#tag-enumerations-and-tuple-templates) tags.
+[declarations](#declarations-and-assignments) and can also be associated with
+[tuple template](#tag-enumerations-and-tuple-templates) tags.
 If the prototype is recursive (i.e., refers to itself), the declaration must
 use the `:rec` modifier.
 
@@ -856,8 +855,17 @@ use the `:rec` modifier.
 
 <!--
 The last parameter can be the symbol
-[`...`](#variables-declarations-and-assignments), which captures as a tuple all
+[`...`](#declarations-and-assignments), which captures as a tuple all
 remaining arguments of a call.
+
+The symbol `...` represents the variable arguments (*varargs*) a function
+receives in a call.
+In the context of a [function](#prototype-values) that expects varargs, it
+evaluates to a tuple holding the varargs.
+In other scenarios, it evaluates to a tuple holding the program arguments.
+When `...` is the last argument of a call, its tuple is expanded as the last
+arguments.
+
 -->
 
 The associated block executes when the unit is [invoked](#TODO).
@@ -868,7 +876,7 @@ A *closure* is a prototoype that accesses variables from outer blocks, known as
 *upvalues*.
 Ceu supports a restricted form of closures, in which *upvalues* must be
 immutable (thus declared with the modifier
-[`val`](#variables-declarations-and-assignments)).
+[`val`](#declarations-and-assignments)).
 
 Examples:
 
@@ -983,7 +991,7 @@ A sequence of expressions evaluate to its last expression.
 
 <!--
 The symbol
-[`...`](#variables-declarations-and-assignments) stores the program arguments
+[`...`](#declarations-and-assignments) stores the program arguments
 as a tuple.
 -->
 
@@ -992,8 +1000,7 @@ as a tuple.
 ### Blocks
 
 A block delimits a lexical scope for
-[variables](#variables-declarations-and-assignments) and
-[tasks](#active-values):
+[variables](#declarations-and-assignments) and [tasks](#active-values):
 A variable is only visible to expressions in the block in which it was
 declared.
 A task is automatically terminated when the block in which it was created
@@ -1025,7 +1032,7 @@ a                       ;; ERR: `a` is out of scope
 
 do {
     spawn T()           ;; spawns task T and attaches it to the block
-    ...
+    <...>
 }                       ;; terminates spawned task
 ```
 
@@ -1105,16 +1112,17 @@ do {
 ```
 -->
 
-## Variables, Declarations and Assignments
+## Declarations and Assignments
 
-Regardless of being dynamically typed, all variables in Ceu must be declared
-before use:
+All variables in Ceu must be declared before use:
 
 ```
 Val : `val´ ID [TAG] [`=´ Expr]         ;; constants
 Var : `var´ ID [TAG] [`=´ Expr]         ;; variables
-Spc : `...´ | `err´ | `evt´             ;; special variables
 ```
+
+The optional initialization expression assigns an initial value to the
+variable, which is set to `nil` otherwise.
 
 The difference between `val` and `var` is that a `val` is immutable, while a
 `var` declaration can be modified by further `set` statements:
@@ -1123,38 +1131,19 @@ The difference between `val` and `var` is that a `val` is immutable, while a
 Set : `set´ Expr `=´ Expr
 ```
 
-The optional initialization expression assigns an initial value to the
-variable, which is set to `nil` otherwise.
-
 The `val` modifier forbids that a name is reassigned, but it does not prevent
 that [dynamic values](#dynamic-values) are modified.
 
-Optionally, a declaration can be associated with a [tuple
-template](#tag-enumerations-and-tuple-templates) tag, which allows the variable
-to be indexed by a field name, instead of a numeric position.
+Optionally, a declaration can be associated with a
+[tuple template](#tag-enumerations-and-tuple-templates) tag, which allows the
+variable to be indexed by a field name, instead of a numeric position.
 Note that the variable is not guaranteed to hold a value matching the template,
 not even a tuple is guaranteed.
 The template association is static but with no runtime guarantees.
 
 If the declaration omits the template tag, but the initialization expression is
-a [tag constructor](#collection-values), then the variable assumes this tag template,
-i.e., `val x = :X []` expands to `val x :X = :X []`.
-
-The symbol `...` represents the variable arguments (*varargs*) a function
-receives in a call.
-In the context of a [function](#prototype-values) that expects varargs, it
-evaluates to a tuple holding the varargs.
-In other scenarios, it evaluates to a tuple holding the program arguments.
-When `...` is the last argument of a call, its tuple is expanded as the last
-arguments.
-
-The variables `err` and `evt` have special scopes and are automatically setup
-in the context of [`throw`](#exceptions) and [`broadcast`](#broadcast)
-statements, respectively.
-Because `evt` is broadcast from arbitrary scopes, it cannot be assigned to
-other variables.
-
-`TODO: :tmp`
+a [tag constructor](#collection-values), then the variable assumes this tag
+template, i.e., `val x = :X []` expands to `val x :X = :X []`.
 
 Examples:
 
@@ -1226,8 +1215,8 @@ A template is surrounded by brackets (`[´ and `]´) to represent the tuple, and
 includes a list of identifiers, each mapping an index into a field.
 Each field can be followed by a tag to represent nested templates.
 
-Then, a [variable declaration](#variables-declarations-and-assignments) can
-specify a tuple template and hold a tuple that can be accessed by field.
+Then, a [variable declaration](#declarations-and-assignments) can specify a
+tuple template and hold a tuple that can be accessed by field.
 
 Examples:
 
@@ -1283,7 +1272,7 @@ Examples:
 
 ```
 data :Pos = [x,y]
-val p = ...
+val p = <...>
 println(:Pos p.x)       ;; `p` is casted to `:Pos`
 ```
 
@@ -1353,7 +1342,7 @@ omitted), the operation expands to `v[:k]`.
 A [task](#active-values) `t` also relies on a field operation to access its
 public field `pub` (i.e., `t.pub`).
 
-A [variable](#variables-declarations-and-assignments) associated with a
+A [variable](#declarations-and-assignments) associated with a
 [tuple template](#tag-enumerations-and-tuple-templates) can also be indexed
 using a field operation.
 
@@ -1443,8 +1432,8 @@ If the condition is [true](#basic-types), the `if` executes the first branch.
 Otherwise, it executes the optional `else` branch, which defaults to `nil`.
 
 The condition expression can be can be assigned to an optional
-[variable declaration](#variables-declarations-and-assignments) and can be
-accessed in the branches.
+[variable declaration](#declarations-and-assignments) and can be accessed in
+the branches.
 
 The branches can be either a block or a simple expression prefixed by the
 symbol `->`.
@@ -1479,8 +1468,8 @@ If a head condition expression is provided, test cases can assume its value
 appears before a binary operator and the right operand.
 
 The head condition and each case condition can be assigned to an optional
-[variable declaration](#variables-declarations-and-assignments) and can be
-accessed in the branches.
+[variable declaration](#declarations-and-assignments) and can be accessed in
+the branches.
 
 Examples:
 
@@ -1529,8 +1518,8 @@ declared in a block are visible in further blocks.
 A test checks an expression and succeeds, terminating the loop, `until` the
 expression is `true` or `while` the expression `false`.
 The condition expression can assigned to an optional
-[variable declaration](#variables-declarations-and-assignments) and can be
-accessed in further blocks.
+[variable declaration](#declarations-and-assignments) and can be accessed in
+further blocks.
 
 Note that there is no `break` statement in Ceu, which must be substituted by
 proper top-level test conditions.
@@ -2021,8 +2010,8 @@ Bcast : `broadcast´ [`in´ Expr `,´] Expr
 A `broadcast` expects an event expression and an optional target between `in`
 and `,`.
 The event is any valid expression, which is assigned to the special variable
-[`evt`](#variables-declarations-and-assignments) and can be queried by await
-operations to decide if tasks should awake.
+[`evt`](#declarations-and-assignments) and can be queried by await operations
+to decide if tasks should awake.
 The target expression restricts the scope of the broadcast:
     if set to `:local`, it is restricted to tasks in the enclosing block;
     if set to `:task`, it is restricted to tasks nested in the current task;
