@@ -551,7 +551,7 @@ class Parser_01 {
     }
     @Test
     fun pp_12_func_nested() {
-        val l = tst_04.lexer(
+        val l = lexer(
             """
             func :nested () { nil }
         """
@@ -560,6 +560,17 @@ class Parser_01 {
         //val e = parser.expr()
         //assert(e.tostr() == "(func :nested () {\nnil\n})") { e.tostr() }
         assert(trap { parser.expr() } == "anon : (lin 2, col 18) : expected \"(\" : have \":nested\"")
+    }
+    @Test
+    fun pp_13_minus() {
+        val l = lexer("""
+            val f = func (v) { -v }
+        """)
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "(val f = (func (v) {\n" +
+                "{{-}}(v)\n" +
+                "}))") { e.tostr() }
     }
 
     // LOOP

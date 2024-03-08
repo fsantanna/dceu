@@ -3010,6 +3010,15 @@ class Exec_01 {
         //assert(out == "anon : (lin 4, col 26) : block escape error : cannot copy reference out\n") { out }
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun nn_23_pipe() {
+        val out = test("""
+            $PLUS
+            val f = func (v) { -v }
+            println(f(10))
+        """)
+        assert(out == "-10\n") { out }
+    }
 
     // FUNC / ARGS / DOTS / ...
 

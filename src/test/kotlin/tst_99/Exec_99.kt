@@ -2323,11 +2323,30 @@ class Exec_99 {
     fun oo_04_method() {
         val out = test("""
             $PLUS
-            func f (v,x) { v+x }
+            func f (v,x) { v - x }
             val v = 10->f(20)
             println(v)
         """)
-        assert(out == "30\n") { out }
+        assert(out == "-10\n") { out }
+    }
+    @Test
+    fun oo_05_method() {
+        val out = test("""
+            func f (v) { v }
+            val v = f<-20
+            println(v)
+        """)
+        assert(out == "20\n") { out }
+    }
+    @Test
+    fun oo_06_method() {
+        val out = test("""
+            $PLUS
+            func f (v,x) { v - x }
+            val v = f(10)<-20
+            println(v)
+        """)
+        assert(out == "-10\n") { out }
     }
 
     // PIPE
@@ -2351,6 +2370,17 @@ class Exec_99 {
             println(v)
         """)
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun op_03_pipe() {
+        val out = test("""
+            $PLUS
+            func g (v) { v+1 }
+            func f (v) { -v }
+            val v = f<--10->g
+            println(v)
+        """)
+        assert(out == "-11\n") { out }
     }
 
     // CAST

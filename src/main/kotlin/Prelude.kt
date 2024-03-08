@@ -5,7 +5,11 @@ val PLUS = """
         `:number (${D}v1.Number + ${D}v2.Number)`
     }    
     val {{-}} = func (v1, v2) {
-        `:number (${D}v1.Number - ${D}v2.Number)`
+        if v2 == nil {
+            `:number - ${D}v1.Number`
+        } else {
+            `:number (${D}v1.Number - ${D}v2.Number)`
+        }
     }    
 """.replace("\n", " ")
 

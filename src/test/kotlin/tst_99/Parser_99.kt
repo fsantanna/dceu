@@ -1088,6 +1088,15 @@ class Parser_99 {
         val e = parser.expr()
         assert(trap { parser.expr() } == "anon : (lin 1, col XX) : spawn error : expected call")
     }
+    @Test
+    fun op_07_pipe() {
+        val l = lexer("""
+            do f<--10->g
+        """)
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "(do f<--10->g)") { e.tostr() }
+    }
 
     // CAST
 
