@@ -13,19 +13,19 @@
     * Comments
 * TYPES
     * Basic Types
-        - `nil` `bool` `char` `number` `pointer` `tag`
+        - `nil` `bool` `char` `number` `tag` `pointer`
     * Collections
         - `tuple` `vector` `dict`
     * Execution Units
-        - `func` `coro` `task` `x-coro` `x-task` `x-tasks` `x-track`
+        - `func` `coro` `task` `exe-coro` `exe-task` `tasks`
     * User Types
 * VALUES
-    * Literal Values
-        - `nil` `bool` `tag` `number` `char` `pointer`
+    * Static Values
+        - `nil` `bool` `char` `number` `tag` `pointer`
     * Dynamic Values
         - `tuple` `vector` `dict` `func` `coro` `task`
     * Active Values
-        - `x-coro` `x-task` `x-tasks` `x-track`
+        - `exe-coro` `exe-task` `tasks`
 * STATEMENTS
     * Program, Sequences and Blocks
         - `;` `do` `defer` `pass`
@@ -527,8 +527,8 @@ A [*char*](#basic-types) type literal is a single or backslashed (`\`)
 character enclosed by single quotes (`'`), and is represented as a *C char*.
 
 A string literal is a sequence of characters enclosed by double quotes (`"`).
-It is expanded to a [vector](#collections) of character literals, e.g., `"abc"`
-expands to `#['a','b','c']`.
+It is expanded to a [vector](#constructors) of character literals, e.g.,
+`"abc"` expands to `#['a','b','c']`.
 
 A native literal is a sequence of characters interpreted as C code enclosed by
 multiple back quotes (`` ` ``).
@@ -556,18 +556,20 @@ The following tags are pre-defined in Ceu:
 ```
     ;; type enumeration
 
-    :nil :error :tag :bool :char :number :pointer   ;; basic types
+    :nil :tag :bool :char :number :pointer          ;; basic types
     :func :coro :task                               ;; prototypes
     :tuple :vector :dict                            ;; collections
     :exe-coro :exe-task :tasks                      ;; active coro/task
     :tasks                                          ;; pool of tasks
 
     :ceu                                            ;; ceu value
-    :rec :nested                                    ;; recursive/nested prototype
+    :rec :nested                                    ;; recursive prototype
     :yielded :toggled :resumed :terminated          ;; coro/task status
     :h :min :s :ms                                  ;; time unit
     :all :idx :key :val                             ;; iterator modifier
     :global :task                                   ;; broadcast target
+
+    :dynamic :error :nested                         ;; internal use
 ```
 
 ### Native Literals
@@ -698,21 +700,19 @@ Examples:
 Ceu provide 3 types of execution units: functions, coroutines, and tasks:
 
 ```
-func    coro    task
-x-coro  x-task  x-tasks  x-track
+func      coro      task
+exe-coro  exe-task  tasks
 ```
 
 The `func` type represents [function prototypes](#prototypes).
 
 The `coro` type represents [coroutine prototypes](#prototypes), while the
-`x-coro` type represents [active coroutines](#active-values).
+`exe-coro` type represents [active coroutines](#active-values).
 
-The `task` type represents [task prototypes](#prototypes), while the `x-task`
+The `task` type represents [task prototypes](#prototypes), while the `exe-task`
 type represents [active tasks](#active-values).
-The `x-tasks` type represents [task pools](#active-values) holding active
+The `tasks` type represents [pools of tasks](#active-values) holding active
 tasks.
-The `x-track` type represents [track references](#active-values) pointing to
-active tasks.
 
 ## User Types
 
@@ -758,48 +758,40 @@ template](#tag-enumerations-and-tuple-templates) declarations.
 As a dynamic language, each value in Ceu carries extra information, such as its
 own type.
 
-## Literal Values
+## Static Values
 
-A *literal value* does not require dynamic allocation since it only carries
-extra information about its type.
+A *static value* does not require dynamic allocation.
 All [basic types](#basic-types) have [literal](#literals) values:
 
 ```
-Types : nil | bool | char | number | pointer | tag
-Lits  : `nil´ | `false´ | `true´ | TAG | NUM | CHR | STR | NAT
+Types : nil | bool | char | number | tag | pointer
+Lits  : `nil´ | `false´ | `true´ | CHR | NUM | TAG | NAT
 ```
 
-Literals are immutable and are copied between variables and blocks as a whole
-without any restrictions.
+Static values are immutable and are transfered between variables and across
+blocks as a whole copies without any restrictions.
 
 ## Dynamic Values
 
-A *dynamic value* requires dynamic allocation since its internal data is too
-big to fit in a literal value.
+A *dynamic value* requires dynamic allocation since its internal data is either
+variable or too big to fit as a static value.
 The following types have dynamic values:
 
 ```
-Colls  : tuple | vector | dict                  ;; collections
-Protos : func | coro | task                     ;; prototypes
-Actvs  : x-coro | x-task | x-tasks | x-track    ;; active values (next section)
+Colls  : tuple | vector | dict          ;; collections
+Protos : func | coro | task             ;; prototypes
+Actvs  : exe-coro | exe-task | tasks    ;; active values (next section)
 ```
 
-Dynamic values are mutable and are manipulated through references, allowing
-that multiple aliases refer to the same value.
+Unlike static values, dynamic values are mutable and are transferred between
+variables and across blocks through references.
+As a consequence, multiple references may point to the same mutable value.
 
-Dynamic values are always attached to the enclosing [block](#blocks) in which
-they were first assigned, and cannot escape to outer blocks in further
-assignments or as return expressions.
-This is also valid for active [coroutines](#active-values) and
-[tasks](#active-values).
-This restriction permits that terminating blocks deallocate all dynamic values
-attached to them.
-
-Ceu also provides an explicit [drop](#copy-and-drop) operation to reattach a
-dynamic value to an outer scope.
-
-Nevertheless, a dynamic value is still subject to garbage collection, given
-that it may loose all references to it, even with its enclosing block active.
+Ceu uses reference counting to determine the life cycle of dynamic values.
+When the reference counter reaches zero, the dynamic value is immediately
+deallocated from memory.
+Note that mutually referenced values are never deallocated.
+Therefore, programmers need to break reference cycles manually.
 
 ### Constructors
 
@@ -812,6 +804,7 @@ Cons : `[´ [List(Expr)] `]´             ;; tuple
      | `@[´ [List(Key-Val)] `]´         ;; dictionary
             Key-Val : ID `=´ Expr
                     | `(´ Expr `,´ Expr `)´
+     | STR
      | TAG `[´ [List(Expr)] `]´         ;; tagged tuple
 ```
 
@@ -822,7 +815,9 @@ Dictionaries (`@[...]`) are built providing a list of pairs of expressions
 (`(key,val)`), in which each pair maps a key to a value.
 The first expression is the key, and the second is the value.
 If the key is a tag, the alternate syntax `tag=val` may be used (omitting the
-tag `:`).
+tag colon prefix `:`).
+
+A [string literal](#literals) expands to a vector of character literals.
 
 A tuple constructor may also be prefixed with a tag, which associates the tag
 with the tuple, e.g., `:X [...]` is equivalent to `tags([...], :X, true)`.
@@ -835,6 +830,7 @@ Examples:
 [1,2,3]             ;; a tuple
 :Pos [10,10]        ;; a tagged tuple
 #[1,2,3]            ;; a vector
+"abc"               ;; a character vector ['a','b','c']
 @[(:x,10), x=10]    ;; a dictionary with equivalent key mappings
 ```
 
@@ -2348,8 +2344,8 @@ The operator `==` compares two values `v1` and `v2` and returns a boolean.
 The operator `/=` is the negation of `==`.
 
 To be considered equal, first the values must be of the same type.
-In addition, [literal values](#literal-values) are compared *by value*, while
-[Dynamic Values](#dynamic-values) and [Active Values](#active-values) are
+In addition, [static values](#static-values) are compared *by value*, while
+[dynamic values](#dynamic-values) and [active values](#active-values) are
 compared *by reference*.
 <!--
 The exception are tuples, which are compared by value, i.e., they must be of
