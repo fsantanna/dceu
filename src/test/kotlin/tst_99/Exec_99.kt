@@ -2587,6 +2587,13 @@ class Exec_99 {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun pp_09_lambda_call () {
+        val out = test("""
+            println(\{ x => x }(10))
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // TUPLE DOT
 

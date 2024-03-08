@@ -23,9 +23,9 @@
     * Static Values
         - `nil` `bool` `char` `number` `tag` `pointer`
     * Dynamic Values
-        - `tuple` `vector` `dict` `func` `coro` `task`
-    * Active Values
-        - `exe-coro` `exe-task` `tasks`
+        - `tuple` `vector` `dict` (collections)
+        - `func` `coro` `task` (prototypes)
+        - `exe-coro` `exe-task` `tasks` (actives)
 * STATEMENTS
     * Program, Sequences and Blocks
         - `;` `do` `defer` `pass`
@@ -414,7 +414,7 @@ The following symbols are reserved in Ceu:
     @[              ;; dictionary constructor delimeter
     \               ;; lambda declaration
     =               ;; assignment separator
-    =>              ;; catch/thus/if/ifs/loop clauses
+    =>              ;; catch/if/ifs/loop/lambda/thus clauses
     <- ->           ;; method calls
     <-- -->         ;; pipe calls
     ;               ;; sequence separator
@@ -527,7 +527,7 @@ A [*char*](#basic-types) type literal is a single or backslashed (`\`)
 character enclosed by single quotes (`'`), and is represented as a *C char*.
 
 A string literal is a sequence of characters enclosed by double quotes (`"`).
-It is expanded to a [vector](#constructors) of character literals, e.g.,
+It is expanded to a [vector](#collection-values) of character literals, e.g.,
 `"abc"` expands to `#['a','b','c']`.
 
 A native literal is a sequence of characters interpreted as C code enclosed by
@@ -704,13 +704,13 @@ func      coro      task
 exe-coro  exe-task  tasks
 ```
 
-The `func` type represents [function prototypes](#prototypes).
+The `func` type represents [function prototypes](#prototype-values).
 
-The `coro` type represents [coroutine prototypes](#prototypes), while the
+The `coro` type represents [coroutine prototypes](#prototype-values), while the
 `exe-coro` type represents [active coroutines](#active-values).
 
-The `task` type represents [task prototypes](#prototypes), while the `exe-task`
-type represents [active tasks](#active-values).
+The `task` type represents [task prototypes](#prototype-values), while the
+`exe-task` type represents [active tasks](#active-values).
 The `tasks` type represents [pools of tasks](#active-values) holding active
 tasks.
 
@@ -793,7 +793,7 @@ deallocated from memory.
 Note that mutually referenced values are never deallocated.
 Therefore, programmers need to break reference cycles manually.
 
-### Constructors
+### Collection Values
 
 Ceu provides constructors for [collections](#collections) to allocate tuples,
 vectors, and dictionaries:
@@ -834,65 +834,68 @@ Examples:
 @[(:x,10), x=10]    ;; a dictionary with equivalent key mappings
 ```
 
-### Prototypes
+### Prototype Values
 
 Ceu supports functions, coroutines, and tasks as prototype values:
 
 ```
-Func : `func´ [:rec] [`(´ [List(ID)] [`...´] `)´] Block
-Coro : `coro´ [:rec] [`(´ [List(ID)] [`...´] `)´] Block
-Task : `task´ [:rec] [`(´ [List(ID)] [`...´] `)´] Block
+Func : `func´ [:rec] `(´ [List(ID [TAG])] [`...´] `)´ Block
+Coro : `coro´ [:rec] `(´ [List(ID [TAG])] [`...´] `)´ Block
+Task : `task´ [:rec] `(´ [List(ID [TAG])] [`...´] `)´ Block
 ```
 
-Each keyword is followed by an optional `:rec` modifier and a list of
+Each prototype keyword is followed by an optional `:rec` modifier and a list of
 identifiers as parameters enclosed by parenthesis.
-If the parenthesis are also omitted, it assumes the single implicit parameter
-`it`.
+Parameter declarations are equivalent to immutable `val`
+[declarations](#variables-declarations-and-assignments) and can also be
+assiociated with [tuple template](#tag-enumerations-and-tuple-templates) tags.
 If the prototype is recursive (i.e., refers to itself), the declaration must
 use the `:rec` modifier.
 
+`TODO: varargs`
+
+<!--
 The last parameter can be the symbol
 [`...`](#variables-declarations-and-assignments), which captures as a tuple all
 remaining arguments of a call.
+-->
 
 The associated block executes when the unit is [invoked](#TODO).
 Each argument in the invocation is evaluated and copied to the parameter
-identifier, which becomes a local variable in the execution block.
+identifier, which becomes an local variable in the execution block.
 
-Ceu supports a restricted form of closures, in which *upvalues* must be
-explicit and final.
-A closure is a prototype that accesses variables from blocks that terminate,
-but which the closure escapes and survives along with these variables, known as
+A *closure* is a prototoype that accesses variables from outer blocks, known as
 *upvalues*.
-Upvalues must be explicitly declared and accessed with the caret prefix (`^`),
-and cannot be modified (declarations must use the modifier
-[`val`](#variables-declarations-and-assignments))
-Finally, inside closures the accesses must be prefixed with double carets
-(`^^`).
+Ceu supports a restricted form of closures, in which *upvalues* must be
+immutable (thus declared with the modifier
+[`val`](#variables-declarations-and-assignments)).
 
 Examples:
 
 ```
-func (^v1) {            ;; v1 survives func
-    val ^v2 = ^v1 + 1   ;; v2 survives func (outside closure: single caret)
-    func () {           ;; closure survives func
-        ^^v1 + ^^v2     ;; (inside closure: double caret)
+func (v) { v }          ;; a function
+coro () { yield() }     ;; a coroutine
+task () { await(:X) }   ;; a task
+
+func (v1) {             ;; a closure
+    func () {
+        v1              ;; v1 is an upvalue
     }
 }
 ```
 
 #### Lambdas
 
-For simple `func` prototypes, Ceu supports a lambda notation:
+For simple `func` prototypes, Ceu supports the lambda notation:
 
 ```
-Lambda : `\´ [List(ID)] Block
+Lambda : `\´ `{´ [ID [TAG] `=>´]  { Expr [`;´] }`}´
 ```
 
-The expression `\<ids> { <es> }` expands to
+The expression `\{ <id> <tag> => <es> }` expands to
 
 ```
-func (<ids>) {
+func (<id> <tag>) {
     <es>
 }
 ```
@@ -903,53 +906,47 @@ If the list of identifiers is omitted, it assumes the single implicit parameter
 Examples:
 
 ```
-val f = \x { 2*x }      ;; f doubles its argument
+val f = \{ x => x+x }   ;; f doubles its argument
 println(\{it}(10))      ;; prints 10
 ```
 
-## Active Values
+### Active Values
 
-An *active value* corresponds to an active coroutine, task, pool of tasks,
-or tracked reference:
+An *active value* corresponds to an active coroutine, task, or pool of tasks:
 
 ```
-x-coro  x-task  x-tasks  x-track
+exe-coro  exe-task  tasks
 ```
 
-An active value is still a dynamic value, with all properties described above.
+Active coroutines and tasks are running instances of
+[prototypes](#prototype-values) that can suspend their execution before they
+terminate.
+After they suspend, coroutines and tasks retain their execution state and can
+be resumed later from their previous suspension point.
 
-Active coroutines and tasks (`x-coro` and `x-task`) are running instances of
-[prototypes](#prototypes) that can suspend themselves in the middle of
-execution, before they terminate.
-Tasks are also considered coroutines (but not the other way around).
-A coroutine retains its execution state and can be
-[resumed](#create-resume-spawn) from its current suspension point.
-
-Coroutines have 4 possible status:
+Coroutines and tasks have 4 possible status:
 
 1. `yielded`: idle and ready to be resumed
-2. `toggled`: ignoring resumes
+2. `toggled`: ignoring resumes (only for tasks)
 3. `resumed`: currently executing
 4. `terminated`: terminated and unable to be resumed
 
-A coroutine is attached to the enclosing [block](#block) in which it was
-instantiated.
-This means that it is possible that a coroutine goes out of scope with the
-yielded status.
-In this case, the coroutine body is aborted and nested [`defer`](#defer)
-expressions are properly triggered.
+The main difference between coroutines and tasks is how they resume execution:
 
-Unlike coroutines, a task can also awake automatically from
-[event broadcasts](#broadcast) without an explicit `resume`.
-It can also be spawned in a [pool](#pools-of-tasks) of anonymous tasks
-(`x-tasks`), which will control the task life cycle and automatically release
-it from memory on termination.
-In this case, the task is also attached to the block in which the pool is
-declared.
-Finally, a task can be [tracked](#track-and-detrack) from outside with a safe
-reference to it (`x-track`).
-A track is cleared when its referred task terminates or goes out of scope.
-This is all automated by the Ceu runtime.
+- A coroutine resumes explicitly from a
+  [resume operation](#create-resume-spawn).
+- A task resumes implicitly from a [broadcast operation](#broadcast).
+
+Before a coroutine or task is collected, it is implicitly aborted, and all
+active [defer statements](#defer) execute automatically in reverse order.
+
+A task is lexically attached to the block in which it is created, such that
+when the block terminates, the task is implicitly aborted (triggering active
+defers), regardless of its reference counter.
+
+A pool of tasks goups related active tasks as a collection.
+A task that lives in a pool is lexically attached to the block in which the
+pool is created.
 
 The operations on [coroutines](#coroutine-operations) and
 [tasks](#tasks-operations) are discussed further.
@@ -1187,13 +1184,13 @@ not even a tuple is guaranteed.
 The template association is static but with no runtime guarantees.
 
 If the declaration omits the template tag, but the initialization expression is
-a [tag constructor](#constructor), then the variable assumes this tag template,
+a [tag constructor](#collection-values), then the variable assumes this tag template,
 i.e., `val x = :X []` expands to `val x :X = :X []`.
 
 The symbol `...` represents the variable arguments (*varargs*) a function
 receives in a call.
-In the context of a [function](#prototypes) that expects varargs, it evaluates
-to a tuple holding the varargs.
+In the context of a [function](#prototype-values) that expects varargs, it
+evaluates to a tuple holding the varargs.
 In other scenarios, it evaluates to a tuple holding the program arguments.
 When `...` is the last argument of a call, its tuple is expanded as the last
 arguments.
@@ -1354,8 +1351,8 @@ Call : OP Expr                      ;; unary operation
 Operations are interpreted as function calls, i.e., `x + y` is equivalent to
 `{+} (x, y)`.
 
-A call expects an expression of type [`func`](#prototypes) and an optional list
-of expressions as arguments enclosed by parenthesis.
+A call expects an expression of type [`func`](#prototype-values) and an
+optional list of expressions as arguments enclosed by parenthesis.
 If the argument is a [lambda expression](#lambdas), then the parenthesis can be
 omitted.
 Each argument is expected to match a parameter of the function declaration.
@@ -1671,7 +1668,8 @@ Catch : `catch´ Expr Block
 A `throw` receives an expression that is assigned to the special variable
 `err`, which is only visible to enclosing `catch` condition expressions.
 A `throw` is propagated upwards and aborts all enclosing [blocks](#blocks) and
-[execution units](#prototypes) (functions, coroutines, and tasks) on the way.
+[execution units](#prototype-values) (functions, coroutines, and tasks) on the
+way.
 When crossing an execution unit, a `throw` jumps back to the calling site and
 continues to propagate upwards.
 
@@ -1779,7 +1777,7 @@ do {
 ### Create, Resume, Spawn
 
 The operation `coroutine` creates a new coroutine from a
-[prototype](#prototypes).
+[prototype](#prototype-values).
 The operation `resume` executes a coroutine starting from its last suspension
 point.
 The operation `spawn` creates and resumes a coroutine:
