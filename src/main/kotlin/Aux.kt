@@ -49,7 +49,6 @@ fun Expr.has_block (): Boolean {
         is Expr.Resume -> this.arg.has_block()
         is Expr.Spawn -> this.args.any { it.has_block() }
         is Expr.Pub -> this.tsk?.has_block() ?: false
-        is Expr.Dtrack -> TODO()
         is Expr.Toggle -> this.tsk.has_block() || this.on.has_block()
         is Expr.Tuple -> this.args.any { it.has_block() }
         is Expr.Vector -> this.args.any { it.has_block() }

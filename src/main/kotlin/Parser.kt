@@ -942,26 +942,6 @@ class Parser (lexer_: Lexer)
                     Expr.Toggle(tk0, tsk, on)
                 }
             }
-            (CEU>=5 && this.acceptFix("detrack")) -> {
-                val tk0 = this.tk0 as Tk.Fix
-                val tsk = this.expr_in_parens()!!
-                val tk1 = this.tk1
-                return if (this.checkFix("{")) {
-                    val (id_tag, es) = lambda(N)
-                    val blk = this.nest("""
-                        (${tk1.pos.pre()}func (${id_tag.tostr(true)}) ${tk1.pos.pre()}{
-                            ${tk1.pos.pre()}if ${id_tag.first.str} {
-                                ${es.tostr(true)}
-                            } else {
-                                nil
-                            }
-                        }) (${tk0.pos.pre()}detrack'(${tsk.tostr(true)}))
-                    """)
-                    Expr.Dtrack(tk0, blk as Expr.Call)
-                } else {
-                    this.nest("${tk0.pos.pre()}detrack''(${tsk.tostr(true)})")
-                }
-            }
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)
             this.acceptEnu("Id")   -> when {

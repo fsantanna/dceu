@@ -250,7 +250,6 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             is Expr.Resume -> this.co.locs() + this.arg.locs()
             is Expr.Spawn  -> (this.tsks?.locs() ?: 0) + this.tsk.locs() + this.args.sumOf { it.locs() }
             is Expr.Pub    -> this.tsk?.locs() ?: 0
-            is Expr.Dtrack -> this.blk.locs()
             is Expr.Toggle -> this.tsk.locs() + this.on.locs()
             is Expr.Tuple  -> this.args.sumOf { it.locs() }
             is Expr.Vector -> this.args.sumOf { it.locs() }
@@ -414,7 +413,6 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.args.forEach { it.traverse() } }
             is Expr.Delay  -> {}
             is Expr.Pub    -> this.tsk?.traverse()
-            is Expr.Dtrack -> this.blk.traverse()
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
 
             is Expr.Nat    -> {

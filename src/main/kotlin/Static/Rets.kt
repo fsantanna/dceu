@@ -68,7 +68,6 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
             }
             is Expr.Delay  -> {}
             is Expr.Pub    -> this.tsk?.traverse(1)
-            is Expr.Dtrack -> this.blk.traverse(TODO())
             is Expr.Toggle -> { this.tsk.traverse(1) ; this.on.traverse(1) }
 
             is Expr.Nat    -> {}

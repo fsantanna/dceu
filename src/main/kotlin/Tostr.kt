@@ -65,21 +65,6 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Spawn  -> "(spawn " + this.tsk.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")" + this.tsks.cond { " in ${this.tsks!!.tostr(pre)}" } + ")"
         is Expr.Delay  -> "delay"
         is Expr.Pub    -> "pub(" + (this.tsk?.tostr(pre) ?: "") + ")"
-        is Expr.Dtrack -> {
-            val tsk = this.blk.args.let {
-                assert(it.size == 1)
-                val x = it[0] as Expr.Call
-                assert(x.args.size == 1)
-                x.args[0]
-            }
-            val clo = this.blk.clo as Expr.Proto
-            assert(clo.args.size == 1)
-            assert(clo.blk.es.size == 1)
-            val id_tag = clo.args[0]
-            val xif = clo.blk.es[0] as Expr.If
-            val blk = xif.t.let { assert(it.es.size > 1); it.es.drop(1) }
-            "(detrack(${tsk.tostr(pre)}) { ${id_tag.tostr(pre)} =>\n${blk.tostr(pre)}})"
-        }
         is Expr.Toggle -> "(toggle ${this.tsk.tostr(pre)}(${this.on.tostr(pre)}))"
 
         is Expr.Nat    -> "```" + this.tk_.tag.cond { it+" " } + this.tk.str + "```"
@@ -93,10 +78,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Vector -> "#[" + this.args.map { it.tostr(pre) }.joinToString(",") + "]"
         is Expr.Dict   -> "@[" + this.args.map { "(${it.first.tostr(pre)},${it.second.tostr(pre)})" }.joinToString(",") + "]"
         is Expr.Index  -> this.col.tostr(pre) + "[" + this.idx.tostr(pre) + "]"
-        is Expr.Call   -> {
-            // TODO: collapse broadcast', detrack''
-            this.clo.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")"
-        }
+        is Expr.Call   -> this.clo.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")"   // TODO: collapse broadcast'
     }.let {
         when {
             !pre           -> it

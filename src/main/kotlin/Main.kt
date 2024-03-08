@@ -6,12 +6,12 @@ import java.util.*
 
 var DUMP = true
 var DEBUG = true
-var CEU = 1
+var CEU = 3
     // 1: dyn-lex               ;; 17 (no dots) / 7 "definitely lost"
     // 2: defer, throw/catch    ;; 6 "definitely lost"
     // 3: coro, yield, resume   ;; 0 "definitely lost"
     // 4: task, pub, bcast, toggle, delay
-    // 5: tasks, track, detrack (lambda)
+    // 5: tasks
     // 6: export
     // TODO: copy, underscore, self (coro/task)
 
@@ -50,8 +50,6 @@ val KEYWORDS: SortedSet<String> = (
         "coro", "resume", "yield",
     )) + (if (CEU < 4) setOf() else setOf(
         "broadcast", "delay", "in", "pub", "spawn", "task", "toggle",
-    )) + (if (CEU < 5) setOf() else setOf(
-        "as", //"detrack",
     )) + (if (CEU < 6) setOf() else setOf(
         "export",
     )) + (if (CEU < 99) setOf() else setOf(
@@ -93,7 +91,7 @@ val TAGS = listOf (
 ))
 
 val GLOBALS = setOf (
-    "dump", "error", "next-dict", "print", "println",   // bc of detrack'' in prelude
+    "dump", "error", "next-dict", "print", "println",
     "string-to-tag", "sup?", "tags",
     "tuple", "type", "{{#}}", "{{==}}", "{{/=}}",
 ) + (if (CEU < 2) setOf() else setOf(
@@ -103,7 +101,7 @@ val GLOBALS = setOf (
 )) + (if (CEU < 4) setOf() else setOf(
     "broadcast'"
 )) + (if (CEU < 5) setOf() else setOf(
-    /*"detrack'",*/ "next-tasks", "tasks", //"track"
+    "next-tasks", "tasks",
 ))
 
 sealed class Tk (val str: String, val pos: Pos) {
@@ -140,7 +138,6 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val tsk: Expr, val args: List<Expr>): Expr(N++, tk_)
     data class Delay  (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Pub    (val tk_: Tk.Fix, val tsk: Expr?): Expr(N++, tk_)
-    data class Dtrack (val tk_: Tk.Fix, val blk: Expr.Call): Expr(N++, tk_)
     data class Toggle (val tk_: Tk.Fix, val tsk: Expr, val on: Expr): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)

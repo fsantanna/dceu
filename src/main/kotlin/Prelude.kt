@@ -68,24 +68,11 @@ val IS = """
     }
 """.replace("\n", " ")
 
-val DETRACK = """
-    ;;;
-    val detrack'' = func (trk) {
-        if detrack'(trk) {
-            true
-        } else {
-            false
-        }
-    }
-    ;;;
-""".replace("\n", " ")
-
 val XAWAIT = """
 func await-chk (e, cnd) {
     ifs {
         (type(cnd) == :tag)      { e is? cnd }
         (type(cnd) == :exe-task) { status(cnd) == :terminated }
-        ;;;(type(cnd) == :track)    { not detrack(cnd) };;;
         else { false }
     }
 }

@@ -147,7 +147,6 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                     this.tsk.traverse()
                 }
             }
-            is Expr.Dtrack -> this.blk.traverse()
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
 
             is Expr.Nat    -> {}

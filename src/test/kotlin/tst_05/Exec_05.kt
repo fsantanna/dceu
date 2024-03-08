@@ -362,7 +362,6 @@ class Exec_05 {
     fun bb_06_track_up() {
         DEBUG = true
         val out = test("""
-            $DETRACK
             val T = task () { yield(nil);yield(nil) }
             spawn (task () {
                 val ts = tasks()
@@ -428,7 +427,6 @@ class Exec_05 {
     @Test
     fun bd_03_track_err() {
         val out = test("""
-            $DETRACK
             var T
             set T = task () { yield(nil) }
             val t1 = spawn T()
@@ -571,7 +569,6 @@ class Exec_05 {
     @Test
     fun cc_00_detrack() {
         val out = test("""
-            $DETRACK
             detrack(nil)
         """)
         //assert(out == " |  anon : (lin 3, col 13) : detrack''(nil)\n" +
@@ -581,7 +578,6 @@ class Exec_05 {
     @Test
     fun cc_01_detrack() {
         val out = test("""
-            $DETRACK
             detrack(nil) { it => nil }
         """)
         //assert(out == " v  anon : (lin 3, col 13) : detrack'(nil) : detrack error : expected track value\n") { out }
@@ -679,7 +675,6 @@ class Exec_05 {
     @Test
     fun cc_09_detrack() {
         val out = test("""
-            $DETRACK
             val T = task (v) {
                 yield(nil) ; nil
             }
@@ -697,7 +692,6 @@ class Exec_05 {
     @Test
     fun cc_10_detrack() {
         val out = test("""
-            $DETRACK
             val T = task (v) {
                 ${AWAIT("it == v")}
             }
@@ -1575,7 +1569,6 @@ class Exec_05 {
     @Test
     fun jj_02_tracks() {
         val out = test("""
-            $DETRACK
             val f = func (trk) {
                 println(detrack(trk) { it => status(it) })
             }
@@ -1687,7 +1680,6 @@ class Exec_05 {
     @Test
     fun op_00_track() {
         val out = test("""
-            $DETRACK
             var T
             set T = task () {
                 set pub() = [10]
@@ -1720,7 +1712,6 @@ class Exec_05 {
     @Test
     fun op_02_track() {
         val out = test("""
-            $DETRACK
             var T
             set T = task () {
                 set pub() = [10]
@@ -1738,7 +1729,6 @@ class Exec_05 {
     @Test
     fun op_02x_track() {
         val out = test("""
-            $DETRACK
             val T = task () {
                 yield(nil)
             }

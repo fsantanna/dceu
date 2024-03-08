@@ -64,7 +64,6 @@ class Tags (outer: Expr.Call) {
             is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.args.forEach { it.traverse() } }
             is Expr.Delay  -> {}
             is Expr.Pub    -> this.tsk?.traverse()
-            is Expr.Dtrack -> this.blk.traverse()
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
 
             is Expr.Nat    -> {}
