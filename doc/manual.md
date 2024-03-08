@@ -3,7 +3,6 @@
 * DESIGN
     * Structured Deterministic Concurrency
     * Event Signaling Mechanisms
-    * Lexical Memory Management
     * Hierarchical Tags
 * LEXICON
     * Keywords
@@ -46,7 +45,7 @@
         - `coroutine` `yield` `resume` `toggle` `kill` `status` `spawn` `resume-yield-all`
     * Task Operations
         - `pub` `spawn` `await` `broadcast` `track` `detrack` `tasks` `spawn in`
-        - `loop in` `every` `spawn {}` `awaiting` `toggle {}` `par` `par-and` `par-or`
+        - `loop in` `every` `spawn {}` `watching` `toggle {}` `par` `par-and` `par-or`
 * STANDARD LIBRARY
     * Primary Library
     * Auxiliary Library
@@ -80,11 +79,18 @@ Follows an extended list of functionalities in Ceu:
 - Restricted closures (upvalues must be final)
 - Deferred statements (for finalization)
 - Exception handling (throw & catch)
-- Hierarchical tuple templates (for data description)
+- Hierarchical Tags and Tuple Templates (for data description)
 - Seamless integration with C (source-level compatibility)
 
 Ceu is in **experimental stage**.
 Both the compiler and runtime can become very slow.
+
+In the rest of this Section, we introduce the two key aspects of Ceu that
+justify its existence:
+*Structured Deterministic Concurrency* and *Event Signaling Mechanisms*.
+Then, we also introduce two other key aspects of the Ceu, which do not appear
+in other languages:
+*Hierarchical Tags* and *Integration with C*.
 
 [1]: https://fsantanna.github.io/sc.html
 [2]: https://en.wikipedia.org/wiki/Structured_concurrency
@@ -119,7 +125,7 @@ The example uses a `par-or` to spawn two concurrent tasks:
 ```
 spawn {
     par-or {
-        await :10:s
+        await (:10:s)
     } with {
         var n = 0
         defer {
@@ -142,12 +148,12 @@ For this reason, the second task is aborted before it has the opportunity to
 awake for the 10th time, but its `defer` statement still executes and outputs
 `"I counted 9"`.
 
-Being coroutines, tasks are expected to yield control explicitly, which makes
-scheduling entirely deterministic.
+Since they are based on coroutines, tasks are expected to yield control
+explicitly, which makes scheduling entirely deterministic.
 In addition, tasks awake in the order they appear in the source code, which
 makes the scheduling order predictable.
 This rule allows us to infer that the example invariably outputs `9`, no matter
-how many times we execute it.
+how many times we re-execute it.
 Likewise, if the order of the two tasks inside the `par-or` were inverted, the
 example would always output `10`.
 
@@ -175,102 +181,48 @@ traversed at its single yielded execution point `(5)`.
 A broadcast traversal runs to completion before proceeding to the next
 statement, just like a function call.
 
-The next example illustrates event broadcasts and the tasks traversal.
-The example uses an `awaiting` statement to observe an event condition while
+The next example illustrates event broadcasts and tasks traversal.
+The example uses an `watching` statement to observe an event condition while
 executing a nested task.
 When the condition is satisfied, the nested task is aborted:
 
 ```
 spawn {
-    awaiting evt==:done {
+    watching :done {
         par {
-            every evt==:tick {
-                println(":tick-1")      ;; always awakes first
+            every :tick {
+                println(:tick-A)        ;; always awakes first
             }
         } with {
-            every evt==:tick {
-                println(":tick-2")      ;; always awakes last
+            every :tick {
+                println(:tick-B)        ;; always awakes last
             }
         }
     }
-    println(":done")
+    println(:done)
 }
-broadcast :tick                         ;; --> :tick-1, :tick-2
-broadcast :tick                         ;; --> :tick-1, :tick-2
-broadcast :done                         ;; --> :done
-println("the end")                      ;; --> the end
+broadcast(:tick)                        ;; --> :tick-A, :tick-B
+broadcast(:tick)                        ;; --> :tick-A, :tick-B
+broadcast(:done)                        ;; --> :done
+println(:the-end)                       ;; --> :the-end
 ```
 
 The main block has an outermost `spawn` task, which awaits `:done`, and has two
 nested tasks awaiting `:tick` events.
 Then, the main block broadcasts three events in sequence.
 The first two `:tick` events awake the nested tasks respecting the structure of
-the program, printing `:tick-1` and `:tick-2` in this order.
-The last event aborts the `awaiting` block and prints `:done`, before
+the program, printing `:tick-A` and `:tick-B` in this order.
+The last event aborts the `watching` block and prints `:done`, before
 terminating the main block.
 
-## Lexical Memory Management
+## Hierarchical Tags and Tuple Templates
 
-Ceu respects the lexical structure of the program also when dealing with
-dynamic memory allocation.
-When a [dynamic value](#dynamic-values) is first assigned to a variable, it
-becomes attached to the [block](#block) in which the variable is declared, and
-the value cannot escape that block in further assignments or as return
-expressions.
-This is valid not only for [collections](#constructors) (tuples, vectors, and
-dictionaries), but also for [closures](#prototypes),
-[coroutines](#active-values), and [tasks](#active-values).
-This restriction ensures that terminating blocks (and consequently tasks)
-deallocate all memory at once.
-*More importantly, it provides static means to reason about the program.*
-To overcome this restriction, Ceu also provides an explicit
-[drop](#copy-and-drop) operation to deattach a dynamic value from its block.
+### Hierarchical Tags
 
-The next example illustrates lexical memory management and the validity of
-assignments:
-
-```
-var x1 = [1,2,3]
-var x2 = do {
-    val y1 = x1         ;; ok, scope of x1>y1
-    val y2 = [4,5,6]
-    set x1 = y2         ;; no, scope of y2<x1
-    [7,8,9]             ;; ok, tuple not yet assigned
-}                       ;; deallocates [4,5,6], but not [7,8,9]
-```
-
-The assignment `y1=x1` is valid because the tuple `[1,2,3]` held in `x1` is
-guaranteed to be in memory while `y1` is visible.
-However, the assignment `x1=y2` is invalid because the tuple `[4,5,6]` held in
-`y2` is deallocated at the end of the block, but `x1` remains visible.
-
-The next example uses `drop` to reattach a local vector to an outer scope:
-
-```
-func to-vector (itr) {      ;; iterable -> vector
-    val ret = #[]           ;; vector is allocated locally
-    loop in itr, v {
-        set ret[+] = v      ;; each value is appended to vector
-    }
-    drop(ret)                   ;; local vector is moved out
-}
-```
-
-The function `to-vector` receives an iterable value, and copies all of its
-values to a new vector, which is finally returned.
-Since the vector `ret` is allocated inside the function, it requires an
-explicit `drop` to reattach it to the caller scope.
-
-Note that values of the [basic types](#basic-types), such as numbers, have no
-assignment restrictions because they are copied as a whole.
-Note also that Ceu still supports garbage collection for dynamic values to
-handle references in long-lasting blocks.
-
-## Hierarchical Tags
-
-A [tag](#basic-type) is a basic type of Ceu that represents unique values in a
+Another key aspect of Ceu is its tag type, which is similar to *symbols* or
+*atoms* in other programming languages.
+A [tag](#basic-type) is a basic type that represents unique values in a
 human-readable form.
-Tags are also known as *symbols* or *atoms* in other programming languages.
 Any identifier prefixed with a colon (`:`) is a valid tag that is guaranteed to
 be unique in comparison to others (i.e., `:x == :x` and `:x /= :y`).
 Just like the number `10`, the tag `:x` is a value in itself and needs not to
@@ -292,15 +244,16 @@ tuples, to support the notion of user types in Ceu.
 For instance, the call `tags(pos,:Pos,true)` associates the tag `:Pos` with the
 value `pos`, such that the query `tags(pos,:Pos)` returns `true`.
 
-In Ceu, tag identifiers using dots (`.`) can describe user type hierarchies.
+As a distinctive feature, tags can describe user type hierarchies by splitting
+identifiers with (`.`).
 For instance, a tag such as `:T.A.x` matches the types `:T`, `:T.A`, and
 `:T.A.x` at the same time, as verified by function `sup?`:
 
 ```
-sup?(:T,     :T.A.x)    ;; --> true
+sup?(:T,     :T.A.x)    ;; --> true  (:T is a supertype of :T.A>x)
 sup?(:T.A,   :T.A.x)    ;; --> true
 sup?(:T.A.x, :T.A.x)    ;; --> true
-sup?(:T.A.x, :T)        ;; --> false
+sup?(:T.A.x, :T)        ;; --> false (:T.A.x is *not* a supertype of :T)
 sup?(:T.A,   :T.B)      ;; --> false
 ```
 
@@ -325,10 +278,10 @@ Ceu also provides a `data` construct to associate a tag with a tuple template
 that enumerates field identifiers.
 Templates provide field names for tuples, which become similar to *structs* in
 C or *classes* in Java.
-Each field identifier in the data declaration corresponds to a numeric index in
+Each field identifier in a data declaration corresponds to a numeric index in
 the tuple, which can then be indexed by field or by number interchangeably.
 The next example defines a template `:Pos`, which serves the same purpose as
-the dictionary of the first example:
+the dictionary of the first example, but now using tuples:
 
 ```
 data :Pos = [x,y]       ;; a template `:Pos` with fields `x` and `y`
@@ -344,7 +297,7 @@ data inheritance, akin to class hierarchies in Object-Oriented Programming.
 A `data` description can be suffixed with a block to nest templates, in which
 inner tags reuse fields from outer tags.
 The next example illustrates an `:Event` super-type, in which each sub-type
-appends additional data to the tuple template:
+appends additional data to the template:
 
 ```
 data :Event = [ts] {            ;; All events carry a timestamp
@@ -365,9 +318,11 @@ Considering the last two lines, a declaration such as
 which not only tags the tuple with the appropriate user type, but also declares
 that the variable satisfies the template.
 
-<!--
- ## Integration with C
+## Integration with C
 
+`TODO`
+
+<!--
 The compiler of Ceu converts an input program into an output in C, which is
 further compiled to a final executable file.
 For this reason, Ceu has source-level compatibility with C, allowing it to
@@ -391,7 +346,6 @@ The following keywords are reserved in Ceu:
 ```
     and                 ;; and operator                     (00)
     await               ;; await event
-    awaiting            ;; awaiting block
     broadcast           ;; broadcast event
     catch               ;; catch exception
     coro                ;; coroutine prototype
@@ -434,6 +388,7 @@ The following keywords are reserved in Ceu:
     until               ;; until loop condition
     val                 ;; constant declaration
     var                 ;; variable declaration
+    watching            ;; watching block
     where               ;; where block
     while               ;; while loop condition
     with                ;; with block
@@ -2087,7 +2042,7 @@ await 1:h 10:min 30:s               ;; awakes after the specified time
 
 ### Broadcast
 
-The operation `broadcast` signals an event to awake [awaiting](#await) tasks:
+The operation `broadcast` signals an event to awake [watching](#await) tasks:
 
 ```
 Bcast : `broadcast´ [`in´ Expr `,´] Expr
@@ -2291,14 +2246,14 @@ println(":X and :Y have occurred")
 
 #### Awaiting Block
 
-An `awaiting` block executes a given block until an await condition is
+An `watching` block executes a given block until an await condition is
 satisfied:
 
 ```
-Awting : `awaiting´ <awt> Block
+Watching : `watching´ <awt> Block
 ```
 
-An `awaiting <awt> { <es> }` expands to a [`par-or`](#parallel-blocks) as
+An `watching <awt> { <es> }` expands to a [`par-or`](#parallel-blocks) as
 follows:
 
 ```
@@ -2312,7 +2267,7 @@ par-or {
 Examples:
 
 ```
-awaiting 1:s {
+watching :1:s {
     every :X {
         println("one more :X occurred before 1 second")
     }
@@ -2335,7 +2290,7 @@ do {
     val t = spawn {
         <es>
     }
-    awaiting :check-now t {
+    watching :check-now t {
         loop {
             await <off>
             toggle t(false)
@@ -2814,7 +2769,7 @@ Expr' : `do´ [:unnest[-hide]] Block                     ;; explicit block
       | `resume-yield-all´ Expr `(´ Expr `)´            ;; resume-yield nested coro
       | `every´ Await [Test] Block                      ;; await event in loop
             [{Test Block}] [Test]
-      | `awaiting´ Await Block                          ;; abort on event
+      | `watching´ Await Block                          ;; abort on event
       | `par´ Block { `with´ Block }                    ;; spawn tasks
       | `par-and´ Block { `with´ Block }                ;; spawn tasks, rejoin on all
       | `par-or´ Block { `with´ Block }                 ;; spawn tasks, rejoin on any

@@ -28,7 +28,7 @@ Follows an extended list of functionalities in Ceu:
 - Restricted closures (upvalues must be final)
 - Deferred statements (for finalization)
 - Exception handling (throw & catch)
-- Hierarchical tuple templates (for data description)
+- Hierarchical Tags and Tuple Templates (for data description)
 - Seamless integration with C (source-level compatibility)
 
 Ceu is in **experimental stage**.
@@ -46,7 +46,7 @@ Displays `Hello World!` every second, until 10 seconds elapse:
 
 ```
 spawn {
-    awaiting :10:s {
+    watching :10:s {
         every :1:s {
             println("Hello World!")
         }
