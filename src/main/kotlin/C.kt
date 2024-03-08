@@ -2426,7 +2426,7 @@ fun Coder.main (tags: Tags): String {
                         ret = ceu_bcast_task(X, CEU_ACTION_RESUME, CEU_TIME, &xin.Dyn->Exe_Task);
                     }
                 } else {
-                    ceu_error_s(X->S, "broadcast error : invalid target");
+                    ret = ceu_error_s(X->S, "broadcast error : invalid target");
                 }
             }
 
