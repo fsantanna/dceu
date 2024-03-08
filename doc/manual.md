@@ -1271,7 +1271,6 @@ uses an [operator](#operatos) with prefix or infix notation:
 Call : OP Expr                      ;; unary operation
      | Expr OP Expr                 ;; binary operation
      | Expr `(´ [List(Expr)] `)´    ;; function call
-     | Expr Lambda                  ;; function call
 ```
 
 Operations are interpreted as function calls, i.e., `x + y` is equivalent to
@@ -1279,11 +1278,8 @@ Operations are interpreted as function calls, i.e., `x + y` is equivalent to
 
 A call expects an expression of type [`func`](#prototype-values) and an
 optional list of expressions as arguments enclosed by parenthesis.
-If the argument is a [lambda expression](#lambdas), then the parenthesis can be
-omitted.
-Each argument is expected to match a parameter of the function declaration.
 A call transfers control to the function, which runs to completion and returns
-control with a value, which substitutes the call.
+a value, which substitutes the call.
 
 As discussed in [Identifiers](#identifiers), the binary minus requires spaces
 around it to prevent ambiguity with identifiers containing dashes.
@@ -1297,7 +1293,32 @@ x - 10          ;; binary operation
 f(10,20)        ;; normal call
 ```
 
-#### Methods and Pipes
+#### Pipe Calls
+
+A pipe is an alternate notation to call a function:
+
+```
+Pipe : Expr (`<--` | `<-` | `->` | `-->` ) Expr
+```
+
+The operators `<--` and `<-` pass the argument in the right to the function in
+the left, while the operators `->` and `-->` pass the argument in the left to
+the function in the right.
+
+The operators `<-` and `->` have higher precedence than the operators `<--` and
+`-->`.
+
+If the receiving function is actually a call, then the pipe operator inserts
+the extra argument into the call either as first (`->` and `-->`) or last (`<-`
+and `<--`).
+
+
+Examples:
+
+```
+f <-- 10        ;; equivalent to `f(10)`
+t -> f(10)      ;; equivalent to `f(t,10)`
+```
 
 ### Indexes and Fields
 
