@@ -2657,7 +2657,7 @@ Expr' : `do´ [:unnest[-hide]] Block                     ;; explicit block
 
       | `nil´ | `false´ | `true´                        ;; literals &
       | NAT | TAG | CHR | NUM | STR                     ;; identifiers
-      | ID | `err´ | `evt´ | `...´
+      | ID | `...´
 
       | [TAG] `[´ [List(Expr)] `]´                      ;; tuple
       | `#[´ [List(Expr)] `]´                           ;; vector
