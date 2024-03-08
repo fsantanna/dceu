@@ -937,19 +937,32 @@ The main difference between coroutines and tasks is how they resume execution:
   [resume operation](#create-resume-spawn).
 - A task resumes implicitly from a [broadcast operation](#broadcast).
 
-Before a coroutine or task is collected, it is implicitly aborted, and all
+Before a coroutine or task is collected, it is implicitly terminated, and all
 active [defer statements](#defer) execute automatically in reverse order.
 
 A task is lexically attached to the block in which it is created, such that
-when the block terminates, the task is implicitly aborted (triggering active
-defers), regardless of its reference counter.
+when the block terminates, the task is implicitly terminated (triggering active
+defers).
 
-A pool of tasks goups related active tasks as a collection.
+A pool of tasks groups related active tasks as a collection.
 A task that lives in a pool is lexically attached to the block in which the
 pool is created.
 
 The operations on [coroutines](#coroutine-operations) and
 [tasks](#tasks-operations) are discussed further.
+
+Examples:
+
+```
+coro C () { <...> }         ;; a coro prototype `C`
+val c = coroutine(C)        ;; is instantiated as `c`
+resume c()                  ;; and resumed explicitly
+
+val ts = tasks()            ;; a pool of tasks `ts`
+task T () { <...> }         ;; a task prototype `T`
+val t = spawn T() in ts     ;; is instantiated as `t` in pool `ts`
+broadcast(:X)               ;; broadcast resumes `t`
+```
 
 # STATEMENTS
 
@@ -968,28 +981,29 @@ Block : `{´ { Expr [`;´] } `}´
 Each expression in a sequence may be separated by an optional semicolon (`;´).
 A sequence of expressions evaluate to its last expression.
 
+<!--
 The symbol
 [`...`](#variables-declarations-and-assignments) stores the program arguments
 as a tuple.
+-->
+
+`TODO: varargs`
 
 ### Blocks
 
-A block delimits a lexical scope for variables and dynamic values:
+A block delimits a lexical scope for
+[variables](#variables-declarations-and-assignments) and
+[tasks](#active-values):
 A variable is only visible to expressions in the block in which it was
 declared.
-A dynamic value cannot escape the block in which it was created (e.g., from
-assignments or returns), unless it is [dropped](#copy-and-drop) out.
-For this reason, when a block terminates, all memory that was allocated inside
-it is automatically reclaimed.
-This is also valid for active [coroutines](#active-values) and
-[tasks](#active-values), which are attached to the block in which they were
-first assigned, and are aborted on termination.
+A task is automatically terminated when the block in which it was created
+terminates.
 
 A block is not an expression by itself, but it can be turned into one by
 prefixing it with an explicit `do`:
 
 ```
-Do : `do´ Block         ;; an explicit block statement
+Do   : `do´ Block       ;; an explicit block statement
 ```
 
 Blocks also appear in compound statements, such as
@@ -1005,59 +1019,17 @@ do {                    ;; block prints :ok and evals to 1
 
 do {
     val a = 1           ;; `a` is only visible in the block
+    <...>
 }
 a                       ;; ERR: `a` is out of scope
 
-var x
 do {
-    set x = [1,2,3]     ;; ERR: tuple cannot be assigned to outer block
-    #[1,2,3]            ;; ERR: vector cannot return from block
-}
-
-do {
-    drop(#[1,2,3])      ;; OK
-}
+    spawn T()           ;; spawns task T and attaches it to the block
+    ...
+}                       ;; terminates spawned task
 ```
-
-#### Yieldable Blocks
-
-Ceu distinguishes between *tight* and *yieldable* blocks at compile time.
-A tight block executes from start to end without any scheduling interruption,
-except from calls to tight functions.
-An yieldadble block may be preempted when it contains one of the following
-expressions:
-    `yield`, `resume`, `spawn`, `broadcast`, `toggle`.
-In addition, a block is considered yieldable when it calls an yieldable (or
-unknown) function, or when it sets variables from enclosing yieldable blocks.
-
-`TODO: restrictions of yieldable blocks`
 
 <!--
-Values assigned to variables declared in yieldable blocks
-are unsafe in some situations that may generate a compile-time
-error:the following situations: `TODO`
--->
-
-Examples:
-
-```
-do {                    ;; tight block
-    val x = 10
-    println(x)
-}
-
-do {                    ;; yieldable block
-    var x = 10
-    println(:before)
-    yield()
-    println(:after)
-    do {                ;; yieldable block
-        set x = 20
-        println(x)
-    }
-}
-```
-
 ### Export
 
 An `export` hides all nested declarations, except those indicated in an
@@ -1078,12 +1050,13 @@ export [x] {
     val y = []      ;; y is not exported but remains active
     val x = y       ;; exported x holds tuple that remains in memory
 }
-println(x)          ;; --> []
+println(x)          ;; -;;-> []
 println(y)          ;; ERR: y is active but not visible
 ```
 
 Exports can be used to group related expressions but expose only public
 identifiers, as expected from libraries and modules.
+-->
 
 ### Defer
 
@@ -1111,13 +1084,14 @@ do {
 }                       ;; --> 1, 4, 3, 2
 ```
 
+<!--
 ### Pass
 
 The `pass` statement permits that an innocuous expression is used in the
 middle of a block:
 
 ```
-Pass : `pass´ Expr
+Pass : `do´ Expr
 ```
 
 Examples:
@@ -1129,6 +1103,7 @@ do {
     ...
 }
 ```
+-->
 
 ## Where and Thus Clauses
 
