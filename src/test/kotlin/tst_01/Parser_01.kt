@@ -865,4 +865,35 @@ class Parser_01 {
         val e = parser.exprs()
         assert(e.tostr() == "(data :U = [t :T])\n") { e.tostr() }
     }
+
+    // DASH
+
+    @Test
+    fun vv_01_dash_num() {
+        val l = lexer("""
+            val v-1
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "{{-}}((val v),1)\n") { e.tostr() }
+    }
+    @Test
+    fun vv_02_dash_num() {
+        val l = lexer("""
+            println(:X-1)
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "println({{-}}(:X,1))\n") { e.tostr() }
+    }
+    @Test
+    fun vv_03_dash_let() {
+        val l = lexer("""
+            println(:X-a)
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "println(:X-a)\n") { e.tostr() }
+    }
+
 }

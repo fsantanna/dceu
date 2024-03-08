@@ -410,18 +410,20 @@ The following symbols are reserved in Ceu:
     {   }           ;; block/operators delimeters
     (   )           ;; expression delimeters
     [   ]           ;; index/constructor delimeters
+    #[              ;; vector constructor delimeter
+    @[              ;; dictionary constructor delimeter
     \               ;; lambda declaration
     =               ;; assignment separator
-    ->              ;; iterator/ifs/toggle clause
+    =>              ;; catch/thus/if/ifs/loop clauses
+    <- ->           ;; method calls
+    <-- -->         ;; pipe calls
     ;               ;; sequence separator
     ,               ;; argument/constructor separator
     .               ;; index/field discriminator
     ...             ;; variable function/program arguments
-    #[              ;; vector constructor
-    @[              ;; dictionary constructor
     '   "   `       ;; character/string/native delimiters
     $               ;; native interpolation
-    ^               ;; lexer annotation/upvalue modifier
+    ^               ;; lexer preprocessor
 ```
 
 ## Operators
@@ -449,7 +451,8 @@ The following identifiers are also reserved as special operators:
 
 ```
     not     and     or
-    in?     is?     is-not?
+    in?     in-not?
+    is?     is-not?
 ```
 
 Operators can be used in prefix or infix notations in
@@ -460,22 +463,20 @@ Operators can be used in prefix or infix notations in
 Ceu uses identifiers to refer to variables and operators:
 
 ```
-ID : [^|^^] [A-Za-z_][A-Za-z0-9_'?!-]*  ;; letter/under/digit/quote/quest/excl/dash
-   | `{´ OP `}´                         ;; operator enclosed by braces as identifier
-OP : [+-*/><=!|&~%#@]+                  ;; see Operators
+ID : [A-Za-z_][A-Za-z0-9_'?!-]*     ;; letter/under/digit/quote/quest/excl/dash
+   | `{´ OP `}´                     ;; operator enclosed by braces as identifier
+OP : [+-*/><=!|&~%#@]+              ;; see Operators
 ```
 
 A variable identifier starts with a letter or underscore (`_`) and is followed
 by letters, digits, underscores, single quotes (`'`), question marks (`?`),
 exclamation marks (`!`), or dashes (`-`).
-A dash must be followed by a letter or digit.
-Identifiers can be prefixed with carets (`^` or `^^`), which denote
-[closure](#prototypes) access modifiers.
+A dash must be followed by a letter.
 
 Note that dashes are ambiguous with the minus operator.
-For this reason, (i) the minus operation requires spaces between operands
-(e.g., `x - 1`), and (ii) variables with common parts in identifiers are
-rejected (e.g., `x` vs `x-1` vs `a-x`).
+For this reason, (i) the minus operation requires spaces between non-numeric
+operands (e.g., `x - a`), and (ii) variables with common parts in identifiers
+are rejected (e.g., `x` vs `x-a` vs `a-x`).
 
 An operator identifier is a sequence of operator symbols
 (see [Operators](#operators)).
@@ -491,7 +492,8 @@ empty?          ;; var with question
 map'            ;; var with prime
 >               ;; simple op id
 ++              ;; op with multi chars
-{{-}}             ;; op as var id
+{{-}}           ;; op as var id
+x-1             ;; invalid identifier (read as `x - 1`)
 ```
 
 ## Literals
@@ -516,7 +518,7 @@ type.
 
 A [*tag*](#basic-types) type literal starts with a colon (`:`) and is followed
 by letters, digits, dots (`.`), or dashes (`-`).
-A dot or dash must be followed by a letter or digit.
+A dot or dash must be followed by a letter.
 
 A [*number*](#basic-types) type literal starts with a digit and is followed by
 digits, letters, and dots (`.`), and is represented as a *C float*.
@@ -554,22 +556,18 @@ The following tags are pre-defined in Ceu:
 ```
     ;; type enumeration
 
-    :nil :tag :bool :char :number :pointer  ;; basic types
-    :func :coro :task                       ;; prototypes
-    :tuple :vector :dict                    ;; collections
-    :x-coro :x-task :x-tasks :x-track       ;; active types
+    :nil :error :tag :bool :char :number :pointer   ;; basic types
+    :func :coro :task                               ;; prototypes
+    :tuple :vector :dict                            ;; collections
+    :exe-coro :exe-task :tasks                      ;; active coro/task
+    :tasks                                          ;; pool of tasks
 
-    :yielded :toggled :resumed :terminated  ;; coro status
-    :h :min :s :ms                          ;; time unit
-    :all :idx :key :val                     ;; iterator modifier
-    :global :local                          ;; broadcast target
-    :tmp                                    ;; temporary variable
-    :rec                                    ;; recursive prototype
-    :fake                                   ;; fake task
-    :check-now                              ;; await immediate check
-    :ceu                                    ;; ceu value
-    :error                                  ;; runtime error
-    :ref :dynamic :bcast :clear             ;; internal use
+    :ceu                                            ;; ceu value
+    :rec :nested                                    ;; recursive/nested prototype
+    :yielded :toggled :resumed :terminated          ;; coro/task status
+    :h :min :s :ms                                  ;; time unit
+    :all :idx :key :val                             ;; iterator modifier
+    :global :task                                   ;; broadcast target
 ```
 
 ### Native Literals
@@ -579,21 +577,18 @@ A native literal can specify a tag modifier as follows:
 ```
 `:<type> <...>`
 `:ceu <...>`
-`:pre <...>`
 `<...>`
 ```
 
-The `:<type>` modifier assumes the C code in `<...>` is an expression of the
-given type and converts it to Ceu.
-The `:ceu` modifier assumes the code is already a value in Ceu and does not
-convert it.
-The `:pre` modifier assumes the code is a C statement that should be placed
-*as is* at the top of the [output file](#integration-with-c).
-The lack of a modifier also assumes a C statement, but to be inlined at the
-current position.
+The `:<type>` modifier assumes that the C code in `<...>` evaluates to an
+expression of the given type and converts it to Ceu.
+The `:ceu` modifier assumes that the code is already a value in Ceu and does
+not convert it.
+The lack of a modifier assumes that the code is a C statement that does not
+evaluate to an expression.
 
-Native literals can include Ceu expressions with an identifier prefixed by
-dollar sign (`$`) suffixed by dot (`.`) with one of the desired types:
+Native literals can evaluate Ceu variable identifiers using a dollar sign
+prefix (`$`) and a dot suffix (`.`) with one of the desired basic types:
     `.Tag`, `.Bool`, `.Char`, `.Number`, `.Pointer`.
 
 Examples:
@@ -601,7 +596,6 @@ Examples:
 ```
 val n = `:number 10`            ;; native 10 is converted to Ceu number
 val x = `:ceu $n`               ;; `x` is set to Ceu `n` as is
-`:pre #include <x.h>`           ;; includes x.h at the top of the final
 `printf("> %f\n", $n.Number);`  ;; outputs `n` as a number
 ```
 
