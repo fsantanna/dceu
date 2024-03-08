@@ -343,47 +343,54 @@ Keywords cannot be used as [variable identifiers](#identifiers).
 
 The following keywords are reserved in Ceu:
 
+<!--
+    ;;export              ;; export block
+    ;;poly                ;; TODO
+-->
+
 ```
     and                 ;; and operator                     (00)
     await               ;; await event
+    break               ;; loop break
     broadcast           ;; broadcast event
     catch               ;; catch exception
     coro                ;; coroutine prototype
+    coroutine           ;; coroutine creation
     data                ;; data declaration
     defer               ;; defer block
-    do                  ;; do block
+    delay               ;; delay task
+    do                  ;; do block                         (10)
     else                ;; else block
-    enum                ;; enum declaration                 (10)
-    err                 ;; exception variable
+    enum                ;; enum declaration
+    error               ;; throw error
     every               ;; every block
-    evt                 ;; event variable
-    export              ;; export block
     false               ;; false value
     func                ;; function prototype
     if                  ;; if block
-    it                  ;; implicit parameter
     ifs                 ;; ifs block
-    in                  ;; in keyword                       (20)
-    in?                 ;; in? operator
+    in                  ;; in keyword
+    in?                 ;; in? operator                     (20)
+    in-not?             ;; in-not? operator
     is?                 ;; is? operator
     is-not?             ;; is-not? operator
+    it                  ;; implicit parameter
     loop                ;; loop block
     nil                 ;; nil value
     not                 ;; not operator
     or                  ;; or operator
-    par                 ;; par block
     par-and             ;; par-and block
     par-or              ;; par-or block                     (30)
-    pass                ;; innocuous expression
-    poly                ;; TODO
+    par                 ;; par block
     pub                 ;; public variable
     resume              ;; resume coroutine
     resume-yield-all    ;; resume coroutine
     set                 ;; assign expression
+    skip                ;; loop skip
     spawn               ;; spawn coroutine
+    tasks               ;; pool of tasks
     task                ;; task prototype/self identifier
-    thus                ;; thus pipe block
-    toggle              ;; toggle coroutine/block           (40)
+    thus                ;; thus pipe block                  (40)
+    toggle              ;; toggle coroutine/block
     true                ;; true value
     until               ;; until loop condition
     val                 ;; constant declaration
@@ -392,7 +399,7 @@ The following keywords are reserved in Ceu:
     where               ;; where block
     while               ;; while loop condition
     with                ;; with block
-    yield               ;; yield coroutine                  (48)
+    yield               ;; yield coroutine                  (50)
 ```
 
 ## Symbols
