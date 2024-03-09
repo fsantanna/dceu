@@ -6,7 +6,7 @@ import java.util.*
 
 var DUMP = true
 var DEBUG = true
-var CEU = 3
+var CEU = 1
     // 1: dyn-lex               ;; 17 (no dots) / 7 "definitely lost"
     // 2: defer, throw/catch    ;; 6 "definitely lost"
     // 3: coro, yield, resume   ;; 0 "definitely lost"

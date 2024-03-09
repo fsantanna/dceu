@@ -34,11 +34,11 @@
     * Tag Enumerations and Tuple Templates
         - `enum` `data`
     * Calls, Operations and Indexing
-        - `f(...)` `x+y` `t[...]` `t.x`
+        - `-x` `x+y` `f(...)` `-->`
+        - `t[...]` `t.x` `t.pub` `t.(:X)` `t[=]`
+        - `where` `thus`
     * Conditionals and Loops
         - `if` `ifs` `loop` `loop if` `loop until` `loop in`
-    * Where and Thus Clauses
-        - `where` `thus`
     * Exceptions
         - `throw` `catch`
     * Coroutine Operations
@@ -532,7 +532,7 @@ It is expanded to a [vector](#collection-values) of character literals, e.g.,
 A native literal is a sequence of characters interpreted as C code enclosed by
 multiple back quotes (`` ` ``).
 The same number of backquotes must be used to open and close the literal.
-Native literals are detailed further.
+Native literals are detailed next.
 
 All literals are valid [values](#values) in Ceu.
 
@@ -1268,7 +1268,7 @@ In Ceu, calls and operations are equivalent, i.e., an operation is a call that
 uses an [operator](#operatos) with prefix or infix notation:
 
 ```
-Call : OP Expr                      ;; unary operation
+Expr : OP Expr                      ;; unary operation
      | Expr OP Expr                 ;; binary operation
      | Expr `(´ [List(Expr)] `)´    ;; function call
 ```
@@ -1298,7 +1298,7 @@ f(10,20)        ;; normal call
 A pipe is an alternate notation to call a function:
 
 ```
-Pipe : Expr (`<--` | `<-` | `->` | `-->` ) Expr
+Expr : Expr (`<--` | `<-` | `->` | `-->` ) Expr
 ```
 
 The operators `<--` and `<-` pass the argument in the right to the function in
@@ -1322,60 +1322,56 @@ t -> f(10)      ;; equivalent to `f(t,10)`
 
 ### Indexes and Fields
 
-[Collections](#collections) in Ceu (tuples, vectors, and dictionaries) are
-accessed through indexes or fields:
+[Collections](#collections) in Ceu are accessed through indexes or fields:
 
 ```
-Index : Expr `[´ Expr `]´
-Field : Expr `.´ (NUM | ID | `pub´ | `(´ TAG `)´)
+Expr : Expr `[´ Expr `]´        ;; Index
+     | Expr `.´ ID              ;; Field
+     | Expr `.´ `pub´ | `pub´   ;; Pub
 ```
 
-An index operation expects a collection expression, and an index enclosed by
-brackets (`[` and `]`).
+An index operation expects a collection and an index enclosed by brackets (`[`
+and `]`).
 For tuples and vectors, the index must be an number.
 For dictionaries, the index can be of any type.
 The operation evaluates to the current value in the given collection index, or
 `nil` if non existent.
 
-A field operation expects a collection expression, a dot separator (`.`),
-and a field identifier.
-A field operation expands to an index operation as follows:
-For a tuple or vector `v`, and a numeric identifier `i`, the operation expands
-to `v[i]`.
-For a dictionary `v`, and a [tag literal](#literals) `k` (with the colon prefix
-`:` omitted), the operation expands to `v[:k]`.
+A field operation expects a dictionary or a tuple template, a dot separator
+(`.`), and a field identifier.
+If the collection is a dictionary `d`, the field must be a
+[tag literal](#literals) `k` (with the colon prefix `:` omitted), which is
+equivalent to the index operation `v[:k]`.
+If the collection is a [tuple template](#tag-enumerations-and-tuple-templates)
+`t`, the field must be an identifier that maps to a template index `i`, which
+is equivalent to the index operation `t[i]`.
 
-A [task](#active-values) `t` also relies on a field operation to access its
-public field `pub` (i.e., `t.pub`).
-
-A [variable](#declarations-and-assignments) associated with a
-[tuple template](#tag-enumerations-and-tuple-templates) can also be indexed
-using a field operation.
+A `pub` operation accesses the public field of an [active task](#active-values)
+and is discussed [further](#task-operations).
 
 Examples:
 
 ```
-tup[3]      ;; tuple access by index
-tup.3       ;; tuple access by numeric field
+tup[3]              ;; tuple access by index
+vec[i]              ;; vector access by index
 
-vec[i]      ;; vector access by index
+dict[:x]            ;; dict access by index
+dict.x              ;; dict access by field
 
-dict[:x]    ;; dict access by index
-dict.x      ;; dict access by field
-
-t.pub       ;; task public field
-
-val t :T    ;; tuple template
+val t :T            ;; tuple template
 t.x
+
+val t = spawn T()
+t.pub               ;; public field of task
 ```
 
 #### Template Casting
 
-An expression can be sufixed with a tag such that the expression base is
-cast into the tag template:
+An expression can be suffixed with a tag between parenthesis such that it is
+cast into a tuple template:
 
 ```
-Cast : TAG Expr
+Expr : Expr `.´ `(´ TAG `)´
 ```
 
 Examples:
@@ -1383,7 +1379,7 @@ Examples:
 ```
 data :Pos = [x,y]
 val p = <...>
-println(:Pos p.x)       ;; `p` is cast to `:Pos`
+println(p.(:Pos).x)     ;; `p` is cast to `:Pos`
 ```
 
 #### Peek, Push, Pop
@@ -1391,7 +1387,7 @@ println(:Pos p.x)       ;; `p` is cast to `:Pos`
 The *ppp operators* (peek, push, pop) manipulate a vector as a stack:
 
 ```
-PPP : Expr `[´ (`=´|`+´|`-´) `]´
+Expr : Expr `[´ (`=´|`+´|`-´) `]´
 ```
 
 A peek operation `vec[=]` sets or gets the last element of a vector.
@@ -1409,6 +1405,29 @@ println(stk[-])         ;; --> 30
 println(stk)            ;; --> [1, 2]
 set stk[+] = 3
 println(stk)            ;; --> [1, 2, 3]
+```
+
+### Where and Thus Clauses
+
+Any expression can be suffixed by `where` and `thus` clauses:
+
+```
+Expr : Expr `where´ Block
+     | Expr `thus´ [TODO] Block]
+```
+
+A `where` clause executes its block before the prefix expression and is allowed
+to declare variables that can be used by the expression.
+
+A `thus` clause captures the result of the prefix expression into the given
+identifier, and then executes its block.
+If the identifier is omitted, it assumes the implicit identifier `it`.
+
+Examples:
+
+```
+var x = (2 * y) where { var y=10 }      ;; x=20
+(x * x) thus x2 { println(x2) }         ;; --> 400
 ```
 
 ### Precedence and Associativity
@@ -1618,28 +1637,6 @@ loop in iter([10,20,30]) {
 loop in [10 -> 0), :step -2 {
     println(it)                 ;; --> 10, 8, 6, 4, 2
 }
-```
-
-## Where and Thus Clauses
-
-Any expression can be suffixed by `where` and `thus` clauses:
-
-```
-Expr : Expr [`where´ Block | `thus´ [ID] Block]
-```
-
-A `where` clause executes its block before the prefix expression and is allowed
-to declare variables that can be used by the expression.
-
-A `thus` clause captures the result of the prefix expression into the given
-identifier, and then executes its block.
-If the identifier is omitted, it assumes the implicit identifier `it`.
-
-Examples:
-
-```
-var x = (2 * y) where { var y=10 }      ;; x=20
-(x * x) thus x2 { println(x2) }         ;; --> 400
 ```
 
 ## Exceptions
