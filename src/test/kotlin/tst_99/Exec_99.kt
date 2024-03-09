@@ -1016,10 +1016,10 @@ class Exec_99 {
             $PLUS
             func iter (v) { v }
             func f (t) {
-                if t.1 == t.2 {
+                if t[1] == t[2] {
                     nil
                 } else {
-                    set t.1 = t.1 + 1
+                    set t[1] = t[1] + 1
                     t.1
                 }
             }
@@ -1036,11 +1036,11 @@ class Exec_99 {
             $PLUS
             func iter (v) { v }
             func f (t) {
-                if t.1 == t.2 {
+                if t[1] == t[2] {
                     nil
                 } else {
-                    set t.1 = t.1 + 1
-                    t.1
+                    set t[1] = t[1] + 1
+                    t[1]
                 }
             }
             val it = [f, 0, 5]
@@ -2259,7 +2259,7 @@ class Exec_99 {
                 toggle :Show {
                     println(pub())
                     every :draw {
-                        println(it.0)
+                        println(it[0])
                     }
                 }
             }
@@ -2632,7 +2632,7 @@ class Exec_99 {
         val out = test(
             """
             val x = [nil,[10]]
-            println(x, x.1, x.1[0])
+            println(x, x[1], x[1][0])
         """
         )
         assert(out == "[nil,[10]]\t[10]\t10\n") { out }

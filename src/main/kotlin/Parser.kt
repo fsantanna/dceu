@@ -1248,13 +1248,6 @@ class Parser (lexer_: Lexer)
                     }
                 }
                 "." -> when {
-                    (CEU>=99 && this.acceptEnu("Num")) -> {
-                        val num = this.tk0 as Tk.Num
-                        if (num.str.contains('.')) {
-                            err(num, "index error : ambiguous dot : use brackets")
-                        }
-                        Expr.Index(e.tk, e, Expr.Num(num))
-                    }
                     (CEU>=99 && this.acceptFix("(")) -> {
                         val n = N
                         this.acceptEnu_err("Tag")

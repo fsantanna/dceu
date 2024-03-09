@@ -1154,8 +1154,9 @@ class Parser_99 {
     fun tt_01_dot() {
         val l = lexer("x.1")
         val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr() == "x[1]") { e.tostr() }
+        //val e = parser.expr()
+        //assert(e.tostr() == "x[1]") { e.tostr() }
+        assert(trap { parser.expr() } == "anon : (lin 1, col 3) : expected identifier : have \"1\"")
     }
     @Test
     fun tt_02_dot_err() {
@@ -1184,7 +1185,7 @@ class Parser_99 {
 
     @Test
     fun vv_01_ppp() {
-        val l = lexer("x.0[=]")
+        val l = lexer("x[0][=]")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
