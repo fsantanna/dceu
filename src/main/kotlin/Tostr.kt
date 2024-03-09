@@ -64,7 +64,7 @@ fun Expr.tostr (pre: Boolean = false): String {
 
         is Expr.Spawn  -> "(spawn " + this.tsk.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")" + this.tsks.cond { " in ${this.tsks!!.tostr(pre)}" } + ")"
         is Expr.Delay  -> "delay"
-        is Expr.Pub    -> "pub(" + (this.tsk?.tostr(pre) ?: "") + ")"
+        is Expr.Pub    -> this.tsk.cond { it.tostr(pre)+"." } + "pub"
         is Expr.Toggle -> "(toggle ${this.tsk.tostr(pre)}(${this.on.tostr(pre)}))"
 
         is Expr.Nat    -> "```" + this.tk_.tag.cond { it+" " } + this.tk.str + "```"

@@ -1849,7 +1849,7 @@ class TTask {
     fun oo_06_track() {
         val out = test("""
             var T = task (v) {
-                set pub() = [v]
+                set pub = [v]
                 yield(nil) { as it => nil }
             }
             var x
@@ -1994,7 +1994,7 @@ class TTask {
         val out = test("""
             var t
             set t = task () {
-                set pub() = []
+                set pub = []
             }
             var a = spawn (t) ()
             var x
@@ -2043,7 +2043,7 @@ class TTask {
         val out = test("""
             var U
             set U = task () {
-                set pub() = func () {
+                set pub = func () {
                     10
                 }
             }

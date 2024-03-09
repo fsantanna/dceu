@@ -897,11 +897,7 @@ class Parser (lexer_: Lexer)
                 Expr.Spawn(tk0, tsks, call.clo, call.args)
             }
             (CEU>=4 && this.acceptFix("delay")) -> Expr.Delay(this.tk0 as Tk.Fix)
-            (CEU>=4 && this.acceptFix("pub")) -> {
-                val tk0 = this.tk0 as Tk.Fix
-                val tsk = this.expr_in_parens(true)
-                Expr.Pub(tk0, tsk)
-            }
+            (CEU>=4 && this.acceptFix("pub")) -> Expr.Pub(this.tk0 as Tk.Fix, null)
             (CEU>=4 && this.acceptFix("broadcast")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val evt = this.expr_in_parens()!!
@@ -933,7 +929,7 @@ class Parser (lexer_: Lexer)
                                     toggle task_$N(true)
                                 }
                             }
-                            pub(task_$N)
+                            task_$N.pub
                         }
                     """)//.let { println(it.tostr()); it }
                 } else {
@@ -1098,7 +1094,7 @@ class Parser (lexer_: Lexer)
                         do {
                             val ceu_$N = ${spw.tostr(true)}
                             loop {
-                                break (pub(ceu_$N)) if (status(ceu_$N) == :terminated)
+                                break (ceu_$N.pub) if (status(ceu_$N) == :terminated)
                                 yield()
                             }
                         }
@@ -1149,7 +1145,7 @@ class Parser (lexer_: Lexer)
                         loop {
                             break if (
                                 ${pars.mapIndexed { i,_ -> """
-                                    (((status(ceu_${i}_$n) == :terminated) and (pub(ceu_${i}_$n) or true)) or
+                                    (((status(ceu_${i}_$n) == :terminated) and (ceu_${i}_$n.pub or true)) or
                                 """}.joinToString("")} false ${")".repeat(pars.size)}
                             )
                             yield()
@@ -1260,6 +1256,7 @@ class Parser (lexer_: Lexer)
                             }
                         """) //.let { println(it);it })
                     }
+                    (CEU>=4 && this.acceptFix("pub")) -> Expr.Pub(e.tk, e)
                     this.acceptEnu_err("Id") -> Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':' + this.tk0.str, this.tk0.pos)))
                     else -> error("impossible case")
                 }

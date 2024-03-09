@@ -505,8 +505,8 @@ class Exec_04 {
             """
             val T = task () {
                 val evt = yield(nil)
-                set pub() = evt
-                println(:in, pub())
+                set pub = evt
+                println(:in, pub)
                 :ok
             }
             val t = spawn T() 
@@ -514,7 +514,7 @@ class Exec_04 {
                 val e = []
                 broadcast(e)
             }
-            println(:out, pub(t))
+            println(:out, t.pub)
         """
         )
         //assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
@@ -2331,7 +2331,7 @@ class Exec_04 {
     fun kk_00_pub_err() {
         val out = test(
             """
-            pub()
+            pub
         """
         )
         //assert(out == " v  anon : (lin 2, col 13) : pub() : pub error : expected task\n") { out }
@@ -2343,7 +2343,7 @@ class Exec_04 {
         val out = test(
             """
             task :nested () {
-                pub()
+                pub
             }
         """
         )
@@ -2356,11 +2356,11 @@ class Exec_04 {
     fun kk_02_pub_err() {
         val out = test(
             """
-            pub(nil)
+            nil.pub
         """
         )
         assert(
-            out == " |  anon : (lin 2, col 13) : pub(nil)\n" +
+            out == " |  anon : (lin 2, col 13) : nil.pub\n" +
                     " v  pub error : expected task\n"
         ) { out }
     }
@@ -2370,10 +2370,10 @@ class Exec_04 {
         val out = test(
             """
             val t = task () {
-                set pub() = []
+                set pub = []
             }
             val a = spawn (t) ()
-            val x = pub(a)
+            val x = a.pub
             println(x)
         """
         )
@@ -2390,11 +2390,11 @@ class Exec_04 {
         val out = test(
             """
             val T = task () {
-                println(pub())
+                println(pub)
                 yield(nil) ;;thus { it => nil }
             }
             val t = spawn T()
-            println(pub(t))
+            println(t.pub)
         """
         )
         assert(out == "nil\nnil\n") { out }
@@ -2405,11 +2405,11 @@ class Exec_04 {
         val out = test(
             """
             val T = task () {
-                set pub() = 10
+                set pub = 10
                 yield(nil) ;;thus { it => nil }
             }
             val t = spawn T()
-            println(pub(t))
+            println(t.pub)
         """
         )
         assert(out == "10\n") { out }
@@ -2422,11 +2422,11 @@ class Exec_04 {
             val T = task () {
                 do {
                     val x = []
-                    set pub() = x
+                    set pub = x
                 }
             }
             val t = spawn T()
-            println(pub(t))
+            println(t.pub)
         """
         )
         //assert(out == " |  anon : (lin 8, col 21) : (spawn T())\n" +
@@ -2444,9 +2444,9 @@ class Exec_04 {
             val t = spawn T()
             do {
                 val x = []
-                set pub(t) = x
+                set t.pub = x
             }
-            println(pub(t))
+            println(t.pub)
         """
         )
         assert(out == "[]\n") { out }
@@ -2459,8 +2459,8 @@ class Exec_04 {
             """
             data :X = [x]
             val T = task () :X {
-                set pub() = [10]
-                println(pub().x)
+                set pub = [10]
+                println(pub.x)
             }
             spawn T()
         """
@@ -2475,8 +2475,8 @@ class Exec_04 {
             data :Z = [z]
             data :X = [x:Z]
             val T = task () :X {
-                set pub() = [[10]]
-                println(pub().x.z)
+                set pub = [[10]]
+                println(pub.x.z)
             }
             spawn T()
         """
@@ -2490,11 +2490,11 @@ class Exec_04 {
             """
             data :X = [x]
             val T = task () :X {
-                set pub() = [10]
+                set pub = [10]
                 yield(nil) ;;thus { it => nil }
             }
             val t :X = spawn T()
-            println(pub(t).x)
+            println(t.pub.x)
         """
         )
         assert(out == "10\n") { out }
@@ -2507,11 +2507,11 @@ class Exec_04 {
             data :Z = [z]
             data :X = [x:Z]
             val T = task () :X {
-                set pub() = [[10]]
+                set pub = [[10]]
                 yield(nil) ;;thus { it => nil }
             }
             val t :X = spawn T()
-            println(pub(t).x.z)
+            println(t.pub.x.z)
         """
         )
         assert(out == "10\n") { out }
@@ -2535,7 +2535,7 @@ class Exec_04 {
     fun kk_12_pub() {
         val out = test(
             """
-            pub().x
+            pub.x
         """
         )
         assert(out == "anon : (lin 2, col 13) : pub error : expected enclosing task\n") { out }
@@ -2546,14 +2546,14 @@ class Exec_04 {
         val out = test(
             """
             spawn (task () {
-                set pub().x = 10
+                set pub.x = 10
                 nil
             }) ()
         """
         )
         assert(
-            out == " |  anon : (lin 2, col 13) : (spawn (task () { (set pub()[:x] = 10) nil })...)\n" +
-                    " |  anon : (lin 3, col 21) : pub()[:x]\n" +
+            out == " |  anon : (lin 2, col 13) : (spawn (task () { (set pub[:x] = 10) nil })()...)\n" +
+                    " |  anon : (lin 3, col 21) : pub[:x]\n" +
                     " v  index error : expected collection\n"
         ) { out }
     }
@@ -2563,15 +2563,15 @@ class Exec_04 {
         val out = test(
             """
             val t = spawn (task () {
-                set pub() = yield(nil)
-                ;;set pub() = evt
-                pub()
+                set pub = yield(nil)
+                ;;set pub = evt
+                pub
             }) ()
             do {
                 val x
                 broadcast([:x])
             }
-            println(pub(t))
+            println(t.pub)
         """
         )
         //assert(out == " |  anon : (lin 9, col 17) : broadcast'([],:task)\n" +
@@ -2584,11 +2584,11 @@ class Exec_04 {
         val out = test(
             """
             val t = spawn (task () {
-                set pub() = 0
+                set pub = 0
                 yield(nil)
             }) ()
-            set pub(t) = 10
-            println(pub(t))
+            set t.pub = 10
+            println(t.pub)
         """
         )
         assert(out == "10\n") { out }
@@ -2601,12 +2601,12 @@ class Exec_04 {
         val out = test(
             """
             var t = task () {
-                set pub() = []
+                set pub = []
                 yield(nil)
                 nil
             }
             var a = spawn (t) ()
-            var x = pub(a)
+            var x = a.pub
             println(x)
         """
         )
@@ -2622,12 +2622,12 @@ class Exec_04 {
             """
             val x = do {
                 var t = task () {
-                    set pub() = []
+                    set pub = []
                     yield(nil)
                     nil
                 }
                 var a = spawn (t) ()
-                pub(a)
+                a.pub
             }
             println(x)
         """
@@ -2643,8 +2643,8 @@ class Exec_04 {
             """
             var f = func (t) {
                 do { do {
-                var p = pub(t)   ;; ok
-                set p = pub(t)   ;; ok  ;;ERROR: spawn A and f() are not comparable
+                var p = t.pub   ;; ok
+                set p = t.pub   ;; ok  ;;ERROR: spawn A and f() are not comparable
                 set p = p       ;; ok
                 println(p)      ;; ok
                 ;;p               ;; ok
@@ -2652,7 +2652,7 @@ class Exec_04 {
                 } }
             }
             var t = task () {
-                set pub() = []
+                set pub = []
                 yield(nil) ;;thus { it => nil }
                 nil
             }
@@ -2680,11 +2680,11 @@ class Exec_04 {
         val out = test(
             """
             var f = func (t) {
-                var p = pub(t)   ;; ok
+                var p = t.pub   ;; ok
                 p               ;; ok
             }
             var t = task () {
-                set pub() = []
+                set pub = []
                 yield(nil) ;;thus { it => nil }
                 nil
             }
@@ -2712,10 +2712,10 @@ class Exec_04 {
             """
             var p
             var f = func (t) {
-                set p = pub(t)   ;; no
+                set p = t.pub   ;; no
             }
             var t = task () {
-                set pub() = []
+                set pub = []
                 yield(nil) ;;thus { it => nil }
                 nil
             }
@@ -2738,10 +2738,10 @@ class Exec_04 {
             """
             var t
             set t = task (v) {
-                set pub() = v
+                set pub = v
                 var f
                 set f = func () {
-                    pub()           ;; TODO: crosses func
+                    pub           ;; TODO: crosses func
                 }
                 println(f())
             }
@@ -2757,9 +2757,9 @@ class Exec_04 {
         val out = test(
             """
             var t = task (v) {
-                set pub() = v
+                set pub = v
                 var f = func () {
-                    pub()   ;; should be ok bc f is called inside t
+                    pub   ;; should be ok bc f is called inside t
                 }
                 println(f())
             }
@@ -2778,7 +2778,7 @@ class Exec_04 {
         val out = test(
             """
             var T = task (v) {
-                set pub() = @[]
+                set pub = @[]
                 nil
             }
             val t = spawn T()
@@ -2796,12 +2796,12 @@ class Exec_04 {
                 println(t)
             }
             val T = task () {
-                set pub() = []
+                set pub = []
                 yield(nil)
                 nil
             }
             val t = spawn T()
-            f(pub(t))
+            f(t.pub)
             println(:ok)
         """
         )
@@ -2989,7 +2989,7 @@ class Exec_04 {
         val out = test(
             """
             spawn (task () :X {
-                set pub().x = nil
+                set pub.x = nil
             }) ()
             println(:ok)
         """
@@ -3897,9 +3897,9 @@ class Exec_04 {
             """
             data :X = [x]
             val T = task () :X {
-                set pub() = [10]
+                set pub = [10]
                 spawn (task :nested () {
-                    println(pub().x)
+                    println(pub.x)
                 }) ()
                 nil
             }
@@ -3915,9 +3915,9 @@ class Exec_04 {
             """
             spawn (task () {
                 do {
-                    println(:xxx, pub())
+                    println(:xxx, pub)
                     spawn (task :nested () {
-                        println(:yyy, pub())
+                        println(:yyy, pub)
                         yield(nil) ;;thus { it => nil }
                     }) ()
                     yield(nil) ;;thus { it => nil }
@@ -4350,13 +4350,13 @@ class Exec_04 {
         val out = test(
             """
             val t = spawn (task () {
-                set pub() = [1]
+                set pub = [1]
                 yield(nil) ;;thus { it => nil }
                 [2]
             } )()
-            println(status(t), pub(t))
+            println(status(t), t.pub)
             broadcast(nil)
-            println(status(t), pub(t))
+            println(status(t), t.pub)
        """
         )
         assert(
@@ -4374,7 +4374,7 @@ class Exec_04 {
                     yield(nil) ;;thus { it => nil }
                     10
                 } )()
-                func (it) { println(pub(it)) } (yield (nil))
+                func (it) { println(it.pub) } (yield (nil))
             } )()
             broadcast(nil)
             println(:ok)
@@ -5116,8 +5116,8 @@ class Exec_04 {
             """
             data :T = [x,y]
             spawn( task () :T {
-                set pub() = [10,20]
-                println(pub().x)
+                set pub = [10,20]
+                println(pub.x)
             }) ()
         """
         )
@@ -5131,11 +5131,11 @@ class Exec_04 {
             var t = spawn (task () {
                 yield(nil) ;;thus { it => nil }
             } )()
-            println(pub(t).y)
+            println(t.pub.y)
         """
         )
         assert(
-            out == " |  anon : (lin 5, col 21) : pub(t)[:y]\n" +
+            out == " |  anon : (lin 5, col 21) : t.pub[:y]\n" +
                     " v  index error : expected collection\n"
         ) { out }
     }
@@ -5146,10 +5146,10 @@ class Exec_04 {
             """
             data :T = [x,y]
             var t :T = spawn( task () {
-                set pub() = [10,20]
+                set pub = [10,20]
                 yield(nil) ;;thus { it => nil }
             }) ()
-            println(pub(t).y)
+            println(t.pub.y)
         """
         )
         assert(out == "20\n") { out }

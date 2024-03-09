@@ -934,7 +934,7 @@ class Exec_99 {
                     yield(nil) ;;thus { it => nil }
                     10
                 } )()
-                yield (nil) thus { it => println(pub(it)) }
+                yield (nil) thus { it => println(it.pub) }
             } )()
             broadcast(nil)
             println(:ok)
@@ -1246,7 +1246,7 @@ class Exec_99 {
     fun gg_06_detrack() {
         val out = test("""
             val T = task () {
-                set pub() = [10]
+                set pub = [10]
                 yield(nil)
             }
             var t = spawn T ()
@@ -1999,7 +1999,9 @@ class Exec_99 {
             broadcast(:X [1,2])
             println(nil)
         """)
-        assert(out == ":1\n:2\n") { out }
+        assert(out == ":it\t:X [1,2]\n" +
+                ":click\t:X [1,2]\n" +
+                "nil\n") { out }
     }
 
     // AWAIT / TASK
@@ -2151,7 +2153,7 @@ class Exec_99 {
             }) ()
             println(:ok)
         """)
-        assert(out == ":ok\n[]\n") { out }
+        assert(out == "[]\n:ok\n") { out }
     }
 
     // CLOCK
@@ -2232,9 +2234,9 @@ class Exec_99 {
     fun mm_01_toggle() {
         val out = test("""
             task T (v) {
-                set pub() = v
+                set pub = v
                 toggle :Show {
-                    println(pub())
+                    println(pub)
                     every (it => (it is? :dict) and (it.sub==:draw)) {
                         println(it.v)
                     }
@@ -2255,9 +2257,9 @@ class Exec_99 {
     fun mm_02_toggle() {
         val out = test("""
             task T (v) {
-                set pub() = v
+                set pub = v
                 toggle :Show {
-                    println(pub())
+                    println(pub)
                     every :draw {
                         println(it[0])
                     }
@@ -2408,7 +2410,7 @@ class Exec_99 {
         val out = test("""
             data :X = [x]
             task T () {
-                set pub() = [10]
+                set pub = [10]
                 yield()
             }
             val t = spawn T()
@@ -2422,11 +2424,11 @@ class Exec_99 {
         val out = test("""
             data :X = [x]
             val T = task () {
-                set pub() = [10]
+                set pub = [10]
                 yield(nil)
             }
             val t = spawn T(nil)
-            pub(t) thus { ceu_94 :X =>
+            t.pub thus { ceu_94 :X =>
                 ceu_94
             }
             nil

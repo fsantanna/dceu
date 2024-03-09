@@ -180,7 +180,9 @@ class Parser_04 {
             pub
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \"(\" : have end of file")
+        val e = parser.exprs()
+        assert(e.tostr() == "pub\n") { e.tostr() }
+        //assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \"(\" : have end of file")
     }
     @Test
     fun dd_00_pub_b() {
@@ -201,22 +203,22 @@ class Parser_04 {
     @Test
     fun dd_01_pub() {
         val l = lexer("""
-            pub()
-            set pub() = 10
+            pub
+            set pub = 10
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "pub()\n(set pub() = 10)\n") { e.tostr() }
+        assert(e.tostr() == "pub\n(set pub = 10)\n") { e.tostr() }
     }
     @Test
     fun dd_02_pub() {
         val l = lexer("""
-            pub(t)
-            set pub(t) = 10
+            t.pub
+            set t.pub = 10
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "pub(t)\n(set pub(t) = 10)\n") { e.tostr() }
+        assert(e.tostr() == "t.pub\n(set t.pub = 10)\n") { e.tostr() }
     }
     @Test
     fun dd_03_pub_tag() {
@@ -232,32 +234,26 @@ class Parser_04 {
     @Test
     fun dd_04_pub() {
         val l = lexer("""
-            pub()()
+            pub()
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "pub()()\n") { e.tostr() }
+        assert(e.tostr() == "pub()\n") { e.tostr() }
     }
     @Test
     fun dd_05_pub() {
         val l = lexer("""
-            set pub()() = 10
+            set pub() = 10
         """)
         val parser = Parser(l)
         assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : set error : expected assignable destination")
     }
     @Test
     fun dd_06_pub() {
-        val l = lexer("set pub = pub(x) + pub()")
-        val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 1, col 9) : expected \"(\" : have \"=\"")
-    }
-    @Test
-    fun dd_07_pub() {
-        val l = lexer("set pub() = pub(x) + pub()")
+        val l = lexer("set pub = x.pub + pub")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(set pub() = {{+}}(pub(x),pub()))") { e.tostr() }
+        assert(e.tostr() == "(set pub = {{+}}(x.pub,pub))") { e.tostr() }
     }
 
     // :NESTED

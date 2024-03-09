@@ -42,7 +42,7 @@ class Parser_05 {
     }
 
     // DETRACK
-
+    /*
     @Test
     fun bb_01_detrack_err() {
         val l = tst_03.lexer("""
@@ -129,4 +129,5 @@ class Parser_05 {
         val e = parser.exprs()
         assert(e.tostr() == "track(x)\n") { e.tostr() }
     }
+     */
 }

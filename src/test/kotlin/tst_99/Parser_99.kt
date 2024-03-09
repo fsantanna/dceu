@@ -903,7 +903,7 @@ class Parser_99 {
         assert(e.tostr() == "do {\n" +
                 "(val ceu_12 = (spawn T()))\n" +
                 "loop {\n" +
-                "(break(pub(ceu_12)) if {{==}}(status(ceu_12),:terminated))\n" +
+                "(break(ceu_12.pub) if {{==}}(status(ceu_12),:terminated))\n" +
                 "yield(nil)\n" +
                 "}\n" +
                 "}") { e.tostr() }

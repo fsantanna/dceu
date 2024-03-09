@@ -118,7 +118,7 @@ class Exec_05 {
     fun aa_09_gc() {
         val out = test("""
             val T = task () {
-                set pub() = []
+                set pub = []
                 yield(nil) ;;thus { it=>nil }
                 nil
             }
@@ -432,10 +432,10 @@ class Exec_05 {
             val t1 = spawn T()
             do {
                 val t2 = spawn T()
-                set pub(t1) = ;;;track;;;(t2)         ;; error scope
+                set t1.pub = ;;;track;;;(t2)         ;; error scope
                 nil
             }
-            println(;;;detrack;;;(pub(t1)))
+            println(;;;detrack;;;(t1.pub))
         """)
         assert(out.contains("exe-task: 0x")) { out }
         //assert(out.contains("terminated\nx-track: 0x")) { out }
@@ -887,11 +887,11 @@ class Exec_05 {
     fun ee_01_pub() {
         val out = test("""
             val T = task () {
-                set pub() = 10
+                set pub = 10
                 yield(nil) ;;thus { it => nil }
             }
             val t = spawn T()
-            println(pub(t))
+            println(t.pub)
         """)
         assert(out.contains("10\n")) { out }
     }
@@ -899,14 +899,14 @@ class Exec_05 {
     fun ee_02_pub() {
         val out = test("""
             val T = task () {
-                set pub() = 10
+                set pub = 10
                 yield(nil) ;;thus { it => nil }
             }
             val t = spawn T()
             val x = ;;;track;;;(t)
             ;;detrack(x) { v =>
                 val v = x
-                val y = pub(v)
+                val y = v.pub
                 println(y)
             ;;}
         """)
@@ -916,11 +916,11 @@ class Exec_05 {
     fun ee_03_pub() {
         val out = test("""
             val T = task () {
-                set pub() = []
+                set pub = []
                 yield(nil) ;;thus { it => nil }
             }
             val t = spawn T()
-            println(pub(t))
+            println(t.pub)
         """)
         assert(out.contains("[]\n")) { out }
     }
@@ -928,14 +928,14 @@ class Exec_05 {
     fun ee_04_pub() {
         val out = test("""
             val T = task () {
-                set pub() = [10]
+                set pub = [10]
                 yield(nil) ;;thus { it => nil }
             }
             val ts = tasks()
             spawn T() in ts
             val t = next-tasks(ts)
-            ;;detrack(t) { it => println(pub(it)) }
-                println(pub(t))
+            ;;detrack(t) { it => println(it.pub) }
+                println(t.pub)
         """)
         assert(out.contains("[10]\n")) { out }
     }
@@ -1034,11 +1034,11 @@ class Exec_05 {
             val x = next-tasks(ts)
             spawn (task () {
                 detrack(x) { it =>
-                    set pub() = it  ;; ERR: cannot expose it
+                    set pub = it  ;; ERR: cannot expose it
                     nil
                 }
                 broadcast(nil) in :global
-                println(status(pub()))
+                println(status(pub))
             }) ()
             println(:nooo)
         """)
@@ -1137,12 +1137,12 @@ class Exec_05 {
     fun fg_01_detrack_pub() {
         val out = test("""
             val T = task () {
-                set pub() = [10]
+                set pub = [10]
                 yield(nil) ; nil
             }
             var t = spawn T()
             var x = track(t)
-            println(detrack(x) { it => pub(it) })
+            println(detrack(x) { it => it.pub })
         """)
         //assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
         assert(out == "[10]\n") { out }
@@ -1155,13 +1155,13 @@ class Exec_05 {
     fun fg_02_detrack_pub() {
         val out = test("""
             val T = task () {
-                set pub() = [10]
+                set pub = [10]
                 yield(nil) ; nil
             }
             var t = spawn T()
             var x = track(t)
             broadcast(nil)
-            println(detrack(x) { it => pub(it) }) ;; expose (ok, global func)
+            println(detrack(x) { it => it.pub }) ;; expose (ok, global func)
         """)
         assert(out == "nil\n") { out }
         //assert(out == " v  anon : (lin 9, col 49) : pub error : expected task\n") { out }
@@ -1170,12 +1170,12 @@ class Exec_05 {
     fun fg_03_detrack_pub() {
         val out = test("""
             val T = task () {
-                set pub() = [10]
+                set pub = [10]
                 yield(nil) ; nil
             }
             var t = spawn T()
             var x = track(t)
-            val v = detrack(x) { it => pub(it) }
+            val v = detrack(x) { it => it.pub }
             broadcast(nil)
             println(v)
         """)
@@ -1192,7 +1192,7 @@ class Exec_05 {
             val x = do {
                 val ts = tasks()
                 var T = task () {
-                    set pub() = []
+                    set pub = []
                     yield(nil) ; nil
                     nil
                 }
@@ -1213,7 +1213,7 @@ class Exec_05 {
     fun fg_05_expose() {
         val out = test("""
             var T = task (t) {
-                set pub() = []
+                set pub = []
                 if t {
                     val p = detrack(t) { it => pub(it) }
                 } else {
@@ -1246,7 +1246,7 @@ class Exec_05 {
                 println(t)
             }
             val T = task () {
-                set pub() = []
+                set pub = []
                 yield(nil) ; nil
             }
             val ts = tasks()
@@ -1261,7 +1261,7 @@ class Exec_05 {
             }
             do {
                 val xx1 = next-tasks(ts)
-                detrack(xx1) { it => f(pub(it)) }
+                detrack(xx1) { it => f(it.pub) }
             }
             println(:ok)
         """)
@@ -1274,7 +1274,7 @@ class Exec_05 {
                 println(t)
             }
             val T = task () {
-                set pub() = []
+                set pub = []
                 yield(nil) ; nil
             }
             val ts = tasks()
@@ -1289,7 +1289,7 @@ class Exec_05 {
     fun fg_07_throw_track() {
         val out = test("""
             val T = task () {
-                set pub() = 10
+                set pub = 10
                 yield(nil) ; nil
             }
             val ts = tasks()
@@ -1300,7 +1300,7 @@ class Exec_05 {
                     error(drop(t))
                 }
             }
-            detrack(t) { it => println(pub(it)) }
+            detrack(t) { it => println(it.pub) }
         """)
         //assert(out == ":ok\n") { out }
         assert(out == "10\n") { out }
@@ -1317,7 +1317,7 @@ class Exec_05 {
                 spawn T() in ts
                 do {
                     val t = next-tasks(ts)
-                    throw(drop(t))
+                    error(drop(t))
                     nil
                 }
             }
@@ -1338,7 +1338,7 @@ class Exec_05 {
                 spawn T() in ts
                 do {
                     val t = next-tasks(ts)
-                    throw(drop(t))
+                    error(drop(t))
                 }
             }
             println(:ok)
@@ -1454,13 +1454,13 @@ class Exec_05 {
     fun hh_05_next() {
         val out = test("""
             val T = task (v) {
-                set pub() = [v]
+                set pub = [v]
                 yield(nil)
             }
             val ts = tasks()
             spawn T(10) in ts
             val x1 = next-tasks(ts)
-            val v = detrack(x1) { it => println(pub(it)) ; pub(it) }
+            val v = detrack(x1) { it => println(it.pub) ; it.pub }
             println(v)
         """
         )
@@ -1636,7 +1636,7 @@ class Exec_05 {
         val out = test("""
             var T
             set T = task (v) {
-                set pub() = [v]
+                set pub = [v]
                 yield(nil) ; nil
             }
             var x
@@ -1682,7 +1682,7 @@ class Exec_05 {
         val out = test("""
             var T
             set T = task () {
-                set pub() = [10]
+                set pub = [10]
                 yield(nil) ; nil
             }
             var t = spawn T ()
@@ -1698,14 +1698,14 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 yield(nil) ; nil
-                set pub() = 10
+                set pub = 10
                 yield(nil) ; nil
             }
             var t = spawn T()
             var x = track(t)
-            detrack(x) { it => println(pub(it)) } 
+            detrack(x) { it => println(it.pub) } 
             broadcast(nil)
-            detrack(x) { it => println(pub(it)) } 
+            detrack(x) { it => println(it.pub) } 
         """)
         assert(out == "nil\n10\n") { out }
     }
@@ -1714,7 +1714,7 @@ class Exec_05 {
         val out = test("""
             var T
             set T = task () {
-                set pub() = [10]
+                set pub = [10]
                 yield(nil) ; nil
             }
             var t = spawn T ()
@@ -1745,7 +1745,7 @@ class Exec_05 {
         val out = test("""
             var T
             set T = task () {
-                set pub() = [10]
+                set pub = [10]
                 yield(nil) ; nil
             }
             var x
@@ -1766,7 +1766,7 @@ class Exec_05 {
     fun op_04_track() {
         val out = test("""
             var T = task () {
-                set pub() = [10]
+                set pub = [10]
                 ${AWAIT("it == :evt")}
             }
             var t = spawn T()
@@ -1777,9 +1777,9 @@ class Exec_05 {
                         yield(nil) ;;thus { it => it==t }
                         throw(:par-or)
                     }) ()
-                    println(detrack(x) { it => pub(it)[0] })
+                    println(detrack(x) { it => it.pub[0] })
                     broadcast(nil) in t
-                    println(detrack(x) { it => pub(it)[0] })
+                    println(detrack(x) { it => it.pub[0] })
                     broadcast(:evt) in t
                     println(999)
                 }
@@ -1831,7 +1831,7 @@ class Exec_05 {
     fun op_07_track_scope() {
         val out = test("""
             val T = task () {
-                set pub() = 1
+                set pub = 1
                 yield(nil) ; nil
             }
             val t = spawn T()
@@ -1846,14 +1846,14 @@ class Exec_05 {
     fun op_08_track_scope() {
         val out = test("""
             val T = task () {
-                set pub() = 1
+                set pub = 1
                 yield(nil) ; nil
             }
             val y = do {
                 val t = spawn T()
                 track(t)
             }
-            detrack(y) { it => println(pub(it)) }
+            detrack(y) { it => println(it.pub) }
         """)
         assert(out == " v  anon : (lin 6, col 21) : block escape error : cannot expose track outside its task scope\n") { out }
     }
