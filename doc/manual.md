@@ -1305,8 +1305,8 @@ The operators `<--` and `<-` pass the argument in the right to the function in
 the left, while the operators `->` and `-->` pass the argument in the left to
 the function in the right.
 
-The operators `<-` and `->` have higher precedence than the operators `<--` and
-`-->`.
+The operators `<-` and `->` have higher
+[precedence](@precedence-and-associativity) than the operators `<--` and `-->`.
 
 If the receiving function is actually a call, then the pipe operator inserts
 the extra argument into the call either as first (`->` and `-->`) or last (`<-`
@@ -1316,7 +1316,7 @@ and `<--`).
 Examples:
 
 ```
-f <-- 10        ;; equivalent to `f(10)`
+f <-- 10 -> g   ;; equivalent to `f(g(10))`
 t -> f(10)      ;; equivalent to `f(t,10)`
 ```
 
@@ -1327,24 +1327,23 @@ accessed through indexes or fields:
 
 ```
 Index : Expr `[´ Expr `]´
-Field : Expr `.´ (NUM | ID | `pub´)
+Field : Expr `.´ (NUM | ID | `pub´ | `(´ TAG `)´)
 ```
 
-An index operation expects an expression as a collection, and an index enclosed
-by brackets (`[` and `]`).
+An index operation expects a collection expression, and an index enclosed by
+brackets (`[` and `]`).
 For tuples and vectors, the index must be an number.
 For dictionaries, the index can be of any type.
+The operation evaluates to the current value in the given collection index, or
+`nil` if non existent.
 
-The operation evaluates to the current value the collection holds on the index,
-or `nil` if non existent.
-
-A field operation expects an expression as a collection, a dot separator (`.`),
+A field operation expects a collection expression, a dot separator (`.`),
 and a field identifier.
 A field operation expands to an index operation as follows:
 For a tuple or vector `v`, and a numeric identifier `i`, the operation expands
 to `v[i]`.
-For a dictionary `v`, and a [tag literal](#literals) `k` (with the colon `:`
-omitted), the operation expands to `v[:k]`.
+For a dictionary `v`, and a [tag literal](#literals) `k` (with the colon prefix
+`:` omitted), the operation expands to `v[:k]`.
 
 A [task](#active-values) `t` also relies on a field operation to access its
 public field `pub` (i.e., `t.pub`).
