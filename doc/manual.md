@@ -892,7 +892,7 @@ func (v1) {             ;; a closure
 }
 ```
 
-#### Lambdas
+#### Lambda Prototype
 
 For simple `func` prototypes, Ceu supports the lambda notation:
 
@@ -1413,21 +1413,26 @@ Any expression can be suffixed by `where` and `thus` clauses:
 
 ```
 Expr : Expr `where´ Block
-     | Expr `thus´ [TODO] Block]
+     | Expr `thus´ `{´ [ID [TAG] `=>´]  { Expr [`;´] }`}´
 ```
 
 A `where` clause executes its block before the prefix expression and is allowed
 to declare variables that can be used by the expression.
 
-A `thus` clause captures the result of the prefix expression into the given
-identifier, and then executes its block.
+A `thus` clause assigns the result of the prefix expression into the given
+identifier, and then executes a block.
 If the identifier is omitted, it assumes the implicit identifier `it`.
+Like [prototypes](#declarations-and-assignments), the identifier can be
+associated with [tuple template](#tag-enumerations-and-tuple-templates) tags.
+A clause such as `e1 thus { v => e2 }` is equivalent to `e1 -> \{ v => e2 }`,
+which combines [pipes](#pipe-calls) and [lambda](#lambda-prototype)
+expressions.
 
 Examples:
 
 ```
-var x = (2 * y) where { var y=10 }      ;; x=20
-(x * x) thus x2 { println(x2) }         ;; --> 400
+var x = (2 * y) where { var y=10 }  ;; x=20
+(x * x) thus { x2 => println(x2) }  ;; --> 400
 ```
 
 ### Precedence and Associativity
