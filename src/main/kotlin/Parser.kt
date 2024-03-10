@@ -638,10 +638,8 @@ class Parser (lexer_: Lexer)
                     return Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, this.block().es))
                 }
 
-                val xid = this.acceptEnu("Id")
-                val (id,tag) = if (!xid) Pair("it","") else {
-                    Pair(this.tk0.str, if (this.acceptEnu("Tag")) this.tk0.str else "")
-                }
+                val idtag = if (this.checkEnu("Id")) this.id_tag() else Pair(Tk.Id("it",this.tk0.pos),null)
+                val id = idtag.first.str
                 this.acceptFix_err("in")
 
                 when {
@@ -675,7 +673,7 @@ class Parser (lexer_: Lexer)
                         this.nest("""
                             do {
                                 val ceu_ste_$N = ${if (step == null) 1 else step.tostr(true)}
-                                var $id $tag = ${eA.tostr(true)} $op (
+                                var ${idtag.tostr(true)} = ${eA.tostr(true)} $op (
                                     ${if (tkA.str == "{") 0 else "ceu_ste_$N"}
                                 )
                                 val ceu_lim_$N = ${eB.tostr(true)}
@@ -694,7 +692,7 @@ class Parser (lexer_: Lexer)
                             do {
                                 val ceu_$N = iter(${iter.tostr(true)})
                                 loop {
-                                    val $id $tag = ceu_$N[0](ceu_$N)
+                                    val ${idtag.tostr(true)} = ceu_$N[0](ceu_$N)
                                     break(false) if ($id == nil)
                                     ${blk.es.tostr(true)}
                                 }

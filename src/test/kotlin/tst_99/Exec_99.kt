@@ -1034,7 +1034,7 @@ class Exec_99 {
                     nil
                 } else {
                     set t[1] = t[1] + 1
-                    t.1
+                    t[1]
                 }
             }
             val it = [f, 0, 5]

@@ -46,10 +46,13 @@ class Parser_99 {
         val l = lexer("1 or 2")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "if 1 {\n" +
-                "1\n" +
+        assert(e.tostr() == "do {\n" +
+                "(val ceu_5 = 1)\n" +
+                "if ceu_5 {\n" +
+                "ceu_5\n" +
                 "} else {\n" +
                 "2\n" +
+                "}\n" +
                 "}") { e.tostr() }
     }
     @Test
@@ -58,10 +61,13 @@ class Parser_99 {
         val l = lexer("1 and 2")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "if 1 {\n" +
+        assert(e.tostr() == "do {\n" +
+                "(val ceu_5 = 1)\n" +
+                "if ceu_5 {\n" +
                 "2\n" +
                 "} else {\n" +
-                "1\n" +
+                "ceu_5\n" +
+                "}\n" +
                 "}") { e.tostr() }
     }
     @Test
@@ -1092,7 +1098,7 @@ class Parser_99 {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(do f<--10->g)") { e.tostr() }
+        assert(e.tostr() == "(do f(g(10)))") { e.tostr() }
     }
 
     // CAST
