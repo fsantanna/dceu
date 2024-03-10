@@ -439,7 +439,7 @@ class Exec_99 {
         assert(out == "true\n") { out }
     }
     @Test
-    fun TODO_ff_07_ifs() {
+    fun ff_07_ifs() {
         val out = test("""
             var x = ifs it=20 {
                 it is? 10 => false
@@ -452,7 +452,7 @@ class Exec_99 {
         assert(out == "true\n") { out }
     }
     @Test
-    fun TODO_08_ifs() {
+    fun ff_08_ifs() {
         val out = test("""
             data :T = []
             val x = ifs 10 {
@@ -464,7 +464,7 @@ class Exec_99 {
         assert(out == "anon : (lin 5, col 21) : access error : variable \"is'\" is not declared\n") { out }
     }
     @Test
-    fun TODO_ff_09_ifs() {
+    fun ff_09_ifs() {
         val out = test("""
             var x = ifs it=20 {
                 it in? [1,20,1] => true
@@ -481,6 +481,20 @@ class Exec_99 {
                 :no => false
                 10  => false
                 20  => true
+            }
+            println(x)
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun todo_ff_11_ifs() {
+        val out = test("""
+            data :T = [v]
+            var x = ifs t:T=[20] {
+                t.v == 10 => false
+                false     => false
+                t.v == 20 => true
+                else      => false
             }
             println(x)
         """)

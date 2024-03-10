@@ -267,7 +267,6 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(val ceu_5 = nil)\n" +
                 "if a {\n" +
                 "1\n" +
                 "} else {\n" +
@@ -285,7 +284,6 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(val ceu_5 = nil)\n" +
                 "nil\n" +
                 "}") { e.tostr() }
         //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
@@ -353,7 +351,6 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(val ceu_5 = nil)\n" +
                 "if f() {\n" +
                 "nil\n" +
                 "} else {\n" +

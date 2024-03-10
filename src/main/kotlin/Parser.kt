@@ -605,15 +605,16 @@ class Parser (lexer_: Lexer)
                 if (id_tag == null) {
                     Expr.If(tk0, cnd, t, f)
                 } else {
-                    val (id,tag) = id_tag
+                    val (id,_) = id_tag
                     this.nest("""
-                        ((${cnd.tostr(true)}) thus { ${id_tag.tostr(true)} =>
+                        do {
+                            val ${id_tag.tostr(true)} = ${cnd.tostr(true)}
                             if ${id.str} {
                                 ${t.es.tostr(true)}
                             } else {
                                 ${f.es.tostr(true)}
                             }
-                        })
+                        }
                     """)
                 }
             }
@@ -1001,15 +1002,11 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (CEU>=99 && this.acceptFix("ifs")) -> {
-                val (id1,v) = if (this.checkFix("{")) {
-                    Pair("ceu_$N", null)
+                val (idtag_0,v_0) = if (this.checkFix("{")) {
+                    Pair(Pair(Tk.Id("ceu_$N",this.tk0.pos),null), null)
                 } else {
-                    val e = this.expr()
-                    if (e is Expr.Acc && this.acceptFix("=")) {
-                        Pair(e.tk.str, this.expr())
-                    } else {
-                        Pair("ceu_$N", e)
-                    }
+                    val (idtag,v) = id_tag_cnd__ifs()
+                    Pair(idtag ?: Pair(Tk.Id("ceu_$N",this.tk0.pos),null), v)
                 }
                 this.acceptFix_err("{")
 
@@ -1019,7 +1016,7 @@ class Parser (lexer_: Lexer)
                             Pair(null, Expr.Bool(Tk.Fix("true",this.tk0.pos)))
                         }
                         this.acceptEnu("Op") -> {
-                            if (v == null) {
+                            if (v_0 == null) {
                                 err(this.tk0, "case error : expected ifs condition")
                             }
                             val op = this.tk0.str.let {
@@ -1027,9 +1024,9 @@ class Parser (lexer_: Lexer)
                             }
                             val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
                             val call = if (e == null) {
-                                "$op($id1)"
+                                "$op(${idtag_0.first.str})"
                             } else {
-                                "$op($id1, ${e.tostr(true)})"
+                                "$op(${idtag_0.first.str}, ${e.tostr(true)})"
                             }
                             Pair(null, this.nest(call))
                         }
@@ -1047,18 +1044,19 @@ class Parser (lexer_: Lexer)
                 //ifs.forEach { println(it.first.third.tostr()) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
                 this.nest("""
-                    ((${v.cond2({it.tostr(true)},{"nil"})}) thus { $id1 =>
-                    ${ifs.map { (xxx,blk) ->
-                        val (idtag2,cnd) = xxx
-                        """
-                        if ${idtag2.cond { "${it.tostr(true)} = "}} ${cnd.tostr(true)} {
-                            ${blk.es.tostr(true)}
-                        } else {
-                        """}.joinToString("")}
-                     ${ifs.map { """
-                         }
-                     """}.joinToString("")}
-                    })
+                    do {
+                        ${v_0.cond { "val " + idtag_0.tostr(true) + " = " + it.tostr(true) }}
+                        ${ifs.map { (xxx,blk) ->
+                            val (idtag2,cnd) = xxx
+                            """
+                            if ${idtag2.cond { "${it.tostr(true)} = "}} ${cnd.tostr(true)} {
+                                ${blk.es.tostr(true)}
+                            } else {
+                            """}.joinToString("")}
+                         ${ifs.map { """
+                             }
+                         """}.joinToString("")}
+                    }
                 """)
             }
             (CEU>=99 && this.acceptFix("resume-yield-all")) -> {
