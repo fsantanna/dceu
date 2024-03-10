@@ -1305,8 +1305,9 @@ The operators `<--` and `<-` pass the argument in the right to the function in
 the left, while the operators `->` and `-->` pass the argument in the left to
 the function in the right.
 
-The operators `<-` and `->` have higher
-[precedence](@precedence-and-associativity) than the operators `<--` and `-->`.
+The single pipe operators `<-` and `->` have higher
+[precedence](@precedence-and-associativity) than the double pipe operators
+`<--` and `-->`.
 
 If the receiving function is actually a call, then the pipe operator inserts
 the extra argument into the call either as first (`->` and `-->`) or last (`<-`
@@ -1441,16 +1442,31 @@ Operations in Ceu can be combined in complex expressions with the following
 precedence priority (from higher to lower):
 
 ```
-1. sufix  operations       ;; t[0], x.i, f(x)
-2. prefix operations       ;; -x, #t
-3. binary operations       ;; x + y
+1. suffix (left associative)
+    - call:         `f()` `{op}()`
+    - index:        `t[i]` `t[=]` `t[+]` `t[-]`
+    - field:        `t.x` `t.pub` `t.(:T)`
+2. inner (left associative)
+    - single pipe:  `v->f` `f<-v`
+2. prefix (right associative)
+    - unary:        `not v` `#t` `-x`
+    - constructor:  `:T []` (see [Collection Values](#collection-values))
+3. infix (left associative)
+    - binary        `x*y` `r++s` `a or b`
+4. outer operations (left associative)
+    - double pipe:  `v-->f` `f<--v`
+    - where:        `v where {...}`
+    - thus:         `v thus {...}`
 ```
 
-All binary operators are left-associative and have the same precedence.
-Expressions with multiple operators require parenthesis for disambiguation:
+All operations are left associative, except prefix operations, which are right
+associative.
+Note that all binary operators have the same precedence.
+Therefore, expressions with different operators but with the same precedence
+require parenthesis for disambiguation:
 
 ```
-Parens : `(´ Expr `)´
+Expr : `(´ Expr `)´
 ```
 
 Examples:
@@ -1469,8 +1485,8 @@ x or y or z     ;; (x or y) or z
 Ceu supports conditionals as follows:
 
 ```
-If  : `if´ [ID [TAG] `=´] Expr (Block | `->´ Expr)
-        [`else´  (Block | `->´ Expr)]
+If  : `if´ [ID [TAG] `=´] Expr (Block | `=>´ Expr)
+        [`else´  (Block | `=>´ Expr)]
 ```
 
 An `if` tests a condition expression and executes one of the two possible
@@ -1482,15 +1498,16 @@ The condition expression can be can be assigned to an optional
 [variable declaration](#declarations-and-assignments) and can be accessed in
 the branches.
 
-The branches can be either a block or a simple expression prefixed by the
-symbol `->`.
+The branches can be either a [block](#blocks) or a simple expression prefixed
+by the arrow symbol `=>`.
 
 Examples:
 
 ```
-val max = if x>y -> x -> y
-if x = f() {
-    print(x)
+val max = if x>y => x => y
+
+if v:Pos = f() {
+    print(v.x)
 }
 ```
 
@@ -1498,23 +1515,23 @@ Ceu also supports `ifs` to test multiple conditions:
 
 ```
 Ifs : `ifs´ [[ID [TAG] `=´] Expr] `{´ {Case} [Else] `}´
-        Case : OP Expr (Block | `->´ Expr)
-             | [ID [TAG] `=´] Expr (Block | `->´ Expr)
-        Else : `else´ (`->´ Expr | Block)
+        Case : OP Expr (Block | `=>´ Expr)
+             | [ID [TAG] `=´] Expr (Block | `=>´ Expr)
+        Else : `else´ (`=>´ Expr | Block)
 ```
 
-The `ifs` statement supports multiple cases with a test condition and an
-associated branch.
-The conditions are tested in sequence, until one is true and its associated
-branch executes.
+The `ifs` statement supports multiple cases with test conditions and associated
+branches.
+The conditions are tested in sequence, until the first is true and its
+associated branch executes.
 The optional `else` branch executes if no conditions are true.
+Like in an `if`, branches can be blocks or simple expressions prefixed by `=>`.
 
-Like in an `if`, branches can be blocks or simple expressions prefixed by `->`.
+An `ifs` also supports a head expression to compare in test cases.
+If provided, test cases can assume that the head value is the left operand of
+a given binary operator and a given right operand.
 
-If a head condition expression is provided, test cases can assume its value
-appears before a binary operator and the right operand.
-
-The head condition and each case condition can be assigned to an optional
+The head expression and each test condition can be assigned to an optional
 [variable declaration](#declarations-and-assignments) and can be accessed in
 the branches.
 
@@ -1522,12 +1539,12 @@ Examples:
 
 ```
 ifs x = f() {
-    == 10      -> println("x == 10")
-    is? :tuple -> println("x is a tuple")
-    g(x) > 10  -> println("g(x) > 10")
-    y=h(x)     -> println(y)
+    == 10      => println("x == 10")
+    is? :tuple => println("x is a tuple")
+    g(x) > 10  => println("g(x) > 10")
+    y=h(x)     => println(y)    ;; only if y is truthy
     else {
-        throw(:error)
+        error(:error)
     }
 }
 ```
