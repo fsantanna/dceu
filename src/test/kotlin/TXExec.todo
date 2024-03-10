@@ -713,7 +713,7 @@ class TXExec {
     fun dict10_iter_val() {
         val out = all("""
             val t = @[x=1, y=2, z=3]
-            loop v in iter(t,:val) {
+            loop v in to-iter(t,:val) {
                 println(v)
             }
         """, true)
@@ -723,7 +723,7 @@ class TXExec {
     fun dict10_iter_key() {
         val out = all("""
             val t = @[x=1, y=2, z=3]
-            loop v in iter(t,:key) {
+            loop v in to-iter(t,:key) {
                 println(v)
             }
         """, true)
@@ -733,7 +733,7 @@ class TXExec {
     fun dict10_iter_all() {
         val out = all("""
             val t = @[x=1, y=2, z=3]
-            loop v in iter(t,:all) {
+            loop v in to-iter(t,:all) {
                 println(v)
             }
         """, true)
@@ -743,7 +743,7 @@ class TXExec {
     fun dict10a_iter() {
         val out = all("""
             val t = @[]
-            loop v in iter(t) {
+            loop v in to-iter(t) {
                 println(v)
             }
             println(:ok)
@@ -763,7 +763,7 @@ class TXExec {
     fun vect11_iter_val() {
         val out = all("""
             val t = #[1, 2, 3]
-            loop v in iter(t,:val) {
+            loop v in to-iter(t,:val) {
                 println(v)
             }
         """, true)
@@ -772,7 +772,7 @@ class TXExec {
     @Test
     fun vect11_iter_all() {
         val out = all("""
-            loop v in iter(#[1, 2, 3],:all) {
+            loop v in to-iter(#[1, 2, 3],:all) {
                 println(v)
             }
         """, true)
@@ -782,7 +782,7 @@ class TXExec {
     fun vect11_iter_idx() {
         val out = all("""
             val t = #[1, 2, 3]
-            loop v in iter(t,:idx) {
+            loop v in to-iter(t,:idx) {
                 println(v)
             }
         """, true)
@@ -792,7 +792,7 @@ class TXExec {
     fun vect12_iter_err() {
         val out = all("""
             val t = #[1, 2, 3]
-            loop (i in iter(t) {
+            loop (i in to-iter(t) {
                 println(i, v)
             }
         """, true)
@@ -804,7 +804,7 @@ class TXExec {
     fun dict13_iter() {
         val out = all("""
             val t = @[x=1, y=2, z=3]
-            loop x in iter(t,:all) {
+            loop x in to-iter(t,:all) {
                 val k = x.0
                 val v = x.1
                 println(k, v)
@@ -858,7 +858,7 @@ class TXExec {
     fun tuple19_iter() {
         val out = all("""
             val t = [1, 2, 3]
-            loop v in iter(t,:all) {
+            loop v in to-iter(t,:all) {
                 println(v)
             }
         """, true)
@@ -878,7 +878,7 @@ class TXExec {
         val out = all("""
             data :T = [v]
             val t = [[1], [2], [3]]
-            loop v:T in iter(t,:val) {
+            loop v:T in to-iter(t,:val) {
                 println(v.v)
             }
         """, true)
@@ -897,7 +897,7 @@ class TXExec {
             }
             println(t2)
             val t3 = #[]
-            loop v in iter(t2,:val) {
+            loop v in to-iter(t2,:val) {
                 set t3[+] = v
             }
             println(t3)
@@ -964,7 +964,7 @@ class TXExec {
                 coro () {
                     yield(^^x)
                 } --> \{
-                    iter(it)
+                    to-iter(it)
                 }
             }
             do {
@@ -985,7 +985,7 @@ class TXExec {
                         yield(drop(pos))
                     }
                 } --> \{
-                    iter(it)
+                    to-iter(it)
                 }
             }
             do {
@@ -1003,7 +1003,7 @@ class TXExec {
     @Test
     fun fg_01_iter_next() {
         val out = all("""
-            val itr :Iterator = iter([1,2,3,4])
+            val itr :Iterator = to-iter([1,2,3,4])
             println(itr.0(itr))
             println(itr.f(itr))
             println(next(itr))
@@ -1798,7 +1798,7 @@ class TXExec {
                 yield(2)
                 nil
             }
-            loop i in iter(coroutine(T)) {
+            loop i in to-iter(coroutine(T)) {
                 println(i)
             }
         """, true)
@@ -1835,7 +1835,7 @@ class TXExec {
     @Test
     fun iter7() {
         val out = all("""
-            val y = loop x in iter([1,2,3]) {
+            val y = loop x in to-iter([1,2,3]) {
             } until x == 2
             println(y)
         """, true)
@@ -1853,7 +1853,7 @@ class TXExec {
     @Test
     fun iter9_it() {
         val out = all("""
-            val y = loop in iter([1,2,3]) {
+            val y = loop in to-iter([1,2,3]) {
             } until it == 4
             println(y)
         """, true)
@@ -1863,7 +1863,7 @@ class TXExec {
     fun iter10_it() {
         val out = all("""
             data :Iterator = [f,s,tp,i]
-            func iter (v, tp) {
+            func to-iter (v, tp) {
                 :Iterator [v]
             }
             export [f] {
@@ -2143,12 +2143,12 @@ class TXExec {
             }
             pass :meio
             enum {
-                :i = `100`,     ;; ignored b/c of itr.i in iter-tuple
+                :i = `100`,     ;; ignored b/c of itr.i in to-iter-tuple
                 :j,
             }
             pass :depois
             val t = [:antes, :x, :y, :z, :a, :b, :c, :meio, :i, :j, :depois]
-            loop v in iter(t,:all) {
+            loop v in to-iter(t,:all) {
                 set t[v.0] = to-number(v.1)
             }
             println(t)
@@ -2415,17 +2415,17 @@ class TXExec {
     fun yy_02() {
         val out = all("""
             data :Iterator = [f,s,tp,i]
-            func iter-coro (itr :Iterator) {
+            func to-iter-coro (itr :Iterator) {
                 val co = itr.s
                 val v = resume co()
                 ((status(co) /= :terminated) and v) or nil
             }
-            func iter (v) {
-                [iter-coro,  v]
+            func to-iter (v) {
+                [to-iter-coro,  v]
             }
             
             func bar (v) {
-                [iter-coro, v]
+                [to-iter-coro, v]
             }
             bar(coroutine(coro () {}))
             println(:ok)
@@ -2776,7 +2776,7 @@ class TXExec {
                 }
             }
             coro Send (co, next) {
-                loop v in iter(co) {
+                loop v in to-iter(co) {
                     resume next(drop(v))
                 }
             }

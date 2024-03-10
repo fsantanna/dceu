@@ -198,7 +198,7 @@ data :Iterator = [f,s,tp,i]
         itr.i
     }
 
-    func iter (v, tp) {
+    func to-iter (v, tp) {
         ifs v {
             is? :Iterator => v
             is? :tuple    => :Iterator [iter-tuple, v, tp, 0]
@@ -226,7 +226,7 @@ func next (v, ...) {
 ;; IN, IN-NOT, DEEP-EQUALS === =/=
 
 func in' (v, xs) {
-    loop x in iter(xs) {
+    loop x in to-iter(xs) {
        until (x == v)
     }
 }
@@ -247,14 +247,14 @@ func :rec {{===}} (v1,v2) {
     } where {
         func equals-tuple-vector (v1', v2') {
             (#v1' == #v2') and not (
-                loop x in iter(v1',:all) {
+                loop x in to-iter(v1',:all) {
                     while (v2'[x[0]] === x[1])
                 }
             )
         }
         func contains-dict? (v1', v2') {
             not (
-                loop x in iter(v1',:all) {
+                loop x in to-iter(v1',:all) {
                     while (v2'[x[0]] === x[1])
                 }
             )
@@ -357,7 +357,7 @@ func :rec copy (v) {
 
 func to-vector (col, tp) {
     val ret = #[]
-    loop v in iter(col,tp) {
+    loop v in to-iter(col,tp) {
         set ret[+] = v
     }
     ret
@@ -367,7 +367,7 @@ func to-vector (col, tp) {
 func to-tasks (...) {
     val ret = #[]
     val args = ...
-    loop v in iter(args) {
+    loop v in to-iter(args) {
         ifs v {
             is? :exe-task {
                 set ret[+] = v
@@ -385,7 +385,7 @@ func to-tasks (...) {
 
 func iterable-to-dict (itr) {
     val dict = @[]
-    loop in iter(itr) {
+    loop in to-iter(itr) {
         set dict[it] = true
     }
     dict

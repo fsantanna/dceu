@@ -690,7 +690,7 @@ class Parser (lexer_: Lexer)
                         val blk = this.block()
                         this.nest("""
                             do {
-                                val ceu_$N = iter(${iter.tostr(true)})
+                                val ceu_$N = to-iter(${iter.tostr(true)})
                                 loop {
                                     val ${idtag.tostr(true)} = ceu_$N[0](ceu_$N)
                                     break(false) if ($id == nil)
@@ -1007,6 +1007,7 @@ class Parser (lexer_: Lexer)
                     Pair(idtag ?: Pair(Tk.Id("ceu_$N",this.tk0.pos),null), v)
                 }
                 this.acceptFix_err("{")
+                val id_0 = idtag_0.first.str
 
                 val ifs = list0("}",null) {
                     val (id_tag,cnd) = when {
@@ -1022,9 +1023,9 @@ class Parser (lexer_: Lexer)
                             }
                             val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
                             val call = if (e == null) {
-                                "$op(${idtag_0.first.str})"
+                                "$op($id_0)"
                             } else {
-                                "$op(${idtag_0.first.str}, ${e.tostr(true)})"
+                                "$op($id_0, ${e.tostr(true)})"
                             }
                             Pair(null, this.nest(call))
                         }

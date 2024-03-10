@@ -99,7 +99,7 @@ class TXJS {
         val out = all("""
             coro objectEntries (obj) {
                 yield()
-                loop v in iter(obj,:all) {
+                loop v in to-iter(obj,:all) {
                     yield([v.0, v.1])
                 }
             }
@@ -109,7 +109,7 @@ class TXJS {
                 last  = "Doe",
             ]
             val co = spawn objectEntries(jane)
-            loop v in iter(co) {
+            loop v in to-iter(co) {
                 println((to-string(v.0) ++ ": ") ++ v.1)
             }
         """, true)
@@ -225,7 +225,7 @@ class TXJS {
     fun x9() {
         val out = all("""
             coro genFunc () {
-                loop v in iter(#['a','b'],:all) {
+                loop v in to-iter(#['a','b'],:all) {
                     yield(drop(v))
                 }
             }
@@ -452,7 +452,7 @@ class TXJS {
                 var cur = ""
                 loop {
                     val tmp = yield()
-                    loop c in iter(tmp,:val) {
+                    loop c in to-iter(tmp,:val) {
                         if c == '\n' {
                             resume target(cur)
                             set cur = ""
@@ -501,7 +501,7 @@ class TXJS {
                 var cur = ""
                 loop {
                     val tmp = yield(nil)
-                    loop c in iter(tmp) {
+                    loop c in to-iter(tmp) {
                         if c == '\n' {
                             yield(drop(cur))
                             set cur = ""
@@ -533,7 +533,7 @@ class TXJS {
             val co_nums  = spawn numberLines()
             val co_print = spawn printLines()
             spawn {
-                loop chars in iter(co_read) {
+                loop chars in to-iter(co_read) {
                     loop {
                         val line = if chars {
                             resume co_split(chars)
@@ -623,7 +623,7 @@ class TXJS {
         coro Split (chars) {
             yield()
             var line = ""
-            loop c in iter(chars) {
+            loop c in to-iter(chars) {
                 if c == '\n' {
                     yield(drop(line))
                     set line = ""
@@ -635,7 +635,7 @@ class TXJS {
         coro Number (lines) {
             yield()
             var i = 1
-            loop l in iter(lines) {
+            loop l in to-iter(lines) {
                 yield(to-string(i) ++ (": " ++ l))
                 set i = i + 1
             }
@@ -665,7 +665,7 @@ class TXJS {
             val split1  = spawn Split(read1)
             val number1 = spawn Number(split1)
             val take1   = spawn Take(3, number1)
-            loop l in iter(take1) {
+            loop l in to-iter(take1) {
                 println(l)
             }
         }
@@ -682,7 +682,7 @@ class TXJS {
                 }
             }
             coro Send (co, next) {
-                loop v in iter(co) {
+                loop v in to-iter(co) {
                     resume next(drop(v))
                 }
             }

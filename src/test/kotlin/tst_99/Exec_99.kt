@@ -426,12 +426,13 @@ class Exec_99 {
         assert(out == "true\n") { out }
     }
     @Test
-    fun TODO_ff_06_ifs_is() {
+    fun ff_06_ifs_is() {
         val out = test("""
+            $IS
             val t = :X []
             val x = ifs t {
-                :Y   => false
-                :X   => true
+                is? :Y   => false
+                is? :X   => true
                 else => false
             }
             println(x)
@@ -1028,7 +1029,7 @@ class Exec_99 {
     fun fg_01_iter() {
         val out = test("""
             $PLUS
-            func iter (v) { v }
+            func to-iter (v) { v }
             func f (t) {
                 if t[1] == t[2] {
                     nil
@@ -1048,7 +1049,7 @@ class Exec_99 {
     fun fg_02_iter() {
         val out = test("""
             $PLUS
-            func iter (v) { v }
+            func to-iter (v) { v }
             func f (t) {
                 if t[1] == t[2] {
                     nil
