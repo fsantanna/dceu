@@ -1527,7 +1527,7 @@ associated branch executes.
 The optional `else` branch executes if no conditions are true.
 Like in an `if`, branches can be blocks or simple expressions prefixed by `=>`.
 
-An `ifs` also supports a head expression to compare in test cases.
+An `ifs` also supports a head expression to compare against in test cases.
 If provided, test cases can assume that the head value is the left operand of
 a given binary operator and a given right operand.
 
@@ -1554,110 +1554,123 @@ ifs x = f() {
 Ceu supports loops and iterators as follows:
 
 ```
-Loop : `loop´
-            [`in´ Iter [`,´ ID [TAG]]]  ;; optional iterator (see further)
-            [Test]                      ;; optional head test
-            Block                       ;; mandatory block
-            [{Test Block}]              ;; optional test/block
-            [Test]                      ;; optional tail test
+Loop : `loop´ [[ID [TAG]] `in´ (Range | Expr)] Block
 
-Test : (`until´ | `while´) [ID [TAG] `=´] Expr
+Skip  : `skip´ `if´ Expr
+
+Break : `break´ [`(´ Expr `)´] `if´ Expr
+      | `until´ Expr
+      | `while´ Expr
 ```
 
-A `loop` executes a block of code continuously until a condition is met.
+A `loop` executes a block of code continuously until a termination condition is
+met.
 
-A `loop` has an optional iterator pattern that changes the value of a variable
-on each iteration.
-If the variable becomes `nil`, then the loop terminates.
+The optional `in` clause extends a loop with an iterator expression and an
+optional control variable.
+The iterator can be a [numeric range](#numeric-ranges) or an expression that
+evaluates to an [iterator tuple](#TODO).
 If the variable identifier is omitted, it assumes the implicit identifier `it`.
 
-A `loop` has optional head and tail tests which, if satisfied, terminate the
-loop.
-
-The mandatory block can be extended with a list of test-block clauses that
-can terminate the loop when a test succeeds.
-The blocks are all considered to be in the same scope such that variables
-declared in a block are visible in further blocks.
-
-A test checks an expression and succeeds, terminating the loop, `until` the
-expression is `true` or `while` the expression `false`.
-The condition expression can assigned to an optional
-[variable declaration](#declarations-and-assignments) and can be accessed in
-further blocks.
-
-Note that there is no `break` statement in Ceu, which must be substituted by
-proper top-level test conditions.
+The loop block may contain control clauses to restart or terminate the loop.
+These clauses must be placed at the exact same nesting level of the loop block,
+but not at lower levels.
+The `skip` clause jumps back to the next loop iteration if the given condition
+is true.
+The `break`, `until`, or `while` terminate the loop if the given condition is
+met.
+The loop as a whole evaluates to the terminating condition, or to the optional
+expression in the case of a `break`.
 
 Examples:
 
 ```
 var i = 0
-loop while i<5 {       ;; --> 0,1,2,3,4
-    println(i)
+loop {
     set i = i + 1
+    skip if (i % 2) == 1
+    println(i)          ;; --> 2,4,6,8,10
+    while i <= 10
 }
 
 loop {
-    val x = random-next() % 100
-    println(x)
-} until x > 80 {
-    val y = random-next() % 100
-    println(x+y)
-} until x+y > 80
+    do {
+        break if true   ;; ERR: invalid nesting level
+    }
+}
 ```
 
-#### Iterators
+#### Numeric Ranges
 
-Loops in Ceu supports generic iterators, numeric iterators, and tasks
-iterators:
+In a numeric loop, the `in` clause specifies an interval `x => y` to iterate
+over.
+The clause chooses open or closed range delimiters, and an optional signed
+`:step` expression to apply at each iteration:
 
 ```
-Iter : Expr                             ;; generic iterator
-     | (`[´ | `(´)                      ;; numeric iterator
-       Expr `->´ Expr
-       (`]´ | `)´)
-       [`,´ :step (`-´|`+´) Expr]
-     | `:tasks´ Expr                    ;; tasks iterator
+Range : (`{´ | `}´) Expr `=>` Expr (`{´ | `}´) [`:step` [`+´|`-´] Expr]
 ```
 
-A generic [iterator](#iterator) is expected to evaluate to a tuple `(f,...)`
-holding a function `f` at index `0`, and any other state required to operate at
-the other indexes.
+The open delimiters `}x` and `y{` exclude the given numbers from the interval,
+while the closed delimiters `{x` and `y}` include them.
+
+The loop terminates when `x` reaches or surpasses `y` considering the step sign
+direction, which defaults to `+1`.
+At each step, the loop control variable assumes the current iteration value.
+After each step, the step is added to `x` and compared against `y`.
+
+Note that for an open delimiter, the loop initializes the given number to its
+successor or predecessor, depending on the step direction.
+
+```
+loop in {0 => 5{ {
+    println(it)     ;; --> 0,1,2,3,4
+}
+
+loop v in }3 => 0} :step -1 {
+    println(v)      ;; --> 2, 1, 0
+}
+```
+
+#### Iterator Tuples
+
+In an iterator loop, the `in` clause specifies an expression that must evaluate
+to an iterator tuple `[f,...]` [tagged](#user-types) as `:Iterator`.
+If the given expression is not an iterator tuple, the loop tries to transform
+it calling `to-iter` implicitly.
+
+The iterator tuple must hold a step function `f` at index `0`, followed by any
+other state required to operate.
 The function `f` expects the iterator tuple itself as argument, and returns its
 next value or `nil` to signal termination.
-The loop calls the function repeatedly, assigning each result to the loop
-variable, which can be accessed in the loop block.
 
-The function [`iter`](#iterator) in the [auxiliary library](#auxiliary-library)
-converts many values, such as vectors and coroutines, into iterators, so that
-they can be traversed in loops.
+The loop calls the step function at each iteration passing the given iterator
+tuple, and assigns the result to the loop control variable.
+When the result is `nil`, the loop terminates.
 
-A numeric loop expects an interval `x -> y`, with open (`(` and `)`) or closed
-(`[` and `]`) delimiters, an optional signed `:step` expression (which defaults
-to `+1`).
-The loop terminates when `x` reaches `y` in the direction of the step sign.
-After each loop iteration, the step is added to `x`.
-
-Tasks iterators are discussed in [Pools of Tasks](#pools-of-tasks).
+The function [`to-iter`](#iterator) in the
+[auxiliary library](#auxiliary-library) creates iterators from iterables, such
+as vectors, coroutines, and task pools, such that they can be traversed in
+loops.
 
 Examples:
 
 ```
-val f = func (t) {              ;; t = [f, V]
-    val ret = t.1               ;; V
-    set t.1 = t.1 - 1           ;; V = V - 1
-    ((ret > 0) and ret) or nil  ;; V or nil
-}
-loop in [f, 5], v {
-    println(v)                  ;; --> 5, 4, 3, 2, 1
+loop v in [10,20,30] {          ;; implicit to-iter([10,20,30])
+    println(v)                  ;; --> 10,20,30
 }
 
-loop in iter([10,20,30]) {
-    println(it)                 ;; --> 10, 20, 30
-}
 
-loop in [10 -> 0), :step -2 {
-    println(it)                 ;; --> 10, 8, 6, 4, 2
+func num-iter (N) {
+    val f = func (t) {
+        val v = t[2]
+        set t[2] = v + 1
+        ((v < N) and v) or nil
+    }
+    :Iterator [f, N, 0]
+}
+loop in num-iter(5) {
+    println(it)                 ;; --> 0,1,2,3,4
 }
 ```
 
@@ -2496,7 +2509,7 @@ throw type
 - `in-not?`:    [Operator In](#operator-in)
 - `is?`:        [Operator Is](#operator-is)
 - `is-not?`:    [Operator Is](#operator-is)
-- `iter`:       [Iterator](#iterator)
+- `to-iter`:    [Iterator](#iterator)
 - `not`:        [Logical Operators](#boolean-operators)
 - `or`:         [Logical Operators](#boolean-operators)
 
@@ -2631,15 +2644,15 @@ tags([],:x,true) is? :x  -> true
 
 ### Iterator
 
-[Iterator loops](#iterators) in Ceu rely on the `:Iterator` template and `iter`
-constructor function as follows:
+[Iterator loops](#iterators) in Ceu rely on the `:Iterator` template and
+`to-iter` constructor function as follows:
 
 ```
 data :Iterator = [f]
-func iter (v, tp)       ;; --> :Iterator [f]
+func to-iter (v, tp)       ;; --> :Iterator [f]
 ```
 
-The function `iter` receives an iterable `v`, an optional modifier `tp`, and
+The function `to-iter` receives an iterable `v`, an optional modifier `tp`, and
 returns an iterator.
 The returned iterator is a tuple template in which the first field is a
 function that, when called, returns the next element of the original iterable
@@ -2647,7 +2660,7 @@ function that, when called, returns the next element of the original iterable
 The iterator function must return `nil` to signal that there are no more
 elements to traverse in the iterable.
 
-The function `iter` accepts the following iterables and modifiers:
+The function `to-iter` accepts the following iterables and modifiers:
 
 - Tuples:
     - On each call, the iterator returns the next tuple element.
