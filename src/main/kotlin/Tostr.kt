@@ -53,7 +53,7 @@ fun Expr.tostr (pre: Boolean = false): String {
             val cnd = this.cnd.es.let {
                 //println(it.tostr())
                 assert(it.size == 2)
-                (it[0] as Expr.Dcl).idtag.tostr(pre) + " => " + it[1].tostr(pre)
+                (it[0] as Expr.Dcl).idtag.tostr(pre) + ", " + it[1].tostr(pre)
             }
             "catch (" + cnd + ") " + this.blk.tostr(pre)
         }

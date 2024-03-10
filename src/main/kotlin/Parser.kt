@@ -150,6 +150,18 @@ class Parser (lexer_: Lexer)
         return e
     }
 
+    fun patt (): Patt {
+        // (id :Tag, e)
+        this.acceptFix_err("(")
+        this.acceptEnu_err("Id")
+        val id = this.tk0 as Tk.Id
+        val tag = if (!this.acceptEnu("Tag")) null else this.tk0 as Tk.Tag
+        this.acceptFix_err(",")
+        val e = this.expr()
+        this.acceptFix_err(")")
+        return Triple(id, tag, e)
+    }
+
     fun id_tag_cnd__clock__catch_await (): Triple<Tk.Id?,Any?,Expr?> {
         // ()                   ;; (null, null, null)
         // (x :Y => z)          ;; (id,   tag,  exp)
@@ -800,13 +812,9 @@ class Parser (lexer_: Lexer)
                 // z                    ;; (null, null, exp)    ;; (it :_ => z)
 
                 val tk0 = this.tk0 as Tk.Fix
-                val (id,tag_clk,cnd) = this.id_tag_cnd__clock__catch_await()
-                if (tag_clk is List<*>) {
-                    err((tag_clk as Clock)[0].second.tk, "catch error : invalid condition")
-                }
+                val (id,tag,cnd) = this.patt()
 
-                val tag = if (tag_clk is Tk.Tag) (tag_clk as Tk.Tag) else null
-                val (a,b,c) = Triple(id!=null, tag_clk!=null, cnd!=null)
+                val (a,b,c) = Triple(id!=null, tag!=null, cnd!=null)
                 if (CEU < 99) {
                     assert(a && c)
                 }
@@ -818,7 +826,7 @@ class Parser (lexer_: Lexer)
                 val xno = Tk.Id("ceu_$N", tk0.pos)
                 val scnd = cnd?.tostr(true)
                 val (xidtag,xcnd) = when {
-                    (CEU < 99)       -> Pair(Pair(id!!, tag), scnd)
+                    (CEU < 99)       -> Pair(Pair(id!!, tag), scnd!!)
                     (!a && !b && !c) -> Pair(Pair(xno, null), "true")
                     ( a &&  b &&  c) -> Pair(Pair(id!!, tag), "((${id.str} is? ${tag!!.str}) and $scnd)")
                     ( a && !b &&  c) -> Pair(Pair(id!!, null), scnd)
