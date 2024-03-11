@@ -388,28 +388,6 @@ class Parser (lexer_: Lexer)
         return Pair(id, tag)
     }
 
-    fun id_tag_cnd__ifs (): Pair<Pair<Tk.Id,Tk.Tag?>?,Expr> {
-        val e = this.expr()
-        return when {
-            (e !is Expr.Acc) -> Pair(null, e)
-            this.acceptFix("=") -> {
-                if (e.tk.str == "...") {
-                    err(this.tk0, "declaration error : unexpected ...")
-                }
-                Pair(Pair(e.tk_,null), this.expr())
-            }
-            this.acceptEnu("Tag") -> {
-                if (e.tk.str == "...") {
-                    err(this.tk0, "declaration error : unexpected ...")
-                }
-                val tag = this.tk0 as Tk.Tag
-                this.acceptFix_err("=")
-                Pair(Pair(e.tk_,tag), this.expr())
-            }
-            else -> Pair(null, e)
-        }
-    }
-
     fun await (type: String): Expr {
         // ()                   ;; (null, null, null)   ;; (_  :_ => (_ or true))
         // (x :Y => z)          ;; (id,   tag,  exp)    ;; (x  :Y => chk(:Y) and z)
@@ -1012,55 +990,35 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (CEU>=99 && this.acceptFix("ifs")) -> {
-                val (idtag_0,v_0) = if (this.checkFix("{")) {
-                    Pair(Pair(Tk.Id("ceu_$N",this.tk0.pos),null), null)
-                } else {
-                    val (idtag,v) = id_tag_cnd__ifs()
-                    Pair(idtag ?: Pair(Tk.Id("ceu_$N",this.tk0.pos),null), v)
+                val V = if (this.checkFix("{")) null else {
+                    this.expr()
                 }
                 this.acceptFix_err("{")
-                val id_0 = idtag_0.first.str
-
                 val ifs = list0("}",null) {
-                    val (id_tag,cnd) = when {
+                    val (idtag,cnd) = when {
                         this.acceptFix("else") -> {
                             Pair(null, Expr.Bool(Tk.Fix("true",this.tk0.pos)))
                         }
-                        this.acceptEnu("Op") -> {
-                            if (v_0 == null) {
-                                err(this.tk0, "case error : expected ifs condition")
-                            }
-                            val op = this.tk0.str.let {
-                                if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
-                            }
-                            val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
-                            val call = if (e == null) {
-                                "$op($id_0)"
-                            } else {
-                                "$op($id_0, ${e.tostr(true)})"
-                            }
-                            Pair(null, this.nest(call))
-                        }
-                        else -> {
-                            id_tag_cnd__ifs()
-                        }
+                        (V == null) -> Pair(null, this.expr())
+                        else -> this.patt()
                     }
                     val blk = if (this.acceptFix("=>")) {
                         Expr.Do(this.tk0, listOf(this.expr()))
                     } else {
                         this.block()
                     }
-                    Pair(Pair(id_tag,cnd),blk)
+                    Pair(Pair(idtag,cnd),blk)
                 }
                 //ifs.forEach { println(it.first.third.tostr()) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
                 this.nest("""
                     do {
-                        ${v_0.cond { "val " + idtag_0.tostr(true) + " = " + it.tostr(true) }}
+                        ${V.cond { "val ceu_$N = ${it.tostr(true)}" }}
                         ${ifs.map { (xxx,blk) ->
-                            val (idtag2,cnd) = xxx
+                            val (idtag,cnd) = xxx
                             """
-                            if ${idtag2.cond { "${it.tostr(true)} = "}} ${cnd.tostr(true)} {
+                            ${idtag.cond { "val ${it.tostr(true)} = ceu_$N"}}
+                            if ${cnd.tostr(true)} {
                                 ${blk.es.tostr(true)}
                             } else {
                             """}.joinToString("")}
@@ -1430,7 +1388,7 @@ class Parser (lexer_: Lexer)
             else -> err_expected(this.tk1, "expression")
         }
         ret.forEachIndexed { i,e ->
-            val ok = (i == ret.lastIndex) || !e.is_constructor()
+            val ok = (i == ret.lastIndex) || !e.is_innocuous()
             if (!ok) {
                 err(e.tk, "expression error : innocuous expression")
             }

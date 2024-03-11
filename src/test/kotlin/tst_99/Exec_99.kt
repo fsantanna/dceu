@@ -406,11 +406,12 @@ class Exec_99 {
     @Test
     fun ff_04_ifs() {
         val out = test("""
-            var x = ifs it=20 {
-                it == 10 => false
-                true     => true
-                it == 20 => false
-                else     => false
+            $IS
+            var x = ifs 20 {
+                == 10 => false
+                (,true)  => true
+                == 20 => false
+                else  => false
             }
             println(x)
         """)
@@ -419,8 +420,9 @@ class Exec_99 {
     @Test
     fun ff_05_ifs() {
         val out = test("""
-            val x = ifs it=20 {
-                it == 10 => false
+            $IS
+            val x = ifs 20 {
+                10 => false
                 else     => true
             }
             println(x)
@@ -444,10 +446,10 @@ class Exec_99 {
     @Test
     fun ff_07_ifs() {
         val out = test("""
-            var x = ifs it=20 {
-                it is? 10 => false
-                true  => true
-                it is? 20 => false
+            var x = ifs 20 {
+                is? 10 => false
+                (,true)  => true
+                is? 20 => false
                 else  => false
             }
             println(x)
@@ -459,7 +461,7 @@ class Exec_99 {
         val out = test("""
             data :T = []
             val x = ifs 10 {
-                true => :T []
+                (,true) => :T []
                 is? 0 => nil
             }
             println(x)
@@ -469,8 +471,8 @@ class Exec_99 {
     @Test
     fun ff_09_ifs() {
         val out = test("""
-            var x = ifs it=20 {
-                it in? [1,20,1] => true
+            var x = ifs 20 {
+                in? [1,20,1] => true
                 else  => false
             }
             println(x)
@@ -478,8 +480,9 @@ class Exec_99 {
         assert(out == "true\n") { out }
     }
     @Test
-    fun TODO_ff_10_ifs() {  // plain value omits ==
+    fun ff_10_ifs() {
         val out = test("""
+            $IS
             var x = ifs 20 {
                 :no => false
                 10  => false
@@ -490,13 +493,14 @@ class Exec_99 {
         assert(out == "true\n") { out }
     }
     @Test
-    fun todo_ff_11_ifs() {
+    fun ff_11_ifs() {
         val out = test("""
+            $IS
             data :T = [v]
-            var x = ifs t:T=[20] {
-                t.v == 10 => false
+            var x = ifs [20] {
+                (t:T, t.v == 10) => false
                 false     => false
-                t.v == 20 => true
+                (t:T, t.v == 20) => true
                 else      => false
             }
             println(x)

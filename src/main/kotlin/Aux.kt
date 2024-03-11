@@ -58,18 +58,27 @@ fun Expr.has_block (): Boolean {
     }
 }
 
-fun Expr.is_constructor (): Boolean {
-    return when (this) {
-        is Expr.Tuple, is Expr.Vector, is Expr.Dict, is Expr.Index -> true
-        is Expr.Acc, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Num -> true
+fun Expr.is_innocuous (): Boolean {
+    return when {
+        this.is_constructor() -> true
+        this is Expr.Acc -> true
         else -> false
     }
 }
 
-// expr is already evaluated to minimum form (and/or no expand to thus)
-fun Expr.is_evaled (): Boolean {
+fun Expr.is_constructor (): Boolean {
+    return when {
+        this.is_static() -> true
+        else -> when (this) {
+            is Expr.Tuple, is Expr.Vector, is Expr.Dict -> true
+            else -> false
+        }
+    }
+}
+
+fun Expr.is_static (): Boolean {
     return when (this) {
-        is Expr.Acc, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Num -> true
+        is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> true
         else -> false
     }
 }

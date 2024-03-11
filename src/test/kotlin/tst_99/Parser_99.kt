@@ -300,11 +300,11 @@ class Parser_99 {
     }
     @Test
     fun ee_03_ifs() {
-        val l = lexer("ifs it=nil { else => it }")
+        val l = lexer("ifs nil { else => it }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(val it = nil)\n" +
+                "(val ceu_16 = nil)\n" +
                 "if true {\n" +
                 "it\n" +
                 "} else {\n" +
@@ -321,30 +321,24 @@ class Parser_99 {
     }
     @Test
     fun ee_05_ifs() {
-        val l = lexer("ifs it=v { a => it }")
+        val l = lexer("ifs v { a => it }")
         val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr() == "do {\n" +
-                "(val it = v)\n" +
-                "if a {\n" +
-                "it\n" +
-                "} else {\n" +
-                "(do nil)\n" +
-                "}\n" +
-                "}") { e.tostr() }
+        assert(trap { parser.expr() } == "anon : (lin 1, col 11) : invalid pattern : unexpected \"=>\"")
     }
     @Test
     fun ee_06_ifs() {
-        val l = lexer("ifs it=v { a{1} b=>it else{0} }")
+        val l = lexer("ifs v { (,a) {1} (,b)=>v else{0} }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(val it = v)\n" +
+                "(val ceu_52 = v)\n" +
+                "(val it = ceu_52)\n" +
                 "if a {\n" +
                 "1\n" +
                 "} else {\n" +
+                "(val it = ceu_52)\n" +
                 "if b {\n" +
-                "it\n" +
+                "v\n" +
                 "} else {\n" +
                 "if true {\n" +
                 "0\n" +
@@ -376,7 +370,25 @@ class Parser_99 {
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 3, col 17) : case error : expected ifs condition")
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "if {{==}}(20) {\n" +
+                "nil\n" +
+                "} else {\n" +
+                "(do nil)\n" +
+                "}\n" +
+                "}") { e.tostr() }
+        //assert(trap { parser.expr() } == "anon : (lin 3, col 17) : case error : expected ifs condition")
+    }
+    @Test
+    fun ee_08x_ifs_nocnd() {
+        val l = lexer("""
+            ifs {
+                (,nil) => nil   ;; err: no ifs expr
+            }
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 3, col 18) : expected expression : have \",\"")
     }
     @Test
     fun ee_09_ifs_nocnd() {
@@ -389,7 +401,23 @@ class Parser_99 {
             println(x)
         """)
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 4, col 21) : case error : expected ifs condition")
+        val e = parser.expr()
+        assert(e.tostr() == "(val x = do {\n" +
+                "(val ceu_80 = 20)\n" +
+                "(val ceu_11 = ceu_80)\n" +
+                "if is'(ceu_11,true) {\n" +
+                "do {\n" +
+                "if {{==}}(20) {\n" +
+                "true\n" +
+                "} else {\n" +
+                "(do nil)\n" +
+                "}\n" +
+                "}\n" +
+                "} else {\n" +
+                "(do nil)\n" +
+                "}\n" +
+                "})") { e.tostr() }
+        //assert(trap { parser.expr() } == "anon : (lin 4, col 21) : case error : expected ifs condition")
     }
 
     // THUS AS
