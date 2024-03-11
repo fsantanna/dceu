@@ -150,71 +150,62 @@ class Parser (lexer_: Lexer)
         return e
     }
 
-    fun patt (): Patt {
-        // (id :Tag, e)
-        // is_if allows
-        //  - if x { ... }
-        val par = if (CEU>=99) this.acceptFix("(") else this.acceptFix_err("(")
-        val id = when {
-            (CEU < 99) -> {
-                this.acceptEnu_err("Id")
-                this.tk0 as Tk.Id
-            }
-            this.acceptEnu("Id") -> {
-                this.tk0 as Tk.Id
-            }
-            else -> null
-        }
-        val tag = if (!this.acceptEnu("Tag")) null else this.tk0 as Tk.Tag
-        val e = when {
-            (CEU < 99) -> {
-                this.acceptFix_err(",")
-                this.expr()
-            }
-            this.acceptFix(",") -> {
-                this.expr()
-            }
-            (id != null) -> err(id, "catch error : innocuous identifier") as Expr
-            else -> null
-        }
-
-        if (par) {
-            this.acceptFix_err(")")
-        }
-        //println(listOf(id,tag,e))
-        return Triple(id, tag, e)
-    }
-
-    fun Patt.convert (): Pair<Pair<Tk.Id,Tk.Tag?>,Expr> {
-        val (id,tag,cnd) = this
-        if (CEU < 99) {
-            assert(id!=null && cnd!=null)
-        }
-
-        val xit  = Tk.Id("it", tk0.pos)
-        val xno  = Tk.Id("ceu_$N", tk0.pos)
-        val xcnd = cnd?.tostr(true)
-
-        // ()                   ;; (null, null, null)   ;; (_  :_ => (_ or true))
-        // (x :Y => z)          ;; (id,   tag,  exp)    ;; (x  :Y => chk(:Y) and z)
-        // (x :Y)               ;; error                ;; error
-        // (x => z)             ;; (id,   null, exp)    ;; (x  :_ => z)
-        // :Y => z              ;; (null, tag,  exp)    ;; (it :Y => chk(:Y) and z)
-        // :Y                   ;; (null, tag,  null)   ;; (_  :Y => chk(:Y) and (_ or true))
-        // z                    ;; (null, null, Acc)    ;; (_  :_ => chk(z))
-        // z                    ;; (null, null, exp)    ;; (it :_ => z)
-
-        val (a,b,c) = Triple(id!=null, tag!=null, cnd!=null)
+    fun patt (): Pair<Pair<Tk.Id,Tk.Tag?>,Expr> {
+        val V = "ceu_$N"
         return when {
-            (CEU < 99) -> Pair(Pair(id!!, tag), cnd!!)
-            (!a && !b && !c) -> Pair(Pair(xno, null), Expr.Bool(Tk.Fix("true",tk0.pos)))
-            ( a &&  b &&  c) -> Pair(Pair(id!!, tag), nest("(${id.str} is? ${tag!!.str}) and ${xcnd!!}"))
-            ( a && !b &&  c) -> Pair(Pair(id!!, null), cnd!!)
-            (!a &&  b &&  c) -> Pair(Pair(xit, tag), nest("(${xit.str} is? ${tag!!.str}) and ${xcnd!!}"))
-            (!a &&  b && !c) -> Pair(Pair(xno, tag), nest("${xno.str} is? ${tag!!.str}"))
-            (!a && !b && cnd is Expr.Acc) -> Pair(Pair(xno, null), nest("${xno.str} is? ${xcnd!!}"))
-            (!a && !b && c) -> Pair(Pair(xit, null), cnd!!)
-            else -> error("impossible case")
+            // (id :Tag, cnd)
+            (CEU<99 || this.checkFix("(")) -> {
+                this.acceptFix_err("(")
+                val a = (CEU<99 && this.acceptEnu_err("Id") || this.acceptEnu("Id"))
+                val id = if (a) {
+                    this.tk0 as Tk.Id
+                } else {
+                    Tk.Id("it",this.tk0.pos)
+                }
+                var cnd: String? = null
+                val b = this.acceptEnu("Tag")
+                val tag = if (!b) null else {
+                    val x = this.tk0 as Tk.Tag
+                    cnd = "(${id.str} is? ${x.str})"
+                    x
+                }
+                val c = (CEU<99 && this.acceptFix_err(",") || this.acceptFix(","))
+                val e = if (!c) null else {
+                    val x = this.expr()
+                    cnd = "(${cnd.cond { "$it and " }} ${x.tostr(true)})"
+                    x
+                }
+                this.acceptFix_err(")")
+                Pair(Pair(id, tag), if (CEU<99) e!! else nest(cnd ?: "true"))
+            }
+
+            // == 10
+            // {{even?}}
+            this.acceptEnu("Op") -> {
+                val op = this.tk0.str.let {
+                    if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
+                }
+                val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
+                val call = if (e == null) {
+                    "$op($V)"
+                } else {
+                    "$op($V, ${e.tostr(true)})"
+                }
+                Pair(Pair(Tk.Id(V,this.tk0.pos),null), this.nest(call))
+            }
+
+            else -> {
+                val e = this.expr()
+                when {
+                    // 10
+                    // :X
+                    // [1,2]
+                    e.is_constructor() -> {
+                        Pair(Pair(Tk.Id(V,this.tk0.pos),null), this.nest("$V is? ${e.tostr(true)}"))
+                    }
+                    else -> err(this.tk1, "invalid pattern : unexpected \"${this.tk1.str}\"") as Pair<Pair<Tk.Id,Tk.Tag?>, Expr>
+                }
+            }
         }
     }
 
@@ -845,7 +836,11 @@ class Parser (lexer_: Lexer)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val (idtag,cnd) = this.patt().convert()
+                val (idtag,cnd) = if (CEU>=99 && this.checkFix("{")) {
+                    Pair(Pair(Tk.Id("ceu_$N",this.tk0.pos), null), Expr.Bool(Tk.Fix("true",this.tk0.pos)))
+                } else {
+                    this.patt()
+                }
                 val blk = this.block()
                 val xcnd = this.nest("""
                     do {
