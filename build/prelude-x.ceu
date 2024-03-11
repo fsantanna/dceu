@@ -13,10 +13,10 @@ func to-bool (v) {
 
 func is' (v1,v2) {
     ifs {
-        (v1 == v2)         => true
-        (type(v2) /= :tag) => false
-        (type(v1) == v2)   => true
-        tags(v1,v2)        => true
+        (v1 == v2)          => true
+        (type(v2) =/= :tag) => false
+        (type(v1) === v2)   => true
+        tags(v1,v2)         => true
         else => false
     }
 }
