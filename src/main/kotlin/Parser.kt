@@ -1444,11 +1444,11 @@ class Parser (lexer_: Lexer)
         when {
             (ret.size > 0) -> {}
             empty -> {}
-            (CEU >= 99) -> ret.add(Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy())))
+            (CEU >= 99) -> ret.add(Expr.Pass(this.tk0 as Tk.Fix, Expr.Nil(Tk.Fix("nil", this.tk0.pos))))
             else -> err_expected(this.tk1, "expression")
         }
         ret.forEachIndexed { i,e ->
-            val ok = (i == ret.lastIndex) || !e.is_innocuous()
+            val ok = (i == ret.lastIndex) || !e.is_constructor()
             if (!ok) {
                 err(e.tk, "expression error : innocuous expression")
             }

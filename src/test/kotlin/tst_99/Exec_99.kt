@@ -1097,7 +1097,7 @@ class Exec_99 {
     fun fi_01_ret() {
         val out = test("""
             println(loop i in {0 => 1} {
-                nil
+                do nil
             })
         """, true)
         assert(out == "false\n") { out }
@@ -1117,7 +1117,7 @@ class Exec_99 {
             val ts = tasks()
             spawn ((task(){yield()})()) in ts
             println(loop i in ts {
-                nil
+                do nil
             })
         """, true)
         assert(out == "false\n") { out }
@@ -1221,9 +1221,9 @@ class Exec_99 {
     fun gg_04_yield() {
         val out = test("""
             val CO = coro () {
-                nil
+                do nil
                 yield() thus { it => println(it);it }
-                nil
+                do nil
                 nil
             }
             val co1 = coroutine(CO)
@@ -1243,7 +1243,7 @@ class Exec_99 {
     fun gg_05_yield() {
         val out = test("""
             val CO = coro () {
-                nil
+                do nil
                 yield() thus {}
                 nil
             }

@@ -46,7 +46,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.Loop  -> {
                 this.blk.es.last().let {
-                    if (it.is_innocuous()) {
+                    if (it.is_constructor()) {
                         err(it.tk, "loop error : innocuous last expression")
                     }
                 }
