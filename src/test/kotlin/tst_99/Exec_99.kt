@@ -497,10 +497,10 @@ class Exec_99 {
         val out = test("""
             $IS
             data :T = [v]
-            var x = ifs [20] {
-                (t:T, t.v == 10) => false
+            var x = ifs :T [20] {
+                (t1:T, t1.v == 10) => false
                 false     => false
-                (t:T, t.v == 20) => true
+                (t2:T, t2.v == 20) => true
                 else      => false
             }
             println(x)

@@ -784,12 +784,12 @@ class Parser_99 {
     }
     @Test
     fun fg_08_catch() {
-        val l = lexer("catch x {}")
+        val l = lexer("catch (,x) {}")
         val parser = Parser(l)
         //assert(trap { parser.expr() } == "anon : (lin 1, col 9) : invalid pattern : expected \",\"")
         //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch error : innocuous identifier")
         val e = parser.expr()
-        assert(e.tostr() == "catch (ceu_5, is'(ceu_5,x)) {\n" +
+        assert(e.tostr() == "catch (it, x) {\n" +
                 "(do nil)\n" +
                 "}") { e.tostr() }
     }
