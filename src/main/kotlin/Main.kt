@@ -104,6 +104,8 @@ val GLOBALS = setOf (
     "next-tasks", "tasks",
 ))
 
+typealias Patt = Triple<Tk.Id?,Tk.Tag?,Expr?>
+
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos, val n_: Int=N++): Tk("", pos_)
     data class Fix (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)

@@ -476,7 +476,7 @@ class Exec_99 {
         assert(out == "true\n") { out }
     }
     @Test
-    fun todo_ff_10_ifs() {  // plain value omits ==
+    fun TODO_ff_10_ifs() {  // plain value omits ==
         val out = test("""
             var x = ifs 20 {
                 :no => false
@@ -782,7 +782,7 @@ class Exec_99 {
     fun mm_17_catch_yield_err() {
         val out = test("""
             coro () {
-                catch ( it => do {
+                catch (it, do {
                     yield(nil) thus { it => nil }
                 } )
                 {
@@ -797,7 +797,7 @@ class Exec_99 {
     fun mm_17a_catch_yield_err() {
         val out = test("""
             coro () {
-                catch ( it => do {
+                catch (it, do {
                     do it
                     yield(nil) thus { it => nil }
                 } )
@@ -1379,7 +1379,7 @@ class Exec_99 {
         assert(out == "1\n2\n3\n") { out }
     }
     @Test
-    fun todo_ii_02_spawn_coro() {
+    fun TODO_ii_02_spawn_coro() {
         val out = test("""
             val co = spawn (coro () {
                 println(1)
@@ -1392,7 +1392,7 @@ class Exec_99 {
         assert(out == "1\n2\n3\n") { out }
     }
     @Test
-    fun todo_ii_03_spawn_coro() {
+    fun TODO_ii_03_spawn_coro() {
         val out = test("""
             val co = spawn coro {
                 println(1)
@@ -1417,7 +1417,7 @@ class Exec_99 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun todo_ii_05_coro() {
+    fun TODO_ii_05_spawn_coro() {
         val out = test("""
             val co = spawn coro {
                 println(1)
@@ -1981,7 +1981,8 @@ class Exec_99 {
         """)
         //assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 4, col 27) : argument error : cannot copy reference out\n") { out }
-        assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing func\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing func\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun kk_12_await_detrack() {
@@ -2136,7 +2137,8 @@ class Exec_99 {
             }
             println(:ok)
         """)
-        assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing func\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing func\n") { out }
         //assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 4, col 28) : argument error : cannot copy reference out\n") { out }
         //assert(out == ":ok\n") { out }
@@ -2553,11 +2555,11 @@ class Exec_99 {
             (spawn T(v) in ts) where {
                 val v = 10
             }
-            loop t in :tasks ts {
+            loop t in ts {
                 println(type(t))
             }
-        """)
-        assert(out == "10\n:x-track\n") { out }
+        """, true)
+        assert(out == "10\n:exe-task\n") { out }
     }
 
     // LAMBDA
@@ -2695,7 +2697,7 @@ class Exec_99 {
         assert(out == "#[1]\n") { out }
     }
     @Test
-    fun todo_COL_vv_04_ppp_push_err() {
+    fun TODO_COL_vv_04_ppp_push_err() {
         val out = test("""
             $PLUS
             val v = #[]

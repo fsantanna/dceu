@@ -152,13 +152,32 @@ class Parser (lexer_: Lexer)
 
     fun patt (): Patt {
         // (id :Tag, e)
-        this.acceptFix_err("(")
-        this.acceptEnu_err("Id")
-        val id = this.tk0 as Tk.Id
+        val par = if (CEU>=99) this.acceptFix("(") else this.acceptFix_err("(")
+        val id = when {
+            (CEU < 99) -> {
+                this.acceptEnu_err("Id")
+                this.tk0 as Tk.Id
+            }
+            this.acceptEnu("Id") -> {
+                this.tk0 as Tk.Id
+            }
+            else -> null
+        }
         val tag = if (!this.acceptEnu("Tag")) null else this.tk0 as Tk.Tag
-        this.acceptFix_err(",")
-        val e = this.expr()
-        this.acceptFix_err(")")
+        val e = when {
+            (CEU < 99) -> {
+                this.acceptFix_err(",")
+                this.expr()
+            }
+            this.acceptFix(",") -> {
+                this.expr()
+            }
+            else -> null
+        }
+        if (par) {
+            this.acceptFix_err(")")
+        }
+        //println(listOf(id,tag,e))
         return Triple(id, tag, e)
     }
 
@@ -813,6 +832,7 @@ class Parser (lexer_: Lexer)
 
                 val tk0 = this.tk0 as Tk.Fix
                 val (id,tag,cnd) = this.patt()
+                this.checkFix_err("{")
 
                 val (a,b,c) = Triple(id!=null, tag!=null, cnd!=null)
                 if (CEU < 99) {
@@ -827,6 +847,7 @@ class Parser (lexer_: Lexer)
                 val scnd = cnd?.tostr(true)
                 val (xidtag,xcnd) = when {
                     (CEU < 99)       -> Pair(Pair(id!!, tag), scnd!!)
+                    ( a && !c) -> err(this.tk1.pos, "invalid pattern : expected \",\"") as Pair<Pair<Tk.Id,Tk.Tag?>, String>
                     (!a && !b && !c) -> Pair(Pair(xno, null), "true")
                     ( a &&  b &&  c) -> Pair(Pair(id!!, tag), "((${id.str} is? ${tag!!.str}) and $scnd)")
                     ( a && !b &&  c) -> Pair(Pair(id!!, null), scnd)
