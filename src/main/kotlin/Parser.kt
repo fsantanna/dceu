@@ -152,6 +152,8 @@ class Parser (lexer_: Lexer)
 
     fun patt (): Patt {
         // (id :Tag, e)
+        // is_if allows
+        //  - if x { ... }
         val par = if (CEU>=99) this.acceptFix("(") else this.acceptFix_err("(")
         val id = when {
             (CEU < 99) -> {
@@ -172,13 +174,48 @@ class Parser (lexer_: Lexer)
             this.acceptFix(",") -> {
                 this.expr()
             }
+            (id != null) -> err(id, "catch error : innocuous identifier") as Expr
             else -> null
         }
+
         if (par) {
             this.acceptFix_err(")")
         }
         //println(listOf(id,tag,e))
         return Triple(id, tag, e)
+    }
+
+    fun Patt.convert (): Pair<Pair<Tk.Id,Tk.Tag?>,Expr> {
+        val (id,tag,cnd) = this
+        if (CEU < 99) {
+            assert(id!=null && cnd!=null)
+        }
+
+        val xit  = Tk.Id("it", tk0.pos)
+        val xno  = Tk.Id("ceu_$N", tk0.pos)
+        val xcnd = cnd?.tostr(true)
+
+        // ()                   ;; (null, null, null)   ;; (_  :_ => (_ or true))
+        // (x :Y => z)          ;; (id,   tag,  exp)    ;; (x  :Y => chk(:Y) and z)
+        // (x :Y)               ;; error                ;; error
+        // (x => z)             ;; (id,   null, exp)    ;; (x  :_ => z)
+        // :Y => z              ;; (null, tag,  exp)    ;; (it :Y => chk(:Y) and z)
+        // :Y                   ;; (null, tag,  null)   ;; (_  :Y => chk(:Y) and (_ or true))
+        // z                    ;; (null, null, Acc)    ;; (_  :_ => chk(z))
+        // z                    ;; (null, null, exp)    ;; (it :_ => z)
+
+        val (a,b,c) = Triple(id!=null, tag!=null, cnd!=null)
+        return when {
+            (CEU < 99) -> Pair(Pair(id!!, tag), cnd!!)
+            (!a && !b && !c) -> Pair(Pair(xno, null), Expr.Bool(Tk.Fix("true",tk0.pos)))
+            ( a &&  b &&  c) -> Pair(Pair(id!!, tag), nest("(${id.str} is? ${tag!!.str}) and ${xcnd!!}"))
+            ( a && !b &&  c) -> Pair(Pair(id!!, null), cnd!!)
+            (!a &&  b &&  c) -> Pair(Pair(xit, tag), nest("(${xit.str} is? ${tag!!.str}) and ${xcnd!!}"))
+            (!a &&  b && !c) -> Pair(Pair(xno, tag), nest("${xno.str} is? ${tag!!.str}"))
+            (!a && !b && cnd is Expr.Acc) -> Pair(Pair(xno, null), nest("${xno.str} is? ${xcnd!!}"))
+            (!a && !b && c) -> Pair(Pair(xit, null), cnd!!)
+            else -> error("impossible case")
+        }
     }
 
     fun id_tag_cnd__clock__catch_await (): Triple<Tk.Id?,Any?,Expr?> {
@@ -611,7 +648,7 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("if") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val (id_tag,cnd) = if (CEU >= 99) id_tag_cnd__ifs() else Pair(null,this.expr())
+                val cnd = this.expr()
                 val arr = (CEU>=99) && this.acceptFix("=>")
                 val t = if (arr) {
                     Expr.Do(this.tk0, listOf(this.expr_1_bin()))
@@ -633,21 +670,7 @@ class Parser (lexer_: Lexer)
                         Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
                     }
                 }
-                if (id_tag == null) {
-                    Expr.If(tk0, cnd, t, f)
-                } else {
-                    val (id,_) = id_tag
-                    this.nest("""
-                        do {
-                            val ${id_tag.tostr(true)} = ${cnd.tostr(true)}
-                            if ${id.str} {
-                                ${t.es.tostr(true)}
-                            } else {
-                                ${f.es.tostr(true)}
-                            }
-                        }
-                    """)
-                }
+                Expr.If(tk0, cnd, t, f)
             }
             this.acceptFix("break") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -821,51 +844,16 @@ class Parser (lexer_: Lexer)
             }
 
             (CEU>=2 && this.acceptFix("catch")) -> {
-                // ()                   ;; (null, null, null)   ;; (_  :_ => (_ or true))
-                // (x :Y => z)          ;; (id,   tag,  exp)    ;; (x  :Y => chk(:Y) and z)
-                // (x :Y)               ;; error                ;; error
-                // (x => z)             ;; (id,   null, exp)    ;; (x  :_ => z)
-                // :Y => z              ;; (null, tag,  exp)    ;; (it :Y => chk(:Y) and z)
-                // :Y                   ;; (null, tag,  null)   ;; (_  :Y => chk(:Y) and (_ or true))
-                // z                    ;; (null, null, Acc)    ;; (_  :_ => chk(z))
-                // z                    ;; (null, null, exp)    ;; (it :_ => z)
-
                 val tk0 = this.tk0 as Tk.Fix
-                val (id,tag,cnd) = this.patt()
-                this.checkFix_err("{")
-
-                val (a,b,c) = Triple(id!=null, tag!=null, cnd!=null)
-                if (CEU < 99) {
-                    assert(a && c)
-                }
-                if (a && b && !c) {
-                    err(id!!, "catch error : innocuous identifier")
-                }
-
-                val xit = Tk.Id("it", tk0.pos)
-                val xno = Tk.Id("ceu_$N", tk0.pos)
-                val scnd = cnd?.tostr(true)
-                val (xidtag,xcnd) = when {
-                    (CEU < 99)       -> Pair(Pair(id!!, tag), scnd!!)
-                    ( a && !c) -> err(this.tk1.pos, "invalid pattern : expected \",\"") as Pair<Pair<Tk.Id,Tk.Tag?>, String>
-                    (!a && !b && !c) -> Pair(Pair(xno, null), "true")
-                    ( a &&  b &&  c) -> Pair(Pair(id!!, tag), "((${id.str} is? ${tag!!.str}) and $scnd)")
-                    ( a && !b &&  c) -> Pair(Pair(id!!, null), scnd)
-                    (!a &&  b &&  c) -> Pair(Pair(xit, tag), "((${xit.str} is? ${tag!!.str}) and $scnd)")
-                    (!a &&  b && !c) -> Pair(Pair(xno, tag), "(${xno.str} is? ${tag!!.str})")
-                    (!a && !b && cnd is Expr.Acc) -> Pair(Pair(xno, null), "(${xno.str} is? $scnd)")
-                    (!a && !b && c) -> Pair(Pair(xit, null), scnd)
-                    else -> error("impossible case")
-                }
-
-                val xxcnd = this.nest("""
+                val (idtag,cnd) = this.patt().convert()
+                val blk = this.block()
+                val xcnd = this.nest("""
                     do {
-                        val ${xidtag.tostr(true)} = `:ceu ceux_peek(X->S, XX(-2-1))` ;; -1 block sentinel
-                        $xcnd
+                        val ${idtag.tostr(true)} = `:ceu ceux_peek(X->S, XX(-2-1))` ;; -1 block sentinel
+                        ${cnd.tostr(true)}
                     }
                 """)
-
-                Expr.Catch(tk0, xxcnd as Expr.Do, this.block())
+                Expr.Catch(tk0, xcnd as Expr.Do, blk)
             }
             (CEU>=2 && this.acceptFix("defer")) -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 
@@ -1175,7 +1163,6 @@ class Parser (lexer_: Lexer)
                                 """}.joinToString("")} false ${")".repeat(pars.size)}
                             )
                             yield()
-                            nil
                         }
                     }
                 """)

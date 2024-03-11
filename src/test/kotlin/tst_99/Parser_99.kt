@@ -189,6 +189,7 @@ class Parser_99 {
 
     // IF / ID-TAG
 
+    /*
     @Test
     fun dd_01_if() {
         val l = lexer("if x:X { :ok }")
@@ -223,6 +224,7 @@ class Parser_99 {
                 "}\n" +
                 "}\n") { e.tostr() }
     }
+     */
     @Test
     fun dd_04_if() {
         val l = lexer("if f() {}")
@@ -573,7 +575,7 @@ class Parser_99 {
         assert(e.tostr() == "do {\n" +
                 "(val ceu_ste_24 = x)\n" +
                 "(var i = {{+}}(0,0))\n" +
-                "(val ceu_lim_23 = n)\n" +
+                "(val ceu_lim_24 = n)\n" +
                 "loop {\n" +
                 "(break(false) if {{>=}}(i,ceu_lim_24))\n" +
                 "(do nil)\n" +
@@ -677,14 +679,14 @@ class Parser_99 {
         val parser = Parser(l)
         //assert(trap { parser.expr() } == "anon : (lin 1, col 8) : pattern error : unexpected \")\"")
         val e = parser.expr()
-        assert(e.tostr() == "catch (ceu_14, true) {\n" + "(do nil)\n" + "}") { e.tostr() }
+        assert(e.tostr() == "catch (ceu_8, true) {\n" + "(do nil)\n" + "}") { e.tostr() }
     }
     @Test
     fun fg_02_catch() {
         val l = lexer("catch {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (ceu_12, true) {\n" +
+        assert(e.tostr() == "catch (ceu_6, true) {\n" +
                 "(do nil)\n" +
                 "}") { e.tostr() }
     }
@@ -694,11 +696,11 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "catch (x :X, do {\n" +
-                "(val ceu_51 = is'(x,:X))\n" +
-                "if ceu_51 {\n" +
+                "(val ceu_35 = is'(x,:X))\n" +
+                "if ceu_35 {\n" +
                 "x\n" +
                 "} else {\n" +
-                "ceu_51\n" +
+                "ceu_35\n" +
                 "}\n" +
                 "}) {\n" +
                 "(do nil)\n" +
@@ -725,11 +727,11 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "catch (it :X, do {\n" +
-                "(val ceu_50 = is'(it,:X))\n" +
-                "if ceu_50 {\n" +
+                "(val ceu_34 = is'(it,:X))\n" +
+                "if ceu_34 {\n" +
                 "z\n" +
                 "} else {\n" +
-                "ceu_50\n" +
+                "ceu_34\n" +
                 "}\n" +
                 "}) {\n" +
                 "(do nil)\n" +
@@ -740,7 +742,7 @@ class Parser_99 {
         val l = lexer("catch :X {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (ceu_13 :X, is'(ceu_13,:X)) {\n" +
+        assert(e.tostr() == "catch (ceu_7 :X, is'(ceu_7,:X)) {\n" +
                 "(do nil)\n" +
                 "}") { e.tostr() }
     }
@@ -748,7 +750,8 @@ class Parser_99 {
     fun fg_08_catch() {
         val l = lexer("catch x {}")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 9) : invalid pattern : expected \",\"")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 9) : invalid pattern : expected \",\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch error : innocuous identifier")
         //val e = parser.expr()
         //assert(e.tostr() == "catch (ceu_8, is'(ceu_8,x)) {\n" +
         //        "nil\n" +

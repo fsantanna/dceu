@@ -267,6 +267,7 @@ class Exec_99 {
 
     // IF / ID-TAG
 
+    /*
     @Test
     fun cj_01_if() {
         val out = test("""
@@ -284,6 +285,7 @@ class Exec_99 {
         """)
         assert(out == "1\n") { out }
     }
+     */
 
     // IF cnd => t => f
 
@@ -309,7 +311,7 @@ class Exec_99 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun dd_04_if() {
+    fun TODO_dd_04_if_assign() {
         val out = test("""
             println(if x=10 => x => 99)
         """)
