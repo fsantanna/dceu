@@ -700,11 +700,11 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "catch (x :X, do {\n" +
-                "(val ceu_35 = is'(x,:X))\n" +
-                "if ceu_35 {\n" +
+                "(val ceu_34 = is'(x,:X))\n" +
+                "if ceu_34 {\n" +
                 "x\n" +
                 "} else {\n" +
-                "ceu_35\n" +
+                "ceu_34\n" +
                 "}\n" +
                 "}) {\n" +
                 "(do nil)\n" +
@@ -750,7 +750,7 @@ class Parser_99 {
         val l = lexer("catch :X {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (ceu_5 :X, is'(ceu_5,:X)) {\n" +
+        assert(e.tostr() == "catch (ceu_5, is'(ceu_5,:X)) {\n" +
                 "(do nil)\n" +
                 "}") { e.tostr() }
     }
