@@ -4761,7 +4761,7 @@ class Exec_01 {
             """
             do []  ;; ;;;not;;; checked
             do []  ;; ;;;not;;; checked
-            nil
+            do nil
             `ceu_dump_gc();`
             ;;println(`:number CEU_GC.free`)
         """
@@ -4842,7 +4842,7 @@ class Exec_01 {
                 v
             }
             #( #[ f([1]) ] )
-            nil
+            do nil
             println(`:number CEU_GC.free`)
         """
         )
@@ -4871,7 +4871,7 @@ class Exec_01 {
                 [2]
             }
             f([1])
-            nil
+            do nil
             println(`:number CEU_GC.free`)
         """
         )

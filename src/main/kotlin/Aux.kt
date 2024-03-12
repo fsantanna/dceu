@@ -62,6 +62,7 @@ fun Expr.is_innocuous (): Boolean {
     return when {
         this.is_constructor() -> true
         this is Expr.Acc -> true
+        this is Expr.Index -> true
         else -> false
     }
 }
