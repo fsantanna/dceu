@@ -447,15 +447,7 @@ func math-floor (v) {
 
 ;; AWAIT
 
-func await-chk (e, cnd) {
-    ifs {
-        (type(cnd) == :tag)      => (e is? cnd)
-        (type(cnd) == :exe-task) => (status(cnd) == :terminated)
-        else => false
-    }
-}
-
-func await-ret (e) {
-    val ok = `:bool $e.type>=CEU_VALUE_DYNAMIC || ceu_as_bool($e)`
-    ok or e
+func await-is-task (v) {
+    assert(type(v) == :exe-task, "expected active task")
+    (status(v) == :terminated)
 }

@@ -73,17 +73,12 @@ val IS = """
 """.replace("\n", " ")
 
 val XAWAIT = """
-func await-chk (e, cnd) {
-    ifs {
-        (type(cnd) == :tag)      { e is? cnd }
-        (type(cnd) == :exe-task) { status(cnd) == :terminated }
-        else { false }
+func await-is-task (v) {
+    if (type(v) /= :exe-task) {
+        println("expected active task")
+        error(:assert)
     }
-}
-
-func await-ret (e) {
-    val ok = `:bool ${D}e.type>=CEU_VALUE_DYNAMIC || ceu_as_bool(${D}e)`
-    ok or e
+    do (status(v) == :terminated)
 }
 """.replace("\n", " ")
 

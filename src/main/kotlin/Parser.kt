@@ -150,7 +150,7 @@ class Parser (lexer_: Lexer)
         return e
     }
 
-    fun patt (): Pair<Pair<Tk.Id,Tk.Tag?>,Expr> {
+    fun patt (isawt: Boolean): Pair<Pair<Tk.Id,Tk.Tag?>,Expr> {
         val V = "ceu_$N"
         return when {
             // (id :Tag, cnd)
@@ -176,7 +176,14 @@ class Parser (lexer_: Lexer)
                     x
                 }
                 this.acceptFix_err(")")
-                Pair(Pair(id, tag), if (CEU<99) e!! else nest(cnd ?: "true"))
+                if (a && (!b && !c)) {
+                    if (isawt) {
+                        return Pair(Pair(Tk.Id("it",this.tk0.pos),null), this.nest("await-is-task(${id.str})"))
+                    } else {
+                        TODO("var w/o body")
+                    }
+                }
+                Pair(Pair(id, tag), if (CEU<99) e!! else this.nest(cnd ?: "true"))
             }
 
             // == 10
@@ -205,97 +212,6 @@ class Parser (lexer_: Lexer)
                     }
                     else -> err(this.tk1, "invalid pattern : unexpected \"${this.tk1.str}\"") as Pair<Pair<Tk.Id,Tk.Tag?>, Expr>
                 }
-            }
-        }
-    }
-
-    fun id_tag_cnd__clock__catch_await (): Triple<Tk.Id?,Any?,Expr?> {
-        // ()                   ;; (null, null, null)
-        // (x :Y => z)          ;; (id,   tag,  exp)
-        // (x :Y)               ;; error
-        // (x => z)             ;; (id,   null, exp)
-        // :Y => z              ;; (null, tag,  exp)
-        // :Y                   ;; (null, tag,  null)
-        // z                    ;; (null, null, exp)
-        val par = this.acceptFix("(")
-        return when {
-            (CEU < 99) -> {
-                val (id,tag) = this.id_tag()
-                this.acceptFix_err("=>")
-                val es = this.expr()
-                this.acceptFix_err(")")
-                Triple(id, tag, es)
-            }
-            this.checkFix("{") -> {
-                Triple(null, null, null)
-            }
-            (par && this.acceptFix(")")) -> {
-                Triple(null, null, null)
-            }
-            else -> {
-                fun fclk (): Any {  // (Either Expr Clock)
-                    val e = this.expr()
-
-                    fun isuni (): Boolean {
-                        return listOf(":h",":min",":s",":ms").any { this.acceptTag(it) }
-                    }
-
-                    fun aux (tag: Tk.Tag): Clock {
-                        val e = let {
-                            val s = tag.str.drop(1)
-                            val n = s.toIntOrNull()
-                            if (n != null) {
-                                Expr.Num(Tk.Num(s, tag.pos))
-                            } else {
-                                Expr.Acc(Tk.Id(s, tag.pos))
-                            }
-                        }
-                        val uni = this.tk0 as Tk.Tag
-                        val ret = listOf(Pair(uni,e))
-                        return if (this.checkFix("{") || (par && this.checkFix(")"))) {
-                            ret
-                        } else {
-                            this.acceptEnu_err("Tag")   // expr
-                            val tag = this.tk0 as Tk.Tag
-                            if (!isuni()) {                 // unit
-                                error("TODO")
-                            }
-                            ret + aux(tag)
-                        }
-                    }
-
-                    return when {
-                        (e !is Expr.Tag) -> e
-                        !isuni() -> e
-                        else -> aux(e.tk as Tk.Tag)
-                    }
-                }
-
-                val e = fclk()
-                //println(e)
-                val isacc = (e is Expr.Acc)
-                val (istag,tag_clk) = when {
-                    (e is Expr.Tag) -> Pair(true, e.tk as Tk.Tag)
-                    (e is List<*>) -> Pair(true, e)
-                    (isacc && this.acceptEnu("Tag")) -> Pair(true, this.tk0 as Tk.Tag)
-                    else -> Pair(false, null)
-                }
-                val isarr = (isacc || istag) && this.acceptFix("=>")
-                //println(listOf(isacc, istag, isarr, e2))
-                val ret = when {
-                    ( isacc &&  istag &&  isarr) -> Triple((e as Expr.Acc).tk as Tk.Id, tag_clk, this.expr())
-                    ( isacc &&  istag && !isarr) -> Triple((e as Expr.Acc).tk as Tk.Id, tag_clk, null)
-                    ( isacc && !istag &&  isarr) -> Triple((e as Expr.Acc).tk as Tk.Id, null, this.expr())
-                    (!isacc &&  istag &&  isarr) -> Triple(null, tag_clk, this.expr())
-                    (!isacc &&  istag && !isarr) -> Triple(null, tag_clk, null)
-                    (          !istag && !isarr) -> Triple(null, null, e as Expr)
-                    else -> error("impossible case")
-                }
-
-                if (par) {
-                    this.acceptFix_err(")")
-                }
-                ret
             }
         }
     }
@@ -386,143 +302,6 @@ class Parser (lexer_: Lexer)
             this.tk0 as Tk.Tag
         }
         return Pair(id, tag)
-    }
-
-    fun await (type: String): Expr {
-        // ()                   ;; (null, null, null)   ;; (_  :_ => (_ or true))
-        // (x :Y => z)          ;; (id,   tag,  exp)    ;; (x  :Y => chk(:Y) and z)
-        // (x :Y)               ;; error                ;; error
-        // (x => z)             ;; (id,   null, exp)    ;; (x  :_ => z)
-        // :Y => z              ;; (null, tag,  exp)    ;; (it :Y => chk(:Y) and z)
-        // :Y                   ;; (null, tag,  null)   ;; (_  :Y => chk(:Y) and (_ or true))
-        // z                    ;; (null, null, Acc)    ;; (_  :_ => chk(z))
-        // z                    ;; (null, null, exp)    ;; (it :_ => z)
-
-        val n = N
-        val tk0 = this.tk0
-        val pre0 = tk0.pos.pre()
-        val par = this.checkFix("(")
-        val (id, tag_clk, cnd) = this.id_tag_cnd__clock__catch_await()
-        if (!par) {
-            this.checkFix_err("{")
-        }
-        val open = this.tk1     // save token for error message below
-
-        val cnt = when (type) {
-            "await"    -> if (!this.checkFix("{")) null else this.block().es
-            "every"    -> { this.checkFix_err("{") ; this.block().es }
-            "watching" -> null
-            else -> error("impossible case)")
-        }
-
-        val (a,b,c) = Triple(id!=null, tag_clk!=null, cnd!=null)
-        val (x,y) = Pair(tag_clk is Tk.Tag, tag_clk is List<*>)
-        //println(listOf(a,b,c,x,y,tag_clk))
-        val tag = if (x) tag_clk as Tk.Tag else null
-        val clk1 = Tk.Tag(":Clock", tk0.pos)
-        val clk2 = if (y) tag_clk as Clock else null
-        if (a && b && !c && cnt==null) {
-            err(id!!, "await error : innocuous identifier")
-        }
-        val xit = Tk.Id("it", tk0.pos)
-        val xno = if (cnt != null) xit else Tk.Id("ceu_$n", tk0.pos)
-        val scnd = cnd?.tostr(true)
-
-        fun sret (id: Tk.Id): String {
-            return (cnt==null).cond { "and await-ret(${id.str})" }
-        }
-
-        val kexp = { clk2!!.map { (tag,e) ->
-            val s = e.tostr(true)
-            "(" + when (tag.str) {
-                ":h"   -> "($s * ${1000*60*60})"
-                ":min" -> "($s * ${1000*60})"
-                ":s"   -> "($s * ${1000})"
-                ":ms"  -> "($s * ${1})"
-                else   -> error("impossible case")
-            }
-        }.joinToString("+") + (")").repeat(clk2!!.size) }
-        val kdcl = { "var ceu_clk_$n = ${kexp()}" }
-        val kchk = { id: String -> """do {
-            ;;println(:AWAKE, $id, ceu_clk_$n)
-            set ceu_clk_$n = ceu_clk_$n - __$id.ms
-            if (ceu_clk_$n > 0) {
-                false
-            } else {
-                set ceu_clk_$n = ${kexp()}
-                true
-            }
-        }""" }
-
-        val (xid,xtag,xcnd) = when {
-            (!a && !b && !c) -> Triple(xno, null, (cnt==null).cond2({"(${xno.str} or true)"},{"true"}))
-            ( a && !b &&  c) -> Triple(id!!, null, "($scnd ${sret(id)})")
-            (!a && !b && cnd is Expr.Acc) -> Triple(xno, null, "(await-chk(__${xno.str},$scnd) ${sret(xno)})")
-            (!a && !b &&  c) -> Triple(xit, null, "($scnd ${sret(xit)})")
-            ( a &&  x &&  c) -> Triple(id!!, tag, "(await-chk(__${id.str},${tag!!.str}) and $scnd ${sret(id)})")
-            ( a &&  x && !c) -> Triple(id!!, tag, "(await-chk(__${id.str},${tag!!.str} ${sret(id)}))")
-            (!a &&  x &&  c) -> Triple(xit, tag, "(await-chk(__${xit.str},${tag!!.str}) and $scnd ${sret(xit)})")
-            (!a &&  x && !c) -> Triple(xno, tag, "(await-chk(__${xno.str},${tag!!.str}) ${sret(xno)})")
-            ( a &&  y &&  c) -> Triple(id!!, clk1, "(await-chk(__${id!!.str},:Clock) and ${kchk(id!!.str)} and $scnd ${sret(id)})")
-            ( a &&  y && !c) -> Triple(id!!, clk1, "(await-chk(__${id!!.str},:Clock) and ${kchk(id!!.str)} ${sret(id)}))")
-            (!a &&  y &&  c) -> Triple(xit, clk1, "(await-chk(__${xit.str},:Clock) and ${kchk(xit.str)} and $scnd ${sret(xit)})")
-            (!a &&  y && !c) -> Triple(xno, clk1, "(await-chk(__${xno.str},:Clock) and ${kchk(xno.str)} ${sret(xno)})")
-            else -> error("impossible case")
-        }
-        val xtask = (!a && !b && cnd is Expr.Acc).cond2({ """
-            ${cnd!!.tostr(true)} thus { (type(it)==:exe-task) and (status(it)==:terminated) }
-        """ },{
-            "false"
-        })
-
-        return this.nest(when (type) {
-            "await" -> """
-                ${pre0}loop {
-                    val ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} = ${pre0}yield()
-                    ${pre0}until ${pre0}$xcnd ${cnt.cond { "and (do { ${it.tostr(true)} } or true)" }}
-                }
-            """ //.let { println(it);it }
-            "every" -> """
-                ${pre0}loop {
-                    val ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} = ${pre0}yield()
-                    skip if not (${pre0}$xcnd)
-                    until loop {
-                        ${cnt!!.tostr(true)}
-                        break (false) if true
-                    }
-                }
-            """
-            "watching" -> """
-                ${pre0}par-or {
-                    ${pre0}loop {
-                        val ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} = ${pre0}yield()
-                        ${pre0}until ${pre0}$xcnd
-                    }
-                } with {
-                    ${this.block().es.tostr(true)}
-                }
-            """
-            else -> error("impossible case")
-        }.let {
-            if (!y) {
-                """
-                if ($xtask) {
-                    ;; task terminated
-                } else {
-                    $it
-                    delay
-                }
-                """
-            } else {
-                """
-                do {
-                    ${kdcl()}
-                    $it
-                    delay
-                }
-                """
-            }
-        }) //.let { println(it);it })
     }
 
     fun method (f: Expr, e: Expr, pre: Boolean): Expr {
@@ -817,7 +596,7 @@ class Parser (lexer_: Lexer)
                 val (idtag,cnd) = if (CEU>=99 && this.checkFix("{")) {
                     Pair(Pair(Tk.Id("ceu_$N",this.tk0.pos), null), Expr.Bool(Tk.Fix("true",this.tk0.pos)))
                 } else {
-                    this.patt()
+                    this.patt(false)
                 }
                 val blk = this.block()
                 val xcnd = this.nest("""
@@ -1000,7 +779,7 @@ class Parser (lexer_: Lexer)
                             Pair(null, Expr.Bool(Tk.Fix("true",this.tk0.pos)))
                         }
                         (V == null) -> Pair(null, this.expr())
-                        else -> this.patt()
+                        else -> this.patt(false)
                     }
                     val blk = if (this.acceptFix("=>")) {
                         Expr.Do(this.tk0, listOf(this.expr()))
@@ -1053,7 +832,6 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (CEU>=99 && this.acceptFix("await")) -> {
-                val tk0 = this.tk0
                 if (this.checkFix("spawn")) {
                     val spw = this.expr()
                     spw as Expr.Spawn
@@ -1067,9 +845,108 @@ class Parser (lexer_: Lexer)
                         }
                     """)
                 }
-                await("await")
+
+                val pre = this.tk0.pos.pre()
+                val (idtag, cnd) = if (!this.checkFix("{")) this.patt(true) else {
+                    Pair(Pair(Tk.Id("it", this.tk0.pos), null), Expr.Bool(Tk.Fix("true",this.tk0.pos)))
+                }
+                val cnt = if (!this.checkFix("{")) null else this.block().es
+                return this.nest("""
+                    do {
+                        var ${idtag.tostr(true)}
+                        loop {
+                            set ${idtag.first.str} = ${pre}yield()
+                            until ${cnd.tostr(true)}
+                        }
+                        delay
+                        ${cnt.cond2({ it.tostr(true) }, {idtag.first.str})}
+                    }
+                """)
+
+/*
+                "every"    -> { this.checkFix_err("{") ; this.block().es }
+                "watching" -> null
+
+                    fun sret (id: Tk.Id): String {
+                        return (cnt==null).cond { "and await-ret(${id.str})" }
+                    }
+
+                    val kexp = { clk2!!.map { (tag,e) ->
+                        val s = e.tostr(true)
+                        "(" + when (tag.str) {
+                            ":h"   -> "($s * ${1000*60*60})"
+                            ":min" -> "($s * ${1000*60})"
+                            ":s"   -> "($s * ${1000})"
+                            ":ms"  -> "($s * ${1})"
+                            else   -> error("impossible case")
+                        }
+                    }.joinToString("+") + (")").repeat(clk2!!.size) }
+                    val kdcl = { "var ceu_clk_$n = ${kexp()}" }
+                    val kchk = { id: String -> """do {
+            ;;println(:AWAKE, $id, ceu_clk_$n)
+            set ceu_clk_$n = ceu_clk_$n - __$id.ms
+            if (ceu_clk_$n > 0) {
+                false
+            } else {
+                set ceu_clk_$n = ${kexp()}
+                true
             }
-            (CEU>=99 && this.acceptFix("every")) -> await("every")
+        }""" }
+
+                    val (xid,xtag,xcnd) = when {
+                        (!a && !b && !c) -> Triple(xno, null, (cnt==null).cond2({"(${xno.str} or true)"},{"true"}))
+                        ( a && !b &&  c) -> Triple(id!!, null, "($scnd ${sret(id)})")
+                        (!a && !b && cnd is Expr.Acc) -> Triple(xno, null, "(await-is(__${xno.str},$scnd) ${sret(xno)})")
+                        (!a && !b &&  c) -> Triple(xit, null, "($scnd ${sret(xit)})")
+                        ( a &&  x &&  c) -> Triple(id!!, tag, "(await-is(__${id.str},${tag!!.str}) and $scnd ${sret(id)})")
+                        ( a &&  x && !c) -> Triple(id!!, tag, "(await-is(__${id.str},${tag!!.str} ${sret(id)}))")
+                        (!a &&  x &&  c) -> Triple(xit, tag, "(await-is(__${xit.str},${tag!!.str}) and $scnd ${sret(xit)})")
+                        (!a &&  x && !c) -> Triple(xno, tag, "(await-is(__${xno.str},${tag!!.str}) ${sret(xno)})")
+                        ( a &&  y &&  c) -> Triple(id!!, clk1, "(await-is(__${id!!.str},:Clock) and ${kchk(id!!.str)} and $scnd ${sret(id)})")
+                        ( a &&  y && !c) -> Triple(id!!, clk1, "(await-is(__${id!!.str},:Clock) and ${kchk(id!!.str)} ${sret(id)}))")
+                        (!a &&  y &&  c) -> Triple(xit, clk1, "(await-is(__${xit.str},:Clock) and ${kchk(xit.str)} and $scnd ${sret(xit)})")
+                        (!a &&  y && !c) -> Triple(xno, clk1, "(await-is(__${xno.str},:Clock) and ${kchk(xno.str)} ${sret(xno)})")
+                        else -> error("impossible case")
+                    }
+                    val xtask = (!a && !b && cnd is Expr.Acc).cond2({ """
+            ${cnd!!.tostr(true)} thus { (type(it)==:exe-task) and (status(it)==:terminated) }
+        """ },{
+                        "false"
+                    })
+
+                    return this.nest(when (type) {
+                        "await" -> """
+                loop {
+                    val ${idtag.tostr(true)} = ${pre0}yield()
+                    ${pre0}until ${pre0}$xcnd ${cnt.cond { "and (do { ${it.tostr(true)} } or true)" }}
+                }
+            """ //.let { println(it);it }
+                        else -> error("impossible case")
+                    }.let {
+                        if (!y) {
+                            """
+                if ($xtask) {
+                    ;; task terminated
+                } else {
+                    $it
+                    delay
+                }
+                """
+                        } else {
+                            """
+                do {
+                    ${kdcl()}
+                    $it
+                    delay
+                }
+                """
+                        }
+                    }) //.let { println(it);it })
+                }
+*/
+
+            }
+            //(CEU>=99 && this.acceptFix("every")) -> await("every")
             (CEU>=99 && this.acceptFix("par")) -> {
                 val pre0 = this.tk0.pos.pre()
                 val pars = mutableListOf(this.block())
@@ -1148,7 +1025,7 @@ class Parser (lexer_: Lexer)
                     }
                 """)
             }
-            (CEU>=99 && this.acceptFix("watching")) -> await("watching")
+            //(CEU>=99 && this.acceptFix("watching")) -> await("watching")
             else -> {
                 err_expected(this.tk1, "expression")
                 error("unreachable")

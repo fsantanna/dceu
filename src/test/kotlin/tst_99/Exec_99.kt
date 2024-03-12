@@ -1819,7 +1819,7 @@ class Exec_99 {
         val out = test("""
             $IS ; $XAWAIT
             task T () {
-                await(it => it is? :x)
+                await(it, it is? :x)
                 println(1)
             }
             spawn T()
@@ -1834,7 +1834,7 @@ class Exec_99 {
             $IS ; $XAWAIT
             spawn task {
                 println(0)
-                await ( (it/=nil) and (it[:type]==:x) )
+                await ( ,(it/=nil) and (it[:type]==:x) )
                 println(99)
             }
             do {
@@ -1930,9 +1930,9 @@ class Exec_99 {
         val out = test("""
             $IS ; $XAWAIT
             spawn task {
-                await (it==2)
+                await (,it==2)
                 println(2)
-                await (it==1)
+                await (,it==1)
                 println(1)
             }
             broadcast (1)
@@ -1961,14 +1961,14 @@ class Exec_99 {
         val out = test("""
             $IS ; $XAWAIT
             spawn task {
-                println(await(true))
+                println(await())
             }
             do {
                 val e = []
                 broadcast(e)
             }
         """)
-        assert(out == "true\n") { out }
+        assert(out == "[]\n") { out }
     }
     @Test
     fun kk_11_await_thus_yield() {
@@ -1993,7 +1993,7 @@ class Exec_99 {
     @Test
     fun kk_12_await_detrack() {
         val out = test("""
-            $IS ; $XAWAIT
+            $XAWAIT
             val t = spawn task {
                 yield()
             }

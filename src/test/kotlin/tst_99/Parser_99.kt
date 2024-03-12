@@ -982,7 +982,7 @@ class Parser_99 {
         val l = lexer("watching :E { nil }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr().contains("await-chk(__ceu_5,:E)")) { e.tostr() }
+        assert(e.tostr().contains("await-is(__ceu_5,:E)")) { e.tostr() }
     }
 
     // CLOCK
@@ -1026,7 +1026,7 @@ class Parser_99 {
         val e = parser.expr()
         val out = e.tostr()
         //println(out)
-        assert(out.contains("await-chk(__it,:v)"))
+        assert(out.contains("await-is(__it,:v)"))
     }
 
     // METHODS
