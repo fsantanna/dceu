@@ -691,11 +691,11 @@ class Parser (lexer_: Lexer)
                             val task_$N = spawn task ;;{
                                 ${blk.tostr(true)}
                             ;;}
-                            watching task_$N {
+                            watching (,it==task_$N) {
                                 loop {
-                                    await(${tag.str} => not it[0])
+                                    await(${tag.str}, not it[0])
                                     toggle task_$N(false)
-                                    await(${tag.str} => it[0])
+                                    await(${tag.str}, it[0])
                                     toggle task_$N(true)
                                 }
                             }
