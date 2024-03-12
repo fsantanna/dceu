@@ -1062,8 +1062,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         val out = e.tostr()
-        //println(out)
-        assert(out.contains("await-is(__it,:v)"))
+        assert(out.contains("await-is(__it,:v)")) { out }
     }
 
     // METHODS
