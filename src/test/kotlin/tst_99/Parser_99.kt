@@ -929,10 +929,19 @@ class Parser_99 {
     fun ja_04_await_err() {
         val l = lexer("await (x:X)")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : await error : innocuous identifier")
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "(var x :X)\n" +
+                "loop {\n" +
+                "(set x = yield(nil))\n" +
+                "(break if is'(x,:X))\n" +
+                "}\n" +
+                "delay\n" +
+                "x\n" +
+                "}") { e.tostr() }
     }
     @Test
-    fun ja_10_await_err() {
+    fun TODO_ja_10_await_err() {    // EOF msg
         val l = lexer("await x")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 8) : expected \"{\" : have end of file")
@@ -941,7 +950,25 @@ class Parser_99 {
     fun ja_05_task_err() {
         val l = lexer("await spawn T() in ts")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : await error : expected non-pool spawn")
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "(val ceu_15 = (spawn T() in ts))\n" +
+                "if {{/=}}(status(ceu_15),:terminated) {\n" +
+                "do {\n" +
+                "(var it)\n" +
+                "loop {\n" +
+                "(set it = yield(nil))\n" +
+                "(break if {{==}}(it,ceu_15))\n" +
+                "}\n" +
+                "delay\n" +
+                "it\n" +
+                "}\n" +
+                "} else {\n" +
+                "nil\n" +
+                "}\n" +
+                "ceu_15.pub\n" +
+                "}") { e.tostr() }
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : await error : expected non-pool spawn")
     }
     @Test
     fun ja_06_task() {
@@ -950,10 +977,20 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
                 "(val ceu_12 = (spawn T()))\n" +
+                "if {{/=}}(status(ceu_12),:terminated) {\n" +
+                "do {\n" +
+                "(var it)\n" +
                 "loop {\n" +
-                "(break(ceu_12.pub) if {{==}}(status(ceu_12),:terminated))\n" +
-                "yield(nil)\n" +
+                "(set it = yield(nil))\n" +
+                "(break if {{==}}(it,ceu_12))\n" +
                 "}\n" +
+                "delay\n" +
+                "it\n" +
+                "}\n" +
+                "} else {\n" +
+                "nil\n" +
+                "}\n" +
+                "ceu_12.pub\n" +
                 "}") { e.tostr() }
     }
 
@@ -966,7 +1003,7 @@ class Parser_99 {
         assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected expression : have end of file")
     }
     @Test
-    fun jc_02_watching_err() {
+    fun TODO_jc_02_watching_err() {
         val l = lexer("watching(x)")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 12) : expected \"{\" : have end of file")
@@ -982,7 +1019,7 @@ class Parser_99 {
         val l = lexer("watching :E { nil }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr().contains("await-is(__ceu_5,:E)")) { e.tostr() }
+        assert(e.tostr().contains("(break if is'(it,:E))")) { e.tostr() }
     }
 
     // CLOCK
