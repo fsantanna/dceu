@@ -71,14 +71,3 @@ val IS = """
         }
     }
 """.replace("\n", " ")
-
-val XAWAIT = """
-func await-is-task (v) {
-    if (type(v) /= :exe-task) {
-        println("expected active task")
-        error(:assert)
-    }
-    do (status(v) == :terminated)
-}
-""".replace("\n", " ")
-

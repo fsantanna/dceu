@@ -177,11 +177,7 @@ class Parser (lexer_: Lexer)
                 }
                 this.acceptFix_err(")")
                 if (a && (!b && !c)) {
-                    if (isawt) {
-                        return Pair(Pair(Tk.Id("it",this.tk0.pos),null), this.nest("await-is-task(${id.str})"))
-                    } else {
-                        TODO("var w/o body")
-                    }
+                    TODO("var w/o body")
                 }
                 Pair(Pair(id, tag), if (CEU<99) e!! else this.nest(cnd ?: "true"))
             }
@@ -838,31 +834,23 @@ class Parser (lexer_: Lexer)
                     return this.nest("""
                         do {
                             val ceu_$N = ${spw.tostr(true)}
-                            loop {
-                                break (ceu_$N.pub) if (status(ceu_$N) == :terminated)
-                                yield()
+                            if (status(ceu_$N) /= :terminated) {
+                                await(,it==ceu_$N)
                             }
+                            ceu_$N.pub
                         }
                     """)
                 }
 
                 val pre = this.tk0.pos.pre()
-                val (idtag, cnd) = if (!this.checkFix("{")) this.patt(true) else {
-                    Pair(Pair(Tk.Id("it", this.tk0.pos), null), Expr.Bool(Tk.Fix("true",this.tk0.pos)))
-                }
+                val (idtag, cnd) = this.patt(true)
                 val cnt = if (!this.checkFix("{")) null else this.block().es
-                val istsk = (cnd is Expr.Call && cnd.clo is Expr.Acc && cnd.clo.tk.str=="await-is-task")
                 return this.nest("""
                     do {
                         var ${idtag.tostr(true)}
                         loop {
-                            ${istsk.cond2({"""
-                                until ${cnd.tostr(true)}                                
-                                set ${idtag.first.str} = ${pre}yield()
-                            """},{"""
-                                set ${idtag.first.str} = ${pre}yield()
-                                until ${cnd.tostr(true)}                                
-                            """})}
+                            set ${idtag.first.str} = ${pre}yield()
+                            until ${cnd.tostr(true)}
                         }
                         delay
                         ${cnt.cond2({ it.tostr(true) }, {idtag.first.str})}
@@ -1031,7 +1019,21 @@ class Parser (lexer_: Lexer)
                     }
                 """)
             }
-            //(CEU>=99 && this.acceptFix("watching")) -> await("watching")
+            /*
+            (CEU>=99 && this.acceptFix("watching")) -> {
+                val pre0 = this.tk0.pos.pre()
+                val awt = await()
+                val body = this.block()
+                this.nest("""
+                    ${pre0}par-or {
+                        await(
+                        ${pre0}${awt.tostr()}
+                    } with {
+                        ${body.es.tostr(true)}
+                    }
+                """)//.let { println(it.tostr()); it }
+            }
+             */
             else -> {
                 err_expected(this.tk1, "expression")
                 error("unreachable")

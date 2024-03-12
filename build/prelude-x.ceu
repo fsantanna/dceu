@@ -444,10 +444,3 @@ func math-cos (v) {
 func math-floor (v) {
     `:number floor($v.Number)`
 }
-
-;; AWAIT
-
-func await-is-task (v) {
-    assert(type(v) == :exe-task, "expected active task")
-    (status(v) == :terminated)
-}

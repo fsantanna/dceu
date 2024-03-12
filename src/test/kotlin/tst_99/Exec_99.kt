@@ -1817,7 +1817,7 @@ class Exec_99 {
     @Test
     fun kk_01_await() {
         val out = test("""
-            $IS ; $XAWAIT
+            $IS
             task T () {
                 await(it, it is? :x)
                 println(1)
@@ -1831,7 +1831,7 @@ class Exec_99 {
     @Test
     fun kk_02_await() {
         val out = test("""
-            $IS ; $XAWAIT
+            $IS
             spawn task {
                 println(0)
                 await ( ,(it/=nil) and (it[:type]==:x) )
@@ -1850,7 +1850,7 @@ class Exec_99 {
     @Test
     fun kk_03_await() {
         val out = test("""
-            $IS ; $XAWAIT
+            $IS
             data :x = []
             spawn task {
                 println(0)
@@ -1870,7 +1870,7 @@ class Exec_99 {
     @Test
     fun kk_04_await() {
         val out = test("""
-            $IS ; $XAWAIT
+            $IS
             data :x = []
             spawn task {
                 println(0)
@@ -1900,7 +1900,7 @@ class Exec_99 {
         val out = test("""
             spawn task {
                 loop {
-                    await {
+                    await (,true) {
                         println(it)
                     }
                 }
@@ -1910,13 +1910,27 @@ class Exec_99 {
         assert(out == "@[]\n") { out }
     }
     @Test
+    fun kk_06x_await() {
+        val out = test("""
+            spawn task {
+                loop {
+                    await {
+                        println(it)
+                    }
+                }
+            }
+            broadcast (@[])
+        """)
+        assert(out == "anon : (lin 4, col 27) : expected expression : have \"{\"\n") { out }
+    }
+    @Test
     fun kk_07_await() {
         val out = test("""
             spawn task {
-                await {
+                await (,true) {
                     println(it)
                 }
-                await {
+                await (,true) {
                     println(it)
                 }
             }
@@ -1928,7 +1942,7 @@ class Exec_99 {
     @Test
     fun kk_08_await() {
         val out = test("""
-            $IS ; $XAWAIT
+            $IS
             spawn task {
                 await (,it==2)
                 println(2)
@@ -1943,7 +1957,7 @@ class Exec_99 {
     @Test
     fun kk_09_await_it() {
         val out = test("""
-            $IS ; $XAWAIT
+            $IS
             data :X = []
             spawn task {
                 await :X {
@@ -1959,7 +1973,7 @@ class Exec_99 {
     @Test
     fun kk_10_await_escape() {
         val out = test("""
-            $IS ; $XAWAIT
+            $IS
             spawn task {
                 println(await())
             }
@@ -1973,7 +1987,7 @@ class Exec_99 {
     @Test
     fun kk_11_await_thus_yield() {
         val out = test("""
-            $IS ; $XAWAIT
+            $IS
             spawn task {
                 await(:X) {
                     yield()
@@ -1993,13 +2007,12 @@ class Exec_99 {
     @Test
     fun kk_12_await_detrack() {
         val out = test("""
-            $XAWAIT
             val t = spawn task {
                 yield()
             }
             val x = ;;;track;;;(t)
             spawn task {
-                await(x)
+                await(,it==x)
                 println(:1)
             }
             broadcast(nil)
@@ -2010,7 +2023,7 @@ class Exec_99 {
     @Test
     fun kk_13_await_drag() {
         val out = test("""
-            $IS ; $XAWAIT
+            $IS
             spawn task {
                 val click = await(:X) {
                     println(:it, it)
@@ -2065,7 +2078,7 @@ class Exec_99 {
                 val t = spawn task {
                     println(:1)
                 }
-                await(t)
+                await(,it==t)
                 println(:2)
             }
             println(:3)
@@ -2079,7 +2092,7 @@ class Exec_99 {
     fun km_01_every() {
         val out = test(
             """
-            $IS ; $XAWAIT
+            $IS
             task T () {
                 println(:1)
                 every true {
@@ -2097,7 +2110,7 @@ class Exec_99 {
     fun km_02_every() {
         val out = test(
             """
-            $IS ; $XAWAIT
+            $IS
             task T () {
                 println(:1)
                 every true {
@@ -2114,7 +2127,7 @@ class Exec_99 {
     @Test
     fun km_03_every() {
         val out = test("""
-            $IS ; $XAWAIT
+            $IS
             data :X = []
             spawn task {
                 par {
@@ -2131,7 +2144,7 @@ class Exec_99 {
     @Test
     fun km_04_every() {
         val out = test("""
-            $IS ; $XAWAIT
+            $IS
             spawn task {
                 every true {
                     yield()
@@ -2152,7 +2165,7 @@ class Exec_99 {
     @Test
     fun km_05_every() {
         val out = test("""
-            $IS ; $XAWAIT
+            $IS
             spawn task {
                 var rect = []
                 spawn task {
@@ -2184,7 +2197,7 @@ class Exec_99 {
     @Test
     fun km_01_clock() {
         val out = test("""
-            $IS ; $PLUS ; $MULT ; $COMP ; $XAWAIT
+            $IS ; $PLUS ; $MULT ; $COMP
             data :Clock = [ms]
             spawn task {
                 await (:2:ms)
@@ -2201,7 +2214,7 @@ class Exec_99 {
     @Test
     fun km_02_clock() {
         val out = test("""
-            $IS ; $PLUS ; $MULT ; $COMP ; $XAWAIT
+            $IS ; $PLUS ; $MULT ; $COMP
             data :Clock = [ms]
             spawn task {
                 var x = 10
@@ -2230,7 +2243,7 @@ class Exec_99 {
     @Test
     fun ll_01_watching() {
         val out = test("""
-            $IS ; $XAWAIT
+            $IS
             spawn task {
                 watching (it==1) {
                     defer { println(:z) }
@@ -2843,7 +2856,7 @@ class Exec_99 {
     fun BUG_zz_02_track_bcast() {
         DEBUG = true
         val out = test("""
-            $IS ; $XAWAIT
+            $IS
             val B = task () {
                 yield(nil)
             }
@@ -2884,7 +2897,7 @@ class Exec_99 {
     @Test
     fun zz_04_par_arg() {
         val out = test("""
-            $IS ; $XAWAIT
+            $IS
             task T (v) {
                 par {
                     every :X {
