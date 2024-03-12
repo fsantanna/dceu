@@ -12,11 +12,6 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
     val global = (outer.clo as Expr.Proto).blk
     val datas = mutableMapOf<String,LData>()
 
-    // allow it to be redeclared as long as it is not accessed
-    private val it_uses: MutableMap<Expr.Dcl,Expr> = mutableMapOf()
-        // Acc = previous use
-        // Dcl = previous hide without previous use
-
     private val dcls: MutableList<Expr> = mutableListOf()
     public val dcl_to_enc: MutableMap<Expr,Expr> = mutableMapOf()
     public val acc_to_dcl: MutableMap<Expr.Acc,Expr.Dcl> = mutableMapOf()
@@ -141,18 +136,6 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         if (e is Expr.Acc) {        // TODO: what about Expr.Nat?
             acc_to_dcl[e] = dcl
         }
-        if (CEU>=99 && dcl.idtag.first.str=="it") {
-            val prv = it_uses[dcl]
-            when (prv) {
-                is Expr.Dcl -> err(prv.idtag.first, "declaration error : variable \"${prv.idtag.first.str}\" is already declared")
-                is Expr.Acc -> {}
-                else -> {
-                    if (e is Expr.Acc && !e.ign) {
-                        it_uses[dcl] = e        // ignore __acc
-                    }
-                }
-            }
-        }
         return dcl
     }
 
@@ -271,11 +254,8 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 }
                 this.args.forEach { (id,tag) ->
                     val prv = dcls.firstOrNull { id.str!="..." && it is Expr.Dcl && id.str==it.idtag.first.str } as Expr.Dcl?
-                    if (prv==null || (CEU>=99 && prv.idtag.first.str=="it" && it_uses[prv]==null)) {
+                    if (prv==null || (CEU>=99 && prv.idtag.first.str=="it")) {
                         // ok
-                        if (CEU>=99 && prv!=null) {
-                            it_uses[prv] = this // found new dcl w/o uses of prv dcl
-                        }
                     } else {
                         err(id, "declaration error : variable \"${id.str}\" is already declared")
                     }
@@ -348,11 +328,8 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             }
             is Expr.Dcl    -> {
                 val prv = dcls.firstOrNull { it is Expr.Dcl && this.idtag.first.str==it.idtag.first.str } as Expr.Dcl?
-                if (prv==null || (CEU>=99 && prv.idtag.first.str=="it" && it_uses[prv]==null)) {
+                if (prv==null || (CEU>=99 && prv.idtag.first.str=="it")) {
                     // ok
-                    if (CEU>=99 && prv!=null) {
-                        it_uses[prv] = this // found new dcl w/o uses of prv dcl
-                    }
                 } else {
                     err(this.idtag.first, "declaration error : variable \"${this.idtag.first.str}\" is already declared")
                 }
