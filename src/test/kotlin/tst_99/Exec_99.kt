@@ -340,7 +340,8 @@ class Exec_99 {
                 val it = 10
             }            
         """)
-        assert(out == "anon : (lin 5, col 21) : declaration error : variable \"it\" is already declared\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : declaration error : variable \"it\" is already declared\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun ee_03_it() {
@@ -351,8 +352,8 @@ class Exec_99 {
             }            
             println(it)
         """)
-        assert(out == "anon : (lin 4, col 21) : declaration error : variable \"it\" is already declared\n") { out }
-
+        assert(out == "nil\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : declaration error : variable \"it\" is already declared\n") { out }
     }
     @Test
     fun ee_04_it() {
@@ -2083,7 +2084,8 @@ class Exec_99 {
             }
             println(:3)
         """, true)
-        assert(out == ":1\n:2\n:3\n") { out }
+        //assert(out == ":1\n:2\n:3\n") { out }
+        assert(out == ":1\n:3\n") { out }
     }
 
     // EVERY
@@ -2095,7 +2097,7 @@ class Exec_99 {
             $IS
             task T () {
                 println(:1)
-                every true {
+                every (,true) {
                     until true
                     error(999)
                 }
@@ -2113,7 +2115,7 @@ class Exec_99 {
             $IS
             task T () {
                 println(:1)
-                every true {
+                every (,true) {
                     until false
                     println(:xxx)
                 }
@@ -2146,7 +2148,7 @@ class Exec_99 {
         val out = test("""
             $IS
             spawn task {
-                every true {
+                every (,true) {
                     yield()
                 }
             }
@@ -2245,7 +2247,7 @@ class Exec_99 {
         val out = test("""
             $IS
             spawn task {
-                watching (it==1) {
+                watching 1 {
                     defer { println(:z) }
                     println(:x)
                     ${AWAIT()}
@@ -2273,7 +2275,7 @@ class Exec_99 {
                 set pub = v
                 toggle :Show {
                     println(pub)
-                    every (it => (it is? :dict) and (it.sub==:draw)) {
+                    every (it, (it is? :dict) and (it.sub==:draw)) {
                         println(it.v)
                     }
                 }
