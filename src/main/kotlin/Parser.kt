@@ -851,12 +851,18 @@ class Parser (lexer_: Lexer)
                     Pair(Pair(Tk.Id("it", this.tk0.pos), null), Expr.Bool(Tk.Fix("true",this.tk0.pos)))
                 }
                 val cnt = if (!this.checkFix("{")) null else this.block().es
+                val istsk = (cnd is Expr.Call && cnd.clo is Expr.Acc && cnd.clo.tk.str=="await-is-task")
                 return this.nest("""
                     do {
                         var ${idtag.tostr(true)}
                         loop {
-                            set ${idtag.first.str} = ${pre}yield()
-                            until ${cnd.tostr(true)}
+                            ${istsk.cond2({"""
+                                until ${cnd.tostr(true)}                                
+                                set ${idtag.first.str} = ${pre}yield()
+                            """},{"""
+                                set ${idtag.first.str} = ${pre}yield()
+                                until ${cnd.tostr(true)}                                
+                            """})}
                         }
                         delay
                         ${cnt.cond2({ it.tostr(true) }, {idtag.first.str})}
