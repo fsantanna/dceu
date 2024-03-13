@@ -37,10 +37,12 @@
         - `-x` `x+y` `f(...)` `-->`
         - `t[...]` `t.x` `t.pub` `t.(:X)` `t[=]`
         - `where` `thus`
-    * Conditionals and Loops
-        - `if` `ifs` `loop` `loop if` `loop until` `loop in`
+    * Conditionals and Pattern Matching
+        - `if` `ifs`
+    * Loops and Iterators
+        - `loop` `loop in`
     * Exceptions
-        - `throw` `catch`
+        - `error` `catch`
     * Coroutine Operations
         - `coroutine` `yield` `resume` `toggle` `kill` `status` `spawn` `resume-yield-all`
     * Task Operations
@@ -78,7 +80,7 @@ Follows an extended list of functionalities in Ceu:
 - Stackless coroutines (the basis of tasks)
 - Restricted closures (upvalues must be final)
 - Deferred statements (for finalization)
-- Exception handling (throw & catch)
+- Exception handling (error & catch)
 - Hierarchical Tags and Tuple Templates (for data description)
 - Seamless integration with C (source-level compatibility)
 
@@ -1014,7 +1016,8 @@ Do   : `do´ Block       ;; an explicit block statement
 ```
 
 Blocks also appear in compound statements, such as
-[conditionals](#conditionals), [loops](#loops-and-iterators), and many others.
+[conditionals](#conditionals-and-pattern-matching),
+[loops](#loops-and-iterators), and many others.
 
 Examples:
 
@@ -1232,7 +1235,7 @@ val r1 :Rect = [pos, [100,100]]         ;; r uses :Rect as template
 println(r1.dim, r1.pos.x)               ;; --> [100,100], 10
 
 val r2 = :Rect [[0,0],[10,10]]          ;; combining tag template/constructor
-println(r2 is? :Rect, r2.dim.h)         ;; --> true, 0
+println(r2 is? :Rect, r2.dim.h)         ;; --> true, 10
 ```
 
 Based on [tags and sub-tags](#user-types), tuple templates can define
@@ -1248,8 +1251,8 @@ Examples:
 
 ```
 data :Event = [ts] {            ;; All events carry a timestamp
-    :Key = [key] {              ;; :Event.Key [ts,key] is a sub-type of :Event [ts]
-    :Mouse = [pos :Pos]         ;; :Event.Mouse [ts, pos :Pos]
+    :Key = [key]                ;; :Event.Key [ts,key] is a sub-type of :Event [ts]
+    :Mouse = [pos :Pos] {       ;; :Event.Mouse [ts, pos :Pos]
         :Motion = []            ;; :Event.Mouse.Motion [ts, pos :Pos]
         :Button = [but]         ;; :Event.Mouse.Button [ts, pos :Pos, but]
     }
@@ -1478,78 +1481,97 @@ x + 10 - 1      ;; ERR: requires parenthesis
 x or y or z     ;; (x or y) or z
 ```
 
-## Conditionals and Loops
+## Conditionals and Pattern Matching
 
 ### Conditionals
 
 Ceu supports conditionals as follows:
 
 ```
-If  : `if´ [ID [TAG] `=´] Expr (Block | `=>´ Expr)
+If  : `if´ Expr (Block | `=>´ Expr)
         [`else´  (Block | `=>´ Expr)]
+Ifs : `ifs´ `{´ {Case} [Else] `}´
+        Case :  Expr  (Block | `=>´ Expr)
+        Else : `else´ (Block | `=>´ Expr)
 ```
 
 An `if` tests a condition expression and executes one of the two possible
 branches.
 If the condition is [true](#basic-types), the `if` executes the first branch.
 Otherwise, it executes the optional `else` branch, which defaults to `nil`.
-
-The condition expression can be can be assigned to an optional
-[variable declaration](#declarations-and-assignments) and can be accessed in
-the branches.
-
-The branches can be either a [block](#blocks) or a simple expression prefixed
+A branch can be either a [block](#blocks) or a simple expression prefixed
 by the arrow symbol `=>`.
+
+An `ifs` supports multiple conditions, which are tested in sequence, until one
+is satisfied, executing its associated branch.
+Otherwise, it executes the optional `else` branch, which defaults to `nil`.
 
 Examples:
 
 ```
 val max = if x>y => x => y
 
-if v:Pos = f() {
-    print(v.x)
+ifs {
+    x > y => x
+    x < y => y
+    else  => error("values are equal")
 }
 ```
 
-Ceu also supports `ifs` to test multiple conditions:
+### Pattern Matching
+
+An `ifs` also supports a head expression to be compared in test cases using
+patterns:
 
 ```
-Ifs : `ifs´ [[ID [TAG] `=´] Expr] `{´ {Case} [Else] `}´
-        Case : OP Expr (Block | `=>´ Expr)
-             | [ID [TAG] `=´] Expr (Block | `=>´ Expr)
-        Else : `else´ (`=>´ Expr | Block)
+Ifs : <see above>
+    | `ifs´ Expr `{´ {Case} [Else] `}´
+        Case :  Patt  (Block | `=>´ Expr)
+        Else : `else´ (Block | `=>´ Expr)
+
+Patt : [`(´] (Decl | Oper | Const) [`)´]
+        Cons : Expr
+        Oper : OP [Expr]
+        Full : [ID] [TAG] [`,´ [Expr]]
 ```
 
-The `ifs` statement supports multiple cases with test conditions and associated
-branches.
-The conditions are tested in sequence, until the first is true and its
-associated branch executes.
-The optional `else` branch executes if no conditions are true.
-Like in an `if`, branches can be blocks or simple expressions prefixed by `=>`.
+`TODO: Clock`
 
-An `ifs` also supports a head expression to compare against in test cases.
-If provided, test cases can assume that the head value is the left operand of
-a given binary operator and a given right operand.
+A pattern is enclosed by optional parenthesis and has three possible forms:
 
-The head expression and each test condition can be assigned to an optional
-[variable declaration](#declarations-and-assignments) and can be accessed in
-the branches.
+- A *constructor pattern* `Cons` compares the head value against the given
+    expression using the operator [`===`](#deep-equality-operators).
+    The expression must be either a [static literal](#static-values) or a
+    [collection constructor](#collection-values).
+- An *operation pattern* `Oper` calls the given predicate passing the head
+    value and the optional expression.
+- A *full pattern* `Full` is composed of a
+    [variable declaration](#declarations-and-assignments] with identifier
+    and tag, and a condition expression.
+    The pattern assigns the head expression to the variable, which is visible
+    by the condition expression and case branch.
+    The pattern checks if the head expression matches the given tag using the
+    operator [`is?`](#operator-is] and if the condition expression is
+    satisfied.
+    The identifier, tag and condition are all optional, but the identifier
+    cannot appear alone, requiring a compaining tag or `,`.
 
 Examples:
 
 ```
-ifs x = f() {
-    == 10      => println("x == 10")
-    is? :tuple => println("x is a tuple")
-    g(x) > 10  => println("g(x) > 10")
-    y=h(x)     => println(y)    ;; only if y is truthy
+ifs f() {
+    [1,2,3]    => println("f() === [1,2,3]")
+    >= g()     => println("f() >= g()")
+    :tuple     => println("f() is? :tuple")
+    x :T, g(x) => println("x=f(), (x is? :T) and g(x)")
+    x,         => println("f() = ", x)
     else {
-        error(:error)
+        error("impossible case")
     }
 }
 ```
 
-### Loops and Iterators
+## Loops and Iterators
 
 Ceu supports loops and iterators as follows:
 
@@ -1632,7 +1654,7 @@ loop v in }3 => 0} :step -1 {
 }
 ```
 
-#### Iterator Tuples
+### Iterator Tuples
 
 In an iterator loop, the `in` clause specifies an expression that must evaluate
 to an iterator tuple `[f,...]` [tagged](#user-types) as `:Iterator`.
@@ -1676,55 +1698,47 @@ loop in num-iter(5) {
 
 ## Exceptions
 
-A `throw` raises an exception that terminates all enclosing blocks up to a
-matching `catch` block:
+The `error` expression raises an exception that aborts the execution of all
+enclosing blocks up to a matching `catch` block.
 
 ```
-Throw : `throw´ `(´ Expr `)´
-Catch : `catch´ Expr Block
+Error : `error´ `(´ Expr `)´
+Catch : `catch´ [Patt] Block
 ```
 
-A `throw` receives an expression that is assigned to the special variable
-`err`, which is only visible to enclosing `catch` condition expressions.
-A `throw` is propagated upwards and aborts all enclosing [blocks](#blocks) and
+An `error` propagates upwards and aborts all enclosing [blocks](#blocks) and
 [execution units](#prototype-values) (functions, coroutines, and tasks) on the
 way.
-When crossing an execution unit, a `throw` jumps back to the calling site and
-continues to propagate upwards.
+When crossing an execution unit, an `error` jumps back to the original calling
+site and continues to propagate upwards.
 
 A `catch` executes its associated block normally, but also registers a
-condition expression to be compared against `err` when a `throw` is crossing
-it.
+[condition pattern](#pattern-matching) to be compared against the exception
+value when an `error` is crossing it.
 If they match, the exception is caught and the `catch` terminates and evaluates
-to `err`, also aborting its associated block, and properly triggering nested
-[`defer`](#defer) statements.
-
-To match an exception, the `catch` expression can access `err` and needs to
-evaluate to `true`.
-If the matching expression `x` is of type [tag](#basic-types), it expands to
-match `err is? x`, allowing to check for [tuple
-templates](#tag-enumerations-and-tuple-templates).
+to exception value, also aborting its associated block, and properly triggering
+nested [`defer`](#defer) statements.
 
 Examples:
 
 ```
-val x = catch (err == 1) {
-    throw(1)
+val x = catch :Error {
+    error(:Error)
     println("unreachable")
 }
-println(x)              ;; --> 1
+println(x)              ;; --> :Error
 ```
 
 ```
-catch err == 1 {        ;; catches
+catch 1 {               ;; catches
     defer {
         println(1)
     }
-    catch err == 2 {    ;; no catches
+    catch 2 {           ;; no catches
         defer {
             println(2)
         }
-        throw(1)        ;; throws
+        error(1)        ;; throws
         ;; unreachable
     }
     ;; unreachable
@@ -1737,7 +1751,7 @@ func f () {
         defer {
             println(1)
         }
-        throw(:Err.Two ["err msg"])   ;; throws another error
+        error(:Err.Two ["err msg"])   ;; throws another error
     }
 }
 catch :Err {                          ;; catches generic error
@@ -2343,7 +2357,7 @@ the sense that they cannot be written in Ceu itself:
 - `sup?`:           [Types and Tags](#types-and-tags)
 - `tags`:           [Types and Tags](#types-and-tags)
 - `tasks`:          [Pool of Tasks](#pool-of-tasks)
-- `throw`:          [Exceptions](#exceptions)
+- `error`:          [Exceptions](#exceptions)
 - `to-number`:      [Conversions](#conversions)
 - `to-string`:      [Conversions](#conversions)
 - `to-tag`:         [Conversions](#conversions)
@@ -2495,8 +2509,6 @@ Examples:
 
 ```
 println(1, :x, [1,2,3])     ;; --> 1   :x   [1,2,3]
-sup? tags
-throw type
 ```
 
 ## Auxiliary Library
@@ -2754,7 +2766,7 @@ Expr' : `do´ [:unnest[-hide]] Block                     ;; explicit block
                     [`,´ :step (`-´|`+´) Expr]
 
       | `catch´ Expr Block                              ;; catch exception
-      | `throw´ `(´ Expr `)´                            ;; throw exception
+      | `error´ `(´ Expr `)´                            ;; throw exception
 
       | `func´ `(´ [List(ID)] `)´ Block                 ;; function
       | `coro´ `(´ [List(ID)] `)´ Block                 ;; coroutine
