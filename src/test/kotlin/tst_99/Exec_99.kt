@@ -421,7 +421,7 @@ class Exec_99 {
     @Test
     fun ff_05_ifs() {
         val out = test("""
-            $IS
+            $COMP
             val x = ifs 20 {
                 10 => false
                 else     => true
@@ -483,7 +483,7 @@ class Exec_99 {
     @Test
     fun ff_10_ifs() {
         val out = test("""
-            $IS
+            $IS ; $COMP
             var x = ifs 20 {
                 :no => false
                 10  => false
@@ -496,7 +496,7 @@ class Exec_99 {
     @Test
     fun ff_11_ifs() {
         val out = test("""
-            $IS
+            $IS ; $COMP
             data :T = [v]
             var x = ifs :T [20] {
                 (t1:T, t1.v == 10) => false
@@ -813,8 +813,8 @@ class Exec_99 {
                 }
             }
         """)
-        assert(out == "anon : (lin 5, col 39) : declaration error : variable \"it\" is already declared\n") { out }
-        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
+        //assert(out == "anon : (lin 5, col 39) : declaration error : variable \"it\" is already declared\n") { out }
+        assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing catch\n") { out }
     }
     @Test
     fun mm_18_it() {
@@ -1943,11 +1943,11 @@ class Exec_99 {
     @Test
     fun kk_08_await() {
         val out = test("""
-            $IS
+            $COMP
             spawn task {
-                await (,it==2)
+                await (2)
                 println(2)
-                await (,it==1)
+                await (==1)
                 println(1)
             }
             broadcast (1)
@@ -2013,7 +2013,7 @@ class Exec_99 {
             }
             val x = ;;;track;;;(t)
             spawn task {
-                await(,it==x)
+                await(==x)
                 println(:1)
             }
             broadcast(nil)
@@ -2245,7 +2245,7 @@ class Exec_99 {
     @Test
     fun ll_01_watching() {
         val out = test("""
-            $IS
+            $COMP
             spawn task {
                 watching 1 {
                     defer { println(:z) }

@@ -158,39 +158,16 @@ class Parser (lexer_: Lexer)
 
     fun patt (): Patt {
         val xit = Tk.Id("it",this.tk0.pos)
-        return when {
-            // (id :Tag, cnd)
-            (CEU<99 || this.checkFix("(")) -> {
-                this.acceptFix_err("(")
-                val a = (CEU<99 && this.acceptEnu_err("Id") || this.acceptEnu("Id"))
-                val id = if (a) {
-                    this.tk0 as Tk.Id
-                } else {
-                    xit
-                }
-                var cnd: String? = null
-                val b = this.acceptEnu("Tag")
-                val tag = if (!b) null else {
-                    val x = this.tk0 as Tk.Tag
-                    cnd = "(${id.str} is? ${x.str})"
-                    x
-                }
-                val c = (CEU<99 && this.acceptFix_err(",") || this.acceptFix(","))
-                val e = if (!c) null else {
-                    val x = this.expr()
-                    cnd = "(${cnd.cond { "$it and " }} ${x.tostr(true)})"
-                    x
-                }
-                this.acceptFix_err(")")
-                if (a && (!b && !c)) {
-                    TODO("var w/o body")
-                }
-                Pair(Pair(id, tag), if (CEU<99) e!! else this.nest(cnd ?: "true"))
-            }
+        val par = this.acceptFix("(")
 
-            // == 10
-            // {{even?}}
-            this.acceptEnu("Op") -> {
+        val ret = when {
+            // ()
+            (CEU>=99 && par && this.checkFix(")")) -> {
+                Pair(Pair(xit,null), this.nest("true"))
+            }
+            // (== 10)
+            // ({{even?}})
+            (CEU>=99 && this.acceptEnu("Op")) -> {
                 val op = this.tk0.str.let {
                     if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
                 }
@@ -202,20 +179,69 @@ class Parser (lexer_: Lexer)
                 }
                 Pair(Pair(xit,null), this.nest(call))
             }
+            // (id
+            this.acceptEnu("Id") -> {
+                val id = this.tk0 as Tk.Id
+                when {
+                    // (id :Tag
+                    this.acceptEnu("Tag") -> {
+                        val tag = this.tk0 as Tk.Tag
+                        when {
+                            // (id :Tag, cnd)
+                            this.acceptFix(",") -> {
+                                val cnd = this.expr()
+                                Pair(Pair(id,tag), this.nest("(${id.str} is? ${tag.str}) and ${cnd.tostr(true)}"))
+                            }
+                            // (id :Tag)
+                            else -> {
+                                Pair(Pair(id, tag), this.nest("${id.str} is? ${tag.str}"))
+                            }
+                        }
+                    }
+                    // (id, cnd)
+                    else -> {
+                        this.acceptFix_err(",")
+                        val cnd = this.expr()
+                        Pair(Pair(id, null), cnd)
+                    }
+                }
+            }
+            // (:X
+            (CEU>=99 && this.acceptEnu("Tag")) -> {
+                val tag = this.tk0 as Tk.Tag
+                when {
+                    // (:X,cnd)
+                    this.acceptFix(",") -> {
+                        val cnd = this.expr()
+                        Pair(Pair(xit,tag), this.nest("(it is? ${tag.str}) and ${cnd.tostr(true)}"))
+                    }
+                    // (:X)
+                    else -> Pair(Pair(xit,null), this.nest("it is? ${tag.str}"))
+                }
 
-            else -> {
+            }
+            // (,cnd)
+            (CEU>=99 && this.acceptFix(",")) -> {
+                val cnd = this.expr()
+                Pair(Pair(xit,null), cnd)
+            }
+            (CEU >= 99) -> {
                 val e = this.expr()
                 when {
                     // 10
-                    // :X
                     // [1,2]
                     e.is_constructor() -> {
-                        Pair(Pair(xit,null), this.nest("it is? ${e.tostr(true)}"))
+                        Pair(Pair(xit,null), this.nest("it === ${e.tostr(true)}"))
                     }
                     else -> err(this.tk1, "invalid pattern : unexpected \"${this.tk1.str}\"") as Pair<Pair<Tk.Id,Tk.Tag?>, Expr>
                 }
             }
+            else -> err_expected(this.tk1, "identifier") as Patt
         }
+        if (par) {
+            this.acceptFix_err(")")
+        }
+        return ret
     }
 
     fun lambda (n:Int): Pair<Pair<Tk.Id,Tk.Tag?>,List<Expr>> {
@@ -595,10 +621,17 @@ class Parser (lexer_: Lexer)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val (idtag,cnd) = if (CEU>=99 && this.checkFix("{")) {
-                    Pair(Pair(Tk.Id("ceu_$N",this.tk0.pos), null), Expr.Bool(Tk.Fix("true",this.tk0.pos)))
-                } else {
-                    this.patt()
+                val (idtag,cnd) = when {
+                    (CEU < 99) -> {
+                        this.checkFix_err("(")
+                        this.patt()
+                    }
+                    this.checkFix("{") -> {
+                        Pair(Pair(Tk.Id("ceu_$N",this.tk0.pos), null), Expr.Bool(Tk.Fix("true",this.tk0.pos)))
+                    }
+                    else -> {
+                        this.patt()
+                    }
                 }
                 val blk = this.block()
                 val xcnd = this.nest("""
@@ -851,7 +884,11 @@ class Parser (lexer_: Lexer)
                 }
 
                 val pre = this.tk0.pos.pre()
+                val par = this.checkFix("(")
                 val (idtag, cnd) = this.patt()
+                if (!par) {
+                    this.checkFix_err("{")
+                }
                 val cnt = if (!this.checkFix("{")) null else this.block().es
                 return this.nest("""
                     do {

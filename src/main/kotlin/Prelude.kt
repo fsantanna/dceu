@@ -25,8 +25,8 @@ val MULT = """
 val COMP = """
     func {{>}} (v1,v2) {
         ifs {
-            (v1 is? :tag)    and (v2 is? :tag)    { `:bool (${D}v1.Tag    > ${D}v2.Tag)` }
-            (v1 is? :number) and (v2 is? :number) { `:bool (${D}v1.Number > ${D}v2.Number)` }
+            (type(v1) == :tag)    and (type(v2) == :tag)    { `:bool (${D}v1.Tag    > ${D}v2.Tag)` }
+            (type(v1) == :number) and (type(v2) == :number) { `:bool (${D}v1.Number > ${D}v2.Number)` }
             else => error(:error)
         }
     }
@@ -38,6 +38,9 @@ val COMP = """
     }
     func {{<=}} (v1,v2) {
         (v1 == v2) or (v1 < v2)
+    }
+    func {{===}} (v1,v2) {
+        (v1 == v2)
     }
 """.replace("\n", " ")
 

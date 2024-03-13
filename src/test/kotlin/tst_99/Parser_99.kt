@@ -709,9 +709,10 @@ class Parser_99 {
     fun fg_01_catch() {
         val l = lexer("catch () {}")
         val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : expected expression : have \")\"")
         //assert(trap { parser.expr() } == "anon : (lin 1, col 8) : pattern error : unexpected \")\"")
-        val e = parser.expr()
-        assert(e.tostr() == "catch (it, true) {\n" + "(do nil)\n" + "}") { e.tostr() }
+        //val e = parser.expr()
+        //assert(e.tostr() == "catch (it, true) {\n" + "(do nil)\n" + "}") { e.tostr() }
     }
     @Test
     fun fg_02_catch() {
