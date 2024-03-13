@@ -44,10 +44,10 @@
     * Exceptions
         - `error` `catch`
     * Coroutine Operations
-        - `coroutine` `yield` `resume` `toggle` `kill` `status` `spawn` `resume-yield-all`
+        - `coroutine` `yield` `resume` `abort` `status` `spawn` `resume-yield-all`
     * Task Operations
-        - `pub` `spawn` `await` `broadcast` `track` `detrack` `tasks` `spawn in`
-        - `loop in` `every` `spawn {}` `watching` `toggle {}` `par` `par-and` `par-or`
+        - `spawn` `tasks` `pub` `await` `broadcast` `toggle`
+        - `spawn {}` `every` `par` `par-and` `par-or` `watching` `toggle {}`
 * STANDARD LIBRARY
     * Primary Library
     * Auxiliary Library
@@ -1770,7 +1770,7 @@ The basic API for coroutines has 5 operations:
 1. [`coroutine`](#create-resume-spawn): creates a new coroutine from a prototype
 2. [`yield`](#yield): suspends the resumed coroutine
 3. [`resume`](#create-resume-spawn): starts or resumes a coroutine
-4. [`kill`](#TODO): `TODO`
+4. [`abort`](#TODO): `TODO`
 5. [`status`](#status): consults the coroutine status
 
 Note that `yield` is the only operation that is called from the coroutine
@@ -1781,61 +1781,79 @@ similarly to calls and returns in functions.
 Examples:
 
 ```
-coro F (a) {                ;; first resume
-    println(a)              ;; --> 10
-    val c = yield(a + 1)    ;; returns 11, second resume, receives 12
-    println(c)              ;; --> 12
-    c + 1                   ;; returns 13
+coro C (x) {                ;; first resume
+    println(x)              ;; --> 10
+    val w = yield(x + 1)    ;; returns 11, second resume, receives 12
+    println(w)              ;; --> 12
+    w + 1                   ;; returns 13
 }
-val f = coroutine(F)        ;; creates `f` from prototype `F`
-val b = resume f(10)        ;; starts  `f`, receives `11`
-val d = resume f(b+1)       ;; resumes `f`, receives `13`
-println(status(f))          ;; --> :terminated
+val c = coroutine(C)        ;; creates `c` from prototype `C`
+val y = resume c(10)        ;; starts  `c`, receives `11`
+val z = resume c(y+1)       ;; resumes `c`, receives `13`
+println(status(c))          ;; --> :terminated
 ```
 
 ```
-coro F () {
+coro C () {
     defer {
         println("aborted")
     }
     yield()
 }
 do {
-    val f = coroutine(F)
-    resume f()
+    val c = coroutine(C)
+    resume c()
 }                           ;; --> aborted
 ```
 
-### Create, Resume, Spawn
+### Create
 
 The operation `coroutine` creates a new coroutine from a
-[prototype](#prototype-values).
-The operation `resume` executes a coroutine starting from its last suspension
-point.
-The operation `spawn` creates and resumes a coroutine:
+[prototype](#prototype-values):
 
 ```
 Create : `coroutine´ `(´ Expr `)´
-Resume : `resume´ Expr `(´ Expr `)´
-Spawn  : `spawn´ Expr `(´ Expr `)´
-       | `spawn´ `coro´ Block
 ```
 
 The operation `coroutine` expects a coroutine prototype (type
-[`coro`](#execution-units) or [`task`](#execution-units)) and returns its
-active reference (type [`x-coro`](#execution-units) or
-[`x-task`](#executions-units)).
+[`coro`](#execution-units)) and returns its active reference (type
+[`exe-coro`](#execution-units)).
 
-The operation `resume` expects an active coroutine, and resumes it.
+Examples:
+
+```
+coro C () {
+    ...
+}
+val c = coroutine(C)
+println(C, c)   ;; --> coro: 0x... / exe-coro: 0x...
+```
+
+### Resume
+
+The operation `resume` executes a coroutine starting from its last suspension
+point:
+
+```
+Resume : `resume´ Expr `(´ [Expr] `)´
+```
+
+The operation `resume` expects an active coroutine, and resumes it, passing an
+optional argument.
 The coroutine executes until it yields or terminates.
 The `resume` evaluates to the argument of `yield` or to the coroutine return
 value.
 
-The operation `spawn T(...)` creates the coroutine `T`, resumes it passing
-`(...)`, and returns its active reference.
-
-A `spawn coro` spawns its block as an anonymous coroutine, returning its
-active reference.
+```
+coro C () {
+    println(:1)
+    yield()
+    println(:2)
+}
+val co = coroutine(C)
+resume co()     ;; --> 1
+resume co()     ;; --> 2
+```
 
 ### Status
 
