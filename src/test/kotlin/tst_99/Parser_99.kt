@@ -704,8 +704,9 @@ class Parser_99 {
         val l = lexer("catch :x:s {}")
         val parser = Parser(l)
         //parser.expr()
+        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expression error : innocuous expression")
         //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch error : invalid condition")
-        assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected \"{\" : have \":s\"")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected \"{\" : have \":s\"")
     }
     @Test
     fun fg_01_catch() {
@@ -1035,8 +1036,10 @@ class Parser_99 {
             }
         """)
         val parser = Parser(l)
+        //parser.expr()
         //assert(trap { parser.expr() } == "anon : (lin 1, col 12) : expected \"{\" : have end of file")
-        assert(trap { parser.expr() } == "anon : (lin 4, col 13) : expected tag : have \"}\"")
+        //assert(trap { parser.expr() } == "anon : (lin 4, col 13) : expected tag : have \"}\"")
+        assert(trap { parser.expr() } == "anon : (lin 4, col 13) : expected \"{\" : have \"}\"")
     }
 
     // TOGGLE

@@ -1,11 +1,22 @@
 package dceu
 
 typealias Clock = List<Pair<Tk.Tag,Expr>>
-typealias Patt = Pair<Pair<Tk.Id,Tk.Tag?>,Expr>
+typealias Patt = Pair<Pair<Tk.Id,Tk.Tag?>,Any>
+
+fun Any.tostr (pre: Boolean): String {
+    return when (this) {
+        is Expr -> this.tostr(pre)
+        else -> (this as Clock).map { it.second.tk.pos.pre() + ":"+it.second.tostr(false) + it.first.str }.joinToString("")
+    }
+}
 
 fun Patt.tostr (pre: Boolean): String {
     val (idtag,cnd) = this
-    return "(${idtag.tostr(pre)}, ${cnd.tostr(pre)})"
+    return if (cnd is Expr) {
+        "(${idtag.tostr(pre)}, ${cnd.tostr(pre)})"
+    } else {
+        cnd.tostr(pre)
+    }
 }
 
 class Parser (lexer_: Lexer)
@@ -209,7 +220,32 @@ class Parser (lexer_: Lexer)
             // (:X
             (CEU>=99 && this.acceptEnu("Tag")) -> {
                 val tag = this.tk0 as Tk.Tag
+                val unis = listOf(":h",":min",":s",":ms")
                 when {
+                    // (:x:ms)
+                    unis.contains(this.tk1.str) -> {
+                        // :X:ms[...]
+                        this.acceptEnu_err("Tag")
+
+                        fun Tk.Tag.tonum (): Expr {
+                            val s = this.str.drop(1)
+                            val n = s.toIntOrNull()
+                            return if (n != null) {
+                                Expr.Num(Tk.Num(s, this.pos))
+                            } else {
+                                Expr.Acc(Tk.Id(s, this.pos))
+                            }
+                        }
+
+                        val l = mutableListOf(Pair(this.tk0 as Tk.Tag, tag.tonum()))
+                        while (this.checkEnu("Tag")) {
+                            val t = this.tk0 as Tk.Tag
+                            this.checkEnu_err("Tag")
+                            assert(unis.contains(this.tk0.str))
+                            l.add(Pair(this.tk0 as Tk.Tag, t.tonum()))
+                        }
+                        Pair(Pair(xit,Tk.Tag(":Clock",tag.pos)), l as Clock)
+                    }
                     // (:X,cnd)
                     this.acceptFix(",") -> {
                         val cnd = this.expr()
@@ -890,17 +926,50 @@ class Parser (lexer_: Lexer)
                     this.checkFix_err("{")
                 }
                 val cnt = if (!this.checkFix("{")) null else this.block().es
+                val clk = if (cnd is Expr) null else {
+                    val l = (cnd as Clock)
+                    l.map { (tag,e) ->
+                        val s = e.tostr(true)
+                        "(" + when (tag.str) {
+                            ":h"   -> "($s * ${1000*60*60})"
+                            ":min" -> "($s * ${1000*60})"
+                            ":s"   -> "($s * ${1000})"
+                            ":ms"  -> "($s * ${1})"
+                            else   -> error("impossible case")
+                        }
+                    }.joinToString("+") + (")").repeat(l.size)
+                }
                 return this.nest("""
                     do {
+                        ${clk.cond { """
+                            var ceu_$N = $it
+                        """ }}
                         var ${idtag.tostr(true)}
                         loop {
                             set ${idtag.first.str} = ${pre}yield()
-                            until ${cnd.tostr(true)}
+                            ${clk.cond2({
+                                """
+                                break if do {
+                                    if ${idtag.first.str} is? :Clock {
+                                        set ceu_$N = ceu_$N - ${idtag.first.str}.ms
+                                        if (ceu_$N > 0) {
+                                            false
+                                        } else {
+                                            true
+                                        }
+                                    }
+                                }
+                                """
+                            },{
+                                """
+                                until ${cnd.tostr(true)}                                
+                                """
+                            })}                            
                         }
                         delay
                         ${cnt.cond2({ it.tostr(true) }, {idtag.first.str})}
                     }
-                """)
+                """) //.let { println(it.tostr());it }
             }
             (CEU>=99 && this.acceptFix("every")) -> {
                 val patt = this.patt()
