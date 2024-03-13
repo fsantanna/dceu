@@ -1401,14 +1401,14 @@ The pop operation `vec[-]` gets and removes the last element of a vector.
 Examples:
 
 ```
-val stk = [1,2,3]
+val stk = #[1,2,3]
 println(stk[=])         ;; --> 3
 set stk[=] = 30
-println(stk)            ;; --> [1, 2, 30]
+println(stk)            ;; --> #[1, 2, 30]
 println(stk[-])         ;; --> 30
-println(stk)            ;; --> [1, 2]
+println(stk)            ;; --> #[1, 2]
 set stk[+] = 3
-println(stk)            ;; --> [1, 2, 3]
+println(stk)            ;; --> #[1, 2, 3]
 ```
 
 ### Where and Thus Clauses
@@ -1765,19 +1765,18 @@ catch :Err {                          ;; catches generic error
 
 ## Coroutine Operations
 
-The basic API for coroutines has 6 operations:
+The basic API for coroutines has 5 operations:
 
 1. [`coroutine`](#create-resume-spawn): creates a new coroutine from a prototype
 2. [`yield`](#yield): suspends the resumed coroutine
-3. [`resume`](#create-resume-spawn): starts or resumes a coroutine from its current suspension point
-4. [`toggle`](#toggle): either ignore or acknowledge resumes
-5. [`kill`](#TODO): `TODO`
-6. [`status`](#status): returns the coroutine status
+3. [`resume`](#create-resume-spawn): starts or resumes a coroutine
+4. [`kill`](#TODO): `TODO`
+5. [`status`](#status): consults the coroutine status
 
 Note that `yield` is the only operation that is called from the coroutine
 itself, all others are called from the user code controlling the coroutine.
-Just like call arguments and return values from functions, the `yield` and
-`resume` operations can transfer values between themselves.
+The `resume` and `yield` operations transfer values between themselves,
+similarly to calls and returns in functions.
 
 Examples:
 
@@ -1959,6 +1958,8 @@ In addition to the coroutines API, tasks also rely on the following operations:
 1. [`spawn`](#create-resume-spawn): creates and resumes a new task from a prototype
 2. [`await`](#await): yields the resumed task until it matches an event
 3. [`broadcast`](#broadcast): broadcasts an event to all tasks
+
+4. [`toggle`](#toggle): either ignore or acknowledge resumes
 
 Examples:
 

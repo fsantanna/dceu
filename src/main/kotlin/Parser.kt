@@ -10,12 +10,12 @@ fun Any.tostr (pre: Boolean): String {
     }
 }
 
-fun Patt.tostr (pre: Boolean): String {
+fun Patt.tostr (pre: Boolean = false): String {
     val (idtag,cnd) = this
     return if (cnd is Expr) {
-        "(${idtag.tostr(pre)}, ${cnd.tostr(pre)})"
+        "(" + idtag.tostr(pre) + ", " + cnd.tostr(pre) + ")"
     } else {
-        cnd.tostr(pre)
+        "(" + cnd.tostr(pre) + ")"
     }
 }
 
@@ -252,7 +252,7 @@ class Parser (lexer_: Lexer)
                         Pair(Pair(xit,tag), this.nest("(it is? ${tag.str}) and ${cnd.tostr(true)}"))
                     }
                     // (:X)
-                    else -> Pair(Pair(xit,null), this.nest("it is? ${tag.str}"))
+                    else -> Pair(Pair(xit,tag), this.nest("it is? ${tag.str}"))
                 }
 
             }
