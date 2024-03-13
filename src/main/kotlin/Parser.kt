@@ -1032,6 +1032,7 @@ class Parser (lexer_: Lexer)
                                 """}.joinToString("")} false ${")".repeat(pars.size)}
                             )
                             yield()
+                            delay
                         }
                     }
                 """)
@@ -1060,6 +1061,7 @@ class Parser (lexer_: Lexer)
                                 """}.joinToString("")} true ${")".repeat(pars.size)}
                             )
                             yield()
+                            delay
                         }
                     }
                 """)
