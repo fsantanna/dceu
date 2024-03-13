@@ -2792,6 +2792,16 @@ class Exec_99 {
         """)
         assert(out == "anon : (lin 5, col 24) : expected \"]\" : have \"1\"\n") { out }
     }
+    @Test
+    fun vv_10_ppp() {
+        val out = test("""
+            $PLUS
+            val stk = [1]
+            stk[-]
+            println(stk, #stk)
+        """)
+        assert(out == "[nil]\t1\n") { out }
+    }
 
     // DATA
 

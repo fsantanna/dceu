@@ -1112,6 +1112,7 @@ class Parser (lexer_: Lexer)
         return this.expr_4_suf(
             when (this.tk0.str) {
                 "[" -> {
+                    // PPP
                     val xop = (CEU>=99 && (this.acceptFix("=") || this.acceptOp("+") || this.acceptOp("-")))
                     if (!xop) {
                         val idx = this.expr()
