@@ -2678,12 +2678,21 @@ class Exec_99 {
         assert(out == "[nil,[10]]\t[10]\t10\n") { out }
     }
 
-    // CONSTRUCTOR
+    // TAG CONSTRUCTOR / DECLARATION
 
     @Test
     fun uu_01_cons() {
         val out = test("println(:T [])")
         assert(out == ":T []\n") { out }
+    }
+    @Test
+    fun uu_02_cons() {
+        val out = test("""
+            data :T = [v]
+            val t = :T [10]
+            println(t.v, t)
+        """)
+        assert(out == "10\t:T [10]\n") { out }
     }
 
     // PPP: PEEK, PUSH, POP

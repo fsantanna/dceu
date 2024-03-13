@@ -201,7 +201,7 @@ class Parser (lexer_: Lexer)
                             // (id :Tag, cnd)
                             this.acceptFix(",") -> {
                                 val cnd = this.expr()
-                                Pair(Pair(id,tag), this.nest("(${id.str} is? ${tag.str}) and ${cnd.tostr(true)}"))
+                                Pair(Pair(id,tag), if (CEU<99) cnd else this.nest("(${id.str} is? ${tag.str}) and ${cnd.tostr(true)}"))
                             }
                             // (id :Tag)
                             else -> {
@@ -417,11 +417,25 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val (id,tag) = this.id_tag()
-                val src = if (!this.acceptFix("=")) null else {
-                    this.expr()
+                val (id,tag1) = this.id_tag()
+                val (tag2,src) = if (!this.acceptFix("=")) Pair(tag1,null) else {
+                    val e = this.expr()
+                    val tag = when {
+                        (tag1 != null) -> tag1
+                        (CEU < 99) -> null
+                        (e !is Expr.Call) -> null
+                        (e.clo !is Expr.Acc) -> null
+                        (e.clo.tk.str != "tags") -> null
+                        (e.args.size != 3) -> null
+                        (e.args[0] !is Expr.Tuple) -> null
+                        (e.args[1] !is Expr.Tag) -> null
+                        (e.args[2] !is Expr.Bool) -> null
+                        (e.args[2].tk.str != "true") -> null
+                        else -> e.args[1].tk as Tk.Tag
+                    }
+                    Pair(tag, e)
                 }
-                Expr.Dcl(tk0, Pair(id,tag), src)
+                Expr.Dcl(tk0, Pair(id,tag2), src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -1195,8 +1209,8 @@ class Parser (lexer_: Lexer)
                     val tk0 = this.tk0
                     val tup = this.expr_prim()
                     this.nest("""
-                            ${tk0.pos.pre()}tags(${tup.tostr(true)}, ${tk0.str}, true)
-                        """)
+                        ${tk0.pos.pre()}tags(${tup.tostr(true)}, ${tk0.str}, true)
+                    """)
                 } else {
                     Expr.Tag(this.tk0 as Tk.Tag)
                 }
