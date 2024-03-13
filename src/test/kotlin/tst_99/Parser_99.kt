@@ -864,7 +864,7 @@ class Parser_99 {
 
     @Test
     fun hh_01_spawn_task() {
-        val l = lexer("spawn task {}")
+        val l = lexer("spawn {}")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "(spawn (task :nested () {\n" +
@@ -872,18 +872,19 @@ class Parser_99 {
                 "})())") { e.tostr() }
     }
     @Test
-    fun TODO_hh_02_spawn_coro() {
+    fun hh_02_spawn_coro() {
         val l = lexer("spawn coro {}")
         val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr() == "spawn (coro () {\n" +
-                "nil\n" +
-                "})()") { e.tostr() }
+        assert(trap { parser.expr() } == "anon : (lin 1, col 12) : expected \"(\" : have \"{\"")
+        //val e = parser.expr()
+        //assert(e.tostr() == "spawn (coro () {\n" +
+        //        "nil\n" +
+        //        "})()") { e.tostr() }
     }
     @Test
     fun hh_03_bcast_in() {
         val l = lexer("""
-            spawn task {
+            spawn {
                 broadcast(nil) in nil
             }
         """)
@@ -1031,7 +1032,7 @@ class Parser_99 {
     @Test
     fun jd_01_clock_err() {
         val l = lexer("""
-            spawn task {
+            spawn {
                 await :2:ms
             }
         """)

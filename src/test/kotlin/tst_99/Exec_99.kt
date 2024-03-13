@@ -1375,7 +1375,7 @@ class Exec_99 {
     @Test
     fun ii_01_spawn_task() {
         val out = test("""
-            spawn task {
+            spawn {
                 println(1)
                 yield()
                 println(3)
@@ -1388,24 +1388,26 @@ class Exec_99 {
     @Test
     fun TODO_ii_02_spawn_coro() {
         val out = test("""
-            val co = spawn (coro () {
+            val co = coroutine (coro () {   ;; spawn coro
                 println(1)
                 yield()
                 println(3)
-            }) ()
+            })
+            resume co()
             println(2)
             resume co()
         """)
         assert(out == "1\n2\n3\n") { out }
     }
     @Test
-    fun TODO_ii_03_spawn_coro() {
+    fun ii_03_spawn_coro() {
         val out = test("""
-            val co = spawn coro {
+            val co = coroutine(coro () {   ;; spawn coro
                 println(1)
                 yield()
                 println(3)
-            }
+            })
+            resume co()
             println(2)
             resume co()
         """)
@@ -1414,8 +1416,8 @@ class Exec_99 {
     @Test
     fun ii_04_spawn() {
         val out = test("""
-            spawn task {
-                spawn task {
+            spawn {
+                spawn {
                     println(1)
                 }
                 nil
@@ -1424,13 +1426,14 @@ class Exec_99 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun TODO_ii_05_spawn_coro() {
+    fun ii_05_spawn_coro() {
         val out = test("""
-            val co = spawn coro {
+            val co = coroutine (coro () {   ;; spawn coro
                 println(1)
                 val v = yield()
                 println(v)
-            }
+            })
+            resume co()
             resume co(10)
         """)
         assert(out == "1\n10\n") { out }
@@ -1438,13 +1441,13 @@ class Exec_99 {
     @Test
     fun ii_06_spawn_defer() {
         val out = test("""
-            spawn task {
+            spawn {
                 do {
-                    val t1 = spawn task {
+                    val t1 = spawn {
                         ${AWAIT()}
                         println(1)
                     }
-                    spawn task {
+                    spawn {
                         defer { println(3) }
                         ${AWAIT()}
                         println(2)
@@ -1461,8 +1464,8 @@ class Exec_99 {
     @Test
     fun ii_07_spawn() {
         val out = test("""
-            spawn task {
-                spawn task {
+            spawn {
+                spawn {
                     yield ()
                     println(1)
                 }
@@ -1490,7 +1493,7 @@ class Exec_99 {
     @Test
     fun jj_02_par() {
         val out = test("""
-            spawn task {
+            spawn {
                 par {
                     println(1)
                 } with {
@@ -1504,7 +1507,7 @@ class Exec_99 {
     @Test
     fun jj_03_paror() {
         val out = test("""
-            spawn task {
+            spawn {
                 par-or {
                     yield()
                     yield()
@@ -1524,7 +1527,7 @@ class Exec_99 {
     @Test
     fun jj_04_paror() {
         val out = test("""
-            spawn task {
+            spawn {
                 val v =
                     par-or {
                         1
@@ -1539,7 +1542,7 @@ class Exec_99 {
     @Test
     fun jj_05_parand() {
         val out = test("""
-            spawn task {
+            spawn {
                 par-and {
                     println(1)
                 } with {
@@ -1553,7 +1556,7 @@ class Exec_99 {
     @Test
     fun jj_06_parand() {
         val out = test("""
-            spawn task {
+            spawn {
                 val v =
                     par-and {
                         1
@@ -1568,7 +1571,7 @@ class Exec_99 {
     @Test
     fun jj_07_paror() {
         val out = test("""
-            spawn task {
+            spawn {
                 par-or {
                     yield()
                     yield()
@@ -1591,7 +1594,7 @@ class Exec_99 {
     @Test
     fun jj_08_parand() {
         val out = test("""
-            spawn task {
+            spawn {
                 par-and {
                     yield()
                     yield()
@@ -1617,7 +1620,7 @@ class Exec_99 {
     @Test
     fun jj_08a_parand() {
         val out = test("""
-            spawn task {
+            spawn {
                 par-and {
                     yield()
                     yield()
@@ -1642,7 +1645,7 @@ class Exec_99 {
     @Test
     fun jj_09_paror_defer() {
         val out = test("""
-            spawn task {
+            spawn {
                 par-or {
                     ${AWAIT()}
                     println(1)
@@ -1660,7 +1663,7 @@ class Exec_99 {
     @Test
     fun jj_10_paror_defer() {
         val out = test("""
-            spawn task {
+            spawn {
                 par-or {
                     defer { println(3) }
                     ${AWAIT()}
@@ -1677,7 +1680,7 @@ class Exec_99 {
     @Test
     fun jj_10x_paror_defer() {
         val out = test("""
-            spawn task {
+            spawn {
                 par-and {
                     func (it) {
                         false
@@ -1695,7 +1698,7 @@ class Exec_99 {
     @Test
     fun jj_11_paror_defer() {
         val out = test("""
-            spawn task {
+            spawn {
                 par-or {
                     defer { println(1) }
                     ${AWAIT()}
@@ -1719,7 +1722,7 @@ class Exec_99 {
     @Test
     fun jj_11_parand_defer() {
         val out = test("""
-            spawn task {
+            spawn {
                 par-and {
                     yield()
                     println(1)
@@ -1738,7 +1741,7 @@ class Exec_99 {
     @Test
     fun jj_12_parand_defer() {
         val out = test("""
-            spawn task {
+            spawn {
                 par-and {
                     defer { println(1) }
                     ${AWAIT()}
@@ -1763,7 +1766,7 @@ class Exec_99 {
     @Test
     fun jj_13_paror_dyn() {
         val out = test("""
-            spawn task {
+            spawn {
                 par-or {
                     yield()
                     yield()
@@ -1797,7 +1800,7 @@ class Exec_99 {
     @Test
     fun jj_13y_paror_dyn() {
         val out = test("""
-            spawn task {
+            spawn {
                 par-or {
                     yield()
                 } with {
@@ -1833,7 +1836,7 @@ class Exec_99 {
     fun kk_02_await() {
         val out = test("""
             $IS
-            spawn task {
+            spawn {
                 println(0)
                 await ( ,(it/=nil) and (it[:type]==:x) )
                 println(99)
@@ -1853,7 +1856,7 @@ class Exec_99 {
         val out = test("""
             $IS
             data :x = []
-            spawn task {
+            spawn {
                 println(0)
                 await(:x)
                 println(99)
@@ -1873,7 +1876,7 @@ class Exec_99 {
         val out = test("""
             $IS
             data :x = []
-            spawn task {
+            spawn {
                 println(0)
                 await(:x)
                 println(99)
@@ -1899,7 +1902,7 @@ class Exec_99 {
     @Test
     fun kk_06_await() {
         val out = test("""
-            spawn task {
+            spawn {
                 loop {
                     await (,true) {
                         println(it)
@@ -1913,7 +1916,7 @@ class Exec_99 {
     @Test
     fun kk_06x_await() {
         val out = test("""
-            spawn task {
+            spawn {
                 loop {
                     await {
                         println(it)
@@ -1927,7 +1930,7 @@ class Exec_99 {
     @Test
     fun kk_07_await() {
         val out = test("""
-            spawn task {
+            spawn {
                 await (,true) {
                     println(it)
                 }
@@ -1944,7 +1947,7 @@ class Exec_99 {
     fun kk_08_await() {
         val out = test("""
             $COMP
-            spawn task {
+            spawn {
                 await (2)
                 println(2)
                 await (==1)
@@ -1960,7 +1963,7 @@ class Exec_99 {
         val out = test("""
             $IS
             data :X = []
-            spawn task {
+            spawn {
                 await :X {
                     nil thus {
                         println(it)
@@ -1975,7 +1978,7 @@ class Exec_99 {
     fun kk_10_await_escape() {
         val out = test("""
             $IS
-            spawn task {
+            spawn {
                 println(await())
             }
             do {
@@ -1989,7 +1992,7 @@ class Exec_99 {
     fun kk_11_await_thus_yield() {
         val out = test("""
             $IS
-            spawn task {
+            spawn {
                 await(:X) {
                     yield()
                 }
@@ -2008,11 +2011,11 @@ class Exec_99 {
     @Test
     fun kk_12_await_detrack() {
         val out = test("""
-            val t = spawn task {
+            val t = spawn {
                 yield()
             }
             val x = ;;;track;;;(t)
-            spawn task {
+            spawn {
                 await(==x)
                 println(:1)
             }
@@ -2025,7 +2028,7 @@ class Exec_99 {
     fun kk_13_await_drag() {
         val out = test("""
             $IS
-            spawn task {
+            spawn {
                 val click = await(:X) {
                     println(:it, it)
                     it
@@ -2039,6 +2042,20 @@ class Exec_99 {
                 ":click\t:X [1,2]\n" +
                 "nil\n") { out }
     }
+    @Test
+    fun kk_14_await_data() {
+        val out = test("""
+            $IS
+            data :T = [v]
+            spawn {
+                await :T {
+                    println(it.v)
+                }
+            }
+            broadcast(:T [:ok])
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // AWAIT / TASK
 
@@ -2048,7 +2065,7 @@ class Exec_99 {
             task T (v) {
                 [v]
             }
-            spawn task {
+            spawn {
                 val v = await spawn T(1)
                 println(v)
             }
@@ -2058,12 +2075,12 @@ class Exec_99 {
     @Test
     fun kl_02_await_task() {
         val out = test("""
-            spawn task {
+            spawn {
                 task T () {
                     val v = await()
                     [v]
                 }
-                spawn task {
+                spawn {
                     val v = await spawn T(1)
                     println(v)
                 }
@@ -2075,8 +2092,8 @@ class Exec_99 {
     @Test
     fun kl_03_await_task() {
         val out = test("""
-            spawn task {
-                val t = spawn task {
+            spawn {
+                val t = spawn {
                     println(:1)
                 }
                 await(,it==t)
@@ -2131,7 +2148,7 @@ class Exec_99 {
         val out = test("""
             $IS
             data :X = []
-            spawn task {
+            spawn {
                 par {
                     every :X {
                     }
@@ -2147,7 +2164,7 @@ class Exec_99 {
     fun km_04_every() {
         val out = test("""
             $IS
-            spawn task {
+            spawn {
                 every (,true) {
                     yield()
                 }
@@ -2168,9 +2185,9 @@ class Exec_99 {
     fun km_05_every() {
         val out = test("""
             $IS
-            spawn task {
+            spawn {
                 var rect = []
-                spawn task {
+                spawn {
                     every :X {
                         do rect
                     }
@@ -2193,6 +2210,20 @@ class Exec_99 {
         """)
         assert(out == "[]\n:ok\n") { out }
     }
+    @Test
+    fun km_06_every_data() {
+        val out = test("""
+            $IS
+            data :T = [v]
+            spawn {
+                every :T {
+                    println(it.v)
+                }
+            }
+            broadcast(:T [:ok])
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // CLOCK
 
@@ -2201,7 +2232,7 @@ class Exec_99 {
         val out = test("""
             $IS ; $PLUS ; $MULT ; $COMP
             data :Clock = [ms]
-            spawn task {
+            spawn {
                 await (:2:ms)
                 println(:ok)
             }
@@ -2218,7 +2249,7 @@ class Exec_99 {
         val out = test("""
             $IS ; $PLUS ; $MULT ; $COMP
             data :Clock = [ms]
-            spawn task {
+            spawn {
                 var x = 10
                 every :x:ms {
                     println(:x, x)
@@ -2246,7 +2277,7 @@ class Exec_99 {
     fun ll_01_watching() {
         val out = test("""
             $COMP
-            spawn task {
+            spawn {
                 watching 1 {
                     defer { println(:z) }
                     println(:x)
@@ -2264,6 +2295,18 @@ class Exec_99 {
             println(3)
         """)
         assert(out == ":x\n1\n:y\n2\n:z\n:A\n3\n") { out }
+    }
+    @Test
+    fun ll_02_watching() {
+        val out = test("""
+            spawn {
+                watching :100:ms {
+                    every ,false {
+                    }
+                }
+            }
+        """)
+        assert(out == "anon : (lin 3, col 30) : access error : variable \"{{*}}\" is not declared\n") { out }
     }
 
     // TOGGLE
@@ -2317,7 +2360,7 @@ class Exec_99 {
     @Test
     fun mm_03_toggle() {
         val out = test("""
-            spawn task {
+            spawn {
                 val x = toggle :Show {
                     10
                 }
@@ -2895,13 +2938,13 @@ class Exec_99 {
     fun TODO_zz_03_double_awake() {
         DEBUG = true
         val out = test("""
-            spawn task {
+            spawn {
                 loop {
             println(false)
-                    val t = spawn task {
+                    val t = spawn {
                         await(:X)
                     }
-                    spawn task {
+                    spawn {
                         loop {
                             yield()
                         }

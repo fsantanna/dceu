@@ -714,23 +714,13 @@ class Parser (lexer_: Lexer)
             }
 
             (CEU>=4 && this.acceptFix("spawn")) -> {
-                when {
-                    (CEU < 99) -> {}
-                    this.acceptFix("coro") -> {
-                        return this.nest("""
-                            TODO
-                        """)
-                    }
-                    this.acceptFix("task") -> {
-                        return this.nest("""
-                            ${this.tk0.pos.pre()}(spawn (task :nested () {
-                                ${this.block().es.tostr(true)}
-                            }) ())
-                        """)
-                    }
-                }
-                if (this.acceptFix("task")) {
-                    err(this.tk0, "spawn error : unexpected \"task\"")
+                if (CEU>=99 && this.checkFix("{")) {
+                    val blk = this.block()
+                    return this.nest("""
+                        ${this.tk0.pos.pre()}(spawn (task :nested () {
+                            ${blk.es.tostr(true)}
+                        }) ())
+                    """)
                 }
 
                 val tk0 = this.tk0 as Tk.Fix
@@ -771,7 +761,7 @@ class Parser (lexer_: Lexer)
                     val blk = this.block()
                     this.nest("""
                         do {
-                            val task_$N = spawn task ;;{
+                            val task_$N = spawn ;;{
                                 ${blk.tostr(true)}
                             ;;}
                             if (status(task_$N) /= :terminated) { 
@@ -1005,7 +995,7 @@ class Parser (lexer_: Lexer)
                     pars.add(this.block())
                 }
                 val spws = pars.map { """
-                    ${it.tk.pos.pre()}spawn task {
+                    ${it.tk.pos.pre()}spawn {
                         ${it.es.tostr(true)}
                     }
                 """}.joinToString("")
@@ -1031,7 +1021,7 @@ class Parser (lexer_: Lexer)
                 this.nest("""
                     ${pre0}do {
                         ${pars.mapIndexed { i,body -> """
-                            val ceu_${i}_$n = spawn task {
+                            val ceu_${i}_$n = spawn {
                                 ${body.es.tostr(true)}
                             }
                         """}.joinToString("")}
@@ -1059,7 +1049,7 @@ class Parser (lexer_: Lexer)
                 this.nest("""
                     ${pre0}do {
                         ${pars.mapIndexed { i,body -> """
-                            val ceu_${i}_$n = spawn task {
+                            val ceu_${i}_$n = spawn {
                                 ${body.es.tostr(true)}
                             }
                         """}.joinToString("")}

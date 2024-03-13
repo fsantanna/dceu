@@ -72,7 +72,11 @@ class Parser_04 {
             spawn task () { nil } ()
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 19) : spawn error : unexpected \"task\"")
+        val e = parser.exprs()
+        assert(e.tostr() == "(spawn (task () {\n" +
+                "nil\n" +
+                "})())\n") { e.tostr() }
+        //assert(trap { parser.exprs() } == "anon : (lin 2, col 19) : spawn error : unexpected \"task\"")
     }
     @Test
     fun bb_05_spawn() {
