@@ -421,6 +421,22 @@ class Parser_99 {
                 "})") { e.tostr() }
         //assert(trap { parser.expr() } == "anon : (lin 4, col 21) : case error : expected ifs condition")
     }
+    @Test
+    fun ee_10_ifs() {
+        val l = lexer("ifs v { x, => 10 }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "(val ceu_21 = v)\n" +
+                "(val x = ceu_21)\n" +
+                "if true {\n" +
+                "10\n" +
+                "} else {\n" +
+                "(do nil)\n" +
+                "}\n" +
+                "}") { e.tostr() }
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
+    }
 
     // THUS AS
 
@@ -1034,6 +1050,19 @@ class Parser_99 {
         val l = lexer("""
             spawn {
                 await :2:ms
+            }
+        """)
+        val parser = Parser(l)
+        //parser.expr()
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 12) : expected \"{\" : have end of file")
+        //assert(trap { parser.expr() } == "anon : (lin 4, col 13) : expected tag : have \"}\"")
+        assert(trap { parser.expr() } == "anon : (lin 4, col 13) : expected \"{\" : have \"}\"")
+    }
+    @Test
+    fun jd_02_clock_err() {
+        val l = lexer("""
+            spawn {
+                await :10:min:10:ms
             }
         """)
         val parser = Parser(l)
