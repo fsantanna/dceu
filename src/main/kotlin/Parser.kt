@@ -212,7 +212,7 @@ class Parser (lexer_: Lexer)
                     // (id, cnd)
                     else -> {
                         this.acceptFix_err(",")
-                        val cnd = if (this.checkFix("(") || this.checkFix("{") || this.checkFix("=>")) {
+                        val cnd = if (this.checkFix(")") || this.checkFix("{") || this.checkFix("=>")) {
                             this.nest("true")
                         } else {
                             this.expr()
@@ -242,9 +242,9 @@ class Parser (lexer_: Lexer)
                         }
 
                         val l = mutableListOf(Pair(this.tk0 as Tk.Tag, tag.tonum()))
-                        while (this.checkEnu("Tag")) {
+                        while (this.acceptEnu("Tag")) {
                             val t = this.tk0 as Tk.Tag
-                            this.checkEnu_err("Tag")
+                            this.acceptEnu_err("Tag")
                             assert(unis.contains(this.tk0.str))
                             l.add(Pair(this.tk0 as Tk.Tag, t.tonum()))
                         }
@@ -258,7 +258,6 @@ class Parser (lexer_: Lexer)
                     // (:X)
                     else -> Pair(Pair(xit,tag), this.nest("it is? ${tag.str}"))
                 }
-
             }
             // (,cnd)
             (CEU>=99 && this.acceptFix(",")) -> {

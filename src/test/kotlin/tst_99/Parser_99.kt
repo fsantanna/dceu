@@ -798,7 +798,7 @@ class Parser_99 {
         val l = lexer("catch :X {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (it, is'(it,:X)) {\n" +
+        assert(e.tostr() == "catch (it :X, is'(it,:X)) {\n" +
                 "(do nil)\n" +
                 "}") { e.tostr() }
     }
@@ -1066,7 +1066,8 @@ class Parser_99 {
             }
         """)
         val parser = Parser(l)
-        //parser.expr()
+        //val e = parser.expr()
+        //println(e.tostr())
         //assert(trap { parser.expr() } == "anon : (lin 1, col 12) : expected \"{\" : have end of file")
         //assert(trap { parser.expr() } == "anon : (lin 4, col 13) : expected tag : have \"}\"")
         assert(trap { parser.expr() } == "anon : (lin 4, col 13) : expected \"{\" : have \"}\"")
