@@ -44,7 +44,7 @@
     * Exceptions
         - `error` `catch`
     * Coroutine Operations
-        - `coroutine` `yield` `resume` `abort` `status` `spawn` `resume-yield-all`
+        - `coroutine` `status` `resume` `yield` `resume-yield-all` <!--`abort`-->
     * Task Operations
         - `spawn` `tasks` `pub` `await` `broadcast` `toggle`
         - `spawn {}` `every` `par` `par-and` `par-or` `watching` `toggle {}`
@@ -388,7 +388,7 @@ The following keywords are reserved in Ceu:
     set                 ;; assign expression
     skip                ;; loop skip
     spawn               ;; spawn coroutine
-    tasks               ;; pool of tasks
+    tasks               ;; task pool
     task                ;; task prototype/self identifier
     thus                ;; thus pipe block                  (40)
     toggle              ;; toggle coroutine/block
@@ -561,7 +561,7 @@ The following tags are pre-defined in Ceu:
     :func :coro :task                               ;; prototypes
     :tuple :vector :dict                            ;; collections
     :exe-coro :exe-task :tasks                      ;; active coro/task
-    :tasks                                          ;; pool of tasks
+    :tasks                                          ;; task pool
 
     :ceu                                            ;; ceu value
     :rec :nested                                    ;; recursive prototype
@@ -712,8 +712,7 @@ The `coro` type represents [coroutine prototypes](#prototype-values), while the
 
 The `task` type represents [task prototypes](#prototype-values), while the
 `exe-task` type represents [active tasks](#active-values).
-The `tasks` type represents [pools of tasks](#active-values) holding active
-tasks.
+The `tasks` type represents [task pools](#active-values) holding active tasks.
 
 ## User Types
 
@@ -922,7 +921,7 @@ println(\{it}(10))      ;; prints 10
 
 ### Active Values
 
-An *active value* corresponds to an active coroutine, task, or pool of tasks:
+An *active value* corresponds to an active coroutine, task, or task pool:
 
 ```
 exe-coro  exe-task  tasks
@@ -947,14 +946,14 @@ The main difference between coroutines and tasks is how they resume execution:
   [resume operation](#create-resume-spawn).
 - A task resumes implicitly from a [broadcast operation](#broadcast).
 
-Before a coroutine or task is collected, it is implicitly terminated, and all
+Before a coroutine or task is collected, it is implicitly aborted, and all
 active [defer statements](#defer) execute automatically in reverse order.
 
 A task is lexically attached to the block in which it is created, such that
 when the block terminates, the task is implicitly terminated (triggering active
 defers).
 
-A pool of tasks groups related active tasks as a collection.
+A task pool groups related active tasks as a collection.
 A task that lives in a pool is lexically attached to the block in which the
 pool is created.
 
@@ -968,7 +967,7 @@ coro C () { <...> }         ;; a coro prototype `C`
 val c = coroutine(C)        ;; is instantiated as `c`
 resume c()                  ;; and resumed explicitly
 
-val ts = tasks()            ;; a pool of tasks `ts`
+val ts = tasks()            ;; a task pool `ts`
 task T () { <...> }         ;; a task prototype `T`
 val t = spawn T() in ts     ;; is instantiated as `t` in pool `ts`
 broadcast(:X)               ;; broadcast resumes `t`
@@ -1110,7 +1109,7 @@ Examples:
 do {
     1           ;; ERR: innocuous expression
     pass 1      ;; OK:  innocuous but explicit
-    ...
+    <...>
 }
 ```
 -->
@@ -1535,8 +1534,6 @@ Patt : [`(´] (Decl | Oper | Const) [`)´]
         Full : [ID] [TAG] [`,´ [Expr]]
 ```
 
-`TODO: Clock`
-
 A pattern is enclosed by optional parenthesis and has three possible forms:
 
 - A *constructor pattern* `Cons` compares the head value against the given
@@ -1555,6 +1552,7 @@ A pattern is enclosed by optional parenthesis and has three possible forms:
     satisfied.
     The identifier, tag and condition are all optional, but the identifier
     cannot appear alone, requiring a compaining tag or `,`.
+    The identifier defaults to `it`.
 
 Examples:
 
@@ -1563,7 +1561,7 @@ ifs f() {
     [1,2,3]    => println("f() === [1,2,3]")
     >= g()     => println("f() >= g()")
     :tuple     => println("f() is? :tuple")
-    x :T, g(x) => println("x=f(), (x is? :T) and g(x)")
+    :T, g(it)  => println("it=f(), (it is? :T) and g(it)")
     x,         => println("f() = ", x)
     else {
         error("impossible case")
@@ -1765,13 +1763,16 @@ catch :Err {                          ;; catches generic error
 
 ## Coroutine Operations
 
-The basic API for coroutines has 5 operations:
+The basic API for coroutines has 4 operations:
 
 1. [`coroutine`](#create-resume-spawn): creates a new coroutine from a prototype
-2. [`yield`](#yield): suspends the resumed coroutine
+2. [`status`](#status): consults the coroutine status
 3. [`resume`](#create-resume-spawn): starts or resumes a coroutine
-4. [`abort`](#TODO): `TODO`
-5. [`status`](#status): consults the coroutine status
+4. [`yield`](#yield): suspends the resumed coroutine
+
+<!--
+5. [`abort`](#TODO): `TODO`
+-->
 
 Note that `yield` is the only operation that is called from the coroutine
 itself, all others are called from the user code controlling the coroutine.
@@ -1808,8 +1809,8 @@ do {
 
 ### Create
 
-The operation `coroutine` creates a new coroutine from a
-[prototype](#prototype-values):
+The operation `coroutine` creates a new [active coroutine](#active-values) from
+a [coroutine prototype](#prototype-values):
 
 ```
 Create : `coroutine´ `(´ Expr `)´
@@ -1823,11 +1824,26 @@ Examples:
 
 ```
 coro C () {
-    ...
+    <...>
 }
 val c = coroutine(C)
 println(C, c)   ;; --> coro: 0x... / exe-coro: 0x...
 ```
+
+### Status
+
+The operation `status` returns the current state of the given active coroutine:
+
+```
+Status : `status´ `(´ Expr `)´
+```
+
+As described in [Active Values](#active-values), a coroutine has 3 possible
+status:
+
+1. `yielded`: idle and ready to be resumed
+2. `resumed`: currently executing
+3. `terminated`: terminated and unable to be resumed
 
 ### Resume
 
@@ -1855,22 +1871,6 @@ resume co()     ;; --> 1
 resume co()     ;; --> 2
 ```
 
-### Status
-
-The operation `status` returns the status of the given active coroutine:
-
-```
-Status : `status´ `(´ Expr `)´
-```
-
-As described in [Active Values](#active-values), a coroutine has 4 possible
-status:
-
-1. `yielded`: idle and ready to be resumed
-2. `toggled`: ignoring resumes
-3. `resumed`: currently executing
-4. `terminated`: terminated and unable to be resumed
-
 ### Yield
 
 The operation `yield` suspends the execution of a running coroutine:
@@ -1893,7 +1893,7 @@ lost.
 
 The operation `resume-yield-all´ continuously resumes the given active
 coroutine, collects its yields, and yields upwards each value, one at a time.
-It is typically use to delegate job of an outer coroutine transparently to an
+It is typically use to delegate a job of an outer coroutine transparently to an
 inner coroutine:
 
 ```
@@ -1913,7 +1913,8 @@ do {
         if (status(co) /= :terminated) or (v /= nil) {
             set arg = yield(v)      ;; takes next arg from upwards
         }
-    } until (status(co) == :terminated)
+        until (status(co) == :terminated)
+    }
     arg
 }
 ```
@@ -1948,163 +1949,154 @@ val a5 = resume g(a4+1)                 ;; g(9), a5=10
 println(a1, a2, a3, a4, a5)             ;; --> 2, 5, 7, 8, 10
 ```
 
-### Toggle
-
-The operation `toggle` configures an active coroutine to ignore or acknowledge
-further `resume` operations:
-
-```
-Toggle : `toggle´ Expr `(´ Expr `)´
-```
-
-A `toggle` expects an active coroutine and a [boolean](#basic-types) value
-between parenthesis.
-If the toggle is set to `true`, the coroutine will ignore further `resume`
-operations, otherwise it will execute normally.
-
 ## Task Operations
 
-A task can refer to itself with the identifier `task`.
-
-A task has a public `pub` variable that can be accessed as a
-[field](#indexes-and-fields):
-    internally as `task.pub`, and
-    externally as `x.pub` where `x` is a reference to the task.
-
-In addition to the coroutines API, tasks also rely on the following operations:
+The basic API for tasks has 6 operations:
 
 1. [`spawn`](#create-resume-spawn): creates and resumes a new task from a prototype
-2. [`await`](#await): yields the resumed task until it matches an event
-3. [`broadcast`](#broadcast): broadcasts an event to all tasks
+2. [`tasks`](#task-pools): creates a task pool
+3. [`status`](#status): consults the task status
+4. [`await`](#await): yields the resumed task until it matches an event
+5. [`broadcast`](#broadcast): broadcasts an event and awake all tasks
+6. [`toggle`](#toggle): either ignore or accept awakes
 
-4. [`toggle`](#toggle): either ignore or acknowledge resumes
+A task has a public `pub` variable that can be accessed internally as `pub`,
+and as a [field operation](#indexes-and-fields) `x.pub` where `x` is refers to
+the task.
 
 Examples:
 
 ```
 task T (x) {
-    set task.pub = x            ;; sets 1 or 2
-    await :number               ;; awakes from broadcast
-    println(task.pub + evt)     ;; --> 11 or 12
+    set pub = x                 ;; sets 1 or 2
+    val n = await(:number)      ;; awaits a number broadcast
+    println(pub + n)            ;; --> 11 or 12
 }
 val t1 = spawn T(1)
 val t2 = spawn T(2)
 println(t1.pub, t2.pub)         ;; --> 1, 2
-broadcast 10                    ;; evt = 10
+broadcast(10)                   ;; awakes all tasks passing 10
 ```
 
 ```
 task T () {
-    await true
+    val n = await(:number)
+    println(n)
 }
-val tsk = spawn T()
-val trk = track(tsk)
-println(tsk, detrack(trk))      ;; --> x-task: 0x...    x-task: 0x...
-broadcast true                  ;; terminates task, clears track
-println(tsk, detrack(trk))      ;; --> x-task: 0x...    x-task: nil
-```
-
-```
-task T () {
-    await :number
-    println(evt)
-}
-val ts = tasks()                ;; pool of tasks
+val ts = tasks()                ;; task pool
 do {
-    spawn in ts, T()            ;; attached to outer pool,
-    spawn in ts, T()            ;; not to enclosing block
+    spawn T() in ts             ;; attached to outer pool,
+    spawn T() in ts             ;; not to enclosing block
 }
-broadcast 10                    ;; --> 10 \n 10
+broadcast(10)                   ;; --> 10, 10
 ```
 
-### Await
+### Spawn
 
-The operation `await` suspends the execution of a running task until a
-condition is true:
-
-```
-Await : `await´ [`:check-now`] (
-            | Expr
-            | TAG [`,´ Expr]
-            | [Expr `:h´] [Expr `:min´] [Expr `:s´] [Expr `:ms´]
-        )
-```
-
-An `await` is expected to be used in conjunction with event
-[broadcasts](#broadcast), allowing the condition expression to query the
-variable `evt` with the occurring event.
-
-All await variations are expansions based on `yield`.
-
-An `await <e>` expands as follows:
+A spawn creates and starts an [active task](#active-values) from a
+[task prototype](#prototypes):
 
 ```
-yield()                 ;; omit if :check-now is set
-loop if not <e> {
-    yield ()
-}
+Spawn : `spawn´ Expr `(´ [List(Expr)] `)´ [`in´ Expr]
 ```
+    
+The task receives an optional list of arguments.
 
-The expansion yields while the condition is false.
-When the optional tag `:check-now` is set, the condition is tested immediately,
-and the coroutine may not yield at all.
-
-An `await <tag>, <e>` expands as follows:
-
-```
-yield() ;; (unless :check-now)
-loop if not ((evt is? <tag>) [and <e>]) {
-    yield ()
-}
-```
-
-The expansion yields until the `evt` is of the given tag.
-The optional `<e>` is also required to be true if provided.
-
-Given a time expression, an `await <time>` sleeps for a number of milliseconds
-and expands as follows:
-
-```
-val ms = <...>              ;; time expression
-loop if ms > 0 {
-    await :frame            ;; assumes a :frame event
-    set ms = ms - evt[0]    ;;  with the elapsed ms at [0]
-}
-```
-
-The expansion yields until the expected number of milliseconds elapses from
-occurrences of `:frame` events representing the passage of time.
-The time expression expects the format `<e>:h <e>:min <e>:s <e>:ms` and is
-converted to milliseconds.
-
-`TODO: configurable :frame event`
+A spawn receives expects a task protoype, an optional list of arguments, and an
+optional pool to hold the task.
+The operation returns a reference to the active task.
 
 Examples:
 
 ```
-await true                          ;; awakes on any broadcast
-await :key, evt.press==:release     ;; awakes on :key with press=:release
-await 1:h 10:min 30:s               ;; awakes after the specified time
+task T (v, vs) {                ;; task prototype accepts 2 args
+    <...>
+}
+val t = spawn T(10, [1,2,3])    ;; starts task passing args
+println(t)                      ;; --> exe-task 0x...
+```
+
+### Task Pools
+
+The `tasks` operation creates a [task pool](#active-values) to hold
+[active tasks](#active-values):
+
+```
+Pool : `tasks´ `(´ Expr `)´
+```
+
+The operation receives an optional expression with the maximum number of task
+instances to hold.
+If the pool is full, a further spawn fails and returns `nil`.
+
+Examples:
+
+```
+task T () {
+    <...>
+}
+val ts = tasks(1)               ;; task pool
+val t1 = spawn T() in ts        ;; success
+val t2 = spawn T() in ts        ;; failure
+println(ts, t1, t2)             ;; --> tasks: 0x... / exe-task 0x... / nil
+```
+
+### Await
+
+The operation `await` suspends the execution of a running task until an event
+[broadcast](#broadcast) matches the condition pattern:
+
+```
+Await : `await´ Patt [`{´ Block `}´]
+
+Patt  : [`(´] (Decl | Oper | Const | Clock) [`)´]
+            Clock : [TAG `:h´] [TAG `:min´] [TAG `:s´] [TAG `:ms´]
+```
+
+Whenever an event is broadcast, it is compared against an `await` pattern.
+If it matches, the task is resumed and executes statement after the `await`.
+
+An `await` accepts an optional block that can access the event value when the
+condition pattern matches.
+If the block is omitted, the pattern requires parenthesis.
+
+In addition to standard [`ifs` patterns](#pattern-matching), an `await` also
+accepts a clock timer that matches the pattern when the given time elapses.
+A clock pattern is the sum of the given time units and tag prefixes.
+The tag prefix must be numeric (e.g., `:10`) or represent a variable identifier
+(e.g., `:x`).
+
+Examples:
+
+```
+await(,false)                   ;; never awakes
+await(:key, it.code==:escape)   ;; awakes on :key with press=:release
+await(:1:h:10:min:30:s)         ;; awakes after the specified time
+await e, {                      ;; awakes on any event
+    println(e)                  ;; and shows it
+}
 ```
 
 ### Broadcast
 
-The operation `broadcast` signals an event to awake [watching](#await) tasks:
+The operation `broadcast` signals an event to awake [awaiting](#await) tasks:
 
 ```
-Bcast : `broadcast´ [`in´ Expr `,´] Expr
+Bcast : `broadcast´ `(´ Expr `)´ [`in´ Expr]
 ```
 
-A `broadcast` expects an event expression and an optional target between `in`
-and `,`.
-The event is any valid expression, which is assigned to the special variable
-[`evt`](#declarations-and-assignments) and can be queried by await operations
-to decide if tasks should awake.
-The target expression restricts the scope of the broadcast:
-    if set to `:local`, it is restricted to tasks in the enclosing block;
-    if set to `:task`, it is restricted to tasks nested in the current task;
-    if set to an active task expresion, it is restricted to that task; and
-    if omited or set to `:global`, all tasks receive the broadcast.
+A `broadcast` expects an event expression and an optional target.
+The event is matched against the patterns in `await` operations, which
+determines the tasks to awake.
+The target expression, with the options as follows, restricts the scope of the
+broadcast:
+
+- `:task`: restricts the broadcast to nested tasks in the current task, which
+    is also the default behavior if the target is omitted;
+- `:global`: does not restrict the broadcast, which considers the program as a
+    whole;
+- otherwise, target must be a task, which restricts the broadcast to it and its
+    nested tasks.
 
 Examples:
 
@@ -2112,50 +2104,57 @@ Examples:
 <...>
 task T () {
     <...>
-    do {
-        <...>
-        val x = spawn X()
-        <...>
-        val e = :Evt [1,2]
-        broadcast in :local,  e     ;; restricted to enclosing `do { ... }`
-        broadcast in :task,   e     ;; restricted to enclosing `task T () { ... }`
-        broadcast in x,       e     ;; restricted to spawned `x`
-        broadcast in :global, e     ;; no restriction
-        broadcast e                 ;; no restriction
-    }
+    val x = spawn X()
+    <...>
+    broadcast(e) in :task       ;; restricted to enclosing task `T`
+    broadcast(e)                ;; restricted to enclosing task `T`
+    broadcast(e) in x           ;; restricted to spawned `x`
+    broadcast(e) in :global     ;; no restrictions
 }
 ```
 
-### Track and Detrack
+### Toggle
 
-The `track` and `detrack` operations manipulate [dynamic
-references](#active-values) to tasks:
+The operation `toggle` configures an active task to ignore or consider further
+`broadcast` operations:
 
 ```
-Track   : `track´ `(´ Expr `)´
-Detrack : `detrack´ `(´ Expr `)´
+Toggle : `toggle´ Expr `(´ Expr `)´
 ```
 
-A `track` expects an [active task](#active-values) and returns a reference to
-it.
-A reference is automatically cleared when the referred task terminates or goes
-out of scope.
-A reference cannot manipulate a task directly, requiring a `detrack`.
+A `toggle` expects an active task and a [boolean](#basic-types) value
+between parenthesis, which is handled as follows:
 
-A `detrack` expects a [track reference](#active-values) and returns the
-referred task or `nil` if it was cleared.
-Because it is a reference that terminate, the result of `detrack` cannot be
-cannot be assigned to other variables.
+- `false`: the task ignores further broadcasts;
+- `true`: the task checks further broadcasts.
 
-`TODO: across yield`
+### Syntactic Block Extensions
 
+Ceu provides some syntactic block extensions to work with tasks more
+effectively.
 
-<!--
-They are both functions in the [primary library](#primary-library) of Ceu.
--->
+#### Spawn Blocks
 
-### Pools of Tasks
-### Syntax Extensions Blocks
+A `spawn` block starts an anonymous nested task:
+
+```
+Spawn : `spawn´ `{´ Block `}´
+```
+
+The task cannot be assigned or referred explicitly.
+Also, any access to `pub` refers to the enclosing task.
+
+The extension is equivalent to the code that follows:
+
+```
+spawn (task :nested () {
+    <...>
+}) ()
+```
+
+The `:nested` annotation is an internal mechanism to indicate that nested task
+is anonymous and unassignable.
+
 #### Every Block
 
 An `every` block is a loop that makes an iteration whenever an await condition
@@ -2375,7 +2374,7 @@ the sense that they cannot be written in Ceu itself:
 - `status`:         [Status](#status)
 - `sup?`:           [Types and Tags](#types-and-tags)
 - `tags`:           [Types and Tags](#types-and-tags)
-- `tasks`:          [Pool of Tasks](#pool-of-tasks)
+- `tasks`:          [Task Pool](#task-pools)
 - `error`:          [Exceptions](#exceptions)
 - `to-number`:      [Conversions](#conversions)
 - `to-string`:      [Conversions](#conversions)
@@ -2805,7 +2804,7 @@ Expr' : `do´ [:unnest[-hide]] Block                     ;; explicit block
       | `broadcast´ [`in´ Expr `,´] Expr                ;; broadcast event
       | `track´ `(´ Expr `)´                            ;; track task
       | `detrack´ `(´ Expr `)´                          ;; detrack task
-      | `tasks´ `(´ Expr `)´                            ;; pool of tasks
+      | `tasks´ `(´ Expr `)´                            ;; task pool
       | `spawn´ `in´ Expr `,´ Expr `(´ Expr `)´         ;; spawn task in pool
 
       | `spawn´ Expr `(´ Expr `)´                       ;; spawn coro
