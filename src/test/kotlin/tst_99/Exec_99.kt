@@ -1362,17 +1362,6 @@ class Exec_99 {
     // SPAWN
 
     @Test
-    fun ii_00_nested() {
-        val out = test("""
-            task :nested () {
-                nil
-            }
-            println(:ok)
-        """)
-        assert(out == ":ok\n") { out }
-    }
-
-    @Test
     fun ii_01_spawn_task() {
         val out = test("""
             spawn {
@@ -1476,6 +1465,55 @@ class Exec_99 {
         """)
         assert(out == "1\n2\n") { out }
     }
+
+    // SPAWN / NESTED
+
+    /*
+    @Test
+    fun ij_01_nested() {
+        val out = test("""
+            task :nested () {
+                nil
+            }
+            println(:ok)
+        """)
+        assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing spawn\n") { out }
+    }
+    @Test
+    fun ij_02_nested() {
+        val out = test("""
+            val t = spawn (task :nested () {
+                nil
+            })()
+            println(t)
+        """)
+        assert(out == "anon : (lin 2, col 21) : spawn task :nested error : expected immediate enclosing block\n") { out }
+    }
+    @Test
+    fun ij_03_nested() {
+        val out = test("""
+            do {
+                spawn (task :nested () {
+                    nil
+                })()
+            }
+        """)
+        assert(out == "anon : (lin 3, col 17) : spawn task :nested error : cannot escape enclosing block\n") { out }
+    }
+    @Test
+    fun ij_04_nested() {
+        val out = test("""
+            do {
+                spawn (task :nested () {
+                    println(:ok)
+                })()
+                nil
+            }
+        """)
+        assert(out == ":ok\n") { out }
+    }
+     */
+
 
     // PAR / PAR-AND / PAR-OR
 

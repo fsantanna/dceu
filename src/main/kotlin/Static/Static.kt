@@ -27,6 +27,17 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                     } else {
                         err(this.tk, "task :nested error : expected enclosing task")
                     }
+
+                    /*
+                    val up1 = ups.pub[this]
+                    val up2 = if (up1==null) null else ups.pub[up1]
+                    when {
+                        (up1 !is Expr.Spawn) -> err(this.tk, "task :nested error : expected enclosing spawn")
+                        (up2 !is Expr.Do) -> err(up1.tk, "spawn task :nested error : expected immediate enclosing block")
+                        (ups.pub[up2] == outer.clo) -> {}    // OK: outer spawn
+                        (up2.es.last() == up1) -> err(up1.tk, "spawn task :nested error : cannot escape enclosing block")
+                    }
+                     */
                 }
                 this.blk.traverse()
             }
