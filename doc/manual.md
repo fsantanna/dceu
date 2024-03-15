@@ -558,8 +558,8 @@ The following tags are pre-defined in Ceu:
     ;; type enumeration
 
     :nil :tag :bool :char :number :pointer          ;; basic types
-    :func :coro :task                               ;; prototypes
     :tuple :vector :dict                            ;; collections
+    :func :coro :task                               ;; prototypes
     :exe-coro :exe-task :tasks                      ;; active coro/task
     :tasks                                          ;; task pool
 
@@ -2456,47 +2456,63 @@ terminates.
 
 ## Primary Library
 
-The primary library provides functions and operations that are primitive in
-the sense that they cannot be written in Ceu itself:
+The primary library provides primitive functions and operations:
 
-- `/=`:             [Equality Operators](#equality-operators)
-- `==`:             [Equality Operators](#equality-operators)
-- `copy`:           [Copy and Drop](#copy-and-drop)
-- `coroutine`:      [Create, Resume, Spawn](#create-resume-spawn)
-- `detrack`:        [Track and Detrack](#track-and-detrack)
-- `drop`:           [Copy and Drop](#copy-and-drop)
-- `next`:           [Dictionary Next](#dictionary-next)
-- `print`:          [Print](#print)
-- `println`:        [Print](#print)
-- `status`:         [Status](#status)
-- `sup?`:           [Types and Tags](#types-and-tags)
-- `tags`:           [Types and Tags](#types-and-tags)
-- `tasks`:          [Task Pool](#task-pools)
-- `error`:          [Exceptions](#exceptions)
-- `to-number`:      [Conversions](#conversions)
-- `to-string`:      [Conversions](#conversions)
-- `to-tag`:         [Conversions](#conversions)
-- `track`:          [Track and Detrack](#track-and-detrack)
-- `type`:           [Types and Tags](#types-and-tags)
+- [`==`](#equality-operators):
+    compares if values are equal
+- [`/=`](#equality-operators):
+    compares if values are not equal
+- [`#`](#length-operator):
+    consults the length of a tuple or vector
+- [`coroutine`](#create):
+    creates a coroutine
+- [`error`](#exceptions):
+    raises an exception
+- [`next-dict`](#next-operations):
+    traverses a dictionary
+- [`next-tasks`](#next-operations):
+    traverses a task pool
+- [`print`](#print):
+    outputs values to the screen
+- [`println`](#println):
+    outputs values to the screen with a line break
+- [`status`](#status):
+    consults the status of a coroutine or task
+- [`sup?`](#types-and-tags):
+    checks if a tag is a supertype of another
+- [`tags`](#types-and-tags):
+    checks and sets value tags
+- [`tasks`](#task-pools):
+    creates a task pool
+- [`to-number`](#type-conversions):
+    converts value to number
+- [`to-string`](#type-conversions):
+    converts value to string
+- [`to-tag`](#type-conversions):
+    converts value to tag
+X [`tuple`](#TODO):
+    creates a tuple
+- [`type`](#types-and-tags):
+    consults the type of a value
+
+This library is primitive in the sense that it cannot be written in Ceu itself.
 
 ### Equality Operators
 
 ```
-func {{==}} (v1, v2)  ;; --> yes/no
-func {{/=}} (v1, v2)  ;; --> yes/no
+func {{==}} (v1, v2)  ;; --> :bool
+func {{/=}} (v1, v2)  ;; --> :bool
 ```
 
-The operator `==` compares two values `v1` and `v2` and returns a boolean.
+The operators `==` and `/=` compare two values `v1` and `v2` to check if they
+are equal or not equal.
+The operator `==` returns `true` if the values are equal and `false` otherwise.
 The operator `/=` is the negation of `==`.
 
 To be considered equal, first the values must be of the same type.
 In addition, [static values](#static-values) are compared *by value*, while
 [dynamic values](#dynamic-values) and [active values](#active-values) are
 compared *by reference*.
-<!--
-The exception are tuples, which are compared by value, i.e., they must be of
-the same size, with all positions having the same value (using `==`).
--->
 
 Examples:
 
@@ -2504,31 +2520,53 @@ Examples:
 1 == 1          ;; --> true
 1 /= 1          ;; --> false
 1 == '1'        ;; --> false
-#[1] == #[1]    ;; --> false
 [1] == [1]      ;; --> false
+```
+
+```
+val t1 = [1]
+val t2 = t1
+t1 == t2        ;; --> true
+```
+
+### Length Operator
+
+```
+func {{#}} (v)      ;; --> :number
+```
+
+The operator `#` returns the length of the received tuple or vector.
+
+Examples:
+
+```
+val tup = []
+val vec = #[1,2,3]
+println(#tup, #vec)     ;; --> 0 / 3
 ```
 
 ### Types and Tags
 
 ```
 func type (v)           ;; --> :type
-func sup? (sup, sub)    ;; --> yes/no
+func sup? (tag1, tag2)  ;; --> :bool
 func string-to-tag (s)  ;; --> :tag
 func tags (v, t, set)   ;; --> v
-func tags (v, t)        ;; --> yes/no
+func tags (v, t)        ;; --> :bool
 ```
 
 The function `type` receives a value `v` and returns its [type](#types) as one
-of these tags:
-    `:nil`, `:bool`, `:char`, `:number`, `:pointer`, `:tag`,
+of the tags that follows:
+    `:nil`, `:tag`, `:bool`, `:char`, `:number`, `:pointer`,
     `:tuple`, `:vector`, `:dict`,
-    `:func`, `:coro`, `:task`, `:x-coro`, `:x-task`, `:x-tasks`, `:x-track`.
+    `:func`, `:coro`, `:task`,
+    `:exe-coro`, `:exe-task`, `tasks`.
 
-The function `sup?` receives a tag `sup`, a tag `sub`, and returns a boolean
-to answer if `sup` is a [super-tag](#hierarchical-tags) of `sub`.
+The function `sup?` receives tags `tag1` and `tag2`, and returns if `tag1` is
+a [super-tag](#hierarchical-tags) of `tag2`.
 
-The function `tags` sets or queries tags associated with values of [non-basic
-types](#user-types).
+The function `tags` sets or queries tags associated with values of
+[user types](#user-types).
 To set or unset a tag, the function receives a value `v`, a tag `t`, and a
 boolean `set` to set or unset the tag.
 The function returns the same value passed to it.
@@ -2544,7 +2582,7 @@ val x = tags([], :x, true)      ;; value x=[] is associated with tag :x
 tags(x, :x)                     ;; --> true
 ```
 
-### Conversions
+### Type Conversions
 
 ```
 func to-number (v)  ;; --> number
@@ -2554,7 +2592,7 @@ func to-tag (v)     ;; --> :tag
 
 The conversion functions receive any value `v` and try to convert it to a value
 of the specified type.
-If the conversion is not possible, they return `nil`.
+If the conversion is not possible, the function returns `nil`.
 
 Examples:
 
@@ -2565,51 +2603,42 @@ to-string(10)       ;; --> "10"
 to-tag(":number")   ;; --> :number
 ```
 
-### Copy and Drop
-
-`TODO: lval, set nil, single ref, only a problem if par scope`
+### Next Operations
 
 ```
-func drop (v)   ;; --> v
-func copy (v)   ;; --> v'
+func next-dict  (dic,  cur)  ;; --> nxt
+func next-tasks (tsks, cur)  ;; --> nxt
 ```
 
-The function `copy` makes a deep copy of the given value `v`.
-Only values of the [basic types](#basic-types) and [collections](#collections)
-are supported.
+The `next` operations allow to traverse collections step by step.
 
-The function `drop` makes a deep drop of the given value `v`.
-A drop [deattaches](#lexical-memory-management) the value from its current
-[block](#blocks), allowing it to be reattached to an outer scope.
-Only values of the [basic types](#basic-types) and [collections](#collections)
-are supported.
+The function `next-dict` receives a dictionary `dic`, a key `cur`, and returns
+the key `nxt` that follows `cur`.
+If `cur` is `nil`, the function returns the initial key.
+The function returns `nil` if there are no reamining keys to enumerate.
+
+The function `next-tasks` receives a task pool `tsks`, a task `cur`, and
+returns task `nxt` that follows `cur`.
+If `cur` is `nil`, the function returns the initial task.
+The function returns `nil` if there are no reamining tasks to enumerate.
 
 Examples:
 
 ```
-copy(10)            ;; --> 10
-copy(func() {})     ;; --> ERR: cannot copy function
-copy([1,[2],3])     ;; --> [1,[2],3]
-
-val v = 10
-drop(v)             ;; --> 10 (innocuous drop)
-
-val u = do {
-    val t = [10]
-    drop(t)         ;; --> [10] (deattaches from `t`, reattaches to `u`)
-}
+val d = [(:k1,10), (:k2,20)]
+val k1 = next-dict(d)
+val k2 = next-dict(d, k1)
+println(k1, k2)     ;; --> :k1 / :k2
 ```
 
-### Dictionary Next
-
 ```
-func next (d, k)
+val ts = tasks()
+spawn T() in ts     ;; tsk1
+spawn T() in ts     ;; tsk2
+val t1 = next-tasks(ts)
+val t2 = next-tasks(ts, t1)
+println(t1, t2)     ;; --> tsk1 / tsk2
 ```
-
-The function `next` allows to enumerate the keys of a dictionary.
-It receives a dictionary `d` and a key `k`, and returns the next key after `k`.
-If `k` is `nil`, the function returns the initial key.
-The function returns `nil` if there are no reamining keys to enumerate.
 
 ### Print
 
