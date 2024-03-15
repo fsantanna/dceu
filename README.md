@@ -1,4 +1,4 @@
-# The Programming Language Ceu
+# The Programming Language Ceu (v0.3)
 
 Ceu is a [synchronous programming language][1] that reconciles *[Structured
 Concurrency][2]* with *[Event-Driven Programming][3]* to extend classical

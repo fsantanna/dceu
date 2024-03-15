@@ -1,4 +1,4 @@
-# The Programming Language Ceu
+# The Programming Language Ceu (v0.3)
 
 - <a href="#design">1.</a> DESIGN
     - <a href="#structured-deterministic-concurrency">1.1.</a> Structured Deterministic Concurrency

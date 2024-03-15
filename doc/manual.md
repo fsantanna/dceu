@@ -1,4 +1,4 @@
-# The Programming Language Ceu
+# The Programming Language Ceu (v0.3)
 
 * DESIGN
     * Structured Deterministic Concurrency
