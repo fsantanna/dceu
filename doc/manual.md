@@ -3,7 +3,8 @@
 * DESIGN
     * Structured Deterministic Concurrency
     * Event Signaling Mechanisms
-    * Hierarchical Tags
+    * Hierarchical Tags and Tuple Templates
+    * Integration with C
 * LEXICON
     * Keywords
     * Symbols
@@ -943,7 +944,7 @@ Coroutines and tasks have 4 possible status:
 The main difference between coroutines and tasks is how they resume execution:
 
 - A coroutine resumes explicitly from a
-  [resume operation](#create-resume-spawn).
+  [resume operation](#resume).
 - A task resumes implicitly from a [broadcast operation](#broadcast).
 
 Before a coroutine or task is collected, it is implicitly aborted, and all
@@ -1620,7 +1621,7 @@ loop {
 }
 ```
 
-#### Numeric Ranges
+### Numeric Ranges
 
 In a numeric loop, the `in` clause specifies an interval `x => y` to iterate
 over.
@@ -1765,9 +1766,9 @@ catch :Err {                          ;; catches generic error
 
 The API for coroutines has the following operations:
 
-- [`coroutine`](#create-resume-spawn): creates a new coroutine from a prototype
-- [`status`](#status): consults the coroutine status
-- [`resume`](#create-resume-spawn): starts or resumes a coroutine
+- [`coroutine`](#coroutine-create): creates a new coroutine from a prototype
+- [`status`](#coroutine-status): consults the coroutine status
+- [`resume`](#spawn): starts or resumes a coroutine
 - [`yield`](#yield): suspends the resumed coroutine
 
 <!--
@@ -1807,7 +1808,7 @@ do {
 }                           ;; --> aborted
 ```
 
-### Create
+### Coroutine Create
 
 The operation `coroutine` creates a new [active coroutine](#active-values) from
 a [coroutine prototype](#prototype-values):
@@ -1834,7 +1835,7 @@ println(C, c)   ;; --> coro: 0x... / exe-coro: 0x...
 5. [`abort`](#TODO): `TODO`
 -->
 
-### Status
+### Coroutine Status
 
 The operation `status` returns the current state of the given active coroutine:
 
@@ -1971,9 +1972,9 @@ println(a1, a2, a3, a4, a5)             ;; --> 2, 5, 7, 8, 10
 
 The API for tasks has the following operations:
 
-- [`spawn`](#create-resume-spawn): creates and resumes a new task from a prototype
+- [`spawn`](#spawn): creates and resumes a new task from a prototype
 - [`tasks`](#task-pools): creates a task pool
-- [`status`](#status): consults the task status
+- [`status`](#task-status): consults the task status
 - [`pub`](#public-field): exposes the task public field
 - [`await`](#await): yields the resumed task until it matches an event
 - [`broadcast`](#broadcast): broadcasts an event and awake all tasks
@@ -2060,7 +2061,7 @@ val t2 = spawn T() in ts        ;; failure
 println(ts, t1, t2)             ;; --> tasks: 0x... / exe-task 0x... / nil
 ```
 
-### Status
+### Task Status
 
 The operation `status` returns the current state of the given active task:
 
@@ -2464,7 +2465,7 @@ The primary library provides primitive functions and operations:
     compares if values are not equal
 - [`#`](#length-operator):
     consults the length of a tuple or vector
-- [`coroutine`](#create):
+- [`coroutine`](#coroutine-create):
     creates a coroutine
 - [`error`](#exceptions):
     raises an exception
@@ -2476,8 +2477,8 @@ The primary library provides primitive functions and operations:
     outputs values to the screen
 - [`println`](#println):
     outputs values to the screen with a line break
-- [`status`](#status):
-    consults the status of a coroutine or task
+- `status`:
+    consults the status of a [coroutine](#coroutine-status) or [task](#task-status)
 - [`sup?`](#types-and-tags):
     checks if a tag is a supertype of another
 - [`tags`](#types-and-tags):
