@@ -2102,15 +2102,15 @@ class TXExec {
         assert(out == "#[[1],[2],[3]]\n") { out }
     }
 
-    // string-to-tag
+    // to-tag-string
 
     @Test
     fun ff_01_string_to_tag() {
         val out = all("""
             pass :xyz
-            println(string-to-tag(":x"))
-            println(string-to-tag(":xyz"))
-            println(string-to-tag("xyz"))
+            println(to-tag-string(":x"))
+            println(to-tag-string(":xyz"))
+            println(to-tag-string("xyz"))
         """, true)
         assert(out == "nil\n:xyz\nnil\n") { out }
     }
@@ -2333,7 +2333,7 @@ class TXExec {
             val x :T.A.x = :T.A.x [10]
             println(x)
             println(x.v)
-            println(string-to-tag(":T.A.z"))
+            println(to-tag-string(":T.A.z"))
         """, true)
         assert(out == "20\t30\t50\ntrue\tfalse\ttrue\n") { out }
     }

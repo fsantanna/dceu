@@ -23,7 +23,7 @@ syn keyword Statement   detrack
 syn keyword Statement   ifs resume-yield-all
 
 syn keyword Statement   dump error next print println
-syn keyword Statement   string-to-tag sup tags tuple type
+syn keyword Statement   to-tag-string sup tags tuple type
 syn keyword Statement   pointer-to-string throw
 syn keyword Statement   coroutine status
 syn keyword Statement   pub

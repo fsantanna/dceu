@@ -201,7 +201,7 @@ val to-number = func (v) {
 
 val to-tag = func (v) {
     if type(v) == :string {
-        string-to-tag(v)
+        to-tag-string(v)
     } else {
         v   ;; TODO
     }

@@ -9,18 +9,6 @@ import org.junit.runners.MethodSorters
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_02 {
 
-    // POINTER-TO-STRING
-
-    @Test
-    fun bb_01() {
-        val out = test("""
-            val ptr = `:pointer "abc"`
-            val str = pointer-to-string(ptr)
-            println(str)
-        """)
-        assert(out == "abc\n") { out }
-    }
-
     // DEFER
 
     @Test

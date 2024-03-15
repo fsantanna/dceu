@@ -269,29 +269,13 @@ func string? (v) {
     ((v is? :vector) and (#v > 0)) and (v[0] is? :char)
 }
 
-func c-to-string (v) {
-    assert(type(v) == :pointer)
-    val str = #[]
-    loop i in {0 => `:number strlen($v.Pointer)`{ {
-        val c = `:char ((char*)$v.Pointer)[(int)$i.Number]`
-        set str[+] = c
-    }
-    str
-}
-
 func :rec to-string (v) {
     ifs v {
         is? :nil => "nil"
-        is? :pointer => c-to-string(v)
-        is? :tag => c-to-string(`:pointer ceu_tag_to_string($v.Tag)`)
+        is? :pointer => to-string-pointer(v)
+        is? :tag => to-string-tag(v)
         is? :char => #[v]
-        is? :number => do {
-            ```
-            static char str[255];
-            snprintf(str, 255, "%g", $v.Number);
-            ```
-            to-string(`:pointer str`)
-        }
+        is? :number => to-string-number(v)
         else => v   ;; TODO
     }
 }
@@ -318,7 +302,7 @@ func to-char (v) {
 
 func to-tag (v) {
     ifs v {
-        {{string?}} => string-to-tag(v)
+        {{string?}} => to-tag-string(v)
         else        => v   ;; TODO
     }
 }

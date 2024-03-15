@@ -7,6 +7,7 @@ import java.util.*
 var DUMP = true
 var DEBUG = true
 var CEU = 1
+
     // 1: dyn-lex               ;; 17 (no dots) / 7 "definitely lost"
     // 2: defer, throw/catch    ;; 6 "definitely lost"
     // 3: coro, yield, resume   ;; 0 "definitely lost"
@@ -92,11 +93,11 @@ val TAGS = listOf (
 
 val GLOBALS = setOf (
     "dump", "error", "next-dict", "print", "println",
-    "string-to-tag", "sup?", "tags",
+    "sup?", "tags",
+    "to-string-number", "to-string-pointer",
+    "to-tag-string",
     "tuple", "type", "{{#}}", "{{==}}", "{{/=}}",
-) + (if (CEU < 2) setOf() else setOf(
-    "pointer-to-string"
-)) + (if (CEU < 3) setOf() else setOf(
+) + (if (CEU < 3) setOf() else setOf(
     "coroutine", "status"
 )) + (if (CEU < 4) setOf() else setOf(
     "broadcast'"

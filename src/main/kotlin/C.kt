@@ -328,7 +328,6 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_dyn_to_val (CEU_Dyn* dyn);
 
     int ceu_tags_f (CEUX* X);
-    char* ceu_tag_to_string (int tag);
     int ceu_type_to_size (int type);
 
     void ceu_gc_inc_val (CEU_Value v);
@@ -356,9 +355,7 @@ fun Coder.main (tags: Tags): String {
     void ceu_print1 (CEU_Value v);
     CEU_Value _ceu_equals_equals_ (CEU_Value e1, CEU_Value e2);
 
-    #if CEU >= 2
-    int ceu_pointer_dash_to_dash_string_f (CEUX* X);
-    #endif
+    char* ceu_to_dash_string_dash_tag (int tag);
     #if CEU >= 3
     int ceu_isexe_dyn (CEU_Dyn* dyn);
     int ceu_isexe_val (CEU_Value val);
@@ -531,7 +528,7 @@ fun Coder.main (tags: Tags): String {
     #if CEU < 2
         CEU_Value arg = ceux_peek(X->S, ceux_arg(X,0));
         assert(arg.type == CEU_VALUE_TAG);
-        return ceu_error_s(X->S, ceu_tag_to_string(arg.Tag));
+        return ceu_error_s(X->S, ceu_to_dash_string_dash_tag(arg.Tag));
     #else
         return ceu_error_v(X->S, ceux_peek(X->S, ceux_arg(X,0)));
     #endif
@@ -1404,18 +1401,10 @@ fun Coder.main (tags: Tags): String {
         }
         return 1;
     }
+    
+    // TO-TAG-*
 
-    char* ceu_tag_to_string (int tag) {
-        CEU_Tags_Names* cur = CEU_TAGS;
-        while (cur != NULL) {
-            if (cur->tag == tag) {
-                return cur->name;
-            }
-            cur = cur->next;
-        }
-        assert(0 && "bug found");
-    }
-    int ceu_string_dash_to_dash_tag_f (CEUX* X) {
+    int ceu_to_dash_tag_dash_string_f (CEUX* X) {
         assert(X->args == 1);
         CEU_Value str = ceux_peek(X->S, ceux_arg(X,0));
         assert(str.type==CEU_VALUE_VECTOR && str.Dyn->Vector.unit==CEU_VALUE_CHAR);
@@ -1431,9 +1420,21 @@ fun Coder.main (tags: Tags): String {
         ceux_push(X->S, 1, ret);
         return 1;
     }
+    
+    // TO-STRING-*
 
-
-    CEU_Value ceu_pointer_dash_to_dash_string (const char* ptr) {
+    char* ceu_to_dash_string_dash_tag (int tag) {
+        CEU_Tags_Names* cur = CEU_TAGS;
+        while (cur != NULL) {
+            if (cur->tag == tag) {
+                return cur->name;
+            }
+            cur = cur->next;
+        }
+        assert(0 && "bug found");
+    }
+    
+    CEU_Value ceu_to_dash_string_dash_pointer (const char* ptr) {
         assert(ptr != NULL);
         CEU_Value str = ceu_create_vector();
         int len = strlen(ptr);
@@ -1443,16 +1444,35 @@ fun Coder.main (tags: Tags): String {
         }
         return str;
     }
-
-    #if CEU >= 2
-    int ceu_pointer_dash_to_dash_string_f (CEUX* X) {
+    
+    int ceu_to_dash_string_dash_pointer_f (CEUX* X) {
         assert(X->args == 1);
         CEU_Value ptr = ceux_peek(X->S, ceux_arg(X,0));
         assert(ptr.type==CEU_VALUE_POINTER && ptr.Pointer!=NULL);
-        ceux_push(X->S, 1, ceu_pointer_dash_to_dash_string(ptr.Pointer));
+        ceux_push(X->S, 1, ceu_to_dash_string_dash_pointer(ptr.Pointer));
         return 1;
     }
-    #endif
+
+    int ceu_to_dash_string_dash_tag_f (CEUX* X) {
+        assert(X->args == 1);
+        CEU_Value t = ceux_peek(X->S, ceux_arg(X,0));
+        assert(t.type == CEU_VALUE_TAG);        
+        ceux_push(X->S, 1, ceu_to_dash_string_dash_pointer(ceu_to_dash_string_dash_tag(t.Tag)));
+        return 1;
+    }
+
+    int ceu_to_dash_string_dash_number_f (CEUX* X) {
+        assert(X->args == 1);
+        CEU_Value n = ceux_peek(X->S, ceux_arg(X,0));
+        assert(n.type == CEU_VALUE_NUMBER);
+        
+        char str[255];
+        snprintf(str, 255, "%g", n.Number);
+        assert(strlen(str) < 255);
+
+        ceux_push(X->S, 1, ceu_to_dash_string_dash_pointer(str));
+        return 1;
+    }
     """
     }
     fun tuple_vector_dict (): String {
@@ -1917,7 +1937,7 @@ fun Coder.main (tags: Tags): String {
                 printf("error: %s", (v.Error==NULL ? "(null)" : v.Error));
                 break;
             case CEU_VALUE_TAG:
-                printf("%s", ceu_tag_to_string(v.Tag));
+                printf("%s", ceu_to_dash_string_dash_tag(v.Tag));
                 break;
             case CEU_VALUE_BOOL:
                 if (v.Bool) {

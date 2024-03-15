@@ -3834,7 +3834,7 @@ class Exec_01 {
         assert(out == "false\ntrue\n") { out }
     }
 
-    // to-number, to-string, to-tag, string-to-tag
+    // to-number, to-string, to-tag, to-tag-string
 
     @Test
     fun qq_01_tostring() {
@@ -3886,9 +3886,9 @@ class Exec_01 {
         val out = test(
             """
             do :xyz
-            println(string-to-tag(#[':','x']))
+            println(to-tag-string(#[':','x']))
             println(to-tag(#[':','x','y','z']))
-            println(string-to-tag(#['x','y','z']))
+            println(to-tag-string(#['x','y','z']))
             println(to-tag(:abc))
         """, true
         )
@@ -3901,7 +3901,7 @@ class Exec_01 {
             data :A = []
             data :A.B = []
             data :A.B.C = []
-            println(string-to-tag(#[':','A']), string-to-tag(#[':','A','.','B']), string-to-tag(#[':','A','.','B','.','C']))
+            println(to-tag-string(#[':','A']), to-tag-string(#[':','A','.','B']), to-tag-string(#[':','A','.','B','.','C']))
         """
         )
         assert(out == ":A\t:A.B\t:A.B.C\n") { out }
@@ -3910,24 +3910,42 @@ class Exec_01 {
     fun ff_03_string_to_tag() {
         val out = test(
             """
-            val x = string-to-tag(#[':','x'])
+            val x = to-tag-string(#[':','x'])
             println(x == :x)
-            val y = string-to-tag(#[':','y'])
+            val y = to-tag-string(#[':','y'])
             println(y)
         """
         )
         assert(out == "true\nnil\n") { out }
     }
+    @Test
+    fun ff_04_tostring_pointer() {
+        val out = test("""
+            val ptr = `:pointer "abc"`
+            val str = to-string-pointer(ptr)
+            println(str)
+        """)
+        assert(out == "abc\n") { out }
+    }
+    @Test
+    fun ff_05_tostring_number() {
+        val out = test("""
+            val str = to-string-number(10)
+            println(str)
+        """)
+        assert(out == "10\n") { out }
+    }
 
-    // string-to-tag
+
+    // to-tag-string
 
     @Test
     fun ff_04_string_to_tag() {
         val out = test("""
             do :xyz
-            println(string-to-tag(":x"))
-            println(string-to-tag(":xyz"))
-            println(string-to-tag("xyz"))
+            println(to-tag-string(":x"))
+            println(to-tag-string(":xyz"))
+            println(to-tag-string("xyz"))
         """)
         assert(out == "nil\n:xyz\nnil\n") { out }
     }
@@ -3937,7 +3955,7 @@ class Exec_01 {
             data :A = []
             data :A.B = []
             data :A.B.C = []
-            println(string-to-tag(":A"), string-to-tag(":A.B"), string-to-tag(":A.B.C"))
+            println(to-tag-string(":A"), to-tag-string(":A.B"), to-tag-string(":A.B.C"))
         """)
         assert(out == ":A\t:A.B\t:A.B.C\n") { out }
     }

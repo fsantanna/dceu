@@ -1036,7 +1036,7 @@ class Parser_99 {
         assert(trap { parser.expr() } == "anon : (lin 1, col 14) : expected \"{\" : have end of file")
     }
     @Test
-    fun jc_07_watching() {
+    fun TODO_jc_07_watching() { // 2x it is? :E
         val l = lexer("watching :E { nil }")
         val parser = Parser(l)
         val e = parser.expr()
@@ -1101,7 +1101,7 @@ class Parser_99 {
         val out = e.tostr()
         assert(out.contains("(set it = yield(nil))\n" +
                 "(break if do {\n" +
-                "(val ceu_150 = is'(it,:v))")) { out }
+                "(val ceu_149 = is'(it,:v))")) { out }
     }
 
     // METHODS

@@ -2894,7 +2894,7 @@ class Exec_99 {
                     :C = []
                 }
             }
-            println(string-to-tag(":A"), string-to-tag(":A.B"), string-to-tag(":A.B.C"))
+            println(to-tag-string(":A"), to-tag-string(":A.B"), to-tag-string(":A.B.C"))
         """, true)
         assert(out == ":A\t:A.B\t:A.B.C\n") { out }
     }
