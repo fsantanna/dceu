@@ -46,7 +46,7 @@
     * Coroutine Operations
         - `coroutine` `status` `resume` `yield` `resume-yield-all` <!--`abort`-->
     * Task Operations
-        - `spawn` `tasks` `pub` `await` `broadcast` `toggle`
+        - `pub` `spawn` `tasks` `status` `await` `broadcast` `toggle`
         - `spawn {}` `every` `par` `par-and` `par-or` `watching` `toggle {}`
 * STANDARD LIBRARY
     * Primary Library
@@ -935,10 +935,10 @@ be resumed later from their previous suspension point.
 
 Coroutines and tasks have 4 possible status:
 
-1. `yielded`: idle and ready to be resumed
-2. `toggled`: ignoring resumes (only for tasks)
-3. `resumed`: currently executing
-4. `terminated`: terminated and unable to be resumed
+- `yielded`: idle and ready to be resumed
+- `toggled`: ignoring resumes (only for tasks)
+- `resumed`: currently executing
+- `terminated`: terminated and unable to be resumed
 
 The main difference between coroutines and tasks is how they resume execution:
 
@@ -1763,12 +1763,12 @@ catch :Err {                          ;; catches generic error
 
 ## Coroutine Operations
 
-The basic API for coroutines has 4 operations:
+The API for coroutines has the following operations:
 
-1. [`coroutine`](#create-resume-spawn): creates a new coroutine from a prototype
-2. [`status`](#status): consults the coroutine status
-3. [`resume`](#create-resume-spawn): starts or resumes a coroutine
-4. [`yield`](#yield): suspends the resumed coroutine
+- [`coroutine`](#create-resume-spawn): creates a new coroutine from a prototype
+- [`status`](#status): consults the coroutine status
+- [`resume`](#create-resume-spawn): starts or resumes a coroutine
+- [`yield`](#yield): suspends the resumed coroutine
 
 <!--
 5. [`abort`](#TODO): `TODO`
@@ -1830,6 +1830,10 @@ val c = coroutine(C)
 println(C, c)   ;; --> coro: 0x... / exe-coro: 0x...
 ```
 
+<!--
+5. [`abort`](#TODO): `TODO`
+-->
+
 ### Status
 
 The operation `status` returns the current state of the given active coroutine:
@@ -1844,6 +1848,20 @@ status:
 1. `yielded`: idle and ready to be resumed
 2. `resumed`: currently executing
 3. `terminated`: terminated and unable to be resumed
+
+Examples:
+
+```
+coro C = coro () {
+    yield()
+}
+val c = coroutine(C)
+println(status(c))      ;; --> :yielded
+resume c()
+println(status(c))      ;; --> :yielded
+resume c()
+println(status(c))      ;; --> :terminated
+```
 
 ### Resume
 
@@ -1951,18 +1969,19 @@ println(a1, a2, a3, a4, a5)             ;; --> 2, 5, 7, 8, 10
 
 ## Task Operations
 
-The basic API for tasks has 6 operations:
+The API for tasks has the following operations:
 
-1. [`spawn`](#create-resume-spawn): creates and resumes a new task from a prototype
-2. [`tasks`](#task-pools): creates a task pool
-3. [`status`](#status): consults the task status
-4. [`await`](#await): yields the resumed task until it matches an event
-5. [`broadcast`](#broadcast): broadcasts an event and awake all tasks
-6. [`toggle`](#toggle): either ignore or accept awakes
+- [`spawn`](#create-resume-spawn): creates and resumes a new task from a prototype
+- [`tasks`](#task-pools): creates a task pool
+- [`status`](#status): consults the task status
+- [`pub`](#public-field): exposes the task public field
+- [`await`](#await): yields the resumed task until it matches an event
+- [`broadcast`](#broadcast): broadcasts an event and awake all tasks
+- [`toggle`](#toggle): either ignore or accept awakes
 
-A task has a public `pub` variable that can be accessed internally as `pub`,
-and as a [field operation](#indexes-and-fields) `x.pub` where `x` is refers to
-the task.
+<!--
+5. [`abort`](#TODO): `TODO`
+-->
 
 Examples:
 
@@ -2039,6 +2058,66 @@ val ts = tasks(1)               ;; task pool
 val t1 = spawn T() in ts        ;; success
 val t2 = spawn T() in ts        ;; failure
 println(ts, t1, t2)             ;; --> tasks: 0x... / exe-task 0x... / nil
+```
+
+### Status
+
+The operation `status` returns the current state of the given active task:
+
+```
+Status : `status´ `(´ Expr `)´
+```
+
+As described in [Active Values](#active-values), a task has 4 possible status:
+
+- `yielded`: idle and ready to be resumed
+- `toggled`: ignoring resumes
+- `resumed`: currently executing
+- `terminated`: terminated and unable to be resumed
+
+Examples:
+
+```
+task T = task () {
+    await(,true)
+}
+val t = spawn T()
+println(status(t))      ;; --> :yielded
+toggle t(false)
+broadcast(nil)
+println(status(t))      ;; --> :toggled
+toggle t(true)
+broadcast(nil)
+println(status(t))      ;; --> :terminated
+```
+
+### Public Field
+
+Tasks expose a public variable `pub` that is accessible externally:
+
+```
+Pub : `pub´ | Expr `.´ `pub´
+```
+
+The variable is accessed internally as `pub`, and externally as a
+[field operation](#indexes-and-fields) `x.pub`, where `x` refers to the task.
+
+When the task terminates, the public field assumes the final task value.
+
+Examples:
+
+```
+task T () {
+    set pub = 10
+    await(,true)
+    println(pub)    ;; --> 20
+    30              ;; final task value
+}
+val t = spawn T()
+println(t.pub)      ;; --> 10
+set t.pub = 20
+broadcast(nil)
+println(t.pub)      ;; --> 30
 ```
 
 ### Await
@@ -2132,6 +2211,7 @@ between parenthesis, which is handled as follows:
 
 Ceu provides some syntactic block extensions to work with tasks more
 effectively.
+The extensions expand to standard task operations.
 
 #### Spawn Blocks
 
@@ -2144,57 +2224,66 @@ Spawn : `spawn´ `{´ Block `}´
 The task cannot be assigned or referred explicitly.
 Also, any access to `pub` refers to the enclosing task.
 
-The extension is equivalent to the code that follows:
+The `spawn` extension expands as follows:
 
 ```
-spawn (task :nested () {
+spawn (task () {
     <...>
 }) ()
 ```
 
+Except regarding `pub` access, the extension is equivalent to this expansion.
+
+<!--
 The `:nested` annotation is an internal mechanism to indicate that nested task
 is anonymous and unassignable.
+-->
 
-#### Every Block
+Examples:
+
+```
+spawn {
+    await(:X)
+    println(":X occurred")
+}
+```
+
+#### Every Blocks
 
 An `every` block is a loop that makes an iteration whenever an await condition
 is satisfied:
 
 ```
-Every : `every´ <awt>
-            [Test]              ;; optional head test
-            Block               ;; mandatory block
-            [{Test Block}]      ;; optional test/block
-            [Test]              ;; optional tail test
+Every : `every´ Patt Block
 ```
 
-An `every` expands to a [loop](#loops-and-iterators) as follows:
+The `every` extension expands as follows:
 
 ```
 loop {
-    await <awt>
-    <...>       ;; tests and blocks
+    await <Patt> {
+        <Block>
+    }
 }
 ```
-
-Any [`await`](#await) variation can be used as `<awt>`.
-It is assumed that `<...>` does not `await` to satisfy the meaning of "every".
 
 Examples:
 
 ```
-every 1:s {
+every :1:s {
     println("1 more second has elapsed")
 }
 ```
 
-#### Spawn Blocks
-
-A spawn block spawns an anonymous task:
+```
+every x :X, f(x) {
+    println(":X satisfies f(x)")
+}
+```
 
 #### Parallel Blocks
 
-A parallel block spawns multiple anonymous tasks concurrently:
+A parallel block spawns multiple anonymous tasks:
 
 ```
 Par     : `par´     Block { `with´ Block }
@@ -2203,37 +2292,36 @@ Par-Or  : `par-or´  Block { `with´ Block }
 ```
 
 A `par` never rejoins, even if all spawned tasks terminate.
-A `par-and` rejoins when all spawned tasks terminate.
-A `par-or` rejoins when any spawned task terminates, aborting the others.
+A `par-and` rejoins only after all spawned tasks terminate.
+A `par-or` rejoins as soon as any spawned task terminates, aborting the others.
 
-A `par { <es1> } with { <es2> }` expands as follows:
+The `par` extension expands as follows:
 
 ```
 do {
     spawn {
-        <es1>           ;; first task
+        <Block-1>       ;; first task
     }
+    <...>
     spawn {
-        <es2>           ;; second task
+        <Block-N>       ;; Nth task
     }
-    await false         ;; never rejoins
+    await(,false)       ;; never rejoins
 }
-
 ```
 
-A `par-and { <es1> } with { <es2> }` expands as follows:
+The `par-and` extension expands as follows:
 
 ```
 do {
     val t1 = spawn {
-        <es1>           ;; first task
+        <Block-1>       ;; first task
     }
-    val t2 = spawn {
-        <es2>           ;; second task
+    <...>
+    val tN = spawn {
+        <Block-N>       ;; Nth task
     }
-    await :check-now (  ;; rejoins when all tasks terminate
-        status(t1)==:terminated and status(t2)==:terminated
-    )
+    await(, status(t1)==:terminated and ... and status(tN)==:terminated)
 }
 ```
 
@@ -2242,30 +2330,31 @@ A `par-or { <es1> } with { <es2> }` expands as follows:
 ```
 do {
     val t1 = spawn {
-        <es1>           ;; first task
+        <Block-1>       ;; first task
     }
-    val t2 = spawn {
-        <es2>           ;; second task
+    <...>
+    val tN = spawn {
+        <Block-N>       ;; Nth task
     }
-    await :check-now (  ;; rejoins when any task terminates
-        status(t1)==:terminated or status(t2)==:terminated
-    )
-}                       ;; aborts other active tasks
+    await(, (status(t1)==:terminated and t1.pub) or
+            <...> or
+            (status(tN)==:terminated and tN.pub))
+}
 ```
 
 Examples:
 
 ```
 par {
-    every 1:s {
+    every :1:s {
         println("1 second has elapsed")
     }
 } with {
-    every 1:min {
+    every :1:min {
         println("1 minute has elapsed")
     }
 } with {
-    every 1:h {
+    every :1:h {
         println("1 hour has elapsed")
     }
 }
@@ -2274,39 +2363,38 @@ println("never reached")
 
 ```
 par-or {
-    await 1:s
+    await(:1:s)
 } with {
-    await :X
+    await(:X)
     println(":X occurred before 1 second")
 }
 ```
 
 ```
 par-and {
-    await :X
+    await(:X)
 } with {
-    await :Y
+    await(:Y)
 }
 println(":X and :Y have occurred")
 ```
 
-#### Awaiting Block
+#### Watching Blocks
 
 An `watching` block executes a given block until an await condition is
 satisfied:
 
 ```
-Watching : `watching´ <awt> Block
+Watching : `watching´ Patt Block
 ```
 
-An `watching <awt> { <es> }` expands to a [`par-or`](#parallel-blocks) as
-follows:
+A `watching` extension expands as follows:
 
 ```
 par-or {
-    await <awt>
+    await(<Patt>)
 } with {
-    <es>
+    <Block>
 }
 ```
 
@@ -2320,36 +2408,45 @@ watching :1:s {
 }
 ```
 
-#### Toggle Block
+#### Toggle Blocks
 
-A `toggle` block executes a given block and [toggles](#toggle) it according to
-given off and on events:
+A `toggle` block executes a given block and [toggles](#toggle) it when a
+broadcast event matches the given tag:
 
 ```
-Toggle : `toggle´ Await `->´ Await Block
+Toggle : `toggle´ TAG Block
 ```
 
-A `toggle <off> -> <on> { <es> }` expands as follows:
+The control event must be a tagged tuple with the given tag, holding a single
+boolean value to toggle the block, e.g.:
+
+- `:X [true]`  activates the block.
+- `:X [false]` deactivates the block.
+
+The `toggle` extension expands as follows:
 
 ```
 do {
     val t = spawn {
-        <es>
+        <Block>
     }
-    watching :check-now t {
-        loop {
-            await <off>
-            toggle t(false)
-            await <on>
-            toggle t(true)
+    if status(t) /= :terminated {
+        watching (,it==t) {
+            loop {
+                await(<TAG>, not it[0])
+                toggle t(false)
+                await(<TAG>, it[0])
+                toggle t(true)
+            }
         }
     }
     t.pub
 }
 ```
 
-The block executes normally, until `<off>` toggles it off, until `<on>` toggles
-if on again.
+The given block executes normally, until a `false` is received, toggling it
+off.
+Then, when a `true` is received, it toggles the block on.
 The whole composition terminates when the task representing the given block
 terminates.
 
