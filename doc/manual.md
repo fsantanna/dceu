@@ -2459,24 +2459,26 @@ terminates.
 
 The primary library provides primitive functions and operations:
 
-- [`==`](#equality-operators):
-    compares if values are equal
-- [`/=`](#equality-operators):
-    compares if values are not equal
+- [`==`,`/=`](#equality-operators):
+    compare if values are equal
+- [`+`,`-`,`*`,`/`](#arithmetic-operators):
+    perform arithmetic operations
+- [`>`,`>=`,`<=`,`<`](#relational-operators):
+    perform relational operations
 - [`#`](#length-operator):
     consults the length of a tuple or vector
 - [`coroutine`](#coroutine-create):
     creates a coroutine
 - [`error`](#exceptions):
     raises an exception
-- [`next-dict`](#next-operations):
-    traverses a dictionary
-- [`next-tasks`](#next-operations):
-    traverses a task pool
-- [`print`](#print):
-    outputs values to the screen
-- [`println`](#println):
-    outputs values to the screen with a line break
+- [`math-cos`,`math-floor`,`math-sin`](#TODO):
+    perform mathematical operations
+- [`next-dict`,`next-tasks`](#next-operations):
+    traverse dictionaries and task pools
+- [`print`,`println`](#print):
+    output values to the screen
+- [`random-seed`,`random-next`](#random-numbers):
+    generate random numbers
 - `status`:
     consults the status of a [coroutine](#coroutine-status) or [task](#task-status)
 - [`sup?`](#types-and-tags):
@@ -2485,13 +2487,10 @@ The primary library provides primitive functions and operations:
     checks and sets value tags
 - [`tasks`](#task-pools):
     creates a task pool
-- [`to-number`](#type-conversions):
-    converts value to number
-- [`to-string`](#type-conversions):
-    converts value to string
-- [`to-tag`](#type-conversions):
-    converts value to tag
-X [`tuple`](#TODO):
+- [`to-number`,`to-string`,`to-tag`](#type-conversions):
+    <!--`to-char`-->
+    perform type conversion operations
+- [`tuple`](#TODO):
     creates a tuple
 - [`type`](#types-and-tags):
     consults the type of a value
@@ -2501,8 +2500,8 @@ This library is primitive in the sense that it cannot be written in Ceu itself.
 ### Equality Operators
 
 ```
-func {{==}} (v1, v2)  ;; --> :bool
-func {{/=}} (v1, v2)  ;; --> :bool
+func {{==}} (v1, v2)    ;; --> :bool
+func {{/=}} (v1, v2)    ;; --> :bool
 ```
 
 The operators `==` and `/=` compare two values `v1` and `v2` to check if they
@@ -2528,6 +2527,57 @@ Examples:
 val t1 = [1]
 val t2 = t1
 t1 == t2        ;; --> true
+```
+
+### Arithmetic Operators
+
+```
+func {{+}} (v1, v2)     ;; --> :number
+func {{-}} (v1 [,v2])   ;; --> :number
+func {{*}} (v1 ,v2)     ;; --> :number
+func {{/}} (v1 ,v2)     ;; --> :number
+func {{%}} (v1 ,v2)     ;; --> :number
+```
+
+The operators `+`, `-`, `*` and `/` perform the standard arithmetics operations
+of *addition*, *subtraction*, *multiplication*, and *division*, respectively.
+
+The operator `%` performs the *remainder* operation.
+
+The operator `-` is also used as the unary minus when it prefixes an
+expression.
+
+Examples:
+
+```
+1 + 2       ;; --> 3
+1 - 2       ;; --> -1
+2 * 3       ;; --> 6
+5 / 2       ;; --> 2.5
+5 % 2       ;; --> 1
+-20         ;; --> -20
+```
+
+### Relational Operators
+
+```
+func {{>}}  (v1 ,v2)    ;; --> :bool
+func {{>=}} (v1 ,v2)    ;; --> :bool
+func {{<=}} (v1 ,v2)    ;; --> :bool
+func {{<}}  (v1, v2)    ;; --> :bool
+```
+
+The operators `>`, `>=`, `<=` and `<` perform the standard relational
+operations of *greater than*, *greater or equal than*, *less than*, and
+*less or equal then*, respectively.
+
+Examples:
+
+```
+1 > 2       ;; --> false
+2 >= 1      ;; --> true
+1 <= 1      ;; --> true
+1 < 2       ;; --> true
 ```
 
 ### Length Operator
@@ -2586,10 +2636,15 @@ tags(x, :x)                     ;; --> true
 ### Type Conversions
 
 ```
-func to-number (v)  ;; --> number
+func to-number (v)  ;; --> :number
 func to-string (v)  ;; --> "string"
-func to-tag (v)     ;; --> :tag
+func to-tag    (v)  ;; --> :tag
 ```
+
+<!--
+func to-char   (v)  ;; -> :char
+to-char(65)         ;; -> 'A'
+-->
 
 The conversion functions receive any value `v` and try to convert it to a value
 of the specified type.
@@ -2655,6 +2710,36 @@ Examples:
 ```
 println(1, :x, [1,2,3])     ;; --> 1   :x   [1,2,3]
 ```
+
+### Mathematical Operations
+
+```
+func math-cos   (v)     ;; --> :number
+func math-floor (v)     ;; --> :number
+func math-sin   (v)     ;; --> :number
+```
+
+The functions `math-sin` and `math-cos` compute the sine and cossine of the
+given number in radians, respectively.
+
+The function `math-floor` return the integral floor of a given real number.
+
+Examples:
+
+```
+math-sin(3.14)          ;; --> 0
+math-cos(3.14)          ;; --> -1
+math-floor(10.14)       ;; --> 10
+```
+
+### Random Numbers
+
+```
+func random-seed (n)
+func random-next ()     ;; --> :number
+```
+
+`TODO`
 
 ## Auxiliary Library
 
