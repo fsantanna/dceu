@@ -2,9 +2,23 @@ v0.3 (mar'24)
 -------------
 
 - Additions
+    - condition patterns (`ifs`, `catch`, `await`)
+    - pipe operators `->` `-->` `<--` `<-`
 - Changes
+    - arrow clause `->` to `=>`
+    - types `x-coro` `x-task` `x-tasks` -> `exe-coro` `exe-task` `tasks`
+    - statements
+        - `throw` -> `error`
+        - `loop if` `loop until` -> `break if` `skip if` `until` `while`
+        - `awaiting` -> `watching`
+        - `pass` -> `do`
 - Removals
     - lexical memory management for dynamic allocation
+    - `evt` `err` variables
+    - closure modifiers
+    - `track` statement
+    - `if` `ifs` condition declaration
+    - tags `:pre` `:tmp` `:check-now` `:fake`
 - Full re-implementation
 
 v0.2 (may'23)
