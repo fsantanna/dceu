@@ -63,14 +63,14 @@ spawn {
 1. Install `gcc` and `java`:
 
 ```
-$ sudo apt install gcc default-jre
+sudo apt install gcc default-jre
 ```
 
 2. Install `ceu`:
 
 ```
-$ wget https://github.com/fsantanna/dceu/releases/download/v0.3.0/install-v0.3.0.sh
-$ sh install-v0.3.0.sh ./ceu/
+wget https://github.com/fsantanna/dceu/releases/download/v0.3.0/install-v0.3.0.sh
+sh install-v0.3.0.sh ./ceu/
 ```
 
 - You may want to
@@ -80,7 +80,7 @@ $ sh install-v0.3.0.sh ./ceu/
 3. Execute `ceu`:
 
 ```
-$ ./ceu/ceu ./ceu/hello-world.ceu
+./ceu/ceu ./ceu/hello-world.ceu
 hello
 world
 ```
@@ -93,28 +93,28 @@ on [SDL][7]:
 1. Install `SDL`:
 
 ```
-$ sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libsdl2-gfx-dev
+sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libsdl2-gfx-dev
 ```
 
 1. Clone `pico-ceu`:
 
 ```
-$ cd ceu/
-$ git clone https://github.com/fsantanna/pico-ceu pico/
+cd ceu/
+git clone https://github.com/fsantanna/pico-ceu pico/
 ```
 
 2. Clone `pico-sdl`:
 
 ```
-$ cd pico/
-$ git clone https://github.com/fsantanna/pico-sdl sdl/
+cd pico/
+git clone https://github.com/fsantanna/pico-sdl sdl/
 ```
 
 3. Execute `pico-ceu`:
 
 ```
-$ cd ../../ # back to your initial working directory
-$ ./ceu/ceu --lib=pico ./ceu/pico/tst/par.ceu
+cd tst/
+../../ceu --lib=pico all.ceu
 ```
 
 - Your directory hierarchy should become as follows:
@@ -132,13 +132,13 @@ $ ./ceu/ceu --lib=pico ./ceu/pico/tst/par.ceu
 
 - A toy Problem: Drag, Click, or Cancel
     - https://fsantanna.github.io/toy.html
-    - Run with `pico-ceu`:
-        - `ceu --lib=pico ./ceu/pico/tst/click-drag-cancel.ceu`
+    - Run with `pico-ceu` in `ceu/pico/tst/`:
+        - `../../ceu --lib=pico click-drag-cancel-x.ceu`
 - Comparison with JS generators:
     - https://github.com/fsantanna/dceu/blob/main/src/test/kotlin/xceu/TXJS.kt
 - A simple but complete 2D game in Ceu:
     - https://github.com/fsantanna/pico-ceu-rocks
-    - Clone, cd to it, and run with `pico-ceu`:
-        - `ceu --lib=pico main.ceu`
+    - Clone in `ceu/pico/`, cd to it, and run with `pico-ceu`:
+        - `../../ceu --lib=pico main.ceu`
 - Academic publications:
     - http://ceu-lang.org/chico/#ceu
