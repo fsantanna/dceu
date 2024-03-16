@@ -2168,6 +2168,10 @@ Bcast : `broadcast´ `(´ Expr `)´ [`in´ Expr]
 A `broadcast` expects an event expression and an optional target.
 The event is matched against the patterns in `await` operations, which
 determines the tasks to awake.
+
+The special event `:Clock [ms]` advances timer patterns in await conditions,
+in which `ms` corresponds to the number of milliseconds to advance.
+
 The target expression, with the options as follows, restricts the scope of the
 broadcast:
 
@@ -2459,19 +2463,21 @@ terminates.
 
 The primary library provides primitive functions and operations:
 
-- [`==`,`/=`](#equality-operators):
-    compare if values are equal
-- [`+`,`-`,`*`,`/`](#arithmetic-operators):
-    perform arithmetic operations
-- [`>`,`>=`,`<=`,`<`](#relational-operators):
-    perform relational operations
 - [`#`](#length-operator):
     consults the length of a tuple or vector
-- [`coroutine`](#coroutine-create):
-    creates a coroutine
+- [`==`,`/=`](#equality-operators):
+    compare if values are equal
+- [`>`,`>=`,`<=`,`<`](#relational-operators):
+    perform relational operations
+- [`+`,`-`,`*`,`/`](#arithmetic-operators):
+    perform arithmetic operations
+- [`and`,`not`,`or`](#logical-operatos):
+    perform logical operations
+- [`coroutine`, `status`, `tasks`](#coroutine-create):
+    [coroutine](#coroutine-status) and [task](#task-status) operations
 - [`error`](#exceptions):
     raises an exception
-- [`math-cos`,`math-floor`,`math-sin`](#TODO):
+- [`math-cos`,`math-floor`,`math-sin`](#mathematical-operations):
     perform mathematical operations
 - [`next-dict`,`next-tasks`](#next-operations):
     traverse dictionaries and task pools
@@ -2479,23 +2485,36 @@ The primary library provides primitive functions and operations:
     output values to the screen
 - [`random-seed`,`random-next`](#random-numbers):
     generate random numbers
-- `status`:
-    consults the status of a [coroutine](#coroutine-status) or [task](#task-status)
 - [`sup?`](#types-and-tags):
     checks if a tag is a supertype of another
 - [`tags`](#types-and-tags):
     checks and sets value tags
-- [`tasks`](#task-pools):
-    creates a task pool
-- [`to-number`,`to-string`,`to-tag`](#type-conversions):
+- [`to-bool`,`to-number`,`to-string`,`to-tag`](#type-conversions):
     <!--`to-char`-->
     perform type conversion operations
-- [`tuple`](#TODO):
-    creates a tuple
 - [`type`](#types-and-tags):
     consults the type of a value
 
-This library is primitive in the sense that it cannot be written in Ceu itself.
+`TODO: tuple, tag-or`
+
+The primary library is primitive in the sense that it cannot be written in Ceu
+itself.
+
+### Length Operator
+
+```
+func {{#}} (v)      ;; --> :number
+```
+
+The operator `#` returns the length of the received tuple or vector.
+
+Examples:
+
+```
+val tup = []
+val vec = #[1,2,3]
+println(#tup, #vec)     ;; --> 0 / 3
+```
 
 ### Equality Operators
 
@@ -2529,35 +2548,6 @@ val t2 = t1
 t1 == t2        ;; --> true
 ```
 
-### Arithmetic Operators
-
-```
-func {{+}} (v1, v2)     ;; --> :number
-func {{-}} (v1 [,v2])   ;; --> :number
-func {{*}} (v1 ,v2)     ;; --> :number
-func {{/}} (v1 ,v2)     ;; --> :number
-func {{%}} (v1 ,v2)     ;; --> :number
-```
-
-The operators `+`, `-`, `*` and `/` perform the standard arithmetics operations
-of *addition*, *subtraction*, *multiplication*, and *division*, respectively.
-
-The operator `%` performs the *remainder* operation.
-
-The operator `-` is also used as the unary minus when it prefixes an
-expression.
-
-Examples:
-
-```
-1 + 2       ;; --> 3
-1 - 2       ;; --> -1
-2 * 3       ;; --> 6
-5 / 2       ;; --> 2.5
-5 % 2       ;; --> 1
--20         ;; --> -20
-```
-
 ### Relational Operators
 
 ```
@@ -2580,20 +2570,80 @@ Examples:
 1 < 2       ;; --> true
 ```
 
-### Length Operator
+### Arithmetic Operators
 
 ```
-func {{#}} (v)      ;; --> :number
+func {{+}} (v1, v2)     ;; --> :number
+func {{-}} (v1 [,v2])   ;; --> :number
+func {{*}} (v1 ,v2)     ;; --> :number
+func {{/}} (v1 ,v2)     ;; --> :number
+func {{%}} (v1 ,v2)     ;; --> :number
 ```
 
-The operator `#` returns the length of the received tuple or vector.
+The operators `+`, `-`, `*` and `/` perform the standard arithmetics operations
+of *addition*, *subtraction*, *multiplication*, and *division*, respectively.
+
+The operator `%` performs the *remainder* operation.
+
+The operator `-` is also used as the unary minus when it prefixes an
+expression.
+
+`TODO: *-*, //`
 
 Examples:
 
 ```
-val tup = []
-val vec = #[1,2,3]
-println(#tup, #vec)     ;; --> 0 / 3
+1 + 2       ;; --> 3
+1 - 2       ;; --> -1
+2 * 3       ;; --> 6
+5 / 2       ;; --> 2.5
+5 % 2       ;; --> 1
+-20         ;; --> -20
+```
+
+### Logical Operators
+
+```
+func not (v)
+func and (v1, v2)
+func or  (v1, v2)
+```
+
+The logical operators `not`, `and`, and `or` are functions with a special
+syntax to be used as prefix (`not`) and infix operators (`and`,`or`).
+
+A `not` receives a value `v` and is equivalent to the code as follows:
+
+```
+if v { false } else { true }
+```
+
+The operators `and` and `or` returns one of their operands `v1` or `v2`.
+
+An `and` is equivalent to the code as follows:
+
+```
+do {
+    val x = v1
+    if x { v2 } else { x }
+}
+```
+
+An `or` is equivalent to the code as follows:
+
+```
+do {
+    val x = v1
+    if x { x } else { v2 }
+}
+```
+
+Examples:
+
+```
+not not nil     ;; --> false
+nil or 10       ;; --> 10
+10 and nil      ;; --> nil
 ```
 
 ### Types and Tags
@@ -2636,9 +2686,10 @@ tags(x, :x)                     ;; --> true
 ### Type Conversions
 
 ```
+func to-bool   (v)  ;; --> :bool
 func to-number (v)  ;; --> :number
-func to-string (v)  ;; --> "string"
 func to-tag    (v)  ;; --> :tag
+func to-string (v)  ;; --> "string"
 ```
 
 <!--
@@ -2653,10 +2704,11 @@ If the conversion is not possible, the function returns `nil`.
 Examples:
 
 ```
+to-bool(nil)        ;; --> false
 to-number("10")     ;; --> 10
 to-number([10])     ;; --> nil
-to-string(10)       ;; --> "10"
 to-tag(":number")   ;; --> :number
+to-string(10)       ;; --> "10"
 ```
 
 ### Next Operations
@@ -2743,29 +2795,30 @@ func random-next ()     ;; --> :number
 
 ## Auxiliary Library
 
-- `:Iterator`:  [Iterator](#iterator)
-- `=/=`:        [Deep Equality Operators](#deep-equality-operators)
-- `===`:        [Deep Equality Operators](#deep-equality-operators)
-- `and`:        [Logical Operators](#boolean-operators)
-- `in?`:        [Operator In](#operator-in)
-- `in-not?`:    [Operator In](#operator-in)
-- `is?`:        [Operator Is](#operator-is)
-- `is-not?`:    [Operator Is](#operator-is)
-- `to-iter`:    [Iterator](#iterator)
-- `not`:        [Logical Operators](#boolean-operators)
-- `or`:         [Logical Operators](#boolean-operators)
+- [`===`,`=/=`](#deep-equality-operators):
+    compare if values are deeply equal
+- [`in?`,`in-not?`](#in-operators):
+    check if value is in collection
+- [`is?`,`is-not?`](#is-operators):
+    check if values are compatible
+- [`:Iterator`,`to-iter`,`to-set`,`to-vector`](#iterator-operations):
+    perform iterator operations
 
-`TODO: many others`
+`TODO: ++, <++, <|<`
+`TODO: min, max, between`
+`TODO: assert, copy, string?`
 
 ### Deep Equality Operators
 
 ```
-func {===} (v1, v2)  ;; --> yes/no
-func {=/=} (v1, v2)  ;; --> yes/no
+func {===} (v1, v2)  ;; --> :bool
+func {=/=} (v1, v2)  ;; --> :bool
 ```
 
-The operator `===` *deeply* compares two values `v1` and `v2` and returns a
-boolean.
+The operators `===` and `=/=` deeply compare two values `v1` and `v2` to check
+if they are equal or not equal.
+The operator `===` returns `true` if the values are deeply equal and `false`
+otherwise.
 The operator `=/=` is the negation of `===`.
 
 Except for [collections](#collections), deep equality behaves the same as
@@ -2784,52 +2837,7 @@ Examples:
 @[(:y,2),(:x,1)]        ;; --> false
 ```
 
-### Logical Operators
-
-```
-func not (v)
-func and (v1, v2)
-func or  (v1, v2)
-```
-
-The logical operators `not`, `and`, and `or` are functions with a special
-syntax to be used as prefix (`not`) and infix operators (`and`,`or`).
-
-A `not` receives a value `v` and expands as follows:
-
-```
-if v { false } else { true }
-```
-
-The operators `and` and `or` returns one of their operands `v1` or `v2`.
-
-An `and` expands as follows:
-
-```
-do {
-    val x :tmp = v1
-    if x { v2 } else { x }
-}
-```
-
-An `or` expands as follows:
-
-```
-do {
-    val x :tmp = v1
-    if x { x } else { v2 }
-}
-```
-
-Examples:
-
-```
-not not nil     ;; --> false
-nil or 10       ;; --> 10
-10 and nil      ;; --> nil
-```
-
-### Operator In
+### In Operators
 
 ```
 func in? (v, vs)
@@ -2853,7 +2861,7 @@ Examples:
 10 in? @[(1,10)]         ;; false
 ```
 
-### Operator Is
+### Is Operators
 
 ```
 func is? (v1, v2)
@@ -2884,7 +2892,7 @@ Examples:
 tags([],:x,true) is? :x  -> true
 ```
 
-### Iterator
+### Iterator Operations
 
 [Iterator loops](#iterators) in Ceu rely on the `:Iterator` template and
 `to-iter` constructor function as follows:
@@ -2927,6 +2935,13 @@ The function `to-iter` accepts the following iterables and modifiers:
 - Active Coroutine
     - On each call, the iterator resumes the coroutine and returns its yielded
       value. If the coroutine is terminated, it returns `nil`.
+
+```
+func to-set    (col)    ;; --> :dict
+func to-vector (col)    ;; --> :vector
+```
+
+`TODO`
 
 <!--
 - :Iterator
