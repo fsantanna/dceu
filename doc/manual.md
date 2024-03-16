@@ -29,7 +29,7 @@
         - `exe-coro` `exe-task` `tasks` (actives)
 * STATEMENTS
     * Program, Sequences and Blocks
-        - `;` `do` `defer` `pass`
+        - `;` `do` `defer`
     * Declarations and Assignments
         - `val` `var` `set`
     * Tag Enumerations and Tuple Templates
@@ -108,8 +108,8 @@ structure of the source code in blocks.
 In this sense, tasks in Ceu are treated in the same way as local variables in
 structured programming:
 When a [block](#blocks) of code terminates or goes out of scope, all of its
-[local variables](#declarations-and-assignments) and [tasks](#active-values)
-are deallocated and become inaccessible to enclosing blocks.
+[local variables](#declarations) and [tasks](#active-values) are deallocated
+and become inaccessible to enclosing blocks.
 In addition, tasks are properly aborted and finalized by [deferred
 statements](#defer).
 
@@ -348,6 +348,7 @@ The following keywords are reserved in Ceu:
 <!--
     ;;export              ;; export block
     ;;poly                ;; TODO
+    delay               ;; delay task
 -->
 
 ```
@@ -360,9 +361,8 @@ The following keywords are reserved in Ceu:
     coroutine           ;; coroutine creation
     data                ;; data declaration
     defer               ;; defer block
-    delay               ;; delay task
-    do                  ;; do block                         (10)
-    else                ;; else block
+    do                  ;; do block
+    else                ;; else block                       (10)
     enum                ;; enum declaration
     error               ;; throw error
     every               ;; every block
@@ -371,8 +371,8 @@ The following keywords are reserved in Ceu:
     if                  ;; if block
     ifs                 ;; ifs block
     in                  ;; in keyword
-    in?                 ;; in? operator                     (20)
-    in-not?             ;; in-not? operator
+    in?                 ;; in? operator
+    in-not?             ;; in-not? operator                 (20)
     is?                 ;; is? operator
     is-not?             ;; is-not? operator
     it                  ;; implicit parameter
@@ -381,8 +381,8 @@ The following keywords are reserved in Ceu:
     not                 ;; not operator
     or                  ;; or operator
     par-and             ;; par-and block
-    par-or              ;; par-or block                     (30)
-    par                 ;; par block
+    par-or              ;; par-or block
+    par                 ;; par block                        (30)
     pub                 ;; public variable
     resume              ;; resume coroutine
     resume-yield-all    ;; resume coroutine
@@ -391,8 +391,8 @@ The following keywords are reserved in Ceu:
     spawn               ;; spawn coroutine
     tasks               ;; task pool
     task                ;; task prototype/self identifier
-    thus                ;; thus pipe block                  (40)
-    toggle              ;; toggle coroutine/block
+    thus                ;; thus pipe block
+    toggle              ;; toggle coroutine/block           (40)
     true                ;; true value
     until               ;; until loop condition
     val                 ;; constant declaration
@@ -401,7 +401,7 @@ The following keywords are reserved in Ceu:
     where               ;; where block
     while               ;; while loop condition
     with                ;; with block
-    yield               ;; yield coroutine                  (50)
+    yield               ;; yield coroutine                  (49)
 ```
 
 ## Symbols
@@ -840,24 +840,22 @@ Examples:
 Ceu supports functions, coroutines, and tasks as prototype values:
 
 ```
-Func : `func´ [:rec] `(´ [List(ID [TAG])] [`...´] `)´ Block
-Coro : `coro´ [:rec] `(´ [List(ID [TAG])] [`...´] `)´ Block
-Task : `task´ [:rec] `(´ [List(ID [TAG])] [`...´] `)´ Block
+Func : `func´ `(´ [List(ID [TAG])] [`...´] `)´ Block
+Coro : `coro´ `(´ [List(ID [TAG])] [`...´] `)´ Block
+Task : `task´ `(´ [List(ID [TAG])] [`...´] `)´ Block
 ```
 
 Each prototype keyword is followed by an optional `:rec` modifier and a list of
 identifiers as parameters enclosed by parenthesis.
 Parameter declarations are equivalent to immutable `val`
-[declarations](#declarations-and-assignments) and can also be associated with
+[declarations](#declarations) and can also be associated with
 [tuple template](#tag-enumerations-and-tuple-templates) tags.
-If the prototype is recursive (i.e., refers to itself), the declaration must
-use the `:rec` modifier.
 
 `TODO: varargs`
 
 <!--
 The last parameter can be the symbol
-[`...`](#declarations-and-assignments), which captures as a tuple all
+[`...`](#declarations), which captures as a tuple all
 remaining arguments of a call.
 
 The symbol `...` represents the variable arguments (*varargs*) a function
@@ -877,8 +875,7 @@ identifier, which becomes an local variable in the execution block.
 A *closure* is a prototoype that accesses variables from outer blocks, known as
 *upvalues*.
 Ceu supports a restricted form of closures, in which *upvalues* must be
-immutable (thus declared with the modifier
-[`val`](#declarations-and-assignments)).
+immutable (thus declared with the modifier [`val`](#declarations)).
 
 Examples:
 
@@ -993,7 +990,7 @@ A sequence of expressions evaluate to its last expression.
 
 <!--
 The symbol
-[`...`](#declarations-and-assignments) stores the program arguments
+[`...`](#declarations) stores the program arguments
 as a tuple.
 -->
 
@@ -1002,7 +999,7 @@ as a tuple.
 ### Blocks
 
 A block delimits a lexical scope for
-[variables](#declarations-and-assignments) and [tasks](#active-values):
+[variables](#declarations) and [tasks](#active-values):
 A variable is only visible to expressions in the block in which it was
 declared.
 A task is automatically terminated when the block in which it was created
@@ -1012,12 +1009,14 @@ A block is not an expression by itself, but it can be turned into one by
 prefixing it with an explicit `do`:
 
 ```
-Do   : `do´ Block       ;; an explicit block statement
+Do : `do´ Block       ;; an explicit block statement
 ```
 
 Blocks also appear in compound statements, such as
 [conditionals](#conditionals-and-pattern-matching),
 [loops](#loops-and-iterators), and many others.
+
+`TODO: do Expr`
 
 Examples:
 
@@ -1117,6 +1116,8 @@ do {
 
 ## Declarations and Assignments
 
+### Declarations
+
 All variables in Ceu must be declared before use:
 
 ```
@@ -1129,11 +1130,6 @@ variable, which is set to `nil` otherwise.
 
 The difference between `val` and `var` is that a `val` is immutable, while a
 `var` declaration can be modified by further `set` statements:
-
-```
-Set : `set´ Expr `=´ Expr
-```
-
 The `val` modifier forbids that a name is reassigned, but it does not prevent
 that [dynamic values](#dynamic-values) are modified.
 
@@ -1146,6 +1142,23 @@ The template association is static but with no runtime guarantees.
 If the declaration omits the template tag, but the initialization expression is
 a [tag constructor](#collection-values), then the variable assumes this tag
 template, i.e., `val x = :X []` expands to `val x :X = :X []`.
+
+A [prototype](#prototype-values) can be declared as an immutable variable as
+follows:
+
+```
+Proto : `func´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block
+      | `coro´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block
+      | `task´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block
+```
+
+The optional `:rec` modifier allows the block to self refer to `ID`.
+
+### Assignments
+
+```
+Set : `set´ Expr `=´ Expr
+```
 
 Examples:
 
@@ -1219,8 +1232,8 @@ A template is surrounded by brackets (`[´ and `]´) to represent the tuple, and
 includes a list of identifiers, each mapping an index into a field.
 Each field can be followed by a tag to represent nested templates.
 
-A [variable declaration](#declarations-and-assignments) can specify a tuple
-template and hold a tuple that can be accessed by field.
+A [variable declaration](#declarations) can specify a tuple template and hold a
+tuple that can be accessed by field.
 
 Examples:
 
@@ -1426,8 +1439,8 @@ to declare variables that can be used by the expression.
 A `thus` clause assigns the result of the prefix expression into the given
 identifier, and then executes a block.
 If the identifier is omitted, it assumes the implicit identifier `it`.
-Like [prototypes](#declarations-and-assignments), the identifier can be
-associated with [tuple template](#tag-enumerations-and-tuple-templates) tags.
+Like in [declarations](#declarations), the identifier can be associated with
+[tuple template](#tag-enumerations-and-tuple-templates) tags.
 A clause such as `e1 thus { v => e2 }` is equivalent to `e1 -> \{ v => e2 }`,
 which combines [pipes](#pipe-calls) and [lambda](#lambda-prototype)
 expressions.
@@ -1529,7 +1542,7 @@ Ifs : <see above>
         Case :  Patt  (Block | `=>´ Expr)
         Else : `else´ (Block | `=>´ Expr)
 
-Patt : [`(´] (Decl | Oper | Const) [`)´]
+Patt : [`(´] (Cons | Oper | Full) [`)´]
         Cons : Expr
         Oper : OP [Expr]
         Full : [ID] [TAG] [`,´ [Expr]]
@@ -1544,8 +1557,8 @@ A pattern is enclosed by optional parenthesis and has three possible forms:
 - An *operation pattern* `Oper` calls the given predicate passing the head
     value and the optional expression.
 - A *full pattern* `Full` is composed of a
-    [variable declaration](#declarations-and-assignments] with identifier
-    and tag, and a condition expression.
+    [variable declaration](#declarations] with identifier and tag, and a
+    condition expression.
     The pattern assigns the head expression to the variable, which is visible
     by the condition expression and case branch.
     The pattern checks if the head expression matches the given tag using the
@@ -1895,7 +1908,7 @@ resume co()     ;; --> 2
 The operation `yield` suspends the execution of a running coroutine:
 
 ```
-Yield : `yield´ `(´ Expr `)´
+Yield : `yield´ `(´ [Expr] `)´
 ```
 
 An `yield` expects an expression between parenthesis that is returned to whom
@@ -2129,7 +2142,7 @@ The operation `await` suspends the execution of a running task until an event
 ```
 Await : `await´ Patt [`{´ Block `}´]
 
-Patt  : [`(´] (Decl | Oper | Const | Clock) [`)´]
+Patt  : [`(´] (Cons | Oper | Full | Clock) [`)´]
             Clock : [TAG `:h´] [TAG `:min´] [TAG `:s´] [TAG `:ms´]
 ```
 
@@ -2953,13 +2966,18 @@ data :Iterator = [f,s,tp,i]
 ```
 Prog  : { Expr [`;´] }
 Block : `{´ { Expr [`;´] } `}´
-Expr  : Expr' [`where´ Block | `thus´ [ID] Block]       ;; where/thus clauses
-Expr' : `do´ [:unnest[-hide]] Block                     ;; explicit block
+Expr  : `do´ Block                                      ;; explicit block
+      | `do´ Expr                                       ;; innocuous expression
       | `defer´ Block                                   ;; defer statements
-      | `pass´ Expr                                     ;; innocuous expression
+      | `(´ Expr `)´                                    ;; parenthesis
 
-      | `val´ ID [TAG] [`=´ [TAG] Expr]                 ;; declaration constant
-      | `var´ ID [TAG] [`=´ [TAG] Expr]                 ;; declaration variable
+      | `val´ ID [TAG] [`=´ [TAG] Expr]                 ;; decl constant
+      | `var´ ID [TAG] [`=´ [TAG] Expr]                 ;; decl variable
+
+      | `func´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block ;; decl func
+      | `coro´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block ;; decl coro
+      | `task´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block ;; decl task
+
       | `set´ Expr `=´ Expr                             ;; assignment
 
       | `enum´ `{´ List(TAG [`=´ Expr]) `}´             ;; tags enum
@@ -2968,92 +2986,82 @@ Expr' : `do´ [:unnest[-hide]] Block                     ;; explicit block
                     [`{´ { Data } `}´]
 
       | `nil´ | `false´ | `true´                        ;; literals &
-      | NAT | TAG | CHR | NUM | STR                     ;; identifiers
-      | ID | `...´
+      | NAT | TAG | CHR | NUM                           ;; identifiers
+      | ID | `pub´ | `...´
 
-      | [TAG] `[´ [List(Expr)] `]´                      ;; tuple
+      | `[´ [List(Expr)] `]´                            ;; tuple
       | `#[´ [List(Expr)] `]´                           ;; vector
       | `@[´ [List(Key-Val)] `]´                        ;; dictionary
             Key-Val : ID `=´ Expr
                     | `(´ Expr `,´ Expr `)´
+      | STR                                             ;; string
+      | TAG `[´ [List(Expr)] `]´                        ;; tagged tuple
 
-      | `(´ Expr `)´                                    ;; parenthesis
-      | Expr `(´ [List(Expr)] `)´                       ;; pos call
-      | Expr Lambda                                     ;; call lambda
+      | OP Expr                                         ;; pre ops
+      | Expr OP Expr                                    ;; bin ops
+      | Expr `(´ [List(Expr)] `)´                       ;; call
 
-      | OP Expr                                         ;; pre op
-      | Expr OP Expr                                    ;; bin op
-      | `not´ Expr                                      ;; op not
-      | Expr (`or´|`and´|`is?´|`is-not?´) Expr          ;; op bin
+      | Expr `[´ Expr `]´                               ;; index
+      | Expr `.´ ID                                     ;; dict field
+      | Expr `.´ `pub´                                  ;; task pub
+      | Expr `.´ `(´ TAG `)´                            ;; cast
 
-      | Expr `[´ Expr `]´                               ;; pos index
-      | Expr `.´ NUM                                    ;; op tuple index
-      | Expr `.´ ID                                     ;; pos dict field
-      | Expr `.´ `pub´                                  ;; pos task pub
+      | Expr `[´ (`=´|`+´|`-´) `]´                      ;; stack peek,push,pop
+      | Expr (`<--` | `<-` | `->` | `-->` ) Expr        ;; pipes
+      | Expr [`where´ Block | `thus´ [ID] Block]        ;; where/thus clauses
 
-      | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
-      | TAG Expr                                        ;; template cast
+      | `if´ Expr (Block | `=>´ Expr)                   ;; conditional
+        [`else´  (Block | `=>´ Expr)]
 
-      | `if´ [ID [TAG] `=´] Expr (Block | `->´ Expr)    ;; conditional
-        [`else´  (Block | `->´ Expr)]
+      | `ifs´ `{´ {Case} [Else] `}´ ;; conditionals     ;; conditionals
+            Case :  Expr  (Block | `=>´ Expr)
+            Else : `else´ (Block | `=>´ Expr)
 
-      | `ifs´ [[ID [TAG] `=´] Expr] `{´ {Case} [Else] `}´ ;; conditionals
-            Case : OP Expr (Block | `->´ Expr)
-                 | [ID [TAG] `=´] Expr (Block | `->´ Expr)
-            Else : `else´ (`->´ Expr | Block)
+      | `ifs´ Expr `{´ {Case} [Else] `}´                ;; pattern matching
+            Case :  Patt  (Block | `=>´ Expr)
+            Else : `else´ (Block | `=>´ Expr)
 
-      | `loop´ [`in´ Iter [`,´ ID [TAG]]]  [Test] Block ;; loops
-            [{Test Block}] [Test]
-            Test : (`until´ | `while´) [ID [TAG] `=´] Expr
-            Iter : Expr                                     ;; generic
-                 | `:tasks´ Expr                            ;; tasks
-                 | (`[´ | `(´) Expr `->´ Expr (`]´ | `)´)   ;; numeric
-                    [`,´ :step (`-´|`+´) Expr]
+      | `loop´ [[ID [TAG]] `in´ (Range | Expr)] Block   ;; loops
+            Range : (`{´ | `}´) Expr `=>` Expr (`{´ | `}´) [`:step` [`+´|`-´] Expr]
+      | `skip´ `if´ Expr                                ;; loop jump back
+      | `break´ [`(´ Expr `)´] `if´ Expr                ;; loop escape
+      | `until´ Expr
+      | `while´ Expr
 
-      | `catch´ Expr Block                              ;; catch exception
+      | `catch´ [Patt] Block                            ;; catch exception
       | `error´ `(´ Expr `)´                            ;; throw exception
 
-      | `func´ `(´ [List(ID)] `)´ Block                 ;; function
-      | `coro´ `(´ [List(ID)] `)´ Block                 ;; coroutine
-      | `task´ `(´ [List(ID)] `)´ Block                 ;; task
-      | Lambda                                          ;; lambda function
+      | `func´ `(´ [List(ID)] `)´ Block                 ;; anon function
+      | `coro´ `(´ [List(ID)] `)´ Block                 ;; anon coroutine
+      | `task´ `(´ [List(ID)] `)´ Block                 ;; anon task
+      | `\´ `{´ [ID [TAG] `=>´]  { Expr [`;´] }`}´      ;; anon function
 
-      | `func´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration func
-      | `coro´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration coro
-      | `task´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration task
+      | `status´ `(´ Expr `)´                           ;; coro/task status
 
       | `coroutine´ `(´ Expr `)´                        ;; create coro
-      | `status´ `(´ Expr `)´                           ;; coro status
-      | `yield´ `(´ Expr `)´                            ;; yield from coro
-      | `resume´ Expr `(´ Expr `)´                      ;; resume coro
-      | `toggle´ Expr `(´ Expr `)´                      ;; toggle coro
+      | `yield´ `(´ [Expr] `)´                          ;; yield from coro
+      | `resume´ Expr `(´ [Expr] `)´                    ;; resume coro
+      | `resume-yield-all´ Expr `(´ [Expr] `)´          ;; resume-yield nested coro
 
-      | `broadcast´ [`in´ Expr `,´] Expr                ;; broadcast event
-      | `track´ `(´ Expr `)´                            ;; track task
-      | `detrack´ `(´ Expr `)´                          ;; detrack task
+      | `spawn´ Expr `(´ [List(Expr)] `)´ [`in´ Expr]   ;; spawn task
       | `tasks´ `(´ Expr `)´                            ;; task pool
-      | `spawn´ `in´ Expr `,´ Expr `(´ Expr `)´         ;; spawn task in pool
+      | `await´ Patt [`{´ Block `}´]                    ;; await event
+      | `broadcast´ `(´ Expr `)´ [`in´ Expr]            ;; broadcast event
+      | `toggle´ Expr `(´ Expr `)´                      ;; toggle task
 
-      | `spawn´ Expr `(´ Expr `)´                       ;; spawn coro
-      | `spawn´ [`coro´] Block                          ;; spawn anonymous task/coro
-      | `await´ Await                                   ;; await event
-      | `resume-yield-all´ Expr `(´ Expr `)´            ;; resume-yield nested coro
-      | `every´ Await [Test] Block                      ;; await event in loop
-            [{Test Block}] [Test]
-      | `watching´ Await Block                          ;; abort on event
+      | `spawn´ Block                                   ;; spawn nested task
+      | `every´ Patt Block                              ;; await event in loop
+      | `watching´ Patt Block                           ;; abort on event
       | `par´ Block { `with´ Block }                    ;; spawn tasks
       | `par-and´ Block { `with´ Block }                ;; spawn tasks, rejoin on all
       | `par-or´ Block { `with´ Block }                 ;; spawn tasks, rejoin on any
-      | `toggle´ Await `->´ Await Block                 ;; toggle task on/off on events
+      | `toggle´ TAG Block                              ;; toggle task on/off on tag
 
-Lambda : `\´ [List(ID)] Block                           ;; lambda function
-
-Await  : [`:check-now`] (                               ;; check before yield
-            | Expr                                      ;; await condition
-            | TAG `,´ Expr                              ;; await tag
-            | [Expr `:h´] [Expr `:min´] [Expr `:s´] [Expr `:ms´] ;; await time
-            | `spawn´ Expr `(´ Expr `)´                 ;; await task
-       )
+Patt : [`(´] (Cons | Oper | Full | Clock) [`)´]
+        Cons  : Expr
+        Oper  : OP [Expr]
+        Full  : [ID] [TAG] [`,´ [Expr]]
+        Clock : [TAG `:h´] [TAG `:min´] [TAG `:s´] [TAG `:ms´]
 
 List(x) : x { `,´ x }                                   ;; comma-separated list
 
@@ -3061,6 +3069,7 @@ ID    : [`^´|`^^´] [A-Za-z_][A-Za-z0-9_\'\?\!\-]*       ;; identifier variable
       | `{´ OP `}´                                      ;; identifier operation
 TAG   : :[A-Za-z0-9\.\-]+                               ;; identifier tag
 OP    : [+-*/><=!|&~%#@]+                               ;; identifier operation
+      | `not´ | `or´ | `and´ | `is?´ | `is-not?´ | `in?´ | `in-not?´
 CHR   : '.' | '\\.'                                     ;; literal character
 NUM   : [0-9][0-9A-Za-z\.]*                             ;; literal number
 NAT   : `.*`                                            ;; native expression
