@@ -366,12 +366,12 @@ func to-tasks (...) {
 }
 ;;;
 
-func iterable-to-dict (itr) {
-    val dict = @[]
-    loop in to-iter(itr) {
-        set dict[it] = true
+func to-set (col) {
+    val ret = @[]
+    loop in to-iter(col) {
+        set ret[it] = true
     }
-    dict
+    ret
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
