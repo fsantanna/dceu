@@ -1328,54 +1328,53 @@ fun Coder.main (tags: Tags): String {
         }
         return tup;
     }
+    
+    CEU_Value ceu_tags_chk (CEU_Value dyn, CEU_Value tag) {
+        CEU_Value ret = { CEU_VALUE_BOOL, {.Bool=0} };
+        CEU_Tags_List* cur = (dyn.type < CEU_VALUE_DYNAMIC) ? NULL : dyn.Dyn->Any.tags;
+        while (cur != NULL) {
+            CEU_Value sub = { CEU_VALUE_TAG, {.Tag=cur->tag} };
+            ret = _ceu_sup_(tag, sub);
+            if (ret.Bool) {
+                break;
+            }
+            cur = cur->next;
+        }
+        return ret;
+    }
+        
+    void ceu_tags_set (CEU_Value dyn, CEU_Value tag, int on) {
+        assert(dyn.type > CEU_VALUE_DYNAMIC);
+        if (on) {   // add
+            CEU_Value has = ceu_tags_chk(dyn, tag);
+            if (!has.Bool) {
+                CEU_Tags_List* v = malloc(sizeof(CEU_Tags_List));
+                assert(v != NULL);
+                v->tag = tag.Tag;
+                v->next = dyn.Dyn->Any.tags;
+                dyn.Dyn->Any.tags = v;
+            }
+        } else {            // rem
+            CEU_Tags_List** cur = &dyn.Dyn->Any.tags;
+            while (*cur != NULL) {
+                if ((*cur)->tag == tag.Tag) {
+                    CEU_Tags_List* v = *cur;
+                    *cur = v->next;
+                    free(v);
+                    break;
+                }
+                cur = &(*cur)->next;
+            }
+        }
+    }
         
     int ceu_tags_f (CEUX* X) {
         assert(X->args >= 1);
         CEU_Value dyn = ceux_peek(X->S, ceux_arg(X,0));
-        CEU_Tags_List* tags = (dyn.type < CEU_VALUE_DYNAMIC) ? NULL : dyn.Dyn->Any.tags;
         CEU_Value tag; // = (CEU_Value) { CEU_VALUE_NIL };
         if (X->args >= 2) {
             tag = ceux_peek(X->S, ceux_arg(X,1));
             assert(tag.type == CEU_VALUE_TAG);
-        }
-        
-        CEU_Value f_chk () {
-            CEU_Value ret = { CEU_VALUE_BOOL, {.Bool=0} };
-            CEU_Tags_List* cur = tags;
-            while (cur != NULL) {
-                CEU_Value sub = { CEU_VALUE_TAG, {.Tag=cur->tag} };
-                ret = _ceu_sup_(tag, sub);
-                if (ret.Bool) {
-                    break;
-                }
-                cur = cur->next;
-            }
-            return ret;
-        }
-        
-        void f_set (int on) {
-            assert(dyn.type > CEU_VALUE_DYNAMIC);
-            if (on) {   // add
-                CEU_Value has = f_chk();
-                if (!has.Bool) {
-                    CEU_Tags_List* v = malloc(sizeof(CEU_Tags_List));
-                    assert(v != NULL);
-                    v->tag = tag.Tag;
-                    v->next = dyn.Dyn->Any.tags;
-                    dyn.Dyn->Any.tags = v;
-                }
-            } else {            // rem
-                CEU_Tags_List** cur = &dyn.Dyn->Any.tags;
-                while (*cur != NULL) {
-                    if ((*cur)->tag == tag.Tag) {
-                        CEU_Tags_List* v = *cur;
-                        *cur = v->next;
-                        free(v);
-                        break;
-                    }
-                    cur = &(*cur)->next;
-                }
-            }
         }
         
         switch (X->args) {
@@ -1385,14 +1384,14 @@ fun Coder.main (tags: Tags): String {
                 break;
             }
             case 2: {   // check tag
-                CEU_Value ret = f_chk();
+                CEU_Value ret = ceu_tags_chk(dyn, tag);
                 ceux_push(X->S, 1, ret);
                 break;
             }
             default: {   // add/rem tag
                 CEU_Value bool = ceux_peek(X->S, ceux_arg(X,2));
                 assert(bool.type == CEU_VALUE_BOOL);
-                f_set(bool.Bool);
+                ceu_tags_set(dyn, tag, bool.Bool);
                 ceux_dup(X->S, ceux_arg(X,0));  // keep dyn
                 break;
             }
@@ -2415,6 +2414,13 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
 
+        void ceu_broadcast_global (void) {
+            assert(CEU_TIME < UINT32_MAX);
+            CEU_TIME++;
+            int ret = ceu_bcast_tasks(CEU_GLOBAL_X, CEU_ACTION_RESUME, CEU_TIME, (CEU_Dyn*) &CEU_GLOBAL_TASK);
+            assert(ret == 0);
+        }
+        
         int ceu_broadcast_plic__f (CEUX* X) {
             assert(X->args == 2);
             //ceu_bstk_assert(bstk);
