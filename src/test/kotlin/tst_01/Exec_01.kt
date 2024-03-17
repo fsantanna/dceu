@@ -3655,6 +3655,17 @@ class Exec_01 {
         """)
         assert(out == ":i\t5\t5\n") { out }
     }
+    @Test
+    fun on_19_nat_glb() {
+        val out = test("""
+            `:pre int v = 10;`
+            val f = func () {
+                `:number v`
+            }
+            println(f())
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // OPERATORS
 
