@@ -200,9 +200,16 @@ val to-number = func (v) {
 }
 
 val to-tag = func (v) {
-    error(:TODO)
-    if type(v) == :string {
-        to-tag-string(v)
+    if type(v) == :vector {
+        if (#v > 0) {
+            if (type(v[0]) == :char) {
+                to-tag-string(v)
+            } else {
+                v
+            }
+        } else {
+            v
+        }
     } else {
         v   ;; TODO
     }

@@ -179,16 +179,16 @@ data :Iterator = [f,s,tp,i]
     }
 
     func to-iter (v, tp) {
-        ifs {
-            tags(v, :Iterator) => v
-            :tuple    => :Iterator [iter-tuple, v, tp, 0]
-            :vector   => :Iterator [iter-tuple, v, tp, 0]
-            :dict     => :Iterator [iter-dict,  v, tp, nil]
-            :func     => :Iterator [v]
-            :coro     => :Iterator [iter-coro, v]
-            :exe-coro => :Iterator [iter-xcoro, v]
-            :tasks    => :Iterator [iter-tasks, v, nil, nil]
-            else      => error(:error)
+        ifs type(v) {
+            ,tags(v, :Iterator) => v
+            ==:tuple    => :Iterator [iter-tuple, v, tp, 0]
+            ==:vector   => :Iterator [iter-tuple, v, tp, 0]
+            ==:dict     => :Iterator [iter-dict,  v, tp, nil]
+            ==:func     => :Iterator [v]
+            ==:coro     => :Iterator [iter-coro, v]
+            ==:exe-coro => :Iterator [iter-xcoro, v]
+            ==:tasks    => :Iterator [iter-tasks, v, nil, nil]
+            else        => error(:error)
         }
     }
 ;;}
@@ -267,7 +267,7 @@ func in-not' (v, xs) {
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 func string? (v) {
-    ((v is? :vector) and (#v > 0)) and (v[0] is? :char)
+    ((type(v)==:vector) and (#v>0)) and (type(v[0])==:char)
 }
 
 func :rec to-string (v) {
