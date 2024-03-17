@@ -181,13 +181,14 @@ data :Iterator = [f,s,tp,i]
     func to-iter (v, tp) {
         ifs {
             tags(v, :Iterator) => v
-            (type(v) == :tuple)    => :Iterator [iter-tuple, v, tp, 0]
-            (type(v) == :vector)   => :Iterator [iter-tuple, v, tp, 0]
-            (type(v) == :dict)     => :Iterator [iter-dict,  v, tp, nil]
-            (type(v) == :func)     => :Iterator [v]
-            (type(v) == :coro)     => :Iterator [iter-coro, v]
-            (type(v) == :exe-coro) => :Iterator [iter-xcoro, v]
-            (type(v) == :tasks)    => :Iterator [iter-tasks, v, nil, nil]
+            :tuple    => :Iterator [iter-tuple, v, tp, 0]
+            :vector   => :Iterator [iter-tuple, v, tp, 0]
+            :dict     => :Iterator [iter-dict,  v, tp, nil]
+            :func     => :Iterator [v]
+            :coro     => :Iterator [iter-coro, v]
+            :exe-coro => :Iterator [iter-xcoro, v]
+            :tasks    => :Iterator [iter-tasks, v, nil, nil]
+            else      => error(:error)
         }
     }
 ;;}
@@ -195,10 +196,10 @@ data :Iterator = [f,s,tp,i]
 ;;;
 func next (v, ...) {
     ifs v {
-        is? :x-coro   => resume v(...)
-        is? :dict     => next-dict(v, ...)
-        is? :Iterator => v.f(v)
-        else          => error(:error)
+        :exe-coro => resume v(...)
+        :dict     => next-dict(v, ...)
+        :Iterator => v.f(v)
+        else      => error(:error)
     }
 }
 ;;;
@@ -243,7 +244,7 @@ func is' (v1,v2) {
         (type(v2) =/= :tag) => false
         (type(v1) === v2)   => true
         tags(v1,v2)         => true
-        else => false
+        else                => false
     }
 }
 
@@ -271,12 +272,12 @@ func string? (v) {
 
 func :rec to-string (v) {
     ifs v {
-        is? :nil => "nil"
-        is? :pointer => to-string-pointer(v)
-        is? :tag => to-string-tag(v)
-        is? :char => #[v]
-        is? :number => to-string-number(v)
-        else => v   ;; TODO
+        :nil     => "nil"
+        :pointer => to-string-pointer(v)
+        :tag     => to-string-tag(v)
+        :char    => #[v]
+        :number  => to-string-number(v)
+        else     => v   ;; TODO
     }
 }
 
@@ -286,8 +287,8 @@ func to-bool (v) {
 
 func to-number (v) {
     ifs v {
-        is? :tag    => `:number $v.Tag`
-        is? :char   => `:number $v.Char`
+        :tag        => `:number $v.Tag`
+        :char       => `:number $v.Char`
         {{string?}} => `:number atoi($v.Dyn->Vector.buf)`
         else        => v   ;; TODO
     }
@@ -295,8 +296,8 @@ func to-number (v) {
 
 func to-char (v) {
     ifs v {
-        is? :number => `:char $v.Number`
-        else => v   ;; TODO
+        :number => `:char $v.Number`
+        else    => v   ;; TODO
     }
 }
 
@@ -304,6 +305,16 @@ func to-tag (v) {
     ifs v {
         {{string?}} => to-tag-string(v)
         else        => v   ;; TODO
+    }
+}
+
+func to-pointer (v) {
+    ifs v {
+        :tag    => `:pointer ceu_to_dash_string_dash_tag($v.Tag)`
+        :tuple  => `:pointer $v.Dyn->Tuple.buf`
+        :vector => `:pointer $v.Dyn->Vector.buf`
+        :dict   => `:pointer $v.Dyn->Dict.buf`
+        else    => v   ;; TODO
     }
 }
 
@@ -325,7 +336,7 @@ func :rec copy (v) {
         {{type-static?}} {
             v
         }
-        == :tuple {
+        :tuple {
             val ret = tuple(#v)
             loop i in {0 => #v{ {
                 set ret[i] = copy(v[i])
@@ -352,10 +363,10 @@ func to-tasks (...) {
     val args = ...
     loop v in to-iter(args) {
         ifs v {
-            is? :exe-task {
+            :exe-task {
                 set ret[+] = v
             }
-            is? :tasks {
+            :tasks {
                 loop i in v {
                     set ret[+] = i
                 }

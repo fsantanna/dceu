@@ -200,10 +200,23 @@ val to-number = func (v) {
 }
 
 val to-tag = func (v) {
+    error(:TODO)
     if type(v) == :string {
         to-tag-string(v)
     } else {
         v   ;; TODO
+    }
+}
+
+val to-pointer = func (v) {
+    if type(v) == :tag {
+        `:pointer ceu_to_dash_string_dash_tag($v.Tag)`
+    } else {
+        if type(v) == :vector {
+            `:pointer $v.Dyn->Vector.buf`
+        } else {
+            v   ;; TODO
+        }
     }
 }
 
