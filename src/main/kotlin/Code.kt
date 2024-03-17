@@ -141,7 +141,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                         clo.Dyn->Clo.upvs.buf[$i] = up;
                     }
                     """
-                }.joinToString("\n")}
+                    }.joinToString("\n")}
                 }
                 """)
             }
@@ -325,7 +325,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
             is Expr.Defer -> {
                 val bup = ups.first(this) { it is Expr.Do } as Expr.Do
                 val (stk,idx) = vars.idx("X",this)
-                assert(stk=="X->S" || stk=="CEU_GLOBAL_S") { stk }
+                assert(stk=="X->S" || stk=="CEU_GLOBAL_X->S") { stk }
                 val (ns,ini,end) = defers.getOrDefault(bup, Triple(mutableListOf(),"",""))
                 val inix = """
                     ceux_repl(X->S, $idx, (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} });

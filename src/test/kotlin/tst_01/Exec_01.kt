@@ -3834,7 +3834,7 @@ class Exec_01 {
         assert(out == "false\ntrue\n") { out }
     }
 
-    // to-number, to-string, to-tag, to-tag-string
+    // to-number, to-string, to-tag, to-tag-string, to-pointer
 
     @Test
     fun qq_01_tostring() {
@@ -3935,12 +3935,8 @@ class Exec_01 {
         """)
         assert(out == "10\n") { out }
     }
-
-
-    // to-tag-string
-
     @Test
-    fun ff_04_string_to_tag() {
+    fun ff_06_string_to_tag() {
         val out = test("""
             do :xyz
             println(to-tag-string(":x"))
@@ -3950,7 +3946,7 @@ class Exec_01 {
         assert(out == "nil\n:xyz\nnil\n") { out }
     }
     @Test
-    fun ff_05_string_to_tag() {
+    fun ff_07_string_to_tag() {
         val out = test("""
             data :A = []
             data :A.B = []
@@ -3958,6 +3954,23 @@ class Exec_01 {
             println(to-tag-string(":A"), to-tag-string(":A.B"), to-tag-string(":A.B.C"))
         """)
         assert(out == ":A\t:A.B\t:A.B.C\n") { out }
+    }
+    @Test
+    fun ff_08_string_to_pointer() {
+        val out = test("""
+            val s = #['a','l','o']
+            val p = to-pointer(s)
+            `printf(">>> %s\n", (char*) ${D}p.Pointer);`
+        """, true)
+        assert(out == ">>> alo\n") { out }
+    }
+    @Test
+    fun ff_09_tag_to_pointer() {
+        val out = test("""
+            val p = to-pointer(:ola)
+            `printf(">>> %s\n", (char*) ${D}p.Pointer);`
+        """, true)
+        assert(out == ">>> :ola\n") { out }
     }
 
     // TYPE
