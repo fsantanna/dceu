@@ -1568,6 +1568,11 @@ A pattern is enclosed by optional parenthesis and has three possible forms:
     cannot appear alone, requiring a compaining tag or `,`.
     The identifier defaults to `it`.
 
+Note that a tag pattern, such as `:X`, satisfies both the `Cons` and `Full`
+forms.
+Nevertheless, it always assumes the `Full` form and uses the operator `is?` to
+match against the head expression.
+
 Examples:
 
 ```
