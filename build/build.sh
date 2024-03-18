@@ -2,6 +2,7 @@
 
 # 1. Edit version:
 #   - README.md
+#   - manual.md
 #   - Main.kt
 #   - install.sh
 #   - build.sh
@@ -15,7 +16,7 @@
 #   - title  = <version>
 #   - Attach = { .zip, install.sh }
 
-VER=v0.3.0
+VER=v0.3.1
 DIR=/tmp/ceu-build/
 
 rm -Rf $DIR
