@@ -34,12 +34,6 @@ Follows an extended list of functionalities in Ceu:
 Ceu is in **experimental stage**.
 Both the compiler and runtime can become very slow.
 
-[1]: https://fsantanna.github.io/sc.html
-[2]: https://en.wikipedia.org/wiki/Structured_concurrency
-[3]: https://en.wikipedia.org/wiki/Event-driven_programming
-[4]: https://en.wikipedia.org/wiki/Esterel
-[5]: https://en.wikipedia.org/wiki/Lua_(programming_language)
-
 # Hello World!
 
 Displays `Hello World!` every second, until 10 seconds elapse:
@@ -87,46 +81,10 @@ world
 
 # pico-ceu
 
-The best way to try Ceu is through [`pico-ceu`][6], a graphical library based
-on [SDL][7]:
+The best way to try Ceu is through `pico-ceu`, a graphical library based on
+[SDL][7]:
 
-1. Install `SDL`:
-
-```
-sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libsdl2-gfx-dev
-```
-
-1. Clone `pico-ceu`:
-
-```
-cd ceu/
-git clone https://github.com/fsantanna/pico-ceu pico/
-```
-
-2. Clone `pico-sdl`:
-
-```
-cd pico/
-git clone https://github.com/fsantanna/pico-sdl sdl/
-```
-
-3. Execute `pico-ceu`:
-
-```
-cd tst/
-../../ceu --lib=pico all.ceu
-```
-
-- Your directory hierarchy should become as follows:
-
-```
-+ ceu/
-|---+ pico/
-    |---+ sdl/
-```
-
-[6]: https://github.com/fsantanna/pico-ceu
-[7]: https://www.libsdl.org/
+- <https://github.com/fsantanna/pico-ceu>
 
 # Resources
 
@@ -142,3 +100,11 @@ cd tst/
         - `../../ceu --lib=pico main.ceu`
 - Academic publications:
     - http://ceu-lang.org/chico/#ceu
+
+[1]: https://fsantanna.github.io/sc.html
+[2]: https://en.wikipedia.org/wiki/Structured_concurrency
+[3]: https://en.wikipedia.org/wiki/Event-driven_programming
+[4]: https://en.wikipedia.org/wiki/Esterel
+[5]: https://en.wikipedia.org/wiki/Lua_(programming_language)
+[6]: https://github.com/fsantanna/pico-ceu
+[7]: https://www.libsdl.org/
