@@ -564,8 +564,8 @@ The following tags are pre-defined in Ceu:
     :exe-coro :exe-task :tasks                      ;; active coro/task
     :tasks                                          ;; task pool
 
-    :ceu                                            ;; ceu value
-    :rec :nested                                    ;; recursive prototype
+    :ceu :pre                                       ;; native ceu value/pre code
+    :rec                                            ;; recursive prototype
     :yielded :toggled :resumed :terminated          ;; coro/task status
     :h :min :s :ms                                  ;; time unit
     :all :idx :key :val                             ;; iterator modifier
@@ -581,6 +581,7 @@ A native literal can specify a tag modifier as follows:
 ```
 `:<type> <...>`
 `:ceu <...>`
+`:pre <...>`
 `<...>`
 ```
 
@@ -588,8 +589,11 @@ The `:<type>` modifier assumes that the C code in `<...>` evaluates to an
 expression of the given type and converts it to Ceu.
 The `:ceu` modifier assumes that the code is already a value in Ceu and does
 not convert it.
-The lack of a modifier assumes that the code is a C statement that does not
-evaluate to an expression.
+
+The `:pre` modifier or lack of modifier assumes that the code is a C statement
+that does not evaluate to an expression.
+With the `:pre` modifier, the statement is placed at the top of the
+[C output file](#TODO), such that it can include pre declarations.
 
 Native literals can evaluate Ceu variable identifiers using a dollar sign
 prefix (`$`) and a dot suffix (`.`) with one of the desired basic types:
@@ -2704,10 +2708,11 @@ tags(x, :x)                     ;; --> true
 ### Type Conversions
 
 ```
-func to-bool   (v)  ;; --> :bool
-func to-number (v)  ;; --> :number
-func to-tag    (v)  ;; --> :tag
-func to-string (v)  ;; --> "string"
+func to-bool    (v)  ;; --> :bool
+func to-tag     (v)  ;; --> :tag
+func to-number  (v)  ;; --> :number
+func to-pointer (v)  ;; --> :pointer
+func to-string  (v)  ;; --> "string"
 ```
 
 <!--
@@ -2718,6 +2723,8 @@ to-char(65)         ;; -> 'A'
 The conversion functions receive any value `v` and try to convert it to a value
 of the specified type.
 If the conversion is not possible, the function returns `nil`.
+
+`TODO: explain all possibilities`
 
 Examples:
 

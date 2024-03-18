@@ -1,9 +1,3 @@
-v0.3.1 (xxx'XX)
----------------
-
-- to-pointer
-- :pre
-
 v0.3 (mar'24)
 -------------
 
@@ -24,7 +18,7 @@ v0.3 (mar'24)
     - closure modifiers
     - `track` statement
     - `if` `ifs` condition declaration
-    - tags `:pre` `:tmp` `:check-now` `:fake`
+    - tags `:tmp` `:check-now` `:fake`
 - Full re-implementation
 
 v0.2 (may'23)

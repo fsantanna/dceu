@@ -2948,9 +2948,8 @@ class Exec_99 {
             assert(nil)
         """, true)
         assert(out == "10\n" +
-                "assertion error : no reason given\n" +
                 " |  anon : (lin 3, col 13) : assert(nil)\n" +
-                " |  build/prelude-x.ceu : (lin 93, col 9) : error(:assert)\n" +
+                " |  build/prelude-x.ceu : (lin 95, col 9) : error(:assert)\n" +
                 " v  error : :assert\n") { out }
     }
 
