@@ -3666,6 +3666,14 @@ class Exec_01 {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun on_20_nat_error() {
+        val out = test("""
+            `ceu_error_s(X->S, "C error");`
+        """)
+        assert(out == " |  anon : (lin 2, col 13) : ```ceu_error_s(X->S, 'C error');```\n" +
+                " v  error : C error\n") { out }
+    }
 
     // OPERATORS
 

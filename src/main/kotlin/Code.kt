@@ -488,7 +488,10 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     x
                 }
                 this.PI0(when (this.tk_.tag) {
-                    null   -> body + "\n" + "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });\n"
+                    null   -> body + "\n" + """
+                        ${this.check_error_aborted(this.toerr())}
+                        ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+                    """
                     ":pre" -> {
                         pres.add(body)
                         "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });"

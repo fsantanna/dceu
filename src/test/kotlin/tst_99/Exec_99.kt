@@ -2941,6 +2941,18 @@ class Exec_99 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun zz_05_assert() {
+        val out = test("""
+            println(assert(10))
+            assert(nil)
+        """, true)
+        assert(out == "10\n" +
+                "assertion error : no reason given\n" +
+                " |  anon : (lin 3, col 13) : assert(nil)\n" +
+                " |  build/prelude-x.ceu : (lin 93, col 9) : error(:assert)\n" +
+                " v  error : :assert\n") { out }
+    }
 
     // MISC
 

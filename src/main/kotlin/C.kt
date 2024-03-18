@@ -2414,11 +2414,11 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
 
-        void ceu_broadcast_global (void) {
+        int ceu_broadcast_global (void) {
             assert(CEU_TIME < UINT32_MAX);
             CEU_TIME++;
             int ret = ceu_bcast_tasks(CEU_GLOBAL_X, CEU_ACTION_RESUME, CEU_TIME, (CEU_Dyn*) &CEU_GLOBAL_TASK);
-            assert(ret == 0);
+            return ret;
         }
         
         int ceu_broadcast_plic__f (CEUX* X) {

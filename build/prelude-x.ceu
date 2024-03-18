@@ -88,10 +88,13 @@ func debug (v) {
 
 func assert (v, msg) {
     if not v {
-        print("assertion error : ")
-        println(msg or "no reason given")
+        if msg {
+            print("assertion error : ")
+            println(msg)
+        }
         error(:assert)
     }
+    v
 }
 
 ;; TAG-OR
@@ -188,7 +191,7 @@ data :Iterator = [f,s,tp,i]
             ==:coro     => :Iterator [iter-coro, v]
             ==:exe-coro => :Iterator [iter-xcoro, v]
             ==:tasks    => :Iterator [iter-tasks, v, nil, nil]
-            else        => error(:error)
+            else        => nil
         }
     }
 ;;}
@@ -272,12 +275,13 @@ func string? (v) {
 
 func :rec to-string (v) {
     ifs v {
-        :nil     => "nil"
-        :pointer => to-string-pointer(v)
-        :tag     => to-string-tag(v)
-        :char    => #[v]
-        :number  => to-string-number(v)
-        else     => v   ;; TODO
+        {{string?}} => v
+        :nil        => "nil"
+        :tag        => to-string-tag(v)
+        :number     => to-string-number(v)
+        :char       => #[v]
+        :pointer    => to-string-pointer(v)
+        else        => nil
     }
 }
 
@@ -290,31 +294,26 @@ func to-number (v) {
         :tag        => `:number $v.Tag`
         :char       => `:number $v.Char`
         {{string?}} => `:number atoi($v.Dyn->Vector.buf)`
-        else        => v   ;; TODO
-    }
-}
-
-func to-char (v) {
-    ifs v {
-        :number => `:char $v.Number`
-        else    => v   ;; TODO
+        else        => nil
     }
 }
 
 func to-tag (v) {
     ifs v {
+        :tag        => v
         {{string?}} => to-tag-string(v)
-        else        => v   ;; TODO
+        else        => nil
     }
 }
 
 func to-pointer (v) {
     ifs v {
-        :tag    => `:pointer ceu_to_dash_string_dash_tag($v.Tag)`
-        :tuple  => `:pointer $v.Dyn->Tuple.buf`
-        :vector => `:pointer $v.Dyn->Vector.buf`
-        :dict   => `:pointer $v.Dyn->Dict.buf`
-        else    => v   ;; TODO
+        :pointer => v
+        :tag     => `:pointer ceu_to_dash_string_dash_tag($v.Tag)`
+        :tuple   => `:pointer $v.Dyn->Tuple.buf`
+        :vector  => `:pointer $v.Dyn->Vector.buf`
+        :dict    => `:pointer $v.Dyn->Dict.buf`
+        else     => nil
     }
 }
 
