@@ -1164,6 +1164,14 @@ class Parser_99 {
                 "(do nil)\n" +
                 "})(20)") { e.tostr() }
     }
+    @Test
+    fun oo_09_method_err() {
+        val out = test("""
+            10->10
+        """)
+        assert(out == " |  anon : (lin 2, col 17) : 10(10)\n" +
+                " v  call error : expected function\n") { out }
+    }
 
     // PIPE / WHERE
 
@@ -1289,6 +1297,20 @@ class Parser_99 {
         //assert(e.tostr() == "x.1.2") { e.tostr() }
         //assert(trap { parser.expr() } == "anon : (lin 1, col 3) : index error : ambiguous dot : use brackets")
         assert(trap { parser.expr() } == "anon : (lin 1, col 3) : expected identifier : have \"1.2\"")
+    }
+    @Test
+    fun tt_03_dot() {
+        val l = lexer("x . a")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Index && e.col is Expr.Acc && e.idx is Expr.Tag)
+        assert(e.tostr() == "x[:a]") { e.tostr() }
+    }
+    @Test
+    fun tt_04_dot_err() {
+        val l = lexer("x . .")
+        val parser = Parser(l)
+        assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected identifier : have \".\"")
     }
 
     // CONSTRUCTOR

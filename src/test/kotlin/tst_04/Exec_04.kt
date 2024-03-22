@@ -25,7 +25,6 @@ class Exec_04 {
         )
         assert(out.contains("task: 0x")) { out }
     }
-
     @Test
     fun aa_02_task_equal() {
         val out = test(
@@ -38,7 +37,6 @@ class Exec_04 {
         )
         assert(out == "true\nfalse\n") { out }
     }
-
     @Test
     fun aa_03_task_err() {
         val out = test(
@@ -52,7 +50,6 @@ class Exec_04 {
                     " v  coroutine error : expected coro\n"
         ) { out }
     }
-
     @Test
     fun aa_04_task_err() {
         val out = test(
@@ -66,7 +63,6 @@ class Exec_04 {
                     " v  call error : expected function\n"
         ) { out }
     }
-
     @Test
     fun aa_05_yield_err() {
         val out = test(
@@ -92,7 +88,6 @@ class Exec_04 {
         assert(out.contains("exe-task: 0x")) { out }
         //assert(out == ("nil\n")) { out }
     }
-
     @Test
     fun bb_02_resume_err() {
         val out = test(
@@ -107,7 +102,6 @@ class Exec_04 {
                     " v  resume error : expected yielded coro\n"
         ) { out }
     }
-
     @Test
     fun bb_03_spawn() {
         val out = test(
@@ -119,7 +113,6 @@ class Exec_04 {
         )
         assert(out == "1\n") { out }
     }
-
     @Test
     fun bb_04_spawn_err() {
         val out = test(
@@ -132,7 +125,6 @@ class Exec_04 {
                     " v  spawn error : expected task\n"
         ) { out }
     }
-
     @Test
     fun bb_05_spawn() {
         val out = test(
@@ -143,6 +135,122 @@ class Exec_04 {
         """
         )
         assert(out.contains("exe-task: 0x")) { out }
+    }
+
+    // TASK / CORO / (no longer mixable)
+
+    @Test
+    fun bc_01_coro_spawn_nest_err() {
+        val out = test("""
+            var T = coro () {
+                spawn coro () {
+                    yield(nil)
+                } ()
+            }
+            var t = coroutine(T)
+            println(resume t())
+            """
+        )
+        //assert(out == ":1\n:2\n1\n") { out }
+        //assert(out.contains("x-coro: 0x")) { out }
+        assert(out == " |  anon : (lin 8, col 21) : (resume (t)(nil))\n" +
+                " |  anon : (lin 3, col 17) : (spawn (coro () { yield(nil) })())\n" +
+                " v  spawn error : expected task\n") { out }
+    }
+    @Test
+    fun bc_02_spawn() {
+        val out = test("""
+            var t
+            set t = coro (v) {
+                var v' = v
+                println(v')          ;; 1
+                set v' = yield((v'+1)) 
+                println(v')          ;; 3
+                set v' = yield(v'+1) 
+                println(v')          ;; 5
+                v'+1
+            }
+            val a = spawn t(1)
+            println(type(a))
+            var v
+            set v = resume a(3)
+            println(v)              ;; 4
+            set v = resume a(v+1)
+            println(v)              ;; 6
+        """, true)
+        //assert(out == "1\n:x-coro\n3\n4\n5\n6\n") { out }
+        assert(out == " |  anon : (lin 12, col 21) : (spawn t(1))\n" +
+                " v  spawn error : expected task\n") { out }
+    }
+    @Test
+    fun bc_04_coro_spawn() {
+        val out = test("""
+            var t
+            set t = coro () {
+                println(1)
+                do {
+                    println(2)
+                    yield(nil)
+                    println(3)
+                }
+                println(4)
+            }
+            var co
+            set co = spawn t()
+            resume co()
+            println(5)
+        """)
+        //assert(out == "1\n2\n3\n4\n5\n") { out }
+        assert(out == " |  anon : (lin 13, col 22) : (spawn t())\n" +
+                " v  spawn error : expected task\n") { out }
+    }
+    @Test
+    fun bc_05_coro_spawn() {
+        val out = test("""
+            var t
+            set t = coro () {
+                println(1)
+                do {
+                    println(2)
+                    yield(nil)
+                    println(3)
+                }
+                println(4)
+            }
+            var co
+            set co = spawn (if true { t } else { nil }) ()
+            resume co()
+            println(5)
+        """)
+        //assert(out == "1\n2\n3\n4\n5\n") { out }
+        assert(out == " |  anon : (lin 13, col 22) : (spawn if true { t } else { nil }())\n" +
+                " v  spawn error : expected task\n") { out }
+    }
+    @Test
+    fun bc_06_coro_spawn() {
+        val out = test("""
+            var t
+            var f
+            set f = func () {
+                t
+            }
+            set t = coro () {
+                println(1)
+                do {
+                    println(2)
+                    yield(nil)
+                    println(3)
+                }
+                println(4)
+            }
+            var co
+            set co = spawn f() ()
+            resume co()
+            println(5)
+        """)
+        //assert(out == "1\n2\n3\n4\n5\n") { out }
+        assert(out == " |  anon : (lin 17, col 22) : (spawn f()())\n" +
+                " v  spawn error : expected task\n") { out }
     }
 
     // DELAY
@@ -341,7 +449,6 @@ class Exec_04 {
         assert(out == "2\n") { out }
         //assert(out == " v  anon : (lin 3, col 21) : block escape error : cannot assign running coro or task to outer scope\n") { out }
     }
-
     @Test
     fun cc_01_scope() {
         val out = test(
@@ -356,7 +463,6 @@ class Exec_04 {
         assert(out == ":ok\n") { out }
         //assert(out == " v  anon : (lin 2, col 21) : block escape error : cannot assign running coro or task to outer scope\n") { out }
     }
-
     @Test
     fun cc_02_scope() {
         val out = test(
@@ -374,7 +480,6 @@ class Exec_04 {
         assert(out == ":ok\n") { out }
         //assert(out == " v  anon : (lin 7, col 30) : block escape error : cannot assign running coro or task to outer scope\n") { out }
     }
-
     @Test
     fun cc_03_scope() {
         val out = test(
@@ -394,7 +499,6 @@ class Exec_04 {
         assert(out == ":ok\n") { out }
         //assert(out == "anon : (lin 6, col 17) : spawn error : unexpected enclosing func\n") { out }
     }
-
     @Test
     fun cc_04_scope() {
         val out = test(
@@ -409,7 +513,6 @@ class Exec_04 {
         )
         assert(out == "1\n2\n") { out }
     }
-
     @Test
     fun cc_05_scope() {
         val out = test(
@@ -431,7 +534,6 @@ class Exec_04 {
         //assert(out == "anon : (lin 7, col 21) : block escape error : incompatible scopes\n:error\n") { out }
         //assert(out == " v  anon : (lin 7, col 21) : block escape error : cannot assign running coro or task to outer scope\n") { out }
     }
-
     @Test
     fun cc_06_scope() {
         val out = test(
@@ -476,7 +578,6 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
-
     @Test
     fun cd_02_bcast_spawn_arg() {
         val out = test(
@@ -498,7 +599,6 @@ class Exec_04 {
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
         assert(out == ":ok\n") { out }
     }
-
     @Test
     fun cd_03_bcast_pub_arg() {
         val out = test(
@@ -536,7 +636,6 @@ class Exec_04 {
         assert(out == "nil\n") { out }
         //assert(out == "true\n") { out }
     }
-
     @Test
     fun dd_02_bcast() {
         val out = test(
@@ -551,7 +650,6 @@ class Exec_04 {
         )
         assert(out == "1\n2\n") { out }
     }
-
     @Test
     fun dd_02x_bcast() {
         val out = test(
@@ -567,7 +665,6 @@ class Exec_04 {
         )
         assert(out == "1\n2\n") { out }
     }
-
     @Test
     fun dd_03_bcast() {
         val out = test(
@@ -587,7 +684,6 @@ class Exec_04 {
         //assert(out == ":1\t1\t1\n:2\t2\t2\n") { out }
         assert(out == ":1\t1\n:2\t2\n") { out }
     }
-
     @Test
     fun dd_04_bcast() {
         val out = test(
@@ -624,7 +720,6 @@ class Exec_04 {
         )
         assert(out.contains(":ok\n")) { out }
     }
-
     @Test
     fun dd_04x_bcast() {
         val out = test(
@@ -642,7 +737,6 @@ class Exec_04 {
         assert(out.contains(":1\t1\n:2\texe-task: 0x")) { out }
         //assert(out == (":1\t1\n:2\t1\n")) { out }
     }
-
     @Test
     fun dd_05_bcast() {
         val out = test(
@@ -662,7 +756,6 @@ class Exec_04 {
         )
         assert(out == ":bcast\n:2\n:1\n") { out }
     }
-
     @Test
     fun dd_05y_bcast() {
         val out = test(
@@ -684,7 +777,6 @@ class Exec_04 {
         )
         assert(out == ":1\n:2\n:3\n:ok\n:4\n") { out }
     }
-
     @Test
     fun dd_05z_bcast() {
         val out = test(
@@ -707,7 +799,6 @@ class Exec_04 {
         )
         assert(out == ":1\n:2\n:3\n:4\n") { out }
     }
-
     @Test
     fun dd_05x_bcast() {
         DEBUG = true
@@ -729,7 +820,6 @@ class Exec_04 {
         )
         assert(out.contains(":1\t:out\n:2\texe-task: 0x")) { out }
     }
-
     @Test
     fun dd_06_bcast() {
         val out = test(
@@ -746,7 +836,6 @@ class Exec_04 {
         )
         assert(out == "1\n2\n") { out }
     }
-
     @Test
     fun dd_07_bcast() {
         val out = test(
@@ -760,7 +849,6 @@ class Exec_04 {
         assert(out == "1\n") { out }
         //assert(out == "anon : (lin 3, col 18) : broadcast error : unexpected enclosing func\n") { out }
     }
-
     @Test
     fun dd_08_bcast() {
         val out = test(
@@ -777,7 +865,6 @@ class Exec_04 {
         )
         assert(out.contains(":ok\n")) { out }
     }
-
     @Test
     fun dd_09_bcast() {
         val out = test(
@@ -800,7 +887,6 @@ class Exec_04 {
         //assert(out == "2\n2\n") { out }
         assert(out.contains("2\nexe-task: 0x")) { out }
     }
-
     @Test
     fun dd_10_bcast() {
         val out = test(
@@ -829,7 +915,6 @@ class Exec_04 {
         )
         assert(out == "1\n2\n2\n3\n") { out }
     }
-
     @Test
     fun dd_11_bcast_await() {
         val out = test(
@@ -845,7 +930,6 @@ class Exec_04 {
         )
         assert(out == ":1\n:2\t10\n") { out }
     }
-
     @Test
     fun dd_12_bcast() {
         val out = test(
@@ -867,7 +951,6 @@ class Exec_04 {
         )
         assert(out == "2\n2\n") { out }
     }
-
     @Test
     fun dd_12x_bcast() {
         val out = test(
@@ -884,7 +967,6 @@ class Exec_04 {
         )
         assert(out == ":ok\n") { out }
     }
-
     @Test
     fun dd_13_bcast() {
         val out = test(
@@ -912,7 +994,6 @@ class Exec_04 {
         )
         assert(out == ":1\n10\n10\n:2\n20\n20\n:3\n30\n30\n") { out }
     }
-
     @Test
     fun dd_13x_bcast() {
         val out = test(
@@ -935,7 +1016,6 @@ class Exec_04 {
         )
         assert(out == ":in\t10\n") { out }
     }
-
     @Test
     fun dd_15_bcast() {
         val out = test(
@@ -946,7 +1026,6 @@ class Exec_04 {
         )
         assert(out == ":ok\n") { out }
     }
-
     @Test
     fun dd_16_tags() {
         val out = test(
@@ -962,7 +1041,6 @@ class Exec_04 {
         )
         assert(out == "true\n") { out }
     }
-
     @Test
     fun gc_dd_16_bcast() {
         val out = test(
@@ -2303,7 +2381,6 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 12, col 13) : broadcast'(drop(e))\n" +
         //        " v  anon : (lin 3, col 38) : block escape error : cannot copy reference out\n") { out }
     }
-
     @Test
     fun jj_02_task_nest() {
         val out = test(
@@ -2337,7 +2414,6 @@ class Exec_04 {
         //assert(out == " v  anon : (lin 2, col 13) : pub() : pub error : expected task\n") { out }
         assert(out == "anon : (lin 2, col 13) : pub error : expected enclosing task\n") { out }
     }
-
     @Test
     fun kk_01_pub_err() {
         val out = test(
@@ -2351,7 +2427,6 @@ class Exec_04 {
         //assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task\n") { out }
         assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing task\n") { out }
     }
-
     @Test
     fun kk_02_pub_err() {
         val out = test(
@@ -2364,7 +2439,6 @@ class Exec_04 {
                     " v  pub error : expected task\n"
         ) { out }
     }
-
     @Test
     fun kk_02_pub_err_x() {
         val out = test(
@@ -2384,7 +2458,6 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 5, col 21) : (spawn t())\n" +
         //        " v  anon : (lin 2, col 29) : block escape error : reference has immutable scope\n") { out }
     }
-
     @Test
     fun kk_03_pub() {
         val out = test(
@@ -2399,7 +2472,6 @@ class Exec_04 {
         )
         assert(out == "nil\nnil\n") { out }
     }
-
     @Test
     fun kk_04_pub() {
         val out = test(
@@ -2414,7 +2486,6 @@ class Exec_04 {
         )
         assert(out == "10\n") { out }
     }
-
     @Test
     fun kk_05_pub_err() {
         val out = test(
@@ -2433,7 +2504,6 @@ class Exec_04 {
         //        " v  anon : (lin 5, col 25) : set error : cannot assign reference to outer scope\n") { out }
         assert(out == "[]\n") { out }
     }
-
     @Test
     fun kk_06_pub_err() {
         val out = test(
@@ -2452,7 +2522,6 @@ class Exec_04 {
         assert(out == "[]\n") { out }
         //assert(out == " v  anon : (lin 8, col 21) : set error : cannot hold alien reference\n") { out }
     }
-
     @Test
     fun kk_07_pub_tag() {
         val out = test(
@@ -2467,7 +2536,6 @@ class Exec_04 {
         )
         assert(out == "10\n") { out }
     }
-
     @Test
     fun kk_08_pub_tag() {
         val out = test(
@@ -2483,7 +2551,6 @@ class Exec_04 {
         )
         assert(out == "10\n") { out }
     }
-
     @Test
     fun kk_09_pub_tag() {
         val out = test(
@@ -2615,7 +2682,6 @@ class Exec_04 {
         assert(out == "[]\n") { out }
         //assert(out == " v  anon : (lin 8, col 13) : declaration error : cannot copy reference out\n") { out }
     }
-
     @Test
     fun kj_02_expose_err() {
         val out = test(
@@ -2636,7 +2702,6 @@ class Exec_04 {
         //assert(out == " v  anon : (lin 2, col 21) : block escape error : reference has immutable scope\n") { out }
         assert(out == "[]\n") { out }
     }
-
     @Test
     fun kj_03_expose_err() {
         val out = test(
@@ -2674,7 +2739,6 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 18, col 13) : f(a)\n" +
         //        " v  anon : (lin 5, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
-
     @Test
     fun kj_05_expose_err() {
         val out = test(
@@ -2705,7 +2769,6 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 12, col 21) : f(a)\n" +
         //        " v  anon : (lin 2, col 30) : block escape error : reference has immutable scope\n") { out }
     }
-
     @Test
     fun kj_06_expose_err() {
         val out = test(
@@ -2731,7 +2794,6 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 12, col 21) : f(a)\n" +
         //        " v  anon : (lin 4, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
-
     @Test
     fun TODO_kj_07_pub_func() {
         val out = test(
@@ -2751,7 +2813,6 @@ class Exec_04 {
         //assert(out == "1\n") { out }
         assert(out == "anon : (lin 7, col 21) : pub error : expected enclosing task\n") { out }
     }
-
     @Test
     fun TODO_kj_08_pub_func_expose() {
         val out = test(
@@ -2772,7 +2833,6 @@ class Exec_04 {
         //        "anon : (lin 9, col 25) : f()\n" +
         //        "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
-
     @Test
     fun kj_09_pub() {
         val out = test(
@@ -2787,7 +2847,6 @@ class Exec_04 {
         )
         assert(out == ":terminated\n") { out }
     }
-
     @Test
     fun kj_10_pub_expose() {
         val out = test(
@@ -2822,7 +2881,6 @@ class Exec_04 {
         )
         assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing task\n") { out }
     }
-
     @Test
     fun ll_01_nested() {
         val out = test(
@@ -2838,7 +2896,6 @@ class Exec_04 {
         )
         assert(out == "10\n") { out }
     }
-
     @Test
     fun ll_02_nested() {
         val out = test(
@@ -2855,7 +2912,6 @@ class Exec_04 {
         )
         assert(out == "10\n") { out }
     }
-
     @Test
     fun ll_03_nested() {
         val out = test(
@@ -2873,7 +2929,6 @@ class Exec_04 {
         )
         assert(out == "10\n") { out }
     }
-
     @Test
     fun ll_04_nested() {
         val out = test(
@@ -2893,7 +2948,6 @@ class Exec_04 {
         )
         assert(out == "10\n") { out }
     }
-
     @Test
     fun ll_05_nested() {
         val out = test(
@@ -2913,7 +2967,6 @@ class Exec_04 {
         )
         assert(out == "[]\n") { out }
     }
-
     @Test
     fun ll_06_upv() {
         val out = test(
@@ -2929,7 +2982,6 @@ class Exec_04 {
         //assert(out == "anon : (lin 5, col 29) : access error : cannot access local across coro or task\n") { out }
         assert(out == "10\n") { out }
     }
-
     @Test
     fun ll_07_task_up_task() {
         val out = test(
@@ -2950,7 +3002,6 @@ class Exec_04 {
         )
         assert(out == ":ok\n") { out }
     }
-
     @Test
     fun ll_08_nested_err() {
         val out = test(
@@ -2971,7 +3022,6 @@ class Exec_04 {
         //assert(out == "ERROR\n") { out }
         assert(out == "anon : (lin 7, col 29) : access error : outer variable \"xxx\" must be immutable\n") { out }
     }
-
     @Test
     fun ll_09_nested_err() {
         val out = test(
@@ -2983,7 +3033,6 @@ class Exec_04 {
         )
         assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
     }
-
     @Test
     fun ll_10_nested() {
         val out = test(

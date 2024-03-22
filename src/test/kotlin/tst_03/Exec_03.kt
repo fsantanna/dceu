@@ -706,6 +706,41 @@ class Exec_03 {
         //        ":error\n") { out }
         assert(out == (":1\n:2\n"))
     }
+    @Test
+    fun ff_05_move_ok () {
+        val out = test("""
+            val tup = [nil]
+            val co = do {
+                var x = coroutine (coro () {
+                    yield(nil)
+                    println(:ok)
+                })
+                resume x()
+                ;;;move;;;(x)
+            }
+            resume co()
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun ff_06_move() {
+        val out = test("""
+            val F = func (x) {
+                val y = (coroutine (coro () {
+                    yield(nil)
+                    x
+                }))
+                resume y()
+                ;;;move;;;(y)
+            }
+            do {
+                val x = []
+                val co = F(x)
+                println(resume co())
+            }
+        """)
+        assert(out == "[]\n") { out }
+    }
 
     // SCOPE
 

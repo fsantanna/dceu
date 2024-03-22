@@ -40,7 +40,7 @@ class Lexer_99 {
     @Test
     fun aa_03_cmds() {
         val l =
-            lexer("ifs thus resume-yield-all await while watching par where par-and par-or until with")
+            lexer("ifs thus resume-yield-all await while watching par every where par-and par-or until with")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "ifs" })
         assert(tks.next().let { it is Tk.Fix && it.str == "thus" })
@@ -49,6 +49,7 @@ class Lexer_99 {
         assert(tks.next().let { it is Tk.Fix && it.str == "while" })
         assert(tks.next().let { it is Tk.Fix && it.str == "watching" })
         assert(tks.next().let { it is Tk.Fix && it.str == "par" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "every" })
         assert(tks.next().let { it is Tk.Fix && it.str == "where" })
         assert(tks.next().let { it is Tk.Fix && it.str == "par-and" })
         assert(tks.next().let { it is Tk.Fix && it.str == "par-or" })
@@ -59,7 +60,7 @@ class Lexer_99 {
     }
 
     @Test
-    fun bb_clk() {
+    fun bb_01_clk() {
         val l = lexer("1:h x :min 30:s (1) :ms")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Num && it.str == "1" })
@@ -74,5 +75,13 @@ class Lexer_99 {
         assert(tks.next().let { it is Tk.Tag && it.str == ":ms" })
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
+    }
+    @Test
+    fun bb_02_clk() {
+        val l = lexer("1s10k")
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Num && it.str == "1s10k" })
+        //println(tks.next())
+        //assert(trap { tks.next() } == "anon : (lin 1, col 1) : invalid time constant")
     }
 }
