@@ -307,6 +307,24 @@ class Exec_01 {
         //assert(out == "anon : (lin 2, col 13) : expression error : innocuous expression\n") { out }
         assert(out == "anon : (lin 2, col 13) : set error : expected assignable destination\n") { out }
     }
+    @Test
+    fun bd_02_set_op() {
+        val out = test("""
+            var {{+}} = func (v1, v2) {
+                `:number (${D}v1.Number + ${D}v2.Number)`
+            }    
+            var {{-}} = func (v1, v2) {
+                if v2 == nil {
+                    `:number - ${D}v1.Number`
+                } else {
+                    `:number (${D}v1.Number - ${D}v2.Number)`
+                }
+            }    
+            set {{+}} = {{-}}
+            println({{+}}(10,4))
+        """)
+        assert(out == "6\n") { out }
+    }
 
     // REC / FUNC
 
@@ -4231,7 +4249,7 @@ class Exec_01 {
         assert(out == "[:Z,:Y,:X]\n2\n") { out }
     }
     @Test
-    fun tags13x() {
+    fun tags14() {
         val out = test("""
             var t = []
             println(tags(t, :X, true))
@@ -5449,6 +5467,24 @@ class Exec_01 {
         //assert(out == "anon : (lin 10, col 29) : set error : incompatible scopes\n" +
         //        ":error\n") { out }
     }
+    @Test
+    fun TODO_qq_09_copy() {     // copy closure
+        val out = test("""
+            var f = func (a) {
+                func () {
+                    a
+                }
+            }
+            var g = do {
+                var t = [1]
+                var i = copy(f(t))
+                set t[0] = 10
+                ;;;move;;;(i)
+            }
+            println(g())
+        """, true)
+        assert(out == "[1]\n") { out }
+    }
 
     // COPY / vector
 
@@ -5497,6 +5533,18 @@ class Exec_01 {
             println(t3)
         """, true)
         assert(out == "@[(:x,1),(:y,2)]\n@[(:x,1),(:y,2)]\n@[(:x,1),(:y,20)]\n") { out }
+    }
+
+    // COPY / tags
+
+    @Test
+    fun TODO_qt_01_copy_tags() {
+        val out = test("""
+            val t = tags([], :x, true)
+            val s = copy(t)
+            println(s)
+        """, true)
+        assert(out == ":x []\n") { out }
     }
 
     // TYPE-*
