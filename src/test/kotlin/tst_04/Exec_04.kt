@@ -623,6 +623,19 @@ class Exec_04 {
         //        " v  anon : (lin 4, col 21) : set error : cannot hold alien reference\n") { out }
         assert(out == ":in\t[]\n:out\t:ok\n") { out }
     }
+    @Test
+    fun cd_04_bcast_copy() {
+        val out = test("""
+            val T = task () {
+                val evt = yield(nil)
+                val v = copy(evt)
+                println(v)
+            }
+            spawn T()
+            broadcast([1,2,3])
+        """, true)
+        assert(out == "[1,2,3]\n") { out }
+    }
 
     // BROADCAST
 
@@ -1140,7 +1153,6 @@ class Exec_04 {
         )
         assert(out == ":ok\t10\n") { out }
     }
-
     @Test
     fun df_02_non_global() {
         val out = test(
@@ -1158,7 +1170,6 @@ class Exec_04 {
         )
         assert(out == ":no\n:ok\t20\n") { out }
     }
-
     @Test
     fun df_03_bcast_throw() {
         DEBUG = true
@@ -1189,6 +1200,26 @@ class Exec_04 {
                     " |  anon : (lin 7, col 21) : error(:XXX)\n" +
                     " v  error : :XXX\n"
         ) { out }
+    }
+    @Test
+    fun TODO_df_04_bcast_local() {
+        val out = test(
+            """
+        var T
+        set T = task (v) {
+            yield(nil)
+            println(v)
+        }
+        var t1
+        set t1 = spawn T (1)
+        do {
+            var t2
+            set t2 = spawn T (2)
+            broadcast(nil) in :local
+        }
+    """
+        )
+        assert(out == "2\n") { out }
     }
 
     // EVT
