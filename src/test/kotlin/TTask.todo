@@ -1,62 +1,6 @@
 class TTask {
 
-    // SPAWN
 
-
-    // MOVE
-
-
-    // SPAWN / GROUP
-
-
-    // THROW
-
-    @Test
-    fun dd_throw4_err() {
-        val out = all("""
-            broadcast in :task, nil
-        """)
-        assert(out == "anon : (lin 2, col 26) : broadcast error : invalid target\n:error\n") { out }
-    }
-    @Test
-    fun dd_throw5_err() {
-        val out = all("""
-            spawn (task () :fake {
-                broadcast in :task, nil
-            }) ()
-        """)
-        assert(out == "anon : (lin 2, col 20) : (task () :fake { broadcast in :task, nil })()\n" +
-                "anon : (lin 3, col 30) : broadcast error : invalid target\n:error\n") { out }
-    }
-    @Test
-    fun dd_throw9_fake() {
-        val out = all("""
-            catch err==:err {
-                spawn (task () :fake {
-                    throw(:err)
-                }) ()
-            }
-            println(10)
-        """)
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun dd_throw11_fake() {
-        val out = all("""
-            spawn task () { 
-                catch {{==}}(err,:err) {
-                    spawn task () :fake {
-                        ${yield()}
-                        throw(:err)
-                    }()
-                    ${yield()}
-                }
-            }() 
-            broadcast nil
-            println(10)
-        """)
-        assert(out == "10\n") { out }
-    }
 
     // BCAST / SCOPE
 
@@ -79,34 +23,6 @@ class TTask {
         """
         )
         assert(out == "2\n") { out }
-    }
-    @Test
-    fun ee_bcast_in6() {
-        val out = ceu.all(
-            """
-            var T
-            set T = task (v) {
-                spawn (task () :fake {
-                    yield(nil)
-                    println(v, evt)
-                }) ()
-                spawn (task () :fake {
-                    do {
-                        broadcast in :task, :ok
-                    }
-                }) ()
-                yield(nil)
-                println(:err)
-            }
-            spawn (task () {
-                yield(nil)
-                println(:err)
-            }) ()
-            spawn T (1)
-            spawn T (2)
-        """
-        )
-        assert(out == "1\t:ok\n2\t:ok\n") { out }
     }
 
     @Test

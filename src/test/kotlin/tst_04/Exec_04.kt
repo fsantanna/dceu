@@ -3045,6 +3045,90 @@ class Exec_04 {
         )
         assert(out == "anon : (lin 2, col 28) : declaration error : data :X is not declared\n") { out }
     }
+    @Test
+    fun BUG_ll_11_bcast_in() {  // bcast in outer of :nested
+        val out = test(
+            """
+            var T
+            set T = task (v) {
+                spawn (task :nested () {
+                    val evt = yield(nil)
+                    println(v, evt)
+                }) ()
+                spawn (task :nested () {
+                    do {
+                        broadcast(:ok) in :task
+                    }
+                }) ()
+                yield(nil)
+                println(:err)
+            }
+            spawn (task () {
+                yield(nil)
+                println(:err)
+            }) ()
+            spawn T (1)
+            spawn T (2)
+        """
+        )
+        assert(out == "1\t:ok\n2\t:ok\n") { out }
+    }
+
+    // NESTED / BCAST / THROW
+
+    @Test
+    fun lm_01_bcast_err() {
+        val out = test("""
+            broadcast(nil) in :task
+            println(:ok)
+        """)
+        //assert(out == "anon : (lin 2, col 26) : broadcast error : invalid target\n:error\n") { out }
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun lm_02_bcast_err() {
+        val out = test("""
+            spawn (task :nested () {
+                broadcast(nil) in :task
+            }) ()
+            println(:ok)
+        """)
+        //assert(out == "anon : (lin 2, col 20) : (task () :fake { broadcast in :task, nil })()\n" +
+        //        "anon : (lin 3, col 30) : broadcast error : invalid target\n:error\n") { out }
+        //assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
+    }
+    @Test
+    fun lm_03_throw_fake() {
+        val out = test("""
+            spawn (task () {
+                catch (err,err==:err) {
+                    spawn (task :nested () {
+                        error(:err)
+                    }) ()
+                }
+                println(10)
+            }) ()
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun lm_04_throw_fake() {
+        val out = test("""
+            spawn task () { 
+                catch (err,{{==}}(err,:err)) {
+                    spawn (task :nested () {
+                        yield(nil)
+                        error(:err)
+                    })()
+                    yield(nil)
+                }
+            }() 
+            broadcast(nil)
+            println(10)
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // ABORTION
 

@@ -1822,7 +1822,7 @@ class Exec_99 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun jj_13x_paror_dyn() {
+    fun jj_14_paror_dyn() {
         val out = test("""
             spawn (task () {
                 par-or {
@@ -1836,7 +1836,7 @@ class Exec_99 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun jj_13y_paror_dyn() {
+    fun jj_15_paror_dyn() {
         val out = test("""
             spawn {
                 par-or {
@@ -1850,6 +1850,21 @@ class Exec_99 {
                 broadcast([])
             }
             println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun BUG_jj_16_par_bcast() {     // bcast in outer of :nested
+        val out = test("""
+            spawn {
+                par-or {
+                    val e = yield()
+                    println(e)
+                } with {
+                    broadcast(:1)
+                }
+            }
+            println(:2)
         """)
         assert(out == ":ok\n") { out }
     }
