@@ -252,7 +252,29 @@ val copy = func :rec (v) {
             }
             ;;;drop;;;(ret)
         } else {
-            error("TODO")
+            if type(v) == :vector {
+                val ret = #[]
+                var i=0
+                loop {
+                    break if i == #v
+                    set ret[i] = copy(v[i])
+                    set i = i + 1
+                }
+                ;;;drop;;;(ret)
+            } else {
+                if type(v) == :dict {
+                    val ret = @[]
+                    var k = nil
+                    loop {
+                        set k = next-dict(v, k)
+                        break if k == nil
+                        set ret[copy(k)] = copy(v[k])
+                    }
+                    ;;;drop;;;(ret)
+                } else {
+                    error(:TODO)
+                }
+            }
         }
     }
 }

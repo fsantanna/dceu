@@ -342,6 +342,22 @@ func :rec copy (v) {
             }
             ret
         }
+        :vector {
+            val ret = #[]
+            loop i in {0 => #v{ {
+                set ret[i] = copy(v[i])
+            }
+            ret
+        }
+        :dict {
+            val ret = @[]
+            var k = nil
+            loop {
+                set k = next-dict(v, k)
+                until (k == nil)
+                set ret[copy(k)] = copy(v[k])
+            }
+        }
         else {
             error(:TODO)
         }

@@ -2952,6 +2952,15 @@ class Exec_99 {
                 " |  build/prelude-x.ceu : (lin 95, col 9) : error(:assert)\n" +
                 " v  error : :assert\n") { out }
     }
+    @Test
+    fun zz_06_copy() {
+        val out = test("""
+            println(copy([1,2,3]))
+            println(copy(#[1,2,3]))
+            println(copy(@[(:k1,[1,2,3]), (1,#[])]))
+        """, true)
+        assert(out == "[1,2,3]\n#[1,2,3]\n@[(:k1,[1,2,3]),(1,#[])]\n") { out }
+    }
 
     // MISC
 

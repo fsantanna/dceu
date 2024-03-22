@@ -5337,7 +5337,7 @@ class Exec_01 {
         assert(out == "10\n") { out }
     }
 
-    // COPY
+    // COPY / tuple
 
     @Test
     fun qq_01_copy() {
@@ -5357,11 +5357,152 @@ class Exec_01 {
         """, true)
         assert(out == "false\n") { out }
     }
+    @Test
+    fun qq_03_copy() {
+        val out = test("""
+            val t1 = [1,2,3]
+            val t2 = copy(t1)
+            val t3 = t1
+            set t1[2] = 999
+            set t2[0] = 10
+            println(t1)
+            println(t2)
+            println(t3)
+        """, true)
+        assert(out == "[1,2,999]\n[10,2,3]\n[1,2,999]\n") { out }
+    }
+    @Test
+    fun qq_04_copy() {
+        val out = test("""
+            var f
+            set f = func (v) {
+                ;;println(v)
+                if v > 0 {
+                    copy([f(v - 1)])
+                } else {
+                    0
+                }
+            }
+            println(f(3))
+        """, true)
+        assert(out == "[[[0]]]\n") { out }
+    }
+    @Test
+    fun qq_05_copy() {
+        val out = test("""
+            val out = do {
+                val ins = [1,2,3]
+                copy(ins)
+            }
+            println(out)
+        """, true)
+        assert(out == "[1,2,3]\n") { out }
+    }
+    @Test
+    fun qq_06_copy() {
+        val out = test("""
+            var x = [1,2,3]
+            do {
+                val y = copy(x)
+                do {
+                    set x = y
+                }
+            }
+            println(x)
+        """, true)
+        assert(out == "[1,2,3]\n") { out }
+        //assert(out == "anon : (lin 6, col 25) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun qq_07_copy() {
+        val out = test("""
+            var x = [1,2,3]
+            do {
+                val y = copy(x)
+                do {
+                    set x = copy(y)
+                }
+            }
+            println(x)
+        """, true)
+        assert(out == "[1,2,3]\n") { out }
+    }
+    @Test
+    fun qq_08_copy() {
+        val out = test("""
+            var v
+            do {
+                var x = [1,2,3]
+                do {
+                    val y = copy(x)
+                    do {
+                        set x = copy(y)
+                        ;;`printf(">>> %d\n", ceu_mem->x.Dyn->hld_type);`
+                        set v = x       ;; err
+                    }
+                }
+            }
+            println(v)
+        """, true)
+        assert(out == "[1,2,3]\n") { out }
+        //assert(out == "anon : (lin 10, col 29) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+
+    // COPY / vector
+
+    @Test
+    fun qr_01_copy_vector () {
+        val out = test("""
+            val v = #[1,2,3]
+            val x = do ;;;export [];;; {
+                val i = v[#v - 1]
+                set v[#v - 1] = nil
+                i
+            }
+            println(x, #v)
+        """, true)
+        assert(out == "3\t2\n") { out }
+    }
+    @Test
+    fun qr_02_copy_vector() {
+        val out = test("""
+            val t1 = #[]        ;; [1,2]
+            set t1[#t1] = 1
+            val t2 = t1         ;; [1,2]
+            val t3 = copy(t1)   ;; [1,20]
+            set t1[#t1] = 2
+            set t3[#t3] = 20
+            println(t1)
+            println(t2)
+            println(t3)
+        """, true)
+        assert(out == "#[1,2]\n#[1,2]\n#[1,20]\n") { out }
+    }
+
+    // COPY / dict
+
+    @Test
+    fun qs_01_copy_dict() {
+        val out = test("""
+            val t1 = @[]
+            set t1[:x] = 1
+            val t2 = t1
+            val t3 = copy(t1)
+            set t1[:y] = 2
+            set t3[:y] = 20
+            println(t1)
+            println(t2)
+            println(t3)
+        """, true)
+        assert(out == "@[(:x,1),(:y,2)]\n@[(:x,1),(:y,2)]\n@[(:x,1),(:y,20)]\n") { out }
+    }
 
     // TYPE-*
 
     @Test
-    fun qr_01_type() {
+    fun rr_01_type() {
         val out = test("""
             println(type-static?(:number))
             println(type-static?(type([])))
