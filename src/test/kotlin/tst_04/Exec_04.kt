@@ -1069,6 +1069,49 @@ class Exec_04 {
         )
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun gc_17_ff() {
+        val out = test(
+            """
+            var T
+            set T = task (v) {
+                spawn task () {
+                    println(v)
+                    yield(nil)
+                    println(v)
+                } ()
+                loop { yield(nil) }
+            }
+            spawn T(1)
+            spawn T(2)
+            broadcast(nil)
+        """
+        )
+        assert(out == "1\n2\n1\n2\n") { out }
+    }
+    @Test
+    fun dd_18_xceu() {
+        val out = test("""
+            spawn task () {
+                var evt1 = yield(nil)
+                val evtx = evt1
+                println(evt1)
+                spawn (task () {
+                    var evt2 = evtx
+                    loop {
+                        println(evt2)    ;; lost reference
+                        set evt2 = yield(nil)
+                    }
+                }) ()
+                set evt1 = yield(nil)
+            }()
+            broadcast (10)
+            broadcast (20)
+        """)
+        //assert(out == "10\nnil\n20\n") { out }
+        assert(out == "10\n10\n20\n") { out }
+        //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
+    }
 
     // BCAST / ARGS
 
@@ -1084,7 +1127,6 @@ class Exec_04 {
                     " v  broadcast error : invalid target\n"
         ) { out }
     }
-
     @Test
     fun de_02_bcast() {
         val out = test(
@@ -1097,7 +1139,6 @@ class Exec_04 {
                     " v  broadcast error : invalid target\n"
         ) { out }
     }
-
     @Test
     fun de_03_bcast() {
         val out = test(
@@ -1108,7 +1149,6 @@ class Exec_04 {
         //assert(out == "true\n") { out }
         assert(out == "nil\n") { out }
     }
-
     @Test
     fun de_04_bcast() {
         val out = test(
@@ -1119,7 +1159,6 @@ class Exec_04 {
         //assert(out == "true\n") { out }
         assert(out == "nil\n") { out }
     }
-
     @Test
     fun de_05_bcast() {
         val out = test(
@@ -1224,21 +1263,21 @@ class Exec_04 {
 
     // EVT
 
-    /*
     @Test
     fun de_01_evt() {
         val out = test("""
             println(evt)
         """)
-        assert(out == "nil\n") { out }
-        assert(out == "nil\n") { out }
+        //assert(out == "nil\n") { out }
+        assert(out == "anon : (lin 2, col 21) : access error : variable \"evt\" is not declared\n") { out }
     }
     @Test
     fun de_02_evt() {
         val out = test("""
+            var evt
             spawn (task () {
                 println(evt)
-                yield(nil)
+                set evt = yield(nil)
                 println(evt)
             }) ()
             broadcast(10)
@@ -1250,7 +1289,7 @@ class Exec_04 {
         DEBUG = true
         val out = test("""
             spawn (task () {
-                yield(nil)
+                val evt = yield(nil)
                 val x = evt
                 println(x)
             }) ()
@@ -1259,15 +1298,16 @@ class Exec_04 {
                 broadcast([10])
             }
         """)
-        assert(out == " |  anon : (lin 9, col 17) : broadcast'([10],:task)\n" +
-                " v  anon : (lin 4, col 17) : declaration error : cannot hold alien reference\n") { out }
+        assert(out == "[10]\n") { out }
+        //assert(out == " |  anon : (lin 9, col 17) : broadcast'([10],:task)\n" +
+        //        " v  anon : (lin 4, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun de_03x_evt_err() {
         DEBUG = true
         val out = test("""
             spawn (task () {
-                yield(nil)
+                val evt = yield(nil)
                 var x
                 set x = evt
                 println(x)
@@ -1277,15 +1317,16 @@ class Exec_04 {
                 broadcast([10])
             }
         """)
-        assert(out == " |  anon : (lin 10, col 17) : broadcast'([10],:task)\n" +
-                " v  anon : (lin 5, col 21) : set error : cannot hold alien reference\n") { out }
+        assert(out == "[10]\n") { out }
+        //assert(out == " |  anon : (lin 10, col 17) : broadcast'([10],:task)\n" +
+        //        " v  anon : (lin 5, col 21) : set error : cannot hold alien reference\n") { out }
     }
     @Test
     fun de_03y_evt_err() {
         DEBUG = true
         val out = test("""
             spawn (task () {
-                yield(nil)
+                val evt = yield(nil)
                 val x = [nil]
                 set x[0] = evt
                 println(x)
@@ -1295,14 +1336,15 @@ class Exec_04 {
                 broadcast([10])
             }
         """)
-        assert(out == " |  anon : (lin 10, col 17) : broadcast'([10],:task)\n" +
-                " v  anon : (lin 5, col 21) : store error : cannot hold alien reference\n") { out }
+        assert(out == "[[10]]\n") { out }
+        //assert(out == " |  anon : (lin 10, col 17) : broadcast'([10],:task)\n" +
+        //        " v  anon : (lin 5, col 21) : store error : cannot hold alien reference\n") { out }
     }
     @Test
     fun de_04_evt_err() {
         val out = test("""
             spawn (task () {
-                yield(nil)
+                val evt = yield(nil)
                 do {
                     val x = evt
                     println(x)
@@ -1317,14 +1359,15 @@ class Exec_04 {
         //assert(out == "[10]\n" +
         //        " |  anon : (lin 10, col 13) : broadcast'([10],:task)\n" +
         //        " v  anon : (lin 7, col 21) : yield error : cannot hold alien reference\n") { out }
-        assert(out == " |  anon : (lin 12, col 17) : broadcast'([10],:task)\n" +
-                " v  anon : (lin 5, col 21) : declaration error : cannot hold alien reference\n") { out }
+        //assert(out == " |  anon : (lin 12, col 17) : broadcast'([10],:task)\n" +
+        //        " v  anon : (lin 5, col 21) : declaration error : cannot hold alien reference\n") { out }
+        assert(out == "[10]\n") { out }
     }
     @Test
     fun de_05_evt() {
         val out = test("""
             spawn (task () {
-                yield(nil)
+                val evt = yield(nil)
                 do {
                     val x = evt
                     println(x)
@@ -1336,18 +1379,18 @@ class Exec_04 {
                 broadcast([10])
             }
         """)
-        //assert(out == "[10]\n") { out }
-        assert(out == " |  anon : (lin 12, col 17) : broadcast'([10],:task)\n" +
-                " v  anon : (lin 5, col 21) : declaration error : cannot hold alien reference\n") { out }
+        assert(out == "[10]\n") { out }
+        //assert(out == " |  anon : (lin 12, col 17) : broadcast'([10],:task)\n" +
+        //        " v  anon : (lin 5, col 21) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun de_05_evt_err_valgrind() {
         val out = test("""
             spawn (task () {
-                yield(nil)
+                var evt = yield(nil)
                 val x = evt
                 println(x)
-                yield(nil)
+                set evt = yield(nil)
                 println(x)
             }) ()
             do {
@@ -1356,14 +1399,15 @@ class Exec_04 {
             }
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 11, col 17) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 4, col 17) : declaration error : cannot hold alien reference\n") { out }
+        assert(out == "[10]\n[10]\n") { out }
+        //assert(out == " |  anon : (lin 11, col 17) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
     @Test
     fun de_06_evt() {
         val out = test("""
             spawn (task () {
-                yield(nil)
+                val evt = yield(nil)
                 println(do {
                     evt
                 })
@@ -1379,7 +1423,7 @@ class Exec_04 {
     fun de_07_evt_err() {
         val out = test("""
             spawn (task () {
-                yield(nil)
+                val evt = yield(nil)
                 val x = evt[0]
                 println(x)
             }) ()
@@ -1388,10 +1432,266 @@ class Exec_04 {
                 broadcast(e)
             }
         """)
-        assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 4, col 17) : declaration error : cannot hold alien reference\n") { out }
+        assert(out == "[10]\n") { out }
+        //assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
-     */
+    @Test
+    fun de_08_evt_hld_err() {
+        DEBUG = true
+        val out = test(
+            """
+            var tk
+            set tk = task (xxx) {
+                val evt = yield(nil)
+                do {
+                    val xxx' = evt
+                    nil
+                }
+            }
+            var co = spawn(tk)()
+            broadcast ([])
+            println(`:number CEU_GC.free`)
+        """
+        )
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
+        //        "anon : (lin 4, col 27) : invalid evt : cannot expose dynamic alien\n:error\n") { out }
+        //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
+        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun de_09_evt_hld_err() {
+        DEBUG = true
+        val out = test(
+            """
+            var tk
+            set tk = task (xxx) {
+                val evt = yield(nil)
+                do {
+                    val xxx' = evt[0]
+                }
+            }
+            spawn (tk) ()
+            broadcast( [[]] )
+            println(`:number CEU_GC.free`)
+        """
+        )
+        //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
+        //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic alien field\n:error\n") { out }
+        //assert(out == "2\n") { out }
+        assert(out == "3\n") { out }
+        //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
+        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun de_10_evt_hld_err() {
+        DEBUG = true
+        val out = test(
+            """
+            var tk
+            set tk = task (xxx) {
+                val evt = yield(nil)
+                do {
+                    val xxx' = evt
+                    nil
+                }
+            }
+            var co = spawn (tk) (1)
+            broadcast ([])
+            println(`:number CEU_GC.free`)
+        """
+        )
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 10, col 14) : broadcast []\n" +
+        //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic alien\n:error\n") { out }
+        //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
+        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun de_11_evt_hld() {
+        DEBUG = true
+        val out = test(
+            """
+            var tk
+            set tk = task (xxx) {
+                do {
+                val evt = yield(nil)
+                    val xxx' = evt
+                }
+                    yield(nil)
+            }
+            var co = spawn (tk)(1)
+            broadcast ([])
+            println(`:number CEU_GC.free`)
+        """
+        )
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 10, col 14) : broadcast []\n" +
+        //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic alien\n:error\n") { out }
+        //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
+        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun de_12_gg_evt_hld() {
+        val out = test(
+            """
+            var fff
+            set fff = func (x) { x }
+            spawn task () {
+                var evt = yield(nil)
+                loop {
+                    break if evt[:type]==:x
+                    set evt = yield(nil)
+                }
+                println(99)
+            }()
+            println(1)
+            broadcast (@[(:type,:y)])
+            println(2)
+            broadcast (@[(:type,:x)])
+            println(3)
+        """)
+        assert(out == "1\n2\n99\n3\n") { out }
+    }
+    @Test
+    fun de_13_evt_hld() {
+        val out = test(
+            """
+            var fff
+            set fff = func (x) { x }
+            spawn task () {
+                println(1)
+                var evt
+                do {
+                    println(2)
+                    set evt = yield(nil)
+                    println(3)
+                }
+                println(4)
+                fff(evt[:type])
+                println(99)
+            }()
+            broadcast (@[(:type,:y)])
+            broadcast (@[(:type,:x)])
+        """
+        )
+        //assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "1\n2\n3\n4\n99\n") { out }
+    }
+    @Test
+    fun de_14__evt() {
+        val out = test(
+            """
+            spawn task () {
+                println(111)
+                yield(nil)
+                println(222)
+            }()
+            println(1)
+            broadcast( nil)
+            println(2)
+        """
+        )
+        assert(out == "111\n1\n222\n2\n") { out }
+    }
+    @Test
+    fun de_15_gg_evt() {
+        val out = test(
+            """
+            spawn task () {
+                var evt
+                loop {
+                    println(evt)
+                    set evt = yield(nil)
+                }
+            }()
+            broadcast (@[])
+        """
+        )
+        assert(out == "nil\n@[]\n") { out }
+    }
+    @Test
+    fun de_16_gg_evt() {
+        val out = test(
+            """
+            spawn task () {
+                loop {
+                    var evt
+                    do {
+                        set evt = yield(nil)
+                    }
+                    println(evt)
+                }
+            }()
+            broadcast( @[] )
+        """
+        )
+        assert(out == "@[]\n") { out }
+    }
+    @Test
+    fun de_17_evt_err() {
+        val out = test(
+            """
+            var x
+            set x = []
+            broadcast (x)
+            println(x)
+        """
+        )
+        //assert(out == "anon : (lin 4, col 13) : set error : incompatible scopes\n") { out }
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 4, col 35) : broadcast error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun de_18_gg_evt_hld_err() {
+        DEBUG = true
+        val out = test(
+            """
+            var tk
+            set tk = task (xxx) {
+                val evt = yield(nil)
+                do {
+                    val xxx' = evt[0]
+                    nil
+                }
+            }
+            var co = spawn (tk) ()
+            broadcast (#[[]])
+            println(`:number CEU_GC.free`)
+        """
+        )
+        assert(out == "2\n") { out }
+        //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
+        //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic alien field\n") { out }
+        //assert(out == "anon : (lin 9, col 13) : broadcast #[[]]\n" +
+        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun de_19_gg_evt_hld_err() {
+        DEBUG = true
+        val out = test(
+            """
+            var tk
+            set tk = task (xxx) {
+                val evt = yield(nil)
+                val xxx' = evt[0]
+            }
+            var co = spawn (tk) ()
+            broadcast (@[(1,[])])
+            println(`:number CEU_GC.free`)
+        """
+        )
+        assert(out == "2\n") { out }
+        //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
+        //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic alien field\n") { out }
+    }
 
     // THROW / CATCH
 
@@ -2446,6 +2746,15 @@ class Exec_04 {
         assert(out == "anon : (lin 2, col 13) : pub error : expected enclosing task\n") { out }
     }
     @Test
+    fun kk_00_x_pub_err() {
+        val out = test("""
+            task.pub
+        """)
+        //assert(out == "anon : (lin 2, col 18) : pub error : expected enclosing task") { out }
+        //assert(out == "anon : (lin 2, col 13) : task error : missing enclosing task") { out }
+        assert(out == "anon : (lin 2, col 17) : expected \"(\" : have \".\"\n") { out }
+    }
+    @Test
     fun kk_01_pub_err() {
         val out = test(
             """
@@ -2597,7 +2906,6 @@ class Exec_04 {
         )
         assert(out == "10\n") { out }
     }
-
     @Test
     fun kk_10_pub_tag() {
         val out = test(
@@ -2614,7 +2922,6 @@ class Exec_04 {
         )
         assert(out == "10\n") { out }
     }
-
     @Test
     fun kk_11_task_tag_err() {
         val out = test(
@@ -2628,7 +2935,6 @@ class Exec_04 {
         assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared\n") { out }
         //assert(out == ":ok\n") { out }
     }
-
     @Test
     fun kk_12_pub() {
         val out = test(
@@ -2638,7 +2944,6 @@ class Exec_04 {
         )
         assert(out == "anon : (lin 2, col 13) : pub error : expected enclosing task\n") { out }
     }
-
     @Test
     fun kk_13_pub() {
         val out = test(
@@ -2655,7 +2960,6 @@ class Exec_04 {
                     " v  index error : expected collection\n"
         ) { out }
     }
-
     @Test
     fun kk_14_pub() {
         val out = test(
@@ -2676,7 +2980,6 @@ class Exec_04 {
         //        " v  anon : (lin 4, col 21) : set error : cannot hold alien reference\n") { out }
         assert(out == "[:x]\n") { out }
     }
-
     @Test
     fun kk_15_pub() {
         val out = test(
@@ -2690,6 +2993,268 @@ class Exec_04 {
         """
         )
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun kk_16_pub() {
+        val out = test("""
+            var t
+            set t = task (v1) {
+                set pub = v1
+                val evt = yield(nil)
+                set pub = pub + evt
+                pub
+            }
+            var a = spawn (t) (1)
+            println(a.pub)
+            broadcast(2) in a
+            println(a.pub)
+        """, true)
+        assert(out == "1\n3\n") { out }
+    }
+    @Test
+    fun kk_17_pub_err() {
+        val out = test("""
+            val t = task () {
+                set pub = []
+            }
+            var a = spawn (t) ()
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 11, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        //assert(out == "anon : (lin 5, col 28) : t()\n" +
+        //        "anon : (lin 2, col 29) : block escape error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun kk_18_pub_err() {
+        val out = test("""
+            val T = task () {
+                set pub = []
+                yield(nil)
+            }
+            var x
+            do {
+                var a = spawn (T) ()
+                set x = a.pub
+                nil
+            }
+            println(x)
+        """)
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        //assert(out == "anon : (lin 11, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        //assert(out == "anon : (lin 8, col 32) : t()\n" +
+        //        "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun kk_19_pub() {
+        val out = test("""
+            var t
+            set t = task () {
+                set pub = 10
+            }
+            var a = spawn t()
+            println(a.pub + a.pub)
+        """, true)
+        assert(out == "20\n") { out }
+    }
+    @Test
+    fun kk_20_pub_pool() {
+        val out = test("""
+            var T
+            set T = task () {
+                set pub = [10]  ;; valgrind test
+            }
+            spawn T()
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 6, col 19) : T()\n" +
+        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun kk_21_pub_pool() {
+        val out = test("""
+            var T
+            set T = task () {
+                do pub ;; useless test
+                nil
+            }
+            spawn T()
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun kk_22_pub_err() {
+        val out = test("""
+            var T
+            set T = task () {
+                set ;;;task.;;;pub = [10]
+                yield(nil)
+            }
+            var y
+            do {
+                var t = spawn (T) ()
+                var x
+                set x = t.pub  ;; pub expose
+                set y = t.pub  ;; incompatible scopes
+            }
+            println(999)
+        """)
+        assert(out == "999\n") { out }
+        //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 13, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+    }
+    @Test
+    fun kk_23_pub_index_err() {
+        val out = test("""
+            var T
+            set T = task () {
+                set ;;;task.;;;pub = [10]
+                yield(nil)
+            }
+            var t = spawn(T)()
+            var x
+            set x = t.pub   ;; no expose
+            println(x)
+        """)
+        assert(out == "[10]\n") { out }
+        //assert(out == "anon : (lin 9, col 17) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 11, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+    }
+    @Test
+    fun kk_24_pub_index_err() {
+        val out = test("""
+            var T
+            set T = task () {
+                set ;;;task.;;;pub = [10]
+                yield(nil)
+            }
+            var t = spawn(T)()
+            println(t.pub)   ;; no expose
+        """)
+        //assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        assert(out == "[10]\n") { out }
+    }
+    @Test
+    fun kk_25_pub_index_err() {
+        val out = test("""
+            var T
+            set T = task () {
+                set ;;;task.;;;pub = [[@[(:x,10)]]]
+                yield(nil)
+            }
+            var t = spawn T ()
+            println(t.pub[0][0][:x])   ;; no expose
+        """)
+        assert(out == "10\n") { out }
+        //assert(out == "anon : (lin 10, col 27) : invalid index : cannot expose dynamic \"pub\" field\n:error\n") { out }
+    }
+    @Test
+    fun kk_26_hh_pub_task() {
+        val out = test("""
+        spawn task () { 
+            var y
+            set y = do {     
+                var ceu_spw_54     
+                set ceu_spw_54 = spawn task :nested () {         
+                    yield(nil)         
+                    [2]             
+                }()        
+                yield(nil)     
+                ;;println(ceu_spw_54.pub)     
+                ceu_spw_54.pub        
+            }     
+            println(y) 
+        }()
+        broadcast( nil )
+        """)
+        assert(out == "[2]\n") { out }
+        //assert(out == "anon : (lin 16, col 9) : broadcast nil\n" +
+        //        "anon : (lin 12, col 28) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+    }
+    @Test
+    fun kk_27_pub_task_err() {
+        val out = test("""
+        spawn task () { 
+            var y
+            set y = do {     
+                var ceu_spw_54     
+                set ceu_spw_54 = spawn task () {         
+                    set ;;;task.;;;pub = [2]             
+                    yield(nil)         
+                }()        
+                ;;yield(nil)     
+                ;;println(ceu_spw_54.pub)     
+                ceu_spw_54.pub        
+            }     
+            println(y) 
+        }()
+        broadcast (nil)
+        """)
+        assert(out == "[2]\n") { out }
+       // assert(out == "anon : (lin 2, col 15) : (task () :fake { var y set y = do { var ceu_s...)\n" +
+       //         "anon : (lin 4, col 21) : block escape error : incompatible scopes\n" +
+       //         ":error\n") { out }
+        //assert(out == "anon : (lin 16, col 9) : broadcast nil\n" +
+        //        "anon : (lin 12, col 28) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+    }
+    @Test
+    fun kk_28_pub_err() {
+        val out = test("""
+            var t
+            set t = task (v) {
+                set ;;;task.;;;pub = v
+                var evt = yield(nil)
+                var x
+                set x = [2]
+                set ;;;task.;;;pub = x
+                set evt = yield(nil)
+                set ;;;task.;;;pub = @[(:y,copy(evt))]
+                ;;;move;;;(;;;task.;;;pub)
+            }
+            var a = spawn (t) ([1])
+            println(a.pub)
+            broadcast(nil) in a
+            println(a.pub)
+            broadcast([3]) in a
+            println(a.pub)
+        """, true)
+        assert(out == "[1]\n[2]\n@[(:y,[3])]\n") { out }
+        //assert(out == "TODO\n") { out }
+    }
+    @Test
+    fun kk_29_pub_out() {
+        val out = test("""
+            var t = task () {
+                set ;;;task.;;;pub = []
+                yield(nil)
+                nil
+            }
+            var a = spawn (t) ()
+            println(a.pub)
+            a.pub
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun kk_30_pub_out_err() {
+        val out = test("""
+            var t = task () {
+                set ;;;task.;;;pub = []
+                ;;;task.;;;pub
+            }
+            var a = spawn (t) ()
+            println(a.pub)
+        """)
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 6, col 28) : t()\n" +
+        //        "anon : (lin 2, col 29) : block escape error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
 
     // ORIGINAL / PUB / EXPOSE
@@ -2897,6 +3462,199 @@ class Exec_04 {
         )
         assert(out == "[]\n:ok\n") { out }
     }
+    @Test
+    fun kj_12_pub_pass() {
+        val out = test("""
+            val S = task (t) {
+                println(t)
+                yield(nil)
+            }
+            val T = task () {
+                set ;;;task.;;;pub = [1,2,3]
+                spawn S(;;;task.;;;pub)
+                nil
+            }
+            spawn T()
+        """)
+        assert(out == "[1,2,3]\n") { out }
+    }
+    @Test
+    fun kj_13_pub_err_expose() {
+        val out = test("""
+            var t
+            set t = task () {
+                set pub = []
+            }
+            var a = spawn (t) ()
+            var x
+            set x = a.pub   ;; seria bom que o pub guardasse o retorno,
+                            ;; uma vez que ele já se "desfez" (gc_dec) do pub
+                            ;; poderia ser uma union pub/ret
+            println(x)
+        """)
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        //assert(out == "anon : (lin 6, col 28) : t()\n" +
+        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun kj_14_pub_err_expose() {
+        val out = test("""
+            var t
+            set t = task () {
+                set ;;;task.;;;pub = @[]
+            }
+            var a = spawn (t) ()
+            var x
+            set x = a.pub
+            println(x)
+        """)
+        assert(out == "@[]\n") { out }
+        //assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        //assert(out == "anon : (lin 6, col 28) : t()\n" +
+        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun kj_15_pub_err_expose() {
+        val out = test("""
+            var t
+            set t = task () {
+                set ;;;task.;;;pub = #[]
+            }
+            var a = spawn (t) ()
+            var x
+            set x = a.pub
+            println(x)
+        """)
+        assert(out == "#[]\n") { out }
+        //assert(out == "anon : (lin 6, col 28) : t()\n" +
+        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun kj_16_pub_nopub() {
+        val out = test("""
+            var U
+            set U = task () {
+                set pub = func () {
+                    10
+                }
+            }
+            var T
+            set T = task (u) {
+                println(type(u.pub))
+            }
+            spawn T (spawn U())
+            println(:ok)
+        """)
+        assert(out == ":func\n:ok\n") { out }
+        //assert(out == "anon : (lin 12, col 28) : U()\n" +
+        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun kj_17_pub_nopub() {
+        val out = test("""
+            var U
+            set U = task () {
+                set ;;;task.;;;pub = [10]
+            }
+            var T
+            set T = task (u) {
+                nil ;;println(u.pub.0)
+            }
+            spawn T (spawn U())
+            println(:ok)
+        """)
+        //assert(out == "anon : (lin 10, col 28) : U()\n" +
+        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun kj_18_pub_nopub() {
+        val out = test("""
+            var U
+            set U = task () {
+                var x
+                set x = [10]
+            }
+            var T
+            set T = task (u) {
+                nil ;;println(u.pub.0)
+            }
+            spawn T (spawn U())
+            println(:ok)
+        """)
+        //assert(out == "anon : (lin 11, col 28) : U()\n" +
+        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun kj_19_func_expose() {
+        val out = test("""
+            var t = task (v) {
+                set ;;;task.;;;pub = v
+                var f = func (p) {
+                    p
+                }
+                println(f(;;;task.;;;pub))
+            }
+            var a = spawn (t) ([1])
+        """, true)
+        assert(out == "[1]\n") { out }
+        //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
+        //        "anon : (lin 9, col 25) : f()\n" +
+        //        "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+    }
+    @Test
+    fun kj_20_pub_func_tst() {
+        val out = test("""
+            var t = task (v) {
+                set ;;;task.;;;pub = v
+                var xxx
+                nil
+            }
+            var a = spawn (t) ([])
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun kj_21_pub_func_expose() {
+        val out = test("""
+            var f = func (t) {
+                t.pub
+            }
+            var T = task () {
+                set ;;;task.;;;pub = []
+                yield(nil)
+            }
+            var t = spawn (T) ()
+            println(f(t))
+        """)
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
+        //        "anon : (lin 9, col 25) : f()\n" +
+        //        "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        //assert(out == "anon : (lin 10, col 21) : f(t)\n" +
+        //        "anon : (lin 2, col 30) : block escape error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+
+    // PUB / DATA
+
+    @Test
+    fun BUG_ki_01_data_pub() {
+        val out = test("""
+            data :T = [x,y]
+            var t :T = spawn task () {
+                set ;;;task.;;;pub = [10,20]
+                nil
+            } ()
+            data :X = [a:T]
+            var x :X = [t]
+            println(x.a.pub.y)  // TODO: combine Pub/Index
+        """, true)
+        assert(out == "20\n") { out }
+    }
 
     // NESTED
 
@@ -3103,6 +3861,85 @@ class Exec_04 {
         """
         )
         assert(out == "1\t:ok\n2\t:ok\n") { out }
+    }
+    @Test
+    fun ll_12_pub_fake_task() {
+        val out = test("""
+            spawn (task () {
+                set pub = 1
+                spawn (task :nested () {
+                    println(pub)
+                }) ()
+                nil
+            }) ()
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun ll_13_pub_fake_task_err() {
+        val out = test("""
+            spawn (task () {
+                set pub = []
+                var x
+                spawn (task :nested () {
+                    set x = pub
+                }) ()
+                println(x)
+            }) ()
+        """)
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 2, col 20) : task () { set task.pub = [] var x spa...)\n" +
+        //        "anon : (lin 5, col 24) : task () :fake { set x = task.pub }()\n" +
+        //        "anon : (lin 6, col 34) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        //assert(out == "anon : (lin 2, col 20) : task () { set task.pub = [] var x spawn task ...)\n" +
+        //        "anon : (lin 5, col 24) : task () :fake { set x = task.pub }()\n" +
+        //        "anon : (lin 6, col 25) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun ll_14_pub_fake_task() {
+        val out = test("""
+            spawn (task () {
+                set pub = [10]
+                var x
+                spawn (task :nested () {
+                    set x = pub[0]
+                }) ()
+                println(x)
+            }) ()
+        """, true)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun ll_15_pub_fake_err() {
+        val out = test("""
+            spawn (task :nested () {
+                pub
+            }) ()
+        """, true)
+        //assert(out == "anon : (lin 3, col 22) : pub error : expected enclosing task") { out }
+        //assert(out == "anon : (lin 3, col 17) : task error : missing enclosing task") { out }
+        assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
+    }
+    @Test
+    fun ll_16_xceu3() {
+        val out = test("""
+            spawn task () {
+                var evt = yield(nil)
+                println(evt)
+                spawn (task :nested () {
+                    loop {
+                        println(evt)    ;; kept reference
+                        set evt = yield(nil)
+                    }
+                }) ()
+                set evt = yield(nil)
+            }()
+            broadcast (10)
+            broadcast (20)
+        """)
+        assert(out == "10\n10\n20\n") { out }
+        //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
 
     // NESTED / BCAST / THROW
@@ -4440,7 +5277,6 @@ class Exec_04 {
         )
         assert(out == ":e1\n:e2\n") { out }
     }
-
     @Test
     fun pp_02_throw() {
         val out = test(
@@ -4470,7 +5306,6 @@ class Exec_04 {
         )
         assert(out == ":e1\n:e2\n") { out }
     }
-
     @Test
     fun pp_03_throw() {
         val out = test(
@@ -4506,6 +5341,62 @@ class Exec_04 {
         )
         assert(out == ":ok1\n:ok2\n:ok3\n") { out }
     }
+    @Test
+    fun pp_04_08_spawn() {
+        val out = test("""
+            spawn task () {
+                spawn (task () {
+                    yield(nil)
+                }) ()
+                yield(nil)
+                error(nil)
+            }()
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun pp_05_xceu() {
+        val out = test("""
+            catch (_,true) {
+                spawn task () {
+                    error([tags([],:x,true)])
+                }()
+            }
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun pp_06_xceu5() {
+        val out = test("""
+            spawn task () {
+                catch (err,err==:or) {
+                    spawn task () {
+                        yield(nil)
+                        ;;println(:evt, evt)
+                        ;;println(111)
+                        error(:or)
+                    }()
+                    spawn task () {
+                        yield(nil)
+                        ;;println(:evt, evt)
+                        ;;println(222)
+                        error(:or)
+                    }()
+                    yield(nil)
+                    ;;println(:in)
+                }
+                ;;println(:out)
+            }()
+            broadcast (nil)
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
+    }
 
     // RETURN
 
@@ -4528,7 +5419,6 @@ class Exec_04 {
                     ":terminated\t[2]\n"
         ) { out }
     }
-
     @Test
     fun nn_02_term() {
         val out = test(
@@ -4561,7 +5451,6 @@ class Exec_04 {
                     " v  toggle error : expected yielded task\n"
         ) { out }
     }
-
     @Test
     fun pp_02_toggle() {
         val out = test(
@@ -4582,7 +5471,6 @@ class Exec_04 {
         )
         assert(out == "1\n2\n10\n") { out }
     }
-
     @Test
     fun pp_03_toggle_defer() {
         val out = test(
@@ -4605,7 +5493,6 @@ class Exec_04 {
         )
         assert(out == "1\n2\n10\n") { out }
     }
-
     @Test
     fun pp_04_toggle_err() { // should be rt error
         val out = test(
@@ -4622,7 +5509,6 @@ class Exec_04 {
                     " v  toggle error : expected yielded task\n"
         ) { out }
     }
-
     @Test
     fun pp_05_toggle_nest() {
         val out = test(
@@ -4663,7 +5549,6 @@ class Exec_04 {
         assert(out == "1\t2\n") { out }
         //assert(out == "anon : (lin 6, col 19) : spawn error : invalid number of arguments\n") { out }
     }
-
     @Test
     fun zz_02_spawn_err() {
         val out = test(
@@ -4676,7 +5561,6 @@ class Exec_04 {
                     " v  spawn error : expected task\n"
         ) { out }
     }
-
     @Test
     fun zz_03_spawn_err() {
         val out = test(
@@ -4686,7 +5570,6 @@ class Exec_04 {
         )
         assert(out == "anon : (lin 3, col 9) : spawn error : expected call\n") { out }
     }
-
     @Test
     fun zz_04_bcast() {
         val out = test(
@@ -4713,7 +5596,6 @@ class Exec_04 {
         )
         assert(out == "1\n2\n99\n") { out }
     }
-
     @Test
     fun zz_05_bcast_in() {
         val out = test(
@@ -4730,7 +5612,6 @@ class Exec_04 {
         )
         assert(out == ":ok\n") { out }
     }
-
     @Test
     fun zz_06_bcast_in() {
         val out = test(
@@ -4749,7 +5630,6 @@ class Exec_04 {
         )
         assert(out == "1\n") { out }
     }
-
     @Test
     fun zz_10_bcast() {
         val out = test(
@@ -4775,7 +5655,6 @@ class Exec_04 {
         )
         assert(out == "1\n") { out }
     }
-
     @Test
     fun zz_11_bcast() {
         val out = test(
@@ -4803,7 +5682,6 @@ class Exec_04 {
         //        ":error\n") { out }
         assert(out == "[]\n") { out }
     }
-
     @Test
     fun zz_12_bcast() {
         val out = test(
@@ -4823,7 +5701,6 @@ class Exec_04 {
         )
         assert(out == "[]\n") { out }
     }
-
     @Test
     fun zz_13_bcast() {
         val out = test(
@@ -4843,7 +5720,6 @@ class Exec_04 {
         //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
         //        "anon : (lin 4, col 17) : declaration error : incompatible scopes\n:error\n") { out }
     }
-
     @Test
     fun zz_14_bcast() {
         val out = test(
@@ -4868,7 +5744,6 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 12, col 13) : broadcast'(e)\n" +
         //        " v  anon : (lin 5, col 36) : block escape error : cannot copy reference out\n") { out }
     }
-
     @Test
     fun zz_15_bcast_err() {
         val out = test(
@@ -4904,7 +5779,6 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 13, col 25) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
-
     @Test
     fun zz_15_bcast_okr() {
         val out = test(
@@ -4921,7 +5795,6 @@ class Exec_04 {
         )
         assert(out == "[]\n") { out }
     }
-
     @Test
     fun zz_16_bcast_err() {
         val out = test(
@@ -4957,7 +5830,6 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
-
     @Test
     fun zz_17_bcast() {
         DEBUG = true
@@ -4993,7 +5865,6 @@ class Exec_04 {
         //        ":2\n" +
         //        ":error\n") { out }
     }
-
     @Test
     fun zz_18_bcast_tuple_func_ok() {
         val out = test(
@@ -5010,7 +5881,6 @@ class Exec_04 {
         )
         assert(out == "[1]\n") { out }
     }
-
     @Test
     fun zz_19_bcast_tuple_func_no() {
         val out = test(
@@ -5033,7 +5903,6 @@ class Exec_04 {
         //        " |  anon : (lin 7, col 17) : f((yield(nil) thus { it => it }) )\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot move pending reference in\n") { out }
     }
-
     @Test
     fun zz_19_bcast_tuple_func_ok_not_fleet() {
         val out = test(
@@ -5056,7 +5925,6 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 11, col 13) : broadcast'([[1]])\n" +
         //        " v  anon : (lin 7, col 38) : block escape error : cannot copy reference out\n") { out }
     }
-
     @Test
     fun zz_20_bcast_tuple_func_ok() {
         val out = test(
@@ -5076,7 +5944,6 @@ class Exec_04 {
         //        " |  anon : (lin 8, col 44) : f(it)\n" +
         //        " v  anon : (lin 3, col 27) : declaration error : cannot move pending reference in\n") { out }
     }
-
     @Test
     fun zz_20_bcast_tuple_func_no() {
         val out = test(
@@ -5099,7 +5966,6 @@ class Exec_04 {
         //        " |  anon : (lin 9, col 44) : f(it)\n" +
         //        " v  anon : (lin 4, col 21) : declaration error : cannot move pending reference in\n") { out }
     }
-
     @Test
     fun zz_20_bcast_tuple_func_nox() {
         val out = test(
@@ -5124,7 +5990,6 @@ class Exec_04 {
         //        " |  anon : (lin 6, col 17) : g(v[0])\n" +
         //        " v  anon : (lin 3, col 31) : argument error : cannot move pending reference in\n") { out }
     }
-
     @Test
     fun zz_21_bcast_tuple_func_ok() {
         val out = test(
@@ -5142,7 +6007,6 @@ class Exec_04 {
         )
         assert(out == "[1]\n") { out }
     }
-
     @Test
     fun zz_22_pool_throw() {
         val out = test(
@@ -5170,7 +6034,6 @@ class Exec_04 {
         )
         assert(out == "1\n2\n3\n4\n5\n6\n7\n") { out }
     }
-
     @Test
     fun zz_23_valgrind() {
         val out = test(
@@ -5189,7 +6052,6 @@ class Exec_04 {
         )
         assert(out == "[]\n") { out }
     }
-
     @Test
     fun zz_24_valgrind() {
         val out = test(
@@ -5206,7 +6068,6 @@ class Exec_04 {
         )
         assert(out == ":ok\n") { out }
     }
-
     @Test
     fun zz_25_break() {
         val out = test(
@@ -5221,6 +6082,149 @@ class Exec_04 {
         """
         )
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun zz_26_xceu() {
+        val out = test("""
+            spawn task () {
+                do {
+                    spawn task () {
+                        yield(nil)
+                    } ()
+                    yield(nil)
+                }
+                broadcast( [[]] )
+                ;;await true
+            }()
+            broadcast (nil)
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun zz_27_xceu() {
+        val out = test("""
+            spawn task () {
+                do {
+                    spawn task () {
+                        yield(nil)
+                    } ()
+                    yield(nil)
+                }
+                broadcast( tags([], :x, true) )
+            }()
+            broadcast (nil)
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun zz_28_xceu () {
+        val out = test("""
+            spawn task () {
+                do {
+                    spawn task () {
+                        yield(nil)
+                    }()
+                    yield(nil)
+                    nil
+                }
+                do {
+                    nil
+                }
+            } ()
+            broadcast (nil)
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun zz_29_xceu () {
+        val out = test("""
+            spawn task () {
+                loop {
+                    var evt = yield(nil);
+                    loop {
+                        break if evt==10
+                        set evt = yield(nil)
+                    }
+                    println(:1)
+                    var t = spawn task () {
+                        var evt2 = yield(nil);
+                        loop {
+                            break if evt2==10 
+                            set evt2 = yield(nil)
+                        }
+                    } ()
+                    loop {
+                        break if status(t)==:terminated
+                        set evt = yield(nil)
+                        delay
+                    }
+                    println(:2)
+                }
+            } ()
+            broadcast (10)    ;; :1
+            broadcast (10)    ;; :2 (not :1 again)
+        """, true)
+        assert(out == ":1\n:2\n") { out }
+    }
+    @Test
+    fun zz_30_xceu () {
+        val out = test("""
+            data :X = [x]
+            task () :X {
+                task :nested () {
+                    ;;;task.;;;pub.x
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun zz_31_kill() {
+        val out = test("""
+            spawn task () {
+                do {
+                    val t1 = spawn task () {
+                        ${AWAIT()}
+                        println(1)
+                    } ()
+                    spawn task () {
+                        defer { println(3) }
+                        ${AWAIT()}
+                        println(2)
+                    } ()
+                    ${AWAIT ("t1")}
+                }
+                println(999)
+            } ()
+            broadcast (nil)
+        """, true)
+        assert(out == "1\n3\n999\n") { out }
+    }
+    @Test
+    fun zz_32_all() {
+        val out = test("""
+            val T = (task () {
+                set ;;;task.;;;pub = []
+                yield(nil)
+            })
+            val f = (func (v) {
+                nil
+            })
+            do {
+                val xxx = spawn T()
+                do {
+                    val zzz = xxx
+                    nil
+                }
+                f(xxx.pub)
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
     }
 
     // ORIGINAL / DATA / EVT
@@ -5240,7 +6244,6 @@ class Exec_04 {
         )
         assert(out == "10\n") { out }
     }
-
     @Test
     fun z1_02_data_await() {
         val out = test(
@@ -5261,7 +6264,6 @@ class Exec_04 {
         )
         assert(out == "10\n20\n") { out }
     }
-
     @Test
     fun z1_03_data_pub_err() {
         val out = test(
@@ -5273,7 +6275,6 @@ class Exec_04 {
         assert(out == "anon : (lin 2, col 21) : declaration error : data :T is not declared\n") { out }
         //assert(out == ":ok\n") { out }
     }
-
     @Test
     fun z1_04_data_pub() {
         val out = test(
@@ -5287,7 +6288,6 @@ class Exec_04 {
         )
         assert(out == "10\n") { out }
     }
-
     @Test
     fun z1_05_data_pub_err() {
         val out = test(
@@ -5303,7 +6303,6 @@ class Exec_04 {
                     " v  index error : expected collection\n"
         ) { out }
     }
-
     @Test
     fun z1_06_data_pub() {
         val out = test(

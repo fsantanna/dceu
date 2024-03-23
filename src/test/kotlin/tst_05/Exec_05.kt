@@ -241,6 +241,258 @@ class Exec_05 {
         """)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun aa_16_pool_leak() {
+        val out = test("""
+            var T
+            set T = task () {
+                yield(nil)
+            }
+            var ts
+            set ts = tasks()
+            spawn T() in ts
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun aa_17_pool_term() {
+        val out = test(
+            """
+            var ts
+            set ts = tasks(2)
+            var T
+            set T = task (v) {
+                println(10)
+                defer {
+                    println(20)
+                    println(30)
+                }
+                do {
+                    var ok1
+                    set ok1=false
+                    loop {
+                        break if ok1
+                        val evt = yield(nil) if type(evt)/=:exe-task { set ok1=true } else { nil } }
+                    }
+                ;;yield(nil)
+                if v {
+                    do { var ok; set ok=false; loop { break if ok ; val evt=yield(nil;) if type(evt)/=:exe-task { set ok=true } else { nil } } }
+                    ;;yield(nil)
+                } else {
+                    nil
+                }
+            }
+            println(0)
+            spawn T(false) in ts 
+            spawn T(true) in ts
+            println(1)
+            broadcast(@[])
+            println(2)
+            broadcast(@[])
+            println(3)
+        """
+        )
+        assert(out == "0\n10\n10\n1\n20\n30\n2\n20\n30\n3\n") { out }
+    }
+    @Test
+    fun aa_18_pool_throw() {
+        val out = test(
+            """
+            var ts
+            set ts = tasks(2)
+            var T
+            set T = task (v) {
+                defer {
+                    println(v)
+                }
+                catch (err,err==:ok) {
+                    spawn task () {
+                        yield(nil)
+                        if v == 1 {
+                            error(:ok)
+                        } else {
+                            nil
+                        }
+                        loop { yield(nil) }
+                    } ()
+                    loop { yield(nil) }
+                }
+                println(v)
+            }
+            spawn T(1) in ts
+            spawn T(2) in ts
+            broadcast(nil)
+            broadcast(nil)
+            println(999)
+        """
+        )
+        assert(out == "1\n1\n999\n2\n") { out }
+    }
+    @Test
+    fun aa_19_pool_throw() {
+        val out = test(
+            """
+            var ts
+            set ts = tasks(2)
+            var T
+            set T = task (v) {
+                defer {
+                    println(v)
+                }
+                catch (err,err==:ok) {
+                    spawn task () {
+                        yield(nil)
+                        if v == 2 {
+                            error(:ok)
+                        } else {
+                            nil
+                        }
+                        loop { yield(nil) }
+                    } ()
+                    loop { yield(nil) }
+                }
+                println(v)
+            }
+            spawn T(1) in ts
+            spawn T(2) in ts
+            broadcast(nil)
+            broadcast(nil)
+            println(999)
+        """
+        )
+        assert(out == "2\n2\n999\n1\n") { out }
+    }
+    @Test
+    fun aa_20_pub_tasks_tup() {
+        val out = test("""
+            val tup = []
+            val T = task () {
+                set ;;;task.;;;pub = tup
+                yield(nil)
+            }
+            val ts = tasks()
+            spawn T() in ts
+            spawn T() in ts
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun aa_21_pub_pool_err() {
+        val out = test("""
+            var T = task () {
+                set ;;;task.;;;pub = [10]
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn in ts, T()
+            loop in :tasks ts, t {
+                var x = detrack(t).pub
+                broadcast in detrack(t), nil
+                println(x)
+            }
+            println(999)
+        """)
+        //assert(out == "20\n") { out }
+        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        assert(out == "anon : (lin 9, col 17) : declaration error : incompatible scopes\n:error\n") { out }
+    }
+
+    // TASKS / lims
+
+    @Test
+    fun ab_01_pool_max_err() {
+        val out = test(
+            """
+            tasks(0)
+        """
+        )
+        assert(out == " |  anon : (lin 2, col 13) : tasks(0)\n" +
+                " v  tasks error : expected positive number\n") { out }
+    }
+    @Test
+    fun ab_02_pool_max_err() {
+        val out = test(
+            """
+            tasks(nil)
+        """
+        )
+        assert(out == " |  anon : (lin 2, col 13) : tasks(nil)\n" +
+                " v  tasks error : expected positive number\n") { out }
+    }
+    @Test
+    fun BUG_ab_03_pool_max() {  // remove from ts when terminates?
+        val out = test(
+            """
+            var ts = tasks(1)
+            var T = task () { yield(nil) }
+            var ok1 = spawn T() in ts
+            var ok2 = spawn T() in ts
+            broadcast(nil)
+            var ok3 = spawn T() in ts
+            var ok4 = spawn T() in ts
+            println(ok1, ok2, ok3, ok4)
+        """
+        )
+        assert(out == "true\tfalse\ttrue\tfalse\n") { out }
+    }
+    @Test
+    fun BUG_ab_04_pool_valgrind() {  // remove from ts when terminates?
+        val out = test(
+            """
+            var ts
+            set ts = tasks(1)
+            var T
+            set T = task () { yield(nil) }
+            var ok1
+            set ok1 = spawn T() in ts
+            broadcast(nil)
+            var ok2
+            set ok2 = spawn T() in ts
+            println(status(ok1), ok2)
+        """
+        )
+        assert(out == ":terminated\tTODO\n") { out }
+    }
+    @Test
+    fun BUG_ab_05_pool_reuse_awake() {
+        val out = test(
+            """
+            var T = task (n) {
+                set pub = n
+                var evt = yield(nil)
+                ;;println(:awake, evt, n)
+                loop {
+                    break if evt == n
+                    set evt = yield(nil)
+                }
+                ;;println(:term, n)
+            }
+            var ts = tasks(2)
+            spawn T(1) in ts
+            spawn T(2) in ts
+            var t = nil
+            loop {
+                set t = next-tasks(ts, t)
+                break if (if t { false } else { true })
+                println(:t, ;;;detrack;;;(t).pub)
+                ;;println(:bcast1)
+                broadcast( 2 )        ;; opens hole for 99 below
+                ;;println(:bcast2)
+                var ok = spawn T(99) in ts     ;; must not fill hole b/c ts in the stack
+                println(ok)
+            }
+            ;;;
+            println("-=-=-=-")
+            loop in :tasks ts, x {
+                println(:t, detrack(x).pub)
+            }
+            ;;;
+        """
+        )
+        assert(out == "1\nfalse\n") { out }
+    }
 
     // GC
 
@@ -1012,6 +1264,24 @@ class Exec_05 {
         """)
         assert(out.contains("[10]\n")) { out }
     }
+    @Test
+    fun BUG_ee_05_data_pool_pub() {
+        val out = test("""
+            data :T = [x,y]
+            var ts = tasks()
+            spawn (task () {
+                set ;;;task.;;;pub = [10,20]
+                yield(nil)
+            }) () in ts
+            var xxx :T = nil
+            loop {
+                set xxx = next-tasks(ts, xxx)
+                break if (if xxx { false } else { true })
+                println(;;;detrack;;;(xxx).pub.y)   // TODO: detrack needs to return to grammar
+            }
+        """, true)
+        assert(out == "20\n") { out }
+    }
 
     // THROW
 
@@ -1035,6 +1305,43 @@ class Exec_05 {
                 " |  anon : (lin 13, col 13) : broadcast'(:task,nil)\n" +
                 " |  anon : (lin 8, col 21) : error(:error)\n" +
                 " v  error : :error\n") { out }
+    }
+    @Test
+    fun ee_02_pool_throw() {
+        val out = test(
+            """
+            spawn (task () {
+                catch (err, err==:ok) {
+                    spawn task () {
+                        yield(nil)
+                        error(:ok)
+                    } ()
+                    loop { yield(nil) }
+                }
+            })()
+            broadcast(nil)
+            println(999)
+        """
+        )
+        assert(out == "999\n") { out }
+    }
+    @Test
+    fun ee_03_pool_term() {
+        val out = test(
+            """
+            var T
+            set T = task () {
+                yield(nil)
+                error(nil)
+            }
+            spawn T()
+            spawn T()
+            broadcast( @[] )
+        """
+        )
+        assert(out == " |  anon : (lin 9, col 13) : broadcast'(:task,@[])\n" +
+                " |  anon : (lin 5, col 17) : error(nil)\n" +
+                " v  error : nil\n") { out }
     }
 
     // SCOPE
@@ -1589,6 +1896,432 @@ class Exec_05 {
         assert(out == " |  anon : (lin 2, col 21) : next-tasks(nil)\n" +
                 " v  next-tasks error : expected tasks\n") { out }
     }
+    @Test
+    fun hh_08_pool_term() {
+        val out = test("""
+            var T = task () {
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn T() in ts
+            var xxx = nil
+            loop {
+                set xxx = next-tasks(ts, xxx)
+                break if (if xxx { false } else { true })
+                println(1)
+                broadcast (1)
+            }
+            println(2)
+        """)
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
+    fun hh_09_pool_term() {
+        val out = test("""
+            var T
+            set T = task () {
+                yield(nil)
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn T() in ts
+            var xxx = nil
+            loop {
+                set xxx = next-tasks(ts, xxx)
+                break if (if xxx { false } else { true })
+                println(1)
+                broadcast(1)
+                var yyy = nil
+                loop  {
+                    set yyy = next-tasks(ts, yyy)
+                    break if (if yyy { false } else { true })
+                    println(2)
+                }
+            }
+            println(3)
+        """)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun hh_10_pool_plain() {
+        val out = test("""
+            var T = task () { yield(nil) }
+            var ts = tasks()
+            spawn T() in ts
+            var yyy
+            var xxx = nil
+            loop {
+                set xxx = next-tasks(ts, xxx)
+                break if (if xxx { false } else { true })
+                set yyy = xxx
+            }
+            println(status(;;;detrack;;;(yyy)))
+        """)
+        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == ":yielded\n") { out }
+    }
+    @Test
+    fun hh_11_pool_move() {
+        val out = test("""
+            var T = task () { yield(nil) }
+            var ts = tasks()
+            spawn T() in ts
+            var yyy
+            var xxx = nil
+            loop {
+                set xxx = next-tasks(ts, xxx)
+                break if (if xxx { false } else { true })
+                set yyy = ;;;move;;;(xxx)
+            }
+            println(status(;;;detrack;;;(yyy)))
+        """)
+        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == ":yielded\n") { out }
+    }
+    @Test
+    fun TODO_hh_12_pool_check() {   // copy task
+        val out = test("""
+            var T = task () { yield(nil) }
+            var ts = tasks()
+            spawn T() in ts
+            var xxx = nil
+            loop ;;;in :tasks ts, xxx;;; {
+                set xxx = next-tasks(ts, xxx)
+                break if (if xxx { false } else { true })
+                println(;;;detrack;;;(xxx) == ;;;detrack;;;(xxx))
+            }
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun TODO_hh_13_pool_err_scope() {   // copy task
+        val out = test("""
+            var T
+            set T = task () { yield(nil) }
+            var ts
+            set ts = tasks()
+            spawn T() in ts
+            var xxx = nil
+            var yyy
+            loop ;;;in :tasks ts, xxx;;; {
+                set xxx = next-tasks(ts, xxx)
+                break if (if xxx { false } else { true })
+                set yyy = copy(xxx)
+            }
+            broadcast(nil)
+            println(;;;detrack;;;(yyy))
+        """, true)
+        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun hh_14_pool_bcast() {
+        val out = test("""
+            var T = task () { yield(nil); println(:ok) }
+            var ts = tasks()
+            spawn T() in ts
+            var xxx = nil
+            loop ;;;in :tasks ts, xxx;;; {
+                set xxx = next-tasks(ts, xxx)
+                break if (if xxx { false } else { true })
+                broadcast(nil) in ;;;detrack;;;(xxx)
+            }
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun hh_15_pool_err_scope() {
+        val out = test(
+            """
+            var T
+            set T = task () { yield(nil) }
+            var ts
+            set ts = tasks()
+            spawn T() in ts
+            var xxx = nil
+            loop ;;;in :tasks ts, xxx;;; {
+                set xxx = next-tasks(ts, xxx)
+                break if (if xxx { false } else { true })
+                var yyy
+                var zzz = nil
+                loop ;;;in :tasks ts, zzz;;; {
+                    set zzz = next-tasks(ts, zzz)
+                    break if (if zzz { false } else { true })
+                    set yyy = ;;;copy;;;(zzz)
+                    println(status(;;;detrack;;;(yyy)))
+                }
+                println(status(;;;detrack;;;(yyy)))
+                set yyy = xxx
+            }
+        """
+        )
+        //assert(out == "anon : (lin 10, col 25) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 10, col 25) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == ":yielded\n:yielded\n") { out }
+    }
+    @Test
+    fun hh_16_pool_scope() {
+        val out = test(
+            """
+            var T
+            set T = task () { yield(nil) }
+            var ts
+            set ts = tasks()
+            spawn T() in ts
+            var xxx = nil
+            loop ;;;in :tasks ts, xxx;;; {
+                set xxx = next-tasks(ts, xxx)
+                break if (if xxx { false } else { true })
+                var yyy
+                var zzz = nil
+                loop ;;;in :tasks ts, zzz;;; {
+                    set zzz = next-tasks(ts, zzz)
+                    break if (if zzz { false } else { true })
+                    do nil
+                }
+                set yyy = xxx
+                ;;pass nil ;; otherwise scope err for yyy/xxx
+            }
+            println(1)
+        """
+        )
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun hh_17_pool_scope() {
+        val out = test(
+            """
+            var T
+            set T = task () { yield(nil) }
+            var ts
+            set ts = tasks()
+            spawn T() in ts
+            var xxx = nil
+            loop ;;;in :tasks ts, xxx;;; {
+                set xxx = next-tasks(ts, xxx)
+                break if (if xxx { false } else { true })
+                do xxx
+            }
+            println(1)
+        """
+        )
+        //assert(out == "anon : (lin 7, col 13) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun hh_18_ff_pool() {
+        val out = test("""
+            var ts
+            set ts = tasks()
+            println(type(ts))
+            var T
+            set T = task (v) {
+                set pub = v
+                val v' = yield(nil)
+            }
+            spawn T(1) in ts
+            spawn T(2) in ts
+            
+            var t1 = nil
+            loop ;;;in :tasks ts, t1;;; {
+                set t1 = next-tasks(ts, t1)
+                break if (if t1 { false } else { true })
+                var t2 = nil
+                loop ;;;in :tasks ts, t2;;; {
+                    set t2 = next-tasks(ts, t2)
+                    break if (if t2 { false } else { true })
+                    println(;;;detrack;;;(t1).pub, ;;;detrack;;;(t2).pub)
+                }
+            }
+             broadcast( 2 )
+        """)
+        assert(out == ":tasks\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
+    }
+    @Test
+    fun hh_19_pub_pool() {
+        val out = test("""
+            var T
+            set T = task () {
+                set pub = [10]
+                yield(nil)
+            }
+            var ts
+            set ts = tasks()
+            spawn T() in ts
+            var t
+            loop ;;;in :tasks ts, t;;; {
+                set t = next-tasks(ts,t)
+                break if (if t { false } else { true })
+                println(;;;detrack;;;(t).pub[0])
+            }
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun hh_20_pool_term() {
+        val out = test("""
+            var T = task () {
+                spawn task () {
+                    yield(nil)
+                }()
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn T() in ts 
+            spawn T() in ts
+            spawn task () {
+                var xxx = nil
+                loop ;;;in :tasks ts, xxx;;; {
+                    set xxx = next-tasks(ts, xxx)
+                    break if (if xxx { false } else { true })
+                    println(1)
+                    broadcast (1)
+                }
+            } ()
+            println(2)
+        """)
+        //assert(out == "1\n2\n") { out }
+        assert(out == "1\n1\n2\n") { out }
+    }
+    @Test
+    fun hh_21_pool_val() {
+        val out = test("""
+            val T = task () {
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn T() in ts
+            var xxx = nil
+            loop ;;;in :tasks ts, xxx;;; {
+                set xxx = next-tasks(ts, xxx)
+                break if (if xxx { false } else { true })
+                val tsk = ;;;detrack;;;(xxx)
+                broadcast (nil)
+            }
+            println(:ok)
+        """)
+        //assert(out == "anon : (lin 8, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun hh_22_ff_pool_val() {
+        val out = test("""
+            val T = task () {
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn T() in ts
+            var trk = nil
+            loop ;;;in :tasks ts, trk;;; {
+                set trk = next-tasks(ts, trk)
+                break if (if trk { false } else { true })
+                val      tsk1 = ;;;detrack;;;(trk)
+                val ;;;:tmp;;; tsk2 = ;;;detrack;;;(trk)
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 8, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun hh_23_pool_scope() {
+        val out = test("""
+            var T = task () { yield(nil) }
+            var ts = tasks()
+            spawn T() in ts
+            var xxx = nil
+            loop ;;;in :tasks ts, xxx;;; {
+                set xxx = next-tasks(ts, xxx)
+                break if (if xxx { false } else { true })
+                do {
+                    val zzz = ;;;detrack;;;(xxx)
+                    nil
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun hh_24_pub_pool_err() {
+        val out = test("""
+            var T
+            set T = task () {
+                set pub = [10]
+                yield(nil)
+            }
+            var ts
+            set ts = tasks()
+            spawn T() in ts
+            var x
+            var t
+            loop ;;;in :tasks ts, t;;; {
+                set t = next-tasks(ts,t)
+                break if (if t { false } else { true })
+                set x = ;;;detrack;;;(t).pub   ;; TODO: incompatible scope
+            }
+            println(999)
+        """)
+        assert(out == "999\n") { out }
+        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        //assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun hh_25_pub_pool_err() {
+        val out = test("""
+            var T = task () {
+                set ;;;task.;;;pub = [10]
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn T() in ts
+            var xxx = nil
+            loop {
+                set xxx = next-tasks(ts, xxx)
+                break if (if xxx { false } else { true })
+                var x = ;;;detrack;;;(xxx).pub
+                broadcast( nil )in ;;;detrack;;;(xxx)
+                println(x)
+            }
+            println(999)
+        """)
+        //assert(out == "[10]\n999\n") { out }
+        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        //assert(out == "anon : (lin 9, col 17) : declaration error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun hh_26_pub_pool_err() {
+        val out = test("""
+            var T = task () {
+                set ;;;task.;;;pub = [10]
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn T() in ts
+            var xxx = nil
+            loop {
+                set xxx = next-tasks(ts, xxx)
+                break if (if xxx { false } else { true })
+                var f = func (tt) {
+                    var x = ;;;detrack;;;(tt).pub
+                    broadcast(nil) in ;;;detrack;;;(tt)
+                    println(x)
+                }
+                f(xxx)
+            }
+            println(999)
+        """)
+        assert(out == "[10]\n999\n") { out }
+        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        //assert(out == "anon : (lin 14, col 17) : f(t)\n" +
+        //        "anon : (lin 10, col 21) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
 
     // ABORTION
 
@@ -1800,6 +2533,27 @@ class Exec_05 {
         //        " v  anon : (lin 9, col 28) : block escape error : cannot expose reference to task in pool\n")) { out }
         assert(out == "nil\n") { out }
     }
+    @Test
+    fun oo_05_xceu() {
+        val out = test("""
+            var T
+            set T = task (pos) {
+                yield(nil)
+                println(pos)
+            }
+            spawn (task () {
+                var ts
+                set ts = tasks()
+                do {
+                    spawn T([]) in ts  ;; pass [] to ts
+                }
+                yield(nil)
+                yield(nil)
+            })()
+            broadcast (nil)
+        """)
+        assert(out == "[]\n") { out }
+    }
 
     // ORIGINAL / TRACK / DETRACK
 
@@ -2006,7 +2760,7 @@ class Exec_05 {
         //assert(out == " v  anon : (lin 6, col 21) : block escape error : cannot expose track outside its task scope\n") { out }
     }
     @Test
-    fun BUG_op_08_track_throw() {
+    fun BUG_op_09_track_throw() {
         // aborted trask in pool does not bcast itself to clear track
         val out = test("""
             val T = task () {
@@ -2032,6 +2786,134 @@ class Exec_05 {
             }
         """)
         assert(!out.contains(":it")) { out }
+    }
+    @Test
+    fun op_10_track() {
+        val out = test("""
+            var T = task (v) {
+                set pub = [v]
+                yield(nil) ;;{ as it => nil }
+            }
+            var x
+            var ts = tasks()
+            spawn T(1) in ts
+            spawn T(2) in ts
+            var t
+            loop ;;;in :tasks ts, t;;; {
+                set t = next-tasks(ts,t)
+                break if (if t { false } else { true })
+                set x = ;;;copy;;;(t)
+            }
+            println(;;;detrack;;;(x).pub[0])   ;; 2
+            broadcast (nil)
+            println(;;;detrack;;;status(x))   ;; nil
+        """)
+        //assert(out == "2\nnil\n") { out }
+        assert(out == "2\n:terminated\n") { out }
+    }
+    @Test
+    fun op_11_track() {
+        val out = test("""
+            var T
+            set T = task (v) {
+                set ;;;task.;;;pub = [v]
+                yield(nil)
+            }
+            var x
+            var ts
+            set ts = tasks()
+            do {
+                spawn T(1) in ts
+                spawn T(2) in ts
+                var t
+                loop ;;;in :tasks ts, t;;; {
+                    set t = next-tasks(ts,t)
+                    break if (if t { false } else { true })
+                    set x = ;;;copy;;;(t)    ;; track(t) up_hold in
+                }
+                println(;;;detrack;;;(x).pub[0])   ;; 2
+                broadcast (nil)
+                println(;;;detrack;;;status(x))   ;; nil
+            }
+        """)
+        assert(out == "2\n:terminated\n") { out }
+        //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun op_12_track_throw() {
+        val out = test("""
+            var T
+            set T = task (v) {
+                yield(nil)
+            }
+            var ts
+            set ts = tasks()
+            spawn T(1) in ts
+            var x
+            set x = catch (_,true) {
+                var t
+                loop ;;;in :tasks ts, t;;; {
+                    set t = next-tasks(ts,t)
+                    break if (if t { false } else { true })
+                    error(;;;copy;;;(t))
+                }
+            }
+            broadcast (nil)
+            println(;;;detrack;;;status(x))   ;; nil
+        """)
+        //assert(out == "nil\n") { out }
+        assert(out == ":terminated\n") { out }
+    }
+    @Test
+    fun op_13_track_throw() {
+        val out = test("""
+            var T
+            set T = task (v) {
+                set ;;;task.;;;pub = [v]
+                yield(nil)
+            }
+            var ts
+            set ts = tasks()
+            spawn T(1) in ts
+            spawn T(2) in ts
+            var x
+            set x = catch (_,true) {
+                var t
+                loop ;;;in :tasks ts, t;;; {
+                    set t = next-tasks(ts,t)
+                    break if (if t { false } else { true })
+                    error(;;;copy;;;(t))
+                }
+            }
+            println(;;;detrack;;;(x).pub[0])   ;; 1
+            println(status(;;;detrack;;;(x)))   ;; :yielded
+            broadcast (nil)
+            println(;;;detrack;;;status(x))   ;; nil
+        """)
+        //assert(out == "1\n:yielded\nnil\n") { out }
+        assert(out == "1\n:yielded\n:terminated\n") { out }
+    }
+    @Test
+    fun op_14_track_simplify() {
+        val out = test("""
+            var T = task (v) {
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn T(1) in ts
+            spawn T(2) in ts
+            var x
+            var t
+            loop ;;;in :tasks ts, t;;; {
+                set t = next-tasks(ts,t)
+                break if (if t { false } else { true })
+                set x = ;;;copy;;;(t)
+            }
+            broadcast( nil )
+            println(;;;detrack;;;status(x))   ;; nil
+        """)
+        //assert(out == "nil\n") { out }
+        assert(out == ":terminated\n") { out }
     }
 
     // ZZ / ALL
