@@ -1290,6 +1290,14 @@ class Exec_01 {
     // DICT / NEXT
 
     @Test
+    fun de_00_dict_next() {
+        val out = test("""
+            val t = @[]
+            println(next-dict(t))
+        """)
+        assert(out == "nil\n") { out }
+    }
+    @Test
     fun de_01_dict_next() {
         val out = test("""
             val t = @[]

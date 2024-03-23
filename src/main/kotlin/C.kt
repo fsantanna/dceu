@@ -1600,7 +1600,11 @@ fun Coder.main (tags: Tags): String {
         } else {
             CEU_Value key = (X->args == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : ceux_peek(X->S, ceux_arg(X,1));
             if (key.type == CEU_VALUE_NIL) {
-                ret = (*dict.Dyn->Dict.buf)[0][0];
+                if (dict.Dyn->Dict.max == 0) {
+                    ret = (CEU_Value) { CEU_VALUE_NIL };
+                } else {
+                    ret = (*dict.Dyn->Dict.buf)[0][0];
+                }
             } else {
                 ret = (CEU_Value) { CEU_VALUE_NIL };
                 for (int i=0; i<dict.Dyn->Dict.max-1; i++) {     // -1: last element has no next
