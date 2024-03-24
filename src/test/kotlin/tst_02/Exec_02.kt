@@ -376,6 +376,16 @@ class Exec_02 {
         """)
         assert(out == "@[]\n") { out }
     }
+    @Test
+    fun jj_19_catch() {
+        val out = test("""
+            val x = catch (_,true) {
+                error([10])
+            }[0]
+            println(x)
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // CALL STACK
 
