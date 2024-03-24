@@ -212,7 +212,7 @@ class Exec_99 {
         assert(out == "false\ntrue\ntrue\nfalse\n") { out }
     }
     @Test
-    fun bc_03_in() {
+    fun bc_02_in() {
         val out = test("""
             $PLUS
             func to-bool (v) {
@@ -236,6 +236,27 @@ class Exec_99 {
             println(4 in-not? t)
         """)
         assert(out == "true\nfalse\nfalse\ntrue\n") { out }
+    }
+    @Test
+    fun bc_03_is() {
+        val out = test("""
+            val t = []
+            tags(t,:x,true)
+            println(t is? :x)
+            tags(t,:y,true)
+            println(t is-not? :y)
+            tags(t,:x,false)
+            println(t is-not? :x)
+        """, true)
+        assert(out == "true\nfalse\ntrue\n") { out }
+    }
+    @Test
+    fun bc_04_is() {
+        val out = test("""
+            println({{is?}}    (4, :nil))
+            println({{is-not?}}(4, :nil))
+        """, true)
+        assert(out == "false\ntrue\n") { out }
     }
 
     // FUNC / DCL / :REC
@@ -263,6 +284,55 @@ class Exec_99 {
             f(3)
         """)
         assert(out == "3\n2\n1\n") { out }
+    }
+    @Test
+    fun cc_03_func() {
+        val out = test(
+            """
+            func f (x) {
+                println(x)
+            }
+            f(10)
+        """
+        )
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun cc_04_task() {
+        val out = test(
+            """
+            task f (x) {
+                println(x)
+            }
+            spawn f (10)
+        """
+        )
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun cc_05_func_err() {
+        val out = test(
+            """
+            func f {        ;; TODO: implicit it?
+                println(x)
+            }
+        """
+        )
+        assert(out == "anon : (lin 2, col 20) : expected \"(\" : have \"{\"\n") { out }
+        //assert(out == "anon : (lin 3, col 25) : access error : variable \"x\" is not declared") { out }
+    }
+    @Test
+    fun cc_06_func_it() {
+        val out = test(
+            """
+            func f {        ;; TODO: implicit it?
+                println(it)
+            }
+            f(10)
+        """
+        )
+        assert(out == "anon : (lin 2, col 20) : expected \"(\" : have \"{\"\n") { out }
+        //assert(out == "10\n") { out }
     }
 
     // IF / ID-TAG
@@ -507,6 +577,499 @@ class Exec_99 {
             println(x)
         """)
         assert(out == "true\n") { out }
+    }
+
+    // IFS / ORIGINAL
+
+    @Test
+    fun fg_01_ifs() {
+        val out = test("""
+            var x = ifs ;;;it=;;;20 {
+                in-not? [1,1] => true
+                else  => false
+            }
+            println(x)
+        """, true)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun fg_02_ifs() {
+        val out = test("""
+            val x = ifs [] {
+                it,true => it
+            }
+            println(x)
+        """, true)
+        //assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun fg_03_ifs() {
+        val out = test("""
+            val x = ifs [] {
+                it,true => ;;;drop;;;(it)
+            }
+            println(x)
+        """, true)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun fg_04_ifs () {
+        val out = test("""
+            val x = ifs {
+                true => it
+            }
+            println(x)
+        """, true)
+        assert(out == "anon : (lin 3, col 25) : access error : variable \"it\" is not declared\n") { out }
+    }
+    @Test
+    fun TODO_fg_05_ifs () {
+        val out = test("""
+            val x = ifs {
+                v=10 => v
+            }
+            println(x)
+        """)
+        assert(out == "anon : (lin 3, col 18) : expected \"{\" : have \"=\"\n") { out }
+        //assert(out == "10\n") { out }
+    }
+    @Test
+    fun fg_06_ifs () {
+        val out = test("""
+            val x = ifs false {
+                and nil => true
+            }
+            println(x)
+        """)
+        //assert(out == "anon : (lin 3, col 17) : expected expression : have \"{\"") { out }
+        //assert(out == "anon : (lin 3, col 17) : access error : variable \"{{and}}\" is not declared") { out }
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun fg_07_ifs () {
+        val out = test("""
+            val x = ifs 4 {
+                is? nil => false
+                in? [4] => true
+            }
+            println(x)
+        """, true)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun fg_08_ifs () {
+        val out = test("""
+            and nil
+        """)
+        //assert(out == "anon : (lin 3, col 17) : expected expression : have \"{\"") { out }
+        assert(out == "anon : (lin 2, col 13) : access error : variable \"{{and}}\" is not declared\n") { out }
+    }
+    @Test
+    fun fg_09_ifs () {
+        val out = test("""
+            val x = ifs "oi" {
+                {{string?}} { true }
+                else => false
+            }
+            println(x)
+        """, true)
+        assert(out == "true\n") { out }
+    }
+
+    // CATCH
+
+    @Test
+    fun gg_01_catch() {
+        val out = test("""
+            var x
+            set x = catch :x {
+                error([])
+                println(9)
+            }[0]
+            println(x)
+        """, true)
+        assert(out == " |  anon : (lin 4, col 17) : error([])\n" +
+                " v  error : []\n") { out }
+    }
+    @Test
+    fun gg_02_catch() {
+        val out = test("""
+            func f (v) {
+                false
+            }
+            catch ,false {
+                catch err,f(err) {
+                    error([])
+                }
+            }
+            println(`:number CEU_GC.free`)
+            println(:ok)
+        """)
+        assert(out == " |  anon : (lin 7, col 21) : error([])\n" +
+                " v  error : []\n") { out }
+    }
+    @Test
+    fun gg_03_catch() {
+        val out = test("""
+            var x
+            set x = catch :x {
+                catch :2 {
+                    error(tags([10], :x, true))
+                    println(9)
+                }
+                println(9)
+            }[0]
+            println(:gc, `:number CEU_GC.free`) ;; error might be caught, so zero but no check
+            println(:x, x)
+        """, true)
+        assert(out == ":gc\t9\n:x\t10\n") { out }
+    }
+    @Test
+    fun gg_04_catch_err() {
+        val out = test("""
+            catch err,err==[] {
+                var x
+                set x = []
+                error(x)
+                println(9)
+            }
+            println(1)
+        """, true)
+        //assert(out == "anon : (lin 5, col 28) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 2, col 27) : block escape error : incompatible scopes\n" +
+        //        "anon : (lin 5, col 17) : error(x)\n" +
+        //        "error error : uncaught exception\n" +
+        //        ":error\n") { out }
+        assert(out == " |  anon : (lin 5, col 17) : error(x)\n" +
+                " v  error : []\n") { out }
+    }
+    @Test
+    fun gg_05_catch() {
+        val out = test("""
+            do {
+                println(catch :x {
+                    error(tags([10],:x,true))
+                    println(9)
+                })
+            }
+        """, true)
+        assert(out == ":x [10]\n") { out }
+    }
+    @Test
+    fun gg_06_catch() {
+        val out = test("""
+            catch ,false {
+                catch {
+                    error([10])
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun gg_07_catch() {
+        val out = test("""
+            var x
+            set x = catch :x {
+                var y
+                set y = catch ,true {
+                    error([10])
+                    println(9)
+                }
+                ;;println(1)
+                y
+            }
+            println(x)
+        """.trimIndent(), true)
+        //assert(out == "anon : (lin 9, col 5) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 2, col 18) : block escape error : incompatible scopes\n" +
+        //        "anon : (lin 5, col 9) : error([10])\n" +
+        //        "error error : uncaught exception\n" +
+        //        ":error\n") { out }
+        assert(out == "[10]\n") { out }
+    }
+    @Test
+    fun gg_08_loop_() {
+        val out = test("""
+            println(catch :x { loop { error(tags([1],:x,true)) }}[0])
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun gg_09_loop() {
+        val out = test("""
+            println(catch :x { loop { error(tags([1],:x,true)) }}[0])
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun gg_10_loop_() {
+        val out = test("""
+            println(catch :2 { loop { error(tags([1],:2,true)) }})
+        """, true)
+        assert(out == ":2 [1]\n") { out }
+    }
+    @Test
+    fun gg_11_loop() {
+        val out = test("""
+            println(catch :x { loop {
+                var x
+                set x = [1] ;; memory released
+                error(tags([1],:x,true))
+            }}[0])
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun gg_12_loop_err() {
+        val out = test("""
+            println(catch :x { loop {
+                var x
+                set x = [1]
+                error(tags(x,:x,true))
+            }})
+        """, true)
+        assert(out == ":x [1]\n") { out }
+        //assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 1, col 33) : block escape error : incompatible scopes\n" +
+        //        "anon : (lin 4, col 5) : error(tags(x,:x,true))\n" +
+        //        "error error : uncaught exception\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun gg_13_catch() {
+        val out = test("""
+            catch err,err===[] {
+                error([])
+                println(9)
+            }
+            println(1)
+        """, true)
+        assert(out == "1\n") { out }
+    }
+
+    // ENUM / TAGS / TEMPLATES
+
+    @Test
+    fun hh_01_enum() {
+        val out = test("""
+            do :antes
+            enum {
+                :x = `1000`,
+                :y, :z,
+                :a = `10`,
+                :b, :c
+            }
+            do :meio
+            enum {
+                :i = `100`,     ;; ignored b/c of itr.i in to-iter-tuple
+                :j,
+            }
+            do :depois
+            val t = [:antes, :x, :y, :z, :a, :b, :c, :meio, :i, :j, :depois]
+            loop v in to-iter(t,:all) {
+                set t[v[0]] = to-number(v[1])
+            }
+            println(t)
+        """, true)
+        assert(out == "[41,1000,1001,1002,10,11,12,42,33,101,43]\n") { out }
+    }
+
+    //
+
+    @Test
+    fun hi_01_tags() {
+        val out = test("""
+            val x  = tags([],:X,true)
+            val xy = tags(tags([],:X,true), :Y, true)
+            println(x, xy)
+        """)
+        assert(out == ":X []\t[:Y,:X] []\n") { out }
+    }
+    @Test
+    fun hi_02_tags() {
+        val out = test("""
+            data :T = [x]
+            val x = :T [1]
+            println(x, tags(x))
+        """)
+        assert(out == ":T [1]\t[:T]\n") { out }
+    }
+    @Test
+    fun hi_03_tags() {
+        val out = test("""
+            data :T = [x]
+            val x = :T [1]
+            val y = x.(:T).x
+            println(y)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun hi_04_tags() {
+        val out = test("""
+            data :T = [x]
+            val x = :T [1]
+            println(x.x, tags(x))
+        """)
+        assert(out == "1\t[:T]\n") { out }
+    }
+    @Test
+    fun hi_05_tags() {
+        val out = test("""
+            data :T = [x]
+            task T () :T {
+                set pub = [10]
+                yield()
+            }
+            val t :T = spawn T()
+            println(t.pub.x)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun hi_06_tags() {
+        val out = test("""
+            data :T = [x]
+            task T () :T {
+                set pub = [10]
+                yield()
+            }
+            val t = spawn T()
+            println(t.(:T).pub)
+        """)
+        assert(out == "[10]\n") { out }
+    }
+    @Test
+    fun hi_07_tags() {
+        val out = test("""
+            data :T = [x]
+            task T () :T {
+                set task.pub = [10]
+                yield()
+            }
+            val t = spawn T()
+            val p = do {
+                t.pub
+            }
+            println(p)
+        """)
+        assert(out == "[10]\n") { out }
+    }
+
+    //
+
+    @Test
+    fun hj_01_tplate() {
+        val out = test("""
+            data :T = [x,y]
+            data :T.S = [z]
+            val t :T = :T []
+            var s :T.S
+            set s = :T.S []
+            println(t is? :T, t is? :T.S)
+            println(s is? :T, s is? :T.S)
+        """, true)
+        assert(out == "true\tfalse\ntrue\ttrue\n") { out }
+    }
+    @Test
+    fun hj_02_tplate() {
+        val out = test("""
+            data :U = [a]
+            data :T = [x,y]
+            data :T.S = [z:U]
+            var s :T.S
+            set s = :T.S [1,2,:U[3]]
+            println(s is? :T, s.z is? :U)
+            set s.z = :U [10]
+            println(s is? :T.S, s.z is? :U)
+        """, true)
+        assert(out == "true\ttrue\ntrue\ttrue\n") { out }
+    }
+    @Test
+    fun hj_03_tplate_nest() {
+        val out = test("""
+            data :T = [t] {
+                :A = [a] {
+                    :I = []
+                    :J = [j]
+                }
+                :B = []
+                :C = [] {
+                    :Q = [q] {
+                        :X = []
+                        :Y = []
+                    }
+                }
+            }
+            val a :T.A   = :T.A [10,20]
+            val b :T     = :T.B [30]
+            val c :T.C.Q = :T.C.Q.Y [40,50]
+            println(a.a, b.t, c.q)
+            println(a is? :T, b is? :T.C, c is? :T.C.Q.Y)
+        """, true)
+        assert(out == "20\t30\t50\ntrue\tfalse\ttrue\n") { out }
+    }
+    @Test
+    fun TODO_hj_04_tplate() {
+        val out = test("""
+            data :T = [x,y]
+            val t :T = [x=1,y=2]    ;; TODO: syntax sugar
+            set t.x = 3
+            println(t)      ;; [x=3,y=2]
+        """, true)
+        assert(out == "1\t2\n") { out }
+    }
+    @Test
+    fun hj_05_tplate_err() {
+        val out = test("""
+            data :T = [v]
+            data :U = [t:T,X]
+            var u :U = [[10]]
+            println(u.X.v)
+        """, true)
+        //assert(out == "anon : (lin 5, col 25) : index error : field \"X\" is not a data") { out }
+        assert(out == " |  anon : (lin 5, col 21) : u[:X]\n" +
+                " v  index error : out of bounds\n") { out }
+    }
+    @Test
+    fun hj_06_tplate_tup() {
+        val out = test("""
+            data :T = [v]
+            val t :T = [[1,2,3]]
+            println(t.v[1])
+        """, true)
+        assert(out == "2\n") { out }
+    }
+    @Test
+    fun TODO_hj_07_tplate_nest() {
+        val out = test("""
+            data :T = [] {
+                :A = [v] {
+                    :x,:y,:z        ;; TODO: list of subtypes w/o data
+                }
+            }
+            val x :T.A.x = :T.A.x [10]
+            println(x)
+            println(x.v)
+            println(to-tag-string(":T.A.z"))
+        """, true)
+        assert(out == "20\t30\t50\ntrue\tfalse\ttrue\n") { out }
+    }
+    @Test
+    fun hj_08_tplate_ifs() {
+        val out = test("""
+            data :T = [v]
+            val v = ifs {
+                t :T = [10] => t.v
+            }
+            println(v)
+        """)
+        //assert(out == "10\n") { out }
+        assert(out == "anon : (lin 4, col 19) : expected \"{\" : have \":T\"\n") { out }
     }
 
     // THUS / SCOPE / :FLEET / :fleet
@@ -1029,6 +1592,22 @@ class Exec_99 {
         """)
         assert(out == "10\n20\n") { out }
     }
+    @Test
+    fun mm_30_thus_yield() {
+        val out = test(
+            """
+            val co = coroutine(coro (it) {
+                yield()
+                1 thus {
+                    yield(it)
+                }
+            })
+            resume co ()
+            val v = resume co()
+            println(v)
+        """)
+        assert(out == "1\n") { out }
+    }
 
     // LOOP / ITER / NUMERIC FOR
 
@@ -1097,8 +1676,467 @@ class Exec_99 {
         """, true)
         assert(out == "0\n1\n") { out }
     }
+    @Test
+    fun fg_05_dict_iter_nil() {
+        val out = test("""
+            val t = @[x=1, y=2, z=3]
+            loop v in t {
+                println(v)
+            }
+        """, true)
+        assert(out == ":x\n:y\n:z\n") { out }
+    }
+    @Test
+    fun fg_06_dict_iter_val() {
+        val out = test("""
+            val t = @[x=1, y=2, z=3]
+            loop v in to-iter(t,:val) {
+                println(v)
+            }
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun fg_07_dict_iter_key() {
+        val out = test("""
+            val t = @[x=1, y=2, z=3]
+            loop v in to-iter(t,:key) {
+                println(v)
+            }
+        """, true)
+        assert(out == ":x\n:y\n:z\n") { out }
+    }
+    @Test
+    fun fg_08_dict_iter_all() {
+        val out = test("""
+            val t = @[x=1, y=2, z=3]
+            loop v in to-iter(t,:all) {
+                println(v)
+            }
+        """, true)
+        assert(out == "[:x,1]\n[:y,2]\n[:z,3]\n") { out }
+    }
+    @Test
+    fun fg_09_dict_iter() {
+        val out = test("""
+            val t = @[]
+            loop v in to-iter(t) {
+                println(v)
+            }
+            println(:ok)
+        """, true)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun fg_10_vect_iter_nil() {
+        val out = test("""
+            loop v in #[1, 2, 3] {
+                println(v)
+            }
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun fg_11_vect_iter_val() {
+        val out = test("""
+            val t = #[1, 2, 3]
+            loop v in to-iter(t,:val) {
+                println(v)
+            }
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun fg_12_vect_iter_all() {
+        val out = test("""
+            loop v in to-iter(#[1, 2, 3],:all) {
+                println(v)
+            }
+        """, true)
+        assert(out == "[0,1]\n[1,2]\n[2,3]\n") { out }
+    }
+    @Test
+    fun fg_13_vect_iter_idx() {
+        val out = test("""
+            val t = #[1, 2, 3]
+            loop v in to-iter(t,:idx) {
+                println(v)
+            }
+        """, true)
+        assert(out == "0\n1\n2\n") { out }
+    }
+    @Test
+    fun fg_14_vect_iter_err() {
+        val out = test("""
+            val t = #[1, 2, 3]
+            loop (i in to-iter(t) {
+                println(i, v)
+            }
+        """, true)
+        //assert(out == "anon : (lin 3, col 36) : expected \",\" : have \"{\"") { out }
+        //assert(out == "anon : (lin 3, col 30) : expected identifier : have \"(\"") { out }
+        assert(out == "anon : (lin 3, col 18) : expected \"in\" : have \"(\"\n") { out }
+    }
+    @Test
+    fun fg_15_dict_iter() {
+        val out = test("""
+            val t = @[x=1, y=2, z=3]
+            loop x in to-iter(t,:all) {
+                val k = x[0]
+                val v = x[1]
+                println(k, v)
+            }
+        """, true)
+        assert(out == ":x\t1\n:y\t2\n:z\t3\n") { out }
+    }
+    @Test
+    fun fg_16_string_concat() {
+        val out = test("""
+            val s = #[]
+            s <++ #['1']
+            s <++ #['2']
+            s <++ #['3']
+            println(s)
+        """, true)
+        assert(out == "123\n") { out }
+    }
+    @Test
+    fun fg_17_concat() {
+        val out = test("""
+            func f (v) {
+                set v[+] = 1
+                v
+            }
+            func g () {
+                f(#[])
+            }
+            println(g())
+        """, true)
+        assert(out == "#[1]\n") { out }
+    }
+    @Test
+    fun fg_18_string() {
+        val out = test("""
+            val v = ""
+            println(v)
+            `printf(">%s<\n", ${D}v.Dyn->Vector.buf);`
+        """)
+        assert(out == "#[]\n><\n") { out }
+    }
+    @Test
+    fun fg_19_tuple_size() {
+        val out = test("""
+            val t = [1, 2, 3]
+            println(#t)
+        """)
+        assert(out == "3\n") { out }
+    }
+    @Test
+    fun fg_20_tuple_iter() {
+        val out = test("""
+            val t = [1, 2, 3]
+            loop v in to-iter(t,:all) {
+                println(v)
+            }
+        """, true)
+        assert(out == "[0,1]\n[1,2]\n[2,3]\n") { out }
+    }
+    @Test
+    fun fg_21_dict_iter_it() {
+        val out = test("""
+            loop in @[x=1, y=2, z=3] {
+                println(it)
+            }
+        """, true)
+        assert(out == ":x\n:y\n:z\n") { out }
+    }
+    @Test
+    fun fg_22_tuple_iter_tag() {
+        val out = test("""
+            data :T = [v]
+            val t = [[1], [2], [3]]
+            loop v:T in to-iter(t,:val) {
+                println(v.v)
+            }
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun fg_23_loop_num() {
+        val out = test("""
+            loop i {
+                println(i)
+                until i == 3
+            }
+        """, true)
+        assert(out == "0\n1\n2\n3\n") { out }
+    }
+    @Test
+    fun fg_24_loop_num() {
+        val out = test("""
+            println(:0)
+            loop a in }0 => 1} {
+                println(a)
+            }
+            println(:1)
+            loop b in }0 => 3{ {
+                println(b)
+            }
+            println(:2)
+            loop c in {0 => 4} :step +2 {
+                println(c)
+            }
+            println(:3)
+            loop d in }2 => 0} :step -1 {
+                println(d)
+            }
+            println(:4)
+            loop in {0 => -2{ :step -1 {
+                println(:x)
+            }
+            println(:5)
+            loop in {1 => 2} {
+                println(:y)
+            }
+            println(:6)
+        """, true)
+        assert(out == ":0\n1\n:1\n1\n2\n:2\n0\n2\n4\n:3\n1\n0\n:4\n:x\n:x\n:5\n:y\n:y\n:6\n") { out }
+    }
+    @Test
+    fun fg_25_loop_num_it() {
+        val out = test("""
+            loop in {0 => 1} {
+                println(it)
+            }
+        """, true)
+        assert(out == "0\n1\n") { out }
+    }
 
-    // LOOP / RET
+    // LOOP / ITER / :ITERATOR
+
+    @Test
+    fun fx_01_iter() {
+        val out = test("""
+            func f (t) {
+                if t[1] == 5 {
+                    nil
+                } else {
+                    set t[1] = t[1] + 1
+                    t[1] - 1
+                }
+            }
+            val it = :Iterator [f,0]
+            loop v in it {
+                println(v)
+            }
+        """, true)
+        assert(out == "0\n1\n2\n3\n4\n") { out }
+    }
+    @Test
+    fun fx_02_iter_err() {
+        val out = test("""
+            loop v in nil {
+                println(v)
+            }
+        """, true)
+        //assert(out.contains("assertion error : expected :Iterator")) { out }
+        assert(out.contains(" |  anon : (lin 2, col 22) : ceu_15303[0]\n" +
+                " v  index error : expected collection\n")) { out }
+    }
+    @Test
+    fun fx_03_iter() {
+        val out = test("""
+            val y = loop x in to-iter([1,2,3]) {
+            until x == 2 }
+            println(y)
+        """, true)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun fx_04_iter() {
+        val out = test("""
+            val y = loop x in [1,2,3] {
+            until x == 4 }
+            println(y)
+        """, true)
+        assert(out == "false\n") { out }
+    }
+    @Test
+    fun fx_05_iter_it() {
+        val out = test("""
+            val y = loop in to-iter([1,2,3]) {
+            until it == 4 }
+            println(y)
+        """, true)
+        assert(out == "false\n") { out }
+    }
+    @Test
+    fun fx_06_iter_it() {
+        val out = test("""
+            data :Iterator = [f,s,tp,i]
+            func to-iter (v, tp) {
+                :Iterator [v]
+            }
+            ;;export [f] {
+                val cur = []
+                func f () {
+                    cur
+                }
+            ;;}
+            loop in f {   ;; assigns f to local which confronts cur
+                until true
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 13, col 33) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun fx_07_drop() {
+        val out = test("""
+            val F = func (x) {
+                coro () {
+                    yield(x)
+                } --> \{
+                    to-iter(it)
+                }
+            }
+            do {
+                val x = []
+                val itr :Iterator = F(x)
+                println(itr.f(itr))
+            }
+        """, true)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun fx_08_drop() {
+        val out = test("""
+            func F () {
+                coro () {
+                    loop {
+                        val pos = []
+                        yield(;;;drop;;;(pos))
+                    }
+                } --> \{
+                    to-iter(it)
+                }
+            }
+            do {
+                val x :Iterator = F()
+                x.f(x) --> \{ }
+                x.f(x)
+            }
+            println(:ok)
+        """, true)
+        assert(out == ":ok\n") { out }
+    }
+
+    // ITER / DROP
+
+    @Test
+    fun fh_01_iter() {
+        val out = test("""
+            val t1 = [[1],[2],[3]]
+            val t2 = #[]
+            loop i in {0 => #t1{ {
+                set t2[+] = ;;;drop;;;(t1[i])
+            }
+            println(t2)
+            val t3 = #[]
+            loop v in to-iter(t2,:val) {
+                set t3[+] = v
+            }
+            println(t3)
+        """, true)
+        assert(out == "#[[1],[2],[3]]\n" +
+                "#[[1],[2],[3]]\n") { out }
+    }
+    @Test
+    fun fh_02() {
+        val out = test("""
+            coro genFunc () {
+                var v1 = [0,'a']
+                yield(;;;drop;;;(v1))
+                var v2 = [1,'b']
+                yield(;;;drop;;;(v2))
+            }
+            loop v in genFunc {
+                println(v)
+            }
+        """, true)
+        assert(out == "[0,a]\n[1,b]\n") { out }
+    }
+    @Test
+    fun fh_03() {
+        val out = test("""
+        val e = func () {nil}
+        val f = func (v) {
+            ifs v {
+                ,true => [e,v]
+            }
+        }
+        val g = func () {
+            val co = []
+            f(;;;drop;;;(co))
+        }
+        val x = g()
+        println(x)
+        """, true)
+        assert(out.contains("[func: 0x")) { out }
+    }
+    @Test
+    fun fh_04_drop() {
+        val out = test("""
+            val F = func (x) {
+                val co = coroutine (coro () {
+                    yield(nil)
+                    x
+                })
+                resume co()
+                co --> \{
+                    it
+                }
+            }
+            do {
+                val x = []
+                val co = F(x)
+                println(resume co())
+            }
+        """)
+        assert(out == "[]\n") { out }
+    }
+
+    // ITER / NEXT
+
+    @Test
+    fun TODO_multi_fi_01_iter_next() {
+        val out = test("""
+            val itr :Iterator = to-iter([1,2,3,4])
+            println(itr[0](itr))
+            println(itr.f(itr))
+            println(next(itr))
+            println(itr->next())
+        """, true)
+        assert(out == "1\n2\n3\n4\n") { out }
+    }
+    @Test
+    fun TODO_multi_fi_02_coro_next() {
+        val out = test("""
+            val co = coroutine <-- coro (v1) {
+                val v2 = yield(v1)
+                val v3 = yield(v2)
+                v3
+            }
+            println(co->next(1))
+            println(co->next(2))
+            println(co->next(3))
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
+
+    // LOOP / RET / UNTIL
 
     @Test
     fun fi_01_ret() {
@@ -1151,6 +2189,149 @@ class Exec_99 {
         """)
         assert(out == "0\n") { out }
     }
+    @Test
+    fun fi_06_loop() {
+        val out = test("""
+            loop {
+                until true
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun fi_07_until() {
+        val out = test("""
+            println(loop {
+            until 10 })
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun fi_08_until() {
+        val out = test("""
+            var x = 0
+            loop {
+                set x = x + 1
+                println(x)
+            until x == 3
+            }
+            println(99)
+        """, true)
+        assert(out == "1\n2\n3\n99\n") { out }
+    }
+    @Test
+    fun fi_09_until() {
+        val out = test("""
+            var x = 0
+            val v = loop {
+                set x = x + 1
+                println(x)
+                until x == 3
+                until false
+            }
+            println(v)
+        """, true)
+        assert(out == "1\n2\n3\ntrue\n") { out }
+    }
+    @Test
+    fun fi_10_until() {
+        val out = test("""
+            println(0)
+            loop {
+                println(1)
+                until true
+                println(2)
+            }
+            println(3)
+        """)
+        assert(out == "0\n1\n3\n") { out }
+    }
+    @Test
+    fun fi_11_until() {
+        val out = test("""
+            println(0)
+            var x = false
+            loop {
+                println(1)
+                until x
+                set x = true
+                println(2)
+            }
+            println(3)
+        """)
+        assert(out == "0\n1\n2\n1\n3\n") { out }
+    }
+    @Test
+    fun fi_12_until() {
+        val out = test("""
+            println(0)
+            var x = false
+            loop {
+                println(1)
+                until x
+                set x = true
+                println(2)
+                until x
+                println(3)
+                until x
+                println(4)
+            }
+            println(5)
+        """)
+        assert(out == "0\n1\n2\n5\n") { out }
+    }
+    @Test
+    fun fi_13_until() {
+        val out = test("""
+            var x = 0
+            loop {
+                set x = x + 1
+                println(x)
+                until v = (x == 3)  ;; TODO: declare var on until?
+                println(v)
+            }
+            println(99)
+        """, true)
+        //assert(out == "1\nfalse\n2\nfalse\n3\n99\n") { out }
+        assert(out == "anon : (lin 6, col 25) : expected expression : have \"=\"\n") { out }
+    }
+    @Test
+    fun fi_14_until() {
+        val out = test("""
+            var x = 5
+            val f = func () {
+                set x = x - 1
+                if x>0 { x } else { nil }
+            }
+            loop {
+                while v1=f()  ;; TODO: declare var on while?
+                println(v1)
+                while v2=f()  ;; TODO: declare var on while?
+                println(v2)
+            }
+        """, true)
+        assert(out == "anon : (lin 8, col 25) : expected expression : have \"=\"\n") { out }
+        //assert(out == "4\n3\n2\n1\n") { out }
+    }
+    @Test
+    fun fi_15_until() {
+        val out = test("""
+            val v = loop in {1=>10} {
+            }
+            println(v)
+        """, true)
+        //assert(out == "nil\n") { out }
+        assert(out == "false\n") { out }
+    }
+    @Test
+    fun fi_16_while() {
+        val out = test("""
+            val v = loop { while false do nil }
+            println(v)
+        """)
+        assert(out == "true\n") { out }
+    }
 
     // TASKS / ITER / DROP
 
@@ -1185,6 +2366,117 @@ class Exec_99 {
             println(x)
         """, true)
         assert(out.contains("track: 0x")) { out }
+    }
+
+    // ITER / CORO
+
+    @Test
+    fun fk_01_iter_coro() {
+        val out = test("""
+            coro T () {
+                yield(1)
+                yield(2)
+                yield(3)
+                ;;nil
+            }
+            loop v in (T) {
+                println(v)
+            }
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun fk_02_iter_coro() {
+        val out = test("""
+            coro T () {
+                yield(1)
+                yield(2)
+                yield(3)
+            }
+            catch :x {
+                loop i in coroutine(T) {
+                    println(i)
+                    error(:x)
+                }
+            }
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun fk_03_iter() {
+        val out = test("""
+            coro T () {
+                yield(1)
+                yield(2)
+                yield(3)
+            }
+            loop i in T {
+                println(i)
+            }
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun fk_04_iter_ok() {
+        val out = test("""
+            coro T () {
+                yield(1)
+                yield(2)
+                3
+            }
+            loop i in coroutine(T) {
+                println(i)
+            }
+        """, true)
+        //assert(out == "anon : (lin 12, col 57) : resume error : expected yielded task\n1\n2\n3\n:error\n") { out }
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
+    fun fk_05_iter() {
+        val out = test("""
+            coro T () {
+                yield(1)
+                yield(2)
+                nil
+            }
+            loop i in to-iter(coroutine(T)) {
+                println(i)
+            }
+        """, true)
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
+    fun fk_06_iter() {
+        val out = test("""
+            coro T () {
+                yield(1)
+                yield(2)
+                yield(3)
+            }
+            println(to-vector(coroutine(T)))
+        """, true)
+        assert(out == "#[1,2,3]\n") { out }
+    }
+    @Test
+    fun fk_07_iter() {
+        val out = test("""
+            coro T () {
+                yield(1)
+                yield(2)
+                3
+            }
+            val co = coroutine(T)
+            println(resume co())
+            println(resume co())
+            println(resume co())
+            println(resume co())
+        """, true)
+        //assert(out == "anon : (lin 11, col 21) : resume error : expected yielded coro\n1\n2\n3\n:error\n") { out }
+        assert(out == "1\n" +
+                "2\n" +
+                "3\n" +
+                " |  anon : (lin 11, col 21) : (resume (co)(nil))\n" +
+                " v  resume error : expected yielded coro\n") { out }
     }
 
     // AS / YIELD / CATCH / DETRACK / THUS
@@ -1476,32 +2768,72 @@ class Exec_99 {
         """)
         assert(out == "1\n2\n") { out }
     }
+    @Test
+    fun ii_08_par1() {
+        val out = test("""
+            spawn task () {
+                par {
+                    do { var ok1; set ok1=true;
+                        loop {
+                            until not ok1
+                            val evt = yield(nil);
+                            if type(evt)/=:exe-task {
+                                set ok1=false
+                            } else { nil }
+                        } 
+                    }
+                    ;;yield()
+                    do { var ok2; set ok2=true; loop { until not ok2 ; val evt=yield(nil); if type(evt)/=:exe-task { set ok2=false } else { nil } } }
+                    ;;yield()
+                    println(1)
+                } with {
+                    do { var ok3; set ok3=true; loop { until not ok3 ; val evt=yield(nil); if type(evt)/=:exe-task { set ok3=false } else { nil } } }
+                    ;;yield()
+                    println(2)
+                } with {
+                    println(3)
+                }
+            } ()
+            broadcast( nil )
+        """, true)
+        assert(out == "3\n2\n") { out }
+    }
+    @Test
+    fun ii_09_spawn() {
+        val out = test("""
+            task T () {}
+            (spawn T() in ts) where {
+            }
+        """)
+        assert(out == "anon : (lin 3, col 27) : access error : variable \"ts\" is not declared\n") { out }
+    }
 
     // SPAWN / NESTED
 
-    /*
     @Test
-    fun ij_01_nested() {
+    fun TODO_ij_01_nested() {
         val out = test("""
             task :nested () {
                 nil
             }
             println(:ok)
         """)
-        assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing spawn\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing spawn\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
-    fun ij_02_nested() {
+    fun TODO_ij_02_nested() {
         val out = test("""
             val t = spawn (task :nested () {
                 nil
             })()
-            println(t)
+            println(type(t))
         """)
-        assert(out == "anon : (lin 2, col 21) : spawn task :nested error : expected immediate enclosing block\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : spawn task :nested error : expected immediate enclosing block\n") { out }
+        assert(out == ":exe-task\n") { out }
     }
     @Test
-    fun ij_03_nested() {
+    fun TODO_ij_03_nested() {
         val out = test("""
             do {
                 spawn (task :nested () {
@@ -1523,7 +2855,23 @@ class Exec_99 {
         """)
         assert(out == ":ok\n") { out }
     }
-     */
+    @Test
+    fun ij_05_task_pub_fake() {
+        val out = test("""
+            task T () {
+                set ;;;task.;;;pub = 10
+                println(;;;task.;;;pub)
+                spawn {
+                    println(;;;task.;;;pub)
+                    await (,false)
+                }
+                nil
+            }
+            spawn T()
+            broadcast (nil) in :global
+        """, true)
+        assert(out == "10\n10\n") { out }
+    }
 
 
     // PAR / PAR-AND / PAR-OR
@@ -1879,6 +3227,194 @@ class Exec_99 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun jj_17_par_tasks() {
+        val out = test("""
+            spawn task () {
+                ^[9,29]yield(nil)                                          
+            }()                                                       
+            spawn task () {                                           
+                ^[9,29]yield(nil)                       
+            }()
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun jj_18_paror_ret() {
+        val out = test("""
+            spawn {
+                val x = par-or {
+                    1
+                } with {
+                    2
+                }
+                println(x)
+            }
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun BUG_jj_19_parand_ret() {
+        val out = test("""
+            spawn {
+                val x = par-and {
+                    1
+                } with {
+                    2
+                }
+                println(x)
+            }
+        """, true)
+        assert(out == "2\n") { out }
+    }
+    @Test
+    fun jj_20_paror_ret_func() {
+        val out = test("""
+            spawn {
+                task f () {
+                    par-or {
+                        1
+                    } with {
+                        999
+                    }
+                }
+                val x = await spawn f()
+                println(x)
+            }
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun jj_21_paror_ret_func() {
+        val out = test("""
+            task T () {
+                await(:x)
+            }
+            spawn {
+                par-or {
+                    await spawn T()
+                } with {
+                    await spawn T()
+                }
+            }
+            broadcast (:x) in :global
+            println(1)
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun jj_22_paror() {
+        val out = test("""
+            spawn {
+                par-or {
+                    await(, true)
+                } with {
+                    await(, true)
+                }
+            }
+            broadcast (true) in :global
+            println(1)
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun jj_23_paror() {
+        val out = test("""
+            spawn {
+                par-or {
+                    await (,true)
+                } with {
+                    await (,true)
+                }
+            }
+            do {
+                broadcast (tags([40], :frame, true)) in :global 
+                broadcast (tags([], :draw, true)) in :global
+            }
+            println(1)
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun jj_24_parand_immediate() {
+        val out = test("""
+            spawn task () {
+                par-and {
+                    println(1)
+                } with {
+                    println(2)
+                }
+                println(999)
+            } ()
+        """, true)
+        assert(out == "1\n2\n999\n") { out }
+    }
+    @Test
+    fun jj_25_paror_valgrind() {
+        val out = test("""
+            spawn {
+                par-or {
+                    loop { yield(nil) }
+                } with {
+                    par-or {
+                        yield()
+                    } with {
+                        loop { yield(nil) }
+                    }
+                }
+            }
+            broadcast (nil) in :global
+            println(1)
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun jj_26_await_track() {
+        val out = test("""
+            task T () {
+                yield()
+            }
+            val t = spawn T()
+            val x = ;;;track;;;(t)
+            spawn {
+                par-and {
+                    println(:0)
+                    await (,it==x)
+                    println(:2)
+                } with {
+                    println(:1)
+                    broadcast (nil) in t
+                }
+                println(:3)
+            }
+            println(:4)
+        """, true)
+        assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
+    }
+    @Test
+    fun jj_27_await_track() {
+        val out = test("""
+            task T () {
+                yield()
+            }
+            val t = spawn T()
+            val x = ;;;track;;;(t)
+            spawn {
+                par-and {
+                    println(:0)
+                    await (,it==x)
+                    println(:2)
+                } with {
+                    println(:1)
+                    broadcast (nil) in t
+                }
+                println(:3)
+            }
+            println(:4)
+        """, true)
+        assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
+    }
 
     // AWAIT
 
@@ -2121,6 +3657,55 @@ class Exec_99 {
         assert(out == ":ok\n") { out }
     }
 
+    // AWAIT / EVT / TEMPLATE / DATA
+
+    @Test
+    fun ka_01_await_data() {
+        val out = test("""
+            data :E = [x,y]
+            spawn {
+                await :E {
+                    println(it.x)
+                }
+            }
+            broadcast (:E [10,20]) in :global
+        """, true)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun ka_02_await_data() {
+        val out = test("""
+            data :E = [x,y]
+            spawn {
+                await :E, it.y==20 {
+                    println(it.x)
+                }
+            }
+            broadcast (:E [10,10]) in :global 
+            println(:mid)
+            broadcast (:E [10,20]) in :global
+        """, true)
+        assert(out == ":mid\n10\n") { out }
+    }
+    @Test
+    fun ka_03_await_data() {
+        val out = test("""
+            data :E = [x,y]
+            data :F = [i,j]
+            spawn {
+                await :E, it.y==20 {
+                    println(it.x)
+                }
+                await :F, it.i==10 {
+                    println(it.j)
+                }
+            }
+            broadcast(:E [10,20]) in :global 
+            broadcast(:F [10,20]) in :global
+        """, true)
+        assert(out == "10\n20\n") { out }
+    }
+
     // AWAIT / TASK
 
     @Test
@@ -2288,6 +3873,76 @@ class Exec_99 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun km_07_every() {
+        val out = test("""
+            spawn {
+                println(0)
+                every :x {
+                    println(it[0])
+                }
+            }
+            do {
+                println(1)
+                broadcast (tags([10], :x, true)) in :global 
+                println(2)
+                broadcast (tags([20], :y, true)) in :global
+                println(3)
+                broadcast (tags([30], :x, true)) in :global
+                println(4)
+            }
+        """, true)
+        assert(out == "0\n1\n10\n2\n3\n30\n4\n") { out }
+    }
+    @Test
+    fun km_08_every_clk() {
+        val out = test("""
+            spawn task () {
+                every :10:s {
+                    println(10)
+                }
+            }()
+            println(0)
+            broadcast (tags([5000], :Clock, true)) in :global 
+            println(1)
+            broadcast (tags([5000], :Clock, true))
+            println(2)
+            broadcast (tags([10000], :Clock, true)) in :global 
+            println(3)
+        """, true)
+        assert(out == "0\n1\n10\n2\n10\n3\n") { out }
+    }
+    @Test
+    fun TODO_km_09_every_clk_multi() { // awake twice from single bcast
+        val out = test("""
+            spawn task () {
+                every :10:s {
+                    println(10)
+                }
+            }()
+            println(0)
+            broadcast in :global, tags([20000], :Clock, true)
+            println(1)
+        """, true)
+        assert(out == "0\n10\n10\n1") { out }
+    }
+    @Test
+    fun km_10_await_clk() {
+        val out = test("""
+            spawn task () {
+                loop {
+                    await (:10:s)
+                    println(999)
+                }
+            }()
+            println(0)
+            broadcast (tags([5000], :Clock, true)) in :global
+            println(1)
+            broadcast (tags([5000], :Clock, true)) in :global 
+            println(2)
+        """, true)
+        assert(out == "0\n1\n999\n2\n") { out }
+    }
 
     // CLOCK
 
@@ -2335,6 +3990,180 @@ class Exec_99 {
         assert(out == ":0\n:x\t10\n:1\n:x\t9\n:2\n:x\t8\n:3\n") { out }
     }
 
+    // AWAIT / ORIGINAL
+
+    @Test
+    fun kn_01_await_task() {
+        val out = test("""
+            spawn {
+                await spawn { 1 }
+                println(1)
+            }
+            println(2)
+        """, true)
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
+    fun kn_02_await_task() {
+        val out = test("""
+            spawn {
+                spawn {
+                    yield ()
+                    println(1)
+                    broadcast(nil) in :global
+                    println(3)
+                }
+                yield ()
+                println(2)
+            }
+            broadcast(nil) in :global
+        """, true)
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
+    fun kn_03_await_task_rets() {
+        val out = test("""
+            spawn {
+                var y = await spawn {
+                    yield ()
+                    [2]
+                }
+                println(y)
+            }
+            broadcast (nil) in :global
+        """, true)
+        assert(out == "[2]\n") { out }
+    }
+    @Test
+    fun kn_04_await_task_err() {
+        val out = test("""
+            spawn {
+                var x = await spawn nil() in nil
+            }
+        """)
+        //assert(out == "anon : (lin 2, col 27) : expected non-pool spawn : have \"spawn\"") { out }
+        assert(out == " |  anon : (lin 4, col 14) : (spawn (task :nested () { (var x = do { (val ...)\n" +
+                " |  anon : (lin 3, col 31) : (spawn nil() in nil)\n" +
+                " v  spawn error : expected task\n") { out }
+    }
+    @Test
+    fun kn_05_await_task_rets() {
+        val out = test("""
+            spawn {
+                var x = await spawn {
+                    var y = []
+                    y
+                }
+                println(x)
+            }
+        """, true)
+        assert(out.contains("[]\n")) { out }
+        //assert(out.contains("anon : (lin 3, col 53) : block escape error : incompatible scopes")) { out }
+        //assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
+        //        "anon : (lin 3, col 25) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun kn_06_await_task_rets_valgrind () {
+        val out = test("""
+            spawn {
+                var x = await spawn {
+                    1
+                }
+                var y = await spawn {
+                    yield ()
+                    [2]
+                }
+                task T () {
+                    3
+                }
+                var z = await spawn T()
+                println(x,y,z)
+            }
+            broadcast(nil) in :global
+        """, true)
+        assert(out == "1\t[2]\t3\n") { out }
+    }
+    @Test
+    fun kn_07_await_task() {
+        val out = test("""
+            task Main_Menu () {
+                await(,false)
+            }            
+            spawn {
+                await spawn Main_Menu ()
+                println(999)
+            }
+            println(1)
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun TODO_kn_08_await_now() {    // :check-now removed
+        val out = test("""
+            spawn {
+                println(1)
+                await( ;;;:check-now;;;, true)
+                println(2)
+            }
+            println(3)
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun kn_09_await_notfalse() {
+        val out = test("""
+            spawn {
+                println(1)
+                await (,10)
+                println(2)
+            }
+            broadcast(nil) in :global
+        """, true)
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
+    fun TODO_kn_10_task_pub_fake_err() {
+        val out = test("""
+            spawn {
+                watching evt,evt==:a {
+                    every evt,evt==:b {
+                        println(;;;task.;;;pub)    ;; no enclosing task
+                    }
+                }
+            }
+            println(1)
+        """)
+        //assert(out == "anon : (lin 5, col 33) : task error : missing enclosing task") { out }
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun kn_11_task_pub_fake() {
+        val out = test("""
+            spawn (task () {
+                set ;;;task.;;;pub = 1
+                watching evt, evt==:a {
+                    every evt, evt==:b {
+                        println(;;;task.;;;pub)
+                    }
+                }
+            }) ()
+             broadcast (:b) in :global
+             broadcast (:b)
+             broadcast (:a)
+             broadcast (:b) in :global
+        """, true)
+        assert(out == "1\n1\n") { out }
+    }
+    @Test
+    fun kn_12_task_tup_status() {
+        val out = test("""
+            task T () {}
+            val ts = [spawn T()]
+            println(status(ts[0]))
+        """)
+        assert(out == ":terminated\n") { out }
+    }
+
     // WATCHING
 
     @Test
@@ -2371,6 +4200,112 @@ class Exec_99 {
             }
         """)
         assert(out == "anon : (lin 3, col 30) : access error : variable \"{{*}}\" is not declared\n") { out }
+    }
+    @Test
+    fun ll_03_watching_clk() {
+        val out = test("""
+            spawn {
+                watching :10:s {
+                    defer { println(10) }
+                    await (,false)
+                    println(1)
+                }
+                println(999)
+            }
+            println(0)
+            broadcast (tags([5000], :Clock, true)) in :global 
+            println(1)
+            broadcast (tags([5000], :Clock, true) )
+            println(2)
+        """, true)
+        assert(out == "0\n1\n10\n999\n2\n") { out }
+    }
+    @Test
+    fun ll_04_watching() {
+        val out = test(
+            """
+            task Bird () {
+                watching ,true {
+                    par {
+                    } with {
+                    }
+                }
+            }            
+            println(1)
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun ll_05_watching() {
+        val out = test("""
+            task T () {
+                watching (,error(:error)) {
+                    await (,false)
+                }
+            }            
+            spawn T() in tasks()
+            broadcast (nil)
+        """, true)
+        assert(out == " |  anon : (lin 8, col 13) : broadcast'(:task,nil)\n" +
+                " |  anon : (lin 3, col 28) : error(:error)\n" +
+                " v  error : :error\n") { out }
+    }
+    @Test
+    fun BUG_ll_06_watching_track() {
+        val out = test("""
+            task T () {
+                set ;;;task.;;;pub = [10]
+                await (:evt)
+                println(:end)
+            }
+            val t = spawn(T)()
+            val x = ;;;track;;;(t)
+            spawn {
+                watching ;;;:check-now;;; ,it==x {
+                    println(x.pub[0])
+                    broadcast(nil) in :global
+                    println(x.pub[0])
+                    broadcast(:evt) in :global          ;; BUG: same tick as watching?
+                    println(:nooo)   ;; never printed
+                    await (,false)
+                }
+                println(status(x))
+            }
+            println(:ok)
+        """, true)
+        assert(out == "10\n10\nnil\n:ok\n") { out }
+    }
+    @Test
+    fun BUG_ll_07_awaiting17_track() {  // same as above
+        val out = test("""
+            task T () {
+                set pub = :pub
+                await (,it==:evt)
+            }
+            val t = spawn T()
+            spawn {
+                watching ,it==t {
+                    broadcast (:evt) in :global
+                    println(:nooo)
+                }
+                println(status(x))
+            }
+            println(:ok)
+        """, true)
+        assert(out == "nil\n:ok\n") { out }
+    }
+    @Test
+    fun ll_08_awaiting() {
+        val out = test("""
+            spawn {
+                watching :x {
+                    watching :y {
+                    }
+                }
+                println(:ok)
+            }
+        """, true)
+        assert(out == ":ok\n") { out }
     }
 
     // TOGGLE
@@ -2528,6 +4463,79 @@ class Exec_99 {
             println(v)
         """)
         assert(out == "-11\n") { out }
+    }
+    @Test
+    fun op_04_thus() {
+        val out = test(
+            """
+            val x = 1 --> \{
+                it
+            }
+            println(x)
+        """,true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun op_05_thus_err() {
+        val out = test(
+            """
+            val x = [] --> \ { x =>
+                x
+            }
+            println(x)
+        """,true)
+        assert(out == "anon : (lin 2, col 32) : declaration error : variable \"x\" is already declared\n") { out }
+    }
+    @Test
+    fun op_05_thus() {
+        val out = test(
+            """
+            val y = [] --> \ { x =>
+                x
+            }
+            println(y)
+        """,true)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun op_06_thus() {
+        val out = test(
+            """
+            val x = \{
+                it
+            } <-- 1
+            println(x)
+        """,true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun op_07_thus() {
+        val out = test(
+            """
+            val x = \ {y =>
+                y
+            } <-- []
+            println(x)
+        """,true)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun op_08_thus() {
+        val out = test(
+            """
+            val x = 2 --> \{ it + 1 } --> \{ it * 2 }
+            println(x)
+        """,true)
+        assert(out == "6\n") { out }
+    }
+    @Test
+    fun op_09_thus() {
+        val out = test(
+            """
+            val x = \{ it + 1 } <-- \{ it * 2 } <-- 2
+            println(x)
+        """,true)
+        assert(out == "5\n") { out }
     }
 
     // CAST
@@ -2784,6 +4792,84 @@ class Exec_99 {
         )
         assert(out == "[nil,[10]]\t[10]\t10\n") { out }
     }
+    @Test
+    fun TODO_tt_02_index_tuple() {
+        val out = test("""
+            val t = [1,2,3]
+            println(t.a, t.c)
+        """)
+        assert(out == "1\t3\n") { out }
+    }
+    @Test
+    fun tt_03_index_dict() {
+        val out = test("""
+            val t = @[ (:x,1), (:y,2) ]
+            println(t.x, t.y)
+        """)
+        assert(out == "1\t2\n") { out }
+    }
+    @Test
+    fun tt_04_string() {
+        val out = test("""
+            var v = "abc"
+            set v[#v] = 'a'
+            set v[2] = 'b'
+            println(v[0])
+            `puts(${D}v.Dyn->Vector.buf);`
+        """)
+        assert(out == "a\nabba\n") { out }
+    }
+    @Test
+    fun tt_05_string() {
+        val out = test("""
+            println("")
+            println("a\tb")
+            println("a\nb")
+            println("a'\"b")
+        """)
+        assert(out == "#[]\na\tb\na\nb\na'\"b\n") { out }
+    }
+    @Test
+    fun tt_06_dict_init_err() {
+        val out = test("""
+            var t = @[x,y]
+            println(t.x, t.y)
+        """)
+        assert(out == "anon : (lin 2, col 24) : expected \"=\" : have \",\"\n") { out }
+    }
+    @Test
+    fun tt_07_dict_init() {
+        val out = test("""
+            var t = @[x=1, y=2]
+            println(t.x, t.y)
+        """)
+        assert(out == "1\t2\n") { out }
+    }
+    @Test
+    fun tt_08_vector() {
+        val out = test("""
+            var v
+            set v = #[]
+            ifs true {
+                ,true {
+                    set v[#v] = 10
+                }
+            }
+            println(v)
+        """)
+        assert(out == "#[10]\n") { out }
+    }
+    @Test
+    fun tt_09_vector_concat() {
+        val out = test("""
+            var v1
+            set v1 = #[1,2,3]
+            var v2
+            set v2 = #[4,5,6]
+            println(v1 ++ v2)
+        """, true)
+        assert(out == "#[1,2,3,4,5,6]\n") { out }
+    }
 
     // TAG CONSTRUCTOR / DECLARATION
 
@@ -2909,6 +4995,19 @@ class Exec_99 {
         """)
         assert(out == "[nil]\t1\n") { out }
     }
+    @Test
+    fun vv_11_vector_size() {
+        val out = test("""
+            val v = #[]
+            println(#v, v)
+            set v[+] = 1
+            set v[+] = 2
+            println(#v, v)
+            val top = v[-]
+            println(#v, v, v[=], top)
+        """, true)
+        assert(out == "0\t#[]\n2\t#[1,2]\n1\t#[1]\t1\t2\n") { out }
+    }
 
     // DATA
 
@@ -2925,17 +5024,184 @@ class Exec_99 {
         assert(out == ":A\t:A.B\t:A.B.C\n") { out }
     }
 
+    // ==, ===, /=, =/=
+
+    @Test
+    fun xa_01_eqeqeq_tup() {
+        val out = test(
+            """
+            println([1] === [1])
+        """, true)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun xa_02_op_eqeqeq_tup() {
+        val out = test(
+            """
+            println([1] === [1])
+            println([ ] === [1])
+            println([1] =/= [1])
+            println([1,[],[1,2,3]] === [1,[],[1,2,3]])
+            println([nil,[[1,1],1]] === [nil,[[1,1],1]])
+        """, true)
+        assert(out == "true\nfalse\nfalse\ntrue\ntrue\n") { out }
+    }
+    @Test
+    fun xa_03_op_eqeqeq_tup() {
+        val out = test(
+            """
+            println([1,[1],1] === [1,[1],1])
+        """, true)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun xb_04_op_eqs_dic() {
+        val out = test(
+            """
+            println(@[] ==  @[])
+            println(@[] === @[])
+            println(@[] /=  @[])
+            println(@[] =/= @[])
+        """, true)
+        assert(out == "false\ntrue\ntrue\nfalse\n") { out }
+    }
+    @Test
+    fun xb_05_op_eqs_vec() {
+        val out = test(
+            """
+            println(#[]  ==  #[])
+            println(#[1] === #[1])
+            println(#[1] /=  #[1])
+            println(#[]  =/= #[])
+        """, true)
+        assert(out == "false\ntrue\ntrue\nfalse\n") { out }
+    }
+    @Test
+    fun xb_06_op_eqs_vec_dic_tup() {
+        val out = test(
+            """
+            println(@[(:y,false)] === @[(:x,true)])
+        """, true)
+        assert(out == "false\n") { out }
+    }
+    @Test
+    fun xb_07_op_eqs_vec_dic_tup() {
+        val out = test(
+            """
+            println([#[],@[]] ==  [#[],@[]])
+            println([#[],@[]] /=  [#[],@[]])
+            println([#[1],@[(:y,false),(:x,true)]] === [#[1],@[(:x,true),(:y,false)]])
+            println([#[],@[]] =/= [#[],@[]])
+        """, true)
+        assert(out == "false\ntrue\ntrue\nfalse\n") { out }
+    }
+    @Test
+    fun xb_08_valgrind() {
+        val out = test(
+            """
+            val f = func (v) {
+                do {
+                    do {
+                        do {
+                            val x
+                            println(x)
+                            do {
+                                nil
+                            }
+                            val y = x[0]
+                        }
+                    }
+                }
+            }
+            do {
+                f(@[(:y,false)])
+            }
+        """)
+        assert(out == "nil\n" +
+                " |  anon : (lin 17, col 17) : f(@[(:y,false)])\n" +
+                " |  anon : (lin 11, col 37) : x[0]\n" +
+                " v  index error : expected collection\n") { out }
+    }
+    @Test
+    fun xb_09_xxx() {
+        val out = test(
+            """
+            println([@[]] === [@[]])
+        """, true)
+        assert(out == "true\n") { out }
+    }
+
+    // TO-*
+
+    @Test
+    fun xc_01_tostring() {
+        val out = test("""
+            val s = to-string(10)
+            println(type(s), s)
+        """, true)
+        assert(out == ":vector\t10\n") { out }
+    }
+    @Test
+    fun xc_02_tonumber() {
+        val out = test("""
+            val n = to-number("10")
+            println(type(n), n)
+        """, true)
+        assert(out == ":number\t10\n") { out }
+    }
+    @Test
+    fun xc_03_tonumber_tostring() {
+        val out = test("""
+            val s = to-string(to-number("10"))
+            println(type(s), s)
+        """, true)
+        assert(out == ":vector\t10\n") { out }
+    }
+    @Test
+    fun xc_04_tovector() {
+        val out = test("""
+            coro T() {
+                yield([1])
+            }
+            val t = coroutine(T)
+            val v = to-vector(t)
+            println(v)
+        """, true)
+        assert(out == "#[[1]]\n") { out }
+    }
+    @Test
+    fun xc_05_tovector() {
+        val out = test("""
+            val v = do {
+                val t = [[1],[2],[3]]
+                to-vector(t)
+            }
+            println(v)
+        """, true)
+        assert(out == "#[[1],[2],[3]]\n") { out }
+    }
+    @Test
+    fun xc_06_string_to_tag() {
+        val out = test("""
+            do :xyz
+            println(to-tag-string(":x"))
+            println(to-tag-string(":xyz"))
+            println(to-tag-string("xyz"))
+        """, true)
+        assert(out == "nil\n:xyz\nnil\n") { out }
+    }
+
     // PRELUDE
 
     @Test
-    fun zz_01_ok() {
+    fun za_01_ok() {
         val out = test("""
             println(:ok)
         """, true)
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun zz_02_tasks() {
+    fun za_02_tasks() {
         val out = test("""
             val ts = tasks()
             loop in {1=>10} {
@@ -2947,7 +5213,7 @@ class Exec_99 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun TODO_zz_03_in() {
+    fun TODO_za_03_in() {
         val out = test("""
             println(10 in? [1,2,3])
             println(10 in? [1,10,3])
@@ -2955,7 +5221,7 @@ class Exec_99 {
         assert(out == "false\ntrue\n") { out }
     }
     @Test
-    fun zz_04_or() {
+    fun za_04_or() {
         val out = test("""
             func f () {
                 if nil {
@@ -2968,7 +5234,7 @@ class Exec_99 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun zz_05_assert() {
+    fun za_05_assert() {
         val out = test("""
             println(assert(10))
             assert(nil)
@@ -2979,13 +5245,479 @@ class Exec_99 {
                 " v  error : :assert\n") { out }
     }
     @Test
-    fun zz_06_copy() {
+    fun za_06_copy() {
         val out = test("""
             println(copy([1,2,3]))
             println(copy(#[1,2,3]))
             println(copy(@[(:k1,[1,2,3]), (1,#[])]))
         """, true)
         assert(out == "[1,2,3]\n#[1,2,3]\n@[(:k1,[1,2,3]),(1,#[])]\n") { out }
+    }
+    @Test
+    fun za_07_assert() {
+        val out = test("""
+            catch :assert {
+                assert([] is? :bool, "ok")
+            }
+            assert(1 is-not? :number)
+        """, true)
+        assert(out.contains("assertion error : ok\n" +
+                " |  anon : (lin 5, col 13) : assert(is-not'(1,:number))\n" +
+                " |  build/prelude-x.ceu : (lin 95, col 9) : error(:assert)\n" +
+                " v  error : :assert\n")) { out }
+    }
+    @Test
+    fun za_08_comp() {
+        val out = test("""
+            func square (x) {
+                x**2
+            }
+            val quad = square <|< square
+            println(quad(3))
+        """, true)
+        assert(out == "81\n") { out }
+    }
+
+    // ORIGINAL
+
+    @Test
+    fun zb_01() {
+        val out = test("""
+            func g () {
+            }
+            coro bar () {
+                do [g, coroutine(coro () {})]
+                nil
+            }
+            val it = [g, coroutine(bar)]
+            resume it[1]()
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun zb_02() {
+        val out = test("""
+            data :Iterator = [f,s,tp,i]
+            func to-iter-coro (itr :Iterator) {
+                val co = itr.s
+                val v = resume co()
+                ((status(co) /= :terminated) and v) or nil
+            }
+            func to-iter (v) {
+                [to-iter-coro,  v]
+            }
+            
+            func bar (v) {
+                [to-iter-coro, v]
+            }
+            bar(coroutine(coro () {}))
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun zb_03() {
+        val out = test("""
+            func g () {}
+            func f (v) {
+                [g, v]
+            }
+            func x () {
+                val t = coro () {}
+                f(t)
+                nil
+            }
+            x()
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun zb_04_all() {
+        val out = test("""
+            task T (pos) {
+                await (,true)
+                println(pos)
+            }
+            spawn {
+                val ts = tasks()
+                do {
+                    spawn T([]) in ts
+                }
+                await (,false)
+            }
+            broadcast(nil) in :global
+        """, true)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun zb_05_all() {
+        val out = test("""
+            task T (pos) {
+                set ;;;task.;;;pub = func () { pos }
+                await (<false)
+            }
+            val t = spawn T ([1,2])
+            println(t.pub())
+        """, true)
+        assert(out == "[1,2]\n") { out }
+    }
+    @Test
+    fun zb_06_all() {
+        val out = test("""
+            task T () {
+                do {
+                    val x = []
+                    set ;;;task.;;;pub = func () { x }
+                }
+            }
+            spawn T ()
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 8, col 19) : T()\n" +
+        //        "anon : (lin 5, col 30) : set error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun zb_07_all() {
+        val out = test("""
+            task U () {
+                set ;;;task.;;;pub = func () {
+                    10
+                }
+            }
+            task T (u) {
+                println(u.pub())
+            }
+            spawn T (spawn U())
+        """, true)
+        assert(out == "10\n") { out }
+        //assert(out == "anon : (lin 10, col 28) : U()\n" +
+        //        "anon : (lin 2, col 23) : block escape error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun zb_08_all() {
+        val out = test("""
+            task U () {
+                set ;;;task.;;;pub = func () {
+                    10
+                }
+                await(, false)
+            }
+            task T (u) {
+                println(u.pub())
+            }
+            spawn T (spawn U())
+        """, true)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun zb_09_all() {
+        val out = test("""
+            task U () {
+                set ;;;task.;;;pub = func () {
+                    10
+                }
+                await(, false )
+            }
+            task T (u) {
+                println(u.pub())
+            }
+            spawn T (spawn U())
+        """, true)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun zb_10_all() {
+        val out = test("""
+            func f () {}
+            spawn {
+                f() where {}
+            }
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun zb_11_all() {
+        val out = test("""
+            spawn {
+                loop {
+                    await (10)
+                    broadcast(tags([], :pause, true)) in :global 
+                    watching 10 {
+                        await(,false)
+                    }
+                    broadcast(tags([], :resume, true)) in :global 
+                }
+            }
+            broadcast (10) in :global
+            broadcast (10) in :global
+            println(:ok)
+        """, true)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun zb_12_all() {
+        val out = test("""
+            spawn {
+                loop {
+                    await (10)
+                    broadcast (tags([], :pause, true)) in :global
+                    watching 10 {
+                        await(,false)
+                    }
+                    broadcast (tags([], :resume, true)) in :global
+                    await (,true)
+                }
+            }
+            broadcast (10) in :global
+            broadcast (10) in :global
+            broadcast (10) in :global
+            println(:ok)
+        """, true)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun zb_13_all_valgrind () {
+        val out = test("""
+            spawn {
+                loop {
+                    await(10)
+                    println(:1)
+                    watching 10 {
+                        await(, false)
+                    }
+                    println(:2)
+                }
+            }
+            broadcast (10) in :global    ;; :1
+            broadcast (10) in :global    ;; :2 (not :1 again)
+        """, true)
+        assert(out == ":1\n:2\n") { out }
+    }
+    @Test
+    fun zb_14_all_term_coro () {
+        val out = test("""
+            task T () {
+                println(:1)
+                watching (,false) {
+                    await (,true)
+                }
+                println(:2)
+                ;;println(:t)
+            }
+            spawn {
+                val ts = tasks()
+                spawn T() in ts
+                ;;println(:every)
+                every :e {
+                    ;;println(:while)
+                    loop t in ts {
+                        ;;println(t, detrack(t), status(detrack(t)))
+                        assert(status(;;;detrack;;;(t)) /= :terminated)
+                    }
+                }
+            }
+            ;;println(:bcast)
+            broadcast(:e) in :global
+        """, true)
+        assert(out == ":1\n:2\n") { out }
+    }
+    @Test
+    fun zb_15_tk_pre () {
+        val out = test("""
+            ifs v {
+                is? :pointer => c-to-string(v)
+                is? :number => 1
+            }
+        """)
+        assert(out == "anon : (lin 2, col 17) : access error : variable \"v\" is not declared\n") { out }
+    }
+    @Test
+    fun zb_16_self_kill () {
+        val out = test("""
+            spawn {
+                loop {
+                    println(:10)
+                    spawn {
+                        println(:a)
+                        await (:E)
+                        do {
+                            println(:b)
+                            broadcast(:E) in :global
+                            println(:c)
+                        }
+                        println(:d)
+                    }
+                    println(:20)
+                    await (:E)
+                    println(:30)
+                }
+            }
+            println(:1)
+            broadcast (nil) in :global
+            println(:2)
+            broadcast (:E) in :global
+            println(:3)
+        """, true)
+        assert(out == ":10\n:a\n:20\n:1\n:2\n:b\n:30\n:10\n:a\n:20\n:3\n") { out }
+    }
+    @Test
+    fun zb_17_tasks_it() {
+        val out = test("""
+            var ts
+            set ts = tasks()
+            println(type(ts))
+            var T
+            set T = task (v) {
+                set ;;;task.;;;pub = v
+                val v' = yield(nil)
+            }
+            spawn T(1) in ts
+            spawn T(2) in ts
+            
+            loop t1 in ts {
+                loop in ts {
+                    println(;;;detrack;;;(t1).pub, ;;;detrack;;;(it).pub)
+                }
+            }
+             broadcast (2) in :global
+        """, true)
+        assert(out == ":tasks\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
+    }
+    @Test
+    fun zb_18_all_defer() {
+        val out = test("""
+            coro F () {
+                defer {
+                    println(:x)
+                }
+                yield()
+                defer {
+                    println(:y)
+                }
+                yield()
+            }
+            do {
+                val f = coroutine(F)
+                resume f()
+                resume f()
+            }
+        """)
+        assert(out == ":y\n:x\n") { out }
+    }
+    @Test
+    fun zb_19_every () {
+        val out = test("""
+            spawn {
+                every :e {
+                    loop in nil {
+                    }
+                }
+            }
+        """)
+        assert(out == "anon : (lin 3, col 40) : access error : variable \"is'\" is not declared\n") { out }
+    }
+    @Test
+    fun zb_20_all_line() {
+        val out = test("""
+        func f (co) {
+            resume co()
+        }
+        coro C () {
+            yield()
+            var t = []
+            yield(;;;drop;;;(t))
+        }
+        do {
+            val co = coroutine (C)
+            resume co()
+            loop {
+                val v = f(co)
+                println(v)
+                until true
+            }
+        }
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun XXX_zb_21() {
+        val out = test("""
+        coro Take () {
+            yield()
+            loop i in {1 => 3} {
+                yield("line")
+            }
+        }
+        do {
+            val take = spawn Take()
+            coro Show () {
+                var line = yield()
+                loop {
+                    while line
+                    set line = yield()
+                    println(line)
+                }
+            }
+            coro Send (co, next) {
+                loop v in to-iter(co) {
+                    resume next(;;;drop;;;(v))
+                }
+            }
+            spawn Send(take, spawn Show())
+            nil
+        }
+        """, true)
+        assert(out == "line\n" +
+                "line\n") { out }
+    }
+    @Test
+    fun zb_22_all() {
+        val out = test("""
+            task T () {
+                set ;;;task.;;;pub = []
+                await (,false)
+            }
+            func f (v1, v2) {}
+            spawn {
+                val ts = tasks()
+                spawn T() in ts
+                loop t in ts {
+                    val x = ;;;detrack;;;(t)
+                    x and true and true and f(x.pub, x.pub)
+                }
+            }
+            println(:ok)
+        """, true)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun zb_23_all() {
+        val out = test("""
+            task T () {
+                await (,false)
+            }
+            spawn {
+                val ts = tasks()
+                spawn T() in ts
+                await (,true)
+                catch ,true {
+                    loop b in ts {
+                        error(;;;drop;;;(b))
+                    }
+                }
+                nil
+            }
+            loop {
+                broadcast (:X []) in :global
+                until true
+            }
+            println(:ok)
+        """, true)
+        assert(out == ":ok\n") { out }
     }
 
     // MISC

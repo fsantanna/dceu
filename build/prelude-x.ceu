@@ -196,17 +196,6 @@ data :Iterator = [f,s,tp,i]
     }
 ;;}
 
-;;;
-func next (v, ...) {
-    ifs v {
-        :exe-coro => resume v(...)
-        :dict     => next-dict(v, ...)
-        :Iterator => v.f(v)
-        else      => error(:error)
-    }
-}
-;;;
-
 ;; IS, IS-NOT, === =/=
 ;; IN, IN-NOT
 
@@ -264,6 +253,18 @@ func in' (v, xs) {
 func in-not' (v, xs) {
     not in'(v,xs)
 }
+
+;;;
+func next (v, ...) {
+    ifs v {
+        :exe-coro => resume v(...)
+        :tasks    => next-tasks(v, ...)
+        :dict     => next-dict(v, ...)
+        :Iterator => v.f(v)
+        else      => error(:error)
+    }
+}
+;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TO-*
@@ -357,6 +358,7 @@ func :rec copy (v) {
                 until (k == nil)
                 set ret[copy(k)] = copy(v[k])
             }
+            ret
         }
         else {
             error(:TODO)
