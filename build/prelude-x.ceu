@@ -264,6 +264,12 @@ func next (v, ...) {
         else      => error(:error)
     }
 }
+
+func create-resume (CO, ...) {
+    val co = coroutine(CO)
+    assert(resume co(...) == nil)
+    co
+}
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

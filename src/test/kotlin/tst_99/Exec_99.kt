@@ -5667,7 +5667,7 @@ class Exec_99 {
                     resume next(;;;drop;;;(v))
                 }
             }
-            spawn Send(take, spawn Show())
+            create-resume(Send, take, create-resume(Show))
             nil
         }
         """, true)
