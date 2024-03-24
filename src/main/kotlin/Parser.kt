@@ -523,9 +523,21 @@ class Parser (lexer_: Lexer)
 
                 val idtag = if (this.checkEnu("Id")) this.id_tag() else Pair(Tk.Id("it",this.tk0.pos),null)
                 val id = idtag.first.str
-                this.acceptFix_err("in")
 
                 when {
+                    this.checkFix("{") -> {
+                        val blk = this.block()
+                        this.nest("""
+                            do {
+                                var ${idtag.tostr()} = 0
+                                loop {
+                                    ${blk.es.tostr(true)}
+                                    set $id = $id + 1
+                                }
+                            }
+                        """)
+                    }
+                    !this.acceptFix_err("in") -> error("impossible case")
                     (this.acceptFix("{") || this.acceptFix("}")) -> {
                         // [x -> y]
                         val tkA = this.tk0 as Tk.Fix

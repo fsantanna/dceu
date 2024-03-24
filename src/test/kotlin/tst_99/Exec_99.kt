@@ -1140,6 +1140,17 @@ class Exec_99 {
         """, true)
         assert(out == "true\n") { out }
     }
+    @Test
+    fun fi_05_loop() {
+        val out = test("""
+            $PLUS
+            loop it {
+                println(it)
+                 until true
+            }
+        """)
+        assert(out == "0\n") { out }
+    }
 
     // TASKS / ITER / DROP
 
