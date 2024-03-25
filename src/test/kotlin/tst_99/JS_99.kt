@@ -6,7 +6,7 @@ import org.junit.Test
 import org.junit.runners.MethodSorters
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-class TXJS {
+class JS_99 {
 
     //////////////////////////////////////////////////////////////////////////
     // TITLE

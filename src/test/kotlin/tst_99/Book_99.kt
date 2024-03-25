@@ -1,9 +1,9 @@
-package xceu
+package tst_99
 
-import org.junit.Ignore
+import dceu.*
 import org.junit.Test
 
-class TXBook {
+class Book_99 {
 
     // CHAPTER 1: Fundamental concepts
 
@@ -11,7 +11,7 @@ class TXBook {
 
     @Test
     fun pg_2_square() {
-        val out = ceu.all("""
+        val out = test("""
             val square = func (x) {
                 x * x
             }
@@ -21,7 +21,7 @@ class TXBook {
     }
     @Test
     fun pg_2_smaller() {
-        val out = ceu.all("""
+        val out = test("""
             val smaller = func (x,y) {
                 if x < y { x } else { y }
             }
@@ -33,7 +33,7 @@ class TXBook {
     }
     @Test
     fun pg_3_square_smaller() {
-        val out = ceu.all("""
+        val out = test("""
             func square (x) {
                 x * x
             }
@@ -46,7 +46,7 @@ class TXBook {
     }
     @Test
     fun pg_3_square_smaller_a() {
-        val out = ceu.all("""
+        val out = test("""
             func square (x) {
                 x * x
             }
@@ -59,7 +59,7 @@ class TXBook {
     }
     @Test
     fun pg_3_delta() {
-        val out = ceu.all("""
+        val out = test("""
             func delta (a,b,c) {
                 ((b**2) - (4*(a*c))) // 2
             }
@@ -78,7 +78,7 @@ class TXBook {
 
     @Test
     fun pg_11_currying() {
-        val out = ceu.all("""
+        val out = test("""
             func smallerc (^x) {
                 func (y) {
                     if ^^x < y { ^^x } else { y }
@@ -96,7 +96,7 @@ class TXBook {
     }
     @Test
     fun pg_12_twice_quad() {
-        val out = ceu.all("""
+        val out = test("""
             func square (x) {
                 x**2
             }
@@ -112,7 +112,7 @@ class TXBook {
     }
     @Test
     fun pg_12_twicec() {
-        val out = ceu.all("""
+        val out = test("""
             func square (x) {
                 x**2
             }
@@ -128,11 +128,11 @@ class TXBook {
     }
     @Test
     fun pg_13_curry() {
-        val out = ceu.all("""
-            func curry (^f) {
-                func (^x) {
+        val out = test("""
+            func curry (f) {
+                func (x) {
                     func (y) {
-                        ^^f(^^x,y)
+                        f(x,y)
                     }
                 }
             }
@@ -145,15 +145,15 @@ class TXBook {
     }
     @Test
     fun pg_13_uncurry() {
-        val out = ceu.all("""
-            func plusc (^x) {
+        val out = test("""
+            func plusc (x) {
                 func (y) {
-                    ^^x + y
+                    x + y
                 }
             }
-            func uncurry (^f) {
+            func uncurry (f) {
                 func (x,y) {
-                    ^^f(x)(y)
+                    f(x)(y)
                 }            
             }
             println(uncurry(plusc)(1,-4))
@@ -162,17 +162,17 @@ class TXBook {
     }
     @Test
     fun pg_13_ops() {
-        val out = ceu.all("""
+        val out = test("""
             println({{*}}(1 + 3, 4))
         """, true)
         assert(out == "16\n") { out }
     }
     @Test
     fun pg_15_compose() {
-        val out = ceu.all("""
-            func compose (^f,^g) {
+        val out = test("""
+            func compose (f,g) {
                 func (v) {
-                    ^^f(^^g(v))
+                    f(g(v))
                 }
             }
             func square (x) {
@@ -188,7 +188,7 @@ class TXBook {
 
     @Test
     fun todo_ifs_pg_18_signum() {
-        val out = ceu.all("""
+        val out = test("""
             func signum (x) {
                 ifs {
                     x < 0  => -1
@@ -202,7 +202,7 @@ class TXBook {
     }
     @Test
     fun pg_19_fact() {
-        val out = ceu.all("""
+        val out = test("""
             func :rec fact (x) {
                 if x == 0 {
                     1
@@ -218,9 +218,8 @@ class TXBook {
     // CHAPTER 1.6: Types
 
     @Test // 1.6.2: Type classes
-    @Ignore
-    fun todo_poly_mult() {
-        val out = ceu.all("""
+    fun TODO_poly_mult() {
+        val out = test("""
             poly val mult
             println(10 {mult} 20)
             println([1,2] {mult} 2)
@@ -249,7 +248,7 @@ class TXBook {
 
     @Test
     fun todo_ifs_pg_30_bool() {
-        val out = ceu.all("""
+        val out = test("""
             func :rec fact (x) {
                 ifs {
                     x < 0  => throw(:error)
@@ -266,23 +265,23 @@ class TXBook {
     }
     @Test
     fun pg_31_short() {
-        val out = ceu.all("""
+        val out = test("""
             println((false and throw(:error)) or true)
             println(true or throw(:error))
         """, true)
         assert(out == "true\ntrue\n") { out }
     }
     @Test
-    @Ignore // class Eq:  ===  =/=  (polymorphic, unlike ~= ~/=)
-    fun todo_pg_32_eq_poly() {
+    fun TODO_pg_32_eq_poly() {
+        // class Eq:  ===  =/=  (polymorphic, unlike ~= ~/=)
     }
     @Test
-    @Ignore // class Ord:  ===  =/=  (polymorphic, unlike ~= ~/=)
-    fun todo_pg_32_ord_poly() {
+    fun TODO_pg_32_ord_poly() {
+        // class Ord:  ===  =/=  (polymorphic, unlike ~= ~/=)
     }
     @Test
     fun pg_33_leap1() {
-        val out = ceu.all("""
+        val out = test("""
             func leapyear? (y) {
                 if (y % 100) == 0 {
                     (y % 400) == 0
@@ -297,7 +296,7 @@ class TXBook {
     }
     @Test
     fun pg_33_leap2() {
-        val out = ceu.all("""
+        val out = test("""
             func leapyear? (y) {
                 (((y % 100) == 0) and ((y % 400) == 0)) or ((y % 4) == 0)
             }
@@ -308,7 +307,7 @@ class TXBook {
     }
     @Test
     fun pg_34_tri() { // :Triangle.Equilateral
-        val out = ceu.all("""
+        val out = test("""
             data :Tri = [] {
                 :Equ = []
                 :Iso = []
