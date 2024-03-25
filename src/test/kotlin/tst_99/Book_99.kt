@@ -79,14 +79,14 @@ class Book_99 {
     @Test
     fun pg_11_currying() {
         val out = test("""
-            func smallerc (^x) {
+            func smallerc (x) {
                 func (y) {
-                    if ^^x < y { ^^x } else { y }
+                    if x < y { x } else { y }
                 }
             }
-            func plusc (^x) {
+            func plusc (x) {
                 func (y) {
-                    ^^x+y
+                    x+y
                 }
             }
             println(smallerc(3)(5))
@@ -116,9 +116,9 @@ class Book_99 {
             func square (x) {
                 x**2
             }
-            func twicec (^f) {
+            func twicec (f) {
                 func (v) {
-                    ^^f(^^f(v))
+                    f(f(v))
                 }
             }
             val quad = twicec(square)
@@ -247,27 +247,26 @@ class Book_99 {
     // CHAPTER 2.1: Booleans
 
     @Test
-    fun todo_ifs_pg_30_bool() {
+    fun TODO_ifs_pg_30_bool() {
         val out = test("""
             func :rec fact (x) {
                 ifs {
-                    x < 0  => throw(:error)
+                    x < 0  => error(:error)
                     x == 0 => 1
                     else => x * fact(x - 1)
                 }
             }
             println(fact(-1))
         """, true)
-        assert(out == "anon : (lin 9, col 21) : fact({{-}}(1))\n" +
-                "anon : (lin 4, col 31) : throw(:error)\n" +
-                "throw error : uncaught exception\n" +
-                ":error\n") { out }
+        assert(out == " |  anon : (lin 9, col 21) : fact({{-}}(1))\n" +
+                " |  anon : (lin 4, col 31) : error(:error)\n" +
+                " v  error : :error\n") { out }
     }
     @Test
     fun pg_31_short() {
         val out = test("""
-            println((false and throw(:error)) or true)
-            println(true or throw(:error))
+            println((false and error(:error)) or true)
+            println(true or error(:error))
         """, true)
         assert(out == "true\ntrue\n") { out }
     }
