@@ -265,12 +265,13 @@ func next (v, ...) {
     }
 }
 
-func create-resume (CO, ...) {
+;;;
+
+func create-resume (CO, arg) {
     val co = coroutine(CO)
-    assert(resume co(...) == nil)
+    assert(resume co(arg) == nil)
     co
 }
-;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TO-*

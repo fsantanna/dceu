@@ -1,8 +1,11 @@
-package xceu
+package tst_99
 
-import ceu.all
+import dceu.*
+import org.junit.FixMethodOrder
 import org.junit.Test
+import org.junit.runners.MethodSorters
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class TXJS {
 
     //////////////////////////////////////////////////////////////////////////
@@ -54,8 +57,8 @@ class TXJS {
     // 22.1.1 What are generators?
 
     @Test
-    fun x1() {
-        val out = all("""
+    fun x_01() {
+        val out = test("""
             coro genFunc () {
                 println("First")
                 yield()
@@ -71,8 +74,8 @@ class TXJS {
     // 22.1.2 Kinds of generators
 
     @Test
-    fun x2() {
-        val out = all("""
+    fun x_02() {
+        val out = test("""
             coro gen1 (v) { println(v) }
             val co1 = coroutine(gen1)
             resume co1(1)
@@ -95,12 +98,12 @@ class TXJS {
     // 22.1.3 Use case: implementing iterables
 
     @Test
-    fun x3() {
-        val out = all("""
+    fun x_03() {
+        val out = test("""
             coro objectEntries (obj) {
                 yield()
                 loop v in to-iter(obj,:all) {
-                    yield([v.0, v.1])
+                    yield([v[0], v[1]])
                 }
             }
             
@@ -108,9 +111,9 @@ class TXJS {
                 first = "Jane",
                 last  = "Doe",
             ]
-            val co = spawn objectEntries(jane)
+            val co = create-resume(objectEntries, jane)
             loop v in to-iter(co) {
-                println((to-string(v.0) ++ ": ") ++ v.1)
+                println((to-string(v[0]) ++ ": ") ++ v[1])
             }
         """, true)
         assert(out == ":first: Jane\n:last: Doe\n") { out }
@@ -119,12 +122,12 @@ class TXJS {
     //  22.1.4 Use case: simpler asynchronous code
 
     @Test
-    fun x4() {
-        val out = all("""
-            export [fetch, text, json] { ;; mock functions
+    fun x_04() {
+        val out = test("""
+            ;;export [fetch, text, json] { ;; mock functions
                 coro fetch (url) {
                     if url == :error {
-                        throw(:error)
+                        error(:error)
                     }
                     url
                 }
@@ -134,7 +137,7 @@ class TXJS {
                 coro json (txt) {
                     "json " ++ txt
                 }
-            }
+            ;;}
             coro fetchJson (url) {
                 val req = await spawn fetch(url)
                 val txt = await spawn text(req)
@@ -153,8 +156,8 @@ class TXJS {
     // 22.3 Generators as iterators (data production)
 
     @Test
-    fun x5() {
-        val out = all("""
+    fun x_05() {
+        val out = test("""
             coro genFunc() {
                 yield('a')
                 yield('b')
@@ -170,8 +173,8 @@ class TXJS {
     // 22.3.1 Ways of iterating over a generator
 
     @Test
-    fun x6() {
-        val out = all("""
+    fun x_06() {
+        val out = test("""
             coro genFunc() {
                 yield('a')
                 yield('b')
@@ -189,20 +192,19 @@ class TXJS {
     // 22.3.3 Throwing an exception from a generator
 
     @Test
-    fun x7() {
-        val out = all("""
+    fun x_07() {
+        val out = test("""
             coro genFunc() {
-                throw(:problem)
+                error(:problem)
             }
             val genObj = coroutine(genFunc)
             resume genObj()
                 ;; anon : (lin 3, col 17) : throw error : uncaught exception
                 ;; :problem
         """, true)
-        assert(out == "anon : (lin 6, col 20) : genObj()\n" +
-                "anon : (lin 3, col 17) : throw(:problem)\n" +
-                "throw error : uncaught exception\n" +
-                ":problem\n") { out }
+        assert(out == " |  anon : (lin 6, col 13) : (resume (genObj)(nil))\n" +
+                " |  anon : (lin 3, col 17) : error(:problem)\n" +
+                " v  error : :problem\n") { out }
     }
 
     // 22.3.4 Example: iterating over properties
@@ -211,22 +213,22 @@ class TXJS {
     //  22.3.5 You can only yield in generators
 
     @Test
-    fun x8() {
-        val out = all("""
+    fun x_08() {
+        val out = test("""
             coro genFunc () {
                 func () {
-                    yield() ;; anon : (lin 4, col 21) : yield error : expected enclosing coro or task
+                    yield() ;; anon : (lin 4, col 21) : yield error : unexpected enclosing func
                 }()
             }
         """, true)
-        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing coro or task") { out }
+        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing func") { out }
     }
     @Test
-    fun x9() {
-        val out = all("""
+    fun x_09() {
+        val out = test("""
             coro genFunc () {
                 loop v in to-iter(#['a','b'],:all) {
-                    yield(drop(v))
+                    yield(;;;drop;;;(v))
                 }
             }
             val arr = to-vector(coroutine(genFunc))
@@ -238,8 +240,8 @@ class TXJS {
     // 22.3.6 Recursion via yield*
 
     @Test
-    fun x10() {
-        val out = all("""
+    fun x_10() {
+        val out = test("""
             coro foo () {
                 yield('a')
                 yield('b')
@@ -258,8 +260,8 @@ class TXJS {
     }
 
     @Test
-    fun x11() {
-        val out = all("""
+    fun x_11() {
+        val out = test("""
             coro foo () {
                 yield('a')
                 yield('b')
@@ -283,8 +285,8 @@ class TXJS {
     //  - To distinguish, may return tuple as [:next, v], [:return, v]
 
     @Test
-    fun x12() {
-        val out = all("""
+    fun x_12() {
+        val out = test("""
             coro genFuncWithReturn () {
                 yield('a')
                 yield('b')
@@ -295,7 +297,7 @@ class TXJS {
                 yield()
                 resume-yield-all genObj ()
             }
-            println(to-vector(spawn logReturned(coroutine(genFuncWithReturn))))
+            println(to-vector(create-resume(logReturned, coroutine(genFuncWithReturn))))
         """, true)
         assert(out == "abc\n") { out }
     }
@@ -303,9 +305,9 @@ class TXJS {
     // 22.3.6.2 Iterating over trees
 
     @Test
-    fun x13() {
-        val out = all("""
-            val tree = @[
+    fun x_13() {
+        val out = test("""
+            val TREE = @[
                 v = 'a',
                 l = @[
                     v = 'b',
@@ -318,13 +320,13 @@ class TXJS {
                 yield()
                 yield(tree.v)
                 if tree.l {
-                    resume-yield-all (spawn T(tree.l)) ()
+                    resume-yield-all (create-resume(T, tree.l)) ()
                 }
                 if tree.r {
-                    resume-yield-all (spawn T(tree.r)) ()
+                    resume-yield-all (create-resume(T, tree.r)) ()
                 }
             }
-            println(to-vector(spawn T(tree)))
+            println(to-vector(create-resume(T, TREE)))
         """, true)
         assert(out == "abcde\n") { out }
     }
@@ -334,8 +336,8 @@ class TXJS {
     // 22.4.1 Sending values via next()
 
     @Test
-    fun x14() {
-        val out = all("""
+    fun x_14() {
+        val out = test("""
             coro dataConsumer () {
                 println(:started)
                 println(1, yield()) ;; (A)
@@ -355,8 +357,8 @@ class TXJS {
     // In Ceu, both inputs are received.
 
     @Test
-    fun x15() {
-        val out = all("""
+    fun x_15() {
+        val out = test("""
             coro gen (input) {
                 println(input)
                 loop {
@@ -381,7 +383,7 @@ class TXJS {
 
     @Test
     fun todo_x16_kill() {
-        val out = all("""
+        val out = test("""
             coro genFunc1() {
                 defer {
                     println(:exiting)
@@ -397,8 +399,8 @@ class TXJS {
     }
 
     @Test
-    fun x17_scope() {
-        val out = all("""
+    fun x_17_scope() {
+        val out = test("""
             coro genFunc1() {
                 defer {
                     println(:exiting)
@@ -420,8 +422,8 @@ class TXJS {
     // 22.4.4.2 Returning from a newborn generator
 
     @Test
-    fun todo_x18() {
-        val out = all("""
+    fun todo_x_18() {
+        val out = test("""
             coro genFunc() {}
             val genObj = coroutine(genFunc)
             kill genObj(:yes)
@@ -439,8 +441,8 @@ class TXJS {
     // See also: https://github.com/fsantanna/uv-ceu/blob/master/ceu/04-fs-lines-push.ceu
 
     @Test
-    fun x19() {
-        val out = all("""
+    fun x_19() {
+        val out = test("""
             func readFile (fileName, target) {
                 ;; TODO: from fileName
                 resume target("ab\nc")
@@ -479,17 +481,17 @@ class TXJS {
                 }
             }
             
-            val co_print = spawn printLines()
-            val co_nums  = spawn numberLines(co_print)
-            val co_split = spawn splitLines(co_nums)
+            val co_print = create-resume(printLines)
+            val co_nums  = create-resume(numberLines, co_print)
+            val co_split = create-resume(splitLines, co_nums)
             readFile(nil, co_split) 
         """, true)
         assert(out == "1: ab\n2: c\n3: defg\n") { out }
     }
 
     @Test
-    fun x20() {
-        val out = all("""
+    fun x_20() {
+        val out = test("""
             coro readFile (fileName) {
                 ;; TODO: from fileName
                 yield("ab\nc")
@@ -503,7 +505,7 @@ class TXJS {
                     val tmp = yield(nil)
                     loop c in to-iter(tmp) {
                         if c == '\n' {
-                            yield(drop(cur))
+                            yield(;;;drop;;;(cur))
                             set cur = ""
                         } else {
                             set cur[+] = c
@@ -529,9 +531,9 @@ class TXJS {
             }
             
             val co_read  = coroutine(readFile)
-            val co_split = spawn splitLines()
-            val co_nums  = spawn numberLines()
-            val co_print = spawn printLines()
+            val co_split = create-resume(splitLines)
+            val co_nums  = create-resume(numberLines)
+            val co_print = create-resume(printLines)
             spawn {
                 loop chars in to-iter(co_read) {
                     loop {
@@ -543,12 +545,12 @@ class TXJS {
                                 val nums = if line {
                                     resume co_nums(line)
                                 }
-                            } until (nums == nil) {
+                                until (nums == nil)
                                 resume co_print(nums)
                             }
                         }
-                    } until
-                        (line == nil)
+                        until (line == nil)
+                    }
                 }
             }
         """, true)
@@ -556,8 +558,8 @@ class TXJS {
     }
 
     @Test
-    fun todo_x21() {
-        val out = all("""
+    fun todo_x_21() {
+        val out = test("""
             ;; f >|>> co   co >>|>> co
             ((readFile >|>> splitLines) >>|>> numLines) >>|>> printLines
         """, true)
@@ -568,8 +570,8 @@ class TXJS {
     // TODO: JS is inverted: callee has no while loop, caller has while loop
 
     @Test
-    fun x22() {
-        val out = all("""
+    fun x_22() {
+        val out = test("""
             coro callee () {
                 loop {
                     val x = yield()
@@ -579,7 +581,7 @@ class TXJS {
             coro caller () {
                 resume-yield-all coroutine(callee) ()
             }
-            val co_caller = spawn caller ()
+            val co_caller = create-resume(caller)
             println(:resume, resume co_caller('a'))
             println(:resume, resume co_caller('b'))
         """, true)
@@ -618,14 +620,14 @@ class TXJS {
     // 22.6.2.2 Lazy push (generators as observables)
     // See also: https://github.com/fsantanna/uv-ceu/blob/master/ceu/05-fs-lines-pull.ceu
     @Test
-    fun x23() {
-        val out = all("""
+    fun x_23() {
+        val out = test("""
         coro Split (chars) {
             yield()
             var line = ""
             loop c in to-iter(chars) {
                 if c == '\n' {
-                    yield(drop(line))
+                    yield(;;;drop;;;(line))
                     set line = ""
                 } else {
                     set line[+] = c
@@ -661,22 +663,23 @@ class TXJS {
                 c == `:char EOF`
         }
         do { ;; PULL
-            val read1   = spawn FS-Read("build/cprelude.ceu")
-            val split1  = spawn Split(read1)
-            val number1 = spawn Number(split1)
-            val take1   = spawn Take(3, number1)
+            val read1   = create-resume(FS-Read, "build/cprelude.ceu")
+            val split1  = create-resume(Split, read1)
+            val number1 = create-resume(Number, split1)
+            val take1   = Take(3, number1)
             loop l in to-iter(take1) {
                 println(l)
             }
         }
         do { ;; PUSH
-            val read2   = spawn FS-Read("build/xprelude.ceu")
-            val split2  = spawn Split(read2)
-            val number2 = spawn Number(split2)
+            val read2   = create-resume(FS-Read, "build/xprelude.ceu")
+            val split2  = create-resume(Split, read2)
+            val number2 = create-resume(Number, split2)
             val take2   = spawn Take(3, number2)
             coro Show () {
                 var line = yield()
-                loop until not line {
+                loop {
+                    until not line
                     println(line)
                     set line = yield()
                 }
