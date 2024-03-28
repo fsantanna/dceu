@@ -948,7 +948,7 @@ class Exec_99 {
         val out = test("""
             data :T = [x]
             task T () :T {
-                set task.pub = [10]
+                set ;;;task.;;;pub = [10]
                 yield()
             }
             val t = spawn T()
@@ -1940,7 +1940,7 @@ class Exec_99 {
             }
         """, true)
         //assert(out.contains("assertion error : expected :Iterator")) { out }
-        assert(out.contains(" |  anon : (lin 2, col 22) : ceu_15303[0]\n" +
+        assert(out.contains(" |  anon : (lin 2, col 22) : ceu_15407[0]\n" +
                 " v  index error : expected collection\n")) { out }
     }
     @Test
@@ -5653,7 +5653,7 @@ class Exec_99 {
             }
         }
         do {
-            val take = spawn Take()
+            val take = create-resume(Take)
             coro Show () {
                 var line = yield()
                 loop {

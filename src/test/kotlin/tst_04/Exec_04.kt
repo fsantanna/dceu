@@ -270,6 +270,16 @@ class Exec_04 {
         //assert(out == ("anon : (lin 4, col 21) : access error : variable \"delay\" is not declared\n")) { out }
     }
     @Test
+    fun bj_01x_delay_err() {
+        val out = test(
+            """
+            delay
+        """
+        )
+        assert(out.contains("anon : (lin 2, col 13) : delay error : expected enclosing task\n")) { out }
+        //assert(out == ("anon : (lin 4, col 21) : access error : variable \"delay\" is not declared\n")) { out }
+    }
+    @Test
     fun bj_02_delay() {
         val out = test(
             """
