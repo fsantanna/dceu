@@ -154,52 +154,53 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         vars.proto_to_upvs[it]!!.size
                     }
                 }
-                """
-                { // BLOCK | ${this.dump()}
-                    // do not clear upvs
-                    ceux_block_enter(X->S, X->base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size} CEU4(COMMA X->exe));
-                    
-                    // GLOBALS (must be after ceux_block_enter)
-                    ${(ups.pub[this] == outer.main()).cond { """
-                    {
-                        ${GLOBALS.mapIndexed { i,id -> """
+                val void = sta.void(this)
+                if (void && !(up is Expr.Loop)) {
+                    body
+                } else {
+                    """
+                    { // BLOCK | ${this.dump()}
+                        // do not clear upvs
+                        ceux_block_enter(X->S, X->base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size} CEU4(COMMA X->exe));
+                        
+                        // GLOBALS (must be after ceux_block_enter)
+                        ${(ups.pub[this] == outer.main()).cond { """
                         {
-                            CEU_Value clo = ceu_create_clo(CEU_VALUE_CLO_FUNC, ceu_${id.idc()}_f, 0, 0, 0);
-                            ceux_repl(X->S, X->base + $i, clo);
+                            ${GLOBALS.mapIndexed { i,id -> """
+                            {
+                                CEU_Value clo = ceu_create_clo(CEU_VALUE_CLO_FUNC, ceu_${id.idc()}_f, 0, 0, 0);
+                                ceux_repl(X->S, X->base + $i, clo);
+                            }
+                            """ }.joinToString("")}
                         }
-                        """ }.joinToString("")}
-                    }
-                    """ }}
-
-                    // defers init
-                    ${defers[this].cond { it.second }}
-                    
-                    ${do_while ( """    
-                        $body
-                        ${(up is Expr.Loop).cond { """
-                            CEU_LOOP_STOP_${up!!.n}:
                         """ }}
-                    """)}
-
-                    // BLOCK (escape) | ${this.dump()}
-                    // defers execute
-                    ${(CEU >= 2).cond { defers[this].cond { it.third } }}
-                    
-                    // out=0 when loop iterates (!CEU_BREAK)
-                    {
-                        int out = CEU3(X->action==CEU_ACTION_ABORT ? 0 : ) ${(up is Expr.Loop).cond { "!CEU_BREAK ? 0 : " }} ${rets.pub[this]!!};
-                        ceux_block_leave(X->S, X->base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size}, out);
+    
+                        // defers init
+                        ${defers[this].cond { it.second }}
+                        
+                        ${do_while ( """    
+                            $body
+                            ${(up is Expr.Loop).cond { """
+                                CEU_LOOP_STOP_${up!!.n}:
+                            """ }}
+                        """)}
+    
+                        // BLOCK (escape) | ${this.dump()}
+                        // defers execute
+                        ${(CEU >= 2).cond { defers[this].cond { it.third } }}
+                        
+                        // out=0 when loop iterates (!CEU_BREAK)
+                        {
+                            int out = CEU3(X->action==CEU_ACTION_ABORT ? 0 : ) ${(up is Expr.Loop).cond { "!CEU_BREAK ? 0 : " }} ${rets.pub[this]!!};
+                            ceux_block_leave(X->S, X->base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size}, out);
+                        }
+                        
+                        ${(CEU >= 2).cond { this.check_error_aborted("NULL")} }
                     }
-                    
-                    ${(CEU >= 2).cond { this.check_error_aborted("NULL")} }
+                    """
                 }
-                """
             }
-            is Expr.Dcl -> {
-                if (sta.funs.contains(this.src)) {
-                    println(this.idtag.tostr())
-                }
-                (!sta.funs.contains(this.src)).cond { """
+            is Expr.Dcl -> (!sta.funs.contains(this.src)).cond { """
                 // DCL | ${this.dump()}
                 ${(this.src != null).cond {
                     val (stk,idx) = vars.idx("X",this,this)
@@ -221,7 +222,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     """)
                 }}
             """ }
-            }
             is Expr.Set -> """
                 { // SET | ${this.dump()}
                     ${this.src.code()}  // src is on the stack and should be returned

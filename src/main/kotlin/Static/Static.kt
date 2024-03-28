@@ -1,13 +1,21 @@
 package dceu
 
 class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
-    // const func decl
-    //      val f = func ()
-    // - if not used, should not generate code
+    // funs: const func is not used: do not generate code
+    // val f = func ()
     val xfuns: MutableMap<Expr.Proto, MutableSet<Expr.Proto>> = mutableMapOf(
         Pair(outer.clo as Expr.Proto, mutableSetOf())
     )
     val funs: MutableSet<Expr.Proto> = mutableSetOf()
+
+    // void: block is innocuous -> should be a proxy to up block
+    fun void (blk: Expr.Do): Boolean {
+        //return false
+        // no declarations, no spawns, no tasks
+        val dcls = vars.enc_to_dcls[blk]!!
+        return dcls.isEmpty() && (ups.pub[blk] !is Expr.Proto) && !this.tsk_or_tsks.contains(blk)
+    }
+    val tsk_or_tsks: MutableSet<Expr.Do> = mutableSetOf()
 
     init {
         outer.traverse()
@@ -149,6 +157,9 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                 this.tsks?.traverse()
                 this.tsk.traverse()
                 this.args.forEach { it.traverse() }
+                if (this.tsks == null) {
+                    tsk_or_tsks.add(ups.first(this) { it is Expr.Do } as Expr.Do)
+                }
                 /*
                 when {
                     (ups.first(this) { f -> ((f is Expr.Proto) && f.tk.str == "func") } != null)
@@ -198,6 +209,10 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.Call   -> {
                 this.clo.traverse()
                 this.args.forEach { it.traverse() }
+                if (this.clo is Expr.Acc && this.clo.tk.str=="tasks") {
+                    tsk_or_tsks.add(ups.first(this) { it is Expr.Do } as Expr.Do)
+                }
+
             }
         }
     }
