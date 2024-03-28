@@ -5568,6 +5568,31 @@ class Exec_01 {
         assert(out == "true\nfalse\nfalse\ntrue\n") { out }
     }
 
+    // OPTIMIZATION / CODE
+
+    @Test
+    fun ss_01_code() {
+        val out = test("""
+            val f = func () {
+                nil
+            }
+            val g = func () {
+                f()
+            }
+            val h = func :rec () {
+                h()
+            }
+            val i = func () {
+                42
+            }
+            println(`:ceu ${D}f`)
+            println(`:ceu ${D}g`)
+            println(`:ceu ${D}h`)
+            println(i())
+        """)
+        assert(out == "nil\nnil\nnil\n42\n") { out }
+    }
+
     // ALL
 
     @Test

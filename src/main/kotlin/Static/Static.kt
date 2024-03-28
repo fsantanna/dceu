@@ -1,20 +1,33 @@
 package dceu
 
 class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
-    val ylds: MutableSet<Expr.Do>  = mutableSetOf() // at least 1 yield (including subs) or nested coro/task
+    // const func decl
+    //      val f = func ()
+    // - if not used, should not generate code
+    val xfuns: MutableMap<Expr.Proto, MutableSet<Expr.Proto>> = mutableMapOf(
+        Pair(outer.clo as Expr.Proto, mutableSetOf())
+    )
+    val funs: MutableSet<Expr.Proto> = mutableSetOf()
 
     init {
         outer.traverse()
-    }
 
-    // ylds: block yields -> vars must be in Mem (TODO: spawn also, see gh_01_set)
-    // void: block is innocuous -> should be a proxy to up block
+        // xfuns -> funs
+        fun f (proto: Expr.Proto) {
+            if (funs.contains(proto)) {     // if breaks recursion
+                funs.remove(proto)          // found access, remove it
+                xfuns[proto]!!.forEach { f(it) }
+            }
+        }
+        funs.addAll(xfuns.keys)     // assume none are acessed
+        f(outer.clo as Expr.Proto)  // start with accesses from outer
+    }
 
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
                 if (this.rec) {
-                    if (ups.pub[this].let { it !is Expr.Dcl || it.tk.str!="val" }) {
+                    if (!this.is_val(ups)) {
                         err(this.tk, "${this.tk.str} :rec error : expected enclosing val declaration")
                     }
                 }
@@ -43,7 +56,12 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             }
             is Expr.Export -> this.blk.traverse()
             is Expr.Do     -> this.es.forEach { it.traverse() }
-            is Expr.Dcl    -> this.src?.traverse()
+            is Expr.Dcl    -> {
+                if (this.tk.str=="val" && this.src is Expr.Proto) {
+                    xfuns[this.src] = mutableSetOf()
+                }
+                this.src?.traverse()
+            }
             is Expr.Set    -> {
                 this.dst.traverse()
                 this.src.traverse()
@@ -55,7 +73,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                 }
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
-            is Expr.Loop  -> {
+            is Expr.Loop   -> {
                 this.blk.es.last().let {
                     if (it.is_innocuous()) {
                         err(it.tk, "loop error : innocuous last expression")
@@ -63,7 +81,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                 }
                 this.blk.traverse()
             }
-            is Expr.Break -> {
+            is Expr.Break  -> {
                 var up = ups.pub[this]
                 while (up is Expr.Do) {
                     up = ups.pub[up]    // skip nested do's from late declarations
@@ -76,7 +94,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                 this.cnd.traverse()
                 this.e?.traverse()
             }
-            is Expr.Skip -> {
+            is Expr.Skip   -> {
                 if (ups.pub[this] is Expr.Do && ups.pub[ups.pub[this]] is Expr.Loop) {
                     // ok
                 } else {
@@ -121,9 +139,6 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                     //ups.any(this) { it is Expr.Do && it.arg!=null }
                     //    -> err(this.tk, "yield error : unexpected enclosing thus")
                 }
-                ups.all_until(this) { it is Expr.Proto }
-                    .filter  { it is Expr.Do }              // all blocks up to proto
-                    .forEach { ylds.add(it as Expr.Do) }
             }
             is Expr.Resume -> {
                 this.co.traverse()
@@ -143,7 +158,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             }
             is Expr.Delay  -> {
                 if (!ups.first(this) { it is Expr.Proto }.let { it?.tk?.str=="task" }) {
-                    err(this.tk, "delay error : expected enclosing task")
+                    //err(this.tk, "delay error : expected enclosing task")
                 }
             }
             is Expr.Pub    -> {
@@ -161,7 +176,13 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
 
             is Expr.Nat    -> {}
-            is Expr.Acc    -> {}
+            is Expr.Acc    -> {
+                val dcl = vars.acc_to_dcl[this]!!
+                if (xfuns.containsKey(dcl.src)) {
+                    val up = ups.first(this) { it is Expr.Proto && (it==outer.clo || it.is_val(ups)) }
+                    xfuns[up]!!.add(dcl.src as Expr.Proto)
+                }
+            }
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
             is Expr.Bool   -> {}

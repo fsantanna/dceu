@@ -386,17 +386,20 @@ class Exec_05 {
                 yield(nil)
             }
             var ts = tasks()
-            spawn in ts, T()
-            loop in :tasks ts, t {
-                var x = detrack(t).pub
-                broadcast in detrack(t), nil
+            spawn T() in ts
+            var t
+            loop {
+                set t = next-tasks(ts, t)
+                break if (if t { false } else { true })
+                var x = ;;;detrack;;;(t).pub
+                broadcast (nil) in ;;;detrack;;;(t)
                 println(x)
             }
             println(999)
         """)
-        //assert(out == "20\n") { out }
+        assert(out == "[10]\n999\n") { out }
         //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
-        assert(out == "anon : (lin 9, col 17) : declaration error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 9, col 17) : declaration error : incompatible scopes\n:error\n") { out }
     }
 
     // TASKS / lims

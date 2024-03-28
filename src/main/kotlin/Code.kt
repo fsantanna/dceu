@@ -5,7 +5,7 @@ fun do_while (code: String): String {
 
 }
 
-class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets) {
+class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static, val rets: Rets) {
     val pres: MutableList<String> = mutableListOf()
     val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
     val code: String = outer.code()
@@ -195,7 +195,11 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                 }
                 """
             }
-            is Expr.Dcl -> """
+            is Expr.Dcl -> {
+                if (sta.funs.contains(this.src)) {
+                    println(this.idtag.tostr())
+                }
+                (!sta.funs.contains(this.src)).cond { """
                 // DCL | ${this.dump()}
                 ${(this.src != null).cond {
                     val (stk,idx) = vars.idx("X",this,this)
@@ -216,7 +220,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val rets: Rets)
                     }}}
                     """)
                 }}
-            """
+            """ }
+            }
             is Expr.Set -> """
                 { // SET | ${this.dump()}
                     ${this.src.code()}  // src is on the stack and should be returned
