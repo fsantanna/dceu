@@ -584,6 +584,25 @@ class Exec_05 {
        """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun BUG_ab_06_tasks_prim() {    // tasks must be primitive, must always be called
+        val out = test("""
+            val T = task () {
+                defer {
+                    println(:task)
+                }
+                loop {
+                    yield(nil)
+                }
+            }
+            val f = tasks
+            do {
+                spawn T() in f()
+            }
+            println(:ok)
+       """)
+        assert(out == ":ok\n") { out }
+    }
 
     // TRACK
 

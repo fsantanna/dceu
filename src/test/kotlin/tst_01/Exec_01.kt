@@ -3625,6 +3625,7 @@ class Exec_01 {
                 println(v)
                 v
             }
+            do f
             var f' = `:ceu ${D}f`
             println(f'(10))
         """
@@ -5573,7 +5574,7 @@ class Exec_01 {
     @Test
     fun ss_01_code() {
         val out = test("""
-            val f = func () {
+            var f = func () {
                 nil
             }
             val g = func () {

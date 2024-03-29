@@ -93,10 +93,6 @@ fun Expr.is_lval (): Boolean {
     }
 }
 
-fun Expr.Proto.is_val (ups: Ups): Boolean {
-    return (ups.pub[this].let { it is Expr.Dcl && it.tk.str=="val" })
-}
-
 fun Expr.base (ups: Ups): Expr {
     return when (this) {
         is Expr.Acc   -> this

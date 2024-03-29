@@ -35,7 +35,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
         when (this) {
             is Expr.Proto  -> {
                 if (this.rec) {
-                    if (!this.is_val(ups)) {
+                    if (!ups.pub[this].let { it is Expr.Dcl && it.tk.str=="val" }) {
                         err(this.tk, "${this.tk.str} :rec error : expected enclosing val declaration")
                     }
                 }
@@ -65,7 +65,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.Export -> this.blk.traverse()
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> {
-                if (this.tk.str=="val" && this.src is Expr.Proto) {
+                if (this.src is Expr.Proto) {
                     xfuns[this.src] = mutableSetOf()
                 }
                 this.src?.traverse()
@@ -190,7 +190,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.Acc    -> {
                 val dcl = vars.acc_to_dcl[this]!!
                 if (xfuns.containsKey(dcl.src)) {
-                    val up = ups.first(this) { it is Expr.Proto && (it==outer.clo || it.is_val(ups)) }
+                    val up = ups.first(this) { it is Expr.Proto && (it==outer.clo || (ups.pub[it] is Expr.Dcl)) }
                     xfuns[up]!!.add(dcl.src as Expr.Proto)
                 }
             }
