@@ -106,7 +106,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                                     int ret = ceu_exe_term(X);
                                     if (!CEU_ERROR_IS(X->S) && ret!=0) {
                                         // nrm->err: remove pending return in the stack
-                                        ceux_rem(X->S, top-1);
+                                        ceux_rem_n(X->S, top-1, 1);
                                     }
                                 }
                             } // close switch
@@ -555,11 +555,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         {
                             ${it.first.code()}
                             ${it.second.code()}
-                            CEU_ERROR_CHK_VAL(
-                                continue,
-                                ceu_dict_set(&ceux_peek(X->S,XX(-3)).Dyn->Dict, ceux_peek(X->S,XX(-2)), ceux_peek(X->S,XX(-1))),
-                                ${this.toerr()}
-                            );
+                            ceu_dict_set(X->S, &ceux_peek(X->S,XX(-3)).Dyn->Dict, ceux_peek(X->S,XX(-2)), ceux_peek(X->S,XX(-1)));
+                            CEU_ERROR_CHK_STK(continue, ${this.toerr()});
                             ceux_drop(X->S, 2);
                         }
                     """ }.joinToString("")}
@@ -580,28 +577,23 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     
                     // COL
                     ${this.col.code()}
-                    CEU_ERROR_CHK_VAL (
-                        continue,
-                        ceu_col_check(ceux_peek(X->S,XX(-1)),ceux_peek(X->S,XX(-2))),
-                        ${this.toerr()}
-                    );
                 """ + when {
                     this.isdst() -> {
                         """
                         {
-                            CEU_Value v = ceu_col_set(ceux_peek(X->S,XX(-1)), ceux_peek(X->S,XX(-2)), ceux_peek(X->S,XX(-3)));
-                            CEU_ERROR_CHK_VAL(continue, v, ${this.toerr()});
-                            ceux_drop(X->S, 2);    // keep src
+                            // [val,idx,col]
+                            ceux_col_set(X->S);
+                            // [val]
+                            CEU_ERROR_CHK_STK(continue, ${this.toerr()});
                         }
                         """
                     }
                     else -> this.PI0("""
                         {
-                            CEU_Value v = CEU_ERROR_CHK_VAL(continue, ceu_col_get(ceux_peek(X->S,XX(-1)),ceux_peek(X->S,XX(-2))), ${this.toerr()});
-                            ceu_gc_inc_val(v);
-                            ceux_drop(X->S, 2);
-                            ceux_push(X->S, 1, v);
-                            ceu_gc_dec_val(v);
+                            // [idx,col]
+                            ceux_col_get(X->S);
+                            // [val]
+                            CEU_ERROR_CHK_STK(X->S, ${this.toerr()});
                         }
                     """)
                 } + """

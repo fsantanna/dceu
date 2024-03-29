@@ -347,8 +347,8 @@ fun Coder.main (tags: Tags): String {
     
     int ceu_dict_key_to_index (CEU_Dict* col, CEU_Value key, int* idx);
     CEU_Value ceu_dict_get (CEU_Dict* col, CEU_Value key);
-    CEU_Value ceu_dict_set (CEU_Dict* col, CEU_Value key, CEU_Value val);
-    CEU_Value ceu_col_check (CEU_Value col, CEU_Value idx);
+    int ceu_dict_set (CEU_Stack* S, CEU_Dict* col, CEU_Value key, CEU_Value val);
+    int ceux_col_check (CEU_Stack* S, int vec_set);
 
     void ceu_print1 (CEU_Value v);
     CEU_Value _ceu_equals_equals_ (CEU_Value e1, CEU_Value e2);
@@ -803,7 +803,7 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceux_peek (CEU_Stack* S, int i);
     void ceux_repl (CEU_Stack* S, int i, CEU_Value v);
     void ceux_ins (CEU_Stack* S, int i, CEU_Value v);
-    void ceux_rem (CEU_Stack* S, int i);
+    void ceux_rem_n (CEU_Stack* S, int i, int n);
     void ceux_drop (CEU_Stack* S, int n);
     #if CEU >= 3
     int ceux_resume (CEUX* X1, int inp, int out, CEU_ACTION act CEU4(COMMA uint32_t now));
@@ -906,15 +906,17 @@ fun Coder.main (tags: Tags): String {
         //       ^ i
     }
     
-    void ceux_rem (CEU_Stack* S, int i) {
-        // [pre,x,pos]
-        //      ^ i
+    void ceux_rem_n (CEU_Stack* S, int i, int n) {
+        // [pre,x,y,z,pos]
+        //      ^ i..n
         assert(i>=0 && i<S->n && "TODO: stack error");
-        ceu_gc_dec_val(S->buf[i]);
-        for (int j=i; j<S->n-1; j++) {
-            S->buf[j] = S->buf[j+1];
+        for (int j=i; j<i+n; j++) {
+            ceu_gc_dec_val(S->buf[j]);
         }
-        S->n--;
+        for (int j=i; j<S->n-n; j++) {
+            S->buf[j] = S->buf[j+n];
+        }
+        S->n -= n;
         // [pre,pos]
     }
     
@@ -1495,26 +1497,43 @@ fun Coder.main (tags: Tags): String {
         }
     }
     
-    CEU_Value ceu_col_get (CEU_Value col, CEU_Value key) {
-        CEU_Value err = ceu_col_check(col,key);
-        if (err.type == CEU_VALUE_ERROR) {
-            return err;
+    int ceux_col_get (CEU_Stack* S) {
+        // [idx, col]
+        int ret = ceux_col_check(S, 0);
+        if (ret != 0) {
+            return ret;
         }
+        int i = SS(-2);
+        CEU_Value key = ceux_peek(S, SS(-2));
+        CEU_Value col = ceux_peek(S, SS(-1));
         switch (col.type) {
             case CEU_VALUE_TUPLE:
-                return col.Dyn->Tuple.buf[(int) key.Number];
+                ceux_push(S, 1, col.Dyn->Tuple.buf[(int) key.Number]);
+                break;
             case CEU_VALUE_VECTOR:
-                return ceu_vector_get(&col.Dyn->Vector, key.Number);
+                ceux_push(S, 1, ceu_vector_get(&col.Dyn->Vector, key.Number));
                 break;
             case CEU_VALUE_DICT:
-                return ceu_dict_get(&col.Dyn->Dict, key);
+                ceux_push(S, 1, ceu_dict_get(&col.Dyn->Dict, key));
+                break;
             default:
                 assert(0 && "bug found");
         }
+        ceux_rem_n(S, i, 2);
+        // [val]
+        return 1;
     }
     
-    CEU_Value ceu_col_set (CEU_Value col, CEU_Value key, CEU_Value val) {
-        CEU_Value ok = { CEU_VALUE_NIL };
+    int ceux_col_set (CEU_Stack* S) {
+        // [val, key, col]
+        int ret = ceux_col_check(S, 1);
+        if (ret != 0) {
+            return ret;
+        }
+        int i = SS(-3);
+        CEU_Value val = ceux_peek(S, SS(-3));
+        CEU_Value key = ceux_peek(S, SS(-2));
+        CEU_Value col = ceux_peek(S, SS(-1));
         switch (col.type) {
             case CEU_VALUE_TUPLE:
                 ceu_tuple_set(&col.Dyn->Tuple, key.Number, val);
@@ -1523,13 +1542,18 @@ fun Coder.main (tags: Tags): String {
                 ceu_vector_set(&col.Dyn->Vector, key.Number, val);
                 break;
             case CEU_VALUE_DICT: {
-                ok = ceu_dict_set(&col.Dyn->Dict, key, val);
+                ret = ceu_dict_set(S, &col.Dyn->Dict, key, val);
                 break;
             }
             default:
                 assert(0 && "bug found");
         }
-        return ok;
+        if (ret == 0) {
+            ceux_rem_n(S, i+1, 2);  // remove key/col, keep val
+        } else {
+            ceux_rem_n(S, i, 3);    // remove val/key/col on error
+        }
+        return ret;
     }
     
     void ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v) {
@@ -1539,9 +1563,7 @@ fun Coder.main (tags: Tags): String {
     }
     
     CEU_Value ceu_vector_get (CEU_Vector* vec, int i) {
-        if (i<0 || i>=vec->its) {
-            return (CEU_Value) { CEU_VALUE_ERROR, {.Error="index error : out of bounds"} };
-        }
+        assert(i>=0 && i<vec->its);
         int sz = ceu_type_to_size(vec->unit);
         CEU_Value ret = (CEU_Value) { vec->unit };
         memcpy(&ret.Number, vec->buf+i*sz, sz);
@@ -1647,9 +1669,9 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { CEU_VALUE_NIL };
         }
     }        
-    CEU_Value ceu_dict_set (CEU_Dict* col, CEU_Value key, CEU_Value val) {
+    int ceu_dict_set (CEU_Stack* S, CEU_Dict* col, CEU_Value key, CEU_Value val) {
         if (key.type == CEU_VALUE_NIL) {
-            return (CEU_Value) { CEU_VALUE_ERROR, {.Error="dict error : index cannot be nil"} };
+            return ceu_error_s(S, "dict error : index cannot be nil");
         }
         int old;
         ceu_dict_key_to_index(col, key, &old);
@@ -1678,25 +1700,27 @@ fun Coder.main (tags: Tags): String {
             (*col->buf)[old][0] = key;
             (*col->buf)[old][1] = val;
         }
-        return (CEU_Value) { CEU_VALUE_NIL };
+        return 0;
     }        
     
-    CEU_Value ceu_col_check (CEU_Value col, CEU_Value idx) {
+    int ceux_col_check (CEU_Stack* S, int vec_set) {
+        CEU_Value idx = ceux_peek(S, SS(-2));
+        CEU_Value col = ceux_peek(S, SS(-1));
         if (col.type<CEU_VALUE_TUPLE || col.type>CEU_VALUE_DICT) {                
-            return (CEU_Value) { CEU_VALUE_ERROR, {.Error="index error : expected collection"} };
+            return ceu_error_s(S, "index error : expected collection");
         }
         if (col.type != CEU_VALUE_DICT) {
             if (idx.type != CEU_VALUE_NUMBER) {
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="index error : expected number"} };
+                return ceu_error_s(S, "index error : expected number");
             }
             if (col.type==CEU_VALUE_TUPLE && (idx.Number<0 || idx.Number>=col.Dyn->Tuple.its)) {                
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="index error : out of bounds"} };
+                return ceu_error_s(S, "index error : out of bounds");
             }
-            if (col.type==CEU_VALUE_VECTOR && (idx.Number<0 || idx.Number>col.Dyn->Vector.its)) {                
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="index error : out of bounds"} };
+            if (col.type==CEU_VALUE_VECTOR && (idx.Number<0 || idx.Number>=col.Dyn->Vector.its+vec_set)) {                
+                return ceu_error_s(S, "index error : out of bounds");
             }
         }
-        return (CEU_Value) { CEU_VALUE_NIL };
+        return 0;
     }
     """
     }
@@ -2214,7 +2238,7 @@ fun Coder.main (tags: Tags): String {
                         ret = ceu_bcast_dyn(X, CEU_ACTION_RESUME, CEU_TIME, up);
                         //assert(ret == 0);
                         assert(X->exe->refs >= 2);  // ensures that the unlink below is safe (otherwise call gc_inc)
-                        ceux_rem(X->S, i);
+                        ceux_rem_n(X->S, i, 1);
                     }
                     ceu_gc_dec_dyn((CEU_Dyn*) X->exe);  // only if natural termination
                 }
