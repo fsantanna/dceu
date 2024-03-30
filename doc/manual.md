@@ -243,8 +243,8 @@ println(pos.x, pos[:y])     ;; --> 10, 20
 
 Tags can also be used to "tag" dynamic objects, such as dictionaries and
 tuples, to support the notion of user types in Ceu.
-For instance, the call `tags(pos,:Pos,true)` associates the tag `:Pos` with the
-value `pos`, such that the query `tags(pos,:Pos)` returns `true`.
+For instance, the call `tag(:Pos,pos)` associates the tag `:Pos` with the
+value `pos`, such that the query `tag(pos)` returns `:Pos`.
 
 As a distinctive feature, tags can describe user type hierarchies by splitting
 identifiers with (`.`).
@@ -252,23 +252,24 @@ For instance, a tag such as `:T.A.x` matches the types `:T`, `:T.A`, and
 `:T.A.x` at the same time, as verified by function `sup?`:
 
 ```
-sup?(:T,     :T.A.x)    ;; --> true  (:T is a supertype of :T.A>x)
+sup?(:T,     :T.A.x)    ;; --> true  (:T is a supertype of :T.A.x)
 sup?(:T.A,   :T.A.x)    ;; --> true
 sup?(:T.A.x, :T.A.x)    ;; --> true
 sup?(:T.A.x, :T)        ;; --> false (:T.A.x is *not* a supertype of :T)
 sup?(:T.A,   :T.B)      ;; --> false
 ```
 
-The next example illustrates hierarchical tags combined with the function
-`tags`:
+The next example illustrates hierarchical tags combined with the functions
+`tag` and `sup?`:
 
 ```
-val x = []                  ;; an empty tuple
-tags(x, :T.A, true)         ;; x is of user type :T.A
-println(tags(x,:T))         ;; --> true
-println(tags(x,:T.A))       ;; --> true
-println(tags(x,:T.B))       ;; --> false
-println(x is? :T)           ;; --> true  (equivalent to tags(x,:T))
+val x = []                      ;; an empty tuple
+tag(:T.A, x)                    ;; x is of user type :T.A
+println(tag(x))                 ;; --> :T.A
+println(sup?(:T,   tag(x)))     ;; --> true
+println(sup?(:T.A, tag(x)))     ;; --> true
+println(sup?(:T.B, tag(x)))     ;; --> false
+println(x is? :T)               ;; --> true  (equivalent to sup?(:T,tag(x)))
 ```
 
 In the example, `x` is set to user type `:T.A`, which is compatible with types
@@ -316,7 +317,7 @@ println(but.ts, but.pos.y, but is :Event.Mouse) ;; --> 0, 20, true
 
 Considering the last two lines, a declaration such as
     `val x = :T [...]` is equivalent to
-    `val x :T = tags([...], :T, true)`,
+    `val x :T = tag(:T, [...])`,
 which not only tags the tuple with the appropriate user type, but also declares
 that the variable satisfies the template.
 
@@ -724,13 +725,12 @@ The `tasks` type represents [task pools](#active-values) holding active tasks.
 Values from non-basic types (i.e., collections and execution units) can be
 associated with [tags](#basic-types) that represent user types.
 
-The function [`tags`](#types-and-tags) associates tags with values, and also
-checks if a value is of the given tag:
+The function [`tag`](#types-and-tags) associates tags with values:
 
 ```
-val x = []              ;; an empty tuple
-tags(x, :T, true)       ;; x is now of user type :T
-println(tags(x,:T))     ;; --> true
+val x = []          ;; an empty tuple
+tag(:T, x)          ;; x is now of user type :T
+println(tag(x))     ;; --> :T
 ```
 
 Tags form [type hierarchies](hierarchical-tags) based on the dots in their
@@ -750,7 +750,7 @@ The function [`is?`](#operator-is) checks if values match types or tags:
 
 ```
 val x = []              ;; an empty tuple
-tags(x, :T.A, true)     ;; x is now of user type :T.A
+tag(:T.A, x)            ;; x is now of user type :T.A
 println(x is? :tuple)   ;; --> true
 println(x is? :T)       ;; --> true
 ```
@@ -825,7 +825,7 @@ tag colon prefix `:`).
 A [string literal](#literals) expands to a vector of character literals.
 
 A tuple constructor may also be prefixed with a tag, which associates the tag
-with the tuple, e.g., `:X [...]` is equivalent to `tags([...], :X, true)`.
+with the tuple, e.g., `:X [...]` is equivalent to `tags(:X, [...])`.
 Tag constructors are typically used in conjunction with
 [tuple templates](#tag-enumerations-and-tuple-templates)
 
@@ -1597,7 +1597,7 @@ ifs f() {
 Ceu supports loops and iterators as follows:
 
 ```
-Loop : `loop´ [[ID [TAG]] `in´ (Range | Expr)] Block
+Loop : `loop´ [ID [TAG]] [`in´ (Range | Expr)] Block
 
 Skip  : `skip´ `if´ Expr
 
@@ -1614,6 +1614,8 @@ optional control variable.
 The iterator can be a [numeric range](#numeric-ranges) or an expression that
 evaluates to an [iterator tuple](#TODO).
 If the variable identifier is omitted, it assumes the implicit identifier `it`.
+If the `in` clause is omitted, but not the the variable identifier, then the
+loop iterates over the variable from `0` to infinity.
 
 The loop block may contain control clauses to restart or terminate the loop.
 These clauses must be placed at the exact same nesting level of the loop block,
@@ -1635,11 +1637,19 @@ loop {
     println(i)          ;; --> 2,4,6,8,10
     while i <= 10
 }
+```
 
+```
 loop {
     do {
         break if true   ;; ERR: invalid nesting level
     }
+}
+```
+
+```
+loop i {
+    println(i)          ;; --> 0,1,2,...
 }
 ```
 
@@ -2509,8 +2519,8 @@ The primary library provides primitive functions and operations:
     generate random numbers
 - [`sup?`](#types-and-tags):
     checks if a tag is a supertype of another
-- [`tags`](#types-and-tags):
-    checks and sets value tags
+- [`tag`](#types-and-tags):
+    gets and sets a value tag
 - [`to-bool`,`to-number`,`to-string`,`to-tag`](#type-conversions):
     <!--`to-char`-->
     perform type conversion operations
@@ -2674,8 +2684,8 @@ nil or 10       ;; --> 10
 func type (v)           ;; --> :type
 func sup? (tag1, tag2)  ;; --> :bool
 func string-to-tag (s)  ;; --> :tag
-func tags (v, t, set)   ;; --> v
-func tags (v, t)        ;; --> :bool
+func tag (t, v)         ;; --> v
+func tag (v)            ;; --> :tag
 ```
 
 The function `type` receives a value `v` and returns its [type](#types) as one
@@ -2688,7 +2698,7 @@ of the tags that follows:
 The function `sup?` receives tags `tag1` and `tag2`, and returns if `tag1` is
 a [super-tag](#hierarchical-tags) of `tag2`.
 
-The function `tags` sets or queries tags associated with values of
+The function `tag` sets or queries tags associated with values of
 [user types](#user-types).
 To set or unset a tag, the function receives a value `v`, a tag `t`, and a
 boolean `set` to set or unset the tag.
@@ -2700,9 +2710,9 @@ value.
 Examples:
 
 ```
-type(10)                        ;; --> :number
-val x = tags([], :x, true)      ;; value x=[] is associated with tag :x
-tags(x, :x)                     ;; --> true
+type(10)                ;; --> :number
+val x = tag(:X, [])     ;; value x=[] is associated with tag :X
+tag(x)                  ;; --> :X
 ```
 
 ### Type Conversions
@@ -2900,10 +2910,10 @@ The operator `is?` checks if `v1` matches `v2` as follows:
 
 ```
 ifs {
-    (v1 == v2)       -> true
-    (type(v1) == v2) -> true
-    tags(v1,v2)      -> true
-    else             -> false
+    (v1 === v2)        => true
+    (type(v1) == v2)   => true
+    (type(v2) == :tag) => sup?(v2, tag(v1))
+    else => false
 }
 ```
 
@@ -2912,9 +2922,9 @@ The operator `is-not?` is the negation of `is?`.
 Examples:
 
 ```
-10 is? :number           -> true
-10 is? nil               -> false
-tags([],:x,true) is? :x  -> true
+10 is? :number          ;; --> true
+10 is? nil              ;; --> false
+tag(:X,[]) is? :X       ;; --> true
 ```
 
 ### Iterator Operations
@@ -3033,7 +3043,7 @@ Expr  : `do´ Block                                      ;; explicit block
             Case :  Patt  (Block | `=>´ Expr)
             Else : `else´ (Block | `=>´ Expr)
 
-      | `loop´ [[ID [TAG]] `in´ (Range | Expr)] Block   ;; loops
+      | `loop´ [ID [TAG]] [`in´ (Range | Expr)] Block   ;; loops
             Range : (`{´ | `}´) Expr `=>` Expr (`{´ | `}´) [`:step` [`+´|`-´] Expr]
       | `skip´ `if´ Expr                                ;; loop jump back
       | `break´ [`(´ Expr `)´] `if´ Expr                ;; loop escape
