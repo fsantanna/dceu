@@ -928,7 +928,7 @@ fun Coder.main (tags: Tags): String {
     #endif
     }
     
-    void ceux_block_leave (CEU_Stack* S, int base, int n, int out) {
+    void ceux_block_leave (CEU_Stack* S, int out) {
         int I = -1;
         for (int i=S->n-1; i>=0; i--) {
             CEU_Value blk = ceux_peek(S,i);
@@ -957,12 +957,6 @@ fun Coder.main (tags: Tags): String {
         }
         assert(I >= 0);
         
-        // clear locals after clear block
-        // TODO: use memset=0
-        for (int i=n-1; i>=0; i--) {
-            ceux_repl(S, base+i, (CEU_Value) { CEU_VALUE_NIL });
-        }
-
     #if CEU >= 2
         // in case of error, out must be readjusted to the error stack:
         // [BLOCK,...,n,pay,err]
@@ -976,6 +970,12 @@ fun Coder.main (tags: Tags): String {
             out = n.Number + 1 + 1 + 1;
         }
     #endif
+
+        // clear locals after clear block
+        // TODO: use memset=0
+        for (int i=S->n-out-1; i>=I; i--) {
+            ceux_repl(S, i, (CEU_Value) { CEU_VALUE_NIL });
+        }
 
         for (int i=0; i<out; i++) {
             ceux_move(S, I+i, SS(-out+i));

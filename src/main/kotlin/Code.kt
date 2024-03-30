@@ -192,7 +192,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         // out=0 when loop iterates (!CEU_BREAK)
                         {
                             int out = CEU3(X->action==CEU_ACTION_ABORT ? 0 : ) ${(up is Expr.Loop).cond { "!CEU_BREAK ? 0 : " }} ${rets.pub[this]!!};
-                            ceux_block_leave(X->S, X->base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size}, out);
+                            ceux_block_leave(X->S, out);
                         }
                         
                         ${(CEU >= 2).cond { this.check_error_aborted("NULL")} }
@@ -222,13 +222,13 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     """)
                 }}
             """ }
-            is Expr.Set -> """
+            is Expr.Set -> this.PI0("""
                 { // SET | ${this.dump()}
                     ${this.src.code()}  // src is on the stack and should be returned
                     // <<< SRC | DST >>>
                     ${this.dst.code()}  // dst should not pop src
                 }
-            """
+            """)
             is Expr.If -> """
                 { // IF | ${this.dump()}
                     ${this.cnd.code()}
