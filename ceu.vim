@@ -24,7 +24,7 @@ syn keyword Statement   resume-yield-all thus until watching
 syn keyword Statement   with where while
 
 syn keyword Statement   dump error next-dict print println
-syn keyword Statement   sup tags
+syn keyword Statement   sup tag
 syn keyword Statement   to-string-number to-string-pointer to-string-tag
 syn keyword Statement   to-tag-string
 syn keyword Statement   tuple type

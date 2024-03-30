@@ -5446,11 +5446,11 @@ class Exec_99 {
             spawn {
                 loop {
                     await (10)
-                    broadcast(tags([], :pause, true)) in :global 
+                    broadcast(tag(:pause, [])) in :global 
                     watching 10 {
                         await(,false)
                     }
-                    broadcast(tags([], :resume, true)) in :global 
+                    broadcast(tag(:resume, [])) in :global 
                 }
             }
             broadcast (10) in :global
@@ -5465,11 +5465,11 @@ class Exec_99 {
             spawn {
                 loop {
                     await (10)
-                    broadcast (tags([], :pause, true)) in :global
+                    broadcast (tag(:pause, [])) in :global
                     watching 10 {
                         await(,false)
                     }
-                    broadcast (tags([], :resume, true)) in :global
+                    broadcast (tag(:resume, [])) in :global
                     await (,true)
                 }
             }
