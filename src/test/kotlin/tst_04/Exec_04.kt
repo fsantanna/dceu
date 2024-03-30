@@ -6521,5 +6521,22 @@ class Exec_04 {
         """)
         assert(out == "false\ntrue\n") { out }
     }
+    @Test
+    fun zz_10_optim() {
+        val out = test("""
+            spawn (task () {
+                println(do {
+                    loop {
+                        yield(nil)
+                        break if true
+                    }
+                    delay
+                    nil
+                })
+            }) ()
+            broadcast(nil)
+        """)
+        assert(out == "nil\n") { out }
+    }
 }
 

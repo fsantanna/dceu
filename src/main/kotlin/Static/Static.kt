@@ -13,9 +13,16 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
         //return false
         // no declarations, no spawns, no tasks
         val dcls = vars.enc_to_dcls[blk]!!
-        return dcls.isEmpty() && (ups.pub[blk] !is Expr.Proto) && !this.tsk_or_tsks.contains(blk)
+        return when {
+            //true -> false
+            (ups.pub[blk] is Expr.Loop) -> false
+            //!dcls.isEmpty() -> false
+            (ups.pub[blk] is Expr.Proto) -> false
+            this.defer_catch_spawn_tasks.contains(blk) -> false
+            else -> true
+        }
     }
-    val tsk_or_tsks: MutableSet<Expr.Do> = mutableSetOf()
+    val defer_catch_spawn_tasks: MutableSet<Expr.Do> = mutableSetOf()
 
     init {
         outer.traverse()
@@ -115,6 +122,8 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.Pass   -> this.e.traverse()
 
             is Expr.Catch  -> {
+                defer_catch_spawn_tasks.add(this.blk)
+                //defer_catch_spawn_tasks.add(this.cnd)
                 this.cnd.traverse()
                 this.blk.traverse()
             }
@@ -126,6 +135,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                         err(this.tk, "defer error : unexpected func with enclosing coro or task")
                     }
                 }
+                defer_catch_spawn_tasks.add(ups.first(this) { it is Expr.Do } as Expr.Do)
                 this.blk.traverse()
             }
 
@@ -158,7 +168,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                 this.tsk.traverse()
                 this.args.forEach { it.traverse() }
                 if (this.tsks == null) {
-                    tsk_or_tsks.add(ups.first(this) { it is Expr.Do } as Expr.Do)
+                    defer_catch_spawn_tasks.add(ups.first(this) { it is Expr.Do } as Expr.Do)
                 }
                 /*
                 when {
@@ -210,7 +220,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                 this.clo.traverse()
                 this.args.forEach { it.traverse() }
                 if (this.clo is Expr.Acc && this.clo.tk.str=="tasks") {
-                    tsk_or_tsks.add(ups.first(this) { it is Expr.Do } as Expr.Do)
+                    defer_catch_spawn_tasks.add(ups.first(this) { it is Expr.Do } as Expr.Do)
                 }
 
             }

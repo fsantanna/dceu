@@ -5681,4 +5681,21 @@ class Exec_01 {
         """)
         assert(out == "2\n") { out }
     }
+    @Test
+    fun zz_opt_01() {
+        val out = test(
+            """
+            println(do {
+                var x
+                set x = [0]
+                x
+            })
+        """
+        )
+        //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[0]\n") { out }
+    }
 }
