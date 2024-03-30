@@ -67,9 +67,8 @@ val IS = """
     func is' (v1,v2) {
         ifs {
             (v1 == v2)         { true  }
-            (type(v2) /= :tag) { false }
             (type(v1) == v2)   { true  }
-            sup?(v2, tag(v1))  { true  }
+            (type(v2) == :tag) { sup?(v2, tag(v1)) }
             else => false
         }
     }

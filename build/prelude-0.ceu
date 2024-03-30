@@ -9,13 +9,17 @@ val not = func (v) {
 }
 
 val is? = func (v1,v2) {
-    if (type(v1) == v2) {
+    if (v1 == v2) {
         true
     } else {
-        if (type(v2) == :tag) {
-            sup?(v2, tag(v1))
+        if (type(v1) == v2) {
+            true
         } else {
-            (v1 == v2)
+            if (type(v2) == :tag) {
+                sup?(v2, tag(v1))
+            } else {
+                false
+            }
         }
     }
 }

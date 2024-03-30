@@ -232,9 +232,10 @@ func :rec {{=/=}} (v1,v2) {
 
 func is' (v1,v2) {
     ifs {
+        (v1 === v2)        => true
         (type(v1) == v2)   => true
         (type(v2) == :tag) => sup?(v2, tag(v1))
-        else => (v1 === v2)
+        else => false
     }
 }
 
