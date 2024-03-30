@@ -593,7 +593,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                             // [idx,col]
                             ceux_col_get(X->S);
                             // [val]
-                            CEU_ERROR_CHK_STK(X->S, ${this.toerr()});
+                            CEU_ERROR_CHK_STK(continue, ${this.toerr()});
                         }
                     """)
                 } + """

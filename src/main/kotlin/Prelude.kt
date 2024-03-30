@@ -69,7 +69,7 @@ val IS = """
             (v1 == v2)         { true  }
             (type(v2) /= :tag) { false }
             (type(v1) == v2)   { true  }
-            tags(v1,v2)        { true  }
+            sup?(v2, tag(v1))  { true  }
             else => false
         }
     }

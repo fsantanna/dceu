@@ -140,7 +140,7 @@ fun Coder.main (tags: Tags): String {
     #define _CEU_Dyn_                   \
         CEU_VALUE type;                 \
         uint8_t refs;                   \
-        struct CEU_Tags_List* tags;
+        CEU_Value tag;
         
     #if 0
         struct {                        \
@@ -296,11 +296,6 @@ fun Coder.main (tags: Tags): String {
         char* name;
         struct CEU_Tags_Names* next;
     } CEU_Tags_Names;
-    
-    typedef struct CEU_Tags_List {
-        int tag;
-        struct CEU_Tags_List* next;
-    } CEU_Tags_List;
     """
     }
 
@@ -311,7 +306,7 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 4
     uint32_t CEU_TIME = 0;
     CEU_Exe_Task CEU_GLOBAL_TASK = {
-        CEU_VALUE_EXE_TASK, 1, NULL,
+        CEU_VALUE_EXE_TASK, 1, (CEU_Value) { CEU_VALUE_NIL },
         CEU_EXE_STATUS_YIELDED, {}, 0, NULL,
         0, {}, { {NULL,NULL}, {NULL,NULL}, {NULL,NULL} }
     };
@@ -583,11 +578,6 @@ fun Coder.main (tags: Tags): String {
     }
 
     void ceu_gc_free (CEU_Dyn* dyn) {
-        while (dyn->Any.tags != NULL) {
-            CEU_Tags_List* tag = dyn->Any.tags;
-            dyn->Any.tags = tag->next;
-            free(tag);
-        }
         switch (dyn->Any.type) {
             case CEU_VALUE_CLO_FUNC:
 #if CEU >= 3
@@ -703,40 +693,40 @@ fun Coder.main (tags: Tags): String {
                 val (s1,c1,e1) = tags.pub[':'+it1.first]!!
                 val ie1 = e1 ?: i1++
                 val prv1 = last
-                last = "&ceu_tag_$c1"
+                last = "&ceu_tag__$c1"
                 var i2 = 0
                 """
                 #define CEU_TAG_$c1 ($ie1)
-                CEU_Tags_Names ceu_tag_$c1 = { CEU_TAG_$c1, "$s1", $prv1 };
+                CEU_Tags_Names ceu_tag__$c1 = { CEU_TAG_$c1, "$s1", $prv1 };
                 """ + it1.second.map { it2 ->
                     val (s2,c2,e2) = tags.pub[':'+it1.first+'.'+it2.first]!!
                     assert(e2 == null)
                     i2++
                     val prv2 = last
-                    last = "&ceu_tag_$c2"
+                    last = "&ceu_tag__$c2"
                     var i3 = 0
                     """
                     #define CEU_TAG_$c2 (($i2 << 8) | $ie1)
-                    CEU_Tags_Names ceu_tag_$c2 = { CEU_TAG_$c2, "$s2", $prv2 };
+                    CEU_Tags_Names ceu_tag__$c2 = { CEU_TAG_$c2, "$s2", $prv2 };
                     """ + it2.second.map { it3 ->
                         val (s3,c3,e3) = tags.pub[':'+it1.first+'.'+it2.first+'.'+it3.first]!!
                         assert(e3 == null)
                         i3++
                         val prv3 = last
-                        last = "&ceu_tag_$c3"
+                        last = "&ceu_tag__$c3"
                         var i4 = 0
                         """
                         #define CEU_TAG_$c3 (($i3 << 16) | ($i2 << 8) | $ie1)
-                        CEU_Tags_Names ceu_tag_$c3 = { CEU_TAG_$c3, "$s3", $prv3 };
+                        CEU_Tags_Names ceu_tag__$c3 = { CEU_TAG_$c3, "$s3", $prv3 };
                         """ + it3.second.map { it4 ->
                             val (s4,c4,e4) = tags.pub[':'+it1.first+'.'+it2.first+'.'+it3.first+'.'+it4.first]!!
                             assert(e4 == null)
                             i4++
                             val prv4 = last
-                            last = "&ceu_tag_$c4"
+                            last = "&ceu_tag__$c4"
                             """
                             #define CEU_TAG_$c4 (($i4 << 24) | ($i3 << 16) | ($i2 << 8) | $ie1)
-                            CEU_Tags_Names ceu_tag_$c4 = { CEU_TAG_$c4, "$s4", $prv4 };
+                            CEU_Tags_Names ceu_tag__$c4 = { CEU_TAG_$c4, "$s4", $prv4 };
                             """
                         }
                             .joinToString("")
@@ -1279,8 +1269,9 @@ fun Coder.main (tags: Tags): String {
     }
     
     CEU_Value _ceu_sup_ (CEU_Value sup, CEU_Value sub) {
-        assert(sup.type == CEU_VALUE_TAG);
-        assert(sub.type == CEU_VALUE_TAG);
+        if (sup.type!=CEU_VALUE_TAG || sub.type!=CEU_VALUE_TAG) {
+            return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} };
+        }
         
         //printf("sup=0x%08X vs sub=0x%08X\n", sup->Tag, sub->Tag);
         int sup0 = sup.Tag & 0x000000FF;
@@ -1311,92 +1302,28 @@ fun Coder.main (tags: Tags): String {
         return 1;
     }
     
-    CEU_Value _ceu_tags_all_ (CEU_Value dyn) {
-        int len = 0; {
-            CEU_Tags_List* cur = dyn.Dyn->Any.tags;
-            while (cur != NULL) {
-                len++;
-                cur = cur->next;
+    int ceu_tag_f (CEUX* X) {
+        assert(X->args==1 || X->args==2);
+        if (X->args == 1) {
+            // [dyn]
+            CEU_Value dyn = ceux_peek(X->S, ceux_arg(X,0));
+            if (dyn.type < CEU_VALUE_DYNAMIC) {
+                ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+            } else {
+                ceux_push(X->S, 1, dyn.Dyn->Any.tag);
             }
-        }
-        CEU_Value tup = ceu_create_tuple(len);
-        {
-            CEU_Tags_List* cur = dyn.Dyn->Any.tags;
-            int i = 0;
-            while (cur != NULL) {
-                ceu_tuple_set(&tup.Dyn->Tuple, i++, (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} });
-                cur = cur->next;
+            ceux_rem_n(X->S, XX(-2), 1);
+            // [tag]
+        } else {
+            // [tag,dyn]
+            CEU_Value dyn = ceux_peek(X->S, ceux_arg(X,1));
+            if (dyn.type < CEU_VALUE_DYNAMIC) {
+                // nothing to set
+            } else {
+                dyn.Dyn->Any.tag = ceux_peek(X->S, ceux_arg(X,0));
             }
-        }
-        return tup;
-    }
-    
-    CEU_Value ceu_tags_chk (CEU_Value dyn, CEU_Value tag) {
-        CEU_Value ret = { CEU_VALUE_BOOL, {.Bool=0} };
-        CEU_Tags_List* cur = (dyn.type < CEU_VALUE_DYNAMIC) ? NULL : dyn.Dyn->Any.tags;
-        while (cur != NULL) {
-            CEU_Value sub = { CEU_VALUE_TAG, {.Tag=cur->tag} };
-            ret = _ceu_sup_(tag, sub);
-            if (ret.Bool) {
-                break;
-            }
-            cur = cur->next;
-        }
-        return ret;
-    }
-        
-    void ceu_tags_set (CEU_Value dyn, CEU_Value tag, int on) {
-        assert(dyn.type > CEU_VALUE_DYNAMIC);
-        if (on) {   // add
-            CEU_Value has = ceu_tags_chk(dyn, tag);
-            if (!has.Bool) {
-                CEU_Tags_List* v = malloc(sizeof(CEU_Tags_List));
-                assert(v != NULL);
-                v->tag = tag.Tag;
-                v->next = dyn.Dyn->Any.tags;
-                dyn.Dyn->Any.tags = v;
-            }
-        } else {            // rem
-            CEU_Tags_List** cur = &dyn.Dyn->Any.tags;
-            while (*cur != NULL) {
-                if ((*cur)->tag == tag.Tag) {
-                    CEU_Tags_List* v = *cur;
-                    *cur = v->next;
-                    free(v);
-                    break;
-                }
-                cur = &(*cur)->next;
-            }
-        }
-    }
-        
-    int ceu_tags_f (CEUX* X) {
-        assert(X->args >= 1);
-        CEU_Value dyn = ceux_peek(X->S, ceux_arg(X,0));
-        CEU_Value tag; // = (CEU_Value) { CEU_VALUE_NIL };
-        if (X->args >= 2) {
-            tag = ceux_peek(X->S, ceux_arg(X,1));
-            assert(tag.type == CEU_VALUE_TAG);
-        }
-        
-        switch (X->args) {
-            case 1: {   // all tags
-                CEU_Value ret = _ceu_tags_all_(dyn);
-                ceux_push(X->S, 1, ret);
-                break;
-            }
-            case 2: {   // check tag
-                CEU_Value ret = ceu_tags_chk(dyn, tag);
-                ceux_push(X->S, 1, ret);
-                break;
-            }
-            default: {   // add/rem tag
-                CEU_Value bool = ceux_peek(X->S, ceux_arg(X,2));
-                assert(bool.type == CEU_VALUE_BOOL);
-                ceu_tags_set(dyn, tag, bool.Bool);
-                ceux_dup(X->S, ceux_arg(X,0));  // keep dyn
-                break;
-            }
+            ceux_rem_n(X->S, XX(-2), 1);
+            // [dyn]
         }
         return 1;
     }
@@ -1731,7 +1658,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Tuple* ret = malloc(sizeof(CEU_Tuple) + n*sizeof(CEU_Value));
         assert(ret != NULL);
         *ret = (CEU_Tuple) {
-            CEU_VALUE_TUPLE, 0, NULL,
+            CEU_VALUE_TUPLE, 0, (CEU_Value) { CEU_VALUE_NIL },
             n, {}
         };
         memset(ret->buf, 0, n*sizeof(CEU_Value));
@@ -1755,7 +1682,7 @@ fun Coder.main (tags: Tags): String {
         assert(buf != NULL);
         buf[0] = '\0';
         *ret = (CEU_Vector) {
-            CEU_VALUE_VECTOR, 0,  NULL,
+            CEU_VALUE_VECTOR, 0, (CEU_Value) { CEU_VALUE_NIL },
             0, 0, CEU_VALUE_NIL, buf
         };
         return (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ret} };
@@ -1766,7 +1693,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Dict* ret = malloc(sizeof(CEU_Dict));
         assert(ret != NULL);
         *ret = (CEU_Dict) {
-            CEU_VALUE_DICT, 0, NULL,
+            CEU_VALUE_DICT, 0, (CEU_Value) { CEU_VALUE_NIL },
             0, NULL
         };
         return (CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)ret} };
@@ -1782,7 +1709,7 @@ fun Coder.main (tags: Tags): String {
             buf[i] = (CEU_Value) { CEU_VALUE_NIL };
         }
         *ret = (CEU_Clo) {
-            type, 0, NULL,
+            type, 0, (CEU_Value) { CEU_VALUE_NIL },
             proto,
             args, locs, { upvs, buf }
         };
@@ -1815,7 +1742,7 @@ fun Coder.main (tags: Tags): String {
             // X->up is set on resume, not here on creation
 
         *ret = (CEU_Exe) {
-            type, 0, NULL,
+            type, 0, (CEU_Value) { CEU_VALUE_NIL },
             CEU_EXE_STATUS_YIELDED, clo, 0, X
         };
         
@@ -1884,7 +1811,7 @@ fun Coder.main (tags: Tags): String {
         assert(ret != NULL);
 
         *ret = (CEU_Tasks) {
-            CEU_VALUE_TASKS, 0, NULL,
+            CEU_VALUE_TASKS, 0, (CEU_Value) { CEU_VALUE_NIL },
             max, { {(CEU_Dyn*)up_tsk,NULL}, {NULL,NULL}, {NULL,NULL} }
         };
         
@@ -1927,25 +1854,10 @@ fun Coder.main (tags: Tags): String {
         return """
     void ceu_print1 (CEU_Value v) {
         if (v.type > CEU_VALUE_DYNAMIC) {  // TAGS
-            CEU_Value tup = _ceu_tags_all_(v);
-            assert(tup.type == CEU_VALUE_TUPLE);
-            int N = tup.Dyn->Tuple.its;
-            if (N > 0) {
-                if (N > 1) {
-                    printf("[");
-                }
-                for (int i=0; i<N; i++) {
-                    ceu_print1(tup.Dyn->Tuple.buf[i]);
-                    if (i < N-1) {
-                        printf(",");
-                    }
-                }
-                if (N > 1) {
-                    printf("]");
-                }
+            if (v.Dyn->Any.tag.type != CEU_VALUE_NIL) {
+                ceu_print1(v.Dyn->Any.tag);
                 printf(" ");
             }
-            ceu_gc_free(tup.Dyn);
         }
         switch (v.type) {
             case CEU_VALUE_BLOCK:

@@ -197,7 +197,7 @@ class Exec_99 {
                     (v1 == v2)         => true
                     (type(v2) /= :tag) => false
                     (type(v1) == v2)   => true
-                    tags(v1,v2)        => true
+                    sup?(v2,tag(v1))   => true
                     else => false
                 }
             }
@@ -241,11 +241,11 @@ class Exec_99 {
     fun bc_03_is() {
         val out = test("""
             val t = []
-            tags(t,:x,true)
+            tag(:x,t)
             println(t is? :x)
-            tags(t,:y,true)
+            tag(:y,t)
             println(t is-not? :y)
-            tags(t,:x,false)
+            tag(nil,t)
             println(t is-not? :x)
         """, true)
         assert(out == "true\nfalse\ntrue\n") { out }
@@ -716,7 +716,7 @@ class Exec_99 {
             var x
             set x = catch :x {
                 catch :2 {
-                    error(tags([10], :x, true))
+                    error(tag(:x, [10]))
                     println(9)
                 }
                 println(9)
@@ -750,7 +750,7 @@ class Exec_99 {
         val out = test("""
             do {
                 println(catch :x {
-                    error(tags([10],:x,true))
+                    error(tag(:x,[10]))
                     println(9)
                 })
             }
@@ -794,21 +794,21 @@ class Exec_99 {
     @Test
     fun gg_08_loop_() {
         val out = test("""
-            println(catch :x { loop { error(tags([1],:x,true)) }}[0])
+            println(catch :x { loop { error(tag(:x,[1])) }}[0])
         """, true)
         assert(out == "1\n") { out }
     }
     @Test
     fun gg_09_loop() {
         val out = test("""
-            println(catch :x { loop { error(tags([1],:x,true)) }}[0])
+            println(catch :x { loop { error(tag(:x,[1])) }}[0])
         """, true)
         assert(out == "1\n") { out }
     }
     @Test
     fun gg_10_loop_() {
         val out = test("""
-            println(catch :2 { loop { error(tags([1],:2,true)) }})
+            println(catch :2 { loop { error(tag(:2,[1])) }})
         """, true)
         assert(out == ":2 [1]\n") { out }
     }
@@ -818,7 +818,7 @@ class Exec_99 {
             println(catch :x { loop {
                 var x
                 set x = [1] ;; memory released
-                error(tags([1],:x,true))
+                error(tag(:x,[1]))
             }}[0])
         """, true)
         assert(out == "1\n") { out }
@@ -829,13 +829,13 @@ class Exec_99 {
             println(catch :x { loop {
                 var x
                 set x = [1]
-                error(tags(x,:x,true))
+                error(tag(:x,x))
             }})
         """, true)
         assert(out == ":x [1]\n") { out }
         //assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 1, col 33) : block escape error : incompatible scopes\n" +
-        //        "anon : (lin 4, col 5) : error(tags(x,:x,true))\n" +
+        //        "anon : (lin 4, col 5) : error(tag(x,:x,true))\n" +
         //        "error error : uncaught exception\n" +
         //        ":error\n") { out }
     }
@@ -883,20 +883,21 @@ class Exec_99 {
     @Test
     fun hi_01_tags() {
         val out = test("""
-            val x  = tags([],:X,true)
-            val xy = tags(tags([],:X,true), :Y, true)
+            val x  = tag(:X,[])
+            val xy = tag(:Y, tag(:X,[]))
             println(x, xy)
         """)
-        assert(out == ":X []\t[:Y,:X] []\n") { out }
+        //assert(out == ":X []\t[:Y,:X] []\n") { out }
+        assert(out == ":X []\t:Y []\n") { out }
     }
     @Test
     fun hi_02_tags() {
         val out = test("""
             data :T = [x]
             val x = :T [1]
-            println(x, tags(x))
+            println(x, tag(x))
         """)
-        assert(out == ":T [1]\t[:T]\n") { out }
+        assert(out == ":T [1]\t:T\n") { out }
     }
     @Test
     fun hi_03_tags() {
@@ -913,9 +914,9 @@ class Exec_99 {
         val out = test("""
             data :T = [x]
             val x = :T [1]
-            println(x.x, tags(x))
+            println(x.x, tag(x))
         """)
-        assert(out == "1\t[:T]\n") { out }
+        assert(out == "1\t:T\n") { out }
     }
     @Test
     fun hi_05_tags() {
@@ -1279,12 +1280,12 @@ class Exec_99 {
         val out = test("""
             val CO = coro () {
                 yield(nil) thus { it =>
-                    println(tags(it,:X)) ;; drop(it)
+                    println(sup(:X,tag(it))) ;; drop(it)
                 }
             }
             val co = coroutine(CO)
             resume co()
-            resume co(tags([],:X,true))
+            resume co(tag(:X,[]))
         """)
         assert(out == "true\n") { out }
     }
@@ -1570,7 +1571,7 @@ class Exec_99 {
                     println(it.x)
                 }
             } )()
-            broadcast (tags([10,20], :E, true))
+            broadcast (tag(:E, [10,20]))
         """)
         assert(out == "10\n") { out }
     }
@@ -1587,8 +1588,8 @@ class Exec_99 {
                     println(it.j)
                 }
             } )()
-            broadcast (tags([10,20], :E, true))
-            broadcast (tags([10,20], :F, true))
+            broadcast (tag(:E, [10,20]))
+            broadcast (tag(:F, [10,20]))
         """)
         assert(out == "10\n20\n") { out }
     }
@@ -3329,8 +3330,8 @@ class Exec_99 {
                 }
             }
             do {
-                broadcast (tags([40], :frame, true)) in :global 
-                broadcast (tags([], :draw, true)) in :global
+                broadcast (tag(:frame, [40])) in :global 
+                broadcast (tag(:draw, [])) in :global
             }
             println(1)
         """, true)
@@ -3427,7 +3428,7 @@ class Exec_99 {
                 println(1)
             }
             spawn T()
-            broadcast (tags([],:x,true))
+            broadcast (tag(:x,[]))
             println(2)
         """)
         assert(out == "1\n2\n") { out }
@@ -3463,9 +3464,9 @@ class Exec_99 {
             }
             do {
                 println(1)
-                broadcast (tags([], :y, true))
+                broadcast (tag(:y, []))
                 println(2)
-                broadcast (tags([], :x, true))
+                broadcast (tag(:x, []))
                 println(3)
             }
         """)
@@ -3483,9 +3484,9 @@ class Exec_99 {
             }
             do {
                 println(1)
-                broadcast (tags([], :y, true))
+                broadcast (tag(:y, []))
                 println(2)
-                broadcast (tags([], :x, true))
+                broadcast (tag(:x, []))
                 println(3)
             }
         """)
@@ -3884,11 +3885,11 @@ class Exec_99 {
             }
             do {
                 println(1)
-                broadcast (tags([10], :x, true)) in :global 
+                broadcast (tag(:x, [10])) in :global 
                 println(2)
-                broadcast (tags([20], :y, true)) in :global
+                broadcast (tag(:y, [20])) in :global
                 println(3)
-                broadcast (tags([30], :x, true)) in :global
+                broadcast (tag(:x, [30])) in :global
                 println(4)
             }
         """, true)
@@ -3903,11 +3904,11 @@ class Exec_99 {
                 }
             }()
             println(0)
-            broadcast (tags([5000], :Clock, true)) in :global 
+            broadcast (tag(:Clock, [5000])) in :global 
             println(1)
-            broadcast (tags([5000], :Clock, true))
+            broadcast (tag(:Clock, [5000]))
             println(2)
-            broadcast (tags([10000], :Clock, true)) in :global 
+            broadcast (tag(:Clock, [10000])) in :global 
             println(3)
         """, true)
         assert(out == "0\n1\n10\n2\n10\n3\n") { out }
@@ -3921,7 +3922,7 @@ class Exec_99 {
                 }
             }()
             println(0)
-            broadcast in :global, tags([20000], :Clock, true)
+            broadcast in :global, tag(:Clock, [20000])
             println(1)
         """, true)
         assert(out == "0\n10\n10\n1") { out }
@@ -3936,9 +3937,9 @@ class Exec_99 {
                 }
             }()
             println(0)
-            broadcast (tags([5000], :Clock, true)) in :global
+            broadcast (tag(:Clock, [5000])) in :global
             println(1)
-            broadcast (tags([5000], :Clock, true)) in :global 
+            broadcast (tag(:Clock, [5000])) in :global 
             println(2)
         """, true)
         assert(out == "0\n1\n999\n2\n") { out }
@@ -4213,9 +4214,9 @@ class Exec_99 {
                 println(999)
             }
             println(0)
-            broadcast (tags([5000], :Clock, true)) in :global 
+            broadcast (tag(:Clock,[5000])) in :global 
             println(1)
-            broadcast (tags([5000], :Clock, true) )
+            broadcast (tag(:Clock, [5000]) )
             println(2)
         """, true)
         assert(out == "0\n1\n10\n999\n2\n") { out }
@@ -4346,13 +4347,13 @@ class Exec_99 {
                 }
             }
             spawn T (0)
-            broadcast (tags([1],     :draw, true))
-            broadcast (tags([false], :Show, true))
-            broadcast (tags([false], :Show, true))
-            broadcast (tags([99],    :draw, true))
-            broadcast (tags([true],  :Show, true))
-            broadcast (tags([true],  :Show, true))
-            broadcast (tags([2],     :draw, true))
+            broadcast (tag(:draw, [1]))
+            broadcast (tag(:Show, [false]))
+            broadcast (tag(:Show, [false]))
+            broadcast (tag(:draw, [99]))
+            broadcast (tag(:Show, [true]))
+            broadcast (tag(:Show, [true]))
+            broadcast (tag(:draw, [2]))
         """, true)
         assert(out == "0\n1\n2\n") { out }
     }

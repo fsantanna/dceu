@@ -428,13 +428,11 @@ class Parser (lexer_: Lexer)
                         (CEU < 99) -> null
                         (e !is Expr.Call) -> null
                         (e.clo !is Expr.Acc) -> null
-                        (e.clo.tk.str != "tags") -> null
-                        (e.args.size != 3) -> null
-                        (e.args[0] !is Expr.Tuple) -> null
-                        (e.args[1] !is Expr.Tag) -> null
-                        (e.args[2] !is Expr.Bool) -> null
-                        (e.args[2].tk.str != "true") -> null
-                        else -> e.args[1].tk as Tk.Tag
+                        (e.clo.tk.str != "tag") -> null
+                        (e.args.size != 2) -> null
+                        (e.args[0] !is Expr.Tag) -> null
+                        (e.args[1] !is Expr.Tuple) -> null
+                        else -> e.args[0].tk as Tk.Tag
                     }
                     Pair(tag, e)
                 }
@@ -1214,10 +1212,10 @@ class Parser (lexer_: Lexer)
         return when {
             (CEU>=99) && this.acceptEnu("Tag") -> {
                 if (this.checkFix("[")) {
-                    val tk0 = this.tk0
+                    val tk0 = this.tk0 as Tk.Tag
                     val tup = this.expr_prim()
                     this.nest("""
-                        ${tk0.pos.pre()}tags(${tup.tostr(true)}, ${tk0.str}, true)
+                        ${tk0.pos.pre()}tag(${tk0.str}, ${tup.tostr(true)})
                     """)
                 } else {
                     Expr.Tag(this.tk0 as Tk.Tag)

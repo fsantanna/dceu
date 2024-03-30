@@ -93,7 +93,7 @@ val TAGS = listOf (
 
 val GLOBALS = setOf (
     "dump", "error", "next-dict", "print", "println",
-    "sup?", "tags",
+    "sup?", "tag",
     "to-string-number", "to-string-pointer", "to-string-tag",
     "to-tag-string",
     "tuple", "type", "{{#}}", "{{==}}", "{{/=}}",

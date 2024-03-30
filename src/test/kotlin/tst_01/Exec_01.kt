@@ -4094,49 +4094,52 @@ class Exec_01 {
         assert(out == ":Xxx\n:1\n") { out }
     }
     @Test
-    fun tags4_err() {
+    fun TODO_tags4_err() {
         val out = test(
             """
-            println(tags())
+            println(tag())
         """
         )
-        assert(out.contains("ceu_tags_f: Assertion `X->args >= 1' failed")) { out }
+        assert(out.contains("ceu_tag_f: Assertion `X->args==1 || X->args==2' failed")) { out }
     }
     @Test
     fun tags4() {
         val out = test(
             """
-            println(tags([]))
+            println(tag([]))
         """
         )
-        assert(out.contains("[]\n")) { out }
+        assert(out.contains("nil\n")) { out }
+        //assert(out.contains("[]\n")) { out }
     }
     @Test
-    fun BUG_tags5() {
+    fun tags5() {
         val out = test(
             """
-            println(tags(1,:2))   ;; TODO: error message
+            println(tag(:2,1))   ;; OK (was TODO: error message)
         """
         )
-        assert(out == "false\n") { out }
+        //assert(out == "false\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun tags6_err() {
         val out = test(
             """
-            tags([],2)
+            println(tag(tag(2,[])))
         """
         )
-        assert(out.contains("Assertion `tag.type == CEU_VALUE_TAG'")) { out }
+        assert(out == "2\n") { out }
+        //assert(out.contains("Assertion `tag.type == CEU_VALUE_TAG'")) { out }
     }
     @Test
     fun tags7_err() {
-        val out = test(
-            """
-            tags([],:x,nil)
-        """
-        )
-        assert(out.contains("Assertion `bool.type == CEU_VALUE_BOOL' failed")) { out }
+        val out = test("""
+            println(tag(:x,[]))
+            println(tag(1,[]))
+        """)
+        assert(out == ":x []\n1 []\n") { out }
+        //assert(out.contains("Assertion `bool.type == CEU_VALUE_BOOL' failed")) { out }
     }
     @Test
     fun tags8() {
@@ -4145,12 +4148,12 @@ class Exec_01 {
             var t
             set t = []
             var x1
-            set x1 = tags(t,:x,true)
+            set x1 = tag(:x,t)
             var x2
-            set x2 = tags(t,:x,true)
+            set x2 = tag(:x,t)
             println(x1, x2, x1==t)
-            set x1 = tags(t,:x,false)
-            set x2 = tags(t,:x,false)
+            set x1 = tag(nil,t)
+            set x2 = tag(nil,t)
             println(x1, x2, x1==t)
         """
         )
@@ -4161,8 +4164,8 @@ class Exec_01 {
         val out = test(
             """
             val t = []
-            val x1 = tags(t,:x,true)
-            val x2 = tags(t,:x,true)
+            val x1 = tag(:x,t)
+            val x2 = tag(:x,t)
             println(x1, x2, x1==t, x2==t)
         """
         )
@@ -4174,12 +4177,12 @@ class Exec_01 {
             """
             var t
             set t = []
-            tags(t,:x,true)
-            println(tags(t, :x))
-            tags(t,:y,true)
-            println(tags(t, :y))
-            tags(t,:x,false)
-            println(tags(t, :x))
+            tag(:x,t)
+            println(tag(t) == :x)
+            tag(:y,t)
+            println(tag(t) == :y)
+            tag(nil,t)
+            println(tag(t) == :y)
         """
         )
         assert(out == "true\ntrue\nfalse\n") { out }
@@ -4206,11 +4209,11 @@ class Exec_01 {
     fun tags11() {
         val out = test(
             """
-            var t = tags([], :T,   true)
-            var s = tags([], :T.S, true)
+            var t = tag(:T,   [])
+            var s = tag(:T.S, [])
             println(to-number(:T), to-number(:T.S))
-            println(tags(t,:T), tags(t,:T.S))
-            println(tags(s,:T), tags(s,:T.S))
+            println(sup?(:T,tag(t)), sup?(:T.S,tag(t)))
+            println(sup?(:T,tag(s)), sup?(:T.S,tag(s)))
         """, true
         )
         assert(out == "16\t272\ntrue\tfalse\ntrue\ttrue\n") { out }
@@ -4241,27 +4244,29 @@ class Exec_01 {
     }
     @Test
     fun tags13() {
+        DEBUG = true
         val out = test(
             """
             var t = []
-            tags(t, :X, true)
-            tags(t, :Y, true)
-            tags(t, :Z, true)
-            ;;println(tags(t))
+            tag(:X, t)
+            tag(:Y, t)
+            tag(:Z, t)
+            ;;println(tag(t))
             var f = func (ts) {
                 println(ts)
             }
-            f(tags(t))
+            f(tag(t))
             println(`:number CEU_GC.free`)
         """
         )
-        assert(out == "[:Z,:Y,:X]\n2\n") { out }
+        //assert(out == "[:Z,:Y,:X]\n2\n") { out }
+        assert(out == ":Z\n0\n") { out }
     }
     @Test
     fun tags14() {
         val out = test("""
             var t = []
-            println(tags(t, :X, true))
+            println(tag(:X, t))
         """)
         assert(out == ":X []\n") { out }
     }
@@ -5033,7 +5038,8 @@ class Exec_01 {
             println(`:number CEU_GC.free`)
         """
         )
-        assert(out == "[]\n2\n") { out }
+        //assert(out == "[]\n2\n") { out }
+        assert(out == "[]\n1\n") { out }
     }
     @Test
     fun gc15_arg() {
@@ -5192,11 +5198,11 @@ class Exec_01 {
             """
             data :T = [x,y]
             data :T.S = [z]
-            var t :T = tags([], :T, true)
+            var t :T = tag(:T, [])
             var s :T.S
-            set s = tags([], :T.S, true)
-            println(tags(t,:T), tags(t,:T.S))
-            println(tags(s,:T), tags(s,:T.S))
+            set s = tag(:T.S, [])
+            println(sup?(:T,tag(t)), sup?(:T.S,tag(t)))
+            println(sup?(:T,tag(s)), sup?(:T.S,tag(s)))
         """, true
         )
         assert(out == "true\tfalse\ntrue\ttrue\n") { out }
@@ -5297,10 +5303,10 @@ class Exec_01 {
             data :T = [x,y]
             data :T.S = [z:U]
             var s :T.S
-            set s = tags([1,2,tags([3],:U,true)], :T.S, true)
-            println(tags(s,:T), tags(s.z,:U))
-            set s.z = tags([10], :U, true)
-            println(tags(s,:T), tags(s.z,:U))
+            set s = tag(:T.S, [1,2,tag(:U,[3])])
+            println(sup?(:T,tag(s)), tag(s.z)==:U)
+            set s.z = tag(:U, [10])
+            println(sup?(:T,tag(s)), sup?(:U, tag(s.z)))
         """, true
         )
         assert(out == "true\ttrue\ntrue\ttrue\n") { out }
@@ -5308,8 +5314,8 @@ class Exec_01 {
     @Test
     fun tplate16x() {
         val out = test("""
-            val x = tags([tags([ ], :y, true)], :x, true)
-            println(tags(x,:x))
+            val x = tag(:x, [tag(:y,[ ])])
+            println(sup?(:x,tag(x)))
             println(:ok)
         """)
         assert(out == "true\n:ok\n") { out }
@@ -5549,7 +5555,7 @@ class Exec_01 {
     @Test
     fun TODO_qt_01_copy_tags() {
         val out = test("""
-            val t = tags([], :x, true)
+            val t = tag(:x, [])
             val s = copy(t)
             println(s)
         """, true)

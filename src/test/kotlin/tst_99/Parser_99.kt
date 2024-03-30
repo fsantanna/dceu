@@ -1320,7 +1320,7 @@ class Parser_99 {
         val l = lexer(":T []")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "tags([],:T,true)") { e.tostr() }
+        assert(e.tostr() == "tag([],:T,true)") { e.tostr() }
     }
     @Test
     fun uu_02_cons_err() {

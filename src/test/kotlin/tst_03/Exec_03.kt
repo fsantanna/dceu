@@ -356,12 +356,12 @@ class Exec_03 {
         val out = test("""
             val CO = coro () {
                 func (it) {
-                    println(tags(it,:X)) ;; drop(it)
+                    println(sup?(:X,tag(it))) ;; drop(it)
                 } (yield(nil))
             }
             val co = coroutine(CO)
             resume co()
-            resume co(tags([],:X,true))
+            resume co(tag(:X,[]))
         """)
         assert(out == "true\n") { out }
     }

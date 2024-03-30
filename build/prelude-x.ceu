@@ -183,7 +183,7 @@ data :Iterator = [f,s,tp,i]
 
     func to-iter (v, tp) {
         ifs type(v) {
-            ,tags(v, :Iterator) => v
+            ,sup?(:Iterator, tag(v)) => v
             ==:tuple    => :Iterator [iter-tuple, v, tp, 0]
             ==:vector   => :Iterator [iter-tuple, v, tp, 0]
             ==:dict     => :Iterator [iter-dict,  v, tp, nil]
@@ -232,11 +232,9 @@ func :rec {{=/=}} (v1,v2) {
 
 func is' (v1,v2) {
     ifs {
-        (v1 == v2)          => true
-        (type(v2) =/= :tag) => false
-        (type(v1) === v2)   => true
-        tags(v1,v2)         => true
-        else                => false
+        (type(v1) == v2)   => true
+        (type(v2) == :tag) => sup?(v2, tag(v1))
+        else => (v1 === v2)
     }
 }
 

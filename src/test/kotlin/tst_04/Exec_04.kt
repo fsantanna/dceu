@@ -1055,11 +1055,11 @@ class Exec_04 {
             """
             val T = task () {
                 func (it) {
-                    println(tags(it,:X))
+                    println(sup?(:X,tag(it)))
                 } (yield(nil))
             }
             spawn T()
-            broadcast (tags([],:X,true))
+            broadcast (tag(:X,[]))
         """
         )
         assert(out == "true\n") { out }
@@ -5371,7 +5371,7 @@ class Exec_04 {
         val out = test("""
             catch (_,true) {
                 spawn task () {
-                    error([tags([],:x,true)])
+                    error([tag(:x,[])])
                 }()
             }
             println(1)
@@ -6121,7 +6121,7 @@ class Exec_04 {
                     } ()
                     yield(nil)
                 }
-                broadcast( tags([], :x, true) )
+                broadcast( tag(:x, []) )
             }()
             broadcast (nil)
             println(:ok)
@@ -6249,7 +6249,7 @@ class Exec_04 {
                     println(it.x)
                 } (yield(nil))
             } )()
-            broadcast (tags([10,20], :E, true))
+            broadcast (tag(:E, [10,20]))
         """
         )
         assert(out == "10\n") { out }
@@ -6268,8 +6268,8 @@ class Exec_04 {
                     println(it.j)
                 } (yield(nil))
             } )()
-            broadcast (tags([10,20], :E, true))
-            broadcast (tags([10,20], :F, true))
+            broadcast (tag(:E, [10,20]))
+            broadcast (tag(:F, [10,20]))
         """
         )
         assert(out == "10\n20\n") { out }
