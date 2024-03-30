@@ -544,5 +544,19 @@ class Exec_02 {
         """)
         assert(out == ("[:x]\n[:x]\n:ok\n"))
     }
-
+    @Test
+    fun zz_03_optim() {
+        val out = test("""
+            catch (it, do {
+                println(it)
+                false
+            }) {
+                error([:x])
+            }
+            println(:ok)
+        """)
+        assert(out == "[:x]\n" +
+                " |  anon : (lin 6, col 17) : error([:x])\n" +
+                " v  error : [:x]\n") { out }
+    }
 }

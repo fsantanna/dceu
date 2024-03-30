@@ -18,7 +18,7 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
                 val n = when {
                     (ups.pub[this] is Expr.Loop) -> 0
                     (i == this.es.lastIndex) -> N
-                    (this.es[i+1] is Expr.Delay) -> if (i+1==this.es.lastIndex) N else 1
+                    (this.es[i+1] is Expr.Delay) -> if (i+1==this.es.lastIndex) N else 0
                     else -> 0
                 }
                 e.traverse(n)
