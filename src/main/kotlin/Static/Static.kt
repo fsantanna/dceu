@@ -122,7 +122,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.Pass   -> this.e.traverse()
 
             is Expr.Catch  -> {
-                defer_catch_spawn_tasks.add(this.blk)
+                //defer_catch_spawn_tasks.add(this.blk)
                 //defer_catch_spawn_tasks.add(this.cnd)
                 this.cnd.traverse()
                 this.blk.traverse()

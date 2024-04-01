@@ -8,7 +8,7 @@ var DUMP = true
 var DEBUG = false
 var CEU = 1
 
-    // 1: dyn-lex               ;; 19 (no dots) / 7 "definitely lost"
+    // 1: dyn-lex               ;; 19 (no dots) / 7->5 "definitely lost"
     // 2: defer, throw/catch    ;; 6 "definitely lost"
     // 3: coro, yield, resume   ;; 0 "definitely lost"
     // 4: task, pub, bcast, toggle, delay

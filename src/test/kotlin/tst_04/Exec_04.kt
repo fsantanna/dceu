@@ -1539,7 +1539,8 @@ class Exec_04 {
             println(`:number CEU_GC.free`)
         """
         )
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "0\n") { out }
         //assert(out == "anon : (lin 10, col 14) : broadcast []\n" +
         //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic alien\n:error\n") { out }
         //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
@@ -5431,6 +5432,7 @@ class Exec_04 {
     }
     @Test
     fun nn_02_term() {
+        //DEBUG = true
         val out = test(
             """
             spawn( task () {
@@ -6537,6 +6539,27 @@ class Exec_04 {
             broadcast(nil)
         """)
         assert(out == "nil\n") { out }
+    }
+    @Test
+    fun zz_11_valgrind() {
+        val out = test("""
+            spawn (task () {
+                spawn (task () {
+                    loop {
+                        do {
+                            (var it)
+                            (set it = yield(nil))
+                        }
+                    }
+                }) ()
+                spawn (task () {
+                    nil
+                }) ()
+                yield(nil)
+            }) ()
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
     }
 }
 

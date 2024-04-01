@@ -5398,35 +5398,19 @@ class Exec_99 {
         //        "anon : (lin 2, col 23) : block escape error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun zb_08_all() {
+    fun zb_08_all_valgrind() {
         val out = test("""
             task U () {
-                set ;;;task.;;;pub = func () {
+                set pub = func () {
                     10
                 }
-                await(, false)
+                await(,false)
             }
             task T (u) {
                 println(u.pub())
             }
             spawn T (spawn U())
-        """, true)
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun zb_09_all() {
-        val out = test("""
-            task U () {
-                set ;;;task.;;;pub = func () {
-                    10
-                }
-                await(, false )
-            }
-            task T (u) {
-                println(u.pub())
-            }
-            spawn T (spawn U())
-        """, true)
+        """)
         assert(out == "10\n") { out }
     }
     @Test

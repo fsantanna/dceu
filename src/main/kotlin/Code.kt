@@ -93,22 +93,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         """}}
                         ${do_while(code)}
                         ${isexe.cond{"""
-                                {
-                                    int top = ceux_n_get(X->S);
-                                ${(this.tk.str == "task").cond { """
-                                    // task return value in pub(t)
-                                    if (top > 0) {
-                                        ceu_gc_dec_val(X->exe_task->pub);
-                                        X->exe_task->pub = ceux_peek(X->S, XX(-1));
-                                        ceu_gc_inc_val(X->exe_task->pub);
-                                    }
-                                """ }}
-                                    int ret = ceu_exe_term(X);
-                                    if (!CEU_ERROR_IS(X->S) && ret!=0) {
-                                        // nrm->err: remove pending return in the stack
-                                        ceux_rem_n(X->S, top-1, 1);
-                                    }
-                                }
+                                return ceu_exe_term(X);
                             } // close switch
                         """}}
                         ${(this == outer.clo).cond { """
@@ -118,7 +103,11 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                                 ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
                             }
                         """ }}
-                        return CEU3(X->action==CEU_ACTION_ABORT ? 0 :) 1;
+                        ${isexe.cond2({"""
+                            assert(0 && "bug found");
+                        """},{"""
+                            return CEU3(X->action==CEU_ACTION_ABORT ? 0 :) 1;
+                        """})}
                     }
                 """)
 

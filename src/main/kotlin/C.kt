@@ -450,7 +450,9 @@ fun Coder.main (tags: Tags): String {
 
     // EXIT / ERROR / ASSERT
     val c_error = """
-    #define CEU_ERROR_IS(S) ((S)->n>0 && ceux_peek((S),(S)->n-1).type==CEU_VALUE_ERROR)
+    #define CEU_ERROR_IS(S)  ((S)->n>0 && ceux_peek((S),(S)->n-1).type==CEU_VALUE_ERROR)
+    #define CEU_ERROR_RET(S) (CEU_ERROR_IS(S) ? (3+ceux_peek(S,(S)->n-3).Number) : 0)
+
     #define CEU_ERROR_CHK_VAL(cmd,v,pre) ({     \
         if (v.type == CEU_VALUE_ERROR) {        \
             ceu_error_e(X->S,v);                \
@@ -1020,10 +1022,9 @@ fun Coder.main (tags: Tags): String {
         //  - n   - number of error messages
         //  - pay - error payload
         //  - err - error value
-        if (ret>0 && CEU_ERROR_IS(S)) {
-            CEU_Value n = ceux_peek(S,SS(-3));
-            assert(n.type == CEU_VALUE_NUMBER);
-            *out = n.Number + 1 + 1 + 1;
+        int err = CEU_ERROR_RET(S);
+        if (err) {
+            *out = err;
             return 1;
         }
          
@@ -1221,10 +1222,11 @@ fun Coder.main (tags: Tags): String {
         // X1: [tsks,exe,inps]
         
         ceu_gc_inc_val(exe);    // keep exe alive to return it  
-        int ret = ceux_resume(X1, inp, 0, CEU_ACTION_RESUME CEU4(COMMA now));
+        ceux_resume(X1, inp, 0, CEU_ACTION_RESUME CEU4(COMMA now));
         // X1: [tsks]
         
-        if (ret > 0) {
+        int ret = CEU_ERROR_RET(X1->S);
+        if (ret) {
             // error
         } else {
             ret = 1;
@@ -2127,6 +2129,15 @@ fun Coder.main (tags: Tags): String {
             int ret = 0;
     #if CEU >= 4
             if (X->exe->type == CEU_VALUE_EXE_TASK) {
+                // task return value in pub(t)
+                ceu_gc_dec_val(X->exe_task->pub);
+                if (X->action==CEU_ACTION_ABORT || ceux_n_get(X->S)==0) {
+                    X->exe_task->pub = (CEU_Value) { CEU_VALUE_NIL };
+                } else {
+                    X->exe_task->pub = ceux_peek(X->S, XX(-1));
+                }
+                ceu_gc_inc_val(X->exe_task->pub);
+                
                 // do not bcast aborted task b/c
                 // it would awake parents that actually need to
                 // respond/catch the error (thus not awake)
@@ -2154,9 +2165,16 @@ fun Coder.main (tags: Tags): String {
                     }
                     ceu_gc_dec_dyn((CEU_Dyn*) X->exe);  // only if natural termination
                 }
-            }
+                
+                if (!CEU_ERROR_IS(X->S)) {
+                    ceux_n_set(X->S, 0);
+                }
+                return ret;
+            } else
     #endif
-            return ret;
+            {
+                return 1;   // CEU_VALUE_EXE_CORO
+            }
         }
 
         #if CEU >= 5
