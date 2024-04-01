@@ -947,6 +947,9 @@ fun Coder.main (tags: Tags): String {
                         int term = (CEU5(cur->Any.type==CEU_VALUE_EXE_TASK &&) cur->Exe_Task.status==CEU_EXE_STATUS_TERMINATED);
                         ceu_abort_dyn(cur);
                         CEU_Dyn* nxt = CEU_LNKS(cur)->sd.nxt;
+                        while (nxt!=NULL && CEU5(nxt->Any.type!=CEU_VALUE_TASKS &&) nxt->Exe_Task.status==CEU_EXE_STATUS_TERMINATED) {
+                            nxt = CEU_LNKS(nxt)->sd.nxt;
+                        }
                         if (!term) {
                             ceu_gc_dec_dyn(cur); // TODO: could affect nxt?
                         }
@@ -2185,13 +2188,17 @@ fun Coder.main (tags: Tags): String {
             }
             CEU_Dyn* cur = tsks->lnks.dn.fst;
             while (cur != NULL) {
+                assert(cur->Exe_Task.status != CEU_EXE_STATUS_TERMINATED);
                 int term = (cur->Exe_Task.status == CEU_EXE_STATUS_TERMINATED);
                 if (!term) {
                     ceu_abort_exe((CEU_Exe*) cur);
                 }
                 CEU_Dyn* nxt = CEU_LNKS(cur)->sd.nxt;
                 if (!term) {
-                    ceu_gc_dec_dyn(cur); // remove strong ref // TODO: could affect nxt?
+                    ceu_gc_dec_dyn(cur); // remove strong (block) ref
+                        // - TODO: could affect nxt?
+                        // no bc nxt is a strong (block) ref,
+                        // so it is impossible that nxt reaches refs=0
                 }
                 cur = nxt;
             }
@@ -2302,6 +2309,9 @@ fun Coder.main (tags: Tags): String {
                 ceu_gc_inc_dyn(cur);
                 ret = ceu_bcast_dyn(X1, act, now, cur);
                 CEU_Dyn* nxt = CEU_LNKS(cur)->sd.nxt;
+                while (nxt!=NULL && CEU5(nxt->Any.type!=CEU_VALUE_TASKS &&) nxt->Exe_Task.status==CEU_EXE_STATUS_TERMINATED) {
+                    nxt = CEU_LNKS(nxt)->sd.nxt;
+                }
                 ceu_gc_dec_dyn(cur); // TODO: could affect nxt?
                 if (ret != 0) {
                     break;
