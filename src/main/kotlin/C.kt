@@ -930,6 +930,15 @@ fun Coder.main (tags: Tags): String {
         ceux_push(S, 1, (CEU_Value) { CEU_VALUE_BLOCK });
     #endif
     }
+
+    #if CEU >= 4
+    CEU_Dyn* ceu_task_get (CEU_Dyn* cur) {
+        while (cur!=NULL && CEU5(cur->Any.type!=CEU_VALUE_TASKS &&) cur->Exe_Task.status==CEU_EXE_STATUS_TERMINATED) {
+            cur = CEU_LNKS(cur)->sd.nxt;
+        }
+        return cur;
+    }
+    #endif
     
     void ceux_block_leave (CEU_Stack* S, int out) {
         int I = -1;
@@ -942,17 +951,11 @@ fun Coder.main (tags: Tags): String {
                 }
 
                 {
-                    CEU_Block cur = blk.Block;
+                    CEU_Block cur = ceu_task_get(blk.Block);
                     while (cur != NULL) {
-                        int term = (CEU5(cur->Any.type==CEU_VALUE_EXE_TASK &&) cur->Exe_Task.status==CEU_EXE_STATUS_TERMINATED);
                         ceu_abort_dyn(cur);
-                        CEU_Dyn* nxt = CEU_LNKS(cur)->sd.nxt;
-                        while (nxt!=NULL && CEU5(nxt->Any.type!=CEU_VALUE_TASKS &&) nxt->Exe_Task.status==CEU_EXE_STATUS_TERMINATED) {
-                            nxt = CEU_LNKS(nxt)->sd.nxt;
-                        }
-                        if (!term) {
-                            ceu_gc_dec_dyn(cur); // TODO: could affect nxt?
-                        }
+                        CEU_Dyn* nxt = ceu_task_get(CEU_LNKS(cur)->sd.nxt);
+                        ceu_gc_dec_dyn(cur); // TODO: could affect nxt?
                         cur = nxt;
                     }
                 }
@@ -2186,20 +2189,14 @@ fun Coder.main (tags: Tags): String {
             if (tsks->lnks.up.dyn == NULL) {
                 return;     // already unlinked/killed
             }
-            CEU_Dyn* cur = tsks->lnks.dn.fst;
+            CEU_Dyn* cur = ceu_task_get(tsks->lnks.dn.fst);
             while (cur != NULL) {
-                assert(cur->Exe_Task.status != CEU_EXE_STATUS_TERMINATED);
-                int term = (cur->Exe_Task.status == CEU_EXE_STATUS_TERMINATED);
-                if (!term) {
-                    ceu_abort_exe((CEU_Exe*) cur);
-                }
-                CEU_Dyn* nxt = CEU_LNKS(cur)->sd.nxt;
-                if (!term) {
-                    ceu_gc_dec_dyn(cur); // remove strong (block) ref
-                        // - TODO: could affect nxt?
-                        // no bc nxt is a strong (block) ref,
-                        // so it is impossible that nxt reaches refs=0
-                }
+                ceu_abort_exe((CEU_Exe*) cur);
+                CEU_Dyn* nxt = ceu_task_get(CEU_LNKS(cur)->sd.nxt);
+                ceu_gc_dec_dyn(cur); // remove strong (block) ref
+                    // - TODO: could affect nxt?
+                    // no bc nxt is a strong (block) ref,
+                    // so it is impossible that nxt reaches refs=0
                 cur = nxt;
             }
         }
@@ -2304,14 +2301,11 @@ fun Coder.main (tags: Tags): String {
             //assert(dyn2!=NULL && (dyn2->type==CEU_VALUE_EXE_TASK CEU5(|| dyn2->type==CEU_VALUE_TASKS)));
             int ret = 0;
             CEU_Links* lnks = CEU_LNKS(dyn2);
-            CEU_Dyn* cur = lnks->dn.fst;
+            CEU_Dyn* cur = ceu_task_get(lnks->dn.fst);
             while (cur != NULL) {
                 ceu_gc_inc_dyn(cur);
                 ret = ceu_bcast_dyn(X1, act, now, cur);
-                CEU_Dyn* nxt = CEU_LNKS(cur)->sd.nxt;
-                while (nxt!=NULL && CEU5(nxt->Any.type!=CEU_VALUE_TASKS &&) nxt->Exe_Task.status==CEU_EXE_STATUS_TERMINATED) {
-                    nxt = CEU_LNKS(nxt)->sd.nxt;
-                }
+                CEU_Dyn* nxt = ceu_task_get(CEU_LNKS(cur)->sd.nxt);
                 ceu_gc_dec_dyn(cur); // TODO: could affect nxt?
                 if (ret != 0) {
                     break;
