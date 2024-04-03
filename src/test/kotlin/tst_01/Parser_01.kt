@@ -645,17 +645,18 @@ class Parser_01 {
         val l = lexer("set ... = 10")
         val parser = Parser(l)
         //val e = parser.expr()
-        assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected \"[\" : have \"=\"")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected \"[\" : have \"=\"")
         //assert(e.tostr() == "set ... = 10") { e.tostr() }
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 5) : expected expression : have \"...\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : expected expression : have \"...\"")
         //assert(trap { parser.expr() } == "anon : (lin 1, col 5) : set error : unexpected ...")
     }
     @Test
     fun ss_06_err() {
         val l = lexer("...")
         val parser = Parser(l)
-        val e = parser.expr()
-        assert(trap { parser.expr() } == "anon : (lin 1, col 4) : expected \"[\" : have end of file")
+        //val e = parser.expr()
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 4) : expected \"[\" : have end of file")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : expected expression : have \"...\"")
     }
     @Test
     fun ss_07_len() {
@@ -676,6 +677,13 @@ class Parser_01 {
         val l = lexer("set ...[0] = 10")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 10) : set error : unexpected \"...\"")
+    }
+    @Test
+    fun ss_08_len() {
+        val l = lexer("f(...[0], #...)")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "f(...[0],#...)") { e.tostr() }
     }
 
     // NATIVE

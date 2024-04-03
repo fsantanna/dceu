@@ -153,7 +153,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Dict   (val tk_: Tk.Fix, val args: List<Pair<Expr,Expr>>): Expr(N++, tk_)
     data class Index  (val tk_: Tk, val col: Expr, val idx: Expr): Expr(N++, tk_)
     data class Call   (val tk_: Tk, val clo: Expr, val isva: Boolean, val args: List<Expr>): Expr(N++, tk_)
-    data class VA_len (val tk_: Tk.Op): Expr(N++, tk_)
+    data class VA_len (val tk_: Tk.Fix): Expr(N++, tk_)
     data class VA_idx (val tk_: Tk.Fix, val idx: Expr): Expr(N++, tk_)
 }
 

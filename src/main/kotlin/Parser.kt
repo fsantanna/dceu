@@ -843,9 +843,9 @@ class Parser (lexer_: Lexer)
                 it
             }
             this.checkFix("(")      -> this.expr_in_parens()!!
-            this.acceptFix("...")    -> {
+            this.acceptFix("#...")      -> Expr.VA_len(this.tk0 as Tk.Fix)
+            this.acceptFix("...[")    -> {
                 val tk0 = this.tk0 as Tk.Fix
-                this.acceptFix_err("[")
                 val e = this.expr()
                 this.acceptFix_err("]")
                 Expr.VA_idx(tk0, e)
@@ -1237,9 +1237,6 @@ class Parser (lexer_: Lexer)
             }
             this.acceptEnu("Op") -> {
                 val op = this.tk0 as Tk.Op
-                if (op.str=="#" && this.checkFix("...")) {
-                    return Expr.VA_len(op)  // #...[1] --> (#...)[1]
-                }
                 val e = this.expr_2_pre()
                 //println(listOf(op,e))
                 when {

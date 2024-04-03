@@ -180,7 +180,13 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     if (x1 == '.') {
                         val (n2, x2) = read2()
                         if (x2 == '.') {
-                            yield(Tk.Fix("...", pos))
+                            val (n3, x3) = read2()
+                            if (x3 == '[') {
+                                yield(Tk.Fix("...[", pos))
+                            } else {
+                                yield(Tk.Fix("...", pos))
+                                unread2(n3)
+                            }
                         } else {
                             yield(Tk.Fix(".", pos))
                             yield(Tk.Fix(".", pos))
@@ -194,6 +200,14 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                 (x=='@' || x=='#') -> {
                     val (n1,x1) = read2()
                     when {
+                        (x=='#' && x1=='.') -> {
+                            val (_,x2) = read2()
+                            val (_,x3) = read2()
+                            if (!(x2=='.' && x3=='.')) {
+                                err(pos, "token error : expected \"...\"")
+                            }
+                            yield(Tk.Fix("#...", pos))
+                        }
                         (x1 == '[') -> yield(Tk.Fix("$x[", pos))
                         (x1 !in OPERATORS) -> {
                             yield(Tk.Op(x.toString(), pos))
