@@ -25,7 +25,7 @@ fun Pair<Tk.Id,Tk.Tag?>.tostr (pre: Boolean = false): String {
 fun Expr.tostr (pre: Boolean = false): String {
     return when (this) {
         is Expr.Proto  -> {
-            val args = this.args.map { it.tostr(pre) }.joinToString(",")
+            val args = (this.args.map { it.tostr(pre) } + (if (this.isva) listOf("...") else emptyList())).joinToString(",")
             "(" + this.tk.str + this.nst.cond { " :nested" } + this.rec.cond { " :rec" } + " (" + args + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
         }
         is Expr.Export -> "export [" + this.ids.joinToString(",") + "] {\n" + this.blk.es.tostr(pre) + "}"
@@ -78,7 +78,10 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Vector -> "#[" + this.args.map { it.tostr(pre) }.joinToString(",") + "]"
         is Expr.Dict   -> "@[" + this.args.map { "(${it.first.tostr(pre)},${it.second.tostr(pre)})" }.joinToString(",") + "]"
         is Expr.Index  -> this.col.tostr(pre) + "[" + this.idx.tostr(pre) + "]"
-        is Expr.Call   -> this.clo.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")"   // TODO: collapse broadcast'
+        is Expr.Call   -> {
+            val args = (this.args.map { it.tostr(pre) } + (if (this.isva) listOf("...") else emptyList())).joinToString(",")
+            this.clo.tostr(pre) + "(" + args + ")"
+        }   // TODO: collapse broadcast'
     }.let {
         when {
             !pre           -> it

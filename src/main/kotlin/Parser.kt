@@ -345,26 +345,25 @@ class Parser (lexer_: Lexer)
         return Expr.Do(tk, es)
     }
 
-    fun args (close: String): List<Pair<Tk.Id,Tk.Tag?>> {
+    fun args (close: String): List<Pair<Tk.Id,Tk.Tag?>?> {
         return this.list0(close,",") {
-            this.acceptEnu_err("Id")
-            val xid = this.tk0 as Tk.Id
-            if (this.tk0.str == "...") {
-                this.checkFix_err(")")
+            if (this.acceptFix("...")) {
+                this.checkFix_err(close)
+                null
+            } else {
+                this.acceptEnu_err("Id")
+                val xid = this.tk0 as Tk.Id
+                val tag = if (!this.acceptEnu("Tag")) null else {
+                    this.tk0 as Tk.Tag
+                }
+                Pair(xid, tag)
             }
-            val tag = if (!this.acceptEnu("Tag")) null else {
-                this.tk0 as Tk.Tag
-            }
-            Pair(xid, tag)
         }
     }
 
     fun id_tag (): Pair<Tk.Id, Tk.Tag?> {
         this.acceptEnu_err("Id")
         val id = this.tk0 as Tk.Id
-        if (id.str == "...") {
-            err(this.tk0, "declaration error : unexpected ...")
-        }
         val tag = if (!this.acceptEnu("Tag")) null else {
             this.tk0 as Tk.Tag
         }
@@ -441,9 +440,6 @@ class Parser (lexer_: Lexer)
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val dst = this.expr()
-                if (dst is Expr.Acc && dst.tk.str == "...") {
-                    err(this.tk0, "set error : unexpected ...")
-                }
                 this.acceptFix_err("=")
                 val src = this.expr()
                 if (CEU>=99 && dst is Expr.Do && dst.es.let { it.size==3 && it[0] is Expr.Dcl && it[1] is Expr.Nat && it[2] is Expr.Index }) {
@@ -605,6 +601,11 @@ class Parser (lexer_: Lexer)
                 }
                 this.acceptFix_err("(")
                 val args = this.args(")")
+                val (xva,xas) = if (args.size>0 && args.last()==null) {
+                    Pair(true, args.dropLast(1).map { it as Pair<Tk.Id,Tk.Tag> })
+                } else {
+                    Pair(false, args.map { it as Pair<Tk.Id,Tk.Tag> })
+                }
                 this.acceptFix_err(")")
                 val tag = when {
                     (tk0.str != "task") -> null
@@ -612,7 +613,7 @@ class Parser (lexer_: Lexer)
                     else -> this.tk0 as Tk.Tag
                 }
                 val blk = this.block(this.tk1)
-                val proto = Expr.Proto(tk0, nst, rec, tag, args, blk)
+                val proto = Expr.Proto(tk0, nst, rec, tag, xva, xas, blk)
                 if (dcl == null) {
                     proto
                 } else {
@@ -743,15 +744,11 @@ class Parser (lexer_: Lexer)
                 if (call !is Expr.Call) {
                     err(this.tk1, "spawn error : expected call")
                 }
-                when {
-                    (call !is Expr.Call) -> err(tk1, "spawn error : expected call")
-                    (call.args.lastOrNull().let { it is Expr.Acc && it.tk.str=="..." }) -> err(tk1, "spawn error : \"...\" is not allowed")
-                }
                 val tsks = if (CEU<5 || !this.acceptFix("in")) null else {
                     this.expr()
                 }
                 call as Expr.Call
-                Expr.Spawn(tk0, tsks, call.clo, call.args)
+                Expr.Spawn(tk0, tsks, call.clo, call.isva, call.args)
             }
             (CEU>=4 && this.acceptFix("delay")) -> Expr.Delay(this.tk0 as Tk.Fix)
             (CEU>=4 && this.acceptFix("pub")) -> Expr.Pub(this.tk0 as Tk.Fix, null)
@@ -765,6 +762,7 @@ class Parser (lexer_: Lexer)
                 }
                 Expr.Call(tk0,
                     Expr.Acc(Tk.Id("broadcast'", tk0.pos)),
+                    false,
                     listOf(xin,evt)
                 )
             }
@@ -1172,22 +1170,28 @@ class Parser (lexer_: Lexer)
                 }
                 "(" -> {
                     val args = list0(")",",") {
-                        val x = this.expr()
-                        if (x is Expr.Acc && x.tk.str=="...") {
+                        if (this.acceptFix("...")) {
                             this.checkFix_err(")")
+                            null
+                        } else {
+                            this.expr()
                         }
-                        x
+                    }
+                    val (xva,xas) = if (args.size>0 && args.last()==null) {
+                        Pair(true, args.dropLast(1).map { it as Expr })
+                    } else {
+                        Pair(false, args.map { it as Expr })
                     }
                     this.acceptFix_err(")")
                     when {
                         (e is Expr.Acc && e.tk.str in XOPERATORS) -> {
                             when (args.size) {
-                                1 -> this.nest("${e.tostr(true)} ${args[0].tostr(true)}")
-                                2 -> this.nest("${args[0].tostr(true)} ${e.tostr(true)} ${args[1].tostr(true)}")
+                                1 -> this.nest("${e.tostr(true)} ${xas[0].tostr(true)}")
+                                2 -> this.nest("${xas[0].tostr(true)} ${e.tostr(true)} ${xas[1].tostr(true)}")
                                 else -> err(e.tk, "operation error : invalid number of arguments") as Expr
                             }
                         }
-                        else -> Expr.Call(e.tk, e, args)
+                        else -> Expr.Call(e.tk, e, xva, xas)
                     }
                 }
                 else -> error("impossible case")
@@ -1228,7 +1232,7 @@ class Parser (lexer_: Lexer)
                 //println(listOf(op,e))
                 when {
                     (op.str == "not") -> this.nest("${op.pos.pre()}(if ${e.tostr(true)} { false } else { true })\n")
-                    else -> Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}", op.pos)), listOf(e))
+                    else -> Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}", op.pos)), false, listOf(e))
                 }
             }
             else -> this.expr_3_met()
@@ -1274,7 +1278,7 @@ class Parser (lexer_: Lexer)
                 "in-not?" -> this.nest("in-not'(${e1.tostr(true)}, ${e2.tostr(true)})")
                 else -> {
                     val id = if (op.str[0] in OPERATORS) "{{${op.str}}}" else op.str
-                    Expr.Call(op, Expr.Acc(Tk.Id(id, op.pos)), listOf(e1,e2))
+                    Expr.Call(op, Expr.Acc(Tk.Id(id, op.pos)), false, listOf(e1,e2))
                 }
             }
         )

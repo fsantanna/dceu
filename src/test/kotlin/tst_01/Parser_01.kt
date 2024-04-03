@@ -514,7 +514,7 @@ class Parser_01 {
         val l = lexer("func (...) { println(...) }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Proto && e.args.size==1)
+        assert(e is Expr.Proto && e.isva && e.args.size==0)
         assert(e.tostr() == "(func (...) {\nprintln(...)\n})") { e.tostr() }
     }
     @Test
@@ -539,7 +539,8 @@ class Parser_01 {
     fun pp_10_func_args_err() {
         val l = lexer("var ...")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : declaration error : unexpected ...")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 5) : declaration error : unexpected ...")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : expected identifier : have \"...\"")
     }
     @Test
     fun pp_11_func_args_err() {
@@ -547,7 +548,8 @@ class Parser_01 {
         val parser = Parser(l)
         //val e = parser.expr()
         //assert(e.tostr() == "set ... = 10") { e.tostr() }
-        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : set error : unexpected ...")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : expected expression : have \"...\"")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 5) : set error : unexpected ...")
     }
     @Test
     fun pp_12_func_nested() {

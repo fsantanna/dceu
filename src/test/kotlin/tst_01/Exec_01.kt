@@ -3049,6 +3049,15 @@ class Exec_01 {
     // FUNC / ARGS / DOTS / ...
 
     @Test
+    fun nn_00_dots_tup() {
+        val out = test(
+            """
+            println(#..., ...)
+        """
+        )
+        assert(out == "3\t2\n") { out }
+    }
+    @Test
     fun nn_01_dots_tup() {
         val out = test(
             """

@@ -111,13 +111,14 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     }
                 """)
 
+                assert(!this.isva) { "TODO" }
                 this.PI0(""" // CREATE | ${this.dump()}
                 {
                     ${isnst.cond { "assert(X->exe!=NULL && X->exe->type==CEU_VALUE_EXE_TASK);" }}
                     CEU_Value clo = ceu_create_clo${istsk.cond { "_task" }} (
                         ${(!istsk).cond { "CEU_VALUE_CLO_${this.tk.str.uppercase()}," }}
                         ceu_f_$id,
-                        ${this.args.let { assert(it.lastOrNull()?.first?.str!="...") { "TODO: ..." }; it.size }},  // TODO: remove assert
+                        ${this.args.size},
                         ${vars.blk_to_locs[this.blk]!!.second},
                         ${vars.proto_to_upvs[this]!!.size}
                         ${istsk.cond { ", ${if (isnst) "X->exe_task" else "NULL"}" }}
@@ -392,8 +393,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             """)
 
             is Expr.Spawn -> {
-                val dots = this.args.lastOrNull()
-                assert(dots==null || dots !is Expr.Acc || dots.tk.str!="...") { "TODO" }
+                assert(!this.isva)
                 assert(rets.pub[this].let { it==0 || it==1 })
                 """
                 { // SPAWN | ${this.dump()}

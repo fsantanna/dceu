@@ -180,7 +180,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     if (x1 == '.') {
                         val (n2, x2) = read2()
                         if (x2 == '.') {
-                            yield(Tk.Id("...", pos))
+                            yield(Tk.Fix("...", pos))
                         } else {
                             yield(Tk.Fix(".", pos))
                             yield(Tk.Fix(".", pos))
