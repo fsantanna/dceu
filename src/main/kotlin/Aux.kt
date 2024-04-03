@@ -36,7 +36,7 @@ fun Expr.Call.main (): Expr.Proto {
 fun Expr.has_block (): Boolean {
     return when (this) {
         is Expr.Proto, is Expr.Enum, is Expr.Data, is Expr.Delay -> false
-        is Expr.Nat, is Expr.Acc, is Expr.Nil -> false
+        is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.VA_len -> false
         is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> false
         is Expr.Do, is Expr.If, is Expr.Loop, is Expr.Catch, is Expr.Defer -> true
         is Expr.Export -> this.blk.es.any { it.has_block() }
@@ -55,6 +55,7 @@ fun Expr.has_block (): Boolean {
         is Expr.Dict -> this.args.any { it.first.has_block() || it.second.has_block()}
         is Expr.Index -> this.col.has_block() || this.idx.has_block()
         is Expr.Call -> this.clo.has_block() || this.args.any { it.has_block() }
+        is Expr.VA_idx -> this.idx.has_block()
     }
 }
 

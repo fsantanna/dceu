@@ -81,6 +81,9 @@ class Tags (outer: Expr.Call) {
                 this.idx.traverse()
             }
             is Expr.Call   -> { this.clo.traverse() ; this.args.forEach { it.traverse() } }
+
+            is Expr.VA_len -> {}
+            is Expr.VA_idx -> this.idx.traverse()
         }
     }
 }

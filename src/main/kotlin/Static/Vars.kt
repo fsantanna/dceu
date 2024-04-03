@@ -239,8 +239,10 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             is Expr.Dict   -> this.args.sumOf { it.first.locs() ; it.second.locs() }
             is Expr.Index  -> this.col.locs() + this.idx.locs()
             is Expr.Call   -> this.clo.locs() + this.args.sumOf { it.locs() }
+            is Expr.VA_idx -> this.idx.locs()
             is Expr.Enum, is Expr.Data, is Expr.Delay, is Expr.Nat, is Expr.Acc -> 0
             is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> 0
+            is Expr.VA_len -> 0
         }
     }
 
@@ -456,6 +458,9 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 data(this)
             }
             is Expr.Call   -> { this.clo.traverse() ; this.args.forEach { it.traverse() } }
+
+            is Expr.VA_len -> {}
+            is Expr.VA_idx -> this.idx.traverse()
         }
     }
 }

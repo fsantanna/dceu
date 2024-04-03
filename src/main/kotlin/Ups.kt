@@ -89,6 +89,9 @@ class Ups (val outer: Expr.Call) {
             is Expr.Dict   -> this.map(this.args.map { listOf(it.first,it.second) }.flatten())
             is Expr.Index  -> this.map(listOf(this.col, this.idx))
             is Expr.Call   -> this.map(listOf(this.clo) + this.args)
+
+            is Expr.VA_len -> emptyMap()
+            is Expr.VA_idx -> this.map(listOf(this.idx))
         }
     }
 }

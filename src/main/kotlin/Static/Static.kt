@@ -224,6 +224,9 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                 }
 
             }
+
+            is Expr.VA_len -> {}
+            is Expr.VA_idx -> this.idx.traverse()
         }
     }
 }

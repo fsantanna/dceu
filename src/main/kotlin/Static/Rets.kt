@@ -94,6 +94,9 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
                     arg.traverse(/*if (i==this.args.lastIndex) MULTI else*/ 1)
                 }
             }
+
+            is Expr.VA_len -> {}
+            is Expr.VA_idx -> this.idx.traverse(1)
         }
     }
 }

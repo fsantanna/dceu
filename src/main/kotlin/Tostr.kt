@@ -82,6 +82,8 @@ fun Expr.tostr (pre: Boolean = false): String {
             val args = (this.args.map { it.tostr(pre) } + (if (this.isva) listOf("...") else emptyList())).joinToString(",")
             this.clo.tostr(pre) + "(" + args + ")"
         }   // TODO: collapse broadcast'
+        is Expr.VA_len -> "#..."
+        is Expr.VA_idx -> "...[${this.idx.tostr(pre)}]"
     }.let {
         when {
             !pre           -> it

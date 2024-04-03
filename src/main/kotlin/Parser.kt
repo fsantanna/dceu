@@ -440,6 +440,9 @@ class Parser (lexer_: Lexer)
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val dst = this.expr()
+                if (dst is Expr.VA_idx) {
+                    err(this.tk0, "set error : unexpected \"...\"")
+                }
                 this.acceptFix_err("=")
                 val src = this.expr()
                 if (CEU>=99 && dst is Expr.Do && dst.es.let { it.size==3 && it[0] is Expr.Dcl && it[1] is Expr.Nat && it[2] is Expr.Index }) {
@@ -739,7 +742,6 @@ class Parser (lexer_: Lexer)
                 }
 
                 val tk0 = this.tk0 as Tk.Fix
-                val tk1 = this.tk1
                 val call = this.expr()
                 if (call !is Expr.Call) {
                     err(this.tk1, "spawn error : expected call")
@@ -841,6 +843,13 @@ class Parser (lexer_: Lexer)
                 it
             }
             this.checkFix("(")      -> this.expr_in_parens()!!
+            this.acceptFix("...")    -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptFix_err("[")
+                val e = this.expr()
+                this.acceptFix_err("]")
+                Expr.VA_idx(tk0, e)
+            }
 
             (CEU>=99 && (this.acceptFix("while") || this.acceptFix("until"))) -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -1228,6 +1237,9 @@ class Parser (lexer_: Lexer)
             }
             this.acceptEnu("Op") -> {
                 val op = this.tk0 as Tk.Op
+                if (op.str=="#" && this.checkFix("...")) {
+                    return Expr.VA_len(op)  // #...[1] --> (#...)[1]
+                }
                 val e = this.expr_2_pre()
                 //println(listOf(op,e))
                 when {

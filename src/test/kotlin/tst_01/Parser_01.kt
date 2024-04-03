@@ -510,46 +510,10 @@ class Parser_01 {
         assert(e.tostr() == "(func (a,b) {\n10\n})") { e.tostr() }
     }
     @Test
-    fun pp_06_func_dots() {
-        val l = lexer("func (...) { println(...) }")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e is Expr.Proto && e.isva && e.args.size==0)
-        assert(e.tostr() == "(func (...) {\nprintln(...)\n})") { e.tostr() }
-    }
-    @Test
     fun pp_07_func_args_err() {
         val l = lexer("func (1) { nil }")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected identifier : have \"1\"")
-    }
-    @Test
-    fun pp_08_func_args_err() {
-        val l = lexer("func (..., a) { nil }")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 10) : expected \")\" : have \",\"")
-    }
-    @Test
-    fun pp_09_func_args_err() {
-        val l = lexer("println(...,a)")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 12) : expected \")\" : have \",\"")
-    }
-    @Test
-    fun pp_10_func_args_err() {
-        val l = lexer("var ...")
-        val parser = Parser(l)
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 5) : declaration error : unexpected ...")
-        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : expected identifier : have \"...\"")
-    }
-    @Test
-    fun pp_11_func_args_err() {
-        val l = lexer("set ... = 10")
-        val parser = Parser(l)
-        //val e = parser.expr()
-        //assert(e.tostr() == "set ... = 10") { e.tostr() }
-        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : expected expression : have \"...\"")
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 5) : set error : unexpected ...")
     }
     @Test
     fun pp_12_func_nested() {
@@ -645,6 +609,73 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr() as Expr.Skip
         assert(e.tostr() == "(skip if nil)") { e.tostr() }
+    }
+
+    // VA / DOTS / VARARGS
+
+    @Test
+    fun ss_01_func_dots() {
+        val l = lexer("func (...) { println(...) }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Proto && e.isva && e.args.size==0)
+        assert(e.tostr() == "(func (...) {\nprintln(...)\n})") { e.tostr() }
+    }
+    @Test
+    fun ss_02_func_args_err() {
+        val l = lexer("func (..., a) { nil }")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 10) : expected \")\" : have \",\"")
+    }
+    @Test
+    fun ss_03_func_args_err() {
+        val l = lexer("println(...,a)")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 12) : expected \")\" : have \",\"")
+    }
+    @Test
+    fun ss_04_func_args_err() {
+        val l = lexer("var ...")
+        val parser = Parser(l)
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 5) : declaration error : unexpected ...")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : expected identifier : have \"...\"")
+    }
+    @Test
+    fun ss_05_func_args_err() {
+        val l = lexer("set ... = 10")
+        val parser = Parser(l)
+        //val e = parser.expr()
+        assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected \"[\" : have \"=\"")
+        //assert(e.tostr() == "set ... = 10") { e.tostr() }
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 5) : expected expression : have \"...\"")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 5) : set error : unexpected ...")
+    }
+    @Test
+    fun ss_06_err() {
+        val l = lexer("...")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(trap { parser.expr() } == "anon : (lin 1, col 4) : expected \"[\" : have end of file")
+    }
+    @Test
+    fun ss_07_len() {
+        val l = lexer("#...")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.VA_len && e.tostr()=="#...") { e.tostr() }
+    }
+    @Test
+    fun ss_08_idx() {
+        val l = lexer("...[i]")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.VA_idx && e.tostr()=="...[i]") { e.tostr() }
+    }
+    @Test
+    fun ss_09_set_err() {
+        val l = lexer("set ...[0] = 10")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 10) : set error : unexpected \"...\"")
     }
 
     // NATIVE
