@@ -338,7 +338,6 @@ fun Coder.main (tags: Tags): String {
 
     CEU_Value ceu_vector_get (CEU_Vector* vec, int i);
     void ceu_vector_set (CEU_Vector* vec, int i, CEU_Value v);
-    CEU_Value ceu_vector_from_c_string (const char* str);
     
     int ceu_dict_key_to_index (CEU_Dict* col, CEU_Value key, int* idx);
     CEU_Value ceu_dict_get (CEU_Dict* col, CEU_Value key);
@@ -1541,15 +1540,6 @@ fun Coder.main (tags: Tags): String {
         }
     }
     
-    CEU_Value ceu_vector_from_c_string (const char* str) {
-        CEU_Value vec = ceu_create_vector();
-        int N = strlen(str);
-        for (int i=0; i<N; i++) {
-            ceu_vector_set(&vec.Dyn->Vector, vec.Dyn->Vector.its, (CEU_Value) { CEU_VALUE_CHAR, {.Char=str[i]} });
-        }
-        return vec;
-    }
-
     int ceu_next_dash_dict_f (CEUX* X) {
         assert(X->args==1 || X->args==2);
         CEU_Value dict = ceux_peek(X->S, ceux_arg(X,0));
@@ -2474,24 +2464,31 @@ fun Coder.main (tags: Tags): String {
     int main (int ceu_argc, char** ceu_argv) {
         assert(CEU_TAG_nil == CEU_VALUE_NIL);
         
-    #if 0
-        // ... args ...
-        {
-            CEU_Value xxx = ceu_create_tuple(ceu_argc);
-            for (int i=0; i<ceu_argc; i++) {
-                CEU_Value vec = ceu_vector_from_c_string(ceu_argv[i]);
-                ceu_tuple_set(&xxx.Dyn->Tuple, i, vec);
-            }
-            ceux_push(X->S, 1, xxx);
-        }
-    #endif
-    
         CEU_Stack S = { 0, {} };
-        CEUX _X = { &S, -1, -1 CEU3(COMMA CEU_ACTION_INVALID COMMA {.exe=NULL}) CEU4(COMMA CEU_TIME COMMA NULL) };
+        CEUX _X = { &S, ceu_argc, ceu_argc CEU3(COMMA CEU_ACTION_INVALID COMMA {.exe=NULL}) CEU4(COMMA CEU_TIME COMMA NULL) };
         CEUX* X = &_X;
         CEU_GLOBAL_X = X;
         
+        ceux_block_enter(X->S, 0, ${GLOBALS.size} CEU4(COMMA X->exe));
+
+        ${GLOBALS.mapIndexed { i,id -> """
+        {
+            CEU_Value clo = ceu_create_clo(CEU_VALUE_CLO_FUNC, ceu_${id.idc()}_f, 0, 0, 0);
+            ceux_repl(X->S, X->base + $i, clo);
+        }
+        """ }.joinToString("")}
+        
+        // ... args ...
+        {
+            for (int i=0; i<ceu_argc; i++) {
+                CEU_Value vec = ceu_to_dash_string_dash_pointer(ceu_argv[i]);
+                ceux_push(X->S, 1, vec);
+            }
+        }
+    
         ${do_while(this.code)}
+
+        ceux_block_leave(X->S, 0);
 
         // uncaught throw
     #if CEU >= 2

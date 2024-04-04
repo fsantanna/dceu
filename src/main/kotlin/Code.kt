@@ -111,7 +111,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     }
                 """)
 
-                assert(!this.isva) { "TODO" }
+                //assert(!this.isva) { "TODO" }
                 this.PI0(""" // CREATE | ${this.dump()}
                 {
                     ${isnst.cond { "assert(X->exe!=NULL && X->exe->type==CEU_VALUE_EXE_TASK);" }}
@@ -160,18 +160,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         // do not clear upvs
                         ceux_block_enter(X->S, X->base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size} CEU4(COMMA X->exe));
                         
-                        // GLOBALS (must be after ceux_block_enter)
-                        ${(ups.pub[this] == outer.main()).cond { """
-                        {
-                            ${GLOBALS.mapIndexed { i,id -> """
-                            {
-                                CEU_Value clo = ceu_create_clo(CEU_VALUE_CLO_FUNC, ceu_${id.idc()}_f, 0, 0, 0);
-                                ceux_repl(X->S, X->base + $i, clo);
-                            }
-                            """ }.joinToString("")}
-                        }
-                        """ }}
-    
                         // defers init
                         ${defers[this].cond { it.second }}
                         
@@ -601,26 +589,26 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 """
             }
             is Expr.Call -> {
-                val dots = this.args.lastOrNull()
-                val has_dots = (dots!=null && dots is Expr.Acc && dots.tk.str=="...") && !this.clo.let { it is Expr.Acc && it.tk.str=="{{#}}" }
-                val id_dots = if (!has_dots) "" else {
-                    TODO()
-                }
                 """
                 { // CALL | ${this.dump()}
                     ${this.clo.code()}
-                    ${this.args.filter{!(has_dots && it.tk.str=="...")}.mapIndexed { i,e -> """
+                    ${this.args.mapIndexed { i,e -> """
                         ${e.code()}
                     """ }.joinToString("")}                    
-                    ${has_dots.cond { """
-                        -=- TODO -=-
-                        for (int i=0; i<$id_dots.Dyn->Tuple.its; i++) {
-                            ceux_push(X->S, 1, $id_dots.Dyn->Tuple.buf[i]);
+                    ${this.isva.cond { """
+                        {
+                            int pars = ${(this==outer).cond2({ """
+                                // [...,main]
+                                X->S->n - 1;
+                            """}, {"""
+                                ceux_peek(X->S,ceux_clo(X)).Dyn->Clo.pars
+                            """})};
+                            for (int i=0; i<X->args-pars; i++) {
+                                ceux_push(X->S, 1, ceux_peek(X->S,ceux_arg(X,pars+i)));
+                            }
                         }
                     """ }}
-
-                    ceux_call(X, ${this.args.size}, ${rets.pub[this]!!});
-                    
+                    ceux_call(X, ${this.args.size} ${(this==outer).cond { "+ceu_argc" }}, ${rets.pub[this]!!});
                     ${this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}
                 """

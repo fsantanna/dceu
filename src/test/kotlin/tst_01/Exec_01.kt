@@ -3055,7 +3055,7 @@ class Exec_01 {
             println(#..., ...)
         """
         )
-        assert(out == "0\n") { out }
+        assert(out == "1\t./out.exe\n") { out }
     }
     @Test
     fun nn_01_dots_tup() {
@@ -3074,7 +3074,7 @@ class Exec_01 {
         val out = test(
             """
             var f = func () {
-                println(...)
+                println(...)        ;; TODO: undeclared
             }
             f(1,2,3)
         """
