@@ -298,7 +298,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 }
             }
             is Expr.Do     -> {
-                val proto = ups.first(this) { it is Expr.Proto } as Expr.Proto
+                //val proto = ups.first(this) { it is Expr.Proto } as Expr.Proto
                 enc_to_dcls[this] = mutableListOf()
                 //println(listOf(this.tk,dcls.size,enc_to_base[proto]))
 

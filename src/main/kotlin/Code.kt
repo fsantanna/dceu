@@ -152,7 +152,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     }
                 }
                 val void = sta.void(this)
-                if (void && !(up is Expr.Loop)) {
+                if (void) {
                     body
                 } else {
                     """
@@ -160,6 +160,18 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         // do not clear upvs
                         ceux_block_enter(X->S, X->base+${vars.enc_to_base[this]!!+upvs}, ${vars.enc_to_dcls[this]!!.size} CEU4(COMMA X->exe));
                         
+                        // GLOBALS (must be after ceux_block_enter)
+                        ${(ups.pub[this] == outer.main()).cond { """
+                        {
+                            ${GLOBALS.mapIndexed { i,id -> """
+                            {
+                                CEU_Value clo = ceu_create_clo(CEU_VALUE_CLO_FUNC, ceu_${id.idc()}_f, 0, 0, 0);
+                                ceux_repl(X->S, X->base + $i, clo);
+                            }
+                            """ }.joinToString("")}
+                        }
+                        """ }}
+        
                         // defers init
                         ${defers[this].cond { it.second }}
                         

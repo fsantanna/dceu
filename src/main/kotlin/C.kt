@@ -2464,20 +2464,7 @@ fun Coder.main (tags: Tags): String {
     int main (int ceu_argc, char** ceu_argv) {
         assert(CEU_TAG_nil == CEU_VALUE_NIL);
         
-        CEU_Stack S = { 0, {} };
-        CEUX _X = { &S, ceu_argc, ceu_argc CEU3(COMMA CEU_ACTION_INVALID COMMA {.exe=NULL}) CEU4(COMMA CEU_TIME COMMA NULL) };
-        CEUX* X = &_X;
-        CEU_GLOBAL_X = X;
-        
-        ceux_block_enter(X->S, 0, ${GLOBALS.size} CEU4(COMMA X->exe));
-
-        ${GLOBALS.mapIndexed { i,id -> """
-        {
-            CEU_Value clo = ceu_create_clo(CEU_VALUE_CLO_FUNC, ceu_${id.idc()}_f, 0, 0, 0);
-            ceux_repl(X->S, X->base + $i, clo);
-        }
-        """ }.joinToString("")}
-        
+    #if 0
         // ... args ...
         {
             for (int i=0; i<ceu_argc; i++) {
@@ -2485,10 +2472,14 @@ fun Coder.main (tags: Tags): String {
                 ceux_push(X->S, 1, vec);
             }
         }
+    #endif
     
+        CEU_Stack S = { 0, {} };
+        CEUX _X = { &S, -1, -1 CEU3(COMMA CEU_ACTION_INVALID COMMA {.exe=NULL}) CEU4(COMMA CEU_TIME COMMA NULL) };
+        CEUX* X = &_X;
+        CEU_GLOBAL_X = X;
+        
         ${do_while(this.code)}
-
-        ceux_block_leave(X->S, 0);
 
         // uncaught throw
     #if CEU >= 2
