@@ -784,6 +784,7 @@ fun Coder.main (tags: Tags): String {
      */
     """
     val h2_ceux = """
+    #define ceux_clo(X) (X->base - X->args - 1)
     #define ceux_arg(X,i) (X->base - X->args + i)
     #define XX(v)  ({ assert(v<=0); X->S->n+v; })
     #define XX1(v) ({ assert(v<=0); X1->S->n+v; })

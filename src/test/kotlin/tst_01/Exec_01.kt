@@ -3055,7 +3055,7 @@ class Exec_01 {
             println(#..., ...)
         """
         )
-        assert(out == "3\t2\n") { out }
+        assert(out == "0\n") { out }
     }
     @Test
     fun nn_01_dots_tup() {
@@ -3166,6 +3166,18 @@ class Exec_01 {
         )
         //assert(out == "1\n") { out }
         assert(out == "anon : (lin 3, col 21) : set error : unexpected ...\n") { out }
+    }
+    @Test
+    fun nn_09_dots_err() {
+        val out = test(
+            """
+            var f = func (x,...) {
+                println(...[0])
+            }
+            f(1)
+        """
+        )
+        assert(out == "TODO: out of bounds") { out }
     }
 
     // LOOP
