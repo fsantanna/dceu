@@ -254,7 +254,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 if (this.tag !=null && !datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
-                this.args.forEach { (id,tag) ->
+                this.pars.forEach { (id,tag) ->
                     val prv = dcls.firstOrNull { it is Expr.Dcl && id.str==it.idtag.first.str } as Expr.Dcl?
                     if (prv==null || (CEU>=99 && prv.idtag.first.str=="it")) {
                         // ok
@@ -265,7 +265,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                         //err(tag, "declaration error : data ${tag.str} is not declared")
                     }
                 }
-                this.args.forEach {
+                this.pars.forEach {
                     val dcl = Expr.Dcl(
                         Tk.Fix("val", this.tk.pos),
                         it, null
@@ -281,7 +281,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
 
                 this.blk.traverse()
 
-                repeat(this.args.size) {
+                repeat(this.pars.size) {
                     dcls.removeLast()   // dropLast(n) copies the list
                 }
             }

@@ -506,7 +506,7 @@ class Parser_01 {
         val l = lexer("func (a,b) { 10 }")
         val parser = Parser(l)
         val e = parser.expr_prim()
-        assert(e is Expr.Proto && e.args.size==2)
+        assert(e is Expr.Proto && e.pars.size==2)
         assert(e.tostr() == "(func (a,b) {\n10\n})") { e.tostr() }
     }
     @Test
@@ -618,7 +618,7 @@ class Parser_01 {
         val l = lexer("func (...) { println(...) }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Proto && e.isva && e.args.size==0)
+        assert(e is Expr.Proto && e.isva && e.pars.size==0)
         assert(e.tostr() == "(func (...) {\nprintln(...)\n})") { e.tostr() }
     }
     @Test

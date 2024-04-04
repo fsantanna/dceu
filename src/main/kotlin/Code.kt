@@ -118,7 +118,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     CEU_Value clo = ceu_create_clo${istsk.cond { "_task" }} (
                         ${(!istsk).cond { "CEU_VALUE_CLO_${this.tk.str.uppercase()}," }}
                         ceu_f_$id,
-                        ${this.args.size},
+                        ${this.pars.size},
                         ${vars.blk_to_locs[this.blk]!!.second},
                         ${vars.proto_to_upvs[this]!!.size}
                         ${istsk.cond { ", ${if (isnst) "X->exe_task" else "NULL"}" }}
@@ -626,13 +626,13 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 """
             }
 
-            is Expr.VA_len -> this.PI0("ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=(X->args)-(ceux_peek(X->S,ceux_clo(X)).Dyn->Clo.args)} });")
+            is Expr.VA_len -> this.PI0("ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=(X->args)-(ceux_peek(X->S,ceux_clo(X)).Dyn->Clo.pars)} });")
             is Expr.VA_idx -> this.PI0("""
                 ${this.idx.code()}
                 {
                     CEU_Value idx = ceux_peek(X->S,XX(-1));
                     assert(idx.type == CEU_VALUE_NUMBER);
-                    int pars = ceux_peek(X->S,ceux_clo(X)).Dyn->Clo.args;
+                    int pars = ceux_peek(X->S,ceux_clo(X)).Dyn->Clo.pars;
                     assert(idx.Number < X->args - pars); 
                     ceux_repl(X->S, XX(-1), ceux_peek(X->S,ceux_arg(X,pars+idx.Number)));
                 }

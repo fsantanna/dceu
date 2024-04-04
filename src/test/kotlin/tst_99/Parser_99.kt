@@ -27,7 +27,7 @@ class Parser_99 {
         val l = lexer("func () {}")
         val parser = Parser(l)
         val e = parser.expr_prim()
-        assert(e is Expr.Proto && e.args.size==0)
+        assert(e is Expr.Proto && e.pars.size==0)
         assert(e.tostr() == "(func () {\n(do nil)\n})") { e.tostr() }
     }
     @Test

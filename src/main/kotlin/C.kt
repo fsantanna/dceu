@@ -180,7 +180,7 @@ fun Coder.main (tags: Tags): String {
     #define _CEU_Clo_                   \
         _CEU_Dyn_                       \
         CEU_Proto proto;                \
-        int args;                       \
+        int pars;                       \
         int locs;                       \
         struct {                        \
             int its;                    \
@@ -328,7 +328,7 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_create_tuple   (int n);
     CEU_Value ceu_create_vector  (void);
     CEU_Value ceu_create_dict    (void);
-    CEU_Value ceu_create_clo     (CEU_VALUE type, CEU_Proto proto, int args, int locs, int upvs);
+    CEU_Value ceu_create_clo     (CEU_VALUE type, CEU_Proto proto, int pars, int locs, int upvs);
     #if CEU >= 4
     CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Dyn* up_dyn, CEU_Block* up_blk);
     CEU_Value ceu_create_track   (CEU_Exe_Task* task);
@@ -996,7 +996,7 @@ fun Coder.main (tags: Tags): String {
     int ceux_call_pre (CEU_Stack* S, CEU_Clo* clo, int* inp) {
         // fill missing args with nils
         {
-            int N = clo->args - *inp;
+            int N = clo->pars - *inp;
             for (int i=0; i<N; i++) {
                 ceux_push(S, 1, (CEU_Value) { CEU_VALUE_NIL });
                 (*inp)++;

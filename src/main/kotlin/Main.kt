@@ -117,7 +117,7 @@ sealed class Tk (val str: String, val pos: Pos) {
 }
 
 sealed class Expr (val n: Int, val tk: Tk) {
-    data class Proto  (val tk_: Tk.Fix, val nst: Boolean, val rec: Boolean, val tag: Tk.Tag?, val isva: Boolean, val args: List<Pair<Tk.Id, Tk.Tag?>>, val blk: Do): Expr(N++, tk_)
+    data class Proto  (val tk_: Tk.Fix, val nst: Boolean, val rec: Boolean, val tag: Tk.Tag?, val isva: Boolean, val pars: List<Pair<Tk.Id, Tk.Tag?>>, val blk: Do): Expr(N++, tk_)
     data class Export (val tk_: Tk.Fix, val ids: List<String>, val blk: Expr.Do) : Expr(N++, tk_)
     data class Do     (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Fix, val idtag: Pair<Tk.Id,Tk.Tag?>, /*val poly: Boolean,*/ val src: Expr?):  Expr(N++, tk_)

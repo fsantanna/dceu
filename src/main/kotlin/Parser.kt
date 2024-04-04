@@ -345,22 +345,6 @@ class Parser (lexer_: Lexer)
         return Expr.Do(tk, es)
     }
 
-    fun args (close: String): List<Pair<Tk.Id,Tk.Tag?>?> {
-        return this.list0(close,",") {
-            if (this.acceptFix("...")) {
-                this.checkFix_err(close)
-                null
-            } else {
-                this.acceptEnu_err("Id")
-                val xid = this.tk0 as Tk.Id
-                val tag = if (!this.acceptEnu("Tag")) null else {
-                    this.tk0 as Tk.Tag
-                }
-                Pair(xid, tag)
-            }
-        }
-    }
-
     fun id_tag (): Pair<Tk.Id, Tk.Tag?> {
         this.acceptEnu_err("Id")
         val id = this.tk0 as Tk.Id
@@ -603,11 +587,23 @@ class Parser (lexer_: Lexer)
                     null
                 }
                 this.acceptFix_err("(")
-                val args = this.args(")")
-                val (xva,xas) = if (args.size>0 && args.last()==null) {
-                    Pair(true, args.dropLast(1).map { it as Pair<Tk.Id,Tk.Tag> })
+                val pars = this.list0(")",",") {
+                    if (this.acceptFix("...")) {
+                        this.checkFix_err(")")
+                        null
+                    } else {
+                        this.acceptEnu_err("Id")
+                        val xid = this.tk0 as Tk.Id
+                        val tag = if (!this.acceptEnu("Tag")) null else {
+                            this.tk0 as Tk.Tag
+                        }
+                        Pair(xid, tag)
+                    }
+                }
+                val (xva,xas) = if (pars.size>0 && pars.last()==null) {
+                    Pair(true, pars.dropLast(1).map { it as Pair<Tk.Id,Tk.Tag> })
                 } else {
-                    Pair(false, args.map { it as Pair<Tk.Id,Tk.Tag> })
+                    Pair(false, pars.map { it as Pair<Tk.Id,Tk.Tag> })
                 }
                 this.acceptFix_err(")")
                 val tag = when {

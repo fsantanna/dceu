@@ -25,8 +25,8 @@ fun Pair<Tk.Id,Tk.Tag?>.tostr (pre: Boolean = false): String {
 fun Expr.tostr (pre: Boolean = false): String {
     return when (this) {
         is Expr.Proto  -> {
-            val args = (this.args.map { it.tostr(pre) } + (if (this.isva) listOf("...") else emptyList())).joinToString(",")
-            "(" + this.tk.str + this.nst.cond { " :nested" } + this.rec.cond { " :rec" } + " (" + args + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
+            val pars = (this.pars.map { it.tostr(pre) } + (if (this.isva) listOf("...") else emptyList())).joinToString(",")
+            "(" + this.tk.str + this.nst.cond { " :nested" } + this.rec.cond { " :rec" } + " (" + pars + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
         }
         is Expr.Export -> "export [" + this.ids.joinToString(",") + "] {\n" + this.blk.es.tostr(pre) + "}"
         is Expr.Do     -> {
