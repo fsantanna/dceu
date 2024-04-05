@@ -3093,7 +3093,8 @@ class Exec_01 {
             f(1,2,3)
         """
         )
-        assert(out == "anon : (lin 3, col 17) : access error : expected enclosing \"...\" parameter declaration") { out }
+        assert(out == "anon : (lin 3, col 17) : access error : expected enclosing \"...\" parameter declaration\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : access error : expected enclosing \"...\" parameter declaration") { out }
         //assert(out == "anon : (lin 3, col 25) : access error : variable \"...\" is not declared") { out }
         //assert(out == "./out.exe\n") { out }
     }
@@ -3181,7 +3182,8 @@ class Exec_01 {
         """
         )
         //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 3, col 21) : set error : unexpected ...\n") { out }
+        //assert(out == "anon : (lin 3, col 21) : set error : unexpected ...\n") { out }
+        assert(out == "anon : (lin 3, col 21) : expected expression : have \"...\"\n") { out }
     }
     @Test
     fun nn_09_dots_err() {
@@ -4865,8 +4867,8 @@ class Exec_01 {
             ;;println(`:number CEU_GC.free`)
         """
         )
-        assert(out == ">>> GC: 18\n" +
-                "    alloc = 18\n" +
+        assert(out == ">>> GC: 19\n" +
+                "    alloc = 19\n" +
                 "    free  = 0\n"
         ) { out }
         //assert(out == ">>> GC: 17\n" +
@@ -4886,8 +4888,8 @@ class Exec_01 {
         """
         )
         //assert(out == "1\n") { out }
-        assert(out == ">>> GC: 18\n" +
-                "    alloc = 19\n" +
+        assert(out == ">>> GC: 19\n" +
+                "    alloc = 20\n" +
                 "    free  = 1\n") { out }
     }
     @Test
@@ -4904,8 +4906,8 @@ class Exec_01 {
         )
         //assert(out == "2\n") { out }
         //assert(out == "0\n") { out }
-        assert(out == ">>> GC: 17\n" +
-                "    alloc = 19\n" +
+        assert(out == ">>> GC: 18\n" +
+                "    alloc = 20\n" +
                 "    free  = 2\n") { out }
     }
     @Test
@@ -4923,8 +4925,8 @@ class Exec_01 {
         """
         )
         //assert(out == "0\n") { out }
-        assert(out == ">>> GC: 19\n" +
-                "    alloc = 19\n" +
+        assert(out == ">>> GC: 20\n" +
+                "    alloc = 20\n" +
                 "    free  = 0\n") { out }
     }
     @Test

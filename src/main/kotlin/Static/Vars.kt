@@ -186,7 +186,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         return when (type(dcl,src)) {
             Type.GLOBAL -> {
                 val s = if (CEU >= 3) "CEU_GLOBAL_X->S" else "$X->S"
-                Pair(s, "(1 + $locs + $I) /* global $id */")
+                Pair(s, "(1 + CEU_ARGC + $locs + $I) /* global $id */")
             }
             Type.LOCAL -> {
                 Pair("$X->S", "($X->base + $upvs + $locs + $I) /* local $id */")

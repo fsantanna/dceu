@@ -610,12 +610,22 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         ${e.code()}
                     """ }.joinToString("")}                    
                     {
-                        int vas = ${this.isvas.cond2({ """
-                            ceux_va_push(X, ${if (this == outer) 1 else 0})
-                        """ }, {"""
-                            0
-                        """})}
-                        ;
+                        int vas = 0;
+                        ${this.isvas.cond { """
+                            vas = ceux_va_push(X, ${if (this == outer) 1 else 0});
+                        """ }}
+                        ${(this == outer).cond { """
+                            // ... args ...
+                            #if 1
+                            {
+                                for (int i=0; i<ceu_argc; i++) {
+                                    CEU_Value vec = ceu_to_dash_string_dash_pointer(ceu_argv[i]);
+                                    ceux_push(X->S, 1, vec);
+                                }
+                            }
+                            vas = ceu_argc;
+                            #endif
+                        """ }}
                         ceux_call(X, ${this.args.size}+vas, ${rets.pub[this]!!});
                     }
                     ${this.check_error_aborted(this.toerr())}

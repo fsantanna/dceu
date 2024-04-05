@@ -202,7 +202,7 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
                 listOf(),
                 Expr.Do(Tk.Fix("",pos), glbs + es)
             ),
-            true,
+            false,
             listOf()
         )
         val ups    = Ups(outer)

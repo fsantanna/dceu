@@ -302,6 +302,7 @@ fun Coder.main (tags: Tags): String {
     // GLOBALS
     fun c_globals (): String {
         return """
+    int CEU_ARGC;
     CEUX* CEU_GLOBAL_X = NULL;
     #if CEU >= 4
     uint32_t CEU_TIME = 0;
@@ -2512,22 +2513,13 @@ fun Coder.main (tags: Tags): String {
     
     int main (int ceu_argc, char** ceu_argv) {
         assert(CEU_TAG_nil == CEU_VALUE_NIL);
+        CEU_ARGC = ceu_argc;
         
         CEU_Stack S = { 0, {} };
-        CEUX _X = { &S, ceu_argc, ceu_argc CEU3(COMMA CEU_ACTION_INVALID COMMA {.exe=NULL}) CEU4(COMMA CEU_TIME COMMA NULL) };
+        CEUX _X = { &S, 0, 0 CEU3(COMMA CEU_ACTION_INVALID COMMA {.exe=NULL}) CEU4(COMMA CEU_TIME COMMA NULL) };
         CEUX* X = &_X;
         CEU_GLOBAL_X = X;
         
-    #if 1
-        // ... args ...
-        {
-            for (int i=0; i<ceu_argc; i++) {
-                CEU_Value vec = ceu_to_dash_string_dash_pointer(ceu_argv[i]);
-                ceux_push(X->S, 1, vec);
-            }
-        }
-    #endif
-    
         ${do_while(this.code)}
 
         // uncaught throw
