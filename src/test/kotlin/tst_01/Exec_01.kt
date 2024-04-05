@@ -838,7 +838,21 @@ class Exec_01 {
             println(f(1,2,3))
         """
         )
-        assert(out == "[[1,2,3]]\n") { out }
+        assert(out == "[1,2,3]\n") { out }
+        //assert(out == "anon : (lin 4, col 22) : drop error : multiple references\n") { out }
+    }
+    @Test
+    fun cm_04x_dots() {
+        val out = test(
+            """
+            var f = func (...) {
+                var x = #[...]
+                ;;;drop;;;(x)
+            }
+            println(f(1,2,3))
+        """
+        )
+        assert(out == "#[1,2,3]\n") { out }
         //assert(out == "anon : (lin 4, col 22) : drop error : multiple references\n") { out }
     }
     @Test

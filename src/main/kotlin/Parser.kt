@@ -379,6 +379,24 @@ class Parser (lexer_: Lexer)
         })
     }
 
+    fun args (clo: String): Pair<Boolean,List<Expr>> {
+        val args = list0(clo,",") {
+            if (this.acceptFix("...")) {
+                this.checkFix_err(clo)
+                null
+            } else {
+                this.expr()
+            }
+        }
+        val (xva,xas) = if (args.size>0 && args.last()==null) {
+            Pair(true, args.dropLast(1).map { it as Expr })
+        } else {
+            Pair(false, args.map { it as Expr })
+        }
+        this.acceptFix_err(clo)
+        return Pair(xva,xas)
+    }
+
     fun expr_prim (): Expr {
         return when {
             this.acceptFix("do") -> {
@@ -809,13 +827,15 @@ class Parser (lexer_: Lexer)
             this.acceptFix("true")  -> Expr.Bool(this.tk0 as Tk.Fix)
             this.acceptEnu("Chr")  -> Expr.Char(this.tk0 as Tk.Chr)
             this.acceptEnu("Num")  -> Expr.Num(this.tk0 as Tk.Num)
-            this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0("]",",") { this.expr() }).let {
-                this.acceptFix_err("]")
-                it
+            this.acceptFix("[")     -> {
+                val tk0 = this.tk0 as Tk.Fix
+                val (xva,xas) = this.args("]")
+                Expr.Tuple(tk0, xva, xas)
             }
-            this.acceptFix("#[")    -> Expr.Vector(this.tk0 as Tk.Fix, list0("]",",") { this.expr() }).let {
-                this.acceptFix_err("]")
-                it
+            this.acceptFix("#[")    -> {
+                val tk0 = this.tk0 as Tk.Fix
+                val (xva,xas) = this.args("]")
+                Expr.Vector(tk0, xva, xas)
             }
             this.acceptFix("@[")    -> Expr.Dict(this.tk0 as Tk.Fix, list0("]",",") {
                 val tk1 = this.tk1
@@ -1174,23 +1194,10 @@ class Parser (lexer_: Lexer)
                     else -> error("impossible case")
                 }
                 "(" -> {
-                    val args = list0(")",",") {
-                        if (this.acceptFix("...")) {
-                            this.checkFix_err(")")
-                            null
-                        } else {
-                            this.expr()
-                        }
-                    }
-                    val (xva,xas) = if (args.size>0 && args.last()==null) {
-                        Pair(true, args.dropLast(1).map { it as Expr })
-                    } else {
-                        Pair(false, args.map { it as Expr })
-                    }
-                    this.acceptFix_err(")")
+                    val (xva,xas) = this.args(")")
                     when {
                         (e is Expr.Acc && e.tk.str in XOPERATORS) -> {
-                            when (args.size) {
+                            when (xas.size) {
                                 1 -> this.nest("${e.tostr(true)} ${xas[0].tostr(true)}")
                                 2 -> this.nest("${xas[0].tostr(true)} ${e.tostr(true)} ${xas[1].tostr(true)}")
                                 else -> err(e.tk, "operation error : invalid number of arguments") as Expr
