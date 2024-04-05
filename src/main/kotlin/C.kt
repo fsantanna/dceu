@@ -1666,6 +1666,20 @@ fun Coder.main (tags: Tags): String {
         // [val]
         return 1;
     }
+    
+    int ceux_va_push (CEUX* X, int ismain) {
+        int pars = 0;
+        if (!ismain) {
+            CEU_Value clo = ceux_peek(X->S,ceux_clo(X));
+            assert(clo.type>=CEU_VALUE_CLO_FUNC && clo.type<CEU_VALUE_TUPLE);   // FUNC-CORO-TASK-TUPLE
+            pars = clo.Dyn->Clo.pars;
+        }
+        int vas = X->args - pars;
+        for (int i=0; i<vas; i++) {
+            ceux_push(X->S, 1, ceux_peek(X->S,ceux_arg(X,pars+i)));
+        }
+        return vas;
+    }
     """
     }
     fun creates (): String {

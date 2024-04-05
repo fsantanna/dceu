@@ -608,19 +608,12 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         ${e.code()}
                     """ }.joinToString("")}                    
                     {
-                        int vas = 0;
-                        ${this.isva.cond { """
-                            int pars = ${(this==outer).cond2({ """
-                                // [...,main]
-                                0
-                            """}, {"""
-                                ceux_peek(X->S,ceux_clo(X)).Dyn->Clo.pars
-                            """})};
-                            vas = X->args - pars;
-                            for (int i=0; i<vas; i++) {
-                                ceux_push(X->S, 1, ceux_peek(X->S,ceux_arg(X,pars+i)));
-                            }
-                        """ }}
+                        int vas = ${this.isva.cond2({ """
+                            ceux_va_push(X, ${if (this == outer) 1 else 0})
+                        """ }, {"""
+                            0
+                        """})}
+                        ;
                         ceux_call(X, ${this.args.size}+vas, ${rets.pub[this]!!});
                     }
                     ${this.check_error_aborted(this.toerr())}
