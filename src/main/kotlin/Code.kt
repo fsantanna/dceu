@@ -393,7 +393,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             """)
 
             is Expr.Spawn -> {
-                assert(!this.isva)
+                assert(!this.isvas)
                 assert(rets.pub[this].let { it==0 || it==1 })
                 """
                 { // SPAWN | ${this.dump()}
@@ -529,7 +529,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             is Expr.Tuple -> this.PI0("""
                 { // TUPLE | ${this.dump()}
                     ${this.args.map {  it.code() }.joinToString("")}
-                    int vas = ${this.isva.cond2({ """
+                    int vas = ${this.isvas.cond2({ """
                         ceux_va_push(X, ${if (this == outer) 1 else 0})
                     """ }, {"""
                         0
@@ -541,7 +541,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             is Expr.Vector -> this.PI0("""
                 { // VECTOR | ${this.dump()}
                     ${this.args.map {  it.code() }.joinToString("")}
-                    int vas = ${this.isva.cond2({ """
+                    int vas = ${this.isvas.cond2({ """
                         ceux_va_push(X, ${if (this == outer) 1 else 0})
                     """ }, {"""
                         0
@@ -610,7 +610,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         ${e.code()}
                     """ }.joinToString("")}                    
                     {
-                        int vas = ${this.isva.cond2({ """
+                        int vas = ${this.isvas.cond2({ """
                             ceux_va_push(X, ${if (this == outer) 1 else 0})
                         """ }, {"""
                             0
