@@ -3093,8 +3093,9 @@ class Exec_01 {
             f(1,2,3)
         """
         )
+        assert(out == "anon : (lin 3, col 17) : access error : expected enclosing \"...\" parameter declaration") { out }
         //assert(out == "anon : (lin 3, col 25) : access error : variable \"...\" is not declared") { out }
-        assert(out == "./out.exe\n") { out }
+        //assert(out == "./out.exe\n") { out }
     }
     @Test
     fun nn_03_dots() {

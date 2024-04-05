@@ -38,6 +38,14 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
         f(outer.clo as Expr.Proto)  // start with accesses from outer
     }
 
+    fun Expr.check_vas () {
+        if (!ups.first(this) { it is Expr.Proto }.let {
+            it==null || (it as Expr.Proto).isvas
+        }) {
+            err(this.tk, "access error : expected enclosing \"...\" parameter declaration")
+        }
+    }
+
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
@@ -209,14 +217,27 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.Bool   -> {}
             is Expr.Char   -> {}
             is Expr.Num    -> {}
-            is Expr.Tuple  -> this.args.forEach { it.traverse() }
-            is Expr.Vector -> this.args.forEach { it.traverse() }
+            is Expr.Tuple  -> {
+                if (this.isvas) {
+                    this.check_vas()
+                }
+                this.args.forEach { it.traverse() }
+            }
+            is Expr.Vector -> {
+                if (this.isvas) {
+                    this.check_vas()
+                }
+                this.args.forEach { it.traverse() }
+            }
             is Expr.Dict   -> this.args.forEach { (k,v) -> k.traverse() ; v.traverse() }
             is Expr.Index  -> {
                 this.col.traverse()
                 this.idx.traverse()
             }
             is Expr.Call   -> {
+                if (this.isvas) {
+                    this.check_vas()
+                }
                 this.clo.traverse()
                 this.args.forEach { it.traverse() }
                 if (this.clo is Expr.Acc && this.clo.tk.str=="tasks") {
@@ -225,8 +246,11 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
 
             }
 
-            is Expr.VA_len -> {}
-            is Expr.VA_idx -> this.idx.traverse()
+            is Expr.VA_len -> this.check_vas()
+            is Expr.VA_idx -> {
+                this.check_vas()
+                this.idx.traverse()
+            }
         }
     }
 }
