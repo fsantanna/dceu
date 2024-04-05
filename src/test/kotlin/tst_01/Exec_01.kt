@@ -832,13 +832,13 @@ class Exec_01 {
         val out = test(
             """
             var f = func (...) {
-                var x = [...]
+                var x = [0,...]
                 ;;;drop;;;(x)
             }
             println(f(1,2,3))
         """
         )
-        assert(out == "[1,2,3]\n") { out }
+        assert(out == "[0,1,2,3]\n") { out }
         //assert(out == "anon : (lin 4, col 22) : drop error : multiple references\n") { out }
     }
     @Test
@@ -846,13 +846,13 @@ class Exec_01 {
         val out = test(
             """
             var f = func (...) {
-                var x = #[...]
+                var x = #[0,...]
                 ;;;drop;;;(x)
             }
             println(f(1,2,3))
         """
         )
-        assert(out == "#[1,2,3]\n") { out }
+        assert(out == "#[0,1,2,3]\n") { out }
         //assert(out == "anon : (lin 4, col 22) : drop error : multiple references\n") { out }
     }
     @Test

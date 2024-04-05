@@ -528,24 +528,26 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
 
             is Expr.Tuple -> this.PI0("""
                 { // TUPLE | ${this.dump()}
-                    ceux_push(X->S, 1, ceu_create_tuple(${this.args.size}));
-                    ${this.args.mapIndexed { i, it ->
-                        it.code() + """
-                        ceu_tuple_set(&ceux_peek(X->S,XX(-2)).Dyn->Tuple, $i, ceux_peek(X->S,XX(-1)));
-                        ceux_pop(X->S, 1);
-                        """
-                    }.joinToString("")}
+                    ${this.args.map {  it.code() }.joinToString("")}
+                    int vas = ${this.isva.cond2({ """
+                        ceux_va_push(X, ${if (this == outer) 1 else 0})
+                    """ }, {"""
+                        0
+                    """})}
+                    ;
+                    ceux_tuple(X->S, ${this.args.size} + vas);
                 }
             """)
             is Expr.Vector -> this.PI0("""
                 { // VECTOR | ${this.dump()}
-                    ceux_push(X->S, 1, ceu_create_vector());
-                    ${this.args.mapIndexed { i, it ->
-                        it.code() + """
-                        ceu_vector_set(&ceux_peek(X->S,XX(-2)).Dyn->Vector, $i, ceux_peek(X->S,XX(-1)));
-                        ceux_pop(X->S, 1);
-                        """
-                    }.joinToString("")}
+                    ${this.args.map {  it.code() }.joinToString("")}
+                    int vas = ${this.isva.cond2({ """
+                        ceux_va_push(X, ${if (this == outer) 1 else 0})
+                    """ }, {"""
+                        0
+                    """})}
+                    ;
+                    ceux_vector(X->S, ${this.args.size} + vas);
                 }
             """)
             is Expr.Dict -> this.PI0("""

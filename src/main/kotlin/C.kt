@@ -913,6 +913,24 @@ fun Coder.main (tags: Tags): String {
         // [pre,pos]
     }
     
+    void ceux_tuple (CEU_Stack* S, int n) {
+        CEU_Value tup = ceu_create_tuple(n);
+        for (int i=0; i<n; i++) {
+            ceu_tuple_set(&tup.Dyn->Tuple, i, ceux_peek(S,SS(-n+i)));
+        }
+        ceux_pop_n(S, n);
+        ceux_push(S, 1, tup);
+    }
+    
+    void ceux_vector (CEU_Stack* S, int n) {
+        CEU_Value vec = ceu_create_vector();
+        for (int i=0; i<n; i++) {
+            ceu_vector_set(&vec.Dyn->Vector, i, ceux_peek(S,SS(-n+i)));
+        }
+        ceux_pop_n(S, n);
+        ceux_push(S, 1, vec);
+    }
+    
     // ceux_block_*
     //  - needs to clear locals on enter and leave
     //  - enter: initialize all vars to nil (prevents garbage)
