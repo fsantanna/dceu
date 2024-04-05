@@ -180,7 +180,7 @@ fun Coder.main (tags: Tags): String {
     #define _CEU_Clo_                   \
         _CEU_Dyn_                       \
         CEU_Proto proto;                \
-        int pars;                       \
+        int pars;         /* formal pars, excluding `...` */ \
         int locs;                       \
         struct {                        \
             int its;                    \
@@ -753,8 +753,8 @@ fun Coder.main (tags: Tags): String {
     
     typedef struct CEUX {
         CEU_Stack* S;
-        int base;   // index above args
-        int args;   // number of args
+        int base;   // index just above end of args
+        int args;   // number of args, including `...`
     #if CEU >= 3
         CEU_ACTION action;
         union {
@@ -1699,7 +1699,7 @@ fun Coder.main (tags: Tags): String {
         return (CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)ret} };
     }
     
-    CEU_Value ceu_create_clo (CEU_VALUE type, CEU_Proto proto, int args, int locs, int upvs) {
+    CEU_Value ceu_create_clo (CEU_VALUE type, CEU_Proto proto, int pars, int locs, int upvs) {
         ceu_debug_add(type);
         CEU_Clo* ret = malloc(CEU4(type==CEU_VALUE_CLO_TASK ? sizeof(CEU_Clo_Task) :) sizeof(CEU_Clo));
         assert(ret != NULL);
@@ -1711,14 +1711,14 @@ fun Coder.main (tags: Tags): String {
         *ret = (CEU_Clo) {
             type, 0, (CEU_Value) { CEU_VALUE_NIL },
             proto,
-            args, locs, { upvs, buf }
+            pars, locs, { upvs, buf }
         };
         return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
     }
 
     #if CEU >= 4
-    CEU_Value ceu_create_clo_task (CEU_Proto proto, int args, int locs, int upvs, CEU_Exe_Task* up_tsk) {
-        CEU_Value clo = ceu_create_clo(CEU_VALUE_CLO_TASK, proto, args, locs, upvs);
+    CEU_Value ceu_create_clo_task (CEU_Proto proto, int pars, int locs, int upvs, CEU_Exe_Task* up_tsk) {
+        CEU_Value clo = ceu_create_clo(CEU_VALUE_CLO_TASK, proto, pars, locs, upvs);
         assert(clo.type == CEU_VALUE_CLO_TASK);
         clo.Dyn->Clo_Task.up_tsk = up_tsk;
         return clo;
@@ -2464,7 +2464,12 @@ fun Coder.main (tags: Tags): String {
     int main (int ceu_argc, char** ceu_argv) {
         assert(CEU_TAG_nil == CEU_VALUE_NIL);
         
-    #if 0
+        CEU_Stack S = { 0, {} };
+        CEUX _X = { &S, ceu_argc, ceu_argc CEU3(COMMA CEU_ACTION_INVALID COMMA {.exe=NULL}) CEU4(COMMA CEU_TIME COMMA NULL) };
+        CEUX* X = &_X;
+        CEU_GLOBAL_X = X;
+        
+    #if 1
         // ... args ...
         {
             for (int i=0; i<ceu_argc; i++) {
@@ -2474,11 +2479,6 @@ fun Coder.main (tags: Tags): String {
         }
     #endif
     
-        CEU_Stack S = { 0, {} };
-        CEUX _X = { &S, -1, -1 CEU3(COMMA CEU_ACTION_INVALID COMMA {.exe=NULL}) CEU4(COMMA CEU_TIME COMMA NULL) };
-        CEUX* X = &_X;
-        CEU_GLOBAL_X = X;
-        
         ${do_while(this.code)}
 
         // uncaught throw

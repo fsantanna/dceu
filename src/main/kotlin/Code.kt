@@ -611,7 +611,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         {
                             int pars = ${(this==outer).cond2({ """
                                 // [...,main]
-                                X->S->n - 1;
+                                0
                             """}, {"""
                                 ceux_peek(X->S,ceux_clo(X)).Dyn->Clo.pars
                             """})};
