@@ -3096,6 +3096,7 @@ class Exec_01 {
     }
     @Test
     fun nn_04_dots_gc() {
+        DEBUG = true
         val out = test(
             """
             var f = func (...) {
@@ -3105,7 +3106,8 @@ class Exec_01 {
             println(`:number CEU_GC.free`)
         """
         )
-        assert(out == "1\t2\t3\n1\n") { out }
+        //assert(out == "1\t2\t3\n1\n") { out }
+        assert(out == "1\t2\t3\n0\n") { out }
     }
     @Test
     fun nn_05_dots() {
@@ -3124,13 +3126,12 @@ class Exec_01 {
         val out = test(
             """
             var f = func (x, ...) {
-                var y = ...
-                println(#..., y, ...)  ;; empty ... is not put into args
+                println(#..., ...)  ;; empty ... is not put into args
             }
             f(1)
         """
         )
-        assert(out == "0\t[]\n") { out }
+        assert(out == "0\n") { out }
     }
     @Test
     fun nn_06_dots_tup_xx() {
@@ -3177,7 +3178,21 @@ class Exec_01 {
             f(1)
         """
         )
-        assert(out == "TODO: out of bounds") { out }
+        assert(out == " |  anon : (lin 3, col 25) : ...[0]\n" +
+                " v  error : index error : out of bounds\n") { out }
+    }
+    @Test
+    fun nn_10_dots_err() {
+        val out = test(
+            """
+            var f = func (x,...) {
+                println(...[nil])
+            }
+            f(1,2)
+        """
+        )
+        assert(out == " |  anon : (lin 3, col 25) : ...[nil]\n" +
+                " v  error : index error : expected number\n") { out }
     }
 
     // LOOP

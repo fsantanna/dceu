@@ -607,20 +607,22 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     ${this.args.mapIndexed { i,e -> """
                         ${e.code()}
                     """ }.joinToString("")}                    
-                    ${this.isva.cond { """
-                        {
+                    {
+                        int vas = 0;
+                        ${this.isva.cond { """
                             int pars = ${(this==outer).cond2({ """
                                 // [...,main]
                                 0
                             """}, {"""
                                 ceux_peek(X->S,ceux_clo(X)).Dyn->Clo.pars
                             """})};
-                            for (int i=0; i<X->args-pars; i++) {
+                            vas = X->args - pars;
+                            for (int i=0; i<vas; i++) {
                                 ceux_push(X->S, 1, ceux_peek(X->S,ceux_arg(X,pars+i)));
                             }
-                        }
-                    """ }}
-                    ceux_call(X, ${this.args.size} ${(this==outer).cond { "+ceu_argc" }}, ${rets.pub[this]!!});
+                        """ }}
+                        ceux_call(X, ${this.args.size}+vas, ${rets.pub[this]!!});
+                    }
                     ${this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}
                 """
@@ -629,13 +631,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             is Expr.VA_len -> this.PI0("ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=(X->args)-(ceux_peek(X->S,ceux_clo(X)).Dyn->Clo.pars)} });")
             is Expr.VA_idx -> this.PI0("""
                 ${this.idx.code()}
-                {
-                    CEU_Value idx = ceux_peek(X->S,XX(-1));
-                    assert(idx.type == CEU_VALUE_NUMBER);
-                    int pars = ceux_peek(X->S,ceux_clo(X)).Dyn->Clo.pars;
-                    assert(idx.Number < X->args - pars); 
-                    ceux_repl(X->S, XX(-1), ceux_peek(X->S,ceux_arg(X,pars+idx.Number)));
-                }
+                ceux_va_get(X);
+                CEU_ERROR_CHK_STK(continue, ${this.toerr()});
             """)
         }
     }

@@ -1649,6 +1649,23 @@ fun Coder.main (tags: Tags): String {
         }
         return 0;
     }
+    
+    int ceux_va_get (CEUX* X) {
+        // [idx]
+        CEU_Value idx = ceux_peek(X->S,XX(-1));
+        if (idx.type != CEU_VALUE_NUMBER) {
+            return ceu_error_s(X->S, "index error : expected number");
+        }
+        CEU_Value clo = ceux_peek(X->S,ceux_clo(X));
+        assert(clo.type>=CEU_VALUE_CLO_FUNC && clo.type<CEU_VALUE_TUPLE);   // FUNC-CORO-TASK-TUPLE
+        int pars = clo.Dyn->Clo.pars;
+        if (idx.Number >= X->args - pars) {                
+            return ceu_error_s(X->S, "index error : out of bounds");
+        }
+        ceux_repl(X->S, XX(-1), ceux_peek(X->S,ceux_arg(X,pars+idx.Number)));
+        // [val]
+        return 1;
+    }
     """
     }
     fun creates (): String {
