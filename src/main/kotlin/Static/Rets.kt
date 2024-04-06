@@ -3,7 +3,7 @@ package dceu
 class Rets (val outer: Expr.Call, val ups: Ups) {
     val pub: MutableMap<Expr,Int> = mutableMapOf()
         // how many values should Expr evaluate to?
-        // 99: multi | n: n
+        // -1: multi | n: n
 
     init {
         outer.traverse(1)
@@ -52,7 +52,7 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
             is Expr.Defer  -> this.blk.traverse(1)  // to assert it is not error
 
             is Expr.Yield  -> {
-                this.arg.traverse(1)    // TODO: args MULTI
+                this.args.forEach { it.traverse(1) }
             }
             is Expr.Resume -> {
                 this.co.traverse(1)
@@ -89,7 +89,7 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
             is Expr.Call   -> {
                 this.clo.traverse(1)
                 this.args.forEachIndexed { i,arg ->
-                    arg.traverse(/*if (i==this.args.lastIndex) MULTI else*/ 1)
+                    arg.traverse(1)
                 }
             }
 

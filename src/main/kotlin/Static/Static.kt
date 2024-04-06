@@ -148,7 +148,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             }
 
             is Expr.Yield  -> {
-                this.arg.traverse()
+                this.args.forEach { it.traverse() }
                 when {
                     ups.any(this) { defer -> (defer is Expr.Defer) }
                         -> err(this.tk, "yield error : unexpected enclosing defer")

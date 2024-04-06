@@ -367,9 +367,16 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             """
             }
 
-            is Expr.Yield -> this.PI0("""
+            is Expr.Yield -> {
+                assert(this.args.size <= 1)
+                this.PI0("""
                 { // YIELD ${this.dump()}
-                    ${this.arg.code()}
+                    ${this.args.map { """
+                        ${it.code()}
+                    """ }.joinToString("")}
+                    ${(this.args.size == 0).cond { """
+                        ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+                    """ }}
                     X->exe->status = CEU_EXE_STATUS_YIELDED;
                     X->exe->pc = $n;
                     return 1;   // TODO: args MULTI
@@ -399,6 +406,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 #endif
                 }
             """)
+            }
 
             is Expr.Spawn -> {
                 assert(!this.dots)

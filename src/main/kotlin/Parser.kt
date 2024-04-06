@@ -728,9 +728,9 @@ class Parser (lexer_: Lexer)
 
             (CEU>=3 && this.acceptFix("yield")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val out = this.expr_in_parens(CEU>=99) ?: Expr.Nil(Tk.Fix("nil",this.tk0.pos))
-                //this.checkFix_err("thus")
-                Expr.Yield(tk0, out)
+                this.acceptFix_err("(")
+                val (xva,xas) = this.args(")")
+                Expr.Yield(tk0, xva, xas)
             }
             (CEU>=3 && this.acceptFix("resume")) -> {
                 val tk0 = this.tk0 as Tk.Fix

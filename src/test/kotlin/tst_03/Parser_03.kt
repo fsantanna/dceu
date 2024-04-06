@@ -83,11 +83,31 @@ class Parser_03 {
     // MULTI ARGS
 
     @Test
-    fun todo_cc_01_resume_err() {   // TODO: multi args should be allowed
+    fun cc_01_resume() {
         val l = lexer("""
-            resume nil(1,2)
-        """.trimIndent())
+            resume co(1,...)
+        """)
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : resume error : invalid number of arguments")
+        val e = parser.expr()
+        assert(e.tostr() == "(resume (co)(1,...))") { e.tostr() }
+
+    }
+    @Test
+    fun cc_02_yield() {
+        val l = lexer("""
+            yield(1,...)
+        """)
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "yield(1,...)") { e.tostr() }
+    }
+    @Test
+    fun cc_03_yield() {
+        val l = lexer("""
+            yield()
+        """)
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "yield()") { e.tostr() }
     }
 }

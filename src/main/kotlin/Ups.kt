@@ -69,7 +69,7 @@ class Ups (val outer: Expr.Call) {
             is Expr.Catch  -> this.map(listOf(this.cnd, this.blk))
             is Expr.Defer  -> this.map(listOf(this.blk))
 
-            is Expr.Yield  -> this.map(listOf(this.arg))
+            is Expr.Yield  -> this.map(this.args)
             is Expr.Resume -> this.map(listOf(this.co) + this.args)
 
             is Expr.Spawn  -> this.map(listOfNotNull(this.tsks, this.tsk) + this.args)

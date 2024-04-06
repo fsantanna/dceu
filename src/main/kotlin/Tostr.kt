@@ -59,8 +59,14 @@ fun Expr.tostr (pre: Boolean = false): String {
         }
         is Expr.Defer  -> "defer " + this.blk.tostr(pre)
 
-        is Expr.Yield  -> "yield(" + this.arg.tostr(pre) + ")"
-        is Expr.Resume -> "(resume (" + this.co.tostr(pre) + ")(" + this.args.map { it.tostr(pre) }.joinToString(",") + "))"
+        is Expr.Yield  -> {
+            val args = (this.args.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList())).joinToString(",")
+            "yield(" + args + ")"
+        }
+        is Expr.Resume -> {
+            val args = (this.args.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList())).joinToString(",")
+            "(resume (" + this.co.tostr(pre) + ")(" + args + "))"
+        }
 
         is Expr.Spawn  -> "(spawn " + this.tsk.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")" + this.tsks.cond { " in ${this.tsks!!.tostr(pre)}" } + ")"
         is Expr.Delay  -> "delay"
