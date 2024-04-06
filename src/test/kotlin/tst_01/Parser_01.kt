@@ -685,6 +685,20 @@ class Parser_01 {
         val e = parser.expr()
         assert(e.tostr() == "f(...[0],#...)") { e.tostr() }
     }
+    @Test
+    fun ss_09_tup() {
+        val l = lexer("[...]")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Tuple && e.isvas && e.tostr()=="[...]") { e.tostr() }
+    }
+    @Test
+    fun ss_10_vec() {
+        val l = lexer("#[...]")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Vector && e.isvas && e.tostr()=="#[...]") { e.tostr() }
+    }
 
     // NATIVE
 

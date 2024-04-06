@@ -74,8 +74,14 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Bool   -> this.tk.str
         is Expr.Char   -> this.tk.str
         is Expr.Num    -> this.tk.str
-        is Expr.Tuple  -> "[" + this.args.map { it.tostr(pre) }.joinToString(",") + "]"
-        is Expr.Vector -> "#[" + this.args.map { it.tostr(pre) }.joinToString(",") + "]"
+        is Expr.Tuple  -> {
+            val args = (this.args.map { it.tostr(pre) } + (if (this.isvas) listOf("...") else emptyList()))
+            "[" + args.joinToString(",") + "]"
+        }
+        is Expr.Vector -> {
+            val args = (this.args.map { it.tostr(pre) } + (if (this.isvas) listOf("...") else emptyList()))
+            "#[" + args.joinToString(",") + "]"
+        }
         is Expr.Dict   -> "@[" + this.args.map { "(${it.first.tostr(pre)},${it.second.tostr(pre)})" }.joinToString(",") + "]"
         is Expr.Index  -> this.col.tostr(pre) + "[" + this.idx.tostr(pre) + "]"
         is Expr.Call   -> {
