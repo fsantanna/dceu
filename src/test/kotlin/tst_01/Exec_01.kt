@@ -3211,6 +3211,18 @@ class Exec_01 {
         assert(out == " |  anon : (lin 3, col 25) : ...[nil]\n" +
                 " v  error : index error : expected number\n") { out }
     }
+    @Test
+    fun nn_11_dots() {
+        val out = test(
+            """
+            var id = func (...) {
+                ...
+            }
+            println(id(1,2,3))
+        """
+        )
+        assert(out == "1\t2\t3\n\n") { out }
+    }
 
     // LOOP
 

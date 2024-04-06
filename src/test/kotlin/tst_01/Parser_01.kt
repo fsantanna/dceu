@@ -699,6 +699,14 @@ class Parser_01 {
         val e = parser.expr()
         assert(e is Expr.Vector && e.dots && e.tostr()=="#[...]") { e.tostr() }
     }
+    @Test
+    fun ss_11_vec() {
+        val l = lexer("do { ... }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        TODO()
+        //assert(e is Expr.Do && e.dots && e.tostr()=="do {\n...\n}\n") { e.tostr() }
+    }
 
     // NATIVE
 
