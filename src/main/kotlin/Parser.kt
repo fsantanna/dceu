@@ -764,7 +764,7 @@ class Parser (lexer_: Lexer)
                     this.expr()
                 }
                 call as Expr.Call
-                Expr.Spawn(tk0, tsks, call.clo, call.isvas, call.args)
+                Expr.Spawn(tk0, tsks, call.clo, call.dots, call.args)
             }
             (CEU>=4 && this.acceptFix("delay")) -> Expr.Delay(this.tk0 as Tk.Fix)
             (CEU>=4 && this.acceptFix("pub")) -> Expr.Pub(this.tk0 as Tk.Fix, null)

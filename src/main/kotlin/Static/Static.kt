@@ -38,9 +38,9 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
         f(outer.clo as Expr.Proto)  // start with accesses from outer
     }
 
-    fun Expr.check_vas () {
+    fun Expr.check_dots () {
         if (!ups.first(this) { it is Expr.Proto }.let {
-            it==null || (it as Expr.Proto).isvas
+            it==null || (it as Expr.Proto).dots
         }) {
             err(this.tk, "access error : expected enclosing \"...\" parameter declaration")
         }
@@ -218,14 +218,14 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.Char   -> {}
             is Expr.Num    -> {}
             is Expr.Tuple  -> {
-                if (this.isvas) {
-                    this.check_vas()
+                if (this.dots) {
+                    this.check_dots()
                 }
                 this.args.forEach { it.traverse() }
             }
             is Expr.Vector -> {
-                if (this.isvas) {
-                    this.check_vas()
+                if (this.dots) {
+                    this.check_dots()
                 }
                 this.args.forEach { it.traverse() }
             }
@@ -235,8 +235,8 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                 this.idx.traverse()
             }
             is Expr.Call   -> {
-                if (this.isvas) {
-                    this.check_vas()
+                if (this.dots) {
+                    this.check_dots()
                 }
                 this.clo.traverse()
                 this.args.forEach { it.traverse() }
@@ -246,9 +246,9 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
 
             }
 
-            is Expr.VA_len -> this.check_vas()
+            is Expr.VA_len -> this.check_dots()
             is Expr.VA_idx -> {
-                this.check_vas()
+                this.check_dots()
                 this.idx.traverse()
             }
         }

@@ -393,7 +393,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             """)
 
             is Expr.Spawn -> {
-                assert(!this.isvas)
+                assert(!this.dots)
                 assert(rets.pub[this].let { it==0 || it==1 })
                 """
                 { // SPAWN | ${this.dump()}
@@ -529,25 +529,25 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             is Expr.Tuple -> this.PI0("""
                 { // TUPLE | ${this.dump()}
                     ${this.args.map {  it.code() }.joinToString("")}
-                    int vas = ${this.isvas.cond2({ """
-                        ceux_va_push(X, ${if (this == outer) 1 else 0})
+                    int dots = ${this.dots.cond2({ """
+                        ceux_dots_push(X, ${if (this == outer) 1 else 0})
                     """ }, {"""
                         0
                     """})}
                     ;
-                    ceux_tuple(X->S, ${this.args.size} + vas);
+                    ceux_tuple(X->S, ${this.args.size} + dots);
                 }
             """)
             is Expr.Vector -> this.PI0("""
                 { // VECTOR | ${this.dump()}
                     ${this.args.map {  it.code() }.joinToString("")}
-                    int vas = ${this.isvas.cond2({ """
-                        ceux_va_push(X, ${if (this == outer) 1 else 0})
+                    int dots = ${this.dots.cond2({ """
+                        ceux_dots_push(X, ${if (this == outer) 1 else 0})
                     """ }, {"""
                         0
                     """})}
                     ;
-                    ceux_vector(X->S, ${this.args.size} + vas);
+                    ceux_vector(X->S, ${this.args.size} + dots);
                 }
             """)
             is Expr.Dict -> this.PI0("""
@@ -610,9 +610,9 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         ${e.code()}
                     """ }.joinToString("")}                    
                     {
-                        int vas = 0;
-                        ${this.isvas.cond { """
-                            vas = ceux_va_push(X, ${if (this == outer) 1 else 0});
+                        int dots = 0;
+                        ${this.dots.cond { """
+                            dots = ceux_dots_push(X, ${if (this == outer) 1 else 0});
                         """ }}
                         ${(this == outer).cond { """
                             // ... args ...
@@ -623,10 +623,10 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                                     ceux_push(X->S, 1, vec);
                                 }
                             }
-                            vas = ceu_argc;
+                            dots = ceu_argc;
                             #endif
                         """ }}
-                        ceux_call(X, ${this.args.size}+vas, ${rets.pub[this]!!});
+                        ceux_call(X, ${this.args.size}+dots, ${rets.pub[this]!!});
                     }
                     ${this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}
@@ -636,7 +636,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             is Expr.VA_len -> this.PI0("ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=(X->args)-(ceux_peek(X->S,ceux_clo(X)).Dyn->Clo.pars)} });")
             is Expr.VA_idx -> this.PI0("""
                 ${this.idx.code()}
-                ceux_va_get(X);
+                ceux_dots_get(X);
                 CEU_ERROR_CHK_STK(continue, ${this.toerr()});
             """)
         }

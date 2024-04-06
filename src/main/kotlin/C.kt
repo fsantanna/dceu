@@ -1669,7 +1669,7 @@ fun Coder.main (tags: Tags): String {
         return 0;
     }
     
-    int ceux_va_get (CEUX* X) {
+    int ceux_dots_get (CEUX* X) {
         // [idx]
         CEU_Value idx = ceux_peek(X->S,XX(-1));
         if (idx.type != CEU_VALUE_NUMBER) {
@@ -1686,18 +1686,18 @@ fun Coder.main (tags: Tags): String {
         return 1;
     }
     
-    int ceux_va_push (CEUX* X, int ismain) {
+    int ceux_dots_push (CEUX* X, int ismain) {
         int pars = 0;
         if (!ismain) {
             CEU_Value clo = ceux_peek(X->S,ceux_clo(X));
             assert(clo.type>=CEU_VALUE_CLO_FUNC && clo.type<CEU_VALUE_TUPLE);   // FUNC-CORO-TASK-TUPLE
             pars = clo.Dyn->Clo.pars;
         }
-        int vas = X->args - pars;
-        for (int i=0; i<vas; i++) {
+        int dots = X->args - pars;
+        for (int i=0; i<dots; i++) {
             ceux_push(X->S, 1, ceux_peek(X->S,ceux_arg(X,pars+i)));
         }
-        return vas;
+        return dots;
     }
     """
     }

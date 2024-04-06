@@ -618,7 +618,7 @@ class Parser_01 {
         val l = lexer("func (...) { println(...) }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Proto && e.isvas && e.pars.size==0)
+        assert(e is Expr.Proto && e.dots && e.pars.size==0)
         assert(e.tostr() == "(func (...) {\nprintln(...)\n})") { e.tostr() }
     }
     @Test
@@ -690,14 +690,14 @@ class Parser_01 {
         val l = lexer("[...]")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Tuple && e.isvas && e.tostr()=="[...]") { e.tostr() }
+        assert(e is Expr.Tuple && e.dots && e.tostr()=="[...]") { e.tostr() }
     }
     @Test
     fun ss_10_vec() {
         val l = lexer("#[...]")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Vector && e.isvas && e.tostr()=="#[...]") { e.tostr() }
+        assert(e is Expr.Vector && e.dots && e.tostr()=="#[...]") { e.tostr() }
     }
 
     // NATIVE

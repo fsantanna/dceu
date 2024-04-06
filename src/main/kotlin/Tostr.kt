@@ -25,7 +25,7 @@ fun Pair<Tk.Id,Tk.Tag?>.tostr (pre: Boolean = false): String {
 fun Expr.tostr (pre: Boolean = false): String {
     return when (this) {
         is Expr.Proto  -> {
-            val pars = (this.pars.map { it.tostr(pre) } + (if (this.isvas) listOf("...") else emptyList())).joinToString(",")
+            val pars = (this.pars.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList())).joinToString(",")
             "(" + this.tk.str + this.nst.cond { " :nested" } + this.rec.cond { " :rec" } + " (" + pars + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
         }
         is Expr.Export -> "export [" + this.ids.joinToString(",") + "] {\n" + this.blk.es.tostr(pre) + "}"
@@ -75,17 +75,17 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Char   -> this.tk.str
         is Expr.Num    -> this.tk.str
         is Expr.Tuple  -> {
-            val args = (this.args.map { it.tostr(pre) } + (if (this.isvas) listOf("...") else emptyList()))
+            val args = (this.args.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList()))
             "[" + args.joinToString(",") + "]"
         }
         is Expr.Vector -> {
-            val args = (this.args.map { it.tostr(pre) } + (if (this.isvas) listOf("...") else emptyList()))
+            val args = (this.args.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList()))
             "#[" + args.joinToString(",") + "]"
         }
         is Expr.Dict   -> "@[" + this.args.map { "(${it.first.tostr(pre)},${it.second.tostr(pre)})" }.joinToString(",") + "]"
         is Expr.Index  -> this.col.tostr(pre) + "[" + this.idx.tostr(pre) + "]"
         is Expr.Call   -> {
-            val args = (this.args.map { it.tostr(pre) } + (if (this.isvas) listOf("...") else emptyList())).joinToString(",")
+            val args = (this.args.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList())).joinToString(",")
             this.clo.tostr(pre) + "(" + args + ")"
         }   // TODO: collapse broadcast'
         is Expr.VA_len -> "#..."
