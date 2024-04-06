@@ -12,7 +12,7 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
     fun Expr.traverse (N: Int) {
         pub[this] = N
         when (this) {
-            is Expr.Proto  -> this.blk.traverse(1 /*MULTI*/)
+            is Expr.Proto  -> this.blk.traverse(MULTI)
             is Expr.Export -> this.blk.traverse(N)
             is Expr.Do     -> this.es.forEachIndexed { i,e ->
                 val n = when {

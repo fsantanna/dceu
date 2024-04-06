@@ -98,7 +98,7 @@ class Exec_04 {
         """
         )
         assert(
-            out == " |  anon : (lin 4, col 13) : (resume (t)(nil))\n" +
+            out == " |  anon : (lin 4, col 13) : (resume (t)())\n" +
                     " v  resume error : expected yielded coro\n"
         ) { out }
     }
@@ -153,7 +153,7 @@ class Exec_04 {
         )
         //assert(out == ":1\n:2\n1\n") { out }
         //assert(out.contains("x-coro: 0x")) { out }
-        assert(out == " |  anon : (lin 8, col 21) : (resume (t)(nil))\n" +
+        assert(out == " |  anon : (lin 8, col 21) : (resume (t)())\n" +
                 " |  anon : (lin 3, col 17) : (spawn (coro () { yield(nil) })())\n" +
                 " v  spawn error : expected task\n") { out }
     }

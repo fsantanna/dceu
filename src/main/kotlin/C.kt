@@ -997,7 +997,14 @@ fun Coder.main (tags: Tags): String {
             assert(n.type == CEU_VALUE_NUMBER);
             out = n.Number + 1 + 1 + 1;
         }
+        else
     #endif
+        {
+            if (out == CEU_MULTI) {
+        //printf(">>> %d - %d\n", S->n, I);
+                out = S->n - I;
+            }
+        }
 
         // clear locals after clear block
         // TODO: use memset=0

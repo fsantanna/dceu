@@ -188,6 +188,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         
                         // out=0 when loop iterates (!CEU_BREAK)
                         {
+                            //int out = (CEU3((X->action==CEU_ACTION_ABORT) ||) (${rets.pub[this]!!}==CEU_MULTI)) ? 0 : ${(up is Expr.Loop).cond { "!CEU_BREAK ? 0 : " }} ${rets.pub[this]!!};
                             int out = CEU3(X->action==CEU_ACTION_ABORT ? 0 : ) ${(up is Expr.Loop).cond { "!CEU_BREAK ? 0 : " }} ${rets.pub[this]!!};
                             ceux_block_leave(X->S, out);
                         }
