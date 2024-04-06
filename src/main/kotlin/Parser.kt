@@ -736,13 +736,11 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val tkx = this.tk1
                 val call = this.expr_2_pre()
-                when {
-                    (call !is Expr.Call) -> err(tkx, "resume error : expected call")
-                    (call.args.size > 1) -> err(tkx, "resume error : invalid number of arguments")
+                if (call !is Expr.Call) {
+                    err(tkx, "resume error : expected call")
                 }
                 call as Expr.Call
-                val arg = call.args.getOrNull(0) ?: Expr.Nil(Tk.Fix("nil",tk1.pos))
-                Expr.Resume(tk0, call.clo, arg)
+                Expr.Resume(tk0, call.clo, call.dots, call.args)
             }
 
             (CEU>=4 && this.acceptFix("spawn")) -> {

@@ -59,7 +59,7 @@ class Tags (outer: Expr.Call) {
             is Expr.Defer  -> this.blk.traverse()
 
             is Expr.Yield  -> this.arg.traverse()
-            is Expr.Resume -> { this.co.traverse() ; this.arg.traverse() }
+            is Expr.Resume -> { this.co.traverse() ; this.args.forEach { it.traverse() } }
 
             is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.args.forEach { it.traverse() } }
             is Expr.Delay  -> {}

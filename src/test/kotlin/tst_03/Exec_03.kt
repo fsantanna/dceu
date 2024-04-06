@@ -43,7 +43,7 @@ class Exec_03 {
             val f
             resume f()
         """)
-        assert(out == " |  anon : (lin 3, col 13) : (resume (f)(nil))\n" +
+        assert(out == " |  anon : (lin 3, col 13) : (resume (f)())\n" +
                 " v  resume error : expected yielded coro\n") { out }
     }
     @Test
@@ -148,7 +148,7 @@ class Exec_03 {
             resume co()
             resume co()
         """)
-        assert(out == " |  anon : (lin 4, col 13) : (resume (co)(nil))\n" +
+        assert(out == " |  anon : (lin 4, col 13) : (resume (co)())\n" +
                 " v  resume error : expected yielded coro\n") { out }
     }
     @Test
@@ -161,7 +161,7 @@ class Exec_03 {
             resume co()
             resume co()
         """)
-        assert(out == " |  anon : (lin 7, col 13) : (resume (co)(nil))\n" +
+        assert(out == " |  anon : (lin 7, col 13) : (resume (co)())\n" +
                 " v  resume error : expected yielded coro\n") { out }
     }
     @Test

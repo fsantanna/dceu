@@ -168,7 +168,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             }
             is Expr.Resume -> {
                 this.co.traverse()
-                this.arg.traverse()
+                this.args.forEach { it.traverse() }
             }
 
             is Expr.Spawn  -> {

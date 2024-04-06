@@ -352,12 +352,20 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 """
             }
 
-            is Expr.Resume -> """
+            is Expr.Resume -> {
+                assert(this.args.size <= 1)
+                """
                 ${this.co.code()}
-                ${this.arg.code()}
-                ceux_resume(X, 1 /* TODO: MULTI */, ${rets.pub[this]!!}, CEU_ACTION_RESUME CEU4(COMMA X->now));
+                ${this.args.map { """
+                    ${it.code()}
+                """ }.joinToString("")}
+                ${(this.args.size == 0).cond { """
+                    ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+                """ }}
+                ceux_resume(X, 1 /*${this.args.size}*/, ${rets.pub[this]!!}, CEU_ACTION_RESUME CEU4(COMMA X->now));
                 ${this.check_error_aborted(this.toerr())}
             """
+            }
 
             is Expr.Yield -> this.PI0("""
                 { // YIELD ${this.dump()}
@@ -405,8 +413,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         })}
                     """ }}
                     ${this.tsk.code()}
-                    ${this.args.mapIndexed { i, e -> """
-                        ${e.code()}
+                    ${this.args.map { """
+                        ${it.code()}
                     """ }.joinToString("")}
                     {
                         ceux_spawn(X, ${this.args.size}, X->now);

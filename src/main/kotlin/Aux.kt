@@ -46,7 +46,7 @@ fun Expr.has_block (): Boolean {
         is Expr.Break -> this.cnd.has_block() || (this.e?.has_block() ?: false)
         is Expr.Skip -> this.cnd.has_block()
         is Expr.Yield -> this.arg.has_block()
-        is Expr.Resume -> this.arg.has_block()
+        is Expr.Resume -> this.args.any { it.has_block() }
         is Expr.Spawn -> this.args.any { it.has_block() }
         is Expr.Pub -> this.tsk?.has_block() ?: false
         is Expr.Toggle -> this.tsk.has_block() || this.on.has_block()

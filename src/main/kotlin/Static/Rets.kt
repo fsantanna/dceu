@@ -56,15 +56,13 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
             }
             is Expr.Resume -> {
                 this.co.traverse(1)
-                this.arg.traverse(1)    // TODO: args MULTI
+                this.args.forEach { it.traverse(1) }
             }
 
             is Expr.Spawn  -> {
                 this.tsks?.traverse(1)
                 this.tsk.traverse(1)
-                this.args.forEachIndexed { i,arg ->
-                    arg.traverse(/*if (i==this.args.lastIndex) MULTI else*/ 1)
-                }
+                this.args.forEach { it.traverse(1) }
             }
             is Expr.Delay  -> {}
             is Expr.Pub    -> this.tsk?.traverse(1)
