@@ -67,7 +67,7 @@ class Parser_03 {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(resume (f())(nil))") { e.tostr() }
+        assert(e.tostr() == "(resume (f())())") { e.tostr() }
     }
     @Test
     fun bb_07_yield_err() {
