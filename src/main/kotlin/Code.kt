@@ -411,8 +411,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
 
             is Expr.Spawn -> {
                 assert(!this.dots)
-                assert(rets.pub[this].let { it==0 || it==1 })
-                """
+                this.PI0("""
                 { // SPAWN | ${this.dump()}
                     ${(CEU >= 5).cond { """
                         ${this.tsks.cond2({
@@ -428,10 +427,9 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     {
                         ceux_spawn(X, ${this.args.size}, X->now);
                         ${this.check_error_aborted(this.toerr())}
-                        ${(rets.pub[this] == 0).cond { "ceux_pop(X->S, 1);" }}
                     }
                 } // SPAWN | ${this.dump()}
-            """
+            """)
             }
             is Expr.Delay -> """
                 // DELAY | ${this.dump()}

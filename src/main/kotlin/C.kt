@@ -1002,7 +1002,7 @@ fun Coder.main (tags: Tags): String {
         {
             if (out == CEU_MULTI) {
         //printf(">>> %d - %d\n", S->n, I);
-                out = S->n - I;
+                out = S->n - I - 1;
             }
         }
 

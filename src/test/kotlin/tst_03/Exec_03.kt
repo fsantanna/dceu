@@ -1604,7 +1604,7 @@ class Exec_03 {
             resume (coroutine (clo2)) ()
             println(:ok)
         """)
-        assert(out == " |  anon : (lin 8, col 13) : (resume (coroutine(clo2))(nil))\n" +
+        assert(out == " |  anon : (lin 8, col 13) : (resume (coroutine(clo2))())\n" +
                 " |  anon : (lin 6, col 17) : coroutine(clo1)()\n" +
                 " v  call error : expected function\n") { out }
     }
