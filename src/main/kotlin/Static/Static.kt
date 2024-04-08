@@ -148,7 +148,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             }
 
             is Expr.Yield  -> {
-                this.args.forEach { it.traverse() }
+                this.args.traverse()
                 when {
                     ups.any(this) { defer -> (defer is Expr.Defer) }
                         -> err(this.tk, "yield error : unexpected enclosing defer")
@@ -168,13 +168,13 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             }
             is Expr.Resume -> {
                 this.co.traverse()
-                this.args.forEach { it.traverse() }
+                this.args.traverse()
             }
 
             is Expr.Spawn  -> {
                 this.tsks?.traverse()
                 this.tsk.traverse()
-                this.args.forEach { it.traverse() }
+                this.args.traverse()
                 if (this.tsks == null) {
                     defer_catch_spawn_tasks.add(ups.first(this) { it is Expr.Do } as Expr.Do)
                 }
@@ -217,29 +217,16 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.Bool   -> {}
             is Expr.Char   -> {}
             is Expr.Num    -> {}
-            is Expr.Tuple  -> {
-                if (this.dots) {
-                    this.check_dots()
-                }
-                this.args.forEach { it.traverse() }
-            }
-            is Expr.Vector -> {
-                if (this.dots) {
-                    this.check_dots()
-                }
-                this.args.forEach { it.traverse() }
-            }
+            is Expr.Tuple  -> this.args.traverse()
+            is Expr.Vector -> this.args.traverse()
             is Expr.Dict   -> this.args.forEach { (k,v) -> k.traverse() ; v.traverse() }
             is Expr.Index  -> {
                 this.col.traverse()
                 this.idx.traverse()
             }
             is Expr.Call   -> {
-                if (this.dots) {
-                    this.check_dots()
-                }
                 this.clo.traverse()
-                this.args.forEach { it.traverse() }
+                this.args.traverse()
                 if (this.clo is Expr.Acc && this.clo.tk.str=="tasks") {
                     defer_catch_spawn_tasks.add(ups.first(this) { it is Expr.Do } as Expr.Do)
                 }
@@ -250,6 +237,12 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.VA_idx -> {
                 this.check_dots()
                 this.idx.traverse()
+            }
+            is Expr.Args -> {
+                if (this.dots) {
+                    this.check_dots()
+                }
+                this.es.forEach { it.traverse() }
             }
         }
     }

@@ -133,10 +133,10 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr.Do, val blk: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
 
-    data class Yield  (val tk_: Tk.Fix, val dots: Boolean, val args: List<Expr>): Expr(N++, tk_)
-    data class Resume (val tk_: Tk.Fix, val co: Expr, val dots: Boolean, val args: List<Expr>): Expr(N++, tk_)
+    data class Yield  (val tk_: Tk.Fix, val args: Expr.Args): Expr(N++, tk_)
+    data class Resume (val tk_: Tk.Fix, val co: Expr, val args: Expr.Args): Expr(N++, tk_)
 
-    data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val tsk: Expr, val dots: Boolean, val args: List<Expr>): Expr(N++, tk_)
+    data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val tsk: Expr, val args: Expr.Args): Expr(N++, tk_)
     data class Delay  (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Pub    (val tk_: Tk, val tsk: Expr?): Expr(N++, tk_)
     data class Toggle (val tk_: Tk.Fix, val tsk: Expr, val on: Expr): Expr(N++, tk_)
@@ -148,13 +148,14 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Bool   (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Char   (val tk_: Tk.Chr): Expr(N++, tk_)
     data class Num    (val tk_: Tk.Num): Expr(N++, tk_)
-    data class Tuple  (val tk_: Tk.Fix, val dots: Boolean, val args: List<Expr>): Expr(N++, tk_)
-    data class Vector (val tk_: Tk.Fix, val dots: Boolean, val args: List<Expr>): Expr(N++, tk_)
+    data class Tuple  (val tk_: Tk.Fix, val args: Expr.Args): Expr(N++, tk_)
+    data class Vector (val tk_: Tk.Fix, val args: Expr.Args): Expr(N++, tk_)
     data class Dict   (val tk_: Tk.Fix, val args: List<Pair<Expr,Expr>>): Expr(N++, tk_)
     data class Index  (val tk_: Tk, val col: Expr, val idx: Expr): Expr(N++, tk_)
-    data class Call   (val tk_: Tk, val clo: Expr, val dots: Boolean, val args: List<Expr>): Expr(N++, tk_)
+    data class Call   (val tk_: Tk, val clo: Expr, val args: Expr.Args): Expr(N++, tk_)
     data class VA_len (val tk_: Tk.Fix): Expr(N++, tk_)
     data class VA_idx (val tk_: Tk.Fix, val idx: Expr): Expr(N++, tk_)
+    data class Args   (val tk_: Tk.Fix, val dots: Boolean, val es: List<Expr>): Expr(N++, tk_)
 }
 
 fun exec (cmds: List<String>): Pair<Boolean,String> {
@@ -198,12 +199,10 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
             Tk.Fix("main", pos),
             Expr.Proto (
                 Tk.Fix("func",pos), false, false, null,
-                true,
-                listOf(),
+                true, listOf(),
                 Expr.Do(Tk.Fix("",pos), glbs + es)
             ),
-            false,
-            listOf()
+            Expr.Args(Tk.Fix("(",pos), false, listOf())
         )
         val ups    = Ups(outer)
         val tags   = Tags(outer)

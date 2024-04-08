@@ -69,10 +69,10 @@ class Ups (val outer: Expr.Call) {
             is Expr.Catch  -> this.map(listOf(this.cnd, this.blk))
             is Expr.Defer  -> this.map(listOf(this.blk))
 
-            is Expr.Yield  -> this.map(this.args)
-            is Expr.Resume -> this.map(listOf(this.co) + this.args)
+            is Expr.Yield  -> this.map(listOf(this.args))
+            is Expr.Resume -> this.map(listOf(this.co,this.args))
 
-            is Expr.Spawn  -> this.map(listOfNotNull(this.tsks, this.tsk) + this.args)
+            is Expr.Spawn  -> this.map(listOfNotNull(this.tsks, this.tsk, this.args))
             is Expr.Delay  -> emptyMap()
             is Expr.Pub    -> this.map(listOfNotNull(this.tsk))
             is Expr.Toggle -> this.map(listOf(this.tsk, this.on))
@@ -84,14 +84,15 @@ class Ups (val outer: Expr.Call) {
             is Expr.Bool   -> emptyMap()
             is Expr.Char   -> emptyMap()
             is Expr.Num    -> emptyMap()
-            is Expr.Tuple  -> this.map(this.args)
-            is Expr.Vector -> this.map(this.args)
+            is Expr.Tuple  -> this.map(listOf(this.args))
+            is Expr.Vector -> this.map(listOf(this.args))
             is Expr.Dict   -> this.map(this.args.map { listOf(it.first,it.second) }.flatten())
             is Expr.Index  -> this.map(listOf(this.col, this.idx))
-            is Expr.Call   -> this.map(listOf(this.clo) + this.args)
+            is Expr.Call   -> this.map(listOf(this.clo,this.args))
 
             is Expr.VA_len -> emptyMap()
             is Expr.VA_idx -> this.map(listOf(this.idx))
+            is Expr.Args   -> this.map(this.es)
         }
     }
 }

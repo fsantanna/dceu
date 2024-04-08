@@ -229,20 +229,21 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             is Expr.Pass   -> this.e.locs()
             is Expr.Catch  -> this.cnd.locs() + this.blk.locs()
             is Expr.Defer  -> this.blk.locs()
-            is Expr.Yield  -> this.args.sumOf { it.locs() }
-            is Expr.Resume -> this.co.locs() + this.args.sumOf { it.locs() }
-            is Expr.Spawn  -> (this.tsks?.locs() ?: 0) + this.tsk.locs() + this.args.sumOf { it.locs() }
+            is Expr.Yield  -> this.args.locs()
+            is Expr.Resume -> this.co.locs() + this.args.locs()
+            is Expr.Spawn  -> (this.tsks?.locs() ?: 0) + this.tsk.locs() + this.args.locs()
             is Expr.Pub    -> this.tsk?.locs() ?: 0
             is Expr.Toggle -> this.tsk.locs() + this.on.locs()
-            is Expr.Tuple  -> this.args.sumOf { it.locs() }
-            is Expr.Vector -> this.args.sumOf { it.locs() }
+            is Expr.Tuple  -> this.args.locs()
+            is Expr.Vector -> this.args.locs()
             is Expr.Dict   -> this.args.sumOf { it.first.locs() ; it.second.locs() }
             is Expr.Index  -> this.col.locs() + this.idx.locs()
-            is Expr.Call   -> this.clo.locs() + this.args.sumOf { it.locs() }
+            is Expr.Call   -> this.clo.locs() + this.args.locs()
             is Expr.VA_idx -> this.idx.locs()
             is Expr.Enum, is Expr.Data, is Expr.Delay, is Expr.Nat, is Expr.Acc -> 0
             is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> 0
             is Expr.VA_len -> 0
+            is Expr.Args -> this.es.sumOf { it.locs() }
         }
     }
 
@@ -386,10 +387,10 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 this.blk.traverse()
             }
 
-            is Expr.Yield  -> this.args.forEach { it.traverse() }
-            is Expr.Resume -> { this.co.traverse() ; this.args.forEach { it.traverse() } }
+            is Expr.Yield  -> this.args.traverse()
+            is Expr.Resume -> { this.co.traverse() ; this.args.traverse() }
 
-            is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.args.forEach { it.traverse() } }
+            is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.args.traverse() }
             is Expr.Delay  -> {}
             is Expr.Pub    -> this.tsk?.traverse()
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
@@ -449,18 +450,19 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             is Expr.Bool   -> {}
             is Expr.Char   -> {}
             is Expr.Num    -> {}
-            is Expr.Tuple  -> this.args.forEach{ it.traverse() }
-            is Expr.Vector -> this.args.forEach{ it.traverse() }
+            is Expr.Tuple  -> this.args.traverse()
+            is Expr.Vector -> this.args.traverse()
             is Expr.Dict   -> this.args.forEach { it.first.traverse() ; it.second.traverse() }
             is Expr.Index  -> {
                 this.col.traverse()
                 this.idx.traverse()
                 data(this)
             }
-            is Expr.Call   -> { this.clo.traverse() ; this.args.forEach { it.traverse() } }
+            is Expr.Call   -> { this.clo.traverse() ; this.args.traverse() }
 
             is Expr.VA_len -> {}
             is Expr.VA_idx -> this.idx.traverse()
+            is Expr.Args   -> this.es.forEach { it.traverse() }
         }
     }
 }

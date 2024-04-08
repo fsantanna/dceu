@@ -45,17 +45,18 @@ fun Expr.has_block (): Boolean {
         is Expr.Pass -> this.e.has_block()
         is Expr.Break -> this.cnd.has_block() || (this.e?.has_block() ?: false)
         is Expr.Skip -> this.cnd.has_block()
-        is Expr.Yield -> this.args.any { it.has_block() }
-        is Expr.Resume -> this.args.any { it.has_block() }
-        is Expr.Spawn -> this.args.any { it.has_block() }
+        is Expr.Yield -> this.args.has_block()
+        is Expr.Resume -> this.args.has_block()
+        is Expr.Spawn -> this.args.has_block()
         is Expr.Pub -> this.tsk?.has_block() ?: false
         is Expr.Toggle -> this.tsk.has_block() || this.on.has_block()
-        is Expr.Tuple -> this.args.any { it.has_block() }
-        is Expr.Vector -> this.args.any { it.has_block() }
+        is Expr.Tuple -> this.args.has_block()
+        is Expr.Vector -> this.args.has_block()
         is Expr.Dict -> this.args.any { it.first.has_block() || it.second.has_block()}
         is Expr.Index -> this.col.has_block() || this.idx.has_block()
-        is Expr.Call -> this.clo.has_block() || this.args.any { it.has_block() }
+        is Expr.Call -> this.clo.has_block() || this.args.has_block()
         is Expr.VA_idx -> this.idx.has_block()
+        is Expr.Args -> this.es.any { it.has_block() }
     }
 }
 

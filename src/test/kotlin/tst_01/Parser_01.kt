@@ -114,21 +114,21 @@ class Parser_01 {
         val l = lexer(" f (1.5F, x) ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
-        assert(e is Expr.Call && e.tk.str=="f" && e.clo is Expr.Acc && e.args.size==2)
+        assert(e is Expr.Call && e.tk.str=="f" && e.clo is Expr.Acc && e.args.es.size==2)
     }
     @Test
     fun dd_02_call() {
         val l = lexer(" f() ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
-        assert(e is Expr.Call && e.clo.tk.str=="f" && e.clo is Expr.Acc && e.args.size==0)
+        assert(e is Expr.Call && e.clo.tk.str=="f" && e.clo is Expr.Acc && e.args.es.size==0)
     }
     @Test
     fun dd_03_call() {
         val l = lexer(" f(x,8)() ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
-        assert(e is Expr.Call && e.clo is Expr.Call && e.args.size==0)
+        assert(e is Expr.Call && e.clo is Expr.Call && e.args.es.size==0)
         assert(e.tostr() == "f(x,8)()")
     }
     @Test
@@ -151,7 +151,7 @@ class Parser_01 {
         val l = lexer(" [ 1.5F, x] ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
-        assert(e is Expr.Tuple && e.args.size==2)
+        assert(e is Expr.Tuple && e.args.es.size==2)
     }
     @Test
     fun ee_02_tuple() {
@@ -171,7 +171,7 @@ class Parser_01 {
         val l = lexer("[1.5F,] ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
-        assert(e is Expr.Tuple && e.args.size==1)
+        assert(e is Expr.Tuple && e.args.es.size==1)
     }
 
     // DICT
@@ -229,7 +229,7 @@ class Parser_01 {
         val l = lexer(" #[ 1,x , :number,2 ] ")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Vector && e.args.size==4)
+        assert(e is Expr.Vector && e.args.es.size==4)
     }
     @Test
     fun vector2() {
@@ -698,14 +698,14 @@ class Parser_01 {
         val l = lexer("[...]")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Tuple && e.dots && e.tostr()=="[...]") { e.tostr() }
+        assert(e is Expr.Tuple && e.args.dots && e.tostr()=="[...]") { e.tostr() }
     }
     @Test
     fun ss_10_vec() {
         val l = lexer("#[...]")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Vector && e.dots && e.tostr()=="#[...]") { e.tostr() }
+        assert(e is Expr.Vector && e.args.dots && e.tostr()=="#[...]") { e.tostr() }
     }
     @Test
     fun ss_11_vec() {

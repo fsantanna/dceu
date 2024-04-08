@@ -59,16 +59,10 @@ fun Expr.tostr (pre: Boolean = false): String {
         }
         is Expr.Defer  -> "defer " + this.blk.tostr(pre)
 
-        is Expr.Yield  -> {
-            val args = (this.args.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList())).joinToString(",")
-            "yield(" + args + ")"
-        }
-        is Expr.Resume -> {
-            val args = (this.args.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList())).joinToString(",")
-            "(resume (" + this.co.tostr(pre) + ")(" + args + "))"
-        }
+        is Expr.Yield  -> "yield(" + this.args.tostr(pre) + ")"
+        is Expr.Resume -> "(resume (" + this.co.tostr(pre) + ")(" + this.args.tostr(pre) + "))"
 
-        is Expr.Spawn  -> "(spawn " + this.tsk.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")" + this.tsks.cond { " in ${this.tsks!!.tostr(pre)}" } + ")"
+        is Expr.Spawn  -> "(spawn " + this.tsk.tostr(pre) + "(" + this.args.tostr(pre) + ")"
         is Expr.Delay  -> "delay"
         is Expr.Pub    -> this.tsk.cond { it.tostr(pre)+"." } + "pub"
         is Expr.Toggle -> "(toggle ${this.tsk.tostr(pre)}(${this.on.tostr(pre)}))"
@@ -80,22 +74,14 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Bool   -> this.tk.str
         is Expr.Char   -> this.tk.str
         is Expr.Num    -> this.tk.str
-        is Expr.Tuple  -> {
-            val args = (this.args.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList()))
-            "[" + args.joinToString(",") + "]"
-        }
-        is Expr.Vector -> {
-            val args = (this.args.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList()))
-            "#[" + args.joinToString(",") + "]"
-        }
+        is Expr.Tuple  -> "[" + this.args.tostr(pre) + "]"
+        is Expr.Vector -> "#[" + this.args.tostr(pre) + "]"
         is Expr.Dict   -> "@[" + this.args.map { "(${it.first.tostr(pre)},${it.second.tostr(pre)})" }.joinToString(",") + "]"
         is Expr.Index  -> this.col.tostr(pre) + "[" + this.idx.tostr(pre) + "]"
-        is Expr.Call   -> {
-            val args = (this.args.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList())).joinToString(",")
-            this.clo.tostr(pre) + "(" + args + ")"
-        }   // TODO: collapse broadcast'
+        is Expr.Call   -> this.clo.tostr(pre) + "(" + this.args.tostr(pre) + ")" // TODO: collapse broadcast'
         is Expr.VA_len -> "#..."
         is Expr.VA_idx -> "...[${this.idx.tostr(pre)}]"
+        is Expr.Args   -> (this.es.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList())).joinToString(",")
     }.let {
         when {
             !pre           -> it

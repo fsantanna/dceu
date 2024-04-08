@@ -58,10 +58,10 @@ class Tags (outer: Expr.Call) {
             is Expr.Catch  -> { this.cnd.traverse() ; this.blk.traverse() }
             is Expr.Defer  -> this.blk.traverse()
 
-            is Expr.Yield  -> this.args.forEach { it.traverse() }
-            is Expr.Resume -> { this.co.traverse() ; this.args.forEach { it.traverse() } }
+            is Expr.Yield  -> this.args.traverse()
+            is Expr.Resume -> { this.co.traverse() ; this.args.traverse() }
 
-            is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.args.forEach { it.traverse() } }
+            is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.args.traverse() }
             is Expr.Delay  -> {}
             is Expr.Pub    -> this.tsk?.traverse()
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
@@ -73,17 +73,18 @@ class Tags (outer: Expr.Call) {
             is Expr.Bool   -> {}
             is Expr.Char   -> {}
             is Expr.Num    -> {}
-            is Expr.Tuple  -> this.args.forEach{ it.traverse() }
-            is Expr.Vector -> this.args.forEach{ it.traverse() }
+            is Expr.Tuple  -> this.args.traverse()
+            is Expr.Vector -> this.args.traverse()
             is Expr.Dict   -> this.args.forEach { it.first.traverse() ; it.second.traverse() }
             is Expr.Index  -> {
                 this.col.traverse()
                 this.idx.traverse()
             }
-            is Expr.Call   -> { this.clo.traverse() ; this.args.forEach { it.traverse() } }
+            is Expr.Call   -> { this.clo.traverse() ; this.args.traverse() }
 
             is Expr.VA_len -> {}
             is Expr.VA_idx -> this.idx.traverse()
+            is Expr.Args   -> this.es.forEach { it.traverse() }
         }
     }
 }
