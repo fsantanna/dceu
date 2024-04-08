@@ -2685,7 +2685,7 @@ class Exec_01 {
         //assert(out == "nil\n") { out }
     }
     @Test
-    fun if3_err() {
+    fun if3_err_ok() {
         val out = test(
             """
             var x
@@ -2695,7 +2695,21 @@ class Exec_01 {
         """.trimIndent()
         )
         //assert(out == "anon : (lin 3, col 13) : if error : invalid condition\n") { out }
-        assert(out == "anon : (lin 3, col 19) : expected expression : have \"}\"\n") { out }
+        //assert(out == "anon : (lin 3, col 19) : expected expression : have \"}\"\n") { out }
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun if3x_err_ok() {
+        val out = test(
+            """
+            var x
+            set x = 10
+            set x = if (false) {1} else {}
+            println(x)
+        """.trimIndent()
+        )
+        //assert(out == "anon : (lin 3, col 13) : if error : invalid condition\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun if4_err() {
@@ -3216,7 +3230,7 @@ class Exec_01 {
         val out = test(
             """
             var id = func (...) {
-                ...
+                (...)
             }
             println(id(1,2,3))
         """
@@ -3801,7 +3815,6 @@ class Exec_01 {
     }
     @Test
     fun op_arithX() {
-        STACK = 64
         val out = test("""
             println(((10 + -20)*2)/5)
         """, true

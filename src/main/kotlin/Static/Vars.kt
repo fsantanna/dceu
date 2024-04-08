@@ -214,7 +214,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             is Expr.Proto  -> this.blk.locs()
             is Expr.Do     -> {
                 val n = this.es.count { it is Expr.Dcl || it is Expr.Defer }
-                val nn = n + this.es.maxOf { it.locs() }
+                val nn = n + (this.es.maxOfOrNull { it.locs() } ?: 0)
                 blk_to_locs[this] = Pair(n, nn)
                 //println(listOf(n, this.es.maxOf { it.locs() }, this))
                 nn

@@ -1334,16 +1334,10 @@ class Parser (lexer_: Lexer)
         return this.expr_0_out()
     }
 
-    fun exprs (empty: Boolean=false): List<Expr> {
+    fun exprs (): List<Expr> {
         val ret = mutableListOf<Expr>()
         while (!this.checkFix("}") && !this.checkEnu("Eof")) {
             ret.add(this.expr())
-        }
-        when {
-            (ret.size > 0) -> {}
-            empty -> {}
-            (CEU >= 99) -> ret.add(Expr.Pass(this.tk0 as Tk.Fix, Expr.Nil(Tk.Fix("nil", this.tk0.pos))))
-            else -> err_expected(this.tk1, "expression")
         }
         ret.forEachIndexed { i,e ->
             val ok = (i == ret.lastIndex) || !e.is_innocuous()

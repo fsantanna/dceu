@@ -48,13 +48,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
         return "\"${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : $src\""
     }
 
-    // POP_IF_0
-    fun Expr.PI0 (v: String): String {
-        return v + (rets.pub[this]!! == 0).cond { """
-            ceux_pop(X->S,1); // PI0 (${this.dump()})
-        """ }
-    }
-
     fun Expr.check_error_aborted (msg: String): String {
         val exe = ups.exe(this)
         return """
@@ -112,7 +105,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 """)
 
                 //assert(!this.isva) { "TODO" }
-                this.PI0(""" // CREATE | ${this.dump()}
+                """ // CREATE | ${this.dump()}
                 {
                     ${isnst.cond { "assert(X->exe!=NULL && X->exe->type==CEU_VALUE_EXE_TASK);" }}
                     CEU_Value clo = ceu_create_clo${istsk.cond { "_task" }} (
@@ -140,7 +133,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     """
                     }.joinToString("\n")}
                 }
-                """)
+                """
             }
             is Expr.Export -> this.blk.es.code()
             is Expr.Do -> {
@@ -202,7 +195,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 // DCL | ${this.dump()}
                 ${(this.src != null).cond {
                     val (stk,idx) = vars.idx("X",this,this)
-                    this.PI0("""
+                    """
                     ${this.src!!.code()}
                     ceux_copy($stk, $idx, XX(-1));
                     
@@ -217,16 +210,16 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         }
                         """ }
                     }}}
-                    """)
+                    """
                 }}
             """ }
-            is Expr.Set -> this.PI0("""
+            is Expr.Set -> """
                 { // SET | ${this.dump()}
                     ${this.src.code()}  // src is on the stack and should be returned
                     // <<< SRC | DST >>>
                     ${this.dst.code()}  // dst should not pop src
                 }
-            """)
+            """
             is Expr.If -> """
                 { // IF | ${this.dump()}
                     ${this.cnd.code()}
@@ -360,27 +353,21 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 ${this.args.map { """
                     ${it.code()}
                 """ }.joinToString("")}
-                ${(this.args.size == 0).cond { """
-                    ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
-                """ }}
-                ceux_resume(X, 1 /*${this.args.size}*/, ${rets.pub[this]!!}, CEU_ACTION_RESUME CEU4(COMMA X->now));
+                ceux_resume(X, ${this.args.size}, ${rets.pub[this]!!}, CEU_ACTION_RESUME CEU4(COMMA X->now));
                 ${this.check_error_aborted(this.toerr())}
             """
             }
 
             is Expr.Yield -> {
                 assert(this.args.size <= 1)
-                this.PI0("""
+                """
                 { // YIELD ${this.dump()}
-                    ${this.args.map { """
+                    ${this.args.map { """  // TODO
                         ${it.code()}
                     """ }.joinToString("")}
-                    ${(this.args.size == 0).cond { """
-                        ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
-                    """ }}
                     X->exe->status = CEU_EXE_STATUS_YIELDED;
                     X->exe->pc = $n;
-                    return 1;   // TODO: args MULTI
+                    return ${this.args.size};
                 case $n: // YIELD ${this.dump()}
                     if (X->action == CEU_ACTION_ABORT) {
                         //ceux_push(X->S, 1, (CEU_Value){CEU_VALUE_NIL}); // fake out=1
@@ -393,25 +380,29 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     }
                 #endif
                     //assert(X->args<=1 && "TODO: varargs resume");
-                #if 0
+                #if 1
+                    // TODO: nao tem mais como fugir disso aqui
                     // fill missing args with nils
-                    {
-                        int N = ${rets.pub[this]!!} - X->args;
-                        assert(N > 0);
-                        for (int i=0; i<N; i++) {
-                            for (int i=0; i<N; i++) {
-                                ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+                    ${rets.pub[this]!!.let { v -> (v != MULTI).cond { """
+                        {
+                            int N = $v - X->args2;
+                            if (N > 0) {
+                                for (int i=0; i<N; i++) {
+                                    ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+                                }
+                            } else if (N < 0) {
+                                ceux_pop_n(X->S, -N);
                             }
-                        }
-                    }
+                        }                        
+                    """ }}}
                 #endif
                 }
-            """)
+            """
             }
 
             is Expr.Spawn -> {
                 assert(!this.dots)
-                this.PI0("""
+                """
                 { // SPAWN | ${this.dump()}
                     ${(CEU >= 5).cond { """
                         ${this.tsks.cond2({
@@ -429,7 +420,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         ${this.check_error_aborted(this.toerr())}
                     }
                 } // SPAWN | ${this.dump()}
-            """)
+                """
             }
             is Expr.Delay -> """
                 // DELAY | ${this.dump()}
@@ -507,7 +498,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     }
                     x
                 }
-                this.PI0(when (this.tk_.tag) {
+                when (this.tk_.tag) {
                     null   -> body + "\n" + """
                         ${this.check_error_aborted(this.toerr())}
                         ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
@@ -523,7 +514,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         }
                         "ceux_push(X->S, 1, ((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} }));"
                     }
-                })
+                }
             }
             is Expr.Acc -> {
                 val (stk,idx) = vars.idx("X",this)
@@ -532,16 +523,16 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         // ACC - SET | ${this.dump()}
                         ceux_repl($stk, $idx, ceux_peek(X->S,XX(-1)));
                     """
-                    else -> this.PI0("ceux_push(X->S, 1, ceux_peek($stk, $idx));\n")
+                    else -> "ceux_push(X->S, 1, ceux_peek($stk, $idx));\n"
                 }
             }
-            is Expr.Nil  -> this.PI0("ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });")
-            is Expr.Tag  -> this.PI0("ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_${this.tk.str.tag2c()}} });")
-            is Expr.Bool -> this.PI0("ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} });")
-            is Expr.Char -> this.PI0("ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_CHAR, {.Char=${this.tk.str}} });")
-            is Expr.Num  -> this.PI0("ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} });")
+            is Expr.Nil  -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });"
+            is Expr.Tag  -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_${this.tk.str.tag2c()}} });"
+            is Expr.Bool -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} });"
+            is Expr.Char -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_CHAR, {.Char=${this.tk.str}} });"
+            is Expr.Num  -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} });"
 
-            is Expr.Tuple -> this.PI0("""
+            is Expr.Tuple -> """
                 { // TUPLE | ${this.dump()}
                     ${this.args.map {  it.code() }.joinToString("")}
                     int dots = ${this.dots.cond2({ """
@@ -552,8 +543,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     ;
                     ceux_tuple(X->S, ${this.args.size} + dots);
                 }
-            """)
-            is Expr.Vector -> this.PI0("""
+            """
+            is Expr.Vector -> """
                 { // VECTOR | ${this.dump()}
                     ${this.args.map {  it.code() }.joinToString("")}
                     int dots = ${this.dots.cond2({ """
@@ -564,8 +555,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     ;
                     ceux_vector(X->S, ${this.args.size} + dots);
                 }
-            """)
-            is Expr.Dict -> this.PI0("""
+            """
+            is Expr.Dict -> """
                 { // DICT | ${this.dump()}
                     ceux_push(X->S, 1, ceu_create_dict());
                     ${this.args.map { """
@@ -578,7 +569,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         }
                     """ }.joinToString("")}
                 }
-            """)
+            """
             is Expr.Index -> {
                 val idx = vars.data(this).let { if (it == null) -1 else it.first!! }
                 """
@@ -605,14 +596,14 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         }
                         """
                     }
-                    else -> this.PI0("""
+                    else -> """
                         {
                             // [idx,col]
                             ceux_col_get(X->S);
                             // [val]
                             CEU_ERROR_CHK_STK(continue, ${this.toerr()});
                         }
-                    """)
+                    """
                 } + """
                 }
                 """
@@ -648,12 +639,30 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 """
             }
 
-            is Expr.VA_len -> this.PI0("ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=(X->args)-(ceux_peek(X->S,ceux_clo(X)).Dyn->Clo.pars)} });")
-            is Expr.VA_idx -> this.PI0("""
+            is Expr.VA_len -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=(X->args)-(ceux_peek(X->S,ceux_clo(X)).Dyn->Clo.pars)} });"
+            is Expr.VA_idx -> """
                 ${this.idx.code()}
                 ceux_dots_get(X);
                 CEU_ERROR_CHK_STK(continue, ${this.toerr()});
-            """)
+            """
+        }.let {
+            val ext = rets.pub[this]    // what external expects from me
+            val int = this.rets(sta)    // what internal offers
+            //println(this)
+            //println(this.tk)
+            //println("ext=" + ext + " / int=" + int)
+            it + when {
+                (int == ext) -> ""
+                (int == HUB) -> ""      // int just mediates, work is in one of the sides
+                (int == MULTI) -> ""    // ext forces int to adjust there
+                (int==1 && ext==0) -> """
+                    ceux_pop(X->S,1); // adjust (${this.dump()})
+                """
+                (int==0 && ext==1) -> """
+                    ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+                """
+                else -> TODO()
+            }
         }
     }
 }

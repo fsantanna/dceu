@@ -1,5 +1,29 @@
 package dceu
 
+val HUB = -2
+
+fun Expr.rets (sta: Static): Int {
+    return when (this) {
+        is Expr.Enum, is Expr.Data, is Expr.Defer -> 0
+        is Expr.Export -> TODO()
+        is Expr.Do -> if (this.es.size == 0) 0 else HUB
+        is Expr.If -> HUB
+        is Expr.Loop, is Expr.Break, is Expr.Skip, is Expr.Pass -> HUB
+        is Expr.Resume, is Expr.Call -> MULTI
+        is Expr.Catch -> HUB
+        is Expr.Yield -> MULTI
+        is Expr.Delay -> HUB
+        is Expr.Toggle -> MULTI
+        is Expr.Dcl -> if (this.src==null || sta.funs.contains(this.src)) 0 else 1
+        is Expr.Set -> 1
+        is Expr.Spawn, is Expr.Pub -> 1
+        is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.Tag -> 1
+        is Expr.Bool, is Expr.Char, is Expr.Num, is Expr.Tuple -> 1
+        is Expr.Vector, is Expr.Dict, is Expr.Index -> 1
+        is Expr.Proto, is Expr.VA_len, is Expr.VA_idx -> 1
+    }
+}
+
 class Rets (val outer: Expr.Call, val ups: Ups) {
     val pub: MutableMap<Expr,Int> = mutableMapOf()
         // how many values should Expr evaluate to?
@@ -12,7 +36,7 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
     fun Expr.traverse (N: Int) {
         pub[this] = N
         when (this) {
-            is Expr.Proto  -> this.blk.traverse(MULTI)
+            is Expr.Proto  -> this.blk.traverse(1)
             is Expr.Export -> this.blk.traverse(N)
             is Expr.Do     -> this.es.forEachIndexed { i,e ->
                 val n = when {

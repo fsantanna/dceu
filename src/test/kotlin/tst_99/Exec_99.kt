@@ -5408,10 +5408,24 @@ class Exec_99 {
             }
             task T (u) {
                 println(u.pub())
+                nil
             }
             spawn T (spawn U())
         """)
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun zb_08x_all_valgrind() {
+        val out = test("""
+            task U () {
+                yield()
+            }
+            task T (u) {
+                ;;println(nil)
+            }
+            spawn T (spawn U())
+        """)
+        assert(out == "[]\n") { out }
     }
     @Test
     fun zb_10_all() {

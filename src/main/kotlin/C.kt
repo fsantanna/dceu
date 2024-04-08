@@ -757,6 +757,7 @@ fun Coder.main (tags: Tags): String {
         int base;   // index just above end of args
         int args;   // number of args, including `...`
     #if CEU >= 3
+        int args2;  // number of args to resume, including `...`
         CEU_ACTION action;
         union {
             struct CEU_Exe* exe;
@@ -1022,6 +1023,7 @@ fun Coder.main (tags: Tags): String {
         // fill missing args with nils
         {
             int N = clo->pars - *inp;
+    //assert(N >= 0);
             for (int i=0; i<N; i++) {
                 ceux_push(S, 1, (CEU_Value) { CEU_VALUE_NIL });
                 (*inp)++;
@@ -1088,7 +1090,7 @@ fun Coder.main (tags: Tags): String {
         // [clo,args,upvs,locs]
         //           ^ base
 
-        CEUX X2 = { X1->S, base, inp CEU3(COMMA CEU_ACTION_CALL COMMA {.exe=X1->exe}) CEU4(COMMA X1->now COMMA X1) };
+        CEUX X2 = { X1->S, base, inp CEU3(COMMA -1 COMMA CEU_ACTION_CALL COMMA {.exe=X1->exe}) CEU4(COMMA X1->now COMMA X1) };
         int ret = clo.Dyn->Clo.proto(&X2);
         
         // [clo,args,upvs,locs,rets]
@@ -1155,6 +1157,7 @@ fun Coder.main (tags: Tags): String {
             //           ^ base
         } else {
             //X2->base = <already set>
+            X2->args2 = inp;
             // X2: [args,upvs,locs,...,inps]
             //           ^ base
         }
@@ -1795,7 +1798,7 @@ fun Coder.main (tags: Tags): String {
         assert(X!=NULL && S!=NULL);
         S->n = 0;
         //S->buf = <dynamic>    // TODO
-        *X = (CEUX) { S, -1, -1, CEU_ACTION_INVALID, {.exe=ret} CEU4(COMMA CEU_TIME-1 COMMA NULL) };
+        *X = (CEUX) { S, -1, -1, -1, CEU_ACTION_INVALID, {.exe=ret} CEU4(COMMA CEU_TIME-1 COMMA NULL) };
             // X->up is set on resume, not here on creation
 
         *ret = (CEU_Exe) {
@@ -2267,7 +2270,7 @@ fun Coder.main (tags: Tags): String {
                     // TODO - fake S/X - should propagate up to calling stack
                     // TODO - fake now - should receive as arg (not CEU_TIME)
                     CEU_Stack S = { 0, {} };
-                    CEUX _X = { &S, -1, -1, CEU_ACTION_INVALID, {.exe=NULL} CEU4(COMMA CEU_TIME COMMA NULL) };
+                    CEUX _X = { &S, -1, -1, -1, CEU_ACTION_INVALID, {.exe=NULL} CEU4(COMMA CEU_TIME COMMA NULL) };
                     CEUX* X = &_X;
                     ceux_push(&S, 1, ceu_dyn_to_val((CEU_Dyn*) exe));
                     // S: [co]
@@ -2523,7 +2526,7 @@ fun Coder.main (tags: Tags): String {
         CEU_ARGC = ceu_argc;
         
         CEU_Stack S = { 0, {} };
-        CEUX _X = { &S, 0, 0 CEU3(COMMA CEU_ACTION_INVALID COMMA {.exe=NULL}) CEU4(COMMA CEU_TIME COMMA NULL) };
+        CEUX _X = { &S, 0, 0 CEU3(COMMA -1 COMMA CEU_ACTION_INVALID COMMA {.exe=NULL}) CEU4(COMMA CEU_TIME COMMA NULL) };
         CEUX* X = &_X;
         CEU_GLOBAL_X = X;
         
