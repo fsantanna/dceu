@@ -770,7 +770,7 @@ class Parser (lexer_: Lexer)
                 }
                 Expr.Call(tk0,
                     Expr.Acc(Tk.Id("broadcast'", tk0.pos)),
-                    args
+                    Expr.Args(args.tk_, args.dots, listOf(xin)+args.es)
                 )
             }
             (CEU>=4 && this.acceptFix("toggle")) -> {

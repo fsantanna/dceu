@@ -62,7 +62,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Yield  -> "yield(" + this.args.tostr(pre) + ")"
         is Expr.Resume -> "(resume (" + this.co.tostr(pre) + ")(" + this.args.tostr(pre) + "))"
 
-        is Expr.Spawn  -> "(spawn " + this.tsk.tostr(pre) + "(" + this.args.tostr(pre) + ")"
+        is Expr.Spawn  -> "(spawn " + this.tsk.tostr(pre) + "(" + this.args.tostr(pre) + "))"
         is Expr.Delay  -> "delay"
         is Expr.Pub    -> this.tsk.cond { it.tostr(pre)+"." } + "pub"
         is Expr.Toggle -> "(toggle ${this.tsk.tostr(pre)}(${this.on.tostr(pre)}))"
@@ -84,9 +84,9 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Args   -> (this.es.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList())).joinToString(",")
     }.let {
         when {
-            !pre           -> it
-            (it[0] == '(') -> '(' + this.tk.pos.pre() + it.drop(1)
-            else           -> this.tk.pos.pre() + it
+            !pre -> it
+            (it.length>0 && it[0]=='(') -> '(' + this.tk.pos.pre() + it.drop(1)
+            else -> this.tk.pos.pre() + it
         }
     }
 }
