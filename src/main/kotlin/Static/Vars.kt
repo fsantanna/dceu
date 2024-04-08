@@ -189,7 +189,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 Pair(s, "(1 + CEU_ARGC + $locs + $I) /* global $id */")
             }
             Type.LOCAL -> {
-                Pair("$X->S", "($X->base + $upvs + $locs + $I) /* local $id */")
+                Pair("$X->S", "($X->clo + 1 + $X->args + $upvs + $locs + $I) /* local $id */")
             }
             Type.ARG -> {
                 assert(locs == 0)
@@ -204,7 +204,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 Pair("$XX->S /* nested */", idx)
             }
             Type.UPVAL -> {
-                Pair("$X->S", "($X->base + $upv) /* upval $id */")
+                Pair("$X->S", "($X->clo + 1 + $X->args + $upv) /* upval $id */")
             }
         }
     }

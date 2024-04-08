@@ -262,6 +262,24 @@ class Exec_03 {
         assert(out == "13\n") { out }
     }
     @Test
+    fun cc_10x_resume() {
+        val out = test("""
+            $PLUS
+            val CO = coro (v1) {
+                println(:v1, v1)        ;; 10
+                val v2 = yield(v1+1)
+                println(:v2, v2)        ;; 12
+                v2 + 1
+            }
+            val co = coroutine(CO)
+            val x1 = resume co(10)
+            println(:x1, x1)            ;; 11
+            val x2 = resume co(x1+1)    ;; 13
+            println(:x2, x2)
+        """)
+        assert(out == ":v1\t10\n:x1\t11\n:v2\t12\n:x2\t13\n") { out }
+    }
+    @Test
     fun TODO_cc_11_mult() {
         val out = test("""
             var co
