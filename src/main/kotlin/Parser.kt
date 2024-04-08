@@ -854,10 +854,9 @@ class Parser (lexer_: Lexer)
             this.acceptFix("(")      -> {
                 val args = this.args(")")
                 when {
-                    (args.es.size == 0) -> err(args.tk, "list error : expected expression") as Expr
-                    args.dots           -> args
-                    (args.es.size > 1)  -> args
-                    else                -> args.es.first()
+                    (!args.dots && args.es.size==0) -> err(args.tk, "list error : expected expression") as Expr
+                    ( args.dots || args.es.size>=2) -> args
+                    else                            -> args.es.first()
                 }
             }
             this.acceptFix("#...")      -> Expr.VA_len(this.tk0 as Tk.Fix)

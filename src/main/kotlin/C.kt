@@ -1019,6 +1019,18 @@ fun Coder.main (tags: Tags): String {
         ceux_n_set(S, I+out);
     }
     
+    // fill missing args with nils, drop extra args
+    void ceux_yield_args (CEUX* X, int exp) {
+        int N = exp - X->args2;
+        if (N > 0) {
+            for (int i=0; i<N; i++) {
+                ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+            }
+        } else if (N < 0) {
+            ceux_pop_n(X->S, -N);
+        }
+    }
+    
     int ceux_call_pre (CEU_Stack* S, CEU_Clo* clo, int* inp) {
         // fill missing args with nils
         {

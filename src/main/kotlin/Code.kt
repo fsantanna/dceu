@@ -375,23 +375,9 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         continue;
                     }
                 #endif
-                    //assert(X->args<=1 && "TODO: varargs resume");
-                #if 1
-                    // TODO: nao tem mais como fugir disso aqui
-                    // fill missing args with nils
                     ${rets.pub[this]!!.let { v -> (v != MULTI).cond { """
-                        {
-                            int N = $v - X->args2;
-                            if (N > 0) {
-                                for (int i=0; i<N; i++) {
-                                    ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
-                                }
-                            } else if (N < 0) {
-                                ceux_pop_n(X->S, -N);
-                            }
-                        }                        
+                        ceux_yield_args(X, $v);
                     """ }}}
-                #endif
                 }
             """
             }
