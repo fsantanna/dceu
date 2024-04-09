@@ -708,12 +708,18 @@ class Parser_01 {
         assert(e is Expr.Vector && e.args.dots && e.tostr()=="#[...]") { e.tostr() }
     }
     @Test
-    fun ss_11_vec() {
+    fun ss_11_do() {
         val l = lexer("do { ... }")
         val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : expected expression : have \"...\"")
+    }
+    @Test
+    fun ss_12_do() {
+        val l = lexer("do { (...) }")
+        val parser = Parser(l)
         val e = parser.expr()
-        TODO()
-        //assert(e is Expr.Do && e.dots && e.tostr()=="do {\n...\n}\n") { e.tostr() }
+        assert(e is Expr.Do && e.es.size==1 && e.es.last().let { it is Expr.Args && it.dots && it.es.size==0 }) { e.tostr() }
+        assert(e.tostr()=="do {\n(...)\n}") { e.tostr() }
     }
 
     // NATIVE

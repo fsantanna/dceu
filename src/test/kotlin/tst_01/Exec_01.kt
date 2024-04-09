@@ -3235,7 +3235,7 @@ class Exec_01 {
             println(id(1,2,3))
         """
         )
-        assert(out == "1\t2\t3\n\n") { out }
+        assert(out == "1\t2\t3\n") { out }
     }
 
     // LOOP

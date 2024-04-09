@@ -92,5 +92,8 @@ fun Expr.tostr (pre: Boolean = false): String {
 }
 
 fun List<Expr>.tostr (pre: Boolean=false): String {
-    return this.map { it.tostr(pre) }.joinToString("\n") + "\n"
+    fun args (e: Expr, s: String): String {
+        return if (e is Expr.Args) "("+s+")" else s
+    }
+    return this.map { args(it, it.tostr(pre)) }.joinToString("\n") + "\n"
 }

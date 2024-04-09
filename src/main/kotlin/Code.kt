@@ -572,10 +572,11 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             }
             is Expr.Call -> {
                 """
+                int ceu_$n;
                 { // CALL | ${this.dump()}
                     ${this.clo.code()}
                     ${this.args.code()}
-                    ceux_call(X, ceu_${this.args.n}, ${rets.pub[this]!!});
+                    ceu_$n = ceux_call(X, ceu_${this.args.n}, ${rets.pub[this]!!});
                     ${this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}
                 """
@@ -587,14 +588,18 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 ceux_dots_get(X);
                 CEU_ERROR_CHK_STK(continue, ${this.toerr()});
             """
-            is Expr.Args -> """
+            is Expr.Args -> {
+                val last = this.es.lastOrNull()
+                """
                 ${this.es.mapIndexed { i,e -> """
                     ${e.code()}
                 """ }.joinToString("")}
                 int ceu_${this.n} = ${this.es.size};
-                ${this.dots.cond { """
-                    ceu_${this.n} += ceux_dots_push(X, ${if (this == outer) 1 else 0});
-                """ }}
+                ${when {
+                    this.dots -> "ceu_${this.n} += ceux_dots_push(X, ${if (this == outer) 1 else 0});"
+                    (last is Expr.Call) -> "ceu_${this.n} += ceu_${last.n} - 1;"
+                    else -> ""
+                }}
                 ${(this == outer.args).cond { """
                     // ... args ...
                     {
@@ -606,6 +611,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     ceu_${this.n} += ceu_argc;
                 """ }}
             """
+            }
         }.let {
             val ext = rets.pub[this]    // what external expects from me
             val int = this.rets(sta)    // what internal offers
