@@ -121,7 +121,9 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
 
             is Expr.VA_len -> {}
             is Expr.VA_idx -> this.idx.traverse(1)
-            is Expr.Args -> this.es.forEach { it.traverse(1) }
+            is Expr.Args -> this.es.forEachIndexed { i, e ->
+                e.traverse(if (!this.dots && i==this.es.lastIndex) MULTI else 1)
+            }
         }
     }
 }
