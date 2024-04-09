@@ -1149,8 +1149,8 @@ fun Coder.main (tags: Tags): String {
         
         // first resume: place upvs+locs
         if (exe.Dyn->Exe.pc == 0) {
-            X2->args = inp;
             ceux_call_pre(X2->S, clo, &inp);
+            X2->args = inp;     // after ceux_call_pre modifies inp
             // X2: [clo,args,upvs,locs]
         } else {
             X2->args2 = inp;
