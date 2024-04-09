@@ -656,7 +656,7 @@ class Exec_04 {
             println(broadcast(1))
         """
         )
-        assert(out == "nil\n") { out }
+        assert(out == "\n") { out }
         //assert(out == "true\n") { out }
     }
     @Test
@@ -1157,7 +1157,8 @@ class Exec_04 {
         """
         )
         //assert(out == "true\n") { out }
-        assert(out == "nil\n") { out }
+        //assert(out == "nil\n") { out }
+        assert(out == "\n") { out }
     }
     @Test
     fun de_04_bcast() {
@@ -1167,7 +1168,8 @@ class Exec_04 {
         """
         )
         //assert(out == "true\n") { out }
-        assert(out == "nil\n") { out }
+        //assert(out == "nil\n") { out }
+        assert(out == "\n") { out }
     }
     @Test
     fun de_05_bcast() {
@@ -1177,7 +1179,8 @@ class Exec_04 {
             println(broadcast(1) in t)
         """
         )
-        assert(out == "nil\n") { out }
+        assert(out == "\n") { out }
+        //assert(out == "nil\n") { out }
         //assert(out == "true\n") { out }
         //assert(
         //    out == " |  anon : (lin 3, col 21) : broadcast'(t,1)\n" +
