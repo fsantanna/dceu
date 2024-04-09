@@ -338,7 +338,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 """
                 ceux_repl(X->S, $idx, (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} });
                         // true: reached, finalize
-                ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
                 """
             }
 
