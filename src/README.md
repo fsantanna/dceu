@@ -6,10 +6,10 @@
 git clone https://github.com/fsantanna/dceu/
 ```
 
-2. Install the Java SDK:
+2. Install `gcc`, `make`, and the Java SDK:
 
 ```
-sudo apt install default-jdk
+sudo apt install gcc make default-jdk
 ```
 
 3. Open `IntelliJ IDEA` (version `2023.1.2`):
@@ -17,8 +17,14 @@ sudo apt install default-jdk
     - Wait for all imports (takes long...)
     - Run self tests:
         - On the left pane, click tab `Project`:
-            - Right click fold `dceu -> src -> test -> kotlin`
-            - Click "Run 'All Tests'"
+            - Left click fold `dceu -> src -> main -> kotlin`
+                - Double click file `Main.kt`
+                    - set `var CEU = 1`
+            - Left click fold `dceu -> src -> test -> kotlin`
+                - Right click fold `test_01`
+                - Left click `Run 'Testes in tst_01'`
+            - Repeat the last two steps for `2`,`3`,`4`,`5`,`99` (skip `6`)
+        - It is ok if tests with prefixes `TODO` and `BUG` fail.
     - Generate artifacts (maybe can already skip to next step?):
         - Click `File -> Project Structure -> Artifacts -> + -> JAR -> From modules with dependencies`
         - Click `Module -> dceu`
