@@ -5154,6 +5154,60 @@ class Exec_01 {
         //assert(out.contains("refs  = 2")) { out }
         assert(out.contains("refs  = 3")) { out }
     }
+    @Test
+    fun gc_17_pool() {
+        DEBUG = true
+        val out = test("""
+            do {
+                var t1 = []
+                do {
+                    val t2 = t1
+                    set t1 = nil
+                }
+                do {
+                    ;;val t3 = []
+                    println(`:number CEU_GC.free`)
+                }
+            }
+        """)
+        assert(out == "0\n") { out }
+    }
+    @Test
+    fun gc_18_pool() {
+        DEBUG = true
+        val out = test("""
+            do {
+                var t1 = []
+                do {
+                    val t2 = t1
+                    set t1 = nil
+                }
+                do {
+                    val t3 = []
+                    println(`:number CEU_GC.free`)
+                }
+            }
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun gc_19_pool() {
+        DEBUG = true
+        val out = test("""
+            do {
+                var t1 = []
+                var ok = false
+                loop {
+                    val t2 = t1
+                    set t1 = nil
+                    break if ok
+                    set ok = true
+                }
+                println(`:number CEU_GC.free`)
+            }
+        """)
+        assert(out == "1\n") { out }
+    }
 
     // MISC
 

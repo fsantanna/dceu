@@ -5791,4 +5791,70 @@ class Exec_99 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun zz_05_mem() {
+        val out = test("""
+            $IS
+            task T (v) {
+                println(:ok)
+                await(:FIN)
+            }
+            val ts = tasks(1)
+            spawn T() in ts
+            spawn {
+                par {
+                    every :CHK {
+                        var xxx = #[next-tasks(ts)]
+                        ;;set xxx = nil
+                    }
+                } with {
+                    every :NEW {
+                        spawn T() in ts
+                    }
+                }
+            }
+            do {
+                broadcast(:NEW)
+                broadcast(:CHK)
+                broadcast(:FIN)
+                broadcast(:NEW)
+                broadcast(:CHK)
+                broadcast(:FIN)
+            }
+        """)
+        assert(out == "TODO\n") { out }
+    }
+    @Test
+    fun zz_06_mem() {
+        val out = test("""
+            $IS
+            task T (v) {
+                println(:ok)
+                await(:FIN)
+            }
+            val ts = tasks(1)
+            spawn T() in ts
+            spawn {
+                par {
+                    every :CHK {
+                        var xxx = #[next-tasks(ts)]
+                        ;;set xxx = nil
+                    }
+                } with {
+                    every :NEW {
+                        spawn T() in ts
+                    }
+                }
+            }
+            do {
+                broadcast(:NEW)
+                broadcast(:CHK)
+                broadcast(:FIN)
+                broadcast(:NEW)
+                broadcast(:CHK)
+                broadcast(:FIN)
+            }
+        """)
+        assert(out == "TODO\n") { out }
+    }
 }

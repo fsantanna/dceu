@@ -2489,6 +2489,30 @@ class Exec_05 {
         //assert(out == (" v  anon : (lin 12, col 29) : store error : cannot hold reference to track or task in pool\n")) { out }
     }
 
+    // TASKS / POOL / SIZE / MEM
+
+    @Test
+    fun kk_01_pool() {
+        val out = test("""
+            val T = task () {
+                println(:1)
+                yield(nil)
+                println(:2)
+            }
+            val ts = tasks(1)
+            var ok = false
+            loop {
+                spawn T() in ts
+                val t = next-tasks(ts)
+                ;;println(t)
+                broadcast(nil)
+                break if ok
+                set ok = true
+            }
+        """)
+        assert(out.contains(":1\n:2\n:1\n:2\n")) { out }
+    }
+
     // ORIGINAL
 
     @Test
