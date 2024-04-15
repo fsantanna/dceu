@@ -2512,6 +2512,36 @@ class Exec_05 {
         """)
         assert(out.contains(":1\n:2\n:1\n:2\n")) { out }
     }
+    @Test
+    fun kk_02_pool() {
+        val out = test("""
+            val T = task (v) {
+                println(:ok)
+                loop {
+                    val it = yield()
+                    break if {{==}}(it,:FIN)
+                }
+            }
+            val ts = tasks(1)
+            spawn T() in ts
+            spawn (task () {
+                loop {
+                    do {
+                        loop {
+                            val it = yield()
+                            break if it==:CHK
+                        }
+                        val xxx = #[next-tasks(ts)]
+                    }
+                }
+            }) ()
+            spawn T() in ts
+            broadcast(:CHK)
+            broadcast(:FIN)
+            spawn T() in ts
+        """)
+        assert(out.contains(":ok\n:ok\n")) { out }
+    }
 
     // ORIGINAL
 

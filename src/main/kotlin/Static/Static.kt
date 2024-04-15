@@ -10,9 +10,10 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
 
     // void: block is innocuous -> should be a proxy to up block
     fun void (blk: Expr.Do): Boolean {
-        //return false
         // no declarations, no spawns, no tasks
         val dcls = vars.enc_to_dcls[blk]!!
+        //println(listOf("-=-=-", blk.tk, ups.pub[blk]?.javaClass?.name))
+        //println(blk.tostr())
         return when {
             //true -> false
             (ups.pub[blk] is Expr.Loop) -> false
