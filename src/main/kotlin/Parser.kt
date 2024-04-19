@@ -710,8 +710,8 @@ class Parser (lexer_: Lexer)
                 val blk = this.block()
                 val xcnd = this.nest("""
                     do {
-                        ;; [pay,err,nil]    ;; nil = catch sentinel
-                        val ${idtag.tostr(true)} = `:ceu ceux_peek(X->S, XX(-1-1-1))` ;; TODO: -1 block sentinel?
+                        ;; [pay,err,blk]
+                        val ${idtag.tostr(true)} = `:ceu ceux_peek(X->S, XX(-1-1-1))`
                         ${cnd.tostr(true)}
                     }
                 """)

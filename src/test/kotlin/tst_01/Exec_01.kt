@@ -4892,14 +4892,10 @@ class Exec_01 {
             ;;println(`:number CEU_GC.free`)
         """
         )
-        assert(out == ">>> GC: 19\n" +
+        assert(out == ">>> GC: 18\n" +
                 "    alloc = 19\n" +
-                "    free  = 0\n"
+                "    free  = 1\n"
         ) { out }
-        //assert(out == ">>> GC: 17\n" +
-        //        "    alloc = 18\n" +
-        //        "    free  = 1\n"
-        //) { out }
     }
     @Test
     fun gc1() {
@@ -4982,8 +4978,8 @@ class Exec_01 {
             println(`:number CEU_GC.free`)
         """
         )
-        //assert(out == "1\n") { out }
-        assert(out == "0\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "0\n") { out }
     }
     @Test
     fun gc6() {
@@ -5056,8 +5052,8 @@ class Exec_01 {
             println(`:number CEU_GC.free`, `:number CEU_GC.free`)
         """
         )
-        //assert(out == "0\t0\n1\t1\n") { out }
-        assert(out == "0\t0\n0\t0\n") { out }
+        assert(out == "0\t0\n1\t1\n") { out }
+        //assert(out == "0\t0\n0\t0\n") { out }
     }
     @Test
     fun gc9_err() {
@@ -5089,8 +5085,8 @@ class Exec_01 {
             println(`:number CEU_GC.free`)
         """, true
         )
-        //assert(out == "1\n1\n") { out }
-        assert(out == "0\n0\n") { out }
+        assert(out == "1\n1\n") { out }
+        //assert(out == "0\n0\n") { out }
     }
     @Test
     fun gc11() {
@@ -5151,8 +5147,8 @@ class Exec_01 {
             }
             dump(t)
         """)
-        //assert(out.contains("refs  = 2")) { out }
-        assert(out.contains("refs  = 3")) { out }
+        assert(out.contains("refs  = 2")) { out }
+        //assert(out.contains("refs  = 3")) { out }
     }
     @Test
     fun gc_17_pool() {
@@ -5170,7 +5166,8 @@ class Exec_01 {
                 }
             }
         """)
-        assert(out == "0\n") { out }
+        //assert(out == "0\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun gc_18_pool() {

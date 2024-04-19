@@ -295,14 +295,9 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                             continue;   // do not execute next statement, instead free up block
                         }
                     """ }}
-                    if (CEU_ERROR_IS(X->S)) {      // caught internal throw
+                    if (CEU_ERROR_IS(X->S)) {       // caught internal throw
                         // [msgs,val,err]
-                        do {
-                            // catch sentinel - hide error at the top
-                            ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
-                            ${this.cnd.code()}              // ceu_ok = 1|0
-                            ceux_rem_n(X->S, XX(-2), 1);    // remove sentinel
-                        } while (0);
+                        ${this.cnd.code()}          // ceu_ok = 1|0
                         assert(!CEU_ERROR_IS(X->S) && "TODO: throw in catch condition");
                         if (!ceu_as_bool(ceux_pop(X->S, XX(-1)))) {  // condition fail: rethrow error, escape catch block
                             continue;
