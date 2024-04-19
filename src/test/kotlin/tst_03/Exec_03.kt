@@ -339,7 +339,7 @@ class Exec_03 {
                 defer {
                     println(:ok)
                 }
-                yield(nil)  ;;thus { it =>nil }  ;; never awakes
+                yield(nil) ;; never awakes
             }
             val co = coroutine(T)
             resume co()

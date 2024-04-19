@@ -954,12 +954,6 @@ fun Coder.main (tags: Tags): String {
     #endif
     
     void ceux_block_leave (CEU_Stack* S, int base, int n CEU4(COMMA CEU_Exe* exe), int out) {
-        // clear locals
-        // TODO: use memset=0
-        for (int i=0; i<n; i++) {
-            ceux_repl(S, base+i, (CEU_Value) { CEU_VALUE_NIL });
-        }
-
         int I = -1;
         for (int i=S->n-1; i>=0; i--) {
             CEU_Value blk = ceux_peek(S,i);
@@ -1006,7 +1000,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
 
-        // clear locals after clear block
+        // clear tmps after clear block
         // TODO: use memset=0
         for (int i=S->n-out-1; i>=I; i--) {
             ceux_repl(S, i, (CEU_Value) { CEU_VALUE_NIL });
@@ -1016,6 +1010,12 @@ fun Coder.main (tags: Tags): String {
             ceux_move(S, I+i, SS(-out+i));
         }
         ceux_n_set(S, I+out);
+        
+        // clear locals
+        // TODO: use memset=0
+        for (int i=0; i<n; i++) {
+            ceux_repl(S, base+n-i-1, (CEU_Value) { CEU_VALUE_NIL });
+        }
     }
     
     // fill missing args with nils, drop extra args
