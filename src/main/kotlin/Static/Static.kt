@@ -17,7 +17,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
         return when {
             //true -> false
             (ups.pub[blk] is Expr.Loop) -> false
-            //!dcls.isEmpty() -> false
+            !dcls.isEmpty() -> false
             (ups.pub[blk] is Expr.Proto) -> false
             this.defer_catch_spawn_tasks.contains(blk) -> false
             else -> true

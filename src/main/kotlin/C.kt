@@ -953,7 +953,13 @@ fun Coder.main (tags: Tags): String {
     }
     #endif
     
-    void ceux_block_leave (CEU_Stack* S, int out) {
+    void ceux_block_leave (CEU_Stack* S, int base, int n CEU4(COMMA CEU_Exe* exe), int out) {
+        // clear locals
+        // TODO: use memset=0
+        for (int i=0; i<n; i++) {
+            ceux_repl(S, base+i, (CEU_Value) { CEU_VALUE_NIL });
+        }
+
         int I = -1;
         for (int i=S->n-1; i>=0; i--) {
             CEU_Value blk = ceux_peek(S,i);

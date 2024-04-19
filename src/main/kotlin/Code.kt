@@ -146,7 +146,11 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 }
                 val void = sta.void(this)
                 if (void) {
-                    body
+                    """
+                    { // BLOCK | void | ${this.dump()}
+                        $body
+                    }
+                    """
                 } else {
                     """
                     { // BLOCK | ${this.dump()}
@@ -180,7 +184,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         ${(CEU >= 2).cond { defers[this].cond { it.third } }}
                         
                         // out=0 when loop iterates (!CEU_BREAK)
-                        ceux_block_leave(X->S, ${(up is Expr.Loop).cond { "(!CEU_BREAK) ? 0 : " }} ${rets.pub[this]!!});
+                        ceux_block_leave(X->S, X->clo+1+X->args+${upvs+vars.enc_to_base[this]!!}, ${vars.enc_to_dcls[this]!!.size} CEU4(COMMA X->exe), ${(up is Expr.Loop).cond { "(!CEU_BREAK) ? 0 : " }} ${rets.pub[this]!!});
                         
                         ${(CEU >= 2).cond { this.check_error_aborted("NULL")} }
                     }
