@@ -1542,8 +1542,8 @@ class Exec_04 {
             println(`:number CEU_GC.free`)
         """
         )
-        //assert(out == "1\n") { out }
-        assert(out == "0\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "0\n") { out }
         //assert(out == "anon : (lin 10, col 14) : broadcast []\n" +
         //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic alien\n:error\n") { out }
         //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
