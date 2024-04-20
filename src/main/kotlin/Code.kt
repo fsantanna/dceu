@@ -597,6 +597,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     this.dots -> "ceu_${this.n} += ceux_dots_push(X, ${if (this == outer) 1 else 0});"
                     (last is Expr.Call)  -> "ceu_${this.n} += ceu_${last.n} - 1;"
                     (last is Expr.Yield) -> "ceu_${this.n} += X->args2 - 1;"
+                    (last!=null && last.rets(sta) != 1) -> "assert(0 && \"TODO\");"
                     else -> ""
                 }}
                 ${(this == outer.args).cond { """

@@ -1631,6 +1631,20 @@ class Exec_01 {
         assert(out == "") { out }
     }
     @Test
+    fun do_01x() {
+        val out = test("""
+            println(do {})
+        """)
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun do_02x() {
+        val out = test("""
+            println(do {}, nil)
+        """)
+        assert(out == "nil\tnil\n") { out }
+    }
+    @Test
     fun do2() {
         val out = test(
             """
@@ -3233,6 +3247,36 @@ class Exec_01 {
                 (...)
             }
             println(id(1,2,3))
+        """
+        )
+        assert(out == "1\t2\t3\n") { out }
+    }
+    @Test
+    fun nn_12_dots() {
+        val out = test(
+            """
+            var id = func (...) {
+                do {
+                    (...)
+                }
+            }
+            println(id(1,2,3))
+        """
+        )
+        assert(out == "1\t2\t3\n") { out }
+    }
+    @Test
+    fun nn_13_dots() {
+        val out = test(
+            """
+            var id = func (...) {
+                println (
+                    do {
+                        (...)
+                    }
+                )
+            }
+            id(1,2,3)
         """
         )
         assert(out == "1\t2\t3\n") { out }
