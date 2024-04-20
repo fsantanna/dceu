@@ -587,6 +587,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             """
             is Expr.Args -> {
                 val last = this.es.lastOrNull()
+                val ext = rets.pub[this]!!
                 """
                 ${this.es.mapIndexed { i,e -> """
                     ${e.code()}
@@ -608,8 +609,12 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     }
                     ceu_${this.n} += ceu_argc;
                 """ }}
-                CEU_ARITY = ceu_$n;
-            """
+                ${(ext > 0).cond2({ """
+                    ceux_adjust(X->S, $ext, ceu_$n);
+                """},{"""
+                    CEU_ARITY = ceu_$n;                    
+                """})}
+                """
             }
         }.let {
             val ext = rets.pub[this]!!  // what external expects from me
@@ -618,14 +623,12 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             //println(this.tk)
             //println("ext=" + ext + " / int=" + int)
             it + when {
-                (int == ext) -> ""
-                (int == PASS) -> "" // int just mediates, work is in one of the sides
-                (ext==MULTI && int==PASS) -> ""
-                (ext==MULTI && int!=PASS) -> "CEU_ARITY = $int;"
-                (ext < 0) -> TODO("bug found")
-                else -> """
-                    ceux_adjust(X->S, $ext, $int);
-                """
+                (int == ext)  -> ""     // exact match, nothing to adjust
+                (int == PASS) -> ""     // int just mediates, work is in one of the sides
+                (int>=0 && ext>=0)     -> "ceux_adjust(X->S, $ext, $int);"
+                (int>=0 && ext==MULTI) -> "CEU_ARITY = $int;"
+                (ext>=0 && int==MULTI) -> ""    // int adjusts there
+                else -> TODO("bug found")
             }
         }
     }
