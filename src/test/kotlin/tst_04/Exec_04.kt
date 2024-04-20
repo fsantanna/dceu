@@ -1187,6 +1187,25 @@ class Exec_04 {
         //            " v  broadcast error : invalid target\n"
         //) { out }
     }
+    @Test
+    fun de_06_bcast() {
+        val out = test(
+            """
+            val T = task () {
+                println(yield(nil))
+                nil
+            }
+            val t = spawn T()
+            broadcast ([])
+        """
+        )
+        //assert(out == "anon : (lin 16, col 13) : f()\n" +
+        //        "anon : (lin 14, col 17) : g()\n" +
+        //        "anon : (lin 12, col 21) : broadcast []\n" +
+        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == "[]\n") { out }
+    }
 
     // BCAST / TARGETS
 

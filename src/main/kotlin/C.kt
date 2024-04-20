@@ -1188,6 +1188,7 @@ fun Coder.main (tags: Tags): String {
         X2->now = now;
     #endif
 
+        CEU_ARITY = inp;
         int ret = clo->proto(X2);
         
         // X2: [args,upvs,locs,...,rets]
