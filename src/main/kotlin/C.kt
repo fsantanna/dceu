@@ -303,6 +303,7 @@ fun Coder.main (tags: Tags): String {
     fun c_globals (): String {
         return """
     int CEU_ARGC;
+    int CEU_ARITY = 0;
     CEUX* CEU_GLOBAL_X = NULL;
     #if CEU >= 4
     uint32_t CEU_TIME = 0;
@@ -800,6 +801,7 @@ fun Coder.main (tags: Tags): String {
             puts("");
         }
     }
+    
     int ceux_rets (CEUX* X) {
         CEU_Value clo = ceux_peek(X->S, X->clo);
         assert(clo.type>=CEU_VALUE_CLO_FUNC && clo.type<CEU_VALUE_TUPLE);   // FUNC-CORO-TASK-TUPLE
@@ -908,6 +910,22 @@ fun Coder.main (tags: Tags): String {
         // [pre,pos]
     }
     
+    // adjust stack according to ext vs int
+    void ceux_adjust (CEU_Stack* S, int exte, int inte) {
+        if (inte == CEU_MULTI) {
+            inte = CEU_ARITY;
+        }
+        if (inte > exte) {
+            ceux_pop_n(S, inte-exte);
+        } else if (inte < exte) {
+            for (int i=0; i<exte-inte; i++) {
+                ceux_push(S, 1, (CEU_Value) { CEU_VALUE_NIL });
+            }
+        } else {
+            // ok
+        }
+    }
+
     void ceux_tuple (CEU_Stack* S, int n) {
         CEU_Value tup = ceu_create_tuple(n);
         for (int i=0; i<n; i++) {

@@ -570,11 +570,10 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             }
             is Expr.Call -> {
                 """
-                int ceu_$n;
                 { // CALL | ${this.dump()}
                     ${this.clo.code()}
                     ${this.args.code()}
-                    ceu_$n = ceux_call(X, ceu_${this.args.n}, ${rets.pub[this]!!});
+                    CEU_ARITY = ceux_call(X, ceu_${this.args.n}, ${rets.pub[this]!!});
                     ${this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}
                 """
@@ -592,13 +591,12 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 ${this.es.mapIndexed { i,e -> """
                     ${e.code()}
                 """ }.joinToString("")}
-                int ceu_${this.n} = ${this.es.size};
+                int ceu_${this.n} = ${this.es.size} - ${if (last!=null && !this.dots) 1 else 0};  // -1: last below
                 ${when {
                     this.dots -> "ceu_${this.n} += ceux_dots_push(X, ${if (this == outer) 1 else 0});"
-                    (last is Expr.Call)  -> "ceu_${this.n} += ceu_${last.n} - 1;"
-                    (last is Expr.Yield) -> "ceu_${this.n} += X->args2 - 1;"
-                    (last!=null && last.rets(sta) != 1) -> "assert(0 && \"TODO\");"
-                    else -> ""
+                    (last == null) -> ""
+                    (last.rets(sta) < 0) -> "ceu_${this.n} += CEU_ARITY;"
+                    else -> "ceu_${this.n} += ${last.rets(sta)};"
                 }}
                 ${(this == outer.args).cond { """
                     // ... args ...
@@ -610,26 +608,24 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     }
                     ceu_${this.n} += ceu_argc;
                 """ }}
+                CEU_ARITY = ceu_$n;
             """
             }
         }.let {
-            val ext = rets.pub[this]    // what external expects from me
+            val ext = rets.pub[this]!!  // what external expects from me
             val int = this.rets(sta)    // what internal offers
             //println(this)
             //println(this.tk)
             //println("ext=" + ext + " / int=" + int)
             it + when {
                 (int == ext) -> ""
-                (int == PASS) -> ""     // int just mediates, work is in one of the sides
-                (int == MULTI) -> ""    // ext forces int to adjust there
-                (ext == MULTI) -> ""    // int does not need adjusts
-                (int==1 && ext==0) -> """
-                    ceux_pop(X->S,1); // adjust (${this.dump()})
+                (int == PASS) -> "" // int just mediates, work is in one of the sides
+                (ext==MULTI && int==PASS) -> ""
+                (ext==MULTI && int!=PASS) -> "CEU_ARITY = $int;"
+                (ext < 0) -> TODO("bug found")
+                else -> """
+                    ceux_adjust(X->S, $ext, $int);
                 """
-                (int==0 && ext==1) -> """
-                    ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
-                """
-                else -> TODO()
             }
         }
     }

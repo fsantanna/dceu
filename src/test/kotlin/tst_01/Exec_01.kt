@@ -1635,7 +1635,8 @@ class Exec_01 {
         val out = test("""
             println(do {})
         """)
-        assert(out == "nil\n") { out }
+        //assert(out == "nil\n") { out }
+        assert(out == "\n") { out }
     }
     @Test
     fun do_02x() {
