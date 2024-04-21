@@ -1061,10 +1061,7 @@ fun Coder.main (tags: Tags): String {
     }
     
     // adjust stack according to ext (req) vs int (act)
-    int ceux_adjust (CEU_Stack* S, int req, int act) {
-        //if (CEU_ERROR_IS(S)) {
-        //    return;
-        //}
+    void ceux_adjust (CEU_Stack* S, int req, int act) {
         if (act == CEU_MULTI) {
             act = CEU_ARITY;
         }
@@ -1090,21 +1087,13 @@ fun Coder.main (tags: Tags): String {
         if (err) {
             return err;
         }
-         
+
         if (req == CEU_MULTI) {
             return act;
-        } else if (act < req) {
-           // fill acts up to reqs
-            for (int i=0; i<req-act; i++) {
-                ceux_push(S, 1, (CEU_Value) { CEU_VALUE_NIL });
-            }
-            return req;
-        } else if (act > req) {
-            ceux_pop_n(S, act-req);
-            return req;
-        } else { // act == req
-            return req;
         }
+        
+        ceux_adjust(S, req, act);
+        return req;
     }
     
     int ceux_call (CEUX* X1, int inp, int out) {
