@@ -3286,6 +3286,16 @@ class Exec_01 {
     // LOOP
 
     @Test
+    fun oo_00_loop() {
+        val out = test("""
+            loop {
+                break if true
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
     fun TODO_oo_01_loop_err() {
         val out = test("""
             loop {
@@ -3550,6 +3560,13 @@ class Exec_01 {
             println(:ok)
         """)
         assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun oo_16_until() {
+        val out = test("""
+            println(loop { break if 10 })
+        """)
+        assert(out == "10\n") { out }
     }
 
     // NATIVE

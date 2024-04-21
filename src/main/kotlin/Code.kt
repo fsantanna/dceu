@@ -260,8 +260,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                             ceux_pop(X->S, 1);        // (2)
                             ${it.code()}
                         """ }, { """
-                            ${(rets.pub[this] == 0).cond { """
-                                ceux_pop(X->S, 1);    // (3)
+                            ${(rets.pub[this] == MULTI).cond { """
+                                CEU_ARITY = 1; //ceux_pop(X->S, 1);    // (3)
                             """ }}
                         """ })}
                         CEU_BREAK = 1;
@@ -619,14 +619,14 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
         }.let {
             val ext = rets.pub[this]!!  // what external expects from me
             val int = this.rets(sta)    // what internal offers
-            //println(this)
+            //println(this.javaClass.name)
             //println(this.tk)
             //println("ext=" + ext + " / int=" + int)
             it + when {
                 (int == ext)  -> ""     // exact match, nothing to adjust
                 (int == PASS) -> ""     // int just mediates, work is in one of the sides
-                (int>=0 && ext>=0)     -> "ceux_adjust(X->S, $ext, $int);"
-                (int>=0 && ext==MULTI) -> "CEU_ARITY = $int;"
+                (int>=0 && ext>=0)     -> "ceux_adjust(X->S, $ext, $int);\n"
+                (int>=0 && ext==MULTI) -> "CEU_ARITY = $int;\n"
                 (ext>=0 && int==MULTI) -> ""    // int adjusts there
                 else -> TODO("bug found")
             }

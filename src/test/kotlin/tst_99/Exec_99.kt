@@ -22,7 +22,8 @@ class Exec_99 {
         val out = test("""
             println(do {})
         """)
-        assert(out == "nil\n") { out }
+        //assert(out == "nil\n") { out }
+        assert(out == "\n") { out }
     }
     @Test
     fun aa_03_if() {
@@ -50,7 +51,8 @@ class Exec_99 {
             println(if [] {})
         """)
         //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
-        assert(out == "nil\n") { out }
+        //assert(out == "nil\n") { out }
+        assert(out == "\n") { out }
     }
     @Test
     fun aa_06_if() {
@@ -64,7 +66,8 @@ class Exec_99 {
         val out = test("""
             println(func () {} ())
         """)
-        assert(out == "nil\n") { out }
+        //assert(out == "nil\n") { out }
+        assert(out == "\n") { out }
     }
 
     // AS
