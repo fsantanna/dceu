@@ -50,9 +50,10 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
 
     fun Expr.check_error_aborted (msg: String): String {
         val exe = ups.exe(this)
+        val defer = ups.first_without(this, { it is Expr.Defer }, { it is Expr.Proto })
         return """
             CEU_ERROR_CHK_STK(continue, $msg);
-            ${(CEU>=3 && exe!=null).cond { """
+            ${(CEU>=3 && exe!=null && defer==null).cond { """
                 if (X->exe->status == CEU_EXE_STATUS_TERMINATED) {
                     continue;
                 }

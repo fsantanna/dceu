@@ -26,6 +26,15 @@ class Ups (val outer: Expr.Call) {
             else -> this.first(up,cnd)
         }
     }
+    fun first_without (e: Expr, cnd1: (Expr)->Boolean, cnd2: (Expr)->Boolean): Expr? {
+        val up = pub[e]
+        return when {
+            cnd2(e) -> null
+            cnd1(e) -> e
+            (up == null) -> null
+            else -> this.first_without(up,cnd1,cnd2)
+        }
+    }
     fun any (e: Expr, cnd: (Expr)->Boolean): Boolean {
         return this.first(e,cnd) != null
     }

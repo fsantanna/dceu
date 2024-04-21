@@ -9,10 +9,10 @@ var DEBUG = false
 var CEU = 1
 
     // 1: dyn-lex               ;; 19 (no dots) / 7->5->3 "definitely lost"
-    // 2: defer, throw/catch    ;; 6 "definitely lost"
+    // 2: defer, throw/catch    ;; 6->5 "definitely lost"
     // 3: coro, yield, resume   ;; 0 "definitely lost"
-    // 4: task, pub, bcast, toggle, delay
-    // 5: tasks
+    // 4: task, pub, bcast, toggle, delay   ;; 1 "definitely lost"
+    // 5: tasks                 ;; 0 "definitely lost"
     // 6: export
     // TODO: copy, underscore, self (coro/task)
 

@@ -319,35 +319,6 @@ class Exec_03 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun cc_14_coro_defer() {
-        val out = test("""
-            val T = coro () {
-                defer {
-                    println(:ok)
-                }
-                yield()  ;;thus { it =>nil }  ;; never awakes
-            }
-            resume (coroutine(T)) ()
-            println(:end)
-        """)
-        assert(out == ":ok\n:end\n") { out }
-    }
-    @Test
-    fun cc_14x_coro_defer() {
-        val out = test("""
-            val T = coro () {
-                defer {
-                    println(:ok)
-                }
-                yield(nil) ;; never awakes
-            }
-            val co = coroutine(T)
-            resume co()
-            println(:end)
-        """)
-        assert(out == ":end\n:ok\n") { out }
-    }
-    @Test
     fun cc_15_yield_err() {
         val out = test("""
             coro () {
@@ -1373,6 +1344,36 @@ class Exec_03 {
             println(:ok)
         """)
         assert(out == ":ok\n@[]\n") { out }
+    }
+    @Test
+    fun ll_03_coro_defer() {
+        val out = test("""
+            val T = coro () {
+                defer {
+                    println(:ok)
+                }
+                yield()
+            }
+            resume (coroutine(T)) ()
+            println(:end)
+        """)
+        assert(out == ":ok\n:end\n") { out }
+    }
+    @Test
+    fun ll_04_coro_defer() {
+        val out = test("""
+            val T = coro () {
+                defer {
+                    println(:1)
+                    println(:2)
+                }
+                yield(nil)
+            }
+            val co = coroutine(T)
+            resume co()
+            println(:end)
+        """)
+        assert(out == ":end\n:1\n:2\n") { out }
     }
 
     // NESTED
