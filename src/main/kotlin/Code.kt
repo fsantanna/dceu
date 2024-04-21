@@ -185,7 +185,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         ${(CEU >= 2).cond { defers[this].cond { it.third } }}
                         
                         // out=0 when loop iterates (!CEU_BREAK)
-                        ceux_block_leave(X->S, X->clo+1+X->args+${upvs+vars.enc_to_base[this]!!}, ${vars.enc_to_dcls[this]!!.size} CEU4(COMMA X->exe), ${(up is Expr.Loop).cond { "(!CEU_BREAK) ? 0 : " }} ${rets.pub[this]!!});
+                        ceux_block_leave(X->S, X->clo+1+X->args+${upvs+vars.enc_to_base[this]!!}, ${vars.enc_to_dcls[this]!!.size} CEU4(COMMA X->exe), ${(up is Expr.Loop).cond { "(!CEU_BREAK) ? 0 : " }} ${rets.exts[this]!!});
                         
                         ${(CEU >= 2).cond { this.check_error_aborted("NULL")} }
                     }
@@ -261,7 +261,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                             ceux_pop(X->S, 1);        // (2)
                             ${it.code()}
                         """ }, { """
-                            ${(rets.pub[this] == MULTI).cond { """
+                            ${(rets.exts[this] == MULTI).cond { """
                                 CEU_ARITY = 1; //ceux_pop(X->S, 1);    // (3)
                             """ }}
                         """ })}
@@ -346,7 +346,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 """
                 ${this.co.code()}
                 ${this.args.code()}
-                ceux_resume(X, ceu_${this.args.n}, ${rets.pub[this]!!}, CEU_ACTION_RESUME CEU4(COMMA X->now));
+                ceux_resume(X, ceu_${this.args.n}, ${rets.exts[this]!!}, CEU_ACTION_RESUME CEU4(COMMA X->now));
                 ${this.check_error_aborted(this.toerr())}
             """
             }
@@ -370,7 +370,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         continue;
                     }
                 #endif
-                    ${rets.pub[this]!!.let { v -> (v != MULTI).cond { """
+                    ${rets.exts[this]!!.let { v -> (v != MULTI).cond { """
                         ceux_yield_args(X, $v);
                     """ }}}
                 }
@@ -574,7 +574,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 { // CALL | ${this.dump()}
                     ${this.clo.code()}
                     ${this.args.code()}
-                    CEU_ARITY = ceux_call(X, ceu_${this.args.n}, ${rets.pub[this]!!});
+                    CEU_ARITY = ceux_call(X, ceu_${this.args.n}, ${rets.exts[this]!!});
                     ${this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}
                 """
@@ -588,7 +588,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             """
             is Expr.Args -> {
                 val last = this.es.lastOrNull()
-                val ext = rets.pub[this]!!
+                val ext = rets.exts[this]!!
                 """
                 ${this.es.mapIndexed { i,e -> """
                     ${e.code()}
@@ -597,8 +597,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 ${when {
                     this.dots -> "ceu_${this.n} += ceux_dots_push(X, ${if (this == outer) 1 else 0});"
                     (last == null) -> ""
-                    (last.rets(sta) < 0) -> "ceu_${this.n} += CEU_ARITY;"
-                    else -> "ceu_${this.n} += ${last.rets(sta)};"
+                    (last.ints(sta) < 0) -> "ceu_${this.n} += CEU_ARITY;"
+                    else -> "ceu_${this.n} += ${last.ints(sta)};"
                 }}
                 ${(this == outer.args).cond { """
                     // ... args ...
@@ -618,8 +618,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 """
             }
         }.let {
-            val ext = rets.pub[this]!!  // what external expects from me
-            val int = this.rets(sta)    // what internal offers
+            val ext = rets.exts[this]!!  // what external expects from me
+            val int = this.ints(sta)    // what internal offers
             //println(this.javaClass.name)
             //println(this.tk)
             //println("ext=" + ext + " / int=" + int)

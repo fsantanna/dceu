@@ -9,7 +9,7 @@ val PASS = -2
 //          - what evaluates is one of its branches as a "tail call"
 //          - in the sense that the final evaluation does not return to the "if" to question it
 
-fun Expr.rets (sta: Static): Int {
+fun Expr.ints (sta: Static): Int {
     return when (this) {
         is Expr.Enum, is Expr.Data, is Expr.Defer -> 0
         is Expr.Export -> TODO()
@@ -33,7 +33,7 @@ fun Expr.rets (sta: Static): Int {
 }
 
 class Rets (val outer: Expr.Call, val ups: Ups) {
-    val pub: MutableMap<Expr,Int> = mutableMapOf()
+    val exts: MutableMap<Expr,Int> = mutableMapOf()
         // how many values should Expr evaluate to?
         // -1: multi | n: n
 
@@ -42,7 +42,7 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
     }
 
     fun Expr.traverse (N: Int) {
-        pub[this] = N
+        exts[this] = N
         when (this) {
             is Expr.Proto  -> this.blk.traverse(MULTI)
             is Expr.Export -> this.blk.traverse(N)
@@ -67,8 +67,8 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
             }
             is Expr.Loop  -> this.blk.traverse(N)
             is Expr.Break -> {
-                val n = pub[ups.first(this) { it is Expr.Loop }!!]!!
-                pub[this] = n
+                val n = exts[ups.first(this) { it is Expr.Loop }!!]!!
+                exts[this] = n
                 this.cnd.traverse(1)
                 this.e?.traverse(n)
             }
