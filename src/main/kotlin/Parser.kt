@@ -1,7 +1,7 @@
 package dceu
 
 typealias Clock = List<Pair<Tk.Tag,Expr>>
-typealias Patt = Pair<Pair<Tk.Id,Tk.Tag?>,Any>
+typealias Patt = Pair<Id_Tag,Any>
 
 fun Any.tostr (pre: Boolean): String {
     return when (this) {
@@ -263,7 +263,7 @@ class Parser (lexer_: Lexer)
                     e.is_constructor() -> {
                         Pair(Pair(xit,null), this.nest("it === ${e.tostr(true)}"))
                     }
-                    else -> err(this.tk1, "invalid pattern : unexpected \"${this.tk1.str}\"") as Pair<Pair<Tk.Id,Tk.Tag?>, Expr>
+                    else -> err(this.tk1, "invalid pattern : unexpected \"${this.tk1.str}\"") as Pair<Id_Tag, Expr>
                 }
             }
             else -> err_expected(this.tk1, "identifier") as Patt
@@ -274,7 +274,7 @@ class Parser (lexer_: Lexer)
         return ret
     }
 
-    fun lambda (n:Int): Pair<Pair<Tk.Id,Tk.Tag?>,List<Expr>> {
+    fun lambda (n:Int): Pair<Id_Tag,List<Expr>> {
         this.acceptFix_err("{")
         val tk0 = this.tk0
         return when {

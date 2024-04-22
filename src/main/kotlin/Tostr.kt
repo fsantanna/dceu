@@ -18,7 +18,7 @@ fun Tk.fpre (pre: Boolean): String {
     return if (pre) this.pos.pre() else ""
 }
 
-fun Pair<Tk.Id,Tk.Tag?>.tostr (pre: Boolean = false): String {
+fun Id_Tag.tostr (pre: Boolean = false): String {
     return this.first.fpre(pre) + this.first.str + this.second.cond { " " + it.fpre(pre) + it.str }
 }
 

@@ -2,7 +2,7 @@ package dceu
 
 import kotlin.math.max
 
-typealias LData = List<Pair<Tk.Id,Tk.Tag?>>
+typealias LData = List<Id_Tag>
 
 enum class Type {
     GLOBAL, LOCAL, ARG, NESTED, UPVAL
@@ -14,12 +14,12 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
 
     private val dcls: MutableList<Expr> = mutableListOf()
     public val dcl_to_enc: MutableMap<Expr,Expr> = mutableMapOf()
-    public val acc_to_dcl: MutableMap<Expr.Acc,Pair<Expr.Dcl,Int>> = mutableMapOf()
+    public val acc_to_dcl: MutableMap<Expr.Acc,Dcl_Idx> = mutableMapOf()
     public val enc_to_dcls: MutableMap<Expr,MutableList<Expr>> = mutableMapOf(
         Pair(outer, dcls.toList().toMutableList())
     )
-    public val nats: MutableMap<Expr.Nat,Pair<List<Pair<Expr.Dcl,Int>>,String>> = mutableMapOf()
-    public val proto_to_upvs: MutableMap<Expr.Proto,MutableSet<Pair<Expr.Dcl,Int>>> = mutableMapOf()
+    public val nats: MutableMap<Expr.Nat,Pair<List<Dcl_Idx>,String>> = mutableMapOf()
+    public val proto_to_upvs: MutableMap<Expr.Proto,MutableSet<Dcl_Idx>> = mutableMapOf()
 
     // enc_to_base: base stack index at beginning of block
     //  - must pop down to it on leave
@@ -105,7 +105,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         }
     }
 
-    fun acc (e: Expr, id: String): Pair<Expr.Dcl,Int> {
+    fun acc (e: Expr, id: String): Dcl_Idx {
         var dcl: Expr.Dcl? = null
         var i: Int? = null
         for (x in dcls) {
@@ -439,7 +439,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             is Expr.Nat    -> {
                 nats[this] = this.tk.str.let {
                     assert(!it.contains("XXX")) { "TODO: native cannot contain XXX"}
-                    val set = mutableListOf<Pair<Expr.Dcl,Int>>()
+                    val set = mutableListOf<Dcl_Idx>()
                     var str = ""
                     var i = 0
 
