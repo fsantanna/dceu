@@ -127,7 +127,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
                     """
                     {
-                        CEU_Value up = ceux_peek(X->S, ${vars.idx("X",dcl,ups.pub[this]!!).second});
+                        CEU_Value up = ceux_peek(X->S, ${vars.idx("X",dcl.first,dcl.second,ups.pub[this]!!).second});
                         ceu_gc_inc_val(up);
                         clo.Dyn->Clo.upvs.buf[$i] = up;
                     }
@@ -465,7 +465,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 val body = vars.nats[this]!!.let { (set, str) ->
                     var x = str
                     for (dcl in set) {
-                        val (stk,idx) = vars.idx("X",dcl,this)
+                        val (stk,idx) = vars.idx("X",dcl.first,dcl.second,this)
                         //println(setOf(x, v))
                         x = x.replaceFirst("XXX", "ceux_peek($stk,$idx)")
                     }

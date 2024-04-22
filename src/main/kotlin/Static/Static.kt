@@ -90,7 +90,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                 this.dst.traverse()
                 this.src.traverse()
                 if (this.dst is Expr.Acc) {
-                    val dcl = vars.acc_to_dcl[this.dst]!!
+                    val (dcl,_) = vars.acc_to_dcl[this.dst]!!
                     if (dcl.tk.str == "val") {
                         err(this.tk, "set error : destination is immutable")
                     }
@@ -207,7 +207,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
-                val dcl = vars.acc_to_dcl[this]!!
+                val (dcl,_) = vars.acc_to_dcl[this]!!
                 if (xfuns.containsKey(dcl.src)) {
                     val up = ups.first(this) { it is Expr.Proto && (it==outer.clo || (ups.pub[it] is Expr.Dcl)) }
                     xfuns[up]!!.add(dcl.src as Expr.Proto)
