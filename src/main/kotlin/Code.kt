@@ -185,24 +185,24 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         ${(CEU >= 2).cond { defers[this].cond { it.third } }}
                         
                         // out=0 when loop iterates (!CEU_BREAK)
-                        ceux_block_leave(X->S, X->clo+1+X->args+${upvs+vars.enc_to_base[this]!!}, ${vars.enc_to_dcls[this]!!.size} CEU4(COMMA X->exe), ${(up is Expr.Loop).cond { "(!CEU_BREAK) ? 0 : " }} ${rets.exts[this]!!});
+                        ceux_block_leave(X->S, X->clo+1+X->args+${upvs+vars.enc_to_base[this]!!}, ${vars.size(vars.enc_to_dcls[this]!!)} CEU4(COMMA X->exe), ${(up is Expr.Loop).cond { "(!CEU_BREAK) ? 0 : " }} ${rets.exts[this]!!});
                         
                         ${(CEU >= 2).cond { this.check_error_aborted("NULL")} }
                     }
                     """
                 }
             }
-            is Expr.Dcl -> (!sta.funs.contains(this.src)).cond { """
-                // DCL | ${this.dump()}
-                ${(this.src != null).cond {
-                    val (stk,idx) = vars.idx("X",this,this)
+            is Expr.Dcl -> (this.src!=null && !sta.funs.contains(this.src)).cond { """
+                // DCL (init) | ${this.dump()}
+                ${this.src!!.code()}
+                ${this.idtag.mapIndexed { ii,_ ->
+                    val (stk,idx) = vars.idx("X",this,ii,this)
                     """
-                    ${this.src!!.code()}
-                    ceux_copy($stk, $idx, XX(-1));
-                    
+                    ceux_copy($stk, $idx, XX(-${this.idtag.size}+$ii));
+                        
                     // recursive func requires its self ref upv to be reset to itself
                     ${this.src.let { proto -> (proto is Expr.Proto && proto.rec).cond {
-                        val i = vars.proto_to_upvs[proto]!!.indexOf(this)
+                        val i = vars.proto_to_upvs[proto]!!.indexOf(Pair(this,ii))
                         (i != -1).cond { """
                         {
                             CEU_Value clo = ceux_peek(X->S, XX(-1));
@@ -212,7 +212,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                         """ }
                     }}}
                     """
-                }}
+                }.joinToString("")}
             """ }
             is Expr.Set -> """
                 { // SET | ${this.dump()}

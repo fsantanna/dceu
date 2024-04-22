@@ -1325,6 +1325,20 @@ class Parser_99 {
         val parser = Parser(l)
         assert(trap { parser.exprs() } == "anon : (lin 1, col 1) : expression error : innocuous expression")
     }
+    @Test
+    fun uu_03_tags() {
+        val l = lexer("val x = :T [1]")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "tag(:T,[])") { e.tostr() }
+    }
+    @Test
+    fun uu_04_tags() {
+        val l = lexer("val (x,y) = (:T [1], :U [2]")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "tag(:T,[])") { e.tostr() }
+    }
 
     // PPP: PEEK, PUSH, POP
 

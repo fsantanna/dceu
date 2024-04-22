@@ -39,6 +39,10 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         this.outer.traverse()
     }
 
+    fun size (lst: List<Expr>): Int {
+        return lst.map { if (it is Expr.Dcl) it.idtag.size else 1 }.sum()
+    }
+
     fun data (e: Expr): Pair<Int?,LData?>? {
         return when (e) {
             is Expr.Acc -> {
@@ -236,7 +240,13 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         return when (this) {
             is Expr.Proto  -> this.blk.locs()
             is Expr.Do     -> {
-                val n = this.es.count { it is Expr.Dcl || it is Expr.Defer }
+                val n = this.es.map {
+                    when (it) {
+                        is Expr.Defer -> 1
+                        is Expr.Dcl -> it.idtag.size
+                        else -> 0
+                    }
+                }.sum()
                 val nn = n + (this.es.maxOfOrNull { it.locs() } ?: 0)
                 blk_to_locs[this] = Pair(n, nn)
                 //println(listOf(n, this.es.maxOf { it.locs() }, this))

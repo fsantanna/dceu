@@ -21,7 +21,7 @@ fun Expr.ints (sta: Static): Int {
         is Expr.Yield -> MULTI
         is Expr.Delay -> PASS
         is Expr.Toggle -> PASS
-        is Expr.Dcl -> if (this.src==null || sta.funs.contains(this.src)) 0 else 1
+        is Expr.Dcl -> if (this.src==null || sta.funs.contains(this.src)) 0 else this.idtag.size
         is Expr.Set -> 1
         is Expr.Spawn, is Expr.Pub -> 1
         is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.Tag -> 1
@@ -55,7 +55,7 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
                 }
                 e.traverse(n)
             }
-            is Expr.Dcl    -> this.src?.traverse(1)
+            is Expr.Dcl    -> this.src?.traverse(this.idtag.size)
             is Expr.Set    -> {
                 this.dst.traverse(1)    // TODO: explain
                 this.src.traverse(1)

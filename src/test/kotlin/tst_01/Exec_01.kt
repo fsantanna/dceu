@@ -325,6 +325,16 @@ class Exec_01 {
         """)
         assert(out == "6\n") { out }
     }
+    @Test
+    fun bd_02x_set_op() {
+        val out = test("""
+            val f = func (v1,v2) {
+                nil
+            }
+            println(f)
+        """)
+        assert(out.contains("func: 0x")) { out }
+    }
 
     // REC / FUNC
 
@@ -3088,6 +3098,18 @@ class Exec_01 {
         """)
         assert(out == "-10\n") { out }
     }
+    @Test
+    fun nn_24_func_args() {
+        val out = test(
+            """
+            val f = func (a,b) {
+                b
+            }
+            println(f(1,2))
+        """
+        )
+        assert(out == "2\n") { out }
+    }
 
     // FUNC / ARGS / DOTS / ...
 
@@ -3281,6 +3303,113 @@ class Exec_01 {
         """
         )
         assert(out == "1\t2\t3\n") { out }
+    }
+
+    // EXPR LIST / VAR LIST
+
+    @Test
+    fun mm_01_list() {
+        val out = test(
+            """
+            val f = func (...) {
+                (1,2,...)
+            }
+            println(f(3))
+        """
+        )
+        assert(out == "1\t2\t3\n") { out }
+    }
+    @Test
+    fun mm_02_list() {
+        val out = test(
+            """
+            val (x,y) = (1,2)
+            println(x,y)
+        """
+        )
+        assert(out == "1\t2\n") { out }
+    }
+    @Test
+    fun mm_03_list() {
+        val out = test(
+            """
+            val (x) = (1,2)
+            println(x)
+        """
+        )
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun mm_04_list() {
+        val out = test(
+            """
+            val x = (1,2)
+            println(x)
+        """
+        )
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun mm_05_list() {
+        val out = test(
+            """
+            val (x,y) = (1)
+            println(x,y)
+        """
+        )
+        assert(out == "1\tnil\n") { out }
+    }
+    @Test
+    fun mm_06_list() {
+        val out = test(
+            """
+            val (x,y) = 1
+            println(x,y)
+        """
+        )
+        assert(out == "1\tnil\n") { out }
+    }
+    @Test
+    fun mm_07_list() {
+        val out = test(
+            """
+            val f = func (...) {
+                (1,2,...)
+            }
+            val (x,y,z) = f(3)
+            println(x,y,z)
+        """
+        )
+        assert(out == "1\t2\t3\n") { out }
+    }
+    @Test
+    fun mm_08_list() {
+        val out = test(
+            """
+            val (x)
+            val (y,z)
+            println(x,y,z)
+        """
+        )
+        assert(out == "nil\tnil\tnil\n") { out }
+    }
+    @Test
+    fun mm_08_list_err() {
+        val out = test(
+            """
+            val (x,x)
+        """
+        )
+        assert(out == "nil\tnil\tnil\n") { out }
+    }
+    @Test
+    fun mm_09_list() {
+        val out = test(
+            """
+            println(val (x,y) = 1)
+        """
+        )
+        assert(out == "1\tnil\n") { out }
     }
 
     // LOOP
