@@ -378,7 +378,11 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                         }
                     }
                 }
+                val dups = (this.idtag.size != this.idtag.map { it.first.str }.toSet().size)
                 when {
+                    dups -> {
+                        err(this.tk, "declaration error : duplicate identifiers")
+                    }
                     (prv_rep == null) -> {}
                     (CEU>=99 && prv_rep.first.idtag.size==1 && prv_rep.first.idtag[0].first.str=="it") -> {}
                     else -> {

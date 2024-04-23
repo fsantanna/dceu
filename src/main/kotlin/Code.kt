@@ -194,25 +194,29 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             }
             is Expr.Dcl -> (this.src!=null && !sta.funs.contains(this.src)).cond { """
                 // DCL (init) | ${this.dump()}
-                ${this.src!!.code()}
-                ${this.idtag.mapIndexed { ii,_ ->
-                    val (stk,idx) = vars.idx("X",this,ii,this)
-                    """
-                    ceux_copy($stk, $idx, XX(-${this.idtag.size}+$ii));
-                        
-                    // recursive func requires its self ref upv to be reset to itself
-                    ${this.src.let { proto -> (proto is Expr.Proto && proto.rec).cond {
-                        val i = vars.proto_to_upvs[proto]!!.indexOf(Pair(this,ii))
-                        (i != -1).cond { """
-                        {
-                            CEU_Value clo = ceux_peek(X->S, XX(-1));
-                            ceu_gc_inc_val(clo);    // TODO: creates cycle, never collected
-                            clo.Dyn->Clo.upvs.buf[$i] = clo;
-                        }
-                        """ }
-                    }}}
-                    """
-                }.joinToString("")}
+                {
+                    ${this.src!!.code()}
+                }
+                {
+                    ${this.idtag.mapIndexed { ii,_ ->
+                        val (stk,idx) = vars.idx("X",this,ii,this)
+                        """
+                        ceux_copy($stk, $idx, XX(-${this.idtag.size}+$ii));
+                            
+                        // recursive func requires its self ref upv to be reset to itself
+                        ${this.src.let { proto -> (proto is Expr.Proto && proto.rec).cond {
+                            val i = vars.proto_to_upvs[proto]!!.indexOf(Pair(this,ii))
+                            (i != -1).cond { """
+                            {
+                                CEU_Value clo = ceux_peek(X->S, XX(-1));
+                                ceu_gc_inc_val(clo);    // TODO: creates cycle, never collected
+                                clo.Dyn->Clo.upvs.buf[$i] = clo;
+                            }
+                            """ }
+                        }}}
+                        """
+                    }.joinToString("")}
+                }
             """ }
             is Expr.Set -> """
                 { // SET | ${this.dump()}
@@ -611,9 +615,9 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                     ceu_${this.n} += ceu_argc;
                 """ }}
                 ${(ext > 0).cond2({ """
-                    ceux_adjust(X->S, $ext, ceu_$n);
+                    ceux_adjust(X->S, $ext, ceu_$n);    // from Expr.Args
                 """},{"""
-                    CEU_ARITY = ceu_$n;                    
+                    CEU_ARITY = ceu_$n;                 // from Expr.Args
                 """})}
                 """
             }
@@ -624,10 +628,11 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             //println(this.tk)
             //println("ext=" + ext + " / int=" + int)
             it + when {
+                (this is Expr.Args) -> ""
                 (int == ext)  -> ""     // exact match, nothing to adjust
                 (int == PASS) -> ""     // int just mediates, work is in one of the sides
-                (int>=0 && ext>=0)     -> "ceux_adjust(X->S, $ext, $int);\n"
-                (int>=0 && ext==MULTI) -> "CEU_ARITY = $int;\n"
+                (int>=0 && ext>=0)     -> "ceux_adjust(X->S, $ext, $int);   // from Expr.let\n"
+                (int>=0 && ext==MULTI) -> "CEU_ARITY = $int;                // from Expr.let\n"
                 (ext>=0 && int==MULTI) -> ""    // int adjusts there
                 else -> TODO("bug found")
             }

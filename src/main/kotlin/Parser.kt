@@ -430,7 +430,15 @@ class Parser (lexer_: Lexer)
                     }
                     Pair(tag, e)
                 }
-                Expr.Dcl(tk0, Pair(id,tag2), src)
+                 */
+                val lst2 = lst1 + if (!par || !this.acceptFix(",")) emptyList() else {
+                    this.list0(")", ",") { this.id_tag() }
+                }
+                if (par) {
+                    this.acceptFix_err(")")
+                }
+                val src = if (!this.acceptFix("=")) null else this.expr()
+                Expr.Dcl(tk0, lst2, src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix

@@ -3400,7 +3400,7 @@ class Exec_01 {
             val (x,x)
         """
         )
-        assert(out == "nil\tnil\tnil\n") { out }
+        assert(out == "anon : (lin 2, col 13) : declaration error : duplicate identifiers\n") { out }
     }
     @Test
     fun mm_09_list() {
