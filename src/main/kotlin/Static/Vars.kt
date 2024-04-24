@@ -28,7 +28,9 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
     public val enc_to_base: MutableMap<Expr,Int> = mutableMapOf()
 
     // Proto/Do
-    //  - max number of simultaneous locals
+    //  - Pair<Int,Int>
+    //      - initial offset for locals
+    //      - max number of simultaneous locals
     //  - only locals, does not include Proto args/upvs
     public val blk_to_locs: MutableMap<Expr.Do,Pair<Int,Int>> = mutableMapOf()
     // proto_to_locs: max number of locals in proto
@@ -249,11 +251,10 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 }.sum()
                 val nn = n + (this.es.maxOfOrNull { it.locs() } ?: 0)
                 blk_to_locs[this] = Pair(n, nn)
-                //println(listOf(n, this.es.maxOf { it.locs() }, this))
                 nn
             }
             is Expr.Export -> this.blk.locs()
-            is Expr.Dcl    -> (this.src?.locs() ?: 0)
+            is Expr.Dcl    -> this.idtag.size + (this.src?.locs() ?: 0)
             is Expr.Set    -> this.dst.locs() + this.src.locs()
             is Expr.If     -> this.cnd.locs() + max(this.t.locs(), this.f.locs())
             is Expr.Loop   -> this.blk.locs()
