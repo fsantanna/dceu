@@ -1025,12 +1025,6 @@ fun Coder.main (tags: Tags): String {
             // col affects v:
             // [x,[1]] <-- moves v=[1] to v
 
-            CEU_Value err = ceu_hold_chk_set(CEU_HLD_BLOCK(col), col->Any.hld.type, v, 0, "set error");
-            if (err.type==CEU_VALUE_ERROR && col->Any.hld.type!=CEU_HOLD_FLEET) {
-                // must be second b/c chk_set above may modify v
-                return err;
-            }
-
             // v affects fleeting col with innermost scope
             if (col->Any.hld.type == CEU_HOLD_FLEET) {
                 if (ceu_block_is_up_dn(CEU_HLD_BLOCK(v.Dyn), CEU_HLD_BLOCK(col))) {
@@ -1312,8 +1306,6 @@ fun Coder.main (tags: Tags): String {
                 if (evt.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                     // do not permit that tasks drop/capture object
                     // b/c they are passed to other tasks regardless
-                    CEU_Value ret = ceu_hold_chk_set(CEU_HLD_BLOCK(evt.Dyn), CEU_HOLD_IMMUT, evt, 0, "TODO");
-                    assert(ret.type == CEU_VALUE_NIL && "TODO");
                 }
             }
             CEU_Value ret;
