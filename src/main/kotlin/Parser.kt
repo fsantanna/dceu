@@ -455,7 +455,8 @@ class Parser (lexer_: Lexer)
                 if (CEU>=99 && dst is Expr.Do && dst.es.let { it.size==3 && it[0] is Expr.Dcl && it[1] is Expr.Nat && it[2] is Expr.Index }) {
                     val dcl = dst.es[0] as Expr.Dcl
                     val c   = dst.es[1] as Expr.Nat
-                    val id  = dcl.idtag.first
+                    assert(dcl.idtag.size == 1)
+                    val id  = dcl.idtag[0].first
                     when (c.tk.str) {
                         "/* = */" -> this.nest("""
                             do {
