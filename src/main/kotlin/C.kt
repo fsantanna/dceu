@@ -1017,27 +1017,6 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
         
-        CEU_Value ceu_hold_chk_set_col (CEU_Dyn* col, CEU_Value v) {
-            if (v.type < CEU_VALUE_DYNAMIC) {
-                return (CEU_Value) { CEU_VALUE_NIL };
-            }
-            
-            // col affects v:
-            // [x,[1]] <-- moves v=[1] to v
-
-            // v affects fleeting col with innermost scope
-            if (col->Any.hld.type == CEU_HOLD_FLEET) {
-                if (ceu_block_is_up_dn(CEU_HLD_BLOCK(v.Dyn), CEU_HLD_BLOCK(col))) {
-                    return (CEU_Value) { CEU_VALUE_NIL };
-                } else {
-                    col->Any.hld.type = MAX(col->Any.hld.type, MIN(CEU_HOLD_FLEET,v.Dyn->Any.hld.type));
-                    return (CEU_Value) { CEU_VALUE_NIL };
-                }
-            } else {
-                return (CEU_Value) { CEU_VALUE_NIL };
-            }
-        }
-
         CEU_Value _ceu_drop_ (CEU_Value src) {
             CEU_Dyn* dyn = src.Dyn;
 
@@ -1358,7 +1337,7 @@ fun Coder.main (tags: Tags): String {
             ceu_gc_inc(v);
             ceu_gc_dec(tup->buf[i], 1);
             tup->buf[i] = v;
-            return ceu_hold_chk_set_col((CEU_Dyn*)tup, v);
+            return (CEU_Value) { CEU_VALUE_NIL };
         }
         
         CEU_Value ceu_vector_get (CEU_Vector* vec, int i) {
@@ -1380,10 +1359,6 @@ fun Coder.main (tags: Tags): String {
                 vec->its--;
                 return ret;
             } else {
-                CEU_Value err = ceu_hold_chk_set_col((CEU_Dyn*)vec, v);
-                if (err.type == CEU_VALUE_ERROR) {
-                    return err;
-                }
                 if (vec->its == 0) {
                     vec->unit = v.type;
                 } else {
@@ -1534,15 +1509,6 @@ fun Coder.main (tags: Tags): String {
                 (*col->buf)[old][0] = (CEU_Value) { CEU_VALUE_NIL };
                 return (CEU_Value) { CEU_VALUE_NIL };
             } else {
-                CEU_Value err1 = ceu_hold_chk_set_col((CEU_Dyn*)col, key);
-                if (err1.type == CEU_VALUE_ERROR) {
-                    return err1;
-                }
-                CEU_Value err2 = ceu_hold_chk_set_col((CEU_Dyn*)col, val);
-                if (err2.type == CEU_VALUE_ERROR) {
-                    return err2;
-                }
-
                 ceu_gc_inc(val);
                 ceu_gc_dec(vv, 1);
                 if (vv.type == CEU_VALUE_NIL) {
@@ -2004,9 +1970,6 @@ fun Coder.main (tags: Tags): String {
                 CEU_VALUE_THROW, 0, NULL, NULL, { CEU_HOLD_FLEET, blk, NULL, NULL },
                 val, stk
             };
-            
-            assert(ceu_hold_chk_set_col((CEU_Dyn*)ret, val).type != CEU_VALUE_ERROR);
-            assert(ceu_hold_chk_set_col((CEU_Dyn*)ret, stk).type != CEU_VALUE_ERROR);
             
             return (CEU_Value) { CEU_VALUE_THROW, {.Dyn=(CEU_Dyn*)ret} };
         }

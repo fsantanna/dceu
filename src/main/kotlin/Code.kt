@@ -155,7 +155,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                         {
                             CEU_Value ceu_up = ${dcl.idc(upv)};
-                            //assert(ceu_hold_chk_set_col(ceu_acc.Dyn, ceu_up).type != CEU_VALUE_ERROR);
                             ceu_gc_inc(ceu_up);
                             ((CEU_Clo_Upvs_$id*)ceu_acc.Dyn->Clo.upvs.buf)->${idc} = ceu_up;
                         }
