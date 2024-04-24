@@ -414,31 +414,35 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val (id,tag1) = this.id_tag()
-                val (tag2,src) = if (!this.acceptFix("=")) Pair(tag1,null) else {
-                    val e = this.expr()
-                    val tag = when {
-                        (tag1 != null) -> tag1
-                        (CEU < 99) -> null
-                        (e !is Expr.Call) -> null
-                        (e.clo !is Expr.Acc) -> null
-                        (e.clo.tk.str != "tag") -> null
-                        (e.args.es.size != 2) -> null
-                        (e.args.es[0] !is Expr.Tag) -> null
-                        (e.args.es[1] !is Expr.Tuple) -> null
-                        else -> e.args.es[0].tk as Tk.Tag
-                    }
-                    Pair(tag, e)
-                }
-                 */
-                val lst2 = lst1 + if (!par || !this.acceptFix(",")) emptyList() else {
+                val par = this.acceptFix("(")
+                val fst = this.id_tag()
+                val lst = listOf(fst) + if (!par || !this.acceptFix(",")) emptyList() else {
                     this.list0(")", ",") { this.id_tag() }
                 }
                 if (par) {
                     this.acceptFix_err(")")
                 }
-                val src = if (!this.acceptFix("=")) null else this.expr()
-                Expr.Dcl(tk0, lst2, src)
+                val (tags,src) = if (!this.acceptFix("=")) Pair(emptyList(),null) else {
+                    val x = this.expr()
+                    val lst2 = if (x is Expr.Args) x.es else listOf(x)
+                    val rep: List<Tk.Tag?> = List(lst.size-lst2.size) { _ -> null }
+                    val lst3 = lst.zip(lst2+rep).map { (a,b) ->
+                        when {
+                            (a.second != null) -> a.second
+                            (CEU < 99) -> null
+                            (b !is Expr.Call) -> null
+                            (b.clo !is Expr.Acc) -> null
+                            (b.clo.tk.str != "tag") -> null
+                            (b.args.es.size != 2) -> null
+                            (b.args.es[0] !is Expr.Tag) -> null
+                            (b.args.es[1] !is Expr.Tuple) -> null
+                            else -> b.args.es[0].tk as Tk.Tag
+                        }
+                    }
+                    Pair(lst3, x)
+                }
+                val fin = lst.zip(tags).map { (x,y) -> Pair(x.first,y) }
+                Expr.Dcl(tk0, fin, src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix

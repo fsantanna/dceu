@@ -14,7 +14,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             when {
                 (it !is Expr.Dcl) -> this.n.toString()
                 (it.src != this) -> error("bug found") as String
-                else -> it.idtag.first.str.idc()
+                (it.idtag.size > 1) -> TODO("function name / multiple decl")
+                else -> it.idtag[0].first.str.idc()
             }
         }
     }

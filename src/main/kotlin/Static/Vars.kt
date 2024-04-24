@@ -114,7 +114,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
     fun acc (e: Expr, id: String): Dcl_Idx {
         var dcl: Expr.Dcl? = null
         var i: Int? = null
-        for (x in dcls) {
+        for (x in dcls.reversed()) {
             if (x is Expr.Dcl) {
                 i = x.idtag.indexOfFirst { id == it.first.str }
                 if (i != -1) {

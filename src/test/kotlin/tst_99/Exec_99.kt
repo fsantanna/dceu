@@ -399,7 +399,7 @@ class Exec_99 {
             val it
             do {
                 val it = 10
-                println(it)
+                println(it)     ;; dcl from last to first
             }            
         """)
         assert(out == "10\n") { out }
@@ -920,6 +920,15 @@ class Exec_99 {
             println(x.x, tag(x))
         """)
         assert(out == "1\t:T\n") { out }
+    }
+    @Test
+    fun hi_04x_tags() {
+        val out = test("""
+            data :T = [x]
+            val (a,b) = (:T [1], :T [2])
+            println(a.x, b.y)
+        """)
+        assert(out == "1\t1\n") { out }
     }
     @Test
     fun hi_05_tags() {
