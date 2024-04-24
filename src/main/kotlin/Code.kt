@@ -703,11 +703,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         val src = ups.pub[this]!!.idc("src")
                         """
                         { // PUB - SET | ${this.dump()}
-                            CEU_ASSERT(
-                                $bupc,
-                                ceu_hold_chk_set(ceu_block_up_block($bupc), CEU_HOLD_MUTAB, $src, 0, "set error"),
-                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
-                            );
                             ceu_gc_inc($src);
                             ceu_gc_dec(ceu_acc.Dyn->Exe_Task.pub, 1);
                             ceu_acc.Dyn->Exe_Task.pub = $src;
@@ -809,11 +804,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         """
                         { // ACC - SET
-                            CEU_ASSERT(
-                                $bupc,
-                                ceu_hold_chk_set(${vblk.idc("block",nst)}, CEU_HOLD_MUTAB, $src, 0, "set error"),
-                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
-                            );
                             ceu_gc_inc($src);
                             ceu_gc_dec($idc, 1);
                             $idc = $src;
