@@ -926,9 +926,9 @@ class Exec_99 {
         val out = test("""
             data :T = [x]
             val (a,b) = (:T [1], :T [2])
-            println(a.x, b.y)
+            println(a.x, b.x)
         """)
-        assert(out == "1\t1\n") { out }
+        assert(out == "1\t2\n") { out }
     }
     @Test
     fun hi_05_tags() {

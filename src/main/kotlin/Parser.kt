@@ -416,18 +416,20 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val par = this.acceptFix("(")
                 val fst = this.id_tag()
-                val lst = listOf(fst) + if (!par || !this.acceptFix(",")) emptyList() else {
+                val lst1 = listOf(fst) + if (!par || !this.acceptFix(",")) emptyList() else {
                     this.list0(")", ",") { this.id_tag() }
                 }
                 if (par) {
                     this.acceptFix_err(")")
                 }
-                val (tags,src) = if (!this.acceptFix("=")) Pair(emptyList(),null) else {
-                    val x = this.expr()
-                    val lst2 = if (x is Expr.Args) x.es else listOf(x)
-                    val rep: List<Tk.Tag?> = List(lst.size-lst2.size) { _ -> null }
-                    val lst3 = lst.zip(lst2+rep).map { (a,b) ->
-                        when {
+                val src = if (!this.acceptFix("=")) null else {
+                    this.expr()
+                }
+                val lst2 = if (CEU < 99) lst1 else {
+                    val srcs = if (src is Expr.Args) src.es else listOf(src)
+                    val rep: List<Tk.Tag?> = List(lst1.size-srcs.size) { _ -> null }
+                    lst1.zip(srcs+rep).map { (a,b) ->
+                        Pair(a.first, when {
                             (a.second != null) -> a.second
                             (CEU < 99) -> null
                             (b !is Expr.Call) -> null
@@ -437,12 +439,10 @@ class Parser (lexer_: Lexer)
                             (b.args.es[0] !is Expr.Tag) -> null
                             (b.args.es[1] !is Expr.Tuple) -> null
                             else -> b.args.es[0].tk as Tk.Tag
-                        }
+                        })
                     }
-                    Pair(lst3, x)
                 }
-                val fin = lst.zip(tags).map { (x,y) -> Pair(x.first,y) }
-                Expr.Dcl(tk0, fin, src)
+                Expr.Dcl(tk0, lst2, src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
