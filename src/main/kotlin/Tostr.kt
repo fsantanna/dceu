@@ -50,10 +50,13 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Pass   -> "(do " + this.e.tostr(pre) + ")"
 
         is Expr.Catch  -> {
-            val cnd = this.cnd.es.let {
-                //println(it.tostr())
-                assert(it.size == 2)
-                (it[0] as Expr.Dcl).idtag.tostr(pre) + ", " + it[1].tostr(pre)
+            val cnd = this.cnd.es.let { es ->
+                assert(es.size==2)
+                es[0].let { dcl ->
+                    dcl as Expr.Dcl
+                    assert(dcl.idtag.size==1)
+                    dcl.idtag[0].tostr(pre) + ", " + es[1].tostr(pre)
+                }
             }
             "catch (" + cnd + ") " + this.blk.tostr(pre)
         }

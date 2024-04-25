@@ -172,15 +172,17 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         // index of dcl inside its blk/proto
         var I = 0
         for (x in dcls) {
-            if (x is Expr.Dcl) {
-                if (x == dcl) {
+            if (x == dcl) {
+                if (x is Expr.Dcl) {
                     I += ii!!
-                    break
-                } else {
-                    I += x.idtag.size
                 }
+                break
             } else {
-                I++
+                if (x is Expr.Dcl) {
+                    I += x.idtag.size
+                } else {
+                    I++
+                }
             }
         }
 
