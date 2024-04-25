@@ -202,7 +202,7 @@ class JS_99 {
                 ;; anon : (lin 3, col 17) : throw error : uncaught exception
                 ;; :problem
         """, true)
-        assert(out == " |  anon : (lin 6, col 13) : (resume (genObj)(nil))\n" +
+        assert(out == " |  anon : (lin 6, col 13) : (resume (genObj)())\n" +
                 " |  anon : (lin 3, col 17) : error(:problem)\n" +
                 " v  error : :problem\n") { out }
     }
@@ -221,7 +221,7 @@ class JS_99 {
                 }()
             }
         """, true)
-        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing func") { out }
+        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing func\n") { out }
     }
     @Test
     fun x_09() {
@@ -645,7 +645,8 @@ class JS_99 {
         coro Take (n, lines) {
             yield()
             var i = 0
-            loop until i == n {
+            loop {
+                until i == n
                 yield(resume lines())
                 set i = i + 1
             }

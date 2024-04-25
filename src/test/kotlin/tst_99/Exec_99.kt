@@ -727,7 +727,7 @@ class Exec_99 {
             println(:gc, `:number CEU_GC.free`) ;; error might be caught, so zero but no check
             println(:x, x)
         """, true)
-        assert(out == ":gc\t9\n:x\t10\n") { out }
+        assert(out == ":gc\t5\n:x\t10\n") { out }
     }
     @Test
     fun gg_04_catch_err() {
@@ -1292,7 +1292,7 @@ class Exec_99 {
         val out = test("""
             val CO = coro () {
                 yield(nil) thus { it =>
-                    println(sup(:X,tag(it))) ;; drop(it)
+                    println(sup?(:X,tag(it))) ;; drop(it)
                 }
             }
             val co = coroutine(CO)
@@ -1953,7 +1953,7 @@ class Exec_99 {
             }
         """, true)
         //assert(out.contains("assertion error : expected :Iterator")) { out }
-        assert(out.contains(" |  anon : (lin 2, col 22) : ceu_15407[0]\n" +
+        assert(out.contains(" |  anon : (lin 2, col 22) : ceu_16694[0]\n" +
                 " v  index error : expected collection\n")) { out }
     }
     @Test
@@ -2488,7 +2488,7 @@ class Exec_99 {
         assert(out == "1\n" +
                 "2\n" +
                 "3\n" +
-                " |  anon : (lin 11, col 21) : (resume (co)(nil))\n" +
+                " |  anon : (lin 11, col 21) : (resume (co)())\n" +
                 " v  resume error : expected yielded coro\n") { out }
     }
 
@@ -4055,7 +4055,7 @@ class Exec_99 {
             }
         """)
         //assert(out == "anon : (lin 2, col 27) : expected non-pool spawn : have \"spawn\"") { out }
-        assert(out == " |  anon : (lin 4, col 14) : (spawn (task :nested () { (var x = do { (val ...)\n" +
+        assert(out == " |  anon : (lin 4, col 14) : (spawn (task :nested () { (var (x) = do { (va...)\n" +
                 " |  anon : (lin 3, col 31) : (spawn nil() in nil)\n" +
                 " v  spawn error : expected task\n") { out }
     }
