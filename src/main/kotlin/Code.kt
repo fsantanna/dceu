@@ -347,7 +347,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             }
 
             is Expr.Resume -> {
-                assert(!this.args.dots && this.args.es.size<=1)
+                //assert(!this.args.dots && this.args.es.size<=1)
                 """
                 ${this.co.code()}
                 ${this.args.code()}

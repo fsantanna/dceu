@@ -280,7 +280,7 @@ class Exec_03 {
         assert(out == ":v1\t10\n:x1\t11\n:v2\t12\n:x2\t13\n") { out }
     }
     @Test
-    fun TODO_cc_11_mult() {
+    fun cc_11_mult() {
         val out = test("""
             var co
             set co = coroutine(coro (x,y) {
@@ -291,16 +291,19 @@ class Exec_03 {
         assert(out == "1\t2\n") { out }
     }
     @Test
-    fun TODO_cc_12_multi_err() {
+    fun cc_12_multi_err() {
         val out = test("""
             var co
-            set co = coroutine(coro () {
-                yield(nil) ;;thus { it => nil }
+            set co = coroutine(coro (...) {
+                println(...)
+                println(yield(nil))
+                println(yield(nil))
             })
+            resume co(1,2)
             resume co()
-            resume co(1,2)  ;; pass multiple values
+            resume co(3,4)
         """)
-        assert(out.contains("TODO: multiple arguments to resume")) { out }
+        assert(out == ("1\t2\n\n3\t4\n")) { out }
     }
     @Test
     fun cc_13_tuple_leak() {
