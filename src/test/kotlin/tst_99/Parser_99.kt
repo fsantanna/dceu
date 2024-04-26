@@ -582,7 +582,7 @@ class Parser_99 {
                 "(val (ceu_14) = to-iter(f))\n" +
                 "loop {\n" +
                 "(val (x) = ceu_14[0](ceu_14))\n" +
-                "(break(false) if {{==}}(x,nil))\n" +
+                "(break(nil) if {{==}}(x,nil))\n" +
                 "x\n" +
                 "}\n" +
                 "}") { e.tostr() }
@@ -843,23 +843,12 @@ class Parser_99 {
             do {
             (val (ceu_co_11) = f)
             (var (ceu_arg_11) = nil)
+            (var (ceu_v_11))
             loop {
-            (val (ceu_v_11) = (resume (ceu_co_11)(ceu_arg_11)))
-            if do {
-            (val (ceu_61) = {{/=}}(status(ceu_co_11),:terminated))
-            if ceu_61 {
-            ceu_61
-            } else {
-            {{/=}}(ceu_v_11,nil)
-            }
-            } {
+            (set ceu_v_11 = (resume (ceu_co_11)(ceu_arg_11)))
+            (break(ceu_v_11) if {{==}}(status(ceu_co_11),:terminated))
             (set ceu_arg_11 = yield(ceu_v_11))
-            } else {
-            nil
             }
-            (break if {{==}}(status(ceu_co_11),:terminated))
-            }
-            ceu_arg_11
             }
         """.trimIndent()) { e.tostr() }
     }

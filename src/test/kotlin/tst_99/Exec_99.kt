@@ -1972,7 +1972,7 @@ class Exec_99 {
             until x == 4 }
             println(y)
         """, true)
-        assert(out == "false\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun fx_05_iter_it() {
@@ -1981,7 +1981,7 @@ class Exec_99 {
             until it == 4 }
             println(y)
         """, true)
-        assert(out == "false\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun fx_06_iter_it() {
@@ -2178,7 +2178,7 @@ class Exec_99 {
                 do nil
             })
         """, true)
-        assert(out == "false\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun fi_04_ret() {
@@ -2629,11 +2629,12 @@ class Exec_99 {
             coro foo (x4) {
                 val x6 = yield(x4+1)
                 val x8 = yield(x6+1)
-                nil
+                x8
             }
             coro bar (x1) {
                 val x3 = yield(x1+1)
                 val x8 = resume-yield-all coroutine(foo) (x3+1)
+                ;;println(:x8, x8, x8+1)
                 val x10 = yield(x8+1)
                 nil
             }

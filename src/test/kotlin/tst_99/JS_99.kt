@@ -139,18 +139,28 @@ class JS_99 {
                 }
             ;;}
             coro fetchJson (url) {
-                val req = await spawn fetch(url)
-                val txt = await spawn text(req)
-                await spawn json(txt)
+                val co_fetch = coroutine(fetch)
+                val co_text  = coroutine(text)
+                val co_json  = coroutine(json)
+                val req = resume-yield-all co_fetch(url)
+                val txt = resume-yield-all co_text(req)
+                resume-yield-all co_json(txt)
             }
             spawn {
-                val obj1 = await spawn fetchJson(:good)
+                val co1 = coroutine(fetchJson)
+                val co2 = coroutine(fetchJson)
+                val obj1 = resume-yield-all co1(:good)
                 println(obj1)   ;; json :good
-                val obj2 = await spawn fetchJson(:error)
+                val obj2 = resume-yield-all co2(:error)
                 println(obj2)   ;; never printed
             }
         """, true)
-        assert(out.contains("uncaught exception\njson :good")) { out }
+        assert(out.contains("json :good\n" +
+                " |  anon : (lin 31, col 14) : (spawn (task :nested () { (val (co1) = corout...)\n" +
+                " |  anon : (lin 32, col 47) : (resume (ceu_co_17768)(ceu_arg_17768))\n" +
+                " |  anon : (lin 23, col 47) : (resume (ceu_co_16940)(ceu_arg_16940))\n" +
+                " |  anon : (lin 5, col 25) : error(:error)\n" +
+                " v  error : :error\n")) { out }
     }
 
     // 22.3 Generators as iterators (data production)
@@ -167,7 +177,7 @@ class JS_99 {
             println(resume genObj())
             println(resume genObj())
         """, true)
-        assert(out == "a\nb\nnil\n") { out }
+        assert(out == "a\nb\n\n") { out }
     }
 
     // 22.3.1 Ways of iterating over a generator
@@ -350,7 +360,7 @@ class JS_99 {
             println(resume genObj('a'))
             println(resume genObj('b'))
         """, true)
-        assert(out == ":started\nnil\n1\ta\nnil\n2\tb\n:result\n") { out }
+        assert(out == ":started\n\n1\ta\n\n2\tb\n:result\n") { out }
     }
 
     // 22.4.1.1 The first next()
@@ -652,7 +662,8 @@ class JS_99 {
             }
         }
         coro FS-Read (filename) {
-            val f = `:pointer fopen(${D}filename.Dyn->Ncast.Vector.buf, "r")`
+            val buf = to-pointer(filename)
+            val f = `:pointer fopen(${D}buf.Pointer, "r")`
             defer {
                 `fclose(${D}f.Pointer);`
             }
@@ -660,23 +671,23 @@ class JS_99 {
             loop {
                 val c = `:char fgetc(${D}f.Pointer)`
                 yield(c)
-            } until
-                c == `:char EOF`
+                until c == `:char EOF`
+            }
         }
         do { ;; PULL
-            val read1   = create-resume(FS-Read, "build/cprelude.ceu")
+            val read1   = create-resume(FS-Read, "build/prelude-0.ceu")
             val split1  = create-resume(Split, read1)
             val number1 = create-resume(Number, split1)
-            val take1   = Take(3, number1)
+            val take1   = create-resume(Take, 3, number1)
             loop l in to-iter(take1) {
                 println(l)
             }
         }
         do { ;; PUSH
-            val read2   = create-resume(FS-Read, "build/xprelude.ceu")
+            val read2   = create-resume(FS-Read, "build/prelude-x.ceu")
             val split2  = create-resume(Split, read2)
             val number2 = create-resume(Number, split2)
-            val take2   = spawn Take(3, number2)
+            val take2   = create-resume(Take, 3, number2)
             coro Show () {
                 var line = yield()
                 loop {
@@ -687,19 +698,19 @@ class JS_99 {
             }
             coro Send (co, next) {
                 loop v in to-iter(co) {
-                    resume next(drop(v))
+                    resume next(;;;drop;;;(v))
                 }
             }
-            spawn Send(take2, spawn Show())
+            create-resume(Send, take2, create-resume(Show))
             nil
         }
         """, true)
-        assert(out == "1: ;; LOGICAL\n" +
+        assert(out == "1: ;; is', is-not'\n" +
                 "2: \n" +
-                "3: export [{{&&}}, {{||}}]\n" +
-                "1: ;; is', is-not'\n" +
+                "3: val not = func (v) {\n" +
+                "1: data :Clock = [ms]\n" +
                 "2: \n" +
-                "3: func to-bool (v) {\n") { out }
+                "3: func debug (v) {\n") { out }
     }
 
     // 22.6.2.2.1 Step 1 – tokenize
