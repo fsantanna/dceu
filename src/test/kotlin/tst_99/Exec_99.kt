@@ -1953,7 +1953,7 @@ class Exec_99 {
             }
         """, true)
         //assert(out.contains("assertion error : expected :Iterator")) { out }
-        assert(out.contains(" |  anon : (lin 2, col 22) : ceu_16694[0]\n" +
+        assert(out.contains(" |  anon : (lin 2, col 22) : ceu_16692[0]\n" +
                 " v  index error : expected collection\n")) { out }
     }
     @Test
@@ -2366,7 +2366,7 @@ class Exec_99 {
         assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
-    fun fj_02_iter() {
+    fun TODO_fj_02_iter() {     // copy x-task?
         val out = test("""
             task T () {
                 yield()
@@ -5433,11 +5433,11 @@ class Exec_99 {
                 yield()
             }
             task T (u) {
-                ;;println(nil)
+                println(u)
             }
             spawn T (spawn U())
         """)
-        assert(out == "[]\n") { out }
+        assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun zb_10_all() {
@@ -5655,7 +5655,7 @@ class Exec_99 {
         assert(out == "[]\n") { out }
     }
     @Test
-    fun XXX_zb_21() {
+    fun zb_21() {
         val out = test("""
         coro Take () {
             yield()
@@ -5679,7 +5679,6 @@ class Exec_99 {
                 }
             }
             create-resume(Send, take, create-resume(Show))
-            nil
         }
         """, true)
         assert(out == "line\n" +
@@ -5825,6 +5824,6 @@ class Exec_99 {
             broadcast(:FIN)
             spawn T() in ts
         """)
-        assert(out == "TODO\n") { out }
+        assert(out == ":ok\n:ok\n") { out }
     }
 }

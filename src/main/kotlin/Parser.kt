@@ -593,7 +593,7 @@ class Parser (lexer_: Lexer)
                                 val ceu_$N = to-iter(${iter.tostr(true)})
                                 loop {
                                     val ${idtag.tostr(true)} = ceu_$N[0](ceu_$N)
-                                    break(false) if ($id == nil)
+                                    break(nil) if ($id == nil)
                                     ${blk.es.tostr(true)}
                                 }
                             }
