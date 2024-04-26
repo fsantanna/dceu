@@ -120,10 +120,10 @@ typealias Id_Tag  = Pair<Tk.Id,Tk.Tag?>
 typealias Dcl_Idx = Pair<Expr.Dcl,Int>
 
 sealed class Expr (val n: Int, val tk: Tk) {
-    data class Proto  (val tk_: Tk.Fix, val nst: Boolean, val rec: Boolean, val tag: Tk.Tag?, val dots: Boolean, val pars: List<Pair<Tk.Id, Tk.Tag?>>, val blk: Do): Expr(N++, tk_)
+    data class Proto  (val tk_: Tk.Fix, val nst: Boolean, val tag: Tk.Tag?, val dots: Boolean, val pars: List<Pair<Tk.Id, Tk.Tag?>>, val blk: Do): Expr(N++, tk_)
     data class Export (val tk_: Tk.Fix, val ids: List<String>, val blk: Expr.Do) : Expr(N++, tk_)
     data class Do     (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
-    data class Dcl    (val tk_: Tk.Fix, val idtag: List<Id_Tag>, /*val poly: Boolean,*/ val src: Expr?):  Expr(N++, tk_)
+    data class Dcl    (val tk_: Tk.Fix, val rec: Boolean, val idtag: List<Id_Tag>, /*val poly: Boolean,*/ val src: Expr?):  Expr(N++, tk_)
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
     data class Loop   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
@@ -197,11 +197,11 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
         }
         //readLine()
         val pos = Pos("anon", 0, 0)
-        val glbs = GLOBALS.map { Expr.Dcl(Tk.Fix("val",pos), listOf(Pair(Tk.Id(it,pos),null)), null) }
+        val glbs = GLOBALS.map { Expr.Dcl(Tk.Fix("val",pos), false, listOf(Pair(Tk.Id(it,pos),null)), null) }
         val outer = Expr.Call (
             Tk.Fix("main", pos),
             Expr.Proto (
-                Tk.Fix("func",pos), false, false, null,
+                Tk.Fix("func",pos), false, null,
                 true, listOf(),
                 Expr.Do(Tk.Fix("",pos), glbs + es)
             ),

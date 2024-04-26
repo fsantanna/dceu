@@ -341,18 +341,16 @@ class Exec_01 {
     @Test
     fun be_01_rec_err() {
         val out = test("""
-            func :rec () {
-                nil
-            }
+            val :rec x = 1
         """)
-        assert(out == "anon : (lin 2, col 13) : func :rec error : expected enclosing val declaration\n") { out }
+        assert(out == "anon : (lin 2, col 13) : val :rec error : invalid assignment\n") { out }
     }
     @Test
     fun be_02_rec() {
         STACK = 128
         val out = test("""
             $PLUS
-            val f = func :rec (v) {
+            val :rec f = func (v) {
                 if v == 0 {
                     0
                 } else {
@@ -364,25 +362,26 @@ class Exec_01 {
         assert(out == "10\n") { out }
     }
     @Test
-    fun TODO_be_03_rec_rec() {
+    fun be_03_rec_rec() {
         STACK = 64
         val out = test("""
             $PLUS
-            val f,g =
-                func :rec (v) {
+            val :rec (f,g) = (
+                func (v) {
                     if v == 0 {
                         0
                     } else {
                         v + g(v - 1)
                     }
                 },
-                func :rec (v) {
+                func (v) {
                     if v == 0 {
                         0
                     } else {
                         v + f(v - 1)
                     }
                 },
+            )
             println(f(4))
         """)
         assert(out == "10\n") { out }
@@ -544,7 +543,7 @@ class Exec_01 {
     fun cc_tuple6a_free() {
         val out = test(
             """
-            val f = func :rec (v) {
+            val :rec f = func (v) {
                 if v > 0 {
                     [f(v - 1)]
                 } else {
@@ -561,7 +560,7 @@ class Exec_01 {
         STACK = 128
         val out = test(
             """
-            val f = func :rec (v) {
+            val :rec f = func (v) {
                 if v > 0 {
                     [f(v - 1)]
                 } else {
@@ -578,7 +577,7 @@ class Exec_01 {
     fun cc_tuple7_hold_err() {
         STACK = 128
         val out = test("""
-            val f = func :rec (v) {
+            val :rec f = func (v) {
                 var x
                 if v > 0 {
                     set x = f(v - 1)
@@ -597,7 +596,7 @@ class Exec_01 {
         STACK = 128
         val out = test(
             """
-            val f = func :rec (v) {
+            val :rec f = func (v) {
                 if v > 0 {
                     val x = f(v - 1)
                     [x] ;; invalid return
@@ -5907,7 +5906,7 @@ class Exec_01 {
             val g = func () {
                 f()
             }
-            val h = func :rec () {
+            val :rec h = func () {
                 h()
             }
             val i = func () {
@@ -5957,7 +5956,7 @@ class Exec_01 {
     fun zz_03_func_scope() {
         STACK = 64
         val out = test("""
-            val f = func :rec (v) {
+            val :rec f = func (v) {
                 if v == nil {
                     1
                 } else {
@@ -5980,7 +5979,7 @@ class Exec_01 {
                 ]),
                 (:right, nil)
             ]
-            val itemCheck = func :rec (tree) {
+            val :rec itemCheck = func (tree) {
                 if tree == nil {
                     1
                 }

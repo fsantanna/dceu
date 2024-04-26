@@ -26,7 +26,7 @@ fun Expr.tostr (pre: Boolean = false): String {
     return when (this) {
         is Expr.Proto  -> {
             val pars = (this.pars.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList())).joinToString(",")
-            "(" + this.tk.str + this.nst.cond { " :nested" } + this.rec.cond { " :rec" } + " (" + pars + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
+            "(" + this.tk.str + this.nst.cond { " :nested" } + " (" + pars + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
         }
         is Expr.Export -> "export [" + this.ids.joinToString(",") + "] {\n" + this.blk.es.tostr(pre) + "}"
         is Expr.Do     -> {
@@ -36,7 +36,7 @@ fun Expr.tostr (pre: Boolean = false): String {
             }
         }
         is Expr.Dcl    -> {
-            "(" + this.tk_.str + " (" + this.idtag.map { it.tostr(pre) }.joinToString(",") + ")" + this.src.cond { " = ${it.tostr(pre)}" } + ")"
+            "(" + this.tk_.str + this.rec.cond { " :rec" } + " (" + this.idtag.map { it.tostr(pre) }.joinToString(",") + ")" + this.src.cond { " = ${it.tostr(pre)}" } + ")"
         }
         is Expr.Set    -> "(set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre) + ")"
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)

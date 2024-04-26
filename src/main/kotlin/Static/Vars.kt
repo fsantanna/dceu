@@ -306,6 +306,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                     }
                     val dcl = Expr.Dcl(
                         Tk.Fix("val", this.tk.pos),
+                        false,
                         this.pars,
                         null
                     )

@@ -50,11 +50,6 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
-                if (this.rec) {
-                    if (!ups.pub[this].let { it is Expr.Dcl && it.tk.str=="val" }) {
-                        err(this.tk, "${this.tk.str} :rec error : expected enclosing val declaration")
-                    }
-                }
                 if (this.nst) {
                     if (ups.first(ups.pub[this]!!) { it is Expr.Proto }.let {
                         (CEU>=99 && it==outer.clo) /* bc of top-level spawn {...} */ ||
@@ -81,6 +76,16 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.Export -> this.blk.traverse()
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> {
+                val ok = when {
+                    (!this.rec) -> true
+                    (this.src == null) -> false
+                    (this.src is Expr.Proto) -> true
+                    (this.src !is Expr.Args) -> false
+                    else -> this.src.es.all { it is Expr.Proto }
+                }
+                if (!ok) {
+                    err(this.tk, "${this.tk.str} :rec error : invalid assignment")
+                }
                 if (this.src is Expr.Proto) {
                     xfuns[this.src] = mutableSetOf()
                 }

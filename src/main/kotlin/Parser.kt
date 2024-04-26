@@ -414,6 +414,7 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
+                val rec = this.acceptTag(":rec")
                 val par = this.acceptFix("(")
                 val fst = this.id_tag()
                 val lst1 = listOf(fst) + if (!par || !this.acceptFix(",")) emptyList() else {
@@ -442,7 +443,7 @@ class Parser (lexer_: Lexer)
                         })
                     }
                 }
-                Expr.Dcl(tk0, lst2, src)
+                Expr.Dcl(tk0, rec, lst2, src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -604,7 +605,6 @@ class Parser (lexer_: Lexer)
             this.acceptFix("func") || (CEU>=3 && this.acceptFix("coro")) || (CEU>=4 && this.acceptFix("task")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val nst = (CEU >= 4) && (tk0.str=="task") && this.acceptTag(":nested")
-                val rec = this.acceptTag(":rec")
                 val dcl = if (CEU>=99 && this.acceptEnu("Id")) {
                     this.tk0
                 } else {
@@ -636,7 +636,7 @@ class Parser (lexer_: Lexer)
                     else -> this.tk0 as Tk.Tag
                 }
                 val blk = this.block(this.tk1)
-                val proto = Expr.Proto(tk0, nst, rec, tag, xva, xas, blk)
+                val proto = Expr.Proto(tk0, nst, tag, xva, xas, blk)
                 if (dcl == null) {
                     proto
                 } else {
