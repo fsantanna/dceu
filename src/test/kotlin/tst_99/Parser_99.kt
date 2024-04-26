@@ -170,21 +170,18 @@ class Parser_99 {
     fun cc_02_func_rec_err() {
         val l = lexer("func :rec () {}")
         val parser = Parser(l)
-        val e = parser.exprs()
-        assert(e.tostr() == "(func :rec () {\n\n})\n") { e.tostr() }
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 11) : expected identifier : have \"(\"")
+        //val e = parser.exprs()
+        //assert(e.tostr() == "(func :rec () {\n\n})\n") { e.tostr() }
+        assert(trap { parser.expr() } == "anon : (lin 1, col 11) : expected identifier : have \"(\"")
     }
     @Test
     fun cc_03_func_rec() {
         val l = lexer("func :rec f () {}")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "export [f] {\n" +
-                "(var (f))\n" +
-                "(set f = (func () {\n" +
-                "(do nil)\n" +
-                "}))\n" +
-                "}\n") { e.tostr() }
+        assert(e.tostr() == "(val :rec (f) = (func () {\n" +
+                "\n" +
+                "}))\n") { e.tostr() }
     }
 
     // IF / ID-TAG

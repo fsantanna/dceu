@@ -547,6 +547,20 @@ class Parser_01 {
                 "}))") { e.tostr() }
     }
 
+    // FUNC / :REC
+
+    @Test
+    fun pq_01_rec() {
+        val l = lexer("""
+            val :rec f = func () { }
+        """)
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "(val :rec (f) = (func () {\n" +
+                "\n" +
+                "}))") { e.tostr() }
+    }
+
     // LOOP
 
     @Test
