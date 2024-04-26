@@ -278,7 +278,7 @@ class Exec_99 {
     fun cc_02_func() {
         val out = test("""
             $PLUS
-            func :rec f (v) {
+            func f (v) {
                 if v /= 0 {
                     println(v)
                     f(v - 1)
@@ -878,7 +878,7 @@ class Exec_99 {
             }
             println(t)
         """, true)
-        assert(out == "[41,1000,1001,1002,10,11,12,42,33,101,43]\n") { out }
+        assert(out == "[40,1000,1001,1002,10,11,12,41,32,101,42]\n") { out }
     }
 
     //
@@ -1953,7 +1953,7 @@ class Exec_99 {
             }
         """, true)
         //assert(out.contains("assertion error : expected :Iterator")) { out }
-        assert(out.contains(" |  anon : (lin 2, col 22) : ceu_16692[0]\n" +
+        assert(out.contains(" |  anon : (lin 2, col 22) : ceu_16684[0]\n" +
                 " v  index error : expected collection\n")) { out }
     }
     @Test

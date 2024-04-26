@@ -76,16 +76,6 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.Export -> this.blk.traverse()
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> {
-                val ok = when {
-                    (!this.rec) -> true
-                    (this.src == null) -> false
-                    (this.src is Expr.Proto) -> true
-                    (this.src !is Expr.Args) -> false
-                    else -> this.src.es.all { it is Expr.Proto }
-                }
-                if (!ok) {
-                    err(this.tk, "${this.tk.str} :rec error : invalid assignment")
-                }
                 if (this.src is Expr.Proto) {
                     xfuns[this.src] = mutableSetOf()
                 }

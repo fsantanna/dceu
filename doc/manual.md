@@ -566,7 +566,6 @@ The following tags are pre-defined in Ceu:
     :tasks                                          ;; task pool
 
     :ceu :pre                                       ;; native ceu value/pre code
-    :rec                                            ;; recursive prototype
     :yielded :toggled :resumed :terminated          ;; coro/task status
     :h :min :s :ms                                  ;; time unit
     :all :idx :key :val                             ;; iterator modifier
@@ -849,8 +848,6 @@ Coro : `coro´ `(´ [List(ID [TAG])] [`...´] `)´ Block
 Task : `task´ `(´ [List(ID [TAG])] [`...´] `)´ Block
 ```
 
-Each prototype keyword is followed by an optional `:rec` modifier and a list of
-identifiers as parameters enclosed by parenthesis.
 Parameter declarations are equivalent to immutable `val`
 [declarations](#declarations) and can also be associated with
 [tuple template](#tag-enumerations-and-tuple-templates) tags.
@@ -1151,12 +1148,10 @@ A [prototype](#prototype-values) can be declared as an immutable variable as
 follows:
 
 ```
-Proto : `func´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block
-      | `coro´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block
-      | `task´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block
+Proto : `func´ ID `(´ [List(ID)] [`...´] `)´ Block
+      | `coro´ ID `(´ [List(ID)] [`...´] `)´ Block
+      | `task´ ID `(´ [List(ID)] [`...´] `)´ Block
 ```
-
-The optional `:rec` modifier allows the block to self refer to `ID`.
 
 ### Assignments
 
@@ -2996,9 +2991,9 @@ Expr  : `do´ Block                                      ;; explicit block
       | `val´ ID [TAG] [`=´ [TAG] Expr]                 ;; decl constant
       | `var´ ID [TAG] [`=´ [TAG] Expr]                 ;; decl variable
 
-      | `func´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block ;; decl func
-      | `coro´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block ;; decl coro
-      | `task´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block ;; decl task
+      | `func´ ID `(´ [List(ID)] [`...´] `)´ Block      ;; decl func
+      | `coro´ ID `(´ [List(ID)] [`...´] `)´ Block      ;; decl coro
+      | `task´ ID `(´ [List(ID)] [`...´] `)´ Block      ;; decl task
 
       | `set´ Expr `=´ Expr                             ;; assignment
 

@@ -203,7 +203,7 @@ class Book_99 {
     @Test
     fun pg_19_fact() {
         val out = test("""
-            func :rec fact (x) {
+            func fact (x) {
                 if x == 0 {
                     1
                 } else {
@@ -249,7 +249,7 @@ class Book_99 {
     @Test
     fun TODO_ifs_pg_30_bool() {
         val out = test("""
-            func :rec fact (x) {
+            func fact (x) {
                 ifs {
                     x < 0  => error(:error)
                     x == 0 => 1

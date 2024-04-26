@@ -343,14 +343,15 @@ class Exec_01 {
         val out = test("""
             val :rec x = 1
         """)
-        assert(out == "anon : (lin 2, col 13) : val :rec error : invalid assignment\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : val :rec error : invalid assignment\n") { out }
+        assert(out == "anon : (lin 2, col 17) : expected identifier : have \":rec\"\n") { out }
     }
     @Test
     fun be_02_rec() {
         STACK = 128
         val out = test("""
             $PLUS
-            val :rec f = func (v) {
+            val f = func (v) {
                 if v == 0 {
                     0
                 } else {
@@ -366,7 +367,7 @@ class Exec_01 {
         STACK = 64
         val out = test("""
             $PLUS
-            val :rec (f,g) = (
+            val (f,g) = (
                 func (v) {
                     if v == 0 {
                         0
@@ -543,7 +544,7 @@ class Exec_01 {
     fun cc_tuple6a_free() {
         val out = test(
             """
-            val :rec f = func (v) {
+            val f = func (v) {
                 if v > 0 {
                     [f(v - 1)]
                 } else {
@@ -560,7 +561,7 @@ class Exec_01 {
         STACK = 128
         val out = test(
             """
-            val :rec f = func (v) {
+            val f = func (v) {
                 if v > 0 {
                     [f(v - 1)]
                 } else {
@@ -577,7 +578,7 @@ class Exec_01 {
     fun cc_tuple7_hold_err() {
         STACK = 128
         val out = test("""
-            val :rec f = func (v) {
+            val f = func (v) {
                 var x
                 if v > 0 {
                     set x = f(v - 1)
@@ -596,7 +597,7 @@ class Exec_01 {
         STACK = 128
         val out = test(
             """
-            val :rec f = func (v) {
+            val f = func (v) {
                 if v > 0 {
                     val x = f(v - 1)
                     [x] ;; invalid return
@@ -4484,7 +4485,7 @@ class Exec_01 {
             println(sup?(:T,tag(s)), sup?(:T.S,tag(s)))
         """, true
         )
-        assert(out == "16\t272\ntrue\tfalse\ntrue\ttrue\n") { out }
+        assert(out == "15\t271\ntrue\tfalse\ntrue\ttrue\n") { out }
     }
     @Test
     fun tags12() {
@@ -4573,7 +4574,7 @@ class Exec_01 {
             )
         """, true
         )
-        assert(out == "16\t1000\t1001\t1002\t10\t11\t12\t17\t100\t101\t18\n") { out }
+        assert(out == "15\t1000\t1001\t1002\t10\t11\t12\t16\t100\t101\t17\n") { out }
     }
     @Test
     fun enum02() {
@@ -5906,7 +5907,7 @@ class Exec_01 {
             val g = func () {
                 f()
             }
-            val :rec h = func () {
+            val h = func () {
                 h()
             }
             val i = func () {
@@ -5956,7 +5957,7 @@ class Exec_01 {
     fun zz_03_func_scope() {
         STACK = 64
         val out = test("""
-            val :rec f = func (v) {
+            val f = func (v) {
                 if v == nil {
                     1
                 } else {
@@ -5979,7 +5980,7 @@ class Exec_01 {
                 ]),
                 (:right, nil)
             ]
-            val :rec itemCheck = func (tree) {
+            val itemCheck = func (tree) {
                 if tree == nil {
                     1
                 }

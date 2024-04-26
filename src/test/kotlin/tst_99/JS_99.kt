@@ -157,8 +157,8 @@ class JS_99 {
         """, true)
         assert(out.contains("json :good\n" +
                 " |  anon : (lin 31, col 14) : (spawn (task :nested () { (val (co1) = corout...)\n" +
-                " |  anon : (lin 32, col 47) : (resume (ceu_co_17768)(ceu_arg_17768))\n" +
-                " |  anon : (lin 23, col 47) : (resume (ceu_co_16940)(ceu_arg_16940))\n" +
+                " |  anon : (lin 32, col 47) : (resume (ceu_co_17760)(ceu_arg_17760))\n" +
+                " |  anon : (lin 23, col 47) : (resume (ceu_co_16932)(ceu_arg_16932))\n" +
                 " |  anon : (lin 5, col 25) : error(:error)\n" +
                 " v  error : :error\n")) { out }
     }
@@ -326,7 +326,7 @@ class JS_99 {
                 ],
                 r = @[v = 'e']
             ]
-            coro :rec T (tree) {
+            coro T (tree) {
                 yield()
                 yield(tree.v)
                 if tree.l {

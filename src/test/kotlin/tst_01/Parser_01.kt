@@ -552,11 +552,11 @@ class Parser_01 {
     @Test
     fun pq_01_rec() {
         val l = lexer("""
-            val :rec f = func () { }
+            val f = func () { }
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(val :rec (f) = (func () {\n" +
+        assert(e.tostr() == "(val (f) = (func () {\n" +
                 "\n" +
                 "}))") { e.tostr() }
     }
