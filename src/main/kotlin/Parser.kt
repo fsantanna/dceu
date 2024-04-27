@@ -290,6 +290,7 @@ class Parser (lexer_: Lexer)
         return ret
     }
     fun patts (): List<Patt> {
+        assert(CEU >= 99)
         val xit = Tk.Id("it",this.tk0.pos)
         val par = this.acceptFix("(")
         return if (!par) listOf(patt_one(par,xit)) else {
@@ -923,36 +924,43 @@ class Parser (lexer_: Lexer)
                 }
                 this.acceptFix_err("{")
                 val ifs = list0("}",null) {
-                    val (idtag,cnd) = when {
+                    val cnds = when {
                         this.acceptFix("else") -> {
-                            Pair(null, Expr.Bool(Tk.Fix("true",this.tk0.pos)))
+                            listOf(Pair(null, Expr.Bool(Tk.Fix("true",this.tk0.pos))))
                         }
-                        (V == null) -> Pair(null, this.expr())
-                        else -> this.patt()
+                        (V == null) -> listOf(Pair(null, this.expr()))
+                        else -> this.patts()
                     }
                     val blk = if (this.acceptFix("=>")) {
                         Expr.Do(this.tk0, listOf(this.expr()))
                     } else {
                         this.block()
                     }
-                    Pair(Pair(idtag,cnd),blk)
+                    Pair(cnds,blk)
                 }
                 //ifs.forEach { println(it.first.third.tostr()) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
                 this.nest("""
                     do {
                         ${V.cond { "val ceu_$N = ${it.tostr(true)}" }}
-                        ${ifs.map { (xxx,blk) ->
-                            val (idtag,cnd) = xxx
+                        ${ifs.map { (lst,blk) ->
+                            val (ids,cnds) = lst.map { (idtag,cnd) ->
+                                Pair("""
+                                    ${idtag.cond { "val ${it.tostr(true)} = ceu_$N"}}                                    
+                                ""","""
+                                    ${cnd.tostr(true)}    
+                                """)
+                            }.unzip()
                             """
-                            ${idtag.cond { "val ${it.tostr(true)} = ceu_$N"}}
-                            if ${cnd.tostr(true)} {
-                                ${blk.es.tostr(true)}
-                            } else {
-                            """}.joinToString("")}
-                         ${ifs.map { """
-                             }
-                         """}.joinToString("")}
+                                ${ids.joinToString("\n")}
+                                if (${cnds.joinToString(" and ")}) {
+                                    ${blk.es.tostr(true)}
+                                } else {
+                            """
+                        }.joinToString("")}
+                        ${ifs.map { """
+                            }
+                        """}.joinToString("")}
                     }
                 """)
             }
