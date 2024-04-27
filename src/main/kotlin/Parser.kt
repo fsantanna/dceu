@@ -162,111 +162,125 @@ class Parser (lexer_: Lexer)
         val xit = Tk.Id("it",this.tk0.pos)
         val par = this.acceptFix("(")
 
-        val ret = when {
-            // ()
-            (CEU>=99 && par && this.checkFix(")")) -> {
-                Pair(Pair(xit,null), this.nest("true"))
-            }
-            // (== 10)
-            // ({{even?}})
-            (CEU>=99 && this.acceptEnu("Op")) -> {
-                val op = this.tk0.str.let {
-                    if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
-                }
-                val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
-                val call = if (e == null) {
-                    "$op(it)"
-                } else {
-                    "$op(it, ${e.tostr(true)})"
-                }
-                Pair(Pair(xit,null), this.nest(call))
-            }
+        fun fid (): Pair<Id_Tag,Expr> {
             // (id
-            this.acceptEnu("Id") -> {
-                val id = this.tk0 as Tk.Id
-                when {
-                    // (id :Tag
-                    this.acceptEnu("Tag") -> {
-                        val tag = this.tk0 as Tk.Tag
-                        when {
-                            // (id :Tag, cnd)
-                            this.acceptFix(",") -> {
-                                val cnd = this.expr()
-                                Pair(Pair(id,tag), if (CEU<99) cnd else this.nest("(${id.str} is? ${tag.str}) and ${cnd.tostr(true)}"))
-                            }
-                            // (id :Tag)
-                            else -> {
-                                Pair(Pair(id, tag), this.nest("${id.str} is? ${tag.str}"))
-                            }
+            this.acceptEnu_err("Id")
+            val id = this.tk0 as Tk.Id
+            return when {
+                // (id :Tag
+                this.acceptEnu("Tag") -> {
+                    val tag = this.tk0 as Tk.Tag
+                    when {
+                        // (id :Tag, cnd)
+                        this.acceptFix(",") -> {
+                            val cnd = this.expr()
+                            Pair(
+                                Pair(id, tag),
+                                if (CEU < 99) cnd else this.nest(
+                                    "(${id.str} is? ${tag.str}) and ${
+                                        cnd.tostr(true)
+                                    }"
+                                )
+                            )
                         }
-                    }
-                    // (id, cnd)
-                    else -> {
-                        this.acceptFix_err(",")
-                        val cnd = if (this.checkFix(")") || this.checkFix("{") || this.checkFix("=>")) {
-                            this.nest("true")
-                        } else {
-                            this.expr()
+                        // (id :Tag)
+                        else -> {
+                            Pair(Pair(id, tag), this.nest("${id.str} is? ${tag.str}"))
                         }
-                        Pair(Pair(id, null), cnd)
                     }
                 }
+                // (id, cnd)
+                else -> {
+                    this.acceptFix_err(",")
+                    val cnd = if (this.checkFix(")") || this.checkFix("{") || this.checkFix("=>")) {
+                        this.nest("true")
+                    } else {
+                        this.expr()
+                    }
+                    Pair(Pair(id, null), cnd)
+                }
             }
-            // (:X
-            (CEU>=99 && this.acceptEnu("Tag")) -> {
-                val tag = this.tk0 as Tk.Tag
-                val unis = listOf(":h",":min",":s",":ms")
-                when {
-                    // (:x:ms)
-                    unis.contains(this.tk1.str) -> {
-                        // :X:ms[...]
-                        this.acceptEnu_err("Tag")
+        }
 
-                        fun Tk.Tag.tonum (): Expr {
-                            val s = this.str.drop(1)
-                            val n = s.toIntOrNull()
-                            return if (n != null) {
-                                Expr.Num(Tk.Num(s, this.pos))
-                            } else {
-                                Expr.Acc(Tk.Id(s, this.pos))
-                            }
-                        }
-
-                        val l = mutableListOf(Pair(this.tk0 as Tk.Tag, tag.tonum()))
-                        while (this.acceptEnu("Tag")) {
-                            val t = this.tk0 as Tk.Tag
+        val ret = if (CEU < 99) {
+            fid()
+        } else {
+            when {
+                // ()
+                (par && this.checkFix(")")) -> {
+                    Pair(Pair(xit, null), this.nest("true"))
+                }
+                // (== 10)
+                // ({{even?}})
+                (this.acceptEnu("Op")) -> {
+                    val op = this.tk0.str.let {
+                        if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
+                    }
+                    val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
+                    val call = if (e == null) {
+                        "$op(it)"
+                    } else {
+                        "$op(it, ${e.tostr(true)})"
+                    }
+                    Pair(Pair(xit, null), this.nest(call))
+                }
+                // (id
+                this.checkEnu("Id") -> fid()
+                // (:X
+                (this.acceptEnu("Tag")) -> {
+                    val tag = this.tk0 as Tk.Tag
+                    val unis = listOf(":h", ":min", ":s", ":ms")
+                    when {
+                        // (:x:ms)
+                        unis.contains(this.tk1.str) -> {
+                            // :X:ms[...]
                             this.acceptEnu_err("Tag")
-                            assert(unis.contains(this.tk0.str))
-                            l.add(Pair(this.tk0 as Tk.Tag, t.tonum()))
+
+                            fun Tk.Tag.tonum(): Expr {
+                                val s = this.str.drop(1)
+                                val n = s.toIntOrNull()
+                                return if (n != null) {
+                                    Expr.Num(Tk.Num(s, this.pos))
+                                } else {
+                                    Expr.Acc(Tk.Id(s, this.pos))
+                                }
+                            }
+
+                            val l = mutableListOf(Pair(this.tk0 as Tk.Tag, tag.tonum()))
+                            while (this.acceptEnu("Tag")) {
+                                val t = this.tk0 as Tk.Tag
+                                this.acceptEnu_err("Tag")
+                                assert(unis.contains(this.tk0.str))
+                                l.add(Pair(this.tk0 as Tk.Tag, t.tonum()))
+                            }
+                            Pair(Pair(xit, Tk.Tag(":Clock", tag.pos)), l as Clock)
                         }
-                        Pair(Pair(xit,Tk.Tag(":Clock",tag.pos)), l as Clock)
+                        // (:X,cnd)
+                        this.acceptFix(",") -> {
+                            val cnd = this.expr()
+                            Pair(Pair(xit, tag), this.nest("(it is? ${tag.str}) and ${cnd.tostr(true)}"))
+                        }
+                        // (:X)
+                        else -> Pair(Pair(xit, tag), this.nest("it is? ${tag.str}"))
                     }
-                    // (:X,cnd)
-                    this.acceptFix(",") -> {
-                        val cnd = this.expr()
-                        Pair(Pair(xit,tag), this.nest("(it is? ${tag.str}) and ${cnd.tostr(true)}"))
+                }
+                // (,cnd)
+                (this.acceptFix(",")) -> {
+                    val cnd = this.expr()
+                    Pair(Pair(xit, null), cnd)
+                }
+                else -> {
+                    val e = this.expr()
+                    when {
+                        // 10
+                        // [1,2]
+                        e.is_constructor() -> {
+                            Pair(Pair(xit, null), this.nest("it === ${e.tostr(true)}"))
+                        }
+                        else -> err(this.tk1, "invalid pattern : unexpected \"${this.tk1.str}\"") as Pair<Id_Tag, Expr>
                     }
-                    // (:X)
-                    else -> Pair(Pair(xit,tag), this.nest("it is? ${tag.str}"))
                 }
             }
-            // (,cnd)
-            (CEU>=99 && this.acceptFix(",")) -> {
-                val cnd = this.expr()
-                Pair(Pair(xit,null), cnd)
-            }
-            (CEU >= 99) -> {
-                val e = this.expr()
-                when {
-                    // 10
-                    // [1,2]
-                    e.is_constructor() -> {
-                        Pair(Pair(xit,null), this.nest("it === ${e.tostr(true)}"))
-                    }
-                    else -> err(this.tk1, "invalid pattern : unexpected \"${this.tk1.str}\"") as Pair<Id_Tag, Expr>
-                }
-            }
-            else -> err_expected(this.tk1, "identifier") as Patt
         }
         if (par) {
             this.acceptFix_err(")")
