@@ -158,10 +158,7 @@ class Parser (lexer_: Lexer)
         return true
     }
 
-    fun patt (): Patt {
-        val xit = Tk.Id("it",this.tk0.pos)
-        val par = this.acceptFix("(")
-
+    fun patt_one (par: Boolean, xit: Tk.Id): Patt {
         fun fid (): Pair<Id_Tag,Expr> {
             // (id
             this.acceptEnu_err("Id")
@@ -201,93 +198,105 @@ class Parser (lexer_: Lexer)
                 }
             }
         }
-        fun one (): Pair<Id_Tag,Any> {
-            return if (CEU < 99) {
-                fid()
-            } else {
-                when {
-                    // ()
-                    (par && this.checkFix(")")) -> {
-                        Pair(Pair(xit, null), this.nest("true"))
+        return if (CEU < 99) {
+            fid()
+        } else {
+            when {
+                // ()
+                (par && this.checkFix(")")) -> {
+                    Pair(Pair(xit, null), this.nest("true"))
+                }
+                // (== 10)
+                // ({{even?}})
+                (this.acceptEnu("Op")) -> {
+                    val op = this.tk0.str.let {
+                        if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
                     }
-                    // (== 10)
-                    // ({{even?}})
-                    (this.acceptEnu("Op")) -> {
-                        val op = this.tk0.str.let {
-                            if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
-                        }
-                        val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
-                        val call = if (e == null) {
-                            "$op(it)"
-                        } else {
-                            "$op(it, ${e.tostr(true)})"
-                        }
-                        Pair(Pair(xit, null), this.nest(call))
+                    val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
+                    val call = if (e == null) {
+                        "$op(it)"
+                    } else {
+                        "$op(it, ${e.tostr(true)})"
                     }
-                    // (id
-                    this.checkEnu("Id") -> fid()
-                    // (:X
-                    (this.acceptEnu("Tag")) -> {
-                        val tag = this.tk0 as Tk.Tag
-                        val unis = listOf(":h", ":min", ":s", ":ms")
-                        when {
-                            // (:x:ms)
-                            unis.contains(this.tk1.str) -> {
-                                // :X:ms[...]
+                    Pair(Pair(xit, null), this.nest(call))
+                }
+                // (id
+                this.checkEnu("Id") -> fid()
+                // (:X
+                (this.acceptEnu("Tag")) -> {
+                    val tag = this.tk0 as Tk.Tag
+                    val unis = listOf(":h", ":min", ":s", ":ms")
+                    when {
+                        // (:x:ms)
+                        unis.contains(this.tk1.str) -> {
+                            // :X:ms[...]
+                            this.acceptEnu_err("Tag")
+
+                            fun Tk.Tag.tonum(): Expr {
+                                val s = this.str.drop(1)
+                                val n = s.toIntOrNull()
+                                return if (n != null) {
+                                    Expr.Num(Tk.Num(s, this.pos))
+                                } else {
+                                    Expr.Acc(Tk.Id(s, this.pos))
+                                }
+                            }
+
+                            val l = mutableListOf(Pair(this.tk0 as Tk.Tag, tag.tonum()))
+                            while (this.acceptEnu("Tag")) {
+                                val t = this.tk0 as Tk.Tag
                                 this.acceptEnu_err("Tag")
-
-                                fun Tk.Tag.tonum(): Expr {
-                                    val s = this.str.drop(1)
-                                    val n = s.toIntOrNull()
-                                    return if (n != null) {
-                                        Expr.Num(Tk.Num(s, this.pos))
-                                    } else {
-                                        Expr.Acc(Tk.Id(s, this.pos))
-                                    }
-                                }
-
-                                val l = mutableListOf(Pair(this.tk0 as Tk.Tag, tag.tonum()))
-                                while (this.acceptEnu("Tag")) {
-                                    val t = this.tk0 as Tk.Tag
-                                    this.acceptEnu_err("Tag")
-                                    assert(unis.contains(this.tk0.str))
-                                    l.add(Pair(this.tk0 as Tk.Tag, t.tonum()))
-                                }
-                                Pair(Pair(xit, Tk.Tag(":Clock", tag.pos)), l as Clock)
+                                assert(unis.contains(this.tk0.str))
+                                l.add(Pair(this.tk0 as Tk.Tag, t.tonum()))
                             }
-                            // (:X,cnd)
-                            this.acceptFix(",") -> {
-                                val cnd = this.expr()
-                                Pair(Pair(xit, tag), this.nest("(it is? ${tag.str}) and ${cnd.tostr(true)}"))
-                            }
-                            // (:X)
-                            else -> Pair(Pair(xit, tag), this.nest("it is? ${tag.str}"))
+                            Pair(Pair(xit, Tk.Tag(":Clock", tag.pos)), l as Clock)
                         }
-                    }
-                    // (,cnd)
-                    (this.acceptFix(",")) -> {
-                        val cnd = this.expr()
-                        Pair(Pair(xit, null), cnd)
-                    }
-                    else -> {
-                        val e = this.expr()
-                        when {
-                            // 10
-                            // [1,2]
-                            e.is_constructor() -> {
-                                Pair(Pair(xit, null), this.nest("it === ${e.tostr(true)}"))
-                            }
-                            else -> err(this.tk1, "invalid pattern : unexpected \"${this.tk1.str}\"") as Pair<Id_Tag, Expr>
+                        // (:X,cnd)
+                        this.acceptFix(",") -> {
+                            val cnd = this.expr()
+                            Pair(Pair(xit, tag), this.nest("(it is? ${tag.str}) and ${cnd.tostr(true)}"))
                         }
+                        // (:X)
+                        else -> Pair(Pair(xit, tag), this.nest("it is? ${tag.str}"))
+                    }
+                }
+                // (,cnd)
+                (this.acceptFix(",")) -> {
+                    val cnd = this.expr()
+                    Pair(Pair(xit, null), cnd)
+                }
+                else -> {
+                    val e = this.expr()
+                    when {
+                        // 10
+                        // [1,2]
+                        e.is_constructor() -> {
+                            Pair(Pair(xit, null), this.nest("it === ${e.tostr(true)}"))
+                        }
+                        else -> err(this.tk1, "invalid pattern : unexpected \"${this.tk1.str}\"") as Pair<Id_Tag, Expr>
                     }
                 }
             }
         }
-        val ret = one()
+    }
+
+    fun patt (): Patt {
+        val xit = Tk.Id("it",this.tk0.pos)
+        val par = this.acceptFix("(")
+        val ret = patt_one(par, xit)
         if (par) {
             this.acceptFix_err(")")
         }
         return ret
+    }
+    fun patts (): List<Patt> {
+        val xit = Tk.Id("it",this.tk0.pos)
+        val par = this.acceptFix("(")
+        return if (!par) listOf(patt_one(par,xit)) else {
+            val ret = list0(")", ",") { patt_one(par,xit) }
+            this.acceptFix_err(")")
+            ret
+        }
     }
 
     fun lambda (n:Int): Pair<Id_Tag,List<Expr>> {
