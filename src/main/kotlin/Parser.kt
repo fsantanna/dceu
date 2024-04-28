@@ -293,11 +293,12 @@ class Parser (lexer_: Lexer)
     fun patts (): List<Patt> {
         assert(CEU >= 99)
         val xit = Tk.Id("it",this.tk0.pos)
-        val par = this.acceptFix("(")
         var one = true  // single or multi pattern?
-        return if (!par) listOf(patt_one(par,xit)) else {
+        return if (!this.acceptFix("(")) {
+            listOf(patt_one(false, xit))
+        } else {
             val ret = list0(")", ",") {
-                val x = patt_one(par, if (one) xit else Tk.Id("ceu_$N",xit.pos))
+                val x = patt_one(true, if (one) xit else Tk.Id("ceu_$N",xit.pos))
                 one = false
                 x
             }
@@ -934,17 +935,34 @@ class Parser (lexer_: Lexer)
                 }
                 this.acceptFix_err("{")
                 val ifs = list0("}",null) {
+                    val xdo = this.checkFix("do")
+                    val xit = Tk.Id("it",this.tk0.pos)
                     val cnds = when {
                         this.acceptFix("else") -> {
                             listOf(Pair(null, Expr.Bool(Tk.Fix("true",this.tk0.pos))))
                         }
+                        this.acceptFix("do") -> {
+                            val (id,tag) = if (!this.acceptFix("(")) Pair(null,null) else {
+                                val x = if (!this.acceptEnu("Id")) null else this.tk0 as Tk.Id
+                                val y = if (!this.acceptEnu("Tag")) null else this.tk0 as Tk.Tag
+                                this.acceptFix_err(")")
+                                Pair(x, y)
+                            }
+                            val blk = if (!this.checkFix("{")) null else this.block()
+                            listOf(Patt(Pair(if (id==null) xit else id, tag), this.nest("""
+                                do {
+                                    ${blk.cond { it.es.tostr(true) }}
+                                    false
+                                }
+                            """)))
+                        }
                         (V == null) -> listOf(Pair(null, this.expr()))
                         else -> this.patts()
                     }
-                    val blk = if (this.acceptFix("=>")) {
-                        Expr.Do(this.tk0, listOf(this.expr()))
-                    } else {
-                        this.block()
+                    val blk = when {
+                        xdo -> Expr.Do(this.tk0, listOf())
+                        this.acceptFix("=>") -> Expr.Do(this.tk0, listOf(this.expr()))
+                        else -> this.block()
                     }
                     Pair(cnds,blk)
                 }

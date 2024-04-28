@@ -743,6 +743,62 @@ class Exec_99 {
         assert(out == ":ok\n") { out }
     }
 
+    // IFS / NO CATCH ALL
+
+    @Test
+    fun fi_01_ifs_no_catch_all() {
+        val out = test("""
+            $IS ; $COMP
+            data :T = [v]
+            var x = ifs [20] {
+                false         => error()
+                (t :T, false) {}
+                ;;do (t :T)
+                (,t.v == 10)  => error()
+                (,t.v == 20)  => :ok
+                else          => error()
+            }
+            println(x)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun fi_02_ifs_no_catch_all() {
+        val out = test("""
+            $IS ; $COMP
+            data :T = [v]
+            var x = ifs [20] {
+                false         => error()
+                ;;(t :T, false) {}
+                do (t :T)
+                (,t.v == 10)  => error()
+                (,t.v == 20)  => :ok
+                else          => error()
+            }
+            println(x)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun fi_03_ifs_no_catch_all() {
+        val out = test("""
+            $IS ; $COMP
+            data :T = [v]
+            var x = ifs [20] {
+                false         => error()
+                ;;(t :T, false) {}
+                do (t :T) {
+                    println(:ok)
+                }
+                (,t.v == 10)  => error()
+                (,t.v == 20)  => :ok
+                else          => error()
+            }
+            println(x)
+        """)
+        assert(out == ":ok\n:ok\n") { out }
+    }
+
     // CATCH
 
     @Test

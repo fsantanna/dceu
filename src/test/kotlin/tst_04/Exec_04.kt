@@ -1726,6 +1726,21 @@ class Exec_04 {
         //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic alien field\n") { out }
     }
 
+    // BCAST / TARGETS
+
+    @Test
+    fun TODO_dh_01_multi() {
+        val out = test(
+            """
+            spawn (task () {
+                println(yield(nil))
+            }) ()
+            broadcast(10,20)
+        """
+        )
+        assert(out == ":ok\t10\n") { out }
+    }
+
     // THROW / CATCH
 
     @Test
