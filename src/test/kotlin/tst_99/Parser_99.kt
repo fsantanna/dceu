@@ -436,6 +436,32 @@ class Parser_99 {
         //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
     }
 
+    // IFS / MULTI
+
+    @Test
+    fun ef_01_ifs_err() {
+        val l = lexer("ifs (1,...) { (1,2) => 10 }")
+        val parser = Parser(l)
+        //val e = parser.expr()
+        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : condition error : uexpected \"...\"")
+    }
+    @Test
+    fun ef_02_ifs() {
+        val l = lexer("ifs (1,2) { (1,2) => 10 }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "(val (ceu_21) = v)\n" +
+                "(val (x) = ceu_21)\n" +
+                "if true {\n" +
+                "10\n" +
+                "} else {\n" +
+                "\n" +
+                "}\n" +
+                "}") { e.tostr() }
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
+    }
+
     // THUS AS
 
     @Test

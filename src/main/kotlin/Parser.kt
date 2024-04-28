@@ -198,6 +198,7 @@ class Parser (lexer_: Lexer)
                 }
             }
         }
+        val xid = xit.str
         return if (CEU < 99) {
             fid()
         } else {
@@ -214,9 +215,9 @@ class Parser (lexer_: Lexer)
                     }
                     val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
                     val call = if (e == null) {
-                        "$op(it)"
+                        "$op($xid)"
                     } else {
-                        "$op(it, ${e.tostr(true)})"
+                        "$op($xid, ${e.tostr(true)})"
                     }
                     Pair(Pair(xit, null), this.nest(call))
                 }
@@ -254,10 +255,10 @@ class Parser (lexer_: Lexer)
                         // (:X,cnd)
                         this.acceptFix(",") -> {
                             val cnd = this.expr()
-                            Pair(Pair(xit, tag), this.nest("(it is? ${tag.str}) and ${cnd.tostr(true)}"))
+                            Pair(Pair(xit, tag), this.nest("($xid is? ${tag.str}) and ${cnd.tostr(true)}"))
                         }
                         // (:X)
-                        else -> Pair(Pair(xit, tag), this.nest("it is? ${tag.str}"))
+                        else -> Pair(Pair(xit, tag), this.nest("$xid is? ${tag.str}"))
                     }
                 }
                 // (,cnd)
@@ -271,7 +272,7 @@ class Parser (lexer_: Lexer)
                         // 10
                         // [1,2]
                         e.is_constructor() -> {
-                            Pair(Pair(xit, null), this.nest("it === ${e.tostr(true)}"))
+                            Pair(Pair(xit, null), this.nest("$xid === ${e.tostr(true)}"))
                         }
                         else -> err(this.tk1, "invalid pattern : unexpected \"${this.tk1.str}\"") as Pair<Id_Tag, Expr>
                     }
@@ -293,8 +294,13 @@ class Parser (lexer_: Lexer)
         assert(CEU >= 99)
         val xit = Tk.Id("it",this.tk0.pos)
         val par = this.acceptFix("(")
+        var one = true  // single or multi pattern?
         return if (!par) listOf(patt_one(par,xit)) else {
-            val ret = list0(")", ",") { patt_one(par,xit) }
+            val ret = list0(")", ",") {
+                val x = patt_one(par, if (one) xit else Tk.Id("ceu_$N",xit.pos))
+                one = false
+                x
+            }
             this.acceptFix_err(")")
             ret
         }
@@ -920,7 +926,11 @@ class Parser (lexer_: Lexer)
             }
             (CEU>=99 && this.acceptFix("ifs")) -> {
                 val V = if (this.checkFix("{")) null else {
-                    this.expr()
+                    val x = this.expr()
+                    if (x is Expr.Args && x.dots) {
+                        err(x.tk, "condition error : uexpected \"...\"")
+                    }
+                    x
                 }
                 this.acceptFix_err("{")
                 val ifs = list0("}",null) {
@@ -940,19 +950,28 @@ class Parser (lexer_: Lexer)
                 }
                 //ifs.forEach { println(it.first.third.tostr()) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
+                val VS = when {
+                    (V == null) -> null
+                    (V !is Expr.Args) -> listOf(V)
+                    else -> V.es
+                }
                 this.nest("""
                     do {
-                        ${V.cond { "val ceu_$N = ${it.tostr(true)}" }}
+                        `/* IFS | VS | ${tk0.dump()} */`
+                        ${VS.cond {
+                            it.mapIndexed { i,e -> "val ceu_${N}_$i = ${e.tostr(true)}" }.joinToString("\n")
+                        }}
                         ${ifs.map { (lst,blk) ->
-                            val (ids,cnds) = lst.map { (idtag,cnd) ->
-                                Pair("""
-                                    ${idtag.cond { "val ${it.tostr(true)} = ceu_$N"}}                                    
-                                ""","""
-                                    ${cnd.tostr(true)}    
-                                """)
+                            val (ids,cnds) = lst.mapIndexed { i,(idtag,cnd) ->
+                                Pair (
+                                    idtag.cond { "val ${it.tostr(true)} = ceu_${N}_$i"},                                    
+                                    cnd.tostr(true)    
+                                )
                             }.unzip()
                             """
+                                `/* IFS | IDS | ${tk0.dump()} */`
                                 ${ids.joinToString("\n")}
+                                `/* IFS | CNDS | ${tk0.dump()} */`
                                 if (${cnds.joinToString(" and ")}) {
                                     ${blk.es.tostr(true)}
                                 } else {

@@ -681,6 +681,56 @@ class Exec_99 {
         assert(out == "true\n") { out }
     }
 
+    // IFS / MULTI
+
+    @Test
+    fun fh_00_ifs () {
+        val out = test("""
+            $IS ; $COMP
+            val x = ifs (10,20) {
+                (10,20) => :ok
+            }
+            println(x)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun fh_01_ifs () {
+        val out = test("""
+            $IS ; $COMP
+            val x = ifs (10,20) {
+                (30,40) => error(:no)
+                (10,20) => :ok
+            }
+            println(x)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun fh_02_ifs () {
+        val out = test("""
+            $IS ; $COMP
+            val x = ifs 1 {
+                (1,2) => error(:no)
+                1 => :ok
+            }
+            println(x)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun fh_03_ifs () {
+        val out = test("""
+            $IS ; $COMP
+            val x = ifs (1,2) {
+                1 => :ok
+                (1,2) => error(:no)
+            }
+            println(x)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+
     // CATCH
 
     @Test

@@ -5,10 +5,12 @@ fun Pos.pre (): String {
     return "^[${this.lin},${this.col}]"
 }
 
-fun Expr.dump (): String {
-    fun Tk.dump (): String {
-        return "(${this.pos.file} : lin ${this.pos.lin} : col ${this.pos.col})"
+fun Tk.dump (): String {
+    return if (!DUMP) "" else {
+        "(${this.pos.file} : lin ${this.pos.lin} : col ${this.pos.col})"
     }
+}
+fun Expr.dump (): String {
     return if (!DUMP) "" else {
         this.tk.dump() + " | " + this.tostr().take(15).filter { it !in listOf('\n','{','}') }
     }
