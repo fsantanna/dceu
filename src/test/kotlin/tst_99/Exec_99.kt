@@ -2071,7 +2071,7 @@ class Exec_99 {
             }
         """, true)
         //assert(out.contains("assertion error : expected :Iterator")) { out }
-        assert(out.contains(" |  anon : (lin 2, col 22) : ceu_16855[0]\n" +
+        assert(out.contains(" |  anon : (lin 2, col 22) : ceu_16912[0]\n" +
                 " v  index error : expected collection\n")) { out }
     }
     @Test

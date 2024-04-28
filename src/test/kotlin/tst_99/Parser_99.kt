@@ -302,7 +302,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(val (ceu_16_0) = nil)\n" +
+                "(val (ceu_17_0) = nil)\n" +
                 "if true {\n" +
                 "it\n" +
                 "} else {\n" +
@@ -331,12 +331,12 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(val (ceu_38_0) = v)\n" +
-                "(val (it) = ceu_38_0)\n" +
+                "(val (ceu_41_0) = v)\n" +
+                "(val (it) = ceu_41_0)\n" +
                 "if a {\n" +
                 "1\n" +
                 "} else {\n" +
-                "(val (it) = ceu_38_0)\n" +
+                "(val (it) = ceu_41_0)\n" +
                 "if b {\n" +
                 "v\n" +
                 "} else {\n" +
@@ -403,8 +403,8 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "(val (x) = do {\n" +
-                "(val (ceu_75_0) = 20)\n" +
-                "(val (it) = ceu_75_0)\n" +
+                "(val (ceu_77_0) = 20)\n" +
+                "(val (it) = ceu_77_0)\n" +
                 "if {{===}}(it,true) {\n" +
                 "do {\n" +
                 "if {{==}}(20) {\n" +
@@ -425,8 +425,8 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(val (ceu_21_0) = v)\n" +
-                "(val (x) = ceu_21_0)\n" +
+                "(val (ceu_22_0) = v)\n" +
+                "(val (x) = ceu_22_0)\n" +
                 "if true {\n" +
                 "10\n" +
                 "} else {\n" +
@@ -451,16 +451,16 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(val (ceu_54_0) = 1)\n" +
-                "(val (ceu_54_1) = 2)\n" +
-                "(val (it) = ceu_54_0)\n" +
-                "(val (ceu_32) = ceu_54_1)\n" +
+                "(val (ceu_55_0) = 1)\n" +
+                "(val (ceu_55_1) = 2)\n" +
+                "(val (it) = ceu_55_0)\n" +
+                "(val (ceu_33) = ceu_55_1)\n" +
                 "if do {\n" +
-                "(val (ceu_95) = {{===}}(it,1))\n" +
-                "if ceu_95 {\n" +
-                "{{===}}(ceu_32,2)\n" +
+                "(val (ceu_96) = {{===}}(it,1))\n" +
+                "if ceu_96 {\n" +
+                "{{===}}(ceu_33,2)\n" +
                 "} else {\n" +
-                "ceu_95\n" +
+                "ceu_96\n" +
                 "}\n" +
                 "} {\n" +
                 "10\n" +
