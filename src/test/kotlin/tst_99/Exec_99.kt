@@ -711,8 +711,20 @@ class Exec_99 {
         val out = test("""
             $IS ; $COMP
             val x = ifs 1 {
-                (1,2) => error(:no)
+                (1,2) => error(:no)     ;; 2 compares to nil
                 1 => :ok
+            }
+            println(x)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun fh_02x_ifs () {
+        val out = test("""
+            $IS ; $COMP
+            val x = ifs 1 {
+                (1,nil) => (:ok)     ;; 2 compares to nil
+                1 => error(:no)
             }
             println(x)
         """)
@@ -2003,7 +2015,7 @@ class Exec_99 {
             }
         """, true)
         //assert(out.contains("assertion error : expected :Iterator")) { out }
-        assert(out.contains(" |  anon : (lin 2, col 22) : ceu_16684[0]\n" +
+        assert(out.contains(" |  anon : (lin 2, col 22) : ceu_16855[0]\n" +
                 " v  index error : expected collection\n")) { out }
     }
     @Test

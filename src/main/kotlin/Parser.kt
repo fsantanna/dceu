@@ -957,9 +957,18 @@ class Parser (lexer_: Lexer)
                 }
                 this.nest("""
                     do {
-                        `/* IFS | VS | ${tk0.dump()} */`
+                        ;;`/* IFS | VS | ${tk0.dump()} */`
                         ${VS.cond {
-                            it.mapIndexed { i,e -> "val ceu_${N}_$i = ${e.tostr(true)}" }.joinToString("\n")
+                            val x = it.mapIndexed { i,e -> "val ceu_${N}_$i = ${e.tostr(true)}" }.joinToString("\n")
+                            val n = ifs.map { it.first.size }.max() - it.size
+                            val y = (n > 0).cond { _ ->
+                                (0 until n).map { i ->
+                                    """
+                                    val ceu_${N}_${i + it.size} = nil
+                                    """
+                                }.joinToString("")
+                            }
+                            x + y
                         }}
                         ${ifs.map { (lst,blk) ->
                             val (ids,cnds) = lst.mapIndexed { i,(idtag,cnd) ->
@@ -969,9 +978,9 @@ class Parser (lexer_: Lexer)
                                 )
                             }.unzip()
                             """
-                                `/* IFS | IDS | ${tk0.dump()} */`
+                                ;;`/* IFS | IDS | ${tk0.dump()} */`
                                 ${ids.joinToString("\n")}
-                                `/* IFS | CNDS | ${tk0.dump()} */`
+                                ;;`/* IFS | CNDS | ${tk0.dump()} */`
                                 if (${cnds.joinToString(" and ")}) {
                                     ${blk.es.tostr(true)}
                                 } else {
