@@ -978,7 +978,9 @@ class Parser (lexer_: Lexer)
                         ;;`/* IFS | VS | ${tk0.dump()} */`
                         ${VS.cond {
                             val x = it.mapIndexed { i,e -> "val ceu_${N}_$i = ${e.tostr(true)}" }.joinToString("\n")
-                            val n = ifs.map { it.first.size }.max() - it.size
+                            val n = ifs.map { it.first.size }.maxOrNull()!! - it.size
+                                // TODO: ifs.map { it.first.size }.max()
+                                //  --> java.lang.NoSuchMethodError: 'java.lang.Comparable kotlin.collections.CollectionsKt.maxOrThrow(java.lang.Iterable)'
                             val y = (n > 0).cond { _ ->
                                 (0 until n).map { i ->
                                     """
