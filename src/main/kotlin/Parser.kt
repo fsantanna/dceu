@@ -311,13 +311,6 @@ class Parser (lexer_: Lexer)
         this.acceptFix_err("{")
         val tk0 = this.tk0
         return when {
-            (CEU < 99) -> {
-                val id_tag = this.id_tag()
-                this.acceptFix_err("=>")
-                val es = this.exprs()
-                this.acceptFix_err("}")
-                Pair(id_tag, es)
-            }
             this.acceptFix("}") -> {
                 val id_tag = Pair(Tk.Id("ceu_$n", tk0.pos), null)
                 val es = listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy())))
