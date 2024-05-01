@@ -832,16 +832,52 @@ class Exec_99 {
     @Test
     fun fi_04_ifs_no_catch_all() {
         val out = test("""
+            ifs {
+                do {
+                    val v = 10
+                    println(:1)
+                }
+                (v == 10) => println(:2)
+            }
+        """)
+        assert(out == ":1\n:2\n") { out }
+    }
+    @Test
+    fun fi_05_ifs_no_catch_all() {
+        val out = test("""
+            val x = ifs {
+                do {
+                    val v = 10
+                    println(:1)
+                }
+                (v == 10) => (:2)
+            }
+            println(x)
+        """)
+        assert(out == ":1\n:2\n") { out }
+    }
+    @Test
+    fun BUG_fi_06_ifs_no_catch_all() {
+        val out = test("""
+            ifs {
+                true => error()
+            }
+        """)
+        assert(out == ":ok\n:ok\n") { out }
+    }
+    @Test
+    fun fi_07_ifs_no_catch_all() {
+        val out = test("""
             $IS ; $COMP
             data :T = [v]
             var x = ifs {
                 false => error()
                 do {
-                    val x :T = 10
+                    val t :T = [20]
                     println(:ok)
                 }
-                (,t.v == 10)  => error()
-                (,t.v == 20)  => :ok
+                (t.v == 10)  => error()
+                (t.v == 20)  => :ok
                 else          => error()
             }
             println(x)
@@ -5713,7 +5749,7 @@ class Exec_99 {
                 is? :number => 1
             }
         """)
-        assert(out == "anon : (lin 2, col 17) : access error : variable \"v\" is not declared\n") { out }
+        assert(out == "anon : (lin 2, col 19) : access error : variable \"v\" is not declared\n") { out }
     }
     @Test
     fun zb_16_self_kill () {

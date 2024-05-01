@@ -931,32 +931,42 @@ class Parser (lexer_: Lexer)
             (CEU>=99 && this.acceptFix("ifs")) -> {
                 this.acceptFix_err("{")
                 val ifs = list0("}",null) {
-                    val cnd = if (this.acceptFix("else")) {
-                        Expr.Bool(Tk.Fix("true",this.tk0.pos))
-                    } else {
-                        this.expr()
+                    val cnd = when {
+                        this.acceptFix("do") -> null
+                        this.acceptFix("else") -> Expr.Bool(Tk.Fix("true",this.tk0.pos))
+                        else -> this.expr()
                     }
-                    val blk = if (this.acceptFix("=>")) {
-                        Expr.Do(this.tk0, listOf(this.expr()))
+                    val es = if (this.acceptFix("=>")) {
+                        Pair(null, listOf(this.expr()))
                     } else {
-                        this.block()
+                        this.lambda(false)
                     }
-                    Pair(cnd, blk)
+                    Pair(cnd, es)
                 }
                 this.acceptFix_err("}")
                 this.nest("""
-                    ;;`/* IFS | ${tk0.dump()} */`
                     do {
-                        ${ifs.map { (cnd,blk) ->
-                            """
-                            if (${cnd.tostr(true)}) {
-                                ${blk.es.tostr(true)}
-                            } else {
-                            """
-                        }.joinToString("")}
-                        ${ifs.map { """
+                        `/* IFS | ${tk0.dump()} */`
+                        ${ifs.map { (cnd,idtag_es) ->
+                            val (idtag,es) = idtag_es
+                            when {
+                                (cnd == null) -> es.tostr(true) // do ...
+                                (idtag != null) -> """
+                                    val ${idtag.tostr(true)} = ${cnd.tostr(true)}
+                                    if ${idtag.first.str} {
+                                        ${es.tostr(true)}
+                                    } else {
+                                """
+                                else -> """
+                                    if (${cnd.tostr(true)}) {
+                                        ${es.tostr(true)}
+                                    } else {
+                                """
                             }
-                        """}.joinToString("")}
+                        }.joinToString("")}
+                        ${ifs.map { (cnd,_) -> cnd.cond {"""
+                            }   ;; ignore "do {}"
+                        """}}.joinToString("")}
                     }
                 """)
             }
@@ -994,9 +1004,9 @@ class Parser (lexer_: Lexer)
                         }
                     }
                     val blk = when {
-                        xdo -> Expr.Do(this.tk0, listOf())
-                        this.acceptFix("=>") -> Expr.Do(this.tk0, listOf(this.expr()))
-                        else -> this.block()
+                        xdo -> emptyList()
+                        this.acceptFix("=>") -> listOf(this.expr())
+                        else -> this.lambda(false).second
                     }
                     Pair(cnds,blk)
                 }
@@ -1020,7 +1030,7 @@ class Parser (lexer_: Lexer)
                                 """
                             }.joinToString("")
                         }}
-                        ${ifs.map { (lst,blk) ->
+                        ${ifs.map { (lst,es) ->
                             val (ids,cnds) = lst.mapIndexed { i,(idtag,cnd) ->
                                 Pair (
                                     idtag.cond { "val ${it.tostr(true)} = ceu_${dceu.N}_$i"},
@@ -1032,7 +1042,7 @@ class Parser (lexer_: Lexer)
                                 ${ids.joinToString("\n")}
                                 `/* MATCH | CNDS | ${tk0.dump()} */`
                                 if (${cnds.joinToString(" and ")}) {
-                                    ${blk.es.tostr(true)}
+                                    ${es.tostr(true)}
                                 } else {
                             """
                         }.joinToString("")}
