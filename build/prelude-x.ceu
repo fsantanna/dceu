@@ -135,7 +135,7 @@ data :Iterator = [f,s,tp,i]
         } else {
             set itr.i = i + 1
             val v = itr.s[i]
-            ifs itr.tp {
+            match itr.tp {
                 == :all => [i, v]
                 == :idx => i
                 == :val => v
@@ -151,7 +151,7 @@ data :Iterator = [f,s,tp,i]
         } else {
             set itr.i = k
             val v = itr.s[k]
-            ifs itr.tp {
+            match itr.tp {
                 == :all => [k, v]
                 == :key => k
                 == :val => v
@@ -182,7 +182,7 @@ data :Iterator = [f,s,tp,i]
     }
 
     func to-iter (v, tp) {
-        ifs type(v) {
+        match type(v) {
             ,sup?(:Iterator, tag(v)) => v
             ==:tuple    => :Iterator [iter-tuple, v, tp, 0]
             ==:vector   => :Iterator [iter-tuple, v, tp, 0]
@@ -255,7 +255,7 @@ func in-not' (v, xs) {
 
 ;;;
 func next (v, ...) {
-    ifs v {
+    match v {
         :exe-coro => resume v(...)
         :tasks    => next-tasks(v, ...)
         :dict     => next-dict(v, ...)
@@ -280,7 +280,7 @@ func string? (v) {
 }
 
 func to-string (v) {
-    ifs v {
+    match v {
         {{string?}} => v
         :nil        => "nil"
         :tag        => to-string-tag(v)
@@ -296,7 +296,7 @@ func to-bool (v) {
 }
 
 func to-number (v) {
-    ifs v {
+    match v {
         :tag        => `:number $v.Tag`
         :char       => `:number $v.Char`
         {{string?}} => `:number atoi($v.Dyn->Vector.buf)`
@@ -305,7 +305,7 @@ func to-number (v) {
 }
 
 func to-tag (v) {
-    ifs v {
+    match v {
         :tag        => v
         {{string?}} => to-tag-string(v)
         else        => nil
@@ -313,7 +313,7 @@ func to-tag (v) {
 }
 
 func to-pointer (v) {
-    ifs v {
+    match v {
         :pointer => v
         :tag     => `:pointer ceu_to_dash_string_dash_tag($v.Tag)`
         :tuple   => `:pointer $v.Dyn->Tuple.buf`
@@ -337,7 +337,7 @@ func type-dynamic? (v) {
 ;; COPY
 
 func copy (v) {
-    ifs type(v) {
+    match type(v) {
         {{type-static?}} {
             v
         }
@@ -384,7 +384,7 @@ func to-tasks (...) {
     val ret = #[]
     val args = ...
     loop v in to-iter(args) {
-        ifs v {
+        match v {
             :exe-task {
                 set ret[+] = v
             }

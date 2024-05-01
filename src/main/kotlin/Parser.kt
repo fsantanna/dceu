@@ -929,22 +929,52 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (CEU>=99 && this.acceptFix("ifs")) -> {
-                val V = if (this.checkFix("{")) null else {
-                    val x = this.expr()
-                    if (x is Expr.Args && x.dots) {
-                        err(x.tk, "condition error : uexpected \"...\"")
+                this.acceptFix_err("{")
+                val ifs = list0("}",null) {
+                    val cnd = if (this.acceptFix("else")) {
+                        Expr.Bool(Tk.Fix("true",this.tk0.pos))
+                    } else {
+                        this.expr()
                     }
-                    x
+                    val blk = if (this.acceptFix("=>")) {
+                        Expr.Do(this.tk0, listOf(this.expr()))
+                    } else {
+                        this.block()
+                    }
+                    Pair(cnd, blk)
+                }
+                this.acceptFix_err("}")
+                this.nest("""
+                    ;;`/* IFS | ${tk0.dump()} */`
+                    do {
+                        ${ifs.map { (cnd,blk) ->
+                            """
+                            if (${cnd.tostr(true)}) {
+                                ${blk.es.tostr(true)}
+                            } else {
+                            """
+                        }.joinToString("")}
+                        ${ifs.map { """
+                            }
+                        """}.joinToString("")}
+                    }
+                """)
+            }
+            (CEU>=99 && this.acceptFix("match")) -> {
+                val V = this.expr()
+                if (V is Expr.Args && V.dots) {
+                    err(V.tk, "match error : unexpected \"...\"")
                 }
                 this.acceptFix_err("{")
                 val ifs = list0("}",null) {
-                    val xdo = this.checkFix("do")
+                    var xdo = false
                     val xit = Tk.Id("it",this.tk0.pos)
                     val cnds = when {
                         this.acceptFix("else") -> {
                             listOf(Pair(null, Expr.Bool(Tk.Fix("true",this.tk0.pos))))
                         }
                         this.acceptFix("do") -> {
+                            xdo = true
                             val (id,tag) = if (!this.acceptFix("(")) Pair(null,null) else {
                                 val x = if (!this.acceptEnu("Id")) null else this.tk0 as Tk.Id
                                 val y = if (!this.acceptEnu("Tag")) null else this.tk0 as Tk.Tag
@@ -959,8 +989,9 @@ class Parser (lexer_: Lexer)
                                 }
                             """)))
                         }
-                        (V == null) -> listOf(Pair(null, this.expr()))
-                        else -> this.patts()
+                        else -> {
+                            this.patts()
+                        }
                     }
                     val blk = when {
                         xdo -> Expr.Do(this.tk0, listOf())
@@ -969,41 +1000,37 @@ class Parser (lexer_: Lexer)
                     }
                     Pair(cnds,blk)
                 }
-                //ifs.forEach { println(it.first.third.tostr()) ; println(it.second.tostr()) }
+                //ifs.forEach { println(it.first.map { it.first?.tostr() }.joinToString("")) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
                 val VS = when {
-                    (V == null) -> null
                     (V !is Expr.Args) -> listOf(V)
                     else -> V.es
                 }
+                val N = ifs.map { it.first.size }.maxOrNull()!! - VS.size
+                    // TODO: ifs.map { it.first.size }.max()
+                    //  --> java.lang.NoSuchMethodError: 'java.lang.Comparable kotlin.collections.CollectionsKt.maxOrThrow(java.lang.Iterable)'
                 this.nest("""
                     do {
-                        ;;`/* IFS | VS | ${tk0.dump()} */`
-                        ${VS.cond {
-                            val x = it.mapIndexed { i,e -> "val ceu_${N}_$i = ${e.tostr(true)}" }.joinToString("\n")
-                            val n = ifs.map { it.first.size }.maxOrNull()!! - it.size
-                                // TODO: ifs.map { it.first.size }.max()
-                                //  --> java.lang.NoSuchMethodError: 'java.lang.Comparable kotlin.collections.CollectionsKt.maxOrThrow(java.lang.Iterable)'
-                            val y = (n > 0).cond { _ ->
-                                (0 until n).map { i ->
-                                    """
-                                    val ceu_${N}_${i + it.size} = nil
-                                    """
-                                }.joinToString("")
-                            }
-                            x + y
+                        `/* MATCH | VS | ${tk0.dump()} */`
+                        ${VS.mapIndexed { i,e -> "val ceu_${dceu.N}_$i = ${e.tostr(true)}" }.joinToString("\n")}
+                        ${(N > 0).cond { _ ->
+                            (0 until N).map { i ->
+                                """
+                                val ceu_${dceu.N}_${i + VS.size} = nil
+                                """
+                            }.joinToString("")
                         }}
                         ${ifs.map { (lst,blk) ->
                             val (ids,cnds) = lst.mapIndexed { i,(idtag,cnd) ->
                                 Pair (
-                                    idtag.cond { "val ${it.tostr(true)} = ceu_${N}_$i"},                                    
-                                    cnd.tostr(true)    
+                                    idtag.cond { "val ${it.tostr(true)} = ceu_${dceu.N}_$i"},
+                                    cnd.tostr(true)
                                 )
                             }.unzip()
                             """
-                                ;;`/* IFS | IDS | ${tk0.dump()} */`
+                                `/* MATCH | IDS | ${tk0.dump()} */`
                                 ${ids.joinToString("\n")}
-                                ;;`/* IFS | CNDS | ${tk0.dump()} */`
+                                `/* MATCH | CNDS | ${tk0.dump()} */`
                                 if (${cnds.joinToString(" and ")}) {
                                     ${blk.es.tostr(true)}
                                 } else {
@@ -1012,6 +1039,7 @@ class Parser (lexer_: Lexer)
                         ${ifs.map { """
                             }
                         """}.joinToString("")}
+                        }
                     }
                 """)
             }

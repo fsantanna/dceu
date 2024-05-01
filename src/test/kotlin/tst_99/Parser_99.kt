@@ -443,7 +443,7 @@ class Parser_99 {
         val l = lexer("ifs (1,...) { (1,2) => 10 }")
         val parser = Parser(l)
         //val e = parser.expr()
-        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : condition error : uexpected \"...\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : match error : unexpected \"...\"")
     }
     @Test
     fun ef_02_ifs() {

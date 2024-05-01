@@ -373,7 +373,7 @@ class Exec_99 {
     fun cj_04_ifs() {
         val out = test("""
             data :X = [x]
-            val i = ifs nil {
+            val i = match nil {
                 ,[10] { ,v:X => v.x }
             }
             println(i)
@@ -489,7 +489,7 @@ class Exec_99 {
     @Test
     fun ff_03_ifs() {
         val out = test("""
-            val x = ifs 20 {
+            val x = match 20 {
                 == 10 => false
                 == 20 => true
                 else  => false
@@ -499,10 +499,20 @@ class Exec_99 {
         assert(out == "true\n") { out }
     }
     @Test
+    fun ff_03x_ifs() {
+        val out = test("""
+            val x = match 20 {
+                == 20 => true
+            }
+            println(x)
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
     fun ff_04_ifs() {
         val out = test("""
             $IS
-            var x = ifs 20 {
+            var x = match 20 {
                 == 10 => false
                 (,true)  => true
                 == 20 => false
@@ -516,7 +526,7 @@ class Exec_99 {
     fun ff_05_ifs() {
         val out = test("""
             $COMP
-            val x = ifs 20 {
+            val x = match 20 {
                 10 => false
                 else     => true
             }
@@ -529,7 +539,7 @@ class Exec_99 {
         val out = test("""
             $IS
             val t = :X []
-            val x = ifs t {
+            val x = match t {
                 is? :Y   => false
                 is? :X   => true
                 else => false
@@ -541,7 +551,7 @@ class Exec_99 {
     @Test
     fun ff_07_ifs() {
         val out = test("""
-            var x = ifs 20 {
+            var x = match 20 {
                 is? 10 => false
                 (,true)  => true
                 is? 20 => false
@@ -555,7 +565,7 @@ class Exec_99 {
     fun ff_08_ifs() {
         val out = test("""
             data :T = []
-            val x = ifs 10 {
+            val x = match 10 {
                 (,true) => :T []
                 is? 0 => nil
             }
@@ -566,7 +576,7 @@ class Exec_99 {
     @Test
     fun ff_09_ifs() {
         val out = test("""
-            var x = ifs 20 {
+            var x = match 20 {
                 in? [1,20,1] => true
                 else  => false
             }
@@ -578,7 +588,7 @@ class Exec_99 {
     fun ff_10_ifs() {
         val out = test("""
             $IS ; $COMP
-            var x = ifs 20 {
+            var x = match 20 {
                 :no => false
                 10  => false
                 20  => true
@@ -592,7 +602,7 @@ class Exec_99 {
         val out = test("""
             $IS ; $COMP
             data :T = [v]
-            var x = ifs :T [20] {
+            var x = match :T [20] {
                 (t1:T, t1.v == 10) => false
                 false     => false
                 (t2:T, t2.v == 20) => true
@@ -608,7 +618,7 @@ class Exec_99 {
     @Test
     fun fg_01_ifs() {
         val out = test("""
-            var x = ifs ;;;it=;;;20 {
+            var x = match ;;;it=;;;20 {
                 in-not? [1,1] => true
                 else  => false
             }
@@ -619,7 +629,7 @@ class Exec_99 {
     @Test
     fun fg_02_ifs() {
         val out = test("""
-            val x = ifs [] {
+            val x = match [] {
                 it,true => it
             }
             println(x)
@@ -631,7 +641,7 @@ class Exec_99 {
     @Test
     fun fg_03_ifs() {
         val out = test("""
-            val x = ifs [] {
+            val x = match [] {
                 it,true => ;;;drop;;;(it)
             }
             println(x)
@@ -662,7 +672,7 @@ class Exec_99 {
     @Test
     fun fg_06_ifs () {
         val out = test("""
-            val x = ifs false {
+            val x = match false {
                 and nil => true
             }
             println(x)
@@ -674,7 +684,7 @@ class Exec_99 {
     @Test
     fun fg_07_ifs () {
         val out = test("""
-            val x = ifs 4 {
+            val x = match 4 {
                 is? nil => false
                 in? [4] => true
             }
@@ -693,7 +703,7 @@ class Exec_99 {
     @Test
     fun fg_09_ifs () {
         val out = test("""
-            val x = ifs "oi" {
+            val x = match "oi" {
                 {{string?}} { true }
                 else => false
             }
@@ -708,7 +718,7 @@ class Exec_99 {
     fun fh_00_ifs () {
         val out = test("""
             $IS ; $COMP
-            val x = ifs (10,20) {
+            val x = match (10,20) {
                 (10,20) => :ok
             }
             println(x)
@@ -719,7 +729,7 @@ class Exec_99 {
     fun fh_01_ifs () {
         val out = test("""
             $IS ; $COMP
-            val x = ifs (10,20) {
+            val x = match (10,20) {
                 (30,40) => error(:no)
                 (10,20) => :ok
             }
@@ -731,7 +741,7 @@ class Exec_99 {
     fun fh_02_ifs () {
         val out = test("""
             $IS ; $COMP
-            val x = ifs 1 {
+            val x = match 1 {
                 (1,2) => error(:no)     ;; 2 compares to nil
                 1 => :ok
             }
@@ -743,7 +753,7 @@ class Exec_99 {
     fun fh_02x_ifs () {
         val out = test("""
             $IS ; $COMP
-            val x = ifs 1 {
+            val x = match 1 {
                 (1,nil) => (:ok)     ;; 2 compares to nil
                 1 => error(:no)
             }
@@ -755,7 +765,7 @@ class Exec_99 {
     fun fh_03_ifs () {
         val out = test("""
             $IS ; $COMP
-            val x = ifs (1,2) {
+            val x = match (1,2) {
                 1 => :ok
                 (1,2) => error(:no)
             }
@@ -771,7 +781,7 @@ class Exec_99 {
         val out = test("""
             $IS ; $COMP
             data :T = [v]
-            var x = ifs [20] {
+            var x = match [20] {
                 false         => error()
                 (t :T, false) {}
                 ;;do (t :T)
@@ -788,7 +798,7 @@ class Exec_99 {
         val out = test("""
             $IS ; $COMP
             data :T = [v]
-            var x = ifs [20] {
+            var x = match [20] {
                 false         => error()
                 ;;(t :T, false) {}
                 do (t :T)
@@ -805,10 +815,29 @@ class Exec_99 {
         val out = test("""
             $IS ; $COMP
             data :T = [v]
-            var x = ifs [20] {
+            var x = match [20] {
                 false         => error()
                 ;;(t :T, false) {}
                 do (t :T) {
+                    println(:ok)
+                }
+                (,t.v == 10)  => error()
+                (,t.v == 20)  => :ok
+                else          => error()
+            }
+            println(x)
+        """)
+        assert(out == ":ok\n:ok\n") { out }
+    }
+    @Test
+    fun fi_04_ifs_no_catch_all() {
+        val out = test("""
+            $IS ; $COMP
+            data :T = [v]
+            var x = ifs {
+                false => error()
+                do {
+                    val x :T = 10
                     println(:ok)
                 }
                 (,t.v == 10)  => error()
@@ -2225,7 +2254,7 @@ class Exec_99 {
         val out = test("""
         val e = func () {nil}
         val f = func (v) {
-            ifs v {
+            match v {
                 ,true => [e,v]
             }
         }
@@ -5003,7 +5032,7 @@ class Exec_99 {
         val out = test("""
             var v
             set v = #[]
-            ifs true {
+            match true {
                 ,true {
                     set v[#v] = 10
                 }
@@ -5679,7 +5708,7 @@ class Exec_99 {
     @Test
     fun zb_15_tk_pre () {
         val out = test("""
-            ifs v {
+            match v {
                 is? :pointer => c-to-string(v)
                 is? :number => 1
             }
