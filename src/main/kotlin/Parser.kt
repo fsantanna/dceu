@@ -929,6 +929,7 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (CEU>=99 && this.acceptFix("ifs")) -> {
+                val tk0 = this.tk0
                 this.acceptFix_err("{")
                 val ifs = list0("}",null) {
                     val cnd = when {
@@ -949,18 +950,15 @@ class Parser (lexer_: Lexer)
                         `/* IFS | ${tk0.dump()} */`
                         ${ifs.map { (cnd,idtag_es) ->
                             val (idtag,es) = idtag_es
-                            when {
-                                (cnd == null) -> es.tostr(true) // do ...
-                                (idtag != null) -> """
-                                    val ${idtag.tostr(true)} = ${cnd.tostr(true)}
-                                    if ${idtag.first.str} {
-                                        ${es.tostr(true)}
-                                    } else {
+                            val idtagx = if (idtag != null) idtag else Pair(Tk.Id("ceu_$N",tk0.pos),null)
+                            if (cnd == null) {
+                                es.tostr(true) // do ...
+                            } else {
                                 """
-                                else -> """
-                                    if (${cnd.tostr(true)}) {
-                                        ${es.tostr(true)}
-                                    } else {
+                                val ${idtagx.tostr(true)} = ${cnd.tostr(true)}
+                                if ${idtagx.first.str} {
+                                    ${es.tostr(true)}
+                                } else {
                                 """
                             }
                         }.joinToString("")}
@@ -971,9 +969,9 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (CEU>=99 && this.acceptFix("match")) -> {
-                val V = this.expr()
-                if (V is Expr.Args && V.dots) {
-                    err(V.tk, "match error : unexpected \"...\"")
+                val xv = this.expr()
+                if (xv is Expr.Args && xv.dots) {
+                    err(xv.tk, "match error : unexpected \"...\"")
                 }
                 this.acceptFix_err("{")
                 val ifs = list0("}",null) {
@@ -1003,37 +1001,40 @@ class Parser (lexer_: Lexer)
                             this.patts()
                         }
                     }
-                    val blk = when {
-                        xdo -> emptyList()
-                        this.acceptFix("=>") -> listOf(this.expr())
-                        else -> this.lambda(false).second
+                    val idtag_es = when {
+                        xdo -> Pair(null,emptyList())
+                        this.acceptFix("=>") -> Pair(null,listOf(this.expr()))
+                        else -> this.lambda(false)
                     }
-                    Pair(cnds,blk)
+                    Pair(cnds,idtag_es)
                 }
                 //ifs.forEach { println(it.first.map { it.first?.tostr() }.joinToString("")) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
-                val VS = when {
-                    (V !is Expr.Args) -> listOf(V)
-                    else -> V.es
+                val xvs = when {
+                    (xv !is Expr.Args) -> listOf(xv)
+                    else -> xv.es
                 }
-                val N = ifs.map { it.first.size }.maxOrNull()!! - VS.size
+                val xn = ifs.map { it.first.size }.maxOrNull()!! - xvs.size
                     // TODO: ifs.map { it.first.size }.max()
                     //  --> java.lang.NoSuchMethodError: 'java.lang.Comparable kotlin.collections.CollectionsKt.maxOrThrow(java.lang.Iterable)'
+                val n = N
                 this.nest("""
                     do {
                         `/* MATCH | VS | ${tk0.dump()} */`
-                        ${VS.mapIndexed { i,e -> "val ceu_${dceu.N}_$i = ${e.tostr(true)}" }.joinToString("\n")}
-                        ${(N > 0).cond { _ ->
-                            (0 until N).map { i ->
+                        ${xvs.mapIndexed { i, e -> "val ceu_${n}_$i = ${e.tostr(true)}" }.joinToString("\n")}
+                        ${(xn > 0).cond { _ ->
+                            (0 until xn).map { i ->
                                 """
-                                val ceu_${dceu.N}_${i + VS.size} = nil
+                                val ceu_${n}_${i + xvs.size} = nil
                                 """
                             }.joinToString("")
                         }}
-                        ${ifs.map { (lst,es) ->
+                        ${ifs.map { (lst,idtag_es) ->
+                            val (idtag,es) = idtag_es
+                            val idtagx = if (idtag != null) idtag else Pair(Tk.Id("ceu_$N",tk0.pos),null)
                             val (ids,cnds) = lst.mapIndexed { i,(idtag,cnd) ->
                                 Pair (
-                                    idtag.cond { "val ${it.tostr(true)} = ceu_${dceu.N}_$i"},
+                                    idtag.cond { "val ${it.tostr(true)} = ceu_${n}_$i"},
                                     cnd.tostr(true)
                                 )
                             }.unzip()
@@ -1041,7 +1042,8 @@ class Parser (lexer_: Lexer)
                                 `/* MATCH | IDS | ${tk0.dump()} */`
                                 ${ids.joinToString("\n")}
                                 `/* MATCH | CNDS | ${tk0.dump()} */`
-                                if (${cnds.joinToString(" and ")}) {
+                                val ${idtagx.tostr(true)} = ${cnds.joinToString(" and ")}
+                                if ${idtagx.first.str} {
                                     ${es.tostr(true)}
                                 } else {
                             """
