@@ -330,11 +330,11 @@ class Parser (lexer_: Lexer)
         return Expr.Do(tk, es)
     }
 
-    fun lambda (): Pair<Id_Tag,List<Expr>> {
+    fun lambda (it: Boolean): Pair<Id_Tag?,List<Expr>> {
         this.acceptFix_err("{")
         val tk0 = this.tk0
         val idtag = when {
-            !this.acceptFix(",") -> Pair(Tk.Id("it", tk0.pos), null)
+            !this.acceptFix(",") -> if (!it) null else Pair(Tk.Id("it", tk0.pos), null)
             this.acceptEnu("Tag") -> {
                 val tag = this.tk0 as Tk.Tag
                 this.acceptFix_err("=>")
@@ -501,10 +501,15 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val cnd = this.expr()
                 val arr = (CEU>=99) && this.acceptFix("=>")
-                val t = if (arr) {
-                    Expr.Do(this.tk0, listOf(this.expr_1_bin()))
-                } else {
-                    this.block()
+                var idtag: Id_Tag? = null
+                val t = when {
+                    arr -> Expr.Do(this.tk0, listOf(this.expr_1_bin()))
+                    (CEU >= 99) -> {
+                        val (x,es) = this.lambda(false)
+                        idtag = x
+                        Expr.Do(this.tk0, es)
+                    }
+                    else -> this.block()
                 }
                 val f = when {
                     (CEU < 99) -> {
@@ -521,7 +526,20 @@ class Parser (lexer_: Lexer)
                         Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
                     }
                 }
-                Expr.If(tk0, cnd, t, f)
+                if (idtag == null) {
+                    Expr.If(tk0, cnd, t, f)
+                } else {
+                    this.nest("""
+                        do {
+                            val ${idtag.tostr(true)} = ${cnd.tostr(true)}
+                            if ${idtag.first.str} {
+                                ${t.es.tostr(true)}
+                            } else {
+                                ${f.es.tostr(true)}
+                            }
+                        }
+                    """)
+                }
             }
             this.acceptFix("break") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -902,7 +920,8 @@ class Parser (lexer_: Lexer)
                 Expr.Break(tk0, cnd, null)
             }
             (CEU>=99 && this.acceptFix("\\")) -> {
-                val (id_tag,es) = lambda()
+                val (id_tag,es) = lambda(true)
+                id_tag!!
                 return this.nest("""
                     (func (${id_tag.tostr(true)}) {
                         ${es.tostr(true)}
@@ -1390,7 +1409,8 @@ class Parser (lexer_: Lexer)
                 )
             }
             "thus" -> {
-                val (id_tag,es) = lambda()
+                val (id_tag,es) = lambda(true)
+                id_tag!!
                 this.nest( """
                         do {
                             ${id_tag.first.pos.pre()}val ${id_tag.tostr(true)} = ${e.tostr(true)}

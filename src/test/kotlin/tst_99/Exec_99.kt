@@ -340,25 +340,46 @@ class Exec_99 {
 
     // IF / ID-TAG
 
-    /*
     @Test
     fun cj_01_if() {
         val out = test("""
-            val v = if x=1 { x }
+            val v = if 1 { it }
             println(v)
         """)
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "anon : (lin 2, col 28) : access error : variable \"it\" is not declared\n") { out }
     }
     @Test
     fun cj_02_if() {
         val out = test("""
             data :X = [x]
-            val i = if v:X=[1] { v.x }
+            val i = if [10] { ,v:X => v.x }
             println(i)
         """)
-        assert(out == "1\n") { out }
+        assert(out == "10\n") { out }
     }
-     */
+    @Test
+    fun cj_03_ifs() {
+        val out = test("""
+            data :X = [x]
+            val i = ifs {
+                [10] { ,v:X => v.x }
+            }
+            println(i)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun cj_04_ifs() {
+        val out = test("""
+            data :X = [x]
+            val i = ifs nil {
+                ,[10] { ,v:X => v.x }
+            }
+            println(i)
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // IF cnd => t => f
 
