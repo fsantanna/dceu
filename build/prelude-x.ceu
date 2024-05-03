@@ -253,17 +253,15 @@ func in-not' (v, xs) {
     not in'(v,xs)
 }
 
-;;;
 func next (v, ...) {
     match v {
         :exe-coro => resume v(...)
         :tasks    => next-tasks(v, ...)
         :dict     => next-dict(v, ...)
-        :Iterator => v.f(v)
+        :Iterator => it.f(v)
         else      => error(:error)
     }
 }
-;;;
 
 func create-resume (CO, ...) {
     val co = coroutine(CO)
@@ -293,6 +291,14 @@ func to-string (v) {
 
 func to-bool (v) {
     not (not v)
+}
+
+func to-char (v) {
+    match v {
+        :char   => v
+        :number => `:char $v.Number`
+        else    => nil
+    }
 }
 
 func to-number (v) {
