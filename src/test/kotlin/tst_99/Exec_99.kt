@@ -4649,6 +4649,24 @@ class Exec_99 {
         """)
         assert(out == "-10\n") { out }
     }
+    @Test
+    fun oo_07_method() {
+        val out = test("""
+            func f (v) { v() }
+            val v = f <- \{10} thus { it }
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun oo_08_method() {
+        val out = test("""
+            func f (x,y) { y(x) }
+            val v = 10 -> f <- \{it} thus { it }
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // PIPE
 
@@ -5879,9 +5897,9 @@ class Exec_99 {
                     println(line)
                 }
             }
-            coro Send (co, next) {
+            coro Send (co, nxt) {
                 loop v in to-iter(co) {
-                    resume next(;;;drop;;;(v))
+                    resume nxt(;;;drop;;;(v))
                 }
             }
             create-resume(Send, take, create-resume(Show))

@@ -1348,7 +1348,7 @@ class Parser (lexer_: Lexer)
             return e
         }
         if (xop!=null && xop!=this.tk0.str) {
-            err(this.tk0, "sufix operation error : expected surrounding parentheses")
+            //err(this.tk0, "sufix operation error : expected surrounding parentheses")
         }
         return when (this.tk0.str) {
             "->" -> this.expr_3_met(this.tk0.str, method(this.expr_4_suf(), e, true))
@@ -1433,7 +1433,7 @@ class Parser (lexer_: Lexer)
             return e
         }
         if (xop!=null && xop!=this.tk0.str) {
-            err(this.tk0, "sufix operation error : expected surrounding parentheses")
+            //err(this.tk0, "sufix operation error : expected surrounding parentheses")
         }
         val op = this.tk0
         return when (op.str) {
