@@ -696,9 +696,9 @@ class JS_99 {
                     set line = yield()
                 }
             }
-            coro Send (co, next) {
+            coro Send (co, nxt) {
                 loop v in to-iter(co) {
-                    resume next(;;;drop;;;(v))
+                    resume nxt(;;;drop;;;(v))
                 }
             }
             create-resume(Send, take2, create-resume(Show))
