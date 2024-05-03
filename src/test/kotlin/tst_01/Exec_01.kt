@@ -3110,6 +3110,23 @@ class Exec_01 {
         )
         assert(out == "2\n") { out }
     }
+    @Test
+    fun nn_25_func_dup() {
+        val out = test(
+            """
+            do {
+                val f = func () {}
+                f()
+            }
+            do {
+                val f = func () {}
+                f()
+            }
+            println(:ok)
+        """
+        )
+        assert(out == ":ok\n") { out }
+    }
 
     // FUNC / ARGS / DOTS / ...
 

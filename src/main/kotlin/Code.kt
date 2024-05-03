@@ -13,6 +13,8 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
         return ups.pub[this].let {
             when {
                 (it !is Expr.Dcl) -> this.n.toString()
+                ups.first(it) { it is Expr.Proto }.let { it==outer.main() }
+                    -> this.n.toString()
                 (it.src != this) -> error("bug found") as String
                 (it.idtag.size > 1) -> TODO("function name / multiple decl")
                 else -> it.idtag[0].first.str.idc()
