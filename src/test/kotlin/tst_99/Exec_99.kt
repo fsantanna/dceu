@@ -612,6 +612,16 @@ class Exec_99 {
         """)
         assert(out == "true\n") { out }
     }
+    @Test
+    fun ff_12_ifs() {
+        val out = test("""
+            ifs {
+                true => error()
+            }
+        """)
+        assert(out == " |  anon : (lin 3, col 25) : error()\n" +
+                " v  error : nil\n") { out }
+    }
 
     // IFS / ORIGINAL
 
@@ -855,15 +865,6 @@ class Exec_99 {
             println(x)
         """)
         assert(out == ":1\n:2\n") { out }
-    }
-    @Test
-    fun BUG_fi_06_ifs_no_catch_all() {
-        val out = test("""
-            ifs {
-                true => error()
-            }
-        """)
-        assert(out == ":ok\n:ok\n") { out }
     }
     @Test
     fun fi_07_ifs_no_catch_all() {
@@ -2157,7 +2158,7 @@ class Exec_99 {
             }
         """, true)
         //assert(out.contains("assertion error : expected :Iterator")) { out }
-        assert(out.contains(" |  anon : (lin 2, col 22) : ceu_16912[0]\n" +
+        assert(out.contains(" |  anon : (lin 2, col 22) : ceu_17750[0]\n" +
                 " v  index error : expected collection\n")) { out }
     }
     @Test

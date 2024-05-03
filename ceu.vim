@@ -19,7 +19,7 @@ syn keyword Statement   true val var
 syn keyword Statement   catch defer
 syn keyword Statement   coro resume yield
 syn keyword Statement   broadcast delay in pub spawn task toggle
-syn keyword Statement   await every ifs par par-and par-or
+syn keyword Statement   await every ifs match par par-and par-or
 syn keyword Statement   resume-yield-all thus until watching
 syn keyword Statement   with where while
 

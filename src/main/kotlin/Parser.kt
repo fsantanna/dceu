@@ -947,7 +947,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("}")
                 this.nest("""
                     do {
-                        `/* IFS | ${tk0.dump()} */`
+                        ;;`/* IFS | ${tk0.dump()} */`
                         ${ifs.map { (cnd,idtag_es) ->
                             val (idtag,es) = idtag_es
                             val idtagx = if (idtag != null) idtag else Pair(Tk.Id("ceu_$N",tk0.pos),null)
@@ -1020,7 +1020,7 @@ class Parser (lexer_: Lexer)
                 val n = N
                 this.nest("""
                     do {
-                        `/* MATCH | VS | ${tk0.dump()} */`
+                        ;;`/* MATCH | VS | ${tk0.dump()} */`
                         ${xvs.mapIndexed { i, e -> "val ceu_${n}_$i = ${e.tostr(true)}" }.joinToString("\n")}
                         ${(xn > 0).cond { _ ->
                             (0 until xn).map { i ->
@@ -1039,9 +1039,9 @@ class Parser (lexer_: Lexer)
                                 )
                             }.unzip()
                             """
-                                `/* MATCH | IDS | ${tk0.dump()} */`
+                                ;;`/* MATCH | IDS | ${tk0.dump()} */`
                                 ${ids.joinToString("\n")}
-                                `/* MATCH | CNDS | ${tk0.dump()} */`
+                                ;;`/* MATCH | CNDS | ${tk0.dump()} */`
                                 val ${idtagx.tostr(true)} = ${cnds.joinToString(" and ")}
                                 if ${idtagx.first.str} {
                                     ${es.tostr(true)}

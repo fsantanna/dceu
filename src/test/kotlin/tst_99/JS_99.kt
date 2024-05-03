@@ -157,8 +157,8 @@ class JS_99 {
         """, true)
         assert(out.contains("json :good\n" +
                 " |  anon : (lin 31, col 14) : (spawn (task :nested () { (val (co1) = corout...)\n" +
-                " |  anon : (lin 32, col 47) : (resume (ceu_co_17988)(ceu_arg_17988))\n" +
-                " |  anon : (lin 23, col 47) : (resume (ceu_co_17160)(ceu_arg_17160))\n" +
+                " |  anon : (lin 32, col 47) : (resume (ceu_co_19212)(ceu_arg_19212))\n" +
+                " |  anon : (lin 23, col 47) : (resume (ceu_co_18384)(ceu_arg_18384))\n" +
                 " |  anon : (lin 5, col 25) : error(:error)\n" +
                 " v  error : :error\n")) { out }
     }

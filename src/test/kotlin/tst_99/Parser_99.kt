@@ -298,7 +298,7 @@ class Parser_99 {
     }
     @Test
     fun ee_03_ifs() {
-        val l = lexer("ifs nil { else => it }")
+        val l = lexer("match nil { else => it }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
@@ -327,7 +327,7 @@ class Parser_99 {
     }
     @Test
     fun ee_06_ifs() {
-        val l = lexer("ifs v { (,a) {1} (,b)=>v else{0} }")
+        val l = lexer("match v { (,a) {1} (,b)=>v else{0} }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
@@ -393,7 +393,7 @@ class Parser_99 {
     @Test
     fun ee_09_ifs_nocnd() {
         val l = lexer("""
-            val x = ifs 20 {
+            val x = match 20 {
                 true => ifs {
                     == 20 => true   ;; err: no ifs expr
                 }
@@ -421,7 +421,7 @@ class Parser_99 {
     }
     @Test
     fun ee_10_ifs() {
-        val l = lexer("ifs v { x, => 10 }")
+        val l = lexer("match v { x, => 10 }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
@@ -440,14 +440,14 @@ class Parser_99 {
 
     @Test
     fun ef_01_ifs_err() {
-        val l = lexer("ifs (1,...) { (1,2) => 10 }")
+        val l = lexer("match (1,...) { (1,2) => 10 }")
         val parser = Parser(l)
-        //val e = parser.expr()
-        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : match error : unexpected \"...\"")
+        val e = parser.expr()
+        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : match error : unexpected \"...\"\n")
     }
     @Test
     fun ef_02_ifs() {
-        val l = lexer("ifs (1,2) { (1,2) => 10 }")
+        val l = lexer("match (1,2) { (1,2) => 10 }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +

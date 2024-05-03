@@ -520,7 +520,9 @@ fun Coder.main (tags: Tags): String {
     }
 
     int ceu_error_f (CEUX* X) {
-        assert(X->args == 1);
+        if (X->args == 0) {
+            ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+        }
     #if CEU < 2
         CEU_Value arg = ceux_peek(X->S, ceux_arg(X,0));
         assert(arg.type == CEU_VALUE_TAG);
