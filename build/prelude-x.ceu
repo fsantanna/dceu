@@ -86,15 +86,23 @@ func debug (v) {
 
 ;; ASSERT
 
+func string? (v) {
+    ((type(v)==:vector) and (#v>0)) and (type(v[0])==:char)
+}
+
 func assert (v, msg) {
-    if not v {
-        if msg {
+    ifs {
+        v => v
+        msg->string? {
             print("assertion error : ")
             println(msg)
+            error(:assert)
         }
-        error(:assert)
+        type(msg) == :func {
+            error(msg())
+        }
+        else => error(msg)
     }
-    v
 }
 
 ;; TAG-OR
@@ -245,7 +253,7 @@ func is-not' (v1,v2) {
 
 func in' (v, xs) {
     loop x in to-iter(xs) {
-       until (x == v)
+       until (x === v)
     }
 }
 
@@ -272,10 +280,6 @@ func create-resume (CO, ...) {
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TO-*
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-func string? (v) {
-    ((type(v)==:vector) and (#v>0)) and (type(v[0])==:char)
-}
 
 func to-string (v) {
     match v {
