@@ -142,13 +142,7 @@ data :Iterator = [f,s,tp,i]
             nil
         } else {
             set itr.i = i + 1
-            val v = itr.s[i]
-            match itr.tp {
-                == :all => [i, v]
-                == :idx => i
-                == :val => v
-                else    => v
-            }
+            (i, itr.s[i])
         }
     }
 
@@ -158,22 +152,16 @@ data :Iterator = [f,s,tp,i]
             nil
         } else {
             set itr.i = k
-            val v = itr.s[k]
-            match itr.tp {
-                == :all => [k, v]
-                == :key => k
-                == :val => v
-                else    => k
-            }
+            (k, itr.s[k])
         }
     }
 
     func iter-xcoro (itr :Iterator) {
         val co = itr.s
-        (resume co()) thus {
+        (resume co()) --> func (...) {
             if (status(co) == :terminated)
                 => nil
-                => it
+                => (...)
         }
     }
 
@@ -252,8 +240,20 @@ func is-not' (v1,v2) {
 }
 
 func in' (v, xs) {
-    loop x in to-iter(xs) {
-       until (x === v)
+    if (type(xs) == :dict) and xs[v] { ,it =>
+        it
+    } else {
+        loop (a,b) in to-iter(xs) {
+            ;;println(v, type(xs), [a,b], v===b)
+            val z = match xs {
+                :dict   => (v === a) and b
+                :tuple  => (v === b) and b
+                :vector => (v === b) and b
+                else    => (v === a) and a
+            }
+            println(:z, z)
+            until z
+        }
     }
 }
 
@@ -301,7 +301,30 @@ func to-char (v) {
     match v {
         :char   => v
         :number => `:char $v.Number`
-        else    => nil
+        {{string?}} {
+            ifs {
+                (#v == 1) => v[0]
+                (#v /= 2) => nil
+                (v[0] /= '\\') => nil
+                else {
+                    val t = @[
+                        ("\\a", '\a'),
+                        ("\\b", '\b'),
+                        ("\\f", '\f'),
+                        ("\\n", '\n'),
+                        ("\\r", '\r'),
+                        ("\\t", '\t'),
+                        ("\\v", '\v'),
+                        ("\\'", '\''),
+                        ("\\\"", '\"'),
+                        ("\\?", '\?'),
+                        ("\\\\", '\\'),
+                    ]
+                    v in? t
+                }
+            }
+        }
+        else => nil
     }
 }
 

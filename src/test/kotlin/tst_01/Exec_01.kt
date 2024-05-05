@@ -6044,4 +6044,44 @@ class Exec_01 {
         //assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
         assert(out == "[0]\n") { out }
     }
+    @Test
+    fun zz_07_iter() {
+        val out = test("""
+            (val ({{+}}) = (func (v1,v2) {
+                ```:number  (${D}v1.Number + ${D}v2.Number)```
+            }))
+            (val (iter-tuple) = (func (itr) {
+                (val (i) = itr[3])
+                if {{==}}(i,{{#}}(itr[1])) {
+                nil
+                } else {
+                (set itr[3] = {{+}}(i,1))
+                (i,itr[1][i])
+                }
+            }))
+            (val (to-iter) = (func (v) {
+                v
+            }))
+            (val (t2) = [1,2,3])
+            (val (t3) = #[])
+            do {
+                (val (ceu_448) = to-iter([iter-tuple,t2,nil,0]))
+                loop {
+                    (val (i,v) = ceu_448[0](ceu_448))
+                    (break(nil) if {{==}}(i,nil))
+                    println(i,v)
+                    do {
+                        (val (ceu_350) = t3)
+                        (set ceu_350[{{#}}(ceu_350)] = v)
+                    }
+                }
+            }
+            println(t3)
+        """)
+        //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[0]\n") { out }
+    }
 }

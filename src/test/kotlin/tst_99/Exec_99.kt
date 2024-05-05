@@ -1078,8 +1078,8 @@ class Exec_99 {
             }
             do :depois
             val t = [:antes, :x, :y, :z, :a, :b, :c, :meio, :i, :j, :depois]
-            loop v in to-iter(t,:all) {
-                set t[v[0]] = to-number(v[1])
+            loop (i,v) in to-iter(t) {
+                set t[i] = to-number(v)
             }
             println(t)
         """, true)
@@ -1908,7 +1908,7 @@ class Exec_99 {
     fun fg_06_dict_iter_val() {
         val out = test("""
             val t = @[x=1, y=2, z=3]
-            loop v in to-iter(t,:val) {
+            loop (_,v) in to-iter(t) {
                 println(v)
             }
         """, true)
@@ -1918,8 +1918,8 @@ class Exec_99 {
     fun fg_07_dict_iter_key() {
         val out = test("""
             val t = @[x=1, y=2, z=3]
-            loop v in to-iter(t,:key) {
-                println(v)
+            loop k in to-iter(t) {
+                println(k)
             }
         """, true)
         assert(out == ":x\n:y\n:z\n") { out }
@@ -1928,11 +1928,11 @@ class Exec_99 {
     fun fg_08_dict_iter_all() {
         val out = test("""
             val t = @[x=1, y=2, z=3]
-            loop v in to-iter(t,:all) {
-                println(v)
+            loop (k,v) in to-iter(t) {
+                println(k,v)
             }
         """, true)
-        assert(out == "[:x,1]\n[:y,2]\n[:z,3]\n") { out }
+        assert(out == ":x\t1\n:y\t2\n:z\t3\n") { out }
     }
     @Test
     fun fg_09_dict_iter() {
@@ -1948,30 +1948,30 @@ class Exec_99 {
     @Test
     fun fg_10_vect_iter_nil() {
         val out = test("""
-            loop v in #[1, 2, 3] {
+            loop (_,v) in #[10, 20, 30] {
                 println(v)
             }
         """, true)
-        assert(out == "1\n2\n3\n") { out }
+        assert(out == "10\n20\n30\n") { out }
     }
     @Test
     fun fg_11_vect_iter_val() {
         val out = test("""
-            val t = #[1, 2, 3]
-            loop v in to-iter(t,:val) {
-                println(v)
+            val t = #[10, 20, 30]
+            loop i in to-iter(t) {
+                println(i)
             }
         """, true)
-        assert(out == "1\n2\n3\n") { out }
+        assert(out == "0\n1\n2\n") { out }
     }
     @Test
     fun fg_12_vect_iter_all() {
         val out = test("""
-            loop v in to-iter(#[1, 2, 3],:all) {
-                println(v)
+            loop (i,v) in to-iter(#[10, 20, 30]) {
+                println(i,v)
             }
         """, true)
-        assert(out == "[0,1]\n[1,2]\n[2,3]\n") { out }
+        assert(out == "0\t10\n1\t20\n2\t30\n") { out }
     }
     @Test
     fun fg_13_vect_iter_idx() {
@@ -1987,21 +1987,19 @@ class Exec_99 {
     fun fg_14_vect_iter_err() {
         val out = test("""
             val t = #[1, 2, 3]
-            loop (i in to-iter(t) {
+            loop [i in to-iter(t) {
                 println(i, v)
             }
         """, true)
         //assert(out == "anon : (lin 3, col 36) : expected \",\" : have \"{\"") { out }
         //assert(out == "anon : (lin 3, col 30) : expected identifier : have \"(\"") { out }
-        assert(out == "anon : (lin 3, col 18) : expected \"in\" : have \"(\"\n") { out }
+        assert(out == "anon : (lin 3, col 18) : expected \"in\" : have \"[\"\n") { out }
     }
     @Test
     fun fg_15_dict_iter() {
         val out = test("""
             val t = @[x=1, y=2, z=3]
-            loop x in to-iter(t,:all) {
-                val k = x[0]
-                val v = x[1]
+            loop (k,v) in to-iter(t) {
                 println(k, v)
             }
         """, true)
@@ -2053,8 +2051,8 @@ class Exec_99 {
     fun fg_20_tuple_iter() {
         val out = test("""
             val t = [1, 2, 3]
-            loop v in to-iter(t,:all) {
-                println(v)
+            loop (k,v) in to-iter(t) {
+                println([k,v])
             }
         """, true)
         assert(out == "[0,1]\n[1,2]\n[2,3]\n") { out }
@@ -2073,7 +2071,7 @@ class Exec_99 {
         val out = test("""
             data :T = [v]
             val t = [[1], [2], [3]]
-            loop v:T in to-iter(t,:val) {
+            loop (_,v:T) in to-iter(t) {
                 println(v.v)
             }
         """, true)
@@ -2263,13 +2261,62 @@ class Exec_99 {
             }
             println(t2)
             val t3 = #[]
-            loop v in to-iter(t2,:val) {
+            loop (_,v) in to-iter(t2) {
                 set t3[+] = v
             }
             println(t3)
         """, true)
         assert(out == "#[[1],[2],[3]]\n" +
                 "#[[1],[2],[3]]\n") { out }
+    }
+    @Test
+    fun fh_01x_iter() {
+        val out = test("""
+            val t2 = #[[1],[2],[3]]
+            val t3 = #[]
+            loop (_,v) in to-iter(t2) {
+                set t3[+] = v
+            }
+            println(t3)
+        """, true)
+        assert(out == "#[[1],[2],[3]]\n") { out }
+    }
+    @Test
+    fun fh_01y_iter() {
+        val out = test("""
+            val t2 = [1,2,3]
+            val t3 = #[]
+            loop (i,v) in to-iter(t2) {
+                println(i, v)
+                set t3[+] = v
+            }
+            println(t3)
+        """, true)
+        assert(out == "#[[1],[2],[3]]\n") { out }
+    }
+    @Test
+    fun fh_01z_iter() {
+        val out = test("""
+            $PLUS
+            func iter-tuple (itr) {
+                val i = itr[3]
+                if i == #itr[1] {
+                    nil
+                } else {
+                    set itr[3] = i + 1
+                    (i, itr[1][i])
+                }
+            }
+            func to-iter (v) { v }
+            val t2 = [1,2,3]
+            val t3 = #[]
+            loop (i,v) in [iter-tuple, t2, nil, 0] {
+                println(i, v)
+                set t3[+] = v
+            }
+            println(t3)
+        """, false)
+        assert(out == "#[[1],[2],[3]]\n") { out }
     }
     @Test
     fun fh_02() {
