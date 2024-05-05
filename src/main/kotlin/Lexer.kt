@@ -412,11 +412,14 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     yield(Tk.Chr("'$c'", pos))
                 }
                 (x == '"') -> {
-                    var c = '"'
+                    var n = 0
                     val v = read2Until {
-                        val brk = (it=='"' && c!='\\')
-                        c = it
+                        val brk = (it=='"' && n%2==0)
+                        n = if (it == '\\') n+1 else 0
                         brk
+                    }
+                    if (v == null) {
+                        err(pos, "string error : unterminated \"")
                     }
                     yield(Tk.Fix("#[", pos))
                     var i = 0

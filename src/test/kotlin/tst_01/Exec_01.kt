@@ -1558,6 +1558,14 @@ class Exec_01 {
         """, true)
         assert(out == "#[1]\n") { out }
     }
+    @Test
+    fun ee_17_vector_nil_err() {
+        val out = test("""
+            val t = #[nil,nil,10]
+            println(#t, t[0])
+        """)
+        assert(out.contains("ceux_vector: Assertion `v.type != CEU_VALUE_NIL' failed")) { out }
+    }
 
     // STRINGS / CHAR
 
@@ -3985,7 +3993,7 @@ class Exec_01 {
         val out = test("""
             `ceu_error_s(X->S, "C error");`
         """)
-        assert(out == " |  anon : (lin 2, col 13) : ```ceu_error_s(X->S, 'C error');```\n" +
+        assert(out == " |  anon : (lin 2, col 13) : ```ceu_error_s(X->S, .C error.);```\n" +
                 " v  error : C error\n") { out }
     }
 

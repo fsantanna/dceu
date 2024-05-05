@@ -351,7 +351,26 @@ class Lexer_01 {
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 4) : char error : expected '")
     }
-
+    @Test
+    fun gg_06_chr() {
+        val l = lexer("\"\\\\\"")
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it.str=="#["})
+        println(tks.next().let { it.str=="\\" })
+        assert(tks.next().let { it.str=="]"})
+    }
+    @Test
+    fun gg_07_chr() {
+        val l = lexer("\"\\\"")
+        val tks = l.lex().iterator()
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : string error : unterminated \"")
+    }
+    @Test
+    fun gg_08_chr() {
+        val l = lexer("'\\n'")
+        val tks = l.lex().iterator()
+        assert(tks.next().str == "'\\n'")
+    }
 
     // INCLUDE
 

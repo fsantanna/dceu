@@ -924,7 +924,9 @@ fun Coder.main (tags: Tags): String {
     void ceux_vector (CEU_Stack* S, int n) {
         CEU_Value vec = ceu_create_vector();
         for (int i=0; i<n; i++) {
-            ceu_vector_set(&vec.Dyn->Vector, i, ceux_peek(S,SS(-n+i)));
+            CEU_Value v = ceux_peek(S,SS(-n+i));
+            assert(v.type != CEU_VALUE_NIL);
+            ceu_vector_set(&vec.Dyn->Vector, i, v);
         }
         ceux_pop_n(S, n);
         ceux_push(S, 1, vec);
