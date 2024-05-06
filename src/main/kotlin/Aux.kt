@@ -112,6 +112,16 @@ fun String.tag2c (): String {
         .replace('.','_')
         .replace('-','_')
 }
+fun String.quote (n: Int): String {
+    return this
+        .replace('\n',' ')
+        .replace('"','.')
+        .replace('\\','.')
+        .let {
+            if (it.length<=n) it else it.take(n-3)+"..."
+        }
+
+}
 
 fun err (pos: Pos, str: String) {
     error(pos.file + " : (lin ${pos.lin}, col ${pos.col}) : $str")

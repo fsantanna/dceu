@@ -2766,6 +2766,16 @@ class Exec_01 {
         //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
         assert(out == "1\n") { out }
     }
+    @Test
+    fun if6_else() {
+        val out = test("""
+            val v = [1]
+            println(:v,v,{{#}}(v),v[0])
+            val x = {{/=}}(v[0],'\\')
+        """)
+        //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
+        assert(out == ":v\t[1]\t1\t1\n") { out }
+    }
 
     // FUNC / CALL
 

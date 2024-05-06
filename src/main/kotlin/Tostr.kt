@@ -12,7 +12,7 @@ fun Tk.dump (): String {
 }
 fun Expr.dump (): String {
     return if (!DUMP) "" else {
-        this.tk.dump() + " | " + this.tostr().take(15).filter { it !in listOf('\n','{','}') }
+        this.tk.dump() + " | " + this.tostr().quote(15)
     }
 }
 

@@ -5474,6 +5474,30 @@ class Exec_99 {
         """, true)
         assert(out == "nil\n:xyz\nnil\n") { out }
     }
+    @Test
+    fun xc_07_to_char() {
+        val out = test("""
+            println(to-char('a'))
+            println(to-char(65))
+            println(to-char("x"))
+            println(to-char(""))
+            println(to-char("ab"))
+            println(to-char("\\n"))
+        """, true)
+        assert(out == "a\nA\nx\nnil\nnil\n\n") { out }
+    }
+    @Test
+    fun xc_07x_to_char() {
+        val out = test("""
+            val v = [1,2]
+            println(:v, v, #v, v[0])
+            ifs {
+                (#v /= 2) => nil
+                (v[0] /= '\\') => nil
+            }
+        """)
+        assert(out == "a\nA\nx\nnil\nnil\n\n") { out }
+    }
 
     // PRELUDE
 

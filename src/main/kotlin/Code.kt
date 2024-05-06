@@ -41,13 +41,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
     }
 
     fun Expr.toerr (): String {
-        val src = this.tostr(false).let {
-            it.replace('\n',' ').replace('"','.').replace('\\','.').let { str ->
-                str.take(45).let {
-                    if (str.length<=45) it else it+"...)"
-                }
-            }
-        }
+        val src = this.tostr(false).quote(45)
         return "\"${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : $src\""
     }
 
