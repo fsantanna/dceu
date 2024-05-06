@@ -342,7 +342,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
             }
 
             is Expr.Yield -> {
-                assert(!this.args.dots && this.args.es.size<=1)
                 """
                 { // YIELD ${this.dump()}
                     ${this.args.code()}

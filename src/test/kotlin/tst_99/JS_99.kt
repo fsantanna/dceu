@@ -102,8 +102,8 @@ class JS_99 {
         val out = test("""
             coro objectEntries (obj) {
                 yield()
-                loop v in to-iter(obj,:all) {
-                    yield([v[0], v[1]])
+                loop (v,k) in to-iter(obj) {
+                    yield(k, v)
                 }
             }
             
@@ -112,7 +112,7 @@ class JS_99 {
                 last  = "Doe",
             ]
             val co = create-resume(objectEntries, jane)
-            loop (v,i) in to-iter(co) {
+            loop (i,v) in to-iter(co) {
                 println((to-string(i) ++ ": ") ++ v)
             }
         """, true)
@@ -238,13 +238,13 @@ class JS_99 {
         val out = test("""
             coro genFunc () {
                 loop (v,i) in to-iter(#['a','b'],:all) {
-                    yield(;;;drop;;;(v))
+                    yield(;;;drop;;;([i,v]))
                 }
             }
             val arr = to-vector(coroutine(genFunc))
             println(arr)
         """, true)
-        assert(out == "#[[a,0],[b,1]]\n") { out }
+        assert(out == "#[[0,a],[1,b]]\n") { out }
     }
 
     // 22.3.6 Recursion via yield*

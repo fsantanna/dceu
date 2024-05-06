@@ -5571,9 +5571,8 @@ class Exec_99 {
             }
             assert(1 is-not? :number)
         """, true)
-        assert(out.contains("assertion error : ok\n" +
-                " |  anon : (lin 5, col 13) : assert(is-not'(1,:number))\n" +
-                " |  build/prelude-x.ceu : (lin 457, col 17) : error({{++}}(#['a','s','s','e','r','t','i'...\n" +
+        assert(out.contains(" |  anon : (lin 3, col 17) : assert(is'([],:bool),#['o','k'])\n" +
+                " |  build/prelude-x.ceu : (lin 457, col 25) : error({{++}}(#['a','s','s','e','r','t','i'...\n" +
                 " v  error : assertion error : ok\n")) { out }
     }
     @Test
