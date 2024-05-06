@@ -187,14 +187,14 @@ func {{===}} (v1,v2) {
     } where {
         func equals-tuple-vector (v1', v2') {
             (#v1' == #v2') and not (
-                loop (v,i) in to-iter(v1') {
+                loop (v,i) in v1' {
                     while (v2'[i] === v)
                 }
             )
         }
         func contains-dict? (v1', v2') {
             not (
-                loop (v,k) in to-iter(v1') {
+                loop (v,k) in v1' {
                     while (v2'[k] === v)
                 }
             )
@@ -227,7 +227,7 @@ func in' (v, xs) {
     if (type(xs) == :dict) and xs[v] { ,it =>
         it
     } else {
-        loop (b,a) in to-iter(xs) {
+        loop (b,a) in xs {
             until match xs {
                 :dict   => (v === a) and b
                 :tuple  => (v === b) and b
@@ -385,10 +385,32 @@ func copy (v) {
     }
 }
 
+func to-tuple (col) {
+    match col {
+        :tuple => col
+        :vector {
+            val tup = tuple(#col)
+            loop (v,i) in col {
+                set tup[i] = v
+            }
+            tup
+        }
+        else => error(:TODO)
+    }
+}
+
 func to-vector (col) {
     val ret = #[]
-    loop v in to-iter(col) {
+    loop v in col {
         set ret[+] = v
+    }
+    ret
+}
+
+func to-dict (col) {
+    val ret = @[]
+    loop v in col {
+        set ret[v[0]] = v[1]
     }
     ret
 }
@@ -397,7 +419,7 @@ func to-vector (col) {
 func to-tasks (...) {
     val ret = #[]
     val args = ...
-    loop v in to-iter(args) {
+    loop v in args {
         match v {
             :exe-task {
                 set ret[+] = v
@@ -415,7 +437,7 @@ func to-tasks (...) {
 
 func to-set (col) {
     val ret = @[]
-    loop in to-iter(col) {
+    loop in col {
         set ret[it] = true
     }
     ret

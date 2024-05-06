@@ -5500,6 +5500,23 @@ class Exec_99 {
         """)
         assert(out == ":v\t[1,2]\t2\t1\n") { out }
     }
+    @Test
+    fun xc_08_totuple() {
+        val out = test("""
+            println(to-tuple([]))
+            println(to-tuple(#[1,2]))
+        """, true)
+        assert(out == "[]\n[1,2]\n") { out }
+    }
+    @Test
+    fun xc_08_todict() {
+        val out = test("""
+            println(to-dict([[:x,1],[:y,2]]))
+            println(to-dict(#[[:x,1],[:y,2]]))
+        """, true)
+        assert(out == "@[(:x,1),(:y,2)]\n" +
+                "@[(:x,1),(:y,2)]\n") { out }
+    }
 
     // PRELUDE
 
