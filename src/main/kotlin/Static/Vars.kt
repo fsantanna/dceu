@@ -205,7 +205,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             //.let { println(it) ; it }
             .drop(1)    // myself
             .filter { it is Expr.Do }
-            .map { this.enc_to_dcls[it]!!.count() }
+            .map { this.size(this.enc_to_dcls[it]!!) }
             .sum()
         //println(listOf(dcl.id.str,off,idx))
 
