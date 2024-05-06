@@ -112,8 +112,8 @@ class JS_99 {
                 last  = "Doe",
             ]
             val co = create-resume(objectEntries, jane)
-            loop v in to-iter(co) {
-                println((to-string(v[0]) ++ ": ") ++ v[1])
+            loop (v,i) in to-iter(co) {
+                println((to-string(i) ++ ": ") ++ v)
             }
         """, true)
         assert(out == ":first: Jane\n:last: Doe\n") { out }
@@ -157,8 +157,8 @@ class JS_99 {
         """, true)
         assert(out.contains("json :good\n" +
                 " |  anon : (lin 31, col 14) : (spawn (task :nested () { (val (co1) = corout...)\n" +
-                " |  anon : (lin 32, col 47) : (resume (ceu_co_19212)(ceu_arg_19212))\n" +
-                " |  anon : (lin 23, col 47) : (resume (ceu_co_18384)(ceu_arg_18384))\n" +
+                " |  anon : (lin 32, col 47) : (resume (ceu_co_22181)(ceu_arg_22181))\n" +
+                " |  anon : (lin 23, col 47) : (resume (ceu_co_21353)(ceu_arg_21353))\n" +
                 " |  anon : (lin 5, col 25) : error(:error)\n" +
                 " v  error : :error\n")) { out }
     }
@@ -237,14 +237,14 @@ class JS_99 {
     fun x_09() {
         val out = test("""
             coro genFunc () {
-                loop v in to-iter(#['a','b'],:all) {
+                loop (v,i) in to-iter(#['a','b'],:all) {
                     yield(;;;drop;;;(v))
                 }
             }
             val arr = to-vector(coroutine(genFunc))
             println(arr)
         """, true)
-        assert(out == "#[[0,a],[1,b]]\n") { out }
+        assert(out == "#[[a,0],[b,1]]\n") { out }
     }
 
     // 22.3.6 Recursion via yield*
@@ -464,7 +464,7 @@ class JS_99 {
                 var cur = ""
                 loop {
                     val tmp = yield()
-                    loop c in to-iter(tmp,:val) {
+                    loop c in to-iter(tmp) {
                         if c == '\n' {
                             resume target(cur)
                             set cur = ""
@@ -708,9 +708,9 @@ class JS_99 {
         assert(out == "1: ;; is', is-not'\n" +
                 "2: \n" +
                 "3: val not = func (v) {\n" +
-                "1: data :Clock = [ms]\n" +
-                "2: \n" +
-                "3: func debug (v) {\n") { out }
+                "1: var assert\n" +
+                "2: data :Clock = [ms]\n" +
+                "3: \n") { out }
     }
 
     // 22.6.2.2.1 Step 1 – tokenize

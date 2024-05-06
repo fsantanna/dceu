@@ -1,3 +1,4 @@
+var assert
 data :Clock = [ms]
 
 func debug (v) {
@@ -84,27 +85,6 @@ func debug (v) {
     }
 ;;}
 
-;; ASSERT
-
-func string? (v) {
-    ((type(v)==:vector) and (#v>0)) and (type(v[0])==:char)
-}
-
-func assert (v, msg) {
-    ifs {
-        v => v
-        msg->string? {
-            print("assertion error : ")
-            println(msg)
-            error(:assert)
-        }
-        type(msg) == :func {
-            error(msg())
-        }
-        else => error(msg)
-    }
-}
-
 ;; TAG-OR
 
 func tag-or (t1,t2) {
@@ -133,7 +113,7 @@ func between (min_max, v) {
 ;; ITERATORS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-data :Iterator = [f,s,tp,i]
+data :Iterator = [f,s,i]
 
 ;;export [iter] {
     func iter-tuple (itr :Iterator) {
@@ -142,7 +122,7 @@ data :Iterator = [f,s,tp,i]
             nil
         } else {
             set itr.i = i + 1
-            (i, itr.s[i])
+            (itr.s[i], i)
         }
     }
 
@@ -152,7 +132,7 @@ data :Iterator = [f,s,tp,i]
             nil
         } else {
             set itr.i = k
-            (k, itr.s[k])
+            (itr.s[k], k)
         }
     }
 
@@ -177,12 +157,12 @@ data :Iterator = [f,s,tp,i]
         itr.i
     }
 
-    func to-iter (v, tp) {
+    func to-iter (v) {
         match type(v) {
             ,sup?(:Iterator, tag(v)) => v
-            ==:tuple    => :Iterator [iter-tuple, v, tp, 0]
-            ==:vector   => :Iterator [iter-tuple, v, tp, 0]
-            ==:dict     => :Iterator [iter-dict,  v, tp, nil]
+            ==:tuple    => :Iterator [iter-tuple, v, 0]
+            ==:vector   => :Iterator [iter-tuple, v, 0]
+            ==:dict     => :Iterator [iter-dict,  v, nil]
             ==:func     => :Iterator [v]
             ==:coro     => :Iterator [iter-coro, v]
             ==:exe-coro => :Iterator [iter-xcoro, v]
@@ -207,15 +187,15 @@ func {{===}} (v1,v2) {
     } where {
         func equals-tuple-vector (v1', v2') {
             (#v1' == #v2') and not (
-                loop x in to-iter(v1',:all) {
-                    while (v2'[x[0]] === x[1])
+                loop (v,i) in to-iter(v1') {
+                    while (v2'[i] === v)
                 }
             )
         }
         func contains-dict? (v1', v2') {
             not (
-                loop x in to-iter(v1',:all) {
-                    while (v2'[x[0]] === x[1])
+                loop (v,k) in to-iter(v1') {
+                    while (v2'[k] === v)
                 }
             )
         }
@@ -239,20 +219,21 @@ func is-not' (v1,v2) {
     not is'(v1,v2)
 }
 
+func string? (v) {
+    ((type(v)==:vector) and (#v>0)) and (type(v[0])==:char)
+}
+
 func in' (v, xs) {
     if (type(xs) == :dict) and xs[v] { ,it =>
         it
     } else {
-        loop (a,b) in to-iter(xs) {
-            ;;println(v, type(xs), [a,b], v===b)
-            val z = match xs {
+        loop (b,a) in to-iter(xs) {
+            until match xs {
                 :dict   => (v === a) and b
                 :tuple  => (v === b) and b
                 :vector => (v === b) and b
                 else    => (v === a) and a
             }
-            println(:z, z)
-            until z
         }
     }
 }
@@ -404,9 +385,9 @@ func copy (v) {
     }
 }
 
-func to-vector (col, tp) {
+func to-vector (col) {
     val ret = #[]
-    loop v in to-iter(col,tp) {
+    loop v in to-iter(col) {
         set ret[+] = v
     }
     ret
@@ -464,6 +445,17 @@ func {{++}} (v1, v2) {
 func {{<|<}} (f,g) {
     func (v) {
         f(g(v))
+    }
+}
+
+;; ASSERT
+
+set assert = func (v, msg) {
+    ifs {
+        v => v
+        (type(msg) == :func) => error(msg())
+        msg->string? => error("assertion error : " ++ msg)
+        else => error("assertion error")
     }
 }
 
