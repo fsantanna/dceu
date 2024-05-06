@@ -455,7 +455,8 @@ set assert = func (v, msg) {
         v => v
         (type(msg) == :func) => error(msg())
         msg->string? => error("assertion error : " ++ msg)
-        else => error("assertion error")
+        (msg == nil) => error("assertion error")
+        else => error(msg)
     }
 }
 

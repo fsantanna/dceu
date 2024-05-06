@@ -5586,6 +5586,24 @@ class Exec_99 {
         """, true)
         assert(out == "81\n") { out }
     }
+    @Test
+    fun za_09_assert() {
+        val out = test("""
+            assert(false, 10)
+        """, true)
+        assert(out == " |  anon : (lin 2, col 13) : assert(false,10)\n" +
+                " |  build/prelude-x.ceu : (lin 459, col 17) : error(msg)\n" +
+                " v  error : 10\n") { out }
+    }
+    @Test
+    fun za_10_assert() {
+        val out = test("""
+            assert(false, :type [])
+        """, true)
+        assert(out == " |  anon : (lin 2, col 13) : assert(false,tag(:type,[]))\n" +
+                " |  build/prelude-x.ceu : (lin 459, col 17) : error(msg)\n" +
+                " v  error : :type []\n") { out }
+    }
 
     // ORIGINAL
 
