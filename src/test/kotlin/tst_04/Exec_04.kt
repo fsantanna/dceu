@@ -3003,7 +3003,7 @@ class Exec_04 {
         """
         )
         assert(
-            out == " |  anon : (lin 2, col 13) : (spawn (task () { (set pub[:x] = 10) nil }...)\n" +
+            out == " |  anon : (lin 2, col 13) : (spawn (task () { (set pub[:x] = 10) nil }...\n" +
                     " |  anon : (lin 3, col 21) : pub[:x]\n" +
                     " v  index error : expected collection\n"
         ) { out }
