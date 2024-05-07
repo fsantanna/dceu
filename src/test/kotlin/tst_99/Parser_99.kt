@@ -275,10 +275,12 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "if a {\n" +
+                "(val (ceu_19) = a)\n" +
+                "if ceu_19 {\n" +
                 "1\n" +
                 "} else {\n" +
-                "if true {\n" +
+                "(val (ceu_20) = true)\n" +
+                "if ceu_20 {\n" +
                 "0\n" +
                 "} else {\n" +
                 "\n" +
@@ -302,8 +304,9 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(val (ceu_17_0) = nil)\n" +
-                "if true {\n" +
+                "(val (ceu_16_0) = nil)\n" +
+                "(val (ceu_16) = true)\n" +
+                "if ceu_16 {\n" +
                 "it\n" +
                 "} else {\n" +
                 "\n" +
@@ -319,11 +322,11 @@ class Parser_99 {
     }
     @Test
     fun ee_05_ifs() {
-        val l = lexer("ifs v { a => it }")
+        val l = lexer("match v { a => it }")
         val parser = Parser(l)
         //val e = parser.expr()
         //assert(e.tostr() == "}") { e.tostr() }
-        assert(trap { parser.expr() } == "anon : (lin 1, col 11) : expected \",\" : have \"=>\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 13) : expected \",\" : have \"=>\"")
     }
     @Test
     fun ee_06_ifs() {
@@ -331,16 +334,19 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(val (ceu_41_0) = v)\n" +
-                "(val (it) = ceu_41_0)\n" +
-                "if a {\n" +
+                "(val (ceu_38_0) = v)\n" +
+                "(val (it) = ceu_38_0)\n" +
+                "(val (ceu_38) = a)\n" +
+                "if ceu_38 {\n" +
                 "1\n" +
                 "} else {\n" +
-                "(val (it) = ceu_41_0)\n" +
-                "if b {\n" +
+                "(val (it) = ceu_38_0)\n" +
+                "(val (ceu_39) = b)\n" +
+                "if ceu_39 {\n" +
                 "v\n" +
                 "} else {\n" +
-                "if true {\n" +
+                "(val (ceu_40) = true)\n" +
+                "if ceu_40 {\n" +
                 "0\n" +
                 "} else {\n" +
                 "\n" +
@@ -355,7 +361,8 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "if f() {\n" +
+                "(val (ceu_16) = f())\n" +
+                "if ceu_16 {\n" +
                 "nil\n" +
                 "} else {\n" +
                 "\n" +
@@ -372,7 +379,8 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "if {{==}}(20) {\n" +
+                "(val (ceu_18) = {{==}}(20))\n" +
+                "if ceu_18 {\n" +
                 "nil\n" +
                 "} else {\n" +
                 "\n" +
@@ -403,11 +411,13 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "(val (x) = do {\n" +
-                "(val (ceu_77_0) = 20)\n" +
-                "(val (it) = ceu_77_0)\n" +
-                "if {{===}}(it,true) {\n" +
+                "(val (ceu_78_0) = 20)\n" +
+                "(val (it) = ceu_78_0)\n" +
+                "(val (ceu_78) = {{===}}(it,true))\n" +
+                "if ceu_78 {\n" +
                 "do {\n" +
-                "if {{==}}(20) {\n" +
+                "(val (ceu_43) = {{==}}(20))\n" +
+                "if ceu_43 {\n" +
                 "true\n" +
                 "} else {\n" +
                 "\n" +
@@ -425,9 +435,10 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(val (ceu_22_0) = v)\n" +
-                "(val (x) = ceu_22_0)\n" +
-                "if true {\n" +
+                "(val (ceu_21_0) = v)\n" +
+                "(val (x) = ceu_21_0)\n" +
+                "(val (ceu_21) = true)\n" +
+                "if ceu_21 {\n" +
                 "10\n" +
                 "} else {\n" +
                 "\n" +
@@ -442,8 +453,8 @@ class Parser_99 {
     fun ef_01_ifs_err() {
         val l = lexer("match (1,...) { (1,2) => 10 }")
         val parser = Parser(l)
-        val e = parser.expr()
-        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : match error : unexpected \"...\"\n")
+        //val e = parser.expr()
+        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : match error : unexpected \"...\"")
     }
     @Test
     fun ef_02_ifs() {
@@ -451,18 +462,19 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(val (ceu_55_0) = 1)\n" +
-                "(val (ceu_55_1) = 2)\n" +
-                "(val (it) = ceu_55_0)\n" +
-                "(val (ceu_33) = ceu_55_1)\n" +
-                "if do {\n" +
-                "(val (ceu_96) = {{===}}(it,1))\n" +
-                "if ceu_96 {\n" +
+                "(val (ceu_54_0) = 1)\n" +
+                "(val (ceu_54_1) = 2)\n" +
+                "(val (it) = ceu_54_0)\n" +
+                "(val (ceu_33) = ceu_54_1)\n" +
+                "(val (ceu_54) = do {\n" +
+                "(val (ceu_97) = {{===}}(it,1))\n" +
+                "if ceu_97 {\n" +
                 "{{===}}(ceu_33,2)\n" +
                 "} else {\n" +
-                "ceu_96\n" +
+                "ceu_97\n" +
                 "}\n" +
-                "} {\n" +
+                "})\n" +
+                "if ceu_54 {\n" +
                 "10\n" +
                 "} else {\n" +
                 "\n" +
@@ -1217,7 +1229,11 @@ class Parser_99 {
     fun op_04_pipe_where_err() {
         val l = lexer("10+1 --> f where { }")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 12) : sufix operation error : expected surrounding parentheses")
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "f({{+}}(10,1))\n" +
+                "}") { e.tostr() }
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 12) : sufix operation error : expected surrounding parentheses")
     }
     @Test
     fun todo_op_05_where() {    // export (not do)
