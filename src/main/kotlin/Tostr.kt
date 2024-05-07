@@ -30,7 +30,6 @@ fun Expr.tostr (pre: Boolean = false): String {
             val pars = (this.pars.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList())).joinToString(",")
             "(" + this.tk.str + this.nst.cond { " :nested" } + " (" + pars + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
         }
-        is Expr.Export -> "export [" + this.ids.joinToString(",") + "] {\n" + this.blk.es.tostr(pre) + "}"
         is Expr.Do     -> {
             when (this.tk.str) {
                 "do" -> "do {\n" + this.es.tostr(pre) + "}"

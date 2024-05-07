@@ -23,7 +23,6 @@ class Tags (outer: Expr.Call) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto -> this.blk.traverse()
-            is Expr.Export -> this.blk.traverse()
             is Expr.Do -> this.es.forEach { it.traverse() }
             is Expr.Dcl -> this.src?.traverse()
             is Expr.Set -> {

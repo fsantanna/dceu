@@ -39,7 +39,6 @@ fun Expr.has_block (): Boolean {
         is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.VA_len -> false
         is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> false
         is Expr.Do, is Expr.If, is Expr.Loop, is Expr.Catch, is Expr.Defer -> true
-        is Expr.Export -> this.blk.es.any { it.has_block() }
         is Expr.Dcl -> this.src?.has_block() ?: false
         is Expr.Set -> this.src.has_block()
         is Expr.Pass -> this.e.has_block()

@@ -133,7 +133,6 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 }
                 """
             }
-            is Expr.Export -> this.blk.es.code()
             is Expr.Do -> {
                 val body = this.es.code()   // before defers[this] check
                 val up = ups.pub[this]

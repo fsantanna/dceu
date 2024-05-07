@@ -73,7 +73,6 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                 }
                 this.blk.traverse()
             }
-            is Expr.Export -> this.blk.traverse()
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> {
                 if (this.src is Expr.Proto) {

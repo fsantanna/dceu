@@ -13,7 +13,6 @@ var CEU = 1
     // 3: coro, yield, resume   ;; 0 "definitely lost"
     // 4: task, pub, bcast, toggle, delay   ;; 1 "definitely lost"
     // 5: tasks                 ;; 0 "definitely lost"
-    // 6: export
     // TODO: copy, underscore, self (coro/task)
 
 // search in tests output for
@@ -51,8 +50,6 @@ val KEYWORDS: SortedSet<String> = (
         "coro", "resume", "yield",
     )) + (if (CEU < 4) setOf() else setOf(
         "broadcast", "delay", "in", "pub", "spawn", "task", "toggle",
-    )) + (if (CEU < 6) setOf() else setOf(
-        "export",
     )) + (if (CEU < 99) setOf() else setOf(
         "await", "every", "ifs", "match",
         "par", "par-and", "par-or",
@@ -122,7 +119,6 @@ typealias Dcl_Idx = Pair<Expr.Dcl,Int>
 
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val nst: Boolean, val tag: Tk.Tag?, val dots: Boolean, val pars: List<Pair<Tk.Id, Tk.Tag?>>, val blk: Do): Expr(N++, tk_)
-    data class Export (val tk_: Tk.Fix, val ids: List<String>, val blk: Expr.Do) : Expr(N++, tk_)
     data class Do     (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Fix, val idtag: List<Id_Tag>, /*val poly: Boolean,*/ val src: Expr?):  Expr(N++, tk_)
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)

@@ -255,7 +255,6 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 blk_to_locs[this] = Pair(n, nn)
                 nn
             }
-            is Expr.Export -> this.blk.locs()
             is Expr.Dcl    -> this.idtag.size + (this.src?.locs() ?: 0)
             is Expr.Set    -> this.dst.locs() + this.src.locs()
             is Expr.If     -> this.cnd.locs() + max(this.t.locs(), this.f.locs())
@@ -324,19 +323,6 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                     dcls.removeLast()   // remove pars
                 }
             }
-            is Expr.Export -> {
-                TODO()
-                val size = dcls.size
-                this.blk.traverse()
-                for (i in dcls.lastIndex downTo size) {
-                    val dcl = dcls[i]
-                    if (dcl is Expr.Dcl) {
-                        if (!this.ids.contains(dcl.idtag[0].first.str)) {   // XXX
-                            dcls.removeAt(i)
-                        }
-                    }
-                }
-            }
             is Expr.Do     -> {
                 //val proto = ups.first(this) { it is Expr.Proto } as Expr.Proto
                 enc_to_dcls[this] = mutableListOf()
@@ -360,13 +346,9 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
 
                 // X. restore size
                 // do not remove ids listed in outer export
-                if (ups.pub[this] !is Expr.Export) {
-                    repeat(dcls.size - size) {
-                        dcls.removeLast()
-                    }
+                repeat(dcls.size - size) {
+                    dcls.removeLast()
                 }
-
-
             }
             is Expr.Dcl    -> {
                 var prv_rep: Pair<Expr.Dcl,Tk.Id>? = null

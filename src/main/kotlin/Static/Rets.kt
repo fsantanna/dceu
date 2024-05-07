@@ -12,7 +12,6 @@ val PASS = -2
 fun Expr.ints (sta: Static): Int {
     return when (this) {
         is Expr.Enum, is Expr.Data, is Expr.Defer -> 0
-        is Expr.Export -> TODO()
         is Expr.Do -> if (this.es.size == 0) 0 else PASS
         is Expr.If -> PASS
         is Expr.Loop, is Expr.Break, is Expr.Skip, is Expr.Pass -> PASS
@@ -45,7 +44,6 @@ class Rets (val outer: Expr.Call, val ups: Ups) {
         exts[this] = N
         when (this) {
             is Expr.Proto  -> this.blk.traverse(MULTI)
-            is Expr.Export -> this.blk.traverse(N)
             is Expr.Do     -> this.es.forEachIndexed { i,e ->
                 val n = when {
                     (ups.pub[this] is Expr.Loop) -> 0

@@ -63,7 +63,6 @@ class Ups (val outer: Expr.Call) {
         }
         return when (this) {
             is Expr.Proto  -> this.map(listOf(this.blk))
-            is Expr.Export -> this.map(listOf(this.blk))
             is Expr.Do     -> this.map(this.es)
             is Expr.Dcl    -> this.map(listOfNotNull(this.src))
             is Expr.Set    -> this.map(listOf(this.dst, this.src))
