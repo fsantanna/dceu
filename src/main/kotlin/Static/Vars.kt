@@ -345,7 +345,6 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 this.es.forEach { it.traverse() }
 
                 // X. restore size
-                // do not remove ids listed in outer export
                 repeat(dcls.size - size) {
                     dcls.removeLast()
                 }

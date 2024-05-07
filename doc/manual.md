@@ -1039,35 +1039,6 @@ do {
 }                       ;; terminates spawned task
 ```
 
-<!--
-### Export
-
-An `export` hides all nested declarations, except those indicated in an
-optional list:
-
-```
-Export : `export´ [`[´ List(ID | `evt´) `]´] Block
-```
-
-Nevertheless, all nested declarations remain active as if they were declared on
-the enclosing block.
-If the list is omitted, all declarations are hidden.
-
-Examples:
-
-```
-export [x] {
-    val y = []      ;; y is not exported but remains active
-    val x = y       ;; exported x holds tuple that remains in memory
-}
-println(x)          ;; -;;-> []
-println(y)          ;; ERR: y is active but not visible
-```
-
-Exports can be used to group related expressions but expose only public
-identifiers, as expected from libraries and modules.
--->
-
 ### Defer
 
 A `defer` block executes only when its enclosing block terminates:
