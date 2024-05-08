@@ -714,7 +714,7 @@ class Exec_99 {
     fun fg_09_ifs () {
         val out = test("""
             val x = match "oi" {
-                {{string?}} { true }
+                {{type.string?}} { true }
                 else => false
             }
             println(x)
@@ -5421,7 +5421,7 @@ class Exec_99 {
     @Test
     fun xc_01_tostring() {
         val out = test("""
-            val s = to-string(10)
+            val s = to.string(10)
             println(type(s), s)
         """, true)
         assert(out == ":vector\t10\n") { out }
@@ -5429,7 +5429,7 @@ class Exec_99 {
     @Test
     fun xc_02_tonumber() {
         val out = test("""
-            val n = to-number("10")
+            val n = to.number("10")
             println(type(n), n)
         """, true)
         assert(out == ":number\t10\n") { out }
@@ -5437,7 +5437,7 @@ class Exec_99 {
     @Test
     fun xc_03_tonumber_tostring() {
         val out = test("""
-            val s = to-string(to-number("10"))
+            val s = to.string(to.number("10"))
             println(type(s), s)
         """, true)
         assert(out == ":vector\t10\n") { out }
@@ -5449,7 +5449,7 @@ class Exec_99 {
                 yield([1])
             }
             val t = coroutine(T)
-            val v = to-vector(t)
+            val v = to.vector(t)
             println(v)
         """, true)
         assert(out == "#[[1]]\n") { out }
@@ -5459,7 +5459,7 @@ class Exec_99 {
         val out = test("""
             val v = do {
                 val t = [[1],[2],[3]]
-                to-vector(t)
+                to.vector(t)
             }
             println(v)
         """, true)
@@ -5478,12 +5478,12 @@ class Exec_99 {
     @Test
     fun xc_07_to_char() {
         val out = test("""
-            println(to-char('a'))
-            println(to-char(65))
-            println(to-char("x"))
-            println(to-char(""))
-            println(to-char("ab"))
-            println(to-char("\\n"))
+            println(to.char('a'))
+            println(to.char(65))
+            println(to.char("x"))
+            println(to.char(""))
+            println(to.char("ab"))
+            println(to.char("\\n"))
             println(:ok)
         """, true)
         assert(out == "a\nA\nx\nnil\nnil\n\n\n:ok\n") { out }
@@ -5503,19 +5503,28 @@ class Exec_99 {
     @Test
     fun xc_08_totuple() {
         val out = test("""
-            println(to-tuple([]))
-            println(to-tuple(#[1,2]))
+            println(to.tuple([]))
+            println(to.tuple(#[1,2]))
         """, true)
         assert(out == "[]\n[1,2]\n") { out }
     }
     @Test
     fun xc_08_todict() {
         val out = test("""
-            println(to-dict([[:x,1],[:y,2]]))
-            println(to-dict(#[[:x,1],[:y,2]]))
+            println(to.dict([[:x,1],[:y,2]]))
+            println(to.dict(#[[:x,1],[:y,2]]))
         """, true)
         assert(out == "@[(:x,1),(:y,2)]\n" +
                 "@[(:x,1),(:y,2)]\n") { out }
+    }
+    @Test
+    fun xc_09_todict() {
+        val out = test("""
+            println(to.dict([:x,:y]))
+            println(to.dict([]))
+        """, true)
+        assert(out == "@[(:x,true),(:y,true)]\n" +
+                "@[]\n") { out }
     }
 
     // PRELUDE
@@ -6121,12 +6130,16 @@ class Exec_99 {
     @Test
     fun zz_01_type() {
         val out = test("""
-            println(type-static?(:number))
-            println(type-static?(type([])))
-            println(type-dynamic?(type(nil)))
-            println(type-dynamic?(:vector))
+            println(type.static?(:number))
+            println(type.static?(type([])))
+            println(type.dynamic?(type(nil)))
+            println(type.dynamic?(:vector))
+            println(type.string?("oi"))
+            println(type.string?(#[]))
+            println(type.nil?(nil))
+            println(type.dict?(nil))
         """, true)
-        assert(out == "true\nfalse\nfalse\ntrue\n") { out }
+        assert(out == "true\nfalse\nfalse\ntrue\ntrue\nfalse\ntrue\nfalse\n") { out }
     }
     @Test
     fun BUG_zz_02_track_bcast() {

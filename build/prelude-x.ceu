@@ -219,45 +219,53 @@ val (in', in-not') = do {
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; TODO
+;; TYPE-*
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-func tag-or (t1,t2) {
-    assert(type(t1) == :tag)
-    assert(type(t2) == :tag)
-    `:tag $t1.Tag | $t2.Tag`
-}
+data :Type = [
+    string?, static?, dynamic?,
+    nil?, tag?, bool?, char?, number?, pointer?,
+    func?, coro?, task?,
+    tuple?, vector?, dict?,
+    exe-coro?, exe-task?,
+    tasks?,
+]
 
-func string? (v) {
-    ((type(v)==:vector) and (#v>0)) and (type(v[0])==:char)
-}
-
-func next (v, ...) {
-    match v {
-        :exe-coro => resume v(...)
-        :tasks    => next-tasks(v, ...)
-        :dict     => next-dict(v, ...)
-        :Iterator => it.f(v)
-        else      => error(:error)
+val type :Type = do {
+    func x-static? (tp) {
+        to.number(tp) < `:number CEU_VALUE_DYNAMIC`
     }
-}
-
-func create-resume (CO, ...) {
-    val co = coroutine(CO)
-    assert(resume co(...) == nil)
-    co
+    func x-dynamic? (tp) {
+        to.number(tp) > `:number CEU_VALUE_DYNAMIC`
+    }
+    func x-string? (v) {
+        ((type(v)==:vector) and (#v>0)) and (type(v[0])==:char)
+    }
+    func x-f (tp) {
+        func (v) {
+            type(v) == tp
+        }
+    }
+    [
+        x-static?, x-dynamic?, x-string?,
+        x-f(:nil), x-f(:tag), x-f(:bool), x-f(:char), x-f(:number), x-f(:pointer),
+        x-f(:func), x-f(:coro), x-f(:task),
+        x-f(:tuple), x-f(:vector), x-f(:dict),
+        x-f(:exe-coro), x-f(:exe-task),
+        x-f(:tasks),
+    ]
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TO: string, bool, char, number, tag, pointer, iter
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-data :To = [string, bool, char, number, tag, pointer, iter]
+data :To = [string, bool, char, number, tag, pointer, tuple, vector, dict, iter]
 
 val to :To = do {
     func to-string (v) {
         match v {
-            {{string?}} => v
+            {{type.string?}} => v
             :nil        => "nil"
             :tag        => to-string-tag(v)
             :number     => to-string-number(v)
@@ -273,7 +281,7 @@ val to :To = do {
         match v {
             :char   => v
             :number => `:char $v.Number`
-            {{string?}} {
+            {{type.string?}} {
                 ifs {
                     (#v == 1) => v[0]
                     (#v /= 2) => nil
@@ -303,14 +311,14 @@ val to :To = do {
         match v {
             :tag        => `:number $v.Tag`
             :char       => `:number $v.Char`
-            {{string?}} => `:number atoi($v.Dyn->Vector.buf)`
+            {{type.string?}} => `:number atoi($v.Dyn->Vector.buf)`
             else        => nil
         }
     }
     func to-tag (v) {
         match v {
             :tag        => v
-            {{string?}} => to-tag-string(v)
+            {{type.string?}} => to-tag-string(v)
             else        => nil
         }
     }
@@ -324,152 +332,78 @@ val to :To = do {
             else     => nil
         }
     }
-    [to-string, to-bool, to-char, to-number, to-tag, to-pointer, to-iter]
-}
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; TYPE-*
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-func type-static? (v) {
-    to.number(v) < `:number CEU_VALUE_DYNAMIC`
-}
-func type-dynamic? (v) {
-    to.number(v) > `:number CEU_VALUE_DYNAMIC`
-}
-
-;; COPY
-
-func copy (v) {
-    match type(v) {
-        {{type-static?}} {
-            v
-        }
-        :tuple {
-            val ret = tuple(#v)
-            loop i in {0 => #v{ {
-                set ret[i] = copy(v[i])
+    func to-tuple (col) {
+        match col {
+            :tuple => col
+            :vector {
+                val tup = tuple(#col)
+                loop (v,i) in col {
+                    set tup[i] = v
+                }
+                tup
             }
-            ret
-        }
-        :vector {
-            val ret = #[]
-            loop i in {0 => #v{ {
-                set ret[i] = copy(v[i])
-            }
-            ret
-        }
-        :dict {
-            val ret = @[]
-            var k = nil
-            loop {
-                set k = next-dict(v, k)
-                until (k == nil)
-                set ret[copy(k)] = copy(v[k])
-            }
-            ret
-        }
-        else {
-            error(:TODO)
+            else => error(:TODO)
         }
     }
-}
-
-func to-tuple (col) {
-    match col {
-        :tuple => col
-        :vector {
-            val tup = tuple(#col)
-            loop (v,i) in col {
-                set tup[i] = v
-            }
-            tup
+    func to-vector (col) {
+        val ret = #[]
+        loop v in col {
+            set ret[+] = v
         }
-        else => error(:TODO)
+        ret
     }
-}
-
-func to-vector (col) {
-    val ret = #[]
-    loop v in col {
-        set ret[+] = v
-    }
-    ret
-}
-
-func to-dict (col) {
-    val ret = @[]
-    loop v in col {
-        set ret[v[0]] = v[1]
-    }
-    ret
-}
-
-;;;
-func to-tasks (...) {
-    val ret = #[]
-    val args = ...
-    loop v in args {
-        match v {
-            :exe-task {
-                set ret[+] = v
+    func to-dict (col) {
+        val ret = @[]
+        loop (v,k) in col {
+            val (k',v') = match v {
+                {{type.tuple?}} => (v[0], v[1]) ;; [(:x,1),(:y,2)]
+                else => (k or true, v)          ;; [:x,:y]
             }
-            :tasks {
-                loop i in v {
-                    set ret[+] = i
+            set ret[k'] = v'
+        }
+        ret
+    }
+    ;;;
+    func to-tasks (...) {
+        val ret = #[]
+        val args = ...
+        loop v in args {
+            match v {
+                :exe-task {
+                    set ret[+] = v
+                }
+                :tasks {
+                    loop i in v {
+                        set ret[+] = i
+                    }
                 }
             }
         }
+        ret
     }
-    ret
-}
-;;;
-
-func to-set (col) {
-    val ret = @[]
-    loop in col {
-        set ret[it] = true
-    }
-    ret
+    ;;;
+    [to-string, to-bool, to-char, to-number, to-tag, to-pointer, to-tuple, to-vector, to-dict, to-iter]
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; CONCAT:  <++  ++
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-func {{<++}} (v1, v2) {
-    assert(type(v1) == :vector)
-    assert(type(v2) == :vector)
-    do {
-        loop i in {0 => #v2{ {
-            set v1[+] = v2[i]
+val ({{<++}}, {{++}}) = do {
+    func x-cat-move (v1, v2) {
+        assert(type(v1) == :vector)
+        assert(type(v2) == :vector)
+        do {
+            loop i in {0 => #v2{ {
+                set v1[+] = v2[i]
+            }
         }
+        v1
     }
-    v1
-}
-
-func {{++}} (v1, v2) {
-    (#[] <++ v1) <++ v2
-}
-
-;; composition
-
-func {{<|<}} (f,g) {
-    func (v) {
-        f(g(v))
+    func x-cat-copy (v1, v2) {
+        (#[] <++ v1) <++ v2
     }
-}
-
-;; ASSERT
-
-set assert = func (v, msg) {
-    ifs {
-        v => v
-        (type(msg) == :func) => error(msg())
-        msg->string? => error("assertion error : " ++ msg)
-        (msg == nil) => error("assertion error")
-        else => error(msg)
-    }
+    [x-cat-move, x-cat-copy]
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -534,4 +468,77 @@ val math :Math = do {
     }
 
     [PI,sin,cos , floor,ceil,round , min,max,between]
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; MISC: tag-or, next, create-resume, copy, assert
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+func tag-or (t1,t2) {
+    assert(type(t1) == :tag)
+    assert(type(t2) == :tag)
+    `:tag $t1.Tag | $t2.Tag`
+}
+
+;;;
+func next (v, ...) {
+    match v {
+        :exe-coro => resume v(...)
+        :tasks    => next-tasks(v, ...)
+        :dict     => next-dict(v, ...)
+        :Iterator => it.f(v)
+        else      => error(:error)
+    }
+}
+;;;
+
+func create-resume (CO, ...) {
+    val co = coroutine(CO)
+    assert(resume co(...) == nil)
+    co
+}
+
+func copy (v) {
+    match type(v) {
+        {{type-static?}} {
+            v
+        }
+        :tuple {
+            val ret = tuple(#v)
+            loop i in {0 => #v{ {
+                set ret[i] = copy(v[i])
+            }
+            ret
+        }
+        :vector {
+            val ret = #[]
+            loop i in {0 => #v{ {
+                set ret[i] = copy(v[i])
+            }
+            ret
+        }
+        :dict {
+            val ret = @[]
+            var k = nil
+            loop {
+                set k = next-dict(v, k)
+                until (k == nil)
+                set ret[copy(k)] = copy(v[k])
+            }
+            ret
+        }
+        else {
+            error(:TODO)
+        }
+    }
+}
+
+set assert = func (v, msg) {
+    ifs {
+        v => v
+        msg->type.func?   => error(msg())
+        msg->type.string? => error("assertion error : " ++ msg)
+        (msg == nil)      => error("assertion error")
+        else => error(msg)
+    }
 }
