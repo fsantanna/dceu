@@ -6061,6 +6061,50 @@ class Exec_99 {
         assert(out == ":ok\n") { out }
     }
 
+    // PRELUDE / MATH
+
+    @Test
+    fun zc_01_min() {
+        val out = test("""
+            println(math.min(10,20), math.min(20,10))
+        """, true)
+        assert(out == "10\t10\n") { out }
+    }
+    @Test
+    fun zc_02_max() {
+        val out = test("""
+            println(math.max(10,20), math.max(20,10))
+        """, true)
+        assert(out == "20\t20\n") { out }
+    }
+    @Test
+    fun zc_03_between() {
+        val out = test("""
+            println(math.between(1,   [10,20]))
+            println(math.between(100, [10,20]))
+            println(math.between(15,  [10,20]))
+        """, true)
+        assert(out == "10\n20\n15\n") { out }
+    }
+    @Test
+    fun zc_04_pi() {
+        val out = test("""
+            println(math.PI)
+            println(math.sin(math.PI/2))
+            println(math.cos(math.PI))
+        """, true)
+        assert(out == "3.14159\n1\n-1\n") { out }
+    }
+    @Test
+    fun zc_05_floor() {
+        val out = test("""
+            println(math.floor(1.7))
+            println(math.ceil(1.1))
+            println(math.round(1.51))
+        """, true)
+        assert(out == "1\n2\n2\n") { out }
+    }
+
     // MISC
 
     @Test

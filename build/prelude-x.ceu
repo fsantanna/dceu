@@ -94,22 +94,6 @@ func tag-or (t1,t2) {
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; MIN, MAX, BETWEEN
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-func min (v1, v2) {
-    ((v1 < v2) and v1) or v2
-}
-
-func max (v1, v2) {
-    ((v1 > v2) and v1) or v2
-}
-
-func between (min_max, v) {
-    max(min_max[0], min(min_max[1], v))
-}
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ITERATORS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -498,13 +482,25 @@ func random-next () {
     `:number rand()`
 }
 
-func math-sin (v) {
-    `:number sin($v.Number)`
-}
 
-func math-cos (v) {
-    `:number cos($v.Number)`
-}
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; MATH: sin,cos,floor , min,max,between
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+data :Math = [
+    PI, sin, cos,
+    floor, ceil, round,
+    min, max, between,
+]
+
+val math :Math = do {
+    val PI = `:number M_PI`
+    func sin (v) {
+        `:number sin($v.Number)`
+    }
+    func cos (v) {
+        `:number cos($v.Number)`
+    }
 
 func math-floor (v) {
     `:number floor($v.Number)`
