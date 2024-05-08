@@ -542,4 +542,10 @@ class Lexer_01 {
         //assert(tks.next().str == ":()")
         //assert(tks.next() is Tk.Eof)
     }
+    @Test
+    fun jj_10_tags() {
+        val l = lexer(":x?")
+        val tks = l.lex().iterator()
+        assert(tks.next().str == ":x?")
+    }
 }

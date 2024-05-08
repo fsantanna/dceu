@@ -697,13 +697,14 @@ fun Coder.main (tags: Tags): String {
             var i1 = 0
             l3.map { it1 ->
                 val (s1,c1,e1) = tags.pub[':'+it1.first]!!
+                val c1c = c1.idc()
                 val ie1 = e1 ?: i1++
                 val prv1 = last
-                last = "&ceu_tag__$c1"
+                last = "&ceu_tag__$c1c"
                 var i2 = 0
                 """
-                #define CEU_TAG_$c1 ($ie1)
-                CEU_Tags_Names ceu_tag__$c1 = { CEU_TAG_$c1, "$s1", $prv1 };
+                #define CEU_TAG_$c1c ($ie1)
+                CEU_Tags_Names ceu_tag__$c1c = { CEU_TAG_$c1c, "$s1", $prv1 };
                 """ + it1.second.map { it2 ->
                     val (s2,c2,e2) = tags.pub[':'+it1.first+'.'+it2.first]!!
                     assert(e2 == null)

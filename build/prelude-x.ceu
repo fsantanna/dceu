@@ -487,7 +487,6 @@ func tag-or (t1,t2) {
     `:tag $t1.Tag | $t2.Tag`
 }
 
-;;;
 func next (v, ...) {
     match v {
         :exe-coro => resume v(...)
@@ -497,7 +496,6 @@ func next (v, ...) {
         else      => error(:error)
     }
 }
-;;;
 
 func create-resume (CO, ...) {
     val co = coroutine(CO)
