@@ -2719,7 +2719,7 @@ class Exec_99 {
                 yield(2)
                 yield(3)
             }
-            println(to-vector(coroutine(T)))
+            println(to.vector(coroutine(T)))
         """, true)
         assert(out == "#[1,2,3]\n") { out }
     }
@@ -5523,7 +5523,7 @@ class Exec_99 {
             println(to.dict([:x,:y]))
             println(to.dict([]))
         """, true)
-        assert(out == "@[(:x,true),(:y,true)]\n" +
+        assert(out == "@[(:x,0),(:y,1)]\n" +
                 "@[]\n") { out }
     }
 
@@ -5602,7 +5602,7 @@ class Exec_99 {
                 " v  error : assertion error : ok\n")) { out }
     }
     @Test
-    fun za_08_comp() {
+    fun TODO_za_08_comp() {     // fp.*
         val out = test("""
             func square (x) {
                 x**2

@@ -364,7 +364,7 @@ val to :To = do {
                 if type(v) == :tuple {
                     (v[0], v[1])    ;; [(:x,1),(:y,2)]
                 } else {
-                    (k or true, v)  ;; [:x,:y]
+                    (v, k or true)  ;; [:x,:y]
                 }
             set ret[k'] = v'
         }
@@ -410,7 +410,7 @@ val ({{<++}}, {{++}}) = do {
     func x-cat-copy (v1, v2) {
         (#[] <++ v1) <++ v2
     }
-    [x-cat-move, x-cat-copy]
+    (x-cat-move, x-cat-copy)
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
