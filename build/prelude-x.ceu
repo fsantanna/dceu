@@ -467,19 +467,23 @@ set assert = func (v, msg) {
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; RANDOM:  random-seed  random-next
+;; RANDOM: seed, next
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-func random-seed (n) {
-    if n {
-        `srand($n.Number);`
-    } else {
-        `srand(time(NULL));`
-    }
-}
+data :Random = [seed,next]
 
-func random-next () {
-    `:number rand()`
+val random :Random = do {
+    func seed (n) {
+        if n {
+            `srand($n.Number);`
+        } else {
+            `srand(time(NULL));`
+        }
+    }
+    func random-next () {
+        `:number rand()`
+    }
+    [seed, random-next]
 }
 
 

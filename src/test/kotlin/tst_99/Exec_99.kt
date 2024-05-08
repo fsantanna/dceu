@@ -6105,6 +6105,17 @@ class Exec_99 {
         assert(out == "1\n2\n2\n") { out }
     }
 
+    // PRELUDE / RANDOM
+
+    @Test
+    fun zd_01_random() {
+        val out = test("""
+            random.seed(0)
+            println(random.next() % 100, random.next() % 100)
+        """, true)
+        assert(out == "83\t86\n") { out }
+    }
+
     // MISC
 
     @Test
