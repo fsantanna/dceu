@@ -688,48 +688,54 @@ class Parser (lexer_: Lexer)
                 Expr.Enum(tk0, tags)
             }
             this.acceptFix("data") -> {
-                val tpl = this.tk0 as Tk.Fix
-                this.checkEnu_err("Tag")
-                fun one (pre: Tk.Tag?): List<Expr.Data> {
-                    return if (!this.acceptEnu("Tag")) emptyList() else {
-                        val tag = (this.tk0 as Tk.Tag).let {
-                            if (pre == null) it else {
-                                Tk.Tag(pre.str+'.'+it.str.drop(1), it.pos)
-                            }
+                val pos = this.tk0.pos
+                this.acceptEnu_err("Tag")
+                val tag = this.tk0 as Tk.Tag
+
+                fun one (pre: Tk.Tag?, me: Tk.Tag): List<Expr.Data> {
+                    val xme = if (pre == null) me else {
+                        Tk.Tag(pre.str+'.'+me.str.drop(1), me.pos)
+                    }
+                    this.acceptFix_err("=")
+                    this.acceptFix_err("[")
+                    val (ids,dtss) = this.list0("]",",") {
+                        this.acceptEnu_err("Id")
+                        val id = this.tk0 as Tk.Id
+                        val xtag = if (!this.acceptEnu("Tag")) null else {
+                            this.tk0 as Tk.Tag
                         }
-                        this.acceptFix_err("=")
-                        this.acceptFix_err("[")
-                        val ids = this.list0("]",",") {
-                            this.acceptEnu_err("Id")
-                            val id = this.tk0 as Tk.Id
-                            val tp = if (!this.acceptEnu("Tag")) null else {
-                                this.tk0 as Tk.Tag
-                            }
-                            Pair(id, tp)
+                        if (this.checkFix("=")) {
+                            val xxtag = if (xtag!=null) xtag else Tk.Tag(":ceu_$N",id.pos)
+                            Pair(Pair(id, xxtag), one(null, xxtag))
+                        } else {
+                            Pair(Pair(id, xtag), emptyList())
                         }
-                        this.acceptFix_err("]")
-                        listOf(Expr.Data(tag, ids)) + when {
-                            (CEU < 99) -> emptyList()
-                            !this.acceptFix("{") -> emptyList()
-                            else -> {
-                                val ll = mutableListOf<Expr.Data>()
-                                while (true) {
-                                    val l = one(tag)
-                                    if (l.isEmpty()) {
-                                        break
-                                    }
-                                    ll.addAll(l)
-                                }
-                                this.acceptFix_err("}")
-                                ll
+                    }.unzip()
+                    this.acceptFix_err("]")
+                    return dtss.flatten() + listOf(Expr.Data(xme, ids)) + when {
+                        (CEU < 99) -> emptyList()
+                        !this.acceptFix("{") -> emptyList()
+                        else -> {
+                            val ll = mutableListOf<Expr.Data>()
+                            while (this.acceptEnu("Tag")) {
+                                val l = one(xme, this.tk0 as Tk.Tag)
+                                //if (l.isEmpty()) {
+                                //    break
+                                //}
+                                ll.addAll(l)
                             }
+                            this.acceptFix_err("}")
+                            ll
                         }
                     }
                 }
-                val l = one(null)
+
+                val dts = one(null, tag)
                 //l.forEach { println(it.tostr()) }
-                if (l.size == 1) l.first() else {
-                    Expr.Do(Tk.Fix("do",tpl.pos), l)
+                when {
+                    (dts.size == 1) -> dts.first()
+                    (CEU < 99) -> error("bug found")
+                    else -> Expr.Do(Tk.Fix("do",pos), dts)
                 }
             }
 

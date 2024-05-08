@@ -187,7 +187,6 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
         return e.message!! + "\n"
     }
     //println(es.tostr())
-    //println(es)
     val c = try {
         if (verbose) {
             System.err.println("... analysing ...")

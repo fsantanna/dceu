@@ -1178,7 +1178,7 @@ class Exec_99 {
         assert(out == "[10]\n") { out }
     }
 
-    //
+    // DATA / HIER / TEMPLATE
 
     @Test
     fun hj_01_tplate() {
@@ -1288,6 +1288,34 @@ class Exec_99 {
         """)
         //assert(out == "10\n") { out }
         assert(out == "anon : (lin 4, col 19) : expected \"{\" : have \":T\"\n") { out }
+    }
+    @Test
+    fun hj_09_tplate_nest() {
+        val out = test("""
+            data :X = [v, t=[a,b]]
+            val x :X = [10, [1,2]]
+            println(x.v, x.t.a, x.t.b)
+        """)
+        assert(out == "10\t1\t2\n") { out }
+    }
+    @Test
+    fun hj_10_tplate_nest() {
+        val out = test("""
+            data :X = [v, t=[a,z=[i,j]]]
+            val x :X = [10, [:a,[1,2]]]
+            println(x.v, x.t.a, x.t.z.j)
+        """)
+        assert(out == "10\t:a\t2\n") { out }
+    }
+    @Test
+    fun hj_11_tplate_nest() {
+        val out = test("""
+            data :X = [v, t :T=[a,b]]
+            val x :X = [10, [1,2]]
+            val t :T = x.t
+            println(t.a, t.b)
+        """)
+        assert(out == "1\t2\n") { out }
     }
 
     // THUS / SCOPE / :FLEET / :fleet
