@@ -222,25 +222,28 @@ val (in', in-not') = do {
 ;; TYPE-*
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;;
 data :Type = [
     string?, static?, dynamic?,
-    nil?, tag?, bool?, char?, number?, pointer?,
-    func?, coro?, task?,
-    tuple?, vector?, dict?,
-    exe-coro?, exe-task?,
-    tasks?,
+    ;;nil?, tag?, bool?, char?, number?, pointer?,
+    ;;func?, coro?, task?,
+    ;;tuple?, vector?, dict?,
+    ;;exe-coro?, exe-task?,
+    ;;tasks?,
 ]
+;;;
 
-val type :Type = do {
+val (static?, dynamic?, string?) = do {
     func x-static? (tp) {
-        to.number(tp) < `:number CEU_VALUE_DYNAMIC`
+        `:bool ($tp.Tag < CEU_VALUE_DYNAMIC)`
     }
     func x-dynamic? (tp) {
-        to.number(tp) > `:number CEU_VALUE_DYNAMIC`
+        `:bool ($tp.Tag > CEU_VALUE_DYNAMIC)`
     }
     func x-string? (v) {
         ((type(v)==:vector) and (#v>0)) and (type(v[0])==:char)
     }
+    ;;;
     func x-f (tp) {
         func (v) {
             type(v) == tp
@@ -254,6 +257,8 @@ val type :Type = do {
         x-f(:exe-coro), x-f(:exe-task),
         x-f(:tasks),
     ]
+    ;;;
+    (x-static?, x-dynamic?, x-string?)
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -265,7 +270,7 @@ data :To = [string, bool, char, number, tag, pointer, tuple, vector, dict, iter]
 val to :To = do {
     func to-string (v) {
         match v {
-            {{type.string?}} => v
+            {{string?}} => v
             :nil        => "nil"
             :tag        => to-string-tag(v)
             :number     => to-string-number(v)
@@ -281,7 +286,7 @@ val to :To = do {
         match v {
             :char   => v
             :number => `:char $v.Number`
-            {{type.string?}} {
+            {{string?}} {
                 ifs {
                     (#v == 1) => v[0]
                     (#v /= 2) => nil
@@ -311,14 +316,14 @@ val to :To = do {
         match v {
             :tag        => `:number $v.Tag`
             :char       => `:number $v.Char`
-            {{type.string?}} => `:number atoi($v.Dyn->Vector.buf)`
+            {{string?}} => `:number atoi($v.Dyn->Vector.buf)`
             else        => nil
         }
     }
     func to-tag (v) {
         match v {
             :tag        => v
-            {{type.string?}} => to-tag-string(v)
+            {{string?}} => to-tag-string(v)
             else        => nil
         }
     }
@@ -355,10 +360,12 @@ val to :To = do {
     func to-dict (col) {
         val ret = @[]
         loop (v,k) in col {
-            val (k',v') = match v {
-                {{type.tuple?}} => (v[0], v[1]) ;; [(:x,1),(:y,2)]
-                else => (k or true, v)          ;; [:x,:y]
-            }
+            val (k',v') =
+                if type(v) == :tuple {
+                    (v[0], v[1])    ;; [(:x,1),(:y,2)]
+                } else {
+                    (k or true, v)  ;; [:x,:y]
+                }
             set ret[k'] = v'
         }
         ret
@@ -500,7 +507,7 @@ func create-resume (CO, ...) {
 
 func copy (v) {
     match type(v) {
-        {{type-static?}} {
+        {{static?}} {
             v
         }
         :tuple {
@@ -536,9 +543,9 @@ func copy (v) {
 set assert = func (v, msg) {
     ifs {
         v => v
-        msg->type.func?   => error(msg())
-        msg->type.string? => error("assertion error : " ++ msg)
-        (msg == nil)      => error("assertion error")
+        type(msg)==:func => error(msg())
+        msg->string?     => error("assertion error : " ++ msg)
+        (msg == nil)     => error("assertion error")
         else => error(msg)
     }
 }

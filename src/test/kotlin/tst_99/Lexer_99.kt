@@ -38,6 +38,13 @@ class Lexer_99 {
         assert(!tks.hasNext())
     }
     @Test
+    fun BUG_aa_03_ops_err() {
+        val l = lexer("{{f.x}}")
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Id  && it.str == "TODO" })
+        assert(!tks.hasNext())
+    }
+    @Test
     fun aa_03_cmds() {
         val l =
             lexer("ifs thus resume-yield-all await while watching par every where par-and par-or until with")

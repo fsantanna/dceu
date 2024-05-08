@@ -714,7 +714,7 @@ class Exec_99 {
     fun fg_09_ifs () {
         val out = test("""
             val x = match "oi" {
-                {{type.string?}} { true }
+                {{string?}} { true }
                 else => false
             }
             println(x)
@@ -6130,16 +6130,16 @@ class Exec_99 {
     @Test
     fun zz_01_type() {
         val out = test("""
-            println(type.static?(:number))
-            println(type.static?(type([])))
-            println(type.dynamic?(type(nil)))
-            println(type.dynamic?(:vector))
-            println(type.string?("oi"))
-            println(type.string?(#[]))
-            println(type.nil?(nil))
-            println(type.dict?(nil))
+            println(static?(:number))
+            println(static?(type([])))
+            println(dynamic?(type(nil)))
+            println(dynamic?(:vector))
+            println(string?("oi"))
+            println(string?(#[]))
+            ;;println(type.nil?(nil))
+            ;;println(type.dict?(nil))
         """, true)
-        assert(out == "true\nfalse\nfalse\ntrue\ntrue\nfalse\ntrue\nfalse\n") { out }
+        assert(out == "true\nfalse\nfalse\ntrue\ntrue\nfalse\n") { out }
     }
     @Test
     fun BUG_zz_02_track_bcast() {
