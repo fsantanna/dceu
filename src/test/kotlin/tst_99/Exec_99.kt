@@ -1078,8 +1078,8 @@ class Exec_99 {
             }
             do :depois
             val t = [:antes, :x, :y, :z, :a, :b, :c, :meio, :i, :j, :depois]
-            loop (v,i) in to-iter(t) {
-                set t[i] = to-number(v)
+            loop (v,i) in to.iter(t) {
+                set t[i] = to.number(v)
             }
             println(t)
         """, true)

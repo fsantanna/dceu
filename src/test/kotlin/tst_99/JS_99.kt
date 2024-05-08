@@ -102,7 +102,7 @@ class JS_99 {
         val out = test("""
             coro objectEntries (obj) {
                 yield()
-                loop (v,k) in to-iter(obj) {
+                loop (v,k) in obj {
                     yield(k, v)
                 }
             }
@@ -112,8 +112,8 @@ class JS_99 {
                 last  = "Doe",
             ]
             val co = create-resume(objectEntries, jane)
-            loop (i,v) in to-iter(co) {
-                println((to-string(i) ++ ": ") ++ v)
+            loop (i,v) in to.iter(co) {
+                println((to.string(i) ++ ": ") ++ v)
             }
         """, true)
         assert(out == ":first: Jane\n:last: Doe\n") { out }
@@ -132,7 +132,7 @@ class JS_99 {
                     url
                 }
                 coro text (url) {
-                    to-string(url)
+                    to.string(url)
                 }
                 coro json (txt) {
                     "json " ++ txt
@@ -189,7 +189,7 @@ class JS_99 {
                 yield('a')
                 yield('b')
             }
-            val arr = to-vector(coroutine(genFunc))
+            val arr = to.vector(coroutine(genFunc))
             println(arr)
             
             ;; val [x,y] = ...  ;; TODO: destructor
@@ -237,11 +237,11 @@ class JS_99 {
     fun x_09() {
         val out = test("""
             coro genFunc () {
-                loop (v,i) in to-iter(#['a','b'],:all) {
+                loop (v,i) in to.iter(#['a','b'],:all) {
                     yield(;;;drop;;;([i,v]))
                 }
             }
-            val arr = to-vector(coroutine(genFunc))
+            val arr = to.vector(coroutine(genFunc))
             println(arr)
         """, true)
         assert(out == "#[[0,a],[1,b]]\n") { out }
@@ -263,7 +263,7 @@ class JS_99 {
                 }
                 yield('y')
             }
-            val arr = to-vector(coroutine(bar))
+            val arr = to.vector(coroutine(bar))
             println(arr)
         """, true)
         assert(out == "xaby\n") { out }
@@ -281,7 +281,7 @@ class JS_99 {
                 resume-yield-all coroutine(foo) ()
                 yield('y')
             }
-            val arr = to-vector(coroutine(bar))
+            val arr = to.vector(coroutine(bar))
             println(arr)
         """, true)
         assert(out == "xaby\n") { out }
@@ -307,7 +307,7 @@ class JS_99 {
                 yield()
                 resume-yield-all genObj ()
             }
-            println(to-vector(create-resume(logReturned, coroutine(genFuncWithReturn))))
+            println(to.vector(create-resume(logReturned, coroutine(genFuncWithReturn))))
         """, true)
         assert(out == "abc\n") { out }
     }
@@ -336,7 +336,7 @@ class JS_99 {
                     resume-yield-all (create-resume(T, tree.r)) ()
                 }
             }
-            println(to-vector(create-resume(T, TREE)))
+            println(to.vector(create-resume(T, TREE)))
         """, true)
         assert(out == "abcde\n") { out }
     }
@@ -464,7 +464,7 @@ class JS_99 {
                 var cur = ""
                 loop {
                     val tmp = yield()
-                    loop c in to-iter(tmp) {
+                    loop c in to.iter(tmp) {
                         if c == '\n' {
                             resume target(cur)
                             set cur = ""
@@ -480,7 +480,7 @@ class JS_99 {
                 loop {
                     val line = yield()
                     set n = n + 1
-                    resume target((to-string(n) ++ ": ") ++ line)
+                    resume target((to.string(n) ++ ": ") ++ line)
                 }
             }
             
@@ -513,7 +513,7 @@ class JS_99 {
                 var cur = ""
                 loop {
                     val tmp = yield(nil)
-                    loop c in to-iter(tmp) {
+                    loop c in to.iter(tmp) {
                         if c == '\n' {
                             yield(;;;drop;;;(cur))
                             set cur = ""
@@ -529,7 +529,7 @@ class JS_99 {
                 loop {
                     val line = yield(nil)
                     set n = n + 1
-                    yield((to-string(n) ++ ": ") ++ line)
+                    yield((to.string(n) ++ ": ") ++ line)
                 }
             }
 
@@ -545,7 +545,7 @@ class JS_99 {
             val co_nums  = create-resume(numberLines)
             val co_print = create-resume(printLines)
             spawn {
-                loop chars in to-iter(co_read) {
+                loop chars in to.iter(co_read) {
                     loop {
                         val line = if chars {
                             resume co_split(chars)
@@ -635,7 +635,7 @@ class JS_99 {
         coro Split (chars) {
             yield()
             var line = ""
-            loop c in to-iter(chars) {
+            loop c in to.iter(chars) {
                 if c == '\n' {
                     yield(;;;drop;;;(line))
                     set line = ""
@@ -647,8 +647,8 @@ class JS_99 {
         coro Number (lines) {
             yield()
             var i = 1
-            loop l in to-iter(lines) {
-                yield(to-string(i) ++ (": " ++ l))
+            loop l in to.iter(lines) {
+                yield(to.string(i) ++ (": " ++ l))
                 set i = i + 1
             }
         }
@@ -662,7 +662,7 @@ class JS_99 {
             }
         }
         coro FS-Read (filename) {
-            val buf = to-pointer(filename)
+            val buf = to.pointer(filename)
             val f = `:pointer fopen(${D}buf.Pointer, "r")`
             defer {
                 `fclose(${D}f.Pointer);`
@@ -679,7 +679,7 @@ class JS_99 {
             val split1  = create-resume(Split, read1)
             val number1 = create-resume(Number, split1)
             val take1   = create-resume(Take, 3, number1)
-            loop l in to-iter(take1) {
+            loop l in to.iter(take1) {
                 println(l)
             }
         }

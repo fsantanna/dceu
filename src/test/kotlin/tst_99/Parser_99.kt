@@ -625,7 +625,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(val (ceu_14) = to-iter(f))\n" +
+                "(val (ceu_14) = to.iter(f))\n" +
                 "loop {\n" +
                 "(val (x) = ceu_14[0](ceu_14))\n" +
                 "(break(nil) if {{==}}(x,nil))\n" +
