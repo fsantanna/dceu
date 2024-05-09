@@ -4,6 +4,7 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
+var TEST = false
 var DUMP = true
 var DEBUG = false
 var CEU = 1
@@ -53,8 +54,9 @@ val KEYWORDS: SortedSet<String> = (
     )) + (if (CEU < 99) setOf() else setOf(
         "await", "every", "ifs", "match",
         "par", "par-and", "par-or",
-        "resume-yield-all", "thus", "until", "watching",
-        "with", "where", "while"
+        "resume-yield-all", "test",
+        "thus", "until", "watching",
+        "with", "where", "while",
     ))
 ).toSortedSet()
 
@@ -271,6 +273,7 @@ fun main (args: Array<String>) {
         })
 
         when {
+            ys.containsKey("--test") -> TEST = true
             ys.containsKey("--version") -> println("dceu " + VERSION)
             (xinp == null) -> println("expected filename")
             else -> {

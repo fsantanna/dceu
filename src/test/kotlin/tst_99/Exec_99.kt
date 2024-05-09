@@ -1,12 +1,18 @@
 package tst_99
 
 import dceu.*
+import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_99 {
+    @Before
+    fun init() {
+        TEST = false
+    }
+
     // EMPTY IF / BLOCK
 
     @Test
@@ -5091,6 +5097,46 @@ class Exec_99 {
             println(\{, x => x }(10))
         """)
         assert(out == "10\n") { out }
+    }
+
+    // TEST
+
+    @Test
+    fun qq_01_test () {
+        val out = test("""
+            do {
+                println(:1)
+            }
+            test {
+                println(:2)
+            }
+            do {
+                test {
+                    println(:3)
+                }
+                println(:4)
+            }
+        """)
+        assert(out == ":1\n:4\n") { out }
+    }
+    @Test
+    fun qq_02_test () {
+        TEST = true
+        val out = test("""
+            do {
+                println(:1)
+            }
+            test {
+                println(:2)
+            }
+            do {
+                test {
+                    println(:3)
+                }
+                println(:4)
+            }
+        """)
+        assert(out == ":1\n:2\n:3\n:4\n") { out }
     }
 
     // TUPLE DOT

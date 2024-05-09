@@ -1254,6 +1254,14 @@ class Parser (lexer_: Lexer)
                     }
                 """)
             }
+            (CEU>=99 && this.acceptFix("test")) -> {
+                val blk = this.block()
+                if (TEST) {
+                    blk
+                } else {
+                    Expr.Pass(this.tk0 as Tk.Fix, Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy())))
+                }
+            }
             else -> {
                 err_expected(this.tk1, "expression")
                 error("unreachable")
