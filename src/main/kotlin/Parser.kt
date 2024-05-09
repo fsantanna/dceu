@@ -620,10 +620,10 @@ class Parser (lexer_: Lexer)
                         val blk = this.block()
                         this.nest("""
                             do {
-                                val ceu_$N = to-iter(${iter.tostr(true)})
+                                val ceu_$N :Iterator = to-iter(${iter.tostr(true)})
                                 loop {
                                     val (${lst.map { it.tostr(true) }.joinToString(",")}) = ceu_$N[0](ceu_$N)
-                                    break(nil) if ($id == nil)
+                                    break(nil) if (ceu_$N.f == nil)
                                     ${blk.es.tostr(true)}
                                 }
                             }

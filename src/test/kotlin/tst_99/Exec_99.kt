@@ -2283,6 +2283,25 @@ class Exec_99 {
         """, true)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun fx_09_iter_nil() {
+        val out = test("""
+            val t = [1,nil,3]
+            loop v in t {
+                println(v)
+            }
+        """, true)
+        assert(out == "1\nnil\n3\n") { out }
+    }
+    @Test
+    fun fx_10_eq() {
+        val out = test("""
+            val t1 = [1,nil,3]
+            val t2 = [1,nil,4]
+            println(t1 === t2)
+        """, true)
+        assert(out == "false\n") { out }
+    }
 
     // ITER / DROP
 

@@ -90,6 +90,7 @@ val to-iter = do {
     func iter-tuple (itr :Iterator) {
         val i = itr.i
         if i >= #itr.s {
+            set itr.f = nil
             nil
         } else {
             set itr.i = i + 1
@@ -100,6 +101,7 @@ val to-iter = do {
     func iter-dict (itr :Iterator) {
         val k = next-dict(itr.s,itr.i)
         if k == nil {
+            set itr.s = nil
             nil
         } else {
             set itr.i = k
@@ -110,10 +112,21 @@ val to-iter = do {
     func iter-xcoro (itr :Iterator) {
         val co = itr.s
         (resume co()) --> func (...) {
-            if (status(co) == :terminated)
-                => nil
-                => (...)
+            if (status(co) == :terminated) {
+                set itr.s = nil
+                nil
+            } else {
+                (...)
+            }
         }
+    }
+
+    func iter-func (itr :Iterator) {
+        val v = itr.f()
+        if v == nil {
+            set itr.f = nil
+        }
+        v
     }
 
     func iter-coro (itr :Iterator) {
@@ -125,6 +138,9 @@ val to-iter = do {
     func iter-tasks (itr :Iterator) {
         ;;error(:TODO)
         set itr.i = next-tasks(itr.s,itr.i)
+        if itr.i == nil {
+            set itr.f = nil
+        }
         itr.i
     }
 
@@ -134,7 +150,7 @@ val to-iter = do {
             ==:tuple    => :Iterator [iter-tuple, v, 0]
             ==:vector   => :Iterator [iter-tuple, v, 0]
             ==:dict     => :Iterator [iter-dict,  v, nil]
-            ==:func     => :Iterator [v]
+            ==:func     => :Iterator [iter-func,  v]
             ==:coro     => :Iterator [iter-coro, v]
             ==:exe-coro => :Iterator [iter-xcoro, v]
             ==:tasks    => :Iterator [iter-tasks, v, nil, nil]
