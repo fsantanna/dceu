@@ -3655,7 +3655,7 @@ class Exec_99 {
                 }
             }
             do {
-                broadcast (tag(:frame| [40])) in :global 
+                broadcast (tag(:frame, [40])) in :global 
                 broadcast (tag(:draw, [])) in :global
             }
             println(1)
@@ -5235,7 +5235,7 @@ class Exec_99 {
             var v
             set v = #[]
             match true {
-                ,true {
+                |true {
                     set v[#v] = 10
                 }
             }
@@ -5855,7 +5855,7 @@ class Exec_99 {
                 set pub = func () {
                     10
                 }
-                await(,false)
+                await(|false)
             }
             task T (u) {
                 println(u.pub())
@@ -5897,7 +5897,7 @@ class Exec_99 {
                     await (10)
                     broadcast(tag(:pause| [])) in :global 
                     watching 10 {
-                        await(,false)
+                        await(|false)
                     }
                     broadcast(tag(:resume, [])) in :global 
                 }
