@@ -2176,8 +2176,7 @@ class Exec_99 {
                     t[1] - 1
                 }
             }
-            val it = :Iterator [f,0]
-            loop v in it {
+            loop v in f {
                 println(v)
             }
         """, true)
