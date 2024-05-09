@@ -164,7 +164,7 @@ fun String.idc (): String {
         else -> {
             val MAP = mapOf(
                 Pair(':', ""),
-                Pair('.', "_dot_"),
+                Pair('.', "_"),
                 Pair('-', "_dash_"),
                 Pair('\'', "_plic_"),
                 Pair('?', "_question_"),

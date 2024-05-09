@@ -699,8 +699,15 @@ class Parser (lexer_: Lexer)
                     this.acceptFix_err("=")
                     this.acceptFix_err("[")
                     val (ids,dtss) = this.list0("]",",") {
-                        this.acceptEnu_err("Id")
-                        val id = this.tk0 as Tk.Id
+                        val id = if (this.acceptEnu("Fix")) {
+                            if (!KEYWORDS.contains(this.tk0.str)) {
+                                err(this.tk0, "invalid field : unexpected \"${this.tk0.str}\"")
+                            }
+                            Tk.Id(this.tk0.str, this.tk0.pos)
+                        } else {
+                            this.acceptEnu_err("Id")
+                            this.tk0 as Tk.Id
+                        }
                         val xtag = if (!this.acceptEnu("Tag")) null else {
                             this.tk0 as Tk.Tag
                         }
