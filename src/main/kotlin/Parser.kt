@@ -1322,6 +1322,12 @@ class Parser (lexer_: Lexer)
                         """) //.let { println(it);it })
                     }
                     (CEU>=4 && this.acceptFix("pub")) -> Expr.Pub(e.tk, e)
+                    this.acceptEnu("Fix") -> {
+                        if (!KEYWORDS.contains(this.tk0.str)) {
+                            err(this.tk0, "invalid field : unexpected \"${this.tk0.str}\"")
+                        }
+                        Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':' + this.tk0.str, this.tk0.pos)))
+                    }
                     this.acceptEnu_err("Id") -> Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':' + this.tk0.str, this.tk0.pos)))
                     else -> error("impossible case")
                 }

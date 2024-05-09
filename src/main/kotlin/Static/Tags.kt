@@ -1,7 +1,7 @@
 package dceu
 
 class Tags (outer: Expr.Call) {
-    val pub: MutableMap<String,Triple<String,String,String?>> = TAGS.map { Pair(it,Triple(it, it.tag2c(), null)) }.toMap().toMutableMap()
+    val pub: MutableMap<String,Triple<String,String,String?>> = TAGS.map { Pair(it,Triple(it, it.idc(), null)) }.toMap().toMutableMap()
 
     fun add (tk: Tk, id: String, c: String, enu: String?) {
         if (pub.containsKey(id)) {
@@ -48,10 +48,10 @@ class Tags (outer: Expr.Call) {
                         I = 0
                         nat.str
                     }
-                    add(tag, tag.str, tag.str.tag2c(), n)
+                    add(tag, tag.str, tag.str.idc(), n)
                 }
             }
-            is Expr.Data -> add(this.tk, this.tk.str, this.tk.str.tag2c(), null)
+            is Expr.Data -> add(this.tk, this.tk.str, this.tk.str.idc(), null)
             is Expr.Pass   -> this.e.traverse()
 
             is Expr.Catch  -> { this.cnd.traverse() ; this.blk.traverse() }
@@ -68,7 +68,7 @@ class Tags (outer: Expr.Call) {
             is Expr.Nat    -> {}
             is Expr.Acc    -> {}
             is Expr.Nil    -> {}
-            is Expr.Tag    -> add(this.tk, this.tk.str, this.tk.str.tag2c(), null)
+            is Expr.Tag    -> add(this.tk, this.tk.str, this.tk.str.idc(), null)
             is Expr.Bool   -> {}
             is Expr.Char   -> {}
             is Expr.Num    -> {}

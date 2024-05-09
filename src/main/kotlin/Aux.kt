@@ -24,10 +24,6 @@ fun <T> T?.cond (f: (v:T)->String): String {
     return this.cond2(f) {""}
 }
 
-fun Boolean.toc (): String {
-    return if (this) "1" else "0"
-}
-
 fun Expr.Call.main (): Expr.Proto {
     assert(this.tk.str == "main")
     return this.clo as Expr.Proto
@@ -105,12 +101,7 @@ fun Expr.base (ups: Ups): Expr {
         }
     }
 }
-fun String.tag2c (): String {
-    return this
-        .drop(1)
-        .replace('.','_')
-        .replace('-','_')
-}
+
 fun String.quote (n: Int): String {
     return this
         .replace('\n',' ')
@@ -168,17 +159,18 @@ fun String.idc (): String {
                 Pair('&', "ampersand"),
                 Pair('#', "hash"),
             )
-            /*"op_" +*/ this.drop(2).dropLast(2).toList().map { MAP[it] }.joinToString("_")
+            this.drop(2).dropLast(2).toList().map { MAP[it] }.joinToString("_")
         }
         else -> {
             val MAP = mapOf(
+                Pair(':', ""),
                 Pair('.', "_dot_"),
                 Pair('-', "_dash_"),
                 Pair('\'', "_plic_"),
                 Pair('?', "_question_"),
                 Pair('!', "_bang_"),
             )
-            /*"id_" +*/ this.toList().map { MAP[it] ?: it }.joinToString("")
+            this.toList().map { MAP[it] ?: it }.joinToString("")
         }
     }
 }

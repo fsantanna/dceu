@@ -87,7 +87,9 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                                 error("unreachable")
                             }
                             (v.second == null) -> Pair(idx, null)
-                            else -> Pair(idx, this.datas[v.second!!.str]!!)
+                            else -> {
+                                Pair(idx, this.datas[v.second!!.str]!!)
+                            }
                         }
                     }
                 }

@@ -5730,10 +5730,10 @@ class Exec_01 {
     fun pp_21_tplate_question() {
         val out = test("""
             data :T = [x?]
-            val t :T = :T [10]
+            val t :T = tag(:T, [10])
             println(t.x?, :x?)
         """)
-        assert(out == "10\n") { out }
+        assert(out == "10\t:x?\n") { out }
     }
 
     // COPY / tuple

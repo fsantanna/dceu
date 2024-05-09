@@ -488,7 +488,7 @@ class Coder (val outer: Expr.Call, val ups: Ups, val vars: Vars, val sta: Static
                 }
             }
             is Expr.Nil  -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });"
-            is Expr.Tag  -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_${this.tk.str.tag2c()}} });"
+            is Expr.Tag  -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_${this.tk.str.idc()}} });"
             is Expr.Bool -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} });"
             is Expr.Char -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_CHAR, {.Char=${this.tk.str}} });"
             is Expr.Num  -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} });"

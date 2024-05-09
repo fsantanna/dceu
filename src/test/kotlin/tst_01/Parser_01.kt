@@ -279,7 +279,8 @@ class Parser_01 {
     fun index5_err() {
         val l = lexer("x . .")
         val parser = Parser(l)
-        assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected identifier : have \".\"")
+        //assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected identifier : have \".\"")
+        assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : invalid field : unexpected \".\"")
     }
     @Test
     fun index6_err() {
