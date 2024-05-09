@@ -272,8 +272,11 @@ fun main (args: Array<String>) {
             }
         })
 
+        if (ys.containsKey("--test")) {
+            TEST = true
+        }
+
         when {
-            ys.containsKey("--test") -> TEST = true
             ys.containsKey("--version") -> println("dceu " + VERSION)
             (xinp == null) -> println("expected filename")
             else -> {
