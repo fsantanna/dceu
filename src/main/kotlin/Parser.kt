@@ -622,7 +622,7 @@ class Parser (lexer_: Lexer)
                             do {
                                 val ceu_$N :Iterator = to-iter(${iter.tostr(true)})
                                 loop {
-                                    val (${lst.map { it.tostr(true) }.joinToString(",")}) = ceu_$N[0](ceu_$N)
+                                    val (${lst.map { it.tostr(true) }.joinToString(",")}) = ceu_$N.f(ceu_$N)
                                     break(nil) if (ceu_$N.f == nil)
                                     ${blk.es.tostr(true)}
                                 }

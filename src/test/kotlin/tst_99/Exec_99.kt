@@ -1876,8 +1876,10 @@ class Exec_99 {
                     t[1]
                 }
             }
-            val it = [f, 0, 5]
+            data :Iterator = [f,s,i]
+            val it = :Iterator [f, 0, 5]
             loop v in it {
+                until not v
                 println(v)
             }
         """)
@@ -1896,8 +1898,10 @@ class Exec_99 {
                     t[1]
                 }
             }
+            data :Iterator = [f,s,i]
             val it = [f, 0, 5]
             loop v in it {
+                until not v
                 println(v)
                 break if true
             }
@@ -2169,11 +2173,12 @@ class Exec_99 {
     fun fx_01_iter() {
         val out = test("""
             func f (t) {
-                if t[1] == 5 {
+                set t[2] = t[2] or 0
+                if t[2] == 5 {
                     nil
                 } else {
-                    set t[1] = t[1] + 1
-                    t[1] - 1
+                    set t[2] = t[2] + 1
+                    t[2] - 1
                 }
             }
             loop v in f {
@@ -2354,6 +2359,7 @@ class Exec_99 {
             func iter-tuple (itr) {
                 val i = itr[3]
                 if i == #itr[1] {
+                    set itr[0] = nil
                     nil
                 } else {
                     set itr[3] = i + 1
@@ -2363,6 +2369,7 @@ class Exec_99 {
             func to-iter (v) { v }
             val t2 = [1,2,3]
             val t3 = #[]
+            data :Iterator = [f,s,i]
             loop (i,v) in [iter-tuple, t2, nil, 0] {
                 ;;println(i, v)
                 set t3[+] = v

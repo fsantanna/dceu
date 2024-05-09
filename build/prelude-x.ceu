@@ -101,7 +101,7 @@ val to-iter = do {
     func iter-dict (itr :Iterator) {
         val k = next-dict(itr.s,itr.i)
         if k == nil {
-            set itr.s = nil
+            set itr.f = nil
             nil
         } else {
             set itr.i = k
@@ -113,7 +113,7 @@ val to-iter = do {
         val co = itr.s
         (resume co()) --> func (...) {
             if (status(co) == :terminated) {
-                set itr.s = nil
+                set itr.f = nil
                 nil
             } else {
                 (...)
@@ -122,7 +122,7 @@ val to-iter = do {
     }
 
     func iter-func (itr :Iterator) {
-        val v = itr.f()
+        val v = itr.s(itr)
         if v == nil {
             set itr.f = nil
         }
@@ -150,7 +150,7 @@ val to-iter = do {
             ==:tuple    => :Iterator [iter-tuple, v, 0]
             ==:vector   => :Iterator [iter-tuple, v, 0]
             ==:dict     => :Iterator [iter-dict,  v, nil]
-            ==:func     => :Iterator [iter-func,  v]
+            ==:func     => :Iterator [iter-func,  v, nil]
             ==:coro     => :Iterator [iter-coro, v]
             ==:exe-coro => :Iterator [iter-xcoro, v]
             ==:tasks    => :Iterator [iter-tasks, v, nil, nil]
