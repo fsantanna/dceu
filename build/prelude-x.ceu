@@ -146,7 +146,7 @@ val to-iter = do {
 
     func (v) {
         match type(v) {
-            ,sup?(:Iterator, tag(v)) => v
+            | sup?(:Iterator, tag(v)) => v
             ==:tuple    => :Iterator [iter-tuple, v, 0]
             ==:vector   => :Iterator [iter-tuple, v, 0]
             ==:dict     => :Iterator [iter-dict,  v, nil]

@@ -380,7 +380,7 @@ class Exec_99 {
         val out = test("""
             data :X = [x]
             val i = match nil {
-                ,[10] { ,v:X => v.x }
+                |[10] { ,v:X => v.x }
             }
             println(i)
         """)
@@ -520,7 +520,7 @@ class Exec_99 {
             $IS
             var x = match 20 {
                 == 10 => false
-                (,true)  => true
+                (|true)  => true
                 == 20 => false
                 else  => false
             }
@@ -559,7 +559,7 @@ class Exec_99 {
         val out = test("""
             var x = match 20 {
                 is? 10 => false
-                (,true)  => true
+                (|true)  => true
                 is? 20 => false
                 else  => false
             }
@@ -572,7 +572,7 @@ class Exec_99 {
         val out = test("""
             data :T = []
             val x = match 10 {
-                (,true) => :T []
+                (|true) => :T []
                 is? 0 => nil
             }
             println(x)
@@ -609,9 +609,9 @@ class Exec_99 {
             $IS ; $COMP
             data :T = [v]
             var x = match :T [20] {
-                (t1:T, t1.v == 10) => false
+                (t1:T| t1.v == 10) => false
                 false     => false
-                (t2:T, t2.v == 20) => true
+                (t2:T| t2.v == 20) => true
                 else      => false
             }
             println(x)
@@ -646,7 +646,7 @@ class Exec_99 {
     fun fg_02_ifs() {
         val out = test("""
             val x = match [] {
-                it,true => it
+                it|true => it
             }
             println(x)
         """, true)
@@ -658,7 +658,7 @@ class Exec_99 {
     fun fg_03_ifs() {
         val out = test("""
             val x = match [] {
-                it,true => ;;;drop;;;(it)
+                it|true => ;;;drop;;;(it)
             }
             println(x)
         """, true)
@@ -799,10 +799,10 @@ class Exec_99 {
             data :T = [v]
             var x = match [20] {
                 false         => error()
-                (t :T, false) {}
+                (t :T| false) {}
                 ;;do (t :T)
-                (,t.v == 10)  => error()
-                (,t.v == 20)  => :ok
+                (|t.v == 10)  => error()
+                (|t.v == 20)  => :ok
                 else          => error()
             }
             println(x)
@@ -816,10 +816,10 @@ class Exec_99 {
             data :T = [v]
             var x = match [20] {
                 false         => error()
-                ;;(t :T, false) {}
+                ;;(t :T| false) {}
                 do (t :T)
-                (,t.v == 10)  => error()
-                (,t.v == 20)  => :ok
+                (|t.v == 10)  => error()
+                (|t.v == 20)  => :ok
                 else          => error()
             }
             println(x)
@@ -833,12 +833,12 @@ class Exec_99 {
             data :T = [v]
             var x = match [20] {
                 false         => error()
-                ;;(t :T, false) {}
+                ;;(t :T| false) {}
                 do (t :T) {
                     println(:ok)
                 }
-                (,t.v == 10)  => error()
-                (,t.v == 20)  => :ok
+                (|t.v == 10)  => error()
+                (|t.v == 20)  => :ok
                 else          => error()
             }
             println(x)
@@ -913,8 +913,8 @@ class Exec_99 {
             func f (v) {
                 false
             }
-            catch ,false {
-                catch err,f(err) {
+            catch |false {
+                catch err|f(err) {
                     error([])
                 }
             }
@@ -943,7 +943,7 @@ class Exec_99 {
     @Test
     fun gg_04_catch_err() {
         val out = test("""
-            catch err,err==[] {
+            catch err|err==[] {
                 var x
                 set x = []
                 error(x)
@@ -974,7 +974,7 @@ class Exec_99 {
     @Test
     fun gg_06_catch() {
         val out = test("""
-            catch ,false {
+            catch |false {
                 catch {
                     error([10])
                 }
@@ -989,7 +989,7 @@ class Exec_99 {
             var x
             set x = catch :x {
                 var y
-                set y = catch ,true {
+                set y = catch |true {
                     error([10])
                     println(9)
                 }
@@ -1056,7 +1056,7 @@ class Exec_99 {
     @Test
     fun gg_13_catch() {
         val out = test("""
-            catch err,err===[] {
+            catch err|err===[] {
                 error([])
                 println(9)
             }
@@ -1604,7 +1604,7 @@ class Exec_99 {
     fun mm_17_catch_yield_err() {
         val out = test("""
             coro () {
-                catch (it, do {
+                catch (it| do {
                     yield(nil) thus {, it => nil }
                 } )
                 {
@@ -1619,7 +1619,7 @@ class Exec_99 {
     fun mm_17a_catch_yield_err() {
         val out = test("""
             coro () {
-                catch (it, do {
+                catch (it| do {
                     do it
                     yield(nil) thus { ,it => nil }
                 } )
@@ -2399,7 +2399,7 @@ class Exec_99 {
         val e = func () {nil}
         val f = func (v) {
             match v {
-                ,true => [e,v]
+                |true => [e,v]
             }
         }
         val g = func () {
@@ -3189,7 +3189,7 @@ class Exec_99 {
                 println(;;;task.;;;pub)
                 spawn {
                     println(;;;task.;;;pub)
-                    await (,false)
+                    await (|false)
                 }
                 nil
             }
@@ -3634,9 +3634,9 @@ class Exec_99 {
         val out = test("""
             spawn {
                 par-or {
-                    await(, true)
+                    await(| true)
                 } with {
-                    await(, true)
+                    await(| true)
                 }
             }
             broadcast (true) in :global
@@ -3649,13 +3649,13 @@ class Exec_99 {
         val out = test("""
             spawn {
                 par-or {
-                    await (,true)
+                    await (|true)
                 } with {
-                    await (,true)
+                    await (|true)
                 }
             }
             do {
-                broadcast (tag(:frame, [40])) in :global 
+                broadcast (tag(:frame| [40])) in :global 
                 broadcast (tag(:draw, [])) in :global
             }
             println(1)
@@ -3706,7 +3706,7 @@ class Exec_99 {
             spawn {
                 par-and {
                     println(:0)
-                    await (,it==x)
+                    await (|it==x)
                     println(:2)
                 } with {
                     println(:1)
@@ -3729,7 +3729,7 @@ class Exec_99 {
             spawn {
                 par-and {
                     println(:0)
-                    await (,it==x)
+                    await (|it==x)
                     println(:2)
                 } with {
                     println(:1)
@@ -3749,7 +3749,7 @@ class Exec_99 {
         val out = test("""
             $IS
             task T () {
-                await(it, it is? :x)
+                await(it| it is? :x)
                 println(1)
             }
             spawn T()
@@ -3764,7 +3764,7 @@ class Exec_99 {
             $IS
             spawn {
                 println(0)
-                await ( ,(it/=nil) and (it[:type]==:x) )
+                await ( |(it/=nil) and (it[:type]==:x) )
                 println(99)
             }
             do {
@@ -3830,7 +3830,7 @@ class Exec_99 {
         val out = test("""
             spawn {
                 loop {
-                    await (,true) {
+                    await (|true) {
                         println(it)
                     }
                 }
@@ -3857,10 +3857,10 @@ class Exec_99 {
     fun kk_07_await() {
         val out = test("""
             spawn {
-                await (,true) {
+                await (|true) {
                     println(it)
                 }
-                await (,true) {
+                await (|true) {
                     println(it)
                 }
             }
@@ -4003,7 +4003,7 @@ class Exec_99 {
         val out = test("""
             data :E = [x,y]
             spawn {
-                await :E, it.y==20 {
+                await :E| it.y==20 {
                     println(it.x)
                 }
             }
@@ -4019,10 +4019,10 @@ class Exec_99 {
             data :E = [x,y]
             data :F = [i,j]
             spawn {
-                await :E, it.y==20 {
+                await :E| it.y==20 {
                     println(it.x)
                 }
-                await :F, it.i==10 {
+                await :F| it.i==10 {
                     println(it.j)
                 }
             }
@@ -4071,7 +4071,7 @@ class Exec_99 {
                 val t = spawn {
                     println(:1)
                 }
-                await(,it==t)
+                await(|it==t)
                 println(:2)
             }
             println(:3)
@@ -4089,7 +4089,7 @@ class Exec_99 {
             $IS
             task T () {
                 println(:1)
-                every (,true) {
+                every (|true) {
                     until true
                     error(999)
                 }
@@ -4107,7 +4107,7 @@ class Exec_99 {
             $IS
             task T () {
                 println(:1)
-                every (,true) {
+                every (|true) {
                     until false
                     println(:xxx)
                 }
@@ -4140,7 +4140,7 @@ class Exec_99 {
         val out = test("""
             $IS
             spawn {
-                every (,true) {
+                every (|true) {
                     yield()
                 }
             }
@@ -4413,7 +4413,7 @@ class Exec_99 {
     fun kn_07_await_task() {
         val out = test("""
             task Main_Menu () {
-                await(,false)
+                await(|false)
             }            
             spawn {
                 await spawn Main_Menu ()
@@ -4428,7 +4428,7 @@ class Exec_99 {
         val out = test("""
             spawn {
                 println(1)
-                await( ;;;:check-now;;;, true)
+                await( ;;;:check-now;;;| true)
                 println(2)
             }
             println(3)
@@ -4440,7 +4440,7 @@ class Exec_99 {
         val out = test("""
             spawn {
                 println(1)
-                await (,10)
+                await (|10)
                 println(2)
             }
             broadcast(nil) in :global
@@ -4451,8 +4451,8 @@ class Exec_99 {
     fun TODO_kn_10_task_pub_fake_err() {
         val out = test("""
             spawn {
-                watching evt,evt==:a {
-                    every evt,evt==:b {
+                watching evt|evt==:a {
+                    every evt|evt==:b {
                         println(;;;task.;;;pub)    ;; no enclosing task
                     }
                 }
@@ -4467,8 +4467,8 @@ class Exec_99 {
         val out = test("""
             spawn (task () {
                 set ;;;task.;;;pub = 1
-                watching evt, evt==:a {
-                    every evt, evt==:b {
+                watching evt| evt==:a {
+                    every evt| evt==:b {
                         println(;;;task.;;;pub)
                     }
                 }
@@ -4520,7 +4520,7 @@ class Exec_99 {
         val out = test("""
             spawn {
                 watching :100:ms {
-                    every ,false {
+                    every |false {
                     }
                 }
             }
@@ -4533,7 +4533,7 @@ class Exec_99 {
             spawn {
                 watching :10:s {
                     defer { println(10) }
-                    await (,false)
+                    await (|false)
                     println(1)
                 }
                 println(999)
@@ -4551,7 +4551,7 @@ class Exec_99 {
         val out = test(
             """
             task Bird () {
-                watching ,true {
+                watching |true {
                     par {
                     } with {
                     }
@@ -4565,8 +4565,8 @@ class Exec_99 {
     fun ll_05_watching() {
         val out = test("""
             task T () {
-                watching (,error(:error)) {
-                    await (,false)
+                watching (|error(:error)) {
+                    await (|false)
                 }
             }            
             spawn T() in tasks()
@@ -4587,13 +4587,13 @@ class Exec_99 {
             val t = spawn(T)()
             val x = ;;;track;;;(t)
             spawn {
-                watching ;;;:check-now;;; ,it==x {
+                watching ;;;:check-now;;; |it==x {
                     println(x.pub[0])
                     broadcast(nil) in :global
                     println(x.pub[0])
                     broadcast(:evt) in :global          ;; BUG: same tick as watching?
                     println(:nooo)   ;; never printed
-                    await (,false)
+                    await (|false)
                 }
                 println(status(x))
             }
@@ -4606,11 +4606,11 @@ class Exec_99 {
         val out = test("""
             task T () {
                 set pub = :pub
-                await (,it==:evt)
+                await (|it==:evt)
             }
             val t = spawn T()
             spawn {
-                watching ,it==t {
+                watching |it==t {
                     broadcast (:evt) in :global
                     println(:nooo)
                 }
@@ -4643,7 +4643,7 @@ class Exec_99 {
                 set pub = v
                 toggle :Show {
                     println(pub)
-                    every (it, (it is? :dict) and (it.sub==:draw)) {
+                    every (it| (it is? :dict) and (it.sub==:draw)) {
                         println(it.v)
                     }
                 }
@@ -5789,7 +5789,7 @@ class Exec_99 {
     fun zb_04_all() {
         val out = test("""
             task T (pos) {
-                await (,true)
+                await (|true)
                 println(pos)
             }
             spawn {
@@ -5797,7 +5797,7 @@ class Exec_99 {
                 do {
                     spawn T([]) in ts
                 }
-                await (,false)
+                await (|false)
             }
             broadcast(nil) in :global
         """, true)
@@ -5895,7 +5895,7 @@ class Exec_99 {
             spawn {
                 loop {
                     await (10)
-                    broadcast(tag(:pause, [])) in :global 
+                    broadcast(tag(:pause| [])) in :global 
                     watching 10 {
                         await(,false)
                     }
@@ -5916,10 +5916,10 @@ class Exec_99 {
                     await (10)
                     broadcast (tag(:pause, [])) in :global
                     watching 10 {
-                        await(,false)
+                        await(|false)
                     }
                     broadcast (tag(:resume, [])) in :global
-                    await (,true)
+                    await (|true)
                 }
             }
             broadcast (10) in :global
@@ -5937,7 +5937,7 @@ class Exec_99 {
                     await(10)
                     println(:1)
                     watching 10 {
-                        await(, false)
+                        await(| false)
                     }
                     println(:2)
                 }
@@ -5952,8 +5952,8 @@ class Exec_99 {
         val out = test("""
             task T () {
                 println(:1)
-                watching (,false) {
-                    await (,true)
+                watching (|false) {
+                    await (|true)
                 }
                 println(:2)
                 ;;println(:t)
@@ -6128,7 +6128,7 @@ class Exec_99 {
         val out = test("""
             task T () {
                 set ;;;task.;;;pub = []
-                await (,false)
+                await (|false)
             }
             func f (v1, v2) {}
             spawn {
@@ -6147,13 +6147,13 @@ class Exec_99 {
     fun zb_23_all() {
         val out = test("""
             task T () {
-                await (,false)
+                await (|false)
             }
             spawn {
                 val ts = tasks()
                 spawn T() in ts
-                await (,true)
-                catch ,true {
+                await (|true)
+                catch |true {
                     loop b in ts {
                         error(;;;drop;;;(b))
                     }
@@ -6305,13 +6305,13 @@ class Exec_99 {
         val out = test("""
             task T (v) {
                 println(:ok)
-                await(,it==:FIN)
+                await(|it==:FIN)
             }
             val ts = tasks(1)
             spawn T() in ts
             spawn {
                 loop {
-                    await ,it==:CHK {
+                    await |it==:CHK {
                         var xxx = #[next-tasks(ts)]
                         ;;set xxx = nil
                     }

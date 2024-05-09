@@ -56,7 +56,7 @@ fun Expr.tostr (pre: Boolean = false): String {
                 es[0].let { dcl ->
                     dcl as Expr.Dcl
                     assert(dcl.idtag.size==1)
-                    dcl.idtag[0].tostr(pre) + ", " + es[1].tostr(pre)
+                    dcl.idtag[0].tostr(pre) + " | " + es[1].tostr(pre)
                 }
             }
             "catch (" + cnd + ") " + this.blk.tostr(pre)

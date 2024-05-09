@@ -973,7 +973,7 @@ class Exec_03 {
             set co = coroutine(coro (x) {
                 error(:e2)
             })
-            catch ( it,:e2) {
+            catch ( it|:e2) {
                 resume co(1)
                 println(99)
             }
@@ -989,7 +989,7 @@ class Exec_03 {
                 yield(nil) ;;thus { it => nil }
                 error(:e2)
             })
-            catch ( it,:e2) {
+            catch ( it|:e2) {
                 resume co()
                 println(1)
                 resume co()
@@ -1004,7 +1004,7 @@ class Exec_03 {
         val out = test("""
             var co
             set co = coroutine (coro () {
-                catch (it, :e1) {
+                catch (it| :e1) {
                     yield(nil) ;;thus { it => nil }
                     error(:e1)
                 }
@@ -1012,7 +1012,7 @@ class Exec_03 {
                 yield() ;;thus { it => nil }
                 error(:e2)
             })
-            catch (it, :e2) {
+            catch (it| :e2) {
                 resume co()
                 resume co()
                 resume co()
@@ -1026,7 +1026,7 @@ class Exec_03 {
     fun hh_04_catch_yield_err() {
         val out = test("""
             coro () {
-                catch ( it , do {
+                catch ( it | do {
                     func (it) { nil } (nil)
                 } )
                 {
@@ -1041,14 +1041,14 @@ class Exec_03 {
         val out = test(
             """
             val CO = coro () {
-                catch (it, false) {
+                catch (it| false) {
                     yield(nil) ;;thus { it => nil }
                 }
                 println(999)
             }
             val co = coroutine(CO)
             resume co()
-            catch (it,true){
+            catch (it|true){
                 error(nil)
             }
             println(:ok)
@@ -1558,7 +1558,7 @@ class Exec_03 {
     fun nn_02_catch() {
         val out = test("""
             coro () {
-                catch ( it , do {
+                catch ( it | do {
                     yield()
                 } )
                 {

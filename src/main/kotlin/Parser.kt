@@ -13,7 +13,7 @@ fun Any.tostr (pre: Boolean): String {
 fun Patt.tostr (pre: Boolean = false): String {
     val (idtag,cnd) = this
     return if (cnd is Expr) {
-        "(" + idtag.tostr(pre) + ", " + cnd.tostr(pre) + ")"
+        "(" + idtag.tostr(pre) + " | " + cnd.tostr(pre) + ")"
     } else {
         "(" + cnd.tostr(pre) + ")"
     }
@@ -169,7 +169,7 @@ class Parser (lexer_: Lexer)
                     val tag = this.tk0 as Tk.Tag
                     when {
                         // (id :Tag, cnd)
-                        this.acceptFix(",") -> {
+                        this.acceptOp("|") -> {
                             val cnd = this.expr()
                             Pair(
                                 Pair(id, tag),
@@ -188,7 +188,7 @@ class Parser (lexer_: Lexer)
                 }
                 // (id, cnd)
                 else -> {
-                    this.acceptFix_err(",")
+                    this.acceptOp_err("|")
                     val cnd = if (this.checkFix(")") || this.checkFix("{") || this.checkFix("=>")) {
                         this.nest("true")
                     } else {
@@ -206,6 +206,11 @@ class Parser (lexer_: Lexer)
                 // ()
                 (par && this.checkFix(")")) -> {
                     Pair(Pair(xit, null), this.nest("true"))
+                }
+                // (|cnd)
+                (this.acceptOp("|")) -> {
+                    val cnd = this.expr()
+                    Pair(Pair(xit, null), cnd)
                 }
                 // (== 10)
                 // ({{even?}})
@@ -253,18 +258,13 @@ class Parser (lexer_: Lexer)
                             Pair(Pair(xit, Tk.Tag(":Clock", tag.pos)), l as Clock)
                         }
                         // (:X,cnd)
-                        this.acceptFix(",") -> {
+                        this.acceptOp("|") -> {
                             val cnd = this.expr()
                             Pair(Pair(xit, tag), this.nest("($xid is? ${tag.str}) and ${cnd.tostr(true)}"))
                         }
                         // (:X)
                         else -> Pair(Pair(xit, tag), this.nest("$xid is? ${tag.str}"))
                     }
-                }
-                // (,cnd)
-                (this.acceptFix(",")) -> {
-                    val cnd = this.expr()
-                    Pair(Pair(xit, null), cnd)
                 }
                 else -> {
                     val e = this.expr()
@@ -837,11 +837,11 @@ class Parser (lexer_: Lexer)
                                 ${blk.tostr(true)}
                             ;;}
                             if (status(task_$N) /= :terminated) { 
-                                watching (,it==task_$N) {
+                                watching (|it==task_$N) {
                                     loop {
-                                        await(${tag.str}, not it[0])
+                                        await(${tag.str} | not it[0])
                                         toggle task_$N(false)
-                                        await(${tag.str}, it[0])
+                                        await(${tag.str} | it[0])
                                         toggle task_$N(true)
                                     }
                                 }
@@ -1092,7 +1092,7 @@ class Parser (lexer_: Lexer)
                         do {
                             val ceu_$N = ${spw.tostr(true)}
                             if (status(ceu_$N) /= :terminated) {
-                                await(,it==ceu_$N)
+                                await(|it==ceu_$N)
                             }
                             ceu_$N.pub
                         }

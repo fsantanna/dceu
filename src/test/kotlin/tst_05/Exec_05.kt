@@ -306,7 +306,7 @@ class Exec_05 {
                 defer {
                     println(v)
                 }
-                catch (err,err==:ok) {
+                catch (err|err==:ok) {
                     spawn task () {
                         yield(nil)
                         if v == 1 {
@@ -340,7 +340,7 @@ class Exec_05 {
                 defer {
                     println(v)
                 }
-                catch (err,err==:ok) {
+                catch (err|err==:ok) {
                     spawn task () {
                         yield(nil)
                         if v == 2 {
@@ -1333,7 +1333,7 @@ class Exec_05 {
         val out = test(
             """
             spawn (task () {
-                catch (err, err==:ok) {
+                catch (err| err==:ok) {
                     spawn task () {
                         yield(nil)
                         error(:ok)
@@ -1707,7 +1707,7 @@ class Exec_05 {
                 yield(nil) ; nil
             }
             val ts = tasks()
-            val t = catch ( it,true) {
+            val t = catch ( it|true) {
                 spawn T() in ts
                 do {
                     val u = next-tasks(ts)
@@ -1750,7 +1750,7 @@ class Exec_05 {
                 yield(nil) ; nil
             }
             val ts = tasks()
-            catch ( it,true) {
+            catch ( it|true) {
                 spawn T() in ts
                 do {
                     val t = next-tasks(ts)
@@ -2740,7 +2740,7 @@ class Exec_05 {
             var t = spawn T()
             var x = ;;;track;;;(t)
             spawn( task () {
-                catch ( err,err==:par-or ) {
+                catch ( err|err==:par-or ) {
                     spawn( task () {
                         yield(nil) ;;thus { it => it==t }
                         error(:par-or)
@@ -2926,7 +2926,7 @@ class Exec_05 {
             set ts = tasks()
             spawn T(1) in ts
             var x
-            set x = catch (_,true) {
+            set x = catch (_|true) {
                 var t
                 loop ;;;in :tasks ts, t;;; {
                     set t = next-tasks(ts,t)
@@ -2953,7 +2953,7 @@ class Exec_05 {
             spawn T(1) in ts
             spawn T(2) in ts
             var x
-            set x = catch (_,true) {
+            set x = catch (_|true) {
                 var t
                 loop ;;;in :tasks ts, t;;; {
                     set t = next-tasks(ts,t)
