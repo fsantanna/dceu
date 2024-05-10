@@ -1120,7 +1120,7 @@ class Parser (lexer_: Lexer)
                                 var ${idtag.tostr(true)}
                                 loop {
                                     set ${idtag.first.str} = ${pre}yield()
-                                    until ${pat.tostr(true)}                                
+                                    until ${pat.code()}                                
                                 }
                                 delay
                                 ${cnt.cond2({ it.tostr(true) }, { idtag.first.str })}
@@ -1135,7 +1135,7 @@ class Parser (lexer_: Lexer)
                 val blk = this.block()
                 this.nest("""
                     loop {
-                        await ${pat.tostr(true)} {
+                        await ${pat.code()} {
                             ${blk.es.tostr(true)}
                         }
                     }
