@@ -6,7 +6,7 @@ import java.io.Reader
 import java.io.StringReader
 import java.lang.Integer.max
 
-data class Lex(var file: String, var lin: Int, var col: Int, val reader: PushbackReader)
+data class Lex(var file: String, var lin: Int, var col: Int, var xcol: Int, val reader: PushbackReader)
 data class Pos (val file: String, val lin: Int, val col: Int)
 
 fun Lex.toPos (): Pos {
@@ -29,7 +29,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
             N = 1
         }
         for (inp in inps) {
-            stack.addFirst(Lex(inp.first.first, inp.first.second, inp.first.third, PushbackReader(inp.second,2)))
+            stack.addFirst(Lex(inp.first.first, inp.first.second, inp.first.third, 0, PushbackReader(inp.second,2)))
         }
     }
 
@@ -42,6 +42,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
         val pos = stack.first()
         val n = pos.reader.read()
         val x = n.toChar()
+        pos.xcol = pos.col
         if (x == '\n') {
             pos.lin++; pos.col=1
         } else if (!iseof(n)) {
@@ -55,8 +56,8 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
         pos.reader.unread(n)
         when {
             iseof(n) -> {}
-            (x == '\n') -> { pos.lin--; pos.col=0 }
-            else -> pos.col = max(0,pos.col-1)    // TODO: should remeber col from previous line
+            (x == '\n') -> { pos.lin--; pos.col=pos.xcol }
+            else -> pos.col = pos.col-1
         }
     }
     fun read2Until (f: (x: Char)->Boolean): String? {
@@ -382,7 +383,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                             if (!f.exists()) {
                                 err(pos, "token ^ error : file not found : $file")
                             }
-                            stack.addFirst(Lex(file, 1, 1, PushbackReader(StringReader(f.readText()), 2)))
+                            stack.addFirst(Lex(file, 1, 1, 0, PushbackReader(StringReader(f.readText()), 2)))
                         }
 
                         (lin != null) -> stack.first().let {
