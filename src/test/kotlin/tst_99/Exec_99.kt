@@ -843,6 +843,25 @@ class Exec_99 {
             }
             println(x)
         """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun fi_03x_ifs_no_catch_all() {
+        val out = test("""
+            $IS ; $COMP
+            data :T = [v]
+            var x = match :T [20] {
+                false         => error()
+                ;;(t :T| false) {}
+                do (t :T) {
+                    println(:ok)
+                }
+                (|t.v == 10)  => error()
+                (|t.v == 20)  => :ok
+                else          => error()
+            }
+            println(x)
+        """)
         assert(out == ":ok\n:ok\n") { out }
     }
     @Test
@@ -2195,7 +2214,7 @@ class Exec_99 {
             }
         """, true)
         //assert(out.contains("assertion error : expected :Iterator")) { out }
-        assert(out.contains(" |  anon : (lin 2, col 22) : ceu_21394[0]\n" +
+        assert(out.contains(" |  anon : (lin 2, col 23) : ceu_21966[:f]\n" +
                 " v  index error : expected collection\n")) { out }
     }
     @Test
@@ -3851,7 +3870,8 @@ class Exec_99 {
             }
             broadcast (@[])
         """)
-        assert(out == "anon : (lin 4, col 27) : expected expression : have \"{\"\n") { out }
+        //assert(out == "anon : (lin 4, col 27) : expected expression : have \"{\"\n") { out }
+        assert(out == "@[]\n") { out }
     }
     @Test
     fun kk_07_await() {
@@ -4525,7 +4545,7 @@ class Exec_99 {
                 }
             }
         """)
-        assert(out == "anon : (lin 3, col 30) : access error : variable \"{{*}}\" is not declared\n") { out }
+        assert(out == "anon : (lin 3, col 31) : access error : variable \"{{*}}\" is not declared\n") { out }
     }
     @Test
     fun ll_03_watching_clk() {
@@ -5808,7 +5828,7 @@ class Exec_99 {
         val out = test("""
             task T (pos) {
                 set ;;;task.;;;pub = func () { pos }
-                await (<false)
+                await (false)
             }
             val t = spawn T ([1,2])
             println(t.pub())

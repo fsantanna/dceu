@@ -4,7 +4,7 @@ typealias Clock = List<Pair<Tk.Tag,Expr>>
 typealias Patt  = Pair<Id_Tag,Expr?>
 
 fun Clock.tostr (pre: Boolean): String {
-    return this.map { it.second.tk.pos.pre() + ":"+it.second.tostr(pre) + it.first.str }.joinToString("")
+    return "<" + this.map { it.second.tostr(pre) + " " + it.first.str }.joinToString(",") + ">"
 }
 
 fun Patt.tostr (pre: Boolean = false): String {
@@ -149,6 +149,22 @@ class Parser (lexer_: Lexer)
         this.checkOp_err(str)
         this.acceptOp(str)
         return true
+    }
+
+    fun clock (): Clock {
+        this.acceptOp_err("<")
+        val us = listOf(":h", ":min", ":s", ":ms")
+        val l = list0(",", {this.checkOp(">")}) {
+            val e = this.expr()
+            this.acceptEnu_err("Tag")
+            val u = this.tk0 as Tk.Tag
+            if (!us.contains(u.str)) {
+                err(u, "invalid clock unit : unexpected \"${u.str}\"")
+            }
+            Pair(u,e)
+        }
+        this.acceptOp_err(">")
+        return l
     }
 
     fun patt_one (xit: Tk.Id): Patt {
@@ -1015,21 +1031,11 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (CEU>=99 && this.acceptFix("await")) -> {
-                val par = this.acceptFix("(")
                 val pre = this.tk0.pos.pre()
+                val par = this.acceptFix("(")
                 when {
-                    this.acceptOp("<") -> {
-                        val us = listOf(":h", ":min", ":s", ":ms")
-                        val l = list0(",", {this.checkOp(">")}) {
-                            val e = this.expr()
-                            this.acceptEnu_err("Tag")
-                            val u = this.tk0 as Tk.Tag
-                            if (!us.contains(u.str)) {
-                                err(u, "invalid clock unit : unexpected \"${u.str}\"")
-                            }
-                            Pair(u,e)
-                        }
-                        this.acceptOp_err(">")
+                    this.checkOp("<") -> {
+                        val l = clock()
                         val clk = l.map { (tag, e) ->
                             val s = e.tostr(true)
                             "(" + when (tag.str) {
@@ -1107,13 +1113,18 @@ class Parser (lexer_: Lexer)
                 }
             }
             (CEU>=99 && this.acceptFix("every")) -> {
-                val pat = this.patt()
+                val clk = this.checkOp("<")
+                val pat = if (clk) {
+                    clock().tostr(true)
+                } else {
+                    this.patt().tostr(true)
+                }
                 val blk = this.block()
                 this.nest("""
                     loop {
-                        await ${pat.code()} {
+                        await $pat ${(!clk).cond{"{"}}
                             ${blk.es.tostr(true)}
-                        }
+                        ${(!clk).cond{"}"}}
                     }
                 """)
             }
@@ -1198,12 +1209,15 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (CEU>=99 && this.acceptFix("watching")) -> {
-                //val pre0 = this.tk0.pos.pre()
-                val pat = this.patt()
+                val pat = if (this.checkOp("<")) {
+                    clock().tostr(true)
+                } else {
+                    this.patt().tostr(true)
+                }
                 val blk = this.block()
                 this.nest("""
                     par-or {
-                        await ${pat.tostr(true)}
+                        await $pat
                     } with {
                         ${blk.es.tostr(true)}
                     }
