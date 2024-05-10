@@ -1,22 +1,15 @@
 package dceu
 
 typealias Clock = List<Pair<Tk.Tag,Expr>>
-typealias Patt = Pair<Id_Tag,Any>
+typealias Patt  = Pair<Id_Tag,Expr?>
 
-fun Any.tostr (pre: Boolean): String {
-    return when (this) {
-        is Expr -> this.tostr(pre)
-        else -> (this as Clock).map { it.second.tk.pos.pre() + ":"+it.second.tostr(false) + it.first.str }.joinToString("")
-    }
+fun Clock.tostr (pre: Boolean): String {
+    return this.map { it.second.tk.pos.pre() + ":"+it.second.tostr(pre) + it.first.str }.joinToString("")
 }
 
 fun Patt.tostr (pre: Boolean = false): String {
     val (idtag,cnd) = this
-    return if (cnd is Expr) {
-        "(" + idtag.tostr(pre) + " | " + cnd.tostr(pre) + ")"
-    } else {
-        "(" + cnd.tostr(pre) + ")"
-    }
+    return "(${idtag.tostr(pre)} ${cnd.cond { "| " + it.tostr(pre) }})"
 }
 
 class Parser (lexer_: Lexer)
@@ -158,115 +151,84 @@ class Parser (lexer_: Lexer)
         return true
     }
 
-    fun patt_one (xit: Tk.Id): Patt {
-        fun fid (): Pair<Id_Tag,Expr> {
-            // (id
-            this.acceptEnu_err("Id")
-            val id = this.tk0 as Tk.Id
-            return when {
-                // (id :Tag
-                this.acceptEnu("Tag") -> {
-                    val tag = this.tk0 as Tk.Tag
-                    when {
-                        // (id :Tag, cnd)
-                        this.acceptOp("|") -> {
-                            val cnd = this.expr()
-                            Pair(
-                                Pair(id, tag),
-                                if (CEU < 99) cnd else this.nest(
-                                    "(${id.str} is? ${tag.str}) and ${
-                                        cnd.tostr(true)
-                                    }"
-                                )
-                            )
-                        }
-                        // (id :Tag)
-                        else -> {
-                            Pair(Pair(id, tag), this.nest("${id.str} is? ${tag.str}"))
-                        }
-                    }
-                }
-                // (id, cnd)
-                else -> {
-                    this.acceptOp_err("|")
-                    Pair(Pair(id, null), this.expr())
-                }
+    fun patt_clk (): Clock? {
+        val unis = listOf(":h", ":min", ":s", ":ms")
+        if (!this.checkEnu("Tag") ||  !unis.contains(this.tk1.str)) {
+            return null
+        }
+
+        this.acceptEnu_err("Tag")
+        val tag = this.tk0 as Tk.Tag
+
+        fun Tk.Tag.tonum(): Expr {
+            val s = this.str.drop(1)
+            val n = s.toIntOrNull()
+            return if (n != null) {
+                Expr.Num(Tk.Num(s, this.pos))
+            } else {
+                Expr.Acc(Tk.Id(s, this.pos))
             }
         }
-        val xid = xit.str
-        return if (CEU < 99) {
-            fid()
-        } else {
-            when {
-                // (|cnd)
-                (this.acceptOp("|")) -> {
-                    val cnd = this.expr()
-                    Pair(Pair(xit, null), cnd)
-                }
-                // (== 10)
-                // ({{even?}})
-                (this.acceptEnu("Op")) -> {
-                    val op = this.tk0.str.let {
-                        if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
-                    }
-                    val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
-                    val call = if (e == null) {
-                        "$op($xid)"
-                    } else {
-                        "$op($xid, ${e.tostr(true)})"
-                    }
-                    Pair(Pair(xit, null), this.nest(call))
-                }
-                // (id
-                this.checkEnu("Id") -> fid()
-                // (:X
-                (this.acceptEnu("Tag")) -> {
-                    val tag = this.tk0 as Tk.Tag
-                    val unis = listOf(":h", ":min", ":s", ":ms")
-                    when {
-                        // (:x:ms)
-                        unis.contains(this.tk1.str) -> {
-                            // :X:ms[...]
-                            this.acceptEnu_err("Tag")
 
-                            fun Tk.Tag.tonum(): Expr {
-                                val s = this.str.drop(1)
-                                val n = s.toIntOrNull()
-                                return if (n != null) {
-                                    Expr.Num(Tk.Num(s, this.pos))
-                                } else {
-                                    Expr.Acc(Tk.Id(s, this.pos))
-                                }
-                            }
+        val l = mutableListOf(Pair(this.tk0 as Tk.Tag, tag.tonum()))
+        while (this.acceptEnu("Tag")) {
+            val t = this.tk0 as Tk.Tag
+            this.acceptEnu_err("Tag")
+            assert(unis.contains(this.tk0.str))
+            l.add(Pair(this.tk0 as Tk.Tag, t.tonum()))
+        }
+        return l
+    }
 
-                            val l = mutableListOf(Pair(this.tk0 as Tk.Tag, tag.tonum()))
-                            while (this.acceptEnu("Tag")) {
-                                val t = this.tk0 as Tk.Tag
-                                this.acceptEnu_err("Tag")
-                                assert(unis.contains(this.tk0.str))
-                                l.add(Pair(this.tk0 as Tk.Tag, t.tonum()))
-                            }
-                            Pair(Pair(xit, Tk.Tag(":Clock", tag.pos)), l as Clock)
-                        }
-                        // (:X,cnd)
-                        this.acceptOp("|") -> {
-                            val cnd = this.expr()
-                            Pair(Pair(xit, tag), this.nest("($xid is? ${tag.str}) and ${cnd.tostr(true)}"))
-                        }
-                        // (:X)
-                        else -> Pair(Pair(xit, tag), this.nest("$xid is? ${tag.str}"))
-                    }
+    fun patt_one (xit: Tk.Id): Patt {
+        return when {
+            // (== 10)
+            // ({{even?}})
+            (CEU>=99 && !this.checkOp("|") && this.acceptEnu("Op")) -> {
+                val op = this.tk0.str.let {
+                    if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
                 }
-                else -> {
-                    val e = this.expr()
-                    when {
-                        // 10
-                        // [1,2]
-                        e.is_constructor() -> {
-                            Pair(Pair(xit, null), this.nest("$xid === ${e.tostr(true)}"))
-                        }
-                        else -> err(this.tk1, "invalid pattern : unexpected \"${this.tk1.str}\"") as Pair<Id_Tag, Expr>
+                val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
+                val call = if (e == null) {
+                    "$op(${xit.str})"
+                } else {
+                    "$op(${xit.str}, ${e.tostr(true)})"
+                }
+                Pair(Pair(xit, null), this.nest(call))
+            }
+
+            // TODO: vai virar else
+            // (id :Tag | cnd)
+            (CEU<99 || (this.checkEnu("Id") || this.checkEnu("Tag") || this.checkOp("|"))) -> {
+                val id = if (CEU<99 || this.checkEnu("Id")) {
+                    this.acceptEnu_err("Id")
+                    this.tk0 as Tk.Id
+                } else {
+                    xit
+                }
+                val xid = id.str
+
+                val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
+
+                val cnd = if (CEU<99 || this.checkOp("|")) {
+                    this.acceptOp_err("|")
+                    this.expr()
+                } else {
+                    null
+                }
+                Pair(Pair(id,tag), cnd)
+            }
+
+            else -> {
+                TODO("vai virar pattern")
+                val e = this.expr()
+                when {
+                    // 10
+                    // [1,2]
+                    e.is_constructor() -> {
+                        Pair(Pair(xit, null), this.nest("${xit.str} === ${e.tostr(true)}"))
                     }
+                    else -> err(this.tk1, "invalid pattern : unexpected \"${this.tk1.str}\"") as Pair<Id_Tag, Expr>
                 }
             }
         }
@@ -295,6 +257,17 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix_err(")")
             ret
+        }
+    }
+
+    fun Patt.code (): Expr {
+        val (idtag, cnd) = this
+        val (id,tag) = idtag
+        return when {
+            (tag!=null && cnd!=null) -> nest("(${id.str} is? ${tag.str}) and ${cnd.tostr(true)}")
+            (tag != null) -> nest("${id.str} is? ${tag.str}")
+            (cnd != null) -> cnd
+            else -> Expr.Bool(Tk.Fix("true",id.pos))
         }
     }
 
@@ -739,7 +712,7 @@ class Parser (lexer_: Lexer)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val (idtag,cnd) = when {
+                val patt = when {
                     (CEU < 99) -> {
                         this.checkFix_err("(")
                         this.patt()
@@ -751,12 +724,13 @@ class Parser (lexer_: Lexer)
                         this.patt()
                     }
                 }
+                val (idtag,_) = patt
                 val blk = this.block()
                 val xcnd = this.nest("""
                     do {
                         ;; [pay,err,blk]
                         val ${idtag.tostr(true)} = `:ceu ceux_peek(X->S, XX(-1-1-1))`
-                        ${cnd.tostr(true)}
+                        ${patt.code()}
                     }
                 """)
                 Expr.Catch(tk0, xcnd as Expr.Do, blk)
@@ -978,7 +952,7 @@ class Parser (lexer_: Lexer)
                     val xit = Tk.Id("it",this.tk0.pos)
                     val cnds = when {
                         this.acceptFix("else") -> {
-                            listOf(Pair(null, Expr.Bool(Tk.Fix("true",this.tk0.pos))))
+                            listOf(Pair(Pair(xit,null), Expr.Bool(Tk.Fix("true",this.tk0.pos))))
                         }
                         this.acceptFix("do") -> {
                             xdo = true
@@ -989,12 +963,13 @@ class Parser (lexer_: Lexer)
                                 Pair(x, y)
                             }
                             val blk = if (!this.checkFix("{")) null else this.block()
-                            listOf(Patt(Pair(if (id==null) xit else id, tag), this.nest("""
+                            val cnd = this.nest("""
                                 do {
                                     ${blk.cond { it.es.tostr(true) }}
                                     false
                                 }
-                            """)))
+                            """)
+                            listOf(Pair(Pair(if (id==null) xit else id, tag), cnd))
                         }
                         else -> {
                             this.patts()
@@ -1031,10 +1006,11 @@ class Parser (lexer_: Lexer)
                         ${ifs.map { (lst,idtag_es) ->
                             val (idtag,es) = idtag_es
                             val idtagx = if (idtag != null) idtag else Pair(Tk.Id("ceu_$N",tk0.pos),null)
-                            val (ids,cnds) = lst.mapIndexed { i,(idtag,cnd) ->
+                            val (ids,cnds) = lst.mapIndexed { i,pat ->
+                                val (idtag,_) = pat
                                 Pair (
                                     idtag.cond { "val ${it.tostr(true)} = ceu_${n}_$i"},
-                                    cnd.tostr(true)
+                                    pat.tostr(true)
                                 )
                             }.unzip()
                             """
@@ -1076,87 +1052,93 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (CEU>=99 && this.acceptFix("await")) -> {
-                if (this.checkFix("spawn")) {
-                    val spw = this.expr()
-                    spw as Expr.Spawn
-                    return this.nest("""
-                        do {
-                            val ceu_$N = ${spw.tostr(true)}
-                            if (status(ceu_$N) /= :terminated) {
-                                await(|it==ceu_$N)
-                            }
-                            ceu_$N.pub
-                        }
-                    """)
-                }
-
-                val pre = this.tk0.pos.pre()
                 val par = this.acceptFix("(")
-                val (idtag, cnd) = if (par && checkFix(")")) {
-                    Pair (
-                        Pair(Tk.Id("it",this.tk0.pos), null),
-                        Expr.Bool(Tk.Fix("true",this.tk0.pos))
-                    )
-                } else {
-                    this.patt()
-                }
-                if (par) {
-                    this.acceptFix_err(")")
-                } else {
-                    this.checkFix_err("{")
-                }
-                val cnt = if (!this.checkFix("{")) null else this.block().es
-                val clk = if (cnd is Expr) null else {
-                    val l = (cnd as Clock)
-                    l.map { (tag,e) ->
-                        val s = e.tostr(true)
-                        "(" + when (tag.str) {
-                            ":h"   -> "($s * ${1000*60*60})"
-                            ":min" -> "($s * ${1000*60})"
-                            ":s"   -> "($s * ${1000})"
-                            ":ms"  -> "($s * ${1})"
-                            else   -> error("impossible case")
-                        }
-                    }.joinToString("+") + (")").repeat(l.size)
-                }
-                return this.nest("""
-                    do {
-                        ${clk.cond { """
-                            var ceu_$N = $it
-                        """ }}
-                        var ${idtag.tostr(true)}
-                        loop {
-                            set ${idtag.first.str} = ${pre}yield()
-                            ${clk.cond2({
-                                """
-                                break if do {
-                                    if ${idtag.first.str} is? :Clock {
-                                        set ceu_$N = ceu_$N - ${idtag.first.str}.ms
-                                        if (ceu_$N > 0) {
-                                            false
-                                        } else {
-                                            true
-                                        }
+                val pre = this.tk0.pos.pre()
+                val clk = patt_clk()
+                when {
+                    (clk != null) -> {
+                        val xclk = clk.map { (tag, e) ->
+                            val s = e.tostr(true)
+                            "(" + when (tag.str) {
+                                ":h" -> "($s * ${1000 * 60 * 60})"
+                                ":min" -> "($s * ${1000 * 60})"
+                                ":s" -> "($s * ${1000})"
+                                ":ms" -> "($s * ${1})"
+                                else -> error("impossible case")
+                            }
+                        }.joinToString("+") + (")").repeat(clk.size)
+                        val ret = this.nest("""
+                            do {
+                                var ceu_clk_$N = $xclk
+                                loop {
+                                    val ceu_evt_$N :Clock = ${pre}yield()
+                                    if ceu_evt_$N is? :Clock {
+                                        set ceu_clk_$N = ceu_clk_$N - ceu_evt_$N.ms
                                     }
+                                    until (ceu_clk_$N <= 0)
                                 }
-                                """
-                            },{
-                                """
-                                until ${cnd.tostr(true)}                                
-                                """
-                            })}                            
+                                delay
+                            }
+                        """)
+                        if (par) {
+                            this.acceptFix_err(")")
                         }
-                        delay
-                        ${cnt.cond2({ it.tostr(true) }, {idtag.first.str})}
+                        ret
                     }
-                """) //.let { println(it.tostr());it }
+                    this.checkFix("spawn") -> {
+                        val spw = this.expr()
+                        spw as Expr.Spawn
+                        val ret = this.nest("""
+                            do {
+                                val ceu_$N = ${spw.tostr(true)}
+                                if (status(ceu_$N) /= :terminated) {
+                                    await(|it==ceu_$N)
+                                }
+                                ceu_$N.pub
+                            }
+                        """)
+                        if (par) {
+                            this.acceptFix_err(")")
+                        }
+                        ret
+                    }
+                    else -> {
+                        val pat = when {
+                            (par && checkFix(")")) ->
+                                Pair(
+                                    Pair(Tk.Id("it", this.tk0.pos), null),
+                                    Expr.Bool(Tk.Fix("true", this.tk0.pos))
+                                )
+                            else -> this.patt()
+                        }
+                        val (idtag,_) = pat
+                        if (par) {
+                            this.acceptFix_err(")")
+                        } else {
+                            this.checkFix_err("{")
+                        }
+                        val cnt = if (!this.checkFix("{")) null else this.block().es
+                        this.nest("""
+                            do {
+                                var ${idtag.tostr(true)}
+                                loop {
+                                    set ${idtag.first.str} = ${pre}yield()
+                                    until ${pat.tostr(true)}                                
+                                }
+                                delay
+                                ${cnt.cond2({ it.tostr(true) }, { idtag.first.str })}
+                            }
+                        """
+                        ) //.let { println(it.tostr());it }
+                    }
+                }
             }
             (CEU>=99 && this.acceptFix("every")) -> {
-                val patt = this.patt()
+                val pat = this.patt()
                 val blk = this.block()
                 this.nest("""
                     loop {
-                        await ${patt.tostr(true)} {
+                        await ${pat.tostr(true)} {
                             ${blk.es.tostr(true)}
                         }
                     }
@@ -1244,11 +1226,11 @@ class Parser (lexer_: Lexer)
             }
             (CEU>=99 && this.acceptFix("watching")) -> {
                 //val pre0 = this.tk0.pos.pre()
-                val patt = this.patt()
+                val pat = this.patt()
                 val blk = this.block()
                 this.nest("""
                     par-or {
-                        await ${patt.tostr(true)}
+                        await ${pat.tostr(true)}
                     } with {
                         ${blk.es.tostr(true)}
                     }
