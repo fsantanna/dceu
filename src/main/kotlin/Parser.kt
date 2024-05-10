@@ -730,7 +730,7 @@ class Parser (lexer_: Lexer)
                     do {
                         ;; [pay,err,blk]
                         val ${idtag.tostr(true)} = `:ceu ceux_peek(X->S, XX(-1-1-1))`
-                        ${(CEU < 99).cond2({cnd!!.tostr()},{pat.code()})}
+                        ${(CEU < 99).cond2({cnd!!.tostr(true)},{pat.code()})}
                     }
                 """)
                 Expr.Catch(tk0, xcnd as Expr.Do, blk)
