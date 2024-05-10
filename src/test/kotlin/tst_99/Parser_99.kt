@@ -1095,30 +1095,47 @@ class Parser_99 {
     fun jd_01_clock_err() {
         val l = lexer("""
             spawn {
-                await :2:ms
+                await 2:ms
             }
         """)
         val parser = Parser(l)
         //parser.expr()
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 12) : expected \"{\" : have end of file")
-        //assert(trap { parser.expr() } == "anon : (lin 4, col 13) : expected tag : have \"}\"")
-        //assert(trap { parser.expr() } == "anon : (lin 4, col 13) : expected \"{\" : have \"}\"")
-        assert(trap { parser.expr() } == "anon : (lin 3, col 25) : expected \"{\" : have \":ms\"")
+        assert(trap { parser.expr() } == "anon : (lin 3, col 24) : expected \"{\" : have \":ms\"")
     }
     @Test
     fun jd_02_clock_err() {
         val l = lexer("""
             spawn {
-                await :10:min:10:ms
+                await <10:min, 10:z>
             }
         """)
         val parser = Parser(l)
-        //val e = parser.expr()
-        //println(e.tostr())
-        assert(trap { parser.expr() } == "anon : (lin 3, col 26) : expected \"{\" : have \":min\"")
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 12) : expected \"{\" : have end of file")
-        //assert(trap { parser.expr() } == "anon : (lin 4, col 13) : expected tag : have \"}\"")
-        //assert(trap { parser.expr() } == "anon : (lin 4, col 13) : expected \"{\" : have \"}\"")
+        assert(trap { parser.expr() } == "anon : (lin 3, col 34) : invalid clock unit : unexpected \":z\"")
+    }
+    @Test
+    fun jd_03_clock() {
+        val l = lexer("""
+            spawn {
+                await <10:min, x:s>
+            }
+        """)
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "(spawn (task :nested () {\n" +
+                "do {\n" +
+                "(var (ceu_clk_16) = {{+}}({{*}}(10,60000),{{*}}(x,1000)))\n" +
+                "loop {\n" +
+                "(val (ceu_evt_16 :Clock) = yield())\n" +
+                "if is'(ceu_evt_16,:Clock) {\n" +
+                "(set ceu_clk_16 = {{-}}(ceu_clk_16,ceu_evt_16[:ms]))\n" +
+                "} else {\n" +
+                "nil\n" +
+                "}\n" +
+                "(break if {{<=}}(ceu_clk_16,0))\n" +
+                "}\n" +
+                "delay\n" +
+                "}\n" +
+                "})())") { e.tostr() }
     }
 
     // TOGGLE

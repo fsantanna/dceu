@@ -151,35 +151,6 @@ class Parser (lexer_: Lexer)
         return true
     }
 
-    fun patt_clk (): Clock? {
-        val unis = listOf(":h", ":min", ":s", ":ms")
-        if (!this.checkEnu("Tag") ||  !unis.contains(this.tk1.str)) {
-            return null
-        }
-
-        this.acceptEnu_err("Tag")
-        val tag = this.tk0 as Tk.Tag
-
-        fun Tk.Tag.tonum(): Expr {
-            val s = this.str.drop(1)
-            val n = s.toIntOrNull()
-            return if (n != null) {
-                Expr.Num(Tk.Num(s, this.pos))
-            } else {
-                Expr.Acc(Tk.Id(s, this.pos))
-            }
-        }
-
-        val l = mutableListOf(Pair(this.tk0 as Tk.Tag, tag.tonum()))
-        while (this.acceptEnu("Tag")) {
-            val t = this.tk0 as Tk.Tag
-            this.acceptEnu_err("Tag")
-            assert(unis.contains(this.tk0.str))
-            l.add(Pair(this.tk0 as Tk.Tag, t.tonum()))
-        }
-        return l
-    }
-
     fun patt_one (xit: Tk.Id): Patt {
         return when {
             // (== 10)
@@ -239,7 +210,7 @@ class Parser (lexer_: Lexer)
         return if (!this.acceptFix("(")) {
             listOf(patt_one(xit))
         } else {
-            val ret = list0(")", ",") {
+            val ret = list0(",", ")") {
                 val x = patt_one(if (one) xit else Tk.Id("ceu_$N",xit.pos))
                 one = false
                 x
@@ -260,9 +231,13 @@ class Parser (lexer_: Lexer)
         }
     }
 
-    fun <T> list0 (close: String, sep: String?, func: ()->T): List<T> {
+    fun <T> list0 (sep: String?, close: String, func: () -> T): List<T> {
+        return list0(sep, {this.checkFix(close)}, func)
+
+    }
+    fun <T> list0 (sep: String?, close: ()->Boolean, func: () -> T): List<T> {
         val l = mutableListOf<T>()
-        while (!this.checkFix(close)) {
+        while (!close()) {
             l.add(func())
             if (sep!=null && !this.acceptFix(sep)) {
                 break
@@ -343,7 +318,7 @@ class Parser (lexer_: Lexer)
     // yield, tuple, vector, call, *list*
     fun args (clo: String): Expr.Args {
         val tk0 = this.tk0 as Tk.Fix
-        val args = list0(clo,",") {
+        val args = list0(",", clo) {
             if (this.acceptFix("...")) {
                 this.checkFix_err(clo)
                 null
@@ -374,7 +349,7 @@ class Parser (lexer_: Lexer)
                 val par = this.acceptFix("(")
                 val fst = this.id_tag()
                 val lst1 = listOf(fst) + if (!par || !this.acceptFix(",")) emptyList() else {
-                    this.list0(")", ",") { this.id_tag() }
+                    this.list0(",", ")") { this.id_tag() }
                 }
                 if (par) {
                     this.acceptFix_err(")")
@@ -504,7 +479,7 @@ class Parser (lexer_: Lexer)
                 val par = this.acceptFix("(")
                 val fst = if (this.checkEnu("Id")) this.id_tag() else Pair(Tk.Id("it",this.tk0.pos),null)
                 val lst = listOf(fst) + if (!par || !this.acceptFix(",")) emptyList() else {
-                    this.list0(")", ",") { this.id_tag() }
+                    this.list0(",", ")") { this.id_tag() }
                 }
                 if (par) {
                     this.acceptFix_err(")")
@@ -591,7 +566,7 @@ class Parser (lexer_: Lexer)
                     if (this.acceptEnu("Id")) this.tk0 else null
                 }
                 this.acceptFix_err("(")
-                val pars = this.list0(")",",") {
+                val pars = this.list0(",", ")") {
                     if (this.acceptFix("...")) {
                         this.checkFix_err(")")
                         null
@@ -628,7 +603,7 @@ class Parser (lexer_: Lexer)
             this.acceptFix("enum") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("{")
-                val tags = this.list0("}",",") {
+                val tags = this.list0(",", "}") {
                     this.acceptEnu_err("Tag")
                     val tag = this.tk0 as Tk.Tag
                     val nat = if (!this.acceptFix("=")) null else {
@@ -651,7 +626,7 @@ class Parser (lexer_: Lexer)
                     }
                     this.acceptFix_err("=")
                     this.acceptFix_err("[")
-                    val (ids,dtss) = this.list0("]",",") {
+                    val (ids,dtss) = this.list0(",", "]") {
                         val id = if (this.acceptEnu("Fix")) {
                             if (!KEYWORDS.contains(this.tk0.str)) {
                                 err(this.tk0, "invalid field : unexpected \"${this.tk0.str}\"")
@@ -837,7 +812,7 @@ class Parser (lexer_: Lexer)
                 val args = this.args("]")
                 Expr.Vector(tk0, args)
             }
-            this.acceptFix("@[")    -> Expr.Dict(this.tk0 as Tk.Fix, list0("]",",") {
+            this.acceptFix("@[")    -> Expr.Dict(this.tk0 as Tk.Fix, list0(",", "]") {
                 val tk1 = this.tk1
                 val k = if (this.acceptEnu("Id")) {
                     val e = Expr.Tag(Tk.Tag(':' + tk1.str, tk1.pos))
@@ -893,7 +868,7 @@ class Parser (lexer_: Lexer)
             (CEU>=99 && this.acceptFix("ifs")) -> {
                 val tk0 = this.tk0
                 this.acceptFix_err("{")
-                val ifs = list0("}",null) {
+                val ifs = list0(null, "}") {
                     val cnd = when {
                         this.acceptFix("do") -> null
                         this.acceptFix("else") -> Expr.Bool(Tk.Fix("true",this.tk0.pos))
@@ -936,7 +911,7 @@ class Parser (lexer_: Lexer)
                     err(xv.tk, "match error : unexpected \"...\"")
                 }
                 this.acceptFix_err("{")
-                val ifs = list0("}",null) {
+                val ifs = list0(null, "}") {
                     var xdo = false
                     val cnds = when {
                         this.acceptFix("else") -> {
@@ -1042,10 +1017,20 @@ class Parser (lexer_: Lexer)
             (CEU>=99 && this.acceptFix("await")) -> {
                 val par = this.acceptFix("(")
                 val pre = this.tk0.pos.pre()
-                val clk = patt_clk()
                 when {
-                    (clk != null) -> {
-                        val xclk = clk.map { (tag, e) ->
+                    this.acceptOp("<") -> {
+                        val us = listOf(":h", ":min", ":s", ":ms")
+                        val l = list0(",", {this.checkOp(">")}) {
+                            val e = this.expr()
+                            this.acceptEnu_err("Tag")
+                            val u = this.tk0 as Tk.Tag
+                            if (!us.contains(u.str)) {
+                                err(u, "invalid clock unit : unexpected \"${u.str}\"")
+                            }
+                            Pair(u,e)
+                        }
+                        this.acceptOp_err(">")
+                        val clk = l.map { (tag, e) ->
                             val s = e.tostr(true)
                             "(" + when (tag.str) {
                                 ":h" -> "($s * ${1000 * 60 * 60})"
@@ -1054,10 +1039,10 @@ class Parser (lexer_: Lexer)
                                 ":ms" -> "($s * ${1})"
                                 else -> error("impossible case")
                             }
-                        }.joinToString("+") + (")").repeat(clk.size)
+                        }.joinToString("+") + (")").repeat(l.size)
                         val ret = this.nest("""
                             do {
-                                var ceu_clk_$N = $xclk
+                                var ceu_clk_$N = $clk
                                 loop {
                                     val ceu_evt_$N :Clock = ${pre}yield()
                                     if ceu_evt_$N is? :Clock {

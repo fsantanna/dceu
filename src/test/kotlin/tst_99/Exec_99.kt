@@ -4224,7 +4224,7 @@ class Exec_99 {
     fun km_08_every_clk() {
         val out = test("""
             spawn task () {
-                every :10:s {
+                every <10:s> {
                     println(10)
                 }
             }()
@@ -4242,7 +4242,7 @@ class Exec_99 {
     fun TODO_km_09_every_clk_multi() { // awake twice from single bcast
         val out = test("""
             spawn task () {
-                every :10:s {
+                every <10:s> {
                     println(10)
                 }
             }()
@@ -4257,7 +4257,7 @@ class Exec_99 {
         val out = test("""
             spawn task () {
                 loop {
-                    await (:10:s)
+                    await <10:s>
                     println(999)
                 }
             }()
@@ -4278,7 +4278,7 @@ class Exec_99 {
             $IS ; $PLUS ; $MULT ; $COMP
             data :Clock = [ms]
             spawn {
-                await (:2:ms)
+                await <2:ms>
                 println(:ok)
             }
             println(:0)
@@ -4296,7 +4296,7 @@ class Exec_99 {
             data :Clock = [ms]
             spawn {
                 var x = 10
-                every :x:ms {
+                every <x:ms> {
                     println(:x, x)
                     set x = x - 1
                 }
@@ -4519,7 +4519,7 @@ class Exec_99 {
     fun ll_02_watching() {
         val out = test("""
             spawn {
-                watching :100:ms {
+                watching <100:ms> {
                     every |false {
                     }
                 }
@@ -4531,7 +4531,7 @@ class Exec_99 {
     fun ll_03_watching_clk() {
         val out = test("""
             spawn {
-                watching :10:s {
+                watching <10:s> {
                     defer { println(10) }
                     await (|false)
                     println(1)
