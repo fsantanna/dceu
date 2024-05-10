@@ -37,7 +37,7 @@ class Tags (outer: Expr.Call) {
                 if (it.first.str.contains('.')) {
                     err(it.first, "enum error : enum tag cannot contain '.'")
                 }
-                var E = ""
+                var E = "1000"
                 var I = 0
                 this.tags.forEach { (tag,nat) ->
                     val n = if (nat == null) {

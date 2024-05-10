@@ -1567,6 +1567,15 @@ class Exec_01 {
         """)
         assert(out.contains("ceux_vector: Assertion `v.type != CEU_VALUE_NIL' failed")) { out }
     }
+    @Test
+    fun BUG_ee_18_vector_f() {
+        val out = test("""
+            func f () { ('z',0) }
+            val t = #['a', (f())]   ;; need way to adjust arity to 1
+            println(t)
+        """)
+        assert(out.contains("ceux_vector: Assertion `v.type != CEU_VALUE_NIL' failed")) { out }
+    }
 
     // STRINGS / CHAR
 
@@ -4636,6 +4645,16 @@ class Exec_01 {
         """
         )
         assert(out == "anon : (lin 3, col 17) : enum error : enum tag cannot contain '.'\n") { out }
+    }
+    @Test
+    fun enum04() {
+        val out = test(
+            """
+            enum { :x, :y }
+            println(:ok)
+        """
+        )
+        assert(out == ":ok\n") { out }
     }
 
     // CLOSURE / ESCAPE / FUNC / UPVALS
