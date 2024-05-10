@@ -206,10 +206,7 @@ class Parser (lexer_: Lexer)
                 } else {
                     xit
                 }
-                val xid = id.str
-
                 val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
-
                 val cnd = if (CEU<99 || this.checkOp("|")) {
                     this.acceptOp_err("|")
                     this.expr()
@@ -1010,7 +1007,7 @@ class Parser (lexer_: Lexer)
                                 val (idtag,_) = pat
                                 Pair (
                                     idtag.cond { "val ${it.tostr(true)} = ceu_${n}_$i"},
-                                    pat.tostr(true)
+                                    pat.code()
                                 )
                             }.unzip()
                             """
