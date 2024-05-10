@@ -9,7 +9,7 @@ fun Clock.tostr (pre: Boolean): String {
 
 fun Patt.tostr (pre: Boolean = false): String {
     val (idtag,cnd) = this
-    return "(${idtag.tostr(pre)} ${cnd.cond { "| " + it.tostr(pre) }})"
+    return "(${idtag.tostr(pre)} | ${cnd.cond2({it.tostr(pre)},{"true"})})"
 }
 
 class Parser (lexer_: Lexer)
@@ -197,9 +197,14 @@ class Parser (lexer_: Lexer)
                 Pair(Pair(xit, null), this.nest(call))
             }
 
-            // TODO: vai virar else
+            // const
+            (CEU>=99 && (this.checkFix("nil") || this.checkFix("false") || this.checkFix("true") || this.checkEnu("Chr") || this.checkEnu("Num"))) -> {
+                val e = this.expr()
+                Pair(Pair(xit, null), this.nest("${xit.str} === ${e.tostr(true)}"))
+            }
+
             // (id :Tag | cnd)
-            (CEU<99 || (this.checkEnu("Id") || this.checkEnu("Tag") || this.checkOp("|"))) -> {
+            else -> {
                 val id = if (CEU<99 || this.checkEnu("Id")) {
                     this.acceptEnu_err("Id")
                     this.tk0 as Tk.Id
@@ -214,19 +219,6 @@ class Parser (lexer_: Lexer)
                     null
                 }
                 Pair(Pair(id,tag), cnd)
-            }
-
-            else -> {
-                TODO("vai virar pattern")
-                val e = this.expr()
-                when {
-                    // 10
-                    // [1,2]
-                    e.is_constructor() -> {
-                        Pair(Pair(xit, null), this.nest("${xit.str} === ${e.tostr(true)}"))
-                    }
-                    else -> err(this.tk1, "invalid pattern : unexpected \"${this.tk1.str}\"") as Pair<Id_Tag, Expr>
-                }
             }
         }
     }
@@ -946,10 +938,9 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("{")
                 val ifs = list0("}",null) {
                     var xdo = false
-                    val xit = Tk.Id("it",this.tk0.pos)
                     val cnds = when {
                         this.acceptFix("else") -> {
-                            listOf(Pair(Pair(xit,null), Expr.Bool(Tk.Fix("true",this.tk0.pos))))
+                            listOf(Pair(Pair(Tk.Id("ceu_$N",this.tk0.pos),null), Expr.Bool(Tk.Fix("true",this.tk0.pos))))
                         }
                         this.acceptFix("do") -> {
                             xdo = true
@@ -966,7 +957,7 @@ class Parser (lexer_: Lexer)
                                     false
                                 }
                             """)
-                            listOf(Pair(Pair(if (id==null) xit else id, tag), cnd))
+                            listOf(Pair(Pair(if (id==null) Tk.Id("it",this.tk0.pos) else id, tag), cnd))
                         }
                         else -> {
                             this.patts()
