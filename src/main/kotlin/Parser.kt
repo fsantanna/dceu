@@ -189,12 +189,7 @@ class Parser (lexer_: Lexer)
                 // (id, cnd)
                 else -> {
                     this.acceptOp_err("|")
-                    val cnd = if (this.checkFix(")") || this.checkFix("{") || this.checkFix("=>")) {
-                        this.nest("true")
-                    } else {
-                        this.expr()
-                    }
-                    Pair(Pair(id, null), cnd)
+                    Pair(Pair(id, null), this.expr())
                 }
             }
         }

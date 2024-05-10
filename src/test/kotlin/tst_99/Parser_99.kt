@@ -1461,4 +1461,29 @@ class Parser_99 {
                 "(data :A.B.C = [])\n" +
                 "}") { e.tostr() }
     }
+
+    // PATT
+
+    @Test
+    fun ww_01_patt() {
+        val l = tst_01.lexer(
+            """
+            ()
+        """
+        )
+        val parser = Parser(l)
+        val p = parser.patt()
+        assert(p.tostr() == "(it | true)") { p.tostr() }
+    }
+    @Test
+    fun ww_02_patt() {
+        val l = tst_01.lexer(
+            """
+            (it)
+        """
+        )
+        val parser = Parser(l)
+        val p = parser.patt()
+        assert(p.tostr() == "(it | true)") { p.tostr() }
+    }
 }
