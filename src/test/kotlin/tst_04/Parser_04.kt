@@ -155,7 +155,7 @@ class Parser_04 {
             broadcast (nil) in nil,
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 0) : expected expression : have \",\"")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 35) : expected expression : have \",\"")
     }
     @Test
     fun cc_05_bcast_err() {

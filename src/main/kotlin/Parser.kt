@@ -158,7 +158,7 @@ class Parser (lexer_: Lexer)
         return true
     }
 
-    fun patt_one (par: Boolean, xit: Tk.Id): Patt {
+    fun patt_one (xit: Tk.Id): Patt {
         fun fid (): Pair<Id_Tag,Expr> {
             // (id
             this.acceptEnu_err("Id")
@@ -198,10 +198,6 @@ class Parser (lexer_: Lexer)
             fid()
         } else {
             when {
-                // ()
-                (par && this.checkFix(")")) -> {
-                    Pair(Pair(xit, null), this.nest("true"))
-                }
                 // (|cnd)
                 (this.acceptOp("|")) -> {
                     val cnd = this.expr()
@@ -279,7 +275,7 @@ class Parser (lexer_: Lexer)
     fun patt (): Patt {
         val xit = Tk.Id("it",this.tk0.pos)
         val par = this.acceptFix("(")
-        val ret = patt_one(par, xit)
+        val ret = patt_one(xit)
         if (par) {
             this.acceptFix_err(")")
         }
@@ -290,10 +286,10 @@ class Parser (lexer_: Lexer)
         val xit = Tk.Id("it",this.tk0.pos)
         var one = true  // single or multi pattern?
         return if (!this.acceptFix("(")) {
-            listOf(patt_one(false, xit))
+            listOf(patt_one(xit))
         } else {
             val ret = list0(")", ",") {
-                val x = patt_one(true, if (one) xit else Tk.Id("ceu_$N",xit.pos))
+                val x = patt_one(if (one) xit else Tk.Id("ceu_$N",xit.pos))
                 one = false
                 x
             }
@@ -1095,9 +1091,18 @@ class Parser (lexer_: Lexer)
                 }
 
                 val pre = this.tk0.pos.pre()
-                val par = this.checkFix("(")
-                val (idtag, cnd) = this.patt()
-                if (!par) {
+                val par = this.acceptFix("(")
+                val (idtag, cnd) = if (par && checkFix(")")) {
+                    Pair (
+                        Pair(Tk.Id("it",this.tk0.pos), null),
+                        Expr.Bool(Tk.Fix("true",this.tk0.pos))
+                    )
+                } else {
+                    this.patt()
+                }
+                if (par) {
+                    this.acceptFix_err(")")
+                } else {
                     this.checkFix_err("{")
                 }
                 val cnt = if (!this.checkFix("{")) null else this.block().es

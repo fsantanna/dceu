@@ -5895,7 +5895,7 @@ class Exec_99 {
             spawn {
                 loop {
                     await (10)
-                    broadcast(tag(:pause| [])) in :global 
+                    broadcast(tag(:pause, [])) in :global 
                     watching 10 {
                         await(|false)
                     }

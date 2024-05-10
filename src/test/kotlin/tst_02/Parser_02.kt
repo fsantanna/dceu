@@ -60,8 +60,8 @@ class Parser_02 {
         val out = test("""
             catch ( x |  )
         """)
-        //assert(out == "anon : (lin 2, col 26) : expected expression : have \")\"\n") { out }
-        assert(out == "anon : (lin 3, col 9) : expected \"{\" : have end of file\n") { out }
+        assert(out == "anon : (lin 2, col 26) : expected expression : have \")\"\n") { out }
+        //assert(out == "anon : (lin 3, col 9) : expected \"{\" : have end of file\n") { out }
     }
     @Test
     fun cc_05_as() {

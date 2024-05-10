@@ -324,13 +324,13 @@ class Parser_99 {
     fun ee_05_ifs() {
         val l = lexer("match v { a => it }")
         val parser = Parser(l)
-        //val e = parser.expr()
+        val e = parser.expr()
         //assert(e.tostr() == "}") { e.tostr() }
         assert(trap { parser.expr() } == "anon : (lin 1, col 13) : expected \",\" : have \"=>\"")
     }
     @Test
     fun ee_06_ifs() {
-        val l = lexer("match v { (,a) {1} (,b)=>v else{0} }")
+        val l = lexer("match v { (|a) {1} (|b)=>v else{0} }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
@@ -431,7 +431,7 @@ class Parser_99 {
     }
     @Test
     fun ee_10_ifs() {
-        val l = lexer("match v { x, => 10 }")
+        val l = lexer("match v { x => 10 }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
@@ -625,10 +625,10 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(val (ceu_14) = to.iter(f))\n" +
+                "(val (ceu_14 :Iterator) = to-iter(f))\n" +
                 "loop {\n" +
-                "(val (x) = ceu_14[0](ceu_14))\n" +
-                "(break(nil) if {{==}}(x,nil))\n" +
+                "(val (x) = ceu_14[:f](ceu_14))\n" +
+                "(break(nil) if {{==}}(ceu_14[:f],nil))\n" +
                 "x\n" +
                 "}\n" +
                 "}") { e.tostr() }
@@ -751,7 +751,7 @@ class Parser_99 {
         val l = lexer("catch (x:s) {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (x :s, is'(x,:s)) {\n" +
+        assert(e.tostr() == "catch (x :s | is'(x,:s)) {\n" +
                 "\n" +
                 "}") { e.tostr() }
         //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch error : invalid condition")
@@ -770,26 +770,26 @@ class Parser_99 {
     fun fg_01_catch() {
         val l = lexer("catch () {}")
         val parser = Parser(l)
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 8) : expected expression : have \")\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : expected expression : have \")\"")
         //assert(trap { parser.expr() } == "anon : (lin 1, col 8) : pattern error : unexpected \")\"")
-        val e = parser.expr()
-        assert(e.tostr() == "catch (it, true) {\n" + "\n" + "}") { e.tostr() }
+        //val e = parser.expr()
+        //assert(e.tostr() == "catch (it, true) {\n" + "\n" + "}") { e.tostr() }
     }
     @Test
     fun fg_02_catch() {
         val l = lexer("catch {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (ceu_5, true) {\n" +
+        assert(e.tostr() == "catch (ceu_5 | true) {\n" +
                 "\n" +
                 "}") { e.tostr() }
     }
     @Test
     fun fg_03_catch() {
-        val l = lexer("catch (x:X, x) {}")
+        val l = lexer("catch (x:X | x) {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (x :X, do {\n" +
+        assert(e.tostr() == "catch (x :X | do {\n" +
                 "(val (ceu_34) = is'(x,:X))\n" +
                 "if ceu_34 {\n" +
                 "x\n" +
@@ -805,26 +805,26 @@ class Parser_99 {
         val l = lexer("catch (x:X) {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (x :X, is'(x,:X)) {\n" +
+        assert(e.tostr() == "catch (x :X | is'(x,:X)) {\n" +
                 "\n" +
                 "}") { e.tostr() }
         //assert(trap { parser.expr() } == "anon : (lin 1, col 8) : catch error : innocuous identifier")
     }
     @Test
     fun fg_05_catch() {
-        val l = lexer("catch (x,z) {}")
+        val l = lexer("catch (x|z) {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (x, z) {\n" +
+        assert(e.tostr() == "catch (x | z) {\n" +
                 "\n" +
                 "}") { e.tostr() }
     }
     @Test
     fun fg_06_catch() {
-        val l = lexer("catch (:X,z) {}")
+        val l = lexer("catch (:X|z) {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (it :X, do {\n" +
+        assert(e.tostr() == "catch (it :X | do {\n" +
                 "(val (ceu_33) = is'(it,:X))\n" +
                 "if ceu_33 {\n" +
                 "z\n" +
@@ -840,27 +840,27 @@ class Parser_99 {
         val l = lexer("catch :X {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (it :X, is'(it,:X)) {\n" +
+        assert(e.tostr() == "catch (it :X | is'(it,:X)) {\n" +
                 "\n" +
                 "}") { e.tostr() }
     }
     @Test
     fun fg_08_catch() {
-        val l = lexer("catch (,x) {}")
+        val l = lexer("catch (|x) {}")
         val parser = Parser(l)
         //assert(trap { parser.expr() } == "anon : (lin 1, col 9) : invalid pattern : expected \",\"")
         //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch error : innocuous identifier")
         val e = parser.expr()
-        assert(e.tostr() == "catch (it, x) {\n" +
+        assert(e.tostr() == "catch (it | x) {\n" +
                 "\n" +
                 "}") { e.tostr() }
     }
     @Test
     fun fg_09_catch() {
-        val l = lexer("catch (,it>1) {}")
+        val l = lexer("catch (|it>1) {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (it, {{>}}(it,1)) {\n" +
+        assert(e.tostr() == "catch (it | {{>}}(it,1)) {\n" +
                 "\n" +
                 "}") { e.tostr() }
     }
@@ -1343,7 +1343,8 @@ class Parser_99 {
     fun tt_04_dot_err() {
         val l = lexer("x . .")
         val parser = Parser(l)
-        assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected identifier : have \".\"")
+        //assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected identifier : have \".\"")
+        assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : invalid field : unexpected \".\"")
     }
 
     // CONSTRUCTOR
@@ -1466,7 +1467,7 @@ class Parser_99 {
 
     @Test
     fun ww_01_patt() {
-        val l = tst_01.lexer(
+        val l = lexer(
             """
             ()
         """
@@ -1477,9 +1478,36 @@ class Parser_99 {
     }
     @Test
     fun ww_02_patt() {
-        val l = tst_01.lexer(
+        val l = lexer(
             """
             (it)
+        """
+        )
+        val parser = Parser(l)
+        val p = parser.patt()
+        assert(p.tostr() == "(it | true)") { p.tostr() }
+    }
+    @Test
+    fun ww_03_patt() {
+        val l = lexer("""
+            (it|)
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 2, col 17) : expected expression : have \")\"")
+    }
+    @Test
+    fun ww_04_patt() {
+        val l = lexer("""
+            (|)
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 2, col 15) : expected expression : have \")\"")
+    }
+    @Test
+    fun ww_05_patt() {
+        val l = lexer(
+            """
+            (|true)
         """
         )
         val parser = Parser(l)
