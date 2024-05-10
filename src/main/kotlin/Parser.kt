@@ -260,14 +260,14 @@ class Parser (lexer_: Lexer)
         }
     }
 
-    fun Patt.code (): Expr {
+    fun Patt.code (): String {
         val (idtag, cnd) = this
         val (id,tag) = idtag
         return when {
-            (tag!=null && cnd!=null) -> nest("(${id.str} is? ${tag.str}) and ${cnd.tostr(true)}")
-            (tag != null) -> nest("${id.str} is? ${tag.str}")
-            (cnd != null) -> cnd
-            else -> Expr.Bool(Tk.Fix("true",id.pos))
+            (tag!=null && cnd!=null) -> "(${id.str} is? ${tag.str}) and ${cnd.tostr(true)}"
+            (tag != null) -> "${id.str} is? ${tag.str}"
+            (cnd != null) -> cnd.tostr(true)
+            else -> "true"
         }
     }
 
@@ -712,7 +712,7 @@ class Parser (lexer_: Lexer)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val patt = when {
+                val pat = when {
                     (CEU < 99) -> {
                         this.checkFix_err("(")
                         this.patt()
@@ -724,13 +724,13 @@ class Parser (lexer_: Lexer)
                         this.patt()
                     }
                 }
-                val (idtag,_) = patt
+                val (idtag,cnd) = pat
                 val blk = this.block()
                 val xcnd = this.nest("""
                     do {
                         ;; [pay,err,blk]
                         val ${idtag.tostr(true)} = `:ceu ceux_peek(X->S, XX(-1-1-1))`
-                        ${patt.code()}
+                        ${(CEU < 99).cond2({cnd!!.tostr()},{pat.code()})}
                     }
                 """)
                 Expr.Catch(tk0, xcnd as Expr.Do, blk)
