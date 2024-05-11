@@ -158,11 +158,13 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun patt_one (): Patt {
+    fun patt (): Patt {
         // Patt : (id :Tag | cnd)
         //      | (id :Tag [{<Patt>,}] | cnd)
         //      | (id :Tag <op> <expr> | cnd)
         //      | (id :Tag <const> | cnd)
+
+        val par = this.acceptFix("(")
 
         val id = if (CEU<99 || this.checkEnu("Id")) {
             this.acceptEnu_err("Id")
@@ -173,7 +175,7 @@ class Parser (lexer_: Lexer)
 
         val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
 
-        return when {
+        val ret = when {
             (CEU<99 || this.checkOp("|")) -> {
                 this.acceptOp_err("|")
                 val cnd = this.expr()
@@ -216,11 +218,7 @@ class Parser (lexer_: Lexer)
                 Pair(Pair(id, tag), Expr.Bool(Tk.Fix("true",this.tk0.pos)))
             }
         }
-    }
 
-    fun patt (): Patt {
-        val par = this.acceptFix("(")
-        val ret = patt_one()
         if (par) {
             this.acceptFix_err(")")
         }
