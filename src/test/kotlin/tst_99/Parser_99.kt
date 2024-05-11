@@ -1544,4 +1544,44 @@ class Parser_99 {
         val p = parser.patt()
         assert(Patts_Any_tostr(p) == "(it | true)") { Patts_Any_tostr(p) }
     }
+
+    // PATTS
+
+    @Test
+    fun wa_01_patts() {
+        val l = lexer("""
+            [1,xy,3]
+        """)
+        val parser = Parser(l)
+        val p = parser.patts()
+        assert(Patts_Any_tostr(p) == "[[(it | {{===}}(it,1)),(xy | true),(it | {{===}}(it,3))]]") { Patts_Any_tostr(p) }
+    }
+    @Test
+    fun wa_02_patts() {
+        val l = lexer("""
+            ([x,[y]], :T)
+        """)
+        val parser = Parser(l)
+        val p = parser.patts()
+        assert(Patts_Any_tostr(p) == "[[(x | true),[(y | true)]],(ceu_14 :T | true)]") { Patts_Any_tostr(p) }
+        // a saida usa [] em vez de ()
+        // no codigo mesmo, sabemos quando patts eh chamado,
+        // e nao trateremos como tupla, mas como lista
+    }
+    @Test
+    fun wa_03_match() {
+        val l = lexer("match nil { [10] => nil }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "(val (ceu_16_0) = nil)\n" +
+                "(val (ceu_9) = ceu_16_0)\n" +
+                "(val (ceu_16) = true)\n" +
+                "if ceu_16 {\n" +
+                "it\n" +
+                "} else {\n" +
+                "\n" +
+                "}\n" +
+                "}") { e.tostr() }
+    }
 }

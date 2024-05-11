@@ -911,6 +911,154 @@ class Exec_99 {
         assert(out == ":ok\n:ok\n") { out }
     }
 
+    // PATTS / TUPLES
+
+    @Test
+    fun REM_00() {
+        val out = test("""
+            
+            x :X ==10 | ...
+            x :X | ...
+            x :X [] | ...
+            
+            match nil {
+                [10]  => error()
+            }
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun fj_01() {
+        val out = test("""
+            match [1,2] {
+                [10,x]  => error()
+                [1,2,3] => error()
+                [1,2]   => println(:ok)
+            }
+            
+            val t = [1,2]
+            if t[0]==10 {
+                val x = t[1]
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun fj_02() {
+        val out = test("""
+            match [1,2] {
+                [1] => println(:ok)
+            }
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun fj_03() {
+        val out = test("""
+            match [1,2] {
+                [x] => println(x)
+            }
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun fj_04() {
+        val out = test("""
+            match [1,2] {
+                [x,|false] => error()
+                [|it==1,y] => println(y)
+            }
+        """)
+        assert(out == "2\n") { out }
+    }
+    @Test
+    fun fj_05() {
+        val out = test("""
+            match :X [] {
+                :X [1] => error()
+                :Y []  => error()
+                :X []  => println(:ok)
+            }
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun fj_06() {
+        val out = test("""
+            match [1,[:x,:y],2] {
+                [1,xy,3]    => error()
+                [1,[x,y],2] => println(x,y)
+            }
+        """)
+        assert(out == ":ok\n") { out }
+    }
+
+    // PATTS / SET
+
+    @Test
+    fun fk_01() {
+        val out = test("""
+            var (x,y,z,w)
+            set (x,y) = (1,2,3)
+            set (z,w) = 4
+            println(x,y,z,w)
+        """)
+        assert(out == "1\t2\t3\tnil\n") { out }
+    }
+    @Test
+    fun fk_02() {
+        val out = test("""
+            var x
+            set [x] = [10]
+            println(x)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun fk_03() {
+        val out = test("""
+            var x
+            set (x|true) = 1
+            println(x)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun fk_04() {
+        val out = test("""
+            var x
+            set (x|false) = 1
+            println(x)
+        """)
+        assert(out == "ERROR\n") { out }
+    }
+    @Test
+    fun fk_05() {
+        val out = test("""
+            var x
+            set [x] = 1
+            println(x)
+        """)
+        assert(out == "ERROR\n") { out }
+    }
+    @Test
+    fun fk_06() {
+        val out = test("""
+            var x
+            set [x|x>0] = 1
+            println(x)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun fk_07() {
+        val out = test("""
+            var x
+            set [x|x<0] = 1
+            println(x)
+        """)
+        assert(out == "ERROR\n") { out }
+    }
+
     // CATCH
 
     @Test

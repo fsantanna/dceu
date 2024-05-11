@@ -1,7 +1,7 @@
 package dceu
 
 typealias Clock = List<Pair<Tk.Tag,Expr>>
-typealias Patt  = Pair<Id_Tag,Expr?>
+typealias Patt  = Pair<Id_Tag,Expr>
 
 class Parser (lexer_: Lexer)
 {
@@ -158,7 +158,11 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun patt_one (xit: Tk.Id): Any {
+    fun patt_one (xit: Tk.Id): Patt {
+        // Patt : (id :Tag | cnd)
+        //      | (id :Tag [{<Patt>,}] | cnd)
+        //      | (id :Tag <op> <expr> | cnd)
+        //      | (id :Tag <const> | cnd)
         return when {
             // (== 10)
             // ({{even?}})
@@ -182,6 +186,7 @@ class Parser (lexer_: Lexer)
             }
 
             // [...]
+            /*
             (CEU>=99 && this.acceptFix("[")) -> {
                 val l = this.list0(",","]") {
                     this.patt_one(xit)
@@ -189,6 +194,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("]")
                 l
             }
+             */
 
             // (id :Tag | cnd)
             else -> {
@@ -203,7 +209,7 @@ class Parser (lexer_: Lexer)
                     this.acceptOp_err("|")
                     this.expr()
                 } else {
-                    null
+                    Expr.Bool(Tk.Fix("true",this.tk0.pos))
                 }
                 Pair(Pair(id,tag), cnd)
             }
