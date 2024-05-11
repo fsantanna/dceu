@@ -1055,7 +1055,7 @@ class Parser_01 {
         """)
         val parser = Parser(l)
         val p = parser.patt()
-        assert(p.tostr() == "(x | true)") { p.tostr() }
+        assert(Patts_Any_tostr(p) == "(x | true)") { Patts_Any_tostr(p) }
     }
     @Test
     fun xx_05_patt () {
@@ -1064,6 +1064,6 @@ class Parser_01 {
         """)
         val parser = Parser(l)
         val p = parser.patt()
-        assert(p.tostr() == "(x :X | nil)") { p.tostr() }
+        assert(Patts_Any_tostr(p) == "(x :X | nil)") { Patts_Any_tostr(p) }
     }
 }

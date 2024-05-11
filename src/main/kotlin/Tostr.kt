@@ -35,15 +35,14 @@ fun Patt.tostr (pre: Boolean = false): String {
     return "(${idtag.tostr(pre)} | ${cnd.cond2({it.tostr(pre)},{"true"})})"
 }
 
-@JvmName("List_tostr")
-fun List<Any>.tostr (pre: Boolean = false): String {
-    return "[" + this.map {
-        when (it) {
-            is List<*>   -> (it as List<Any>).tostr(pre)
-            is Pair<*,*> -> (it as Patt).tostr(pre)
-            else -> error("bug found")
-        }
-    }.joinToString(",") + "]"
+fun Patts_Any_tostr (any: Any, pre: Boolean = false): String {
+    return when (any) {
+        is List<*>   -> "[" + (any as List<Any>).map {
+            Patts_Any_tostr(it,pre)
+        }.joinToString(",") + "]"
+        is Pair<*,*> -> (any as Patt).tostr(pre)
+        else -> error("bug found")
+    }
 }
 
 fun Expr.tostr (pre: Boolean = false): String {

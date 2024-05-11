@@ -1506,7 +1506,7 @@ class Parser_99 {
         )
         val parser = Parser(l)
         val p = parser.patt()
-        assert(p.tostr() == "(it | true)") { p.tostr() }
+        assert(Patts_Any_tostr(p) == "(it | true)") { Patts_Any_tostr(p) }
     }
     @Test
     fun ww_02_patt() {
@@ -1517,7 +1517,7 @@ class Parser_99 {
         )
         val parser = Parser(l)
         val p = parser.patt()
-        assert(p.tostr() == "(it | true)") { p.tostr() }
+        assert(Patts_Any_tostr(p) == "(it | true)") { Patts_Any_tostr(p) }
     }
     @Test
     fun ww_03_patt() {
@@ -1542,6 +1542,6 @@ class Parser_99 {
         """)
         val parser = Parser(l)
         val p = parser.patt()
-        assert(p.tostr() == "(it | true)") { p.tostr() }
+        assert(Patts_Any_tostr(p) == "(it | true)") { Patts_Any_tostr(p) }
     }
 }
