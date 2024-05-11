@@ -158,31 +158,47 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun patt_one (xit: Tk.Id): Patt {
+    fun patt_one (): Patt {
         // Patt : (id :Tag | cnd)
         //      | (id :Tag [{<Patt>,}] | cnd)
         //      | (id :Tag <op> <expr> | cnd)
         //      | (id :Tag <const> | cnd)
+
+        val id = if (CEU<99 || this.checkEnu("Id")) {
+            this.acceptEnu_err("Id")
+            this.tk0 as Tk.Id
+        } else {
+            Tk.Id("it", this.tk0.pos)
+        }
+
+        val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
+
         return when {
+            (CEU<99 || this.checkOp("|")) -> {
+                this.acceptOp_err("|")
+                val cnd = this.expr()
+                Pair(Pair(id, tag), cnd)
+            }
+
             // (== 10)
             // ({{even?}})
-            (CEU>=99 && !this.checkOp("|") && this.acceptEnu("Op")) -> {
+            this.acceptEnu("Op") -> {
                 val op = this.tk0.str.let {
                     if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
                 }
                 val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
                 val call = if (e == null) {
-                    "$op(${xit.str})"
+                    "$op(${id.str})"
                 } else {
-                    "$op(${xit.str}, ${e.tostr(true)})"
+                    "$op(${id.str}, ${e.tostr(true)})"
                 }
-                Pair(Pair(xit, null), this.nest(call))
+                Pair(Pair(id, null), this.nest(call))
             }
 
             // const
-            (CEU>=99 && (this.checkFix("nil") || this.checkFix("false") || this.checkFix("true") || this.checkEnu("Chr") || this.checkEnu("Num"))) -> {
+            (this.checkFix("nil") || this.checkFix("false") || this.checkFix("true") || this.checkEnu("Chr") || this.checkEnu("Num")) -> {
                 val e = this.expr()
-                Pair(Pair(xit, null), this.nest("${xit.str} === ${e.tostr(true)}"))
+                Pair(Pair(id, null), this.nest("${id.str} === ${e.tostr(true)}"))
             }
 
             // [...]
@@ -196,30 +212,15 @@ class Parser (lexer_: Lexer)
             }
              */
 
-            // (id :Tag | cnd)
             else -> {
-                val id = if (CEU<99 || this.checkEnu("Id")) {
-                    this.acceptEnu_err("Id")
-                    this.tk0 as Tk.Id
-                } else {
-                    xit
-                }
-                val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
-                val cnd = if (CEU<99 || this.checkOp("|")) {
-                    this.acceptOp_err("|")
-                    this.expr()
-                } else {
-                    Expr.Bool(Tk.Fix("true",this.tk0.pos))
-                }
-                Pair(Pair(id,tag), cnd)
+                Pair(Pair(id, tag), Expr.Bool(Tk.Fix("true",this.tk0.pos)))
             }
         }
     }
 
     fun patt (): Any {
-        val xit = Tk.Id("it",this.tk0.pos)
         val par = this.acceptFix("(")
-        val ret = patt_one(xit)
+        val ret = patt_one()
         if (par) {
             this.acceptFix_err(")")
         }
@@ -227,15 +228,11 @@ class Parser (lexer_: Lexer)
     }
     fun patts (): List<Any> {
         assert(CEU >= 99)
-        val xit = Tk.Id("it",this.tk0.pos)
-        var one = true  // single or multi pattern?
         return if (!this.acceptFix("(")) {
-            listOf(patt_one(xit))
+            listOf(patt_one())
         } else {
             val ret = list0(",", ")") {
-                val x = patt_one(if (one) xit else Tk.Id("ceu_$N",xit.pos))
-                one = false
-                x
+                patt_one()
             }
             this.acceptFix_err(")")
             ret
