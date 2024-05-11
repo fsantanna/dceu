@@ -175,11 +175,10 @@ class Parser (lexer_: Lexer)
 
         val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
 
-        val ret = when {
+        val cnd = when {
             (CEU<99 || this.checkOp("|")) -> {
                 this.acceptOp_err("|")
-                val cnd = this.expr()
-                Pair(Pair(id, tag), cnd)
+                this.expr()
             }
 
             // (== 10)
@@ -194,35 +193,33 @@ class Parser (lexer_: Lexer)
                 } else {
                     "$op(${id.str}, ${e.tostr(true)})"
                 }
-                Pair(Pair(id, null), this.nest(call))
+                this.nest(call)
             }
 
             // const
             (this.checkFix("nil") || this.checkFix("false") || this.checkFix("true") || this.checkEnu("Chr") || this.checkEnu("Num")) -> {
                 val e = this.expr()
-                Pair(Pair(id, null), this.nest("${id.str} === ${e.tostr(true)}"))
+                this.nest("${id.str} === ${e.tostr(true)}")
             }
 
             // [...]
-            /*
-            (CEU>=99 && this.acceptFix("[")) -> {
+            this.acceptFix("[") -> {
                 val l = this.list0(",","]") {
-                    this.patt_one(xit)
+                    this.patt()
                 }
                 this.acceptFix_err("]")
-                l
+                TODO()
             }
-             */
 
             else -> {
-                Pair(Pair(id, tag), Expr.Bool(Tk.Fix("true",this.tk0.pos)))
+                Expr.Bool(Tk.Fix("true",this.tk0.pos))
             }
         }
 
         if (par) {
             this.acceptFix_err(")")
         }
-        return ret
+        return Pair(Pair(id,tag), cnd)
     }
 
     fun Patt.code (): String {
