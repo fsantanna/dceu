@@ -918,7 +918,6 @@ class Parser_99 {
         assert(trap { parser.expr() } == "anon : (lin 2, col 30) : resume-yield-all error : invalid number of arguments")
     }
 
-
     // SPAWN
 
     @Test
@@ -953,7 +952,6 @@ class Parser_99 {
                 "broadcast'(nil,nil)\n" +
                 "})())") { e.tostr() }
     }
-
 
     // PAR / PAR-OR
 
@@ -1539,11 +1537,9 @@ class Parser_99 {
     }
     @Test
     fun ww_05_patt() {
-        val l = lexer(
-            """
+        val l = lexer("""
             (|true)
-        """
-        )
+        """)
         val parser = Parser(l)
         val p = parser.patt()
         assert(p.tostr() == "(it | true)") { p.tostr() }

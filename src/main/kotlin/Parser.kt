@@ -3,15 +3,6 @@ package dceu
 typealias Clock = List<Pair<Tk.Tag,Expr>>
 typealias Patt  = Pair<Id_Tag,Expr?>
 
-fun Clock.tostr (pre: Boolean): String {
-    return "<" + this.map { it.second.tostr(pre) + " " + it.first.str }.joinToString(",") + ">"
-}
-
-fun Patt.tostr (pre: Boolean = false): String {
-    val (idtag,cnd) = this
-    return "(${idtag.tostr(pre)} | ${cnd.cond2({it.tostr(pre)},{"true"})})"
-}
-
 class Parser (lexer_: Lexer)
 {
     val lexer = lexer_
@@ -167,7 +158,7 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun patt_one (xit: Tk.Id): Patt {
+    fun patt_one (xit: Tk.Id): List<Any> {
         return when {
             // (== 10)
             // ({{even?}})
@@ -181,13 +172,22 @@ class Parser (lexer_: Lexer)
                 } else {
                     "$op(${xit.str}, ${e.tostr(true)})"
                 }
-                Pair(Pair(xit, null), this.nest(call))
+                listOf(Pair(Pair(xit, null), this.nest(call)))
             }
 
             // const
             (CEU>=99 && (this.checkFix("nil") || this.checkFix("false") || this.checkFix("true") || this.checkEnu("Chr") || this.checkEnu("Num"))) -> {
                 val e = this.expr()
-                Pair(Pair(xit, null), this.nest("${xit.str} === ${e.tostr(true)}"))
+                listOf(Pair(Pair(xit, null), this.nest("${xit.str} === ${e.tostr(true)}")))
+            }
+
+            // [...]
+            (CEU>=99 && this.acceptFix("[")) -> {
+                val l = this.list0(",","]") {
+                    this.patt_one(xit)
+                }
+                this.acceptFix_err("]")
+                l
             }
 
             // (id :Tag | cnd)
@@ -205,12 +205,12 @@ class Parser (lexer_: Lexer)
                 } else {
                     null
                 }
-                Pair(Pair(id,tag), cnd)
+                listOf(Pair(Pair(id,tag), cnd))
             }
         }
     }
 
-    fun patt (): Patt {
+    fun patt (): List<Any> {
         val xit = Tk.Id("it",this.tk0.pos)
         val par = this.acceptFix("(")
         val ret = patt_one(xit)
@@ -219,7 +219,7 @@ class Parser (lexer_: Lexer)
         }
         return ret
     }
-    fun patts (): List<Patt> {
+    fun patts (): List<List<Any>> {
         assert(CEU >= 99)
         val xit = Tk.Id("it",this.tk0.pos)
         var one = true  // single or multi pattern?
@@ -692,13 +692,13 @@ class Parser (lexer_: Lexer)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val pat = when {
+                val pats = when {
                     (CEU < 99) -> {
                         this.checkFix_err("(")
                         this.patt()
                     }
                     this.checkFix("{") -> {
-                        Pair(Pair(Tk.Id("ceu_$N",this.tk0.pos), null), Expr.Bool(Tk.Fix("true",this.tk0.pos)))
+                        listOf(Pair(Pair(Tk.Id("ceu_$N",this.tk0.pos), null), Expr.Bool(Tk.Fix("true",this.tk0.pos))))
                     }
                     else -> {
                         this.patt()
@@ -931,7 +931,7 @@ class Parser (lexer_: Lexer)
                     var xdo = false
                     val cnds = when {
                         this.acceptFix("else") -> {
-                            listOf(Pair(Pair(Tk.Id("ceu_$N",this.tk0.pos),null), Expr.Bool(Tk.Fix("true",this.tk0.pos))))
+                            listOf(listOf(Pair(Pair(Tk.Id("ceu_$N",this.tk0.pos),null), Expr.Bool(Tk.Fix("true",this.tk0.pos)))))
                         }
                         this.acceptFix("do") -> {
                             xdo = true
@@ -948,7 +948,7 @@ class Parser (lexer_: Lexer)
                                     false
                                 }
                             """)
-                            listOf(Pair(Pair(if (id==null) Tk.Id("it",this.tk0.pos) else id, tag), cnd))
+                            listOf(listOf(Pair(Pair(if (id==null) Tk.Id("it",this.tk0.pos) else id, tag), cnd)))
                         }
                         else -> {
                             this.patts()
@@ -1082,12 +1082,12 @@ class Parser (lexer_: Lexer)
                         ret
                     }
                     else -> {
-                        val pat = when {
+                        val pats = when {
                             (par && checkFix(")")) ->
-                                Pair(
+                                listOf(Pair(
                                     Pair(Tk.Id("it", this.tk0.pos), null),
                                     Expr.Bool(Tk.Fix("true", this.tk0.pos))
-                                )
+                                ))
                             else -> this.patt()
                         }
                         val (idtag,_) = pat

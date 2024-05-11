@@ -6088,7 +6088,7 @@ class Exec_99 {
                 }
             }
         """)
-        assert(out == "anon : (lin 3, col 40) : access error : variable \"is'\" is not declared\n") { out }
+        assert(out == "anon : (lin 3, col 51) : access error : variable \"is'\" is not declared\n") { out }
     }
     @Test
     fun zb_20_all_line() {

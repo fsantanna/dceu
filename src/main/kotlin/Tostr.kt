@@ -20,8 +20,30 @@ fun Tk.fpre (pre: Boolean): String {
     return if (pre) this.pos.pre() else ""
 }
 
+@JvmName("Id_Tag_tostr")
 fun Id_Tag.tostr (pre: Boolean = false): String {
     return this.first.fpre(pre) + this.first.str + this.second.cond { " " + it.fpre(pre) + it.str }
+}
+
+@JvmName("Clock_tostr")
+fun Clock.tostr (pre: Boolean): String {
+    return "<" + this.map { it.second.tostr(pre) + " " + it.first.str }.joinToString(",") + ">"
+}
+
+fun Patt.tostr (pre: Boolean = false): String {
+    val (idtag,cnd) = this
+    return "(${idtag.tostr(pre)} | ${cnd.cond2({it.tostr(pre)},{"true"})})"
+}
+
+@JvmName("List_tostr")
+fun List<Any>.tostr (pre: Boolean = false): String {
+    return "[" + this.map {
+        when (it) {
+            is List<*>   -> (it as List<Any>).tostr(pre)
+            is Pair<*,*> -> (it as Patt).tostr(pre)
+            else -> error("bug found")
+        }
+    }.joinToString(",") + "]"
 }
 
 fun Expr.tostr (pre: Boolean = false): String {
