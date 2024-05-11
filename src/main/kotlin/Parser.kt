@@ -218,25 +218,13 @@ class Parser (lexer_: Lexer)
         }
     }
 
-    fun patt (): Any {
+    fun patt (): Patt {
         val par = this.acceptFix("(")
         val ret = patt_one()
         if (par) {
             this.acceptFix_err(")")
         }
         return ret
-    }
-    fun patts (): List<Any> {
-        assert(CEU >= 99)
-        return if (!this.acceptFix("(")) {
-            listOf(patt_one())
-        } else {
-            val ret = list0(",", ")") {
-                patt_one()
-            }
-            this.acceptFix_err(")")
-            ret
-        }
     }
 
     fun Patt.code (): String {
@@ -905,7 +893,7 @@ class Parser (lexer_: Lexer)
                 this.nest("""
                     do {
                         ;;`/* IFS | ${tk0.dump()} */`
-                        ${ifs.map { (cnd,idtag_es) ->
+                        ${ifs.mapIndexed { i,(cnd,idtag_es) ->
                             val (idtag,es) = idtag_es
                             val idtagx = if (idtag != null) idtag else Pair(Tk.Id("ceu_$N",tk0.pos),null)
                             if (cnd == null) {
@@ -935,7 +923,7 @@ class Parser (lexer_: Lexer)
                     var xdo = false
                     val cnds = when {
                         this.acceptFix("else") -> {
-                            listOf(Pair(Pair(Tk.Id("ceu_$N",this.tk0.pos),null), Expr.Bool(Tk.Fix("true",this.tk0.pos))))
+                            Pair(Pair(Tk.Id("ceu_unused_$N",this.tk0.pos),null), Expr.Bool(Tk.Fix("true",this.tk0.pos)))
                         }
                         this.acceptFix("do") -> {
                             xdo = true
@@ -952,10 +940,10 @@ class Parser (lexer_: Lexer)
                                     false
                                 }
                             """)
-                            listOf(Pair(Pair(if (id==null) Tk.Id("it",this.tk0.pos) else id, tag), cnd))
+                            Pair(Pair(if (id==null) Tk.Id("it",this.tk0.pos) else id, tag), cnd)
                         }
                         else -> {
-                            this.patts()
+                            this.patt()
                         }
                     }
                     val idtag_es = when {
@@ -967,43 +955,20 @@ class Parser (lexer_: Lexer)
                 }
                 //ifs.forEach { println(it.first.map { it.first?.tostr() }.joinToString("")) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
-                val xvs = when {
-                    (xv !is Expr.Args) -> listOf(xv)
-                    else -> xv.es
-                }
-                val xn = ifs.map { it.first.size }.maxOrNull()!! - xvs.size
-                    // TODO: ifs.map { it.first.size }.max()
-                    //  --> java.lang.NoSuchMethodError: 'java.lang.Comparable kotlin.collections.CollectionsKt.maxOrThrow(java.lang.Iterable)'
                 val n = N
                 this.nest("""
                     do {
                         ;;`/* MATCH | VS | ${tk0.dump()} */`
-                        ${xvs.mapIndexed { i, e -> "val ceu_${n}_$i = ${e.tostr(true)}" }.joinToString("\n")}
-                        ${(xn > 0).cond { _ ->
-                            (0 until xn).map { i ->
-                                """
-                                val ceu_${n}_${i + xvs.size} = nil
-                                """
-                            }.joinToString("")
-                        }}
-                        ${ifs.map { (lst,idtag_es) ->
-                            val (idtag,es) = idtag_es
-                            val idtagx = if (idtag != null) idtag else Pair(Tk.Id("ceu_$N",tk0.pos),null)
-                            val (ids,cnds) = lst.mapIndexed { i,pats ->
-                                val pat = pats as Patt
-                                val (idtag,_) = pat
-                                Pair (
-                                    idtag.cond { "val ${it.tostr(true)} = ceu_${n}_$i"},
-                                    pat.code()
-                                )
-                            }.unzip()
+                        val ceu_x_${n} = ${xv.tostr(true)}
+                        ${ifs.map { (x_pat,y_idtag_es) ->
+                            val idtagx = if (y_idtag_es.first != null) y_idtag_es.first!! else Pair(Tk.Id("ceu_$N",tk0.pos),null)
                             """
                                 ;;`/* MATCH | IDS | ${tk0.dump()} */`
-                                ${ids.joinToString("\n")}
+                                ${x_pat.first.cond { "val ${it.tostr(true)} = ceu_x_${n}"}}
                                 ;;`/* MATCH | CNDS | ${tk0.dump()} */`
-                                val ${idtagx.tostr(true)} = ${cnds.joinToString(" and ")}
+                                val ${idtagx.tostr(true)} = ${x_pat.code()}
                                 if ${idtagx.first.str} {
-                                    ${es.tostr(true)}
+                                    ${y_idtag_es.second.tostr(true)}
                                 } else {
                             """
                         }.joinToString("")}

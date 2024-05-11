@@ -1553,7 +1553,7 @@ class Parser_99 {
             [1,xy,3]
         """)
         val parser = Parser(l)
-        val p = parser.patts()
+        val p = parser.patt()
         assert(Patts_Any_tostr(p) == "[[(it | {{===}}(it,1)),(xy | true),(it | {{===}}(it,3))]]") { Patts_Any_tostr(p) }
     }
     @Test
@@ -1562,7 +1562,7 @@ class Parser_99 {
             ([x,[y]], :T)
         """)
         val parser = Parser(l)
-        val p = parser.patts()
+        val p = parser.patt()
         assert(Patts_Any_tostr(p) == "[[(x | true),[(y | true)]],(ceu_14 :T | true)]") { Patts_Any_tostr(p) }
         // a saida usa [] em vez de ()
         // no codigo mesmo, sabemos quando patts eh chamado,
