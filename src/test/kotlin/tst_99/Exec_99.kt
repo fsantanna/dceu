@@ -991,6 +991,17 @@ class Exec_99 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun fj_07_err() {
+        val out = test("""
+            $ASR
+            match nil {
+                [] => println(:ok)
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // PATTS / SET
 

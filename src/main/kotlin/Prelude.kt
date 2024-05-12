@@ -73,3 +73,9 @@ val IS = """
         }
     }
 """.replace("\n", " ")
+
+val ASR = """
+    func assert (v, msg) {
+        if v => v => error(msg)
+    }    
+"""

@@ -208,7 +208,9 @@ class Parser (lexer_: Lexer)
                     this.patt()
                 }
                 this.acceptFix_err("]")
-                TODO()
+                this.nest("""
+                    assert(type(${id.str})==:tuple, "TODO: error") 
+                """)
             }
 
             else -> {
