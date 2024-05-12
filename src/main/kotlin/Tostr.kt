@@ -31,7 +31,8 @@ fun Clock.tostr (pre: Boolean): String {
 }
 
 fun Patt.tostr (pre: Boolean = false): String {
-    val (idtag,cnd) = this
+    val (idstags,cnd) = this
+    val idtag = idstags.first() // XXX
     return "(${idtag.tostr(pre)} | ${cnd.cond2({it.tostr(pre)},{"true"})})"
 }
 
