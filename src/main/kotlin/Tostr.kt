@@ -72,17 +72,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Data   -> "(data " + this.tk.str + " = [" + this.ids.map { it.tostr() }.joinToString(",") + "])"
         is Expr.Pass   -> "(do " + this.e.tostr(pre) + ")"
 
-        is Expr.Catch  -> {
-            val cnd = this.cnd.es.let { es ->
-                assert(es.size==2)
-                es[0].let { dcl ->
-                    dcl as Expr.Dcl
-                    assert(dcl.idtag.size==1)
-                    dcl.idtag[0].tostr(pre) + " | " + es[1].tostr(pre)
-                }
-            }
-            "catch (" + cnd + ") " + this.blk.tostr(pre)
-        }
+        is Expr.Catch  -> "catch (| " + this.cnd.tostr(pre) + ") " + this.blk.tostr(pre)
         is Expr.Defer  -> "defer " + this.blk.tostr(pre)
 
         is Expr.Yield  -> "yield(" + this.args.tostr(pre) + ")"

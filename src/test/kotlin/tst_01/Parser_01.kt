@@ -1021,49 +1021,4 @@ class Parser_01 {
         val e = parser.exprs()
         assert(e.tostr() == "println(:X-a)\n") { e.tostr() }
     }
-
-    // PATTS
-
-    @Test
-    fun xx_01_patt () {
-        val l = lexer("""
-            ()
-        """)
-        val parser = Parser(l)
-        assert(trap { parser.patt() } == "anon : (lin 2, col 14) : expected identifier : have \")\"")
-    }
-    @Test
-    fun xx_02_patt () {
-        val l = lexer("""
-            (x)
-        """)
-        val parser = Parser(l)
-        assert(trap { parser.patt() } == "anon : (lin 2, col 15) : expected \"|\" : have \")\"")
-    }
-    @Test
-    fun xx_03_patt () {
-        val l = lexer("""
-            (x|)
-        """)
-        val parser = Parser(l)
-        assert(trap { parser.patt() } == "anon : (lin 2, col 16) : expected expression : have \")\"")
-    }
-    @Test
-    fun xx_04_patt () {
-        val l = lexer("""
-            (x|true)
-        """)
-        val parser = Parser(l)
-        val p = parser.patt()
-        assert(Patts_Any_tostr(p) == "(x | true)") { Patts_Any_tostr(p) }
-    }
-    @Test
-    fun xx_05_patt () {
-        val l = lexer("""
-            (x:X|nil)
-        """)
-        val parser = Parser(l)
-        val p = parser.patt()
-        assert(Patts_Any_tostr(p) == "(x :X | nil)") { Patts_Any_tostr(p) }
-    }
 }

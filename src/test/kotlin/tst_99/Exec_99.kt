@@ -924,6 +924,9 @@ class Exec_99 {
             match nil {
                 [10]  => error()
             }
+            
+            match src {
+                [v,x] = src
         """)
         assert(out == ":ok\n") { out }
     }
@@ -935,10 +938,6 @@ class Exec_99 {
                 [1,2,3] => error()
                 [1,2]   => println(:ok)
             }
-            
-            val t = [1,2]
-            if t[0]==10 {
-                val x = t[1]
         """)
         assert(out == ":ok\n") { out }
     }

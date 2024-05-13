@@ -79,4 +79,59 @@ class Parser_02 {
         //assert(out == "anon : (lin 2, col 27) : expected \"in\" : have \"{\"\n") { out }
         assert(out == ":ok\n") { out }
     }
+
+    // PATTS
+
+    @Test
+    fun dd_01_patt () {
+        val l = tst_01.lexer(
+            """
+            ()
+        """
+        )
+        val parser = Parser(l)
+        assert(trap { parser.patt() } == "anon : (lin 2, col 14) : expected identifier : have \")\"")
+    }
+    @Test
+    fun dd_02_patt () {
+        val l = tst_01.lexer(
+            """
+            (x)
+        """
+        )
+        val parser = Parser(l)
+        assert(trap { parser.patt() } == "anon : (lin 2, col 15) : expected \"|\" : have \")\"")
+    }
+    @Test
+    fun dd_03_patt () {
+        val l = tst_01.lexer(
+            """
+            (x|)
+        """
+        )
+        val parser = Parser(l)
+        assert(trap { parser.patt() } == "anon : (lin 2, col 16) : expected expression : have \")\"")
+    }
+    @Test
+    fun dd_04_patt () {
+        val l = tst_01.lexer(
+            """
+            (x|true)
+        """
+        )
+        val parser = Parser(l)
+        val p = parser.patt()
+        assert(Patts_Any_tostr(p) == "(x | true)") { Patts_Any_tostr(p) }
+    }
+    @Test
+    fun dd_05_patt () {
+        val l = tst_01.lexer(
+            """
+            (x:X|nil)
+        """
+        )
+        val parser = Parser(l)
+        val p = parser.patt()
+        assert(Patts_Any_tostr(p) == "(x :X | nil)") { Patts_Any_tostr(p) }
+    }
 }
