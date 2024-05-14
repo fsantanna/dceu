@@ -1,7 +1,6 @@
 package dceu
 
 typealias Clock = List<Pair<Tk.Tag,Expr>>
-typealias Patt  = Pair<List<Id_Tag>,Expr>
 
 class Parser (lexer_: Lexer)
 {
@@ -158,7 +157,7 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun patt (xv: Expr, xf: (() -> Expr)?): Expr.Do {
+    fun patt (xi: String?, xv: String, xf: (() -> String)?): String {
         // Patt : (id :Tag | cnd)
         //      | (id :Tag [{<Patt>,}] | cnd)
         //      | (id :Tag <op> <expr> | cnd)
@@ -175,10 +174,10 @@ class Parser (lexer_: Lexer)
 
         val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
 
-        val cnd: Expr = when {
+        val cnd: String = when {
             (CEU<99 || this.checkOp("|")) -> {
                 this.acceptOp_err("|")
-                this.expr()
+                this.expr().tostr(true)
             }
 
             // (== 10)
@@ -188,18 +187,17 @@ class Parser (lexer_: Lexer)
                     if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
                 }
                 val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
-                val call = if (e == null) {
+                if (e == null) {
                     "$op(${id.str})"
                 } else {
                     "$op(${id.str}, ${e.tostr(true)})"
                 }
-                this.nest(call)
             }
 
             // const
             (this.checkFix("nil") || this.checkFix("false") || this.checkFix("true") || this.checkEnu("Chr") || this.checkEnu("Num")) -> {
                 val e = this.expr()
-                this.nest("${id.str} === ${e.tostr(true)}")
+                "${id.str} === ${e.tostr(true)}"
             }
 
             // [...]
@@ -215,35 +213,33 @@ class Parser (lexer_: Lexer)
             }
              */
 
-            else -> {
-                Expr.Bool(Tk.Fix("true",this.tk0.pos))
-            }
+            else -> "true"
         }
 
         if (par) {
             this.acceptFix_err(")")
         }
 
-        val n = N
-        return this.nest("""
-            do {
-                var ok_$n = false
-                val ${Pair(id,tag).tostr(true)} = ${xv.tostr(true)}
-                if (${cnd.tostr(true)}) {
-                    set ok_$n = `:ceu ceux_peek(X->S, XX(-1))`
-                    ${xf.cond { it().tostr(true) } }
-                } else {
-                    nil
+        return when {
+            (xi==null && xf==null) -> // catch
+                """
+                do {
+                    val ${Pair(id,tag).tostr(true)} = $xv
+                    $cnd
                 }
-                ok_$n
-            }
-        """) as Expr.Do
-    }
-
-    fun Patt.code (): String {
-        val (idstags, cnd) = this
-        val (id,tag) = idstags.first() // XXX
-        return tag.cond { "(${id.str} is? ${it.str}) and " } + cnd.tostr(true)
+                """
+            (xi!=null && xf!=null) -> // match
+                """
+                if (not $xi) {
+                    val ${Pair(id,tag).tostr(true)} = $xv
+                    if $cnd {
+                        set $xi = `:ceu ceux_peek(X->S, XX(-2))`
+                        ${xf.cond { it() } }
+                    }
+                }
+                """
+            else -> TODO("patt: xi vs xf")
+        }
     }
 
     fun <T> list0 (sep: String?, close: String, func: () -> T): List<T> {
@@ -692,12 +688,13 @@ class Parser (lexer_: Lexer)
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val pat = this.patt (
+                    null,
                     // [pay,err,blk]
-                    this.nest("`:ceu ceux_peek(X->S, XX(-1-1-1))`"),
+                    "`:ceu ceux_peek(X->S, XX(-1-1-1))`",
                     null
                 )
                 val blk = this.block()
-                Expr.Catch(tk0, pat, blk)
+                Expr.Catch(tk0, this.nest(pat) as Expr.Do, blk)
             }
             (CEU>=2 && this.acceptFix("defer")) -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 
@@ -906,21 +903,21 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (CEU>=99 && this.acceptFix("match")) -> {
+                val n = N
                 val xv = this.expr()
-                val acc = Expr.Acc(Tk.Id("ceu_$N", xv.tk.pos))
                 this.acceptFix_err("{")
                 fun case (): String {
-                    fun cons (): Expr {
+                    fun cons (): String {
                         return when {
-                            this.acceptFix("=>") -> this.expr()
+                            this.acceptFix("=>") -> this.expr().tostr(true)
                             else -> {
                                 val (idtag, es) = this.lambda(false)
-                                this.nest("""
-                                    do {
-                                        ${idtag.cond { "val ${it.tostr(true)} = `:ceu ceux_peek(X->S, XX(-1))`" }}
-                                        ${es.tostr(true)}
-                                    }
-                                """)
+                                """
+                                do {
+                                    ${idtag.cond { "val ${it.tostr(true)} = `:ceu ceux_peek(X->S, XX(-2))`" }}
+                                    ${es.tostr(true)}
+                                }
+                                """
                             }
                         }
 
@@ -930,22 +927,19 @@ class Parser (lexer_: Lexer)
                         this.acceptFix("else") -> {
                             val ret = cons()
                             this.acceptFix_err("}")
-                            """
-                            do {
-                                ${ret.tostr(true)}
-                            }
-                            """
+                            ret
                         }
                         else -> {
-                            val cur = this.patt(acc, ::cons)
+                            val cur = this.patt("ceu_ok_$n", "ceu_v_$n", ::cons)
                             val nxt = case()
-                            "${cur.tostr(true)} or $nxt"
+                            "($cur) or ($nxt)"
                         }
                     }
                 }
                 this.nest("""
                     do {
-                        val ${acc.tk.str} = ${xv.tostr(true)}
+                        val ceu_v_$n = ${xv.tostr(true)}
+                        var ceu_ok_$n = false
                         ${case()}
                     }
                 """)
@@ -1044,7 +1038,7 @@ class Parser (lexer_: Lexer)
                                 var ${idtag.tostr(true)}
                                 loop {
                                     set ${idtag.first.str} = ${pre}yield()
-                                    until ${pat.code()}                                
+                                    until pat.code                                
                                 }
                                 delay
                                 ${cnt.cond2({ it.tostr(true) }, { idtag.first.str })}
