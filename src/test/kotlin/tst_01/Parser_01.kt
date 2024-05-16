@@ -114,21 +114,21 @@ class Parser_01 {
         val l = lexer(" f (1.5F, x) ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
-        assert(e is Expr.Call && e.tk.str=="f" && e.clo is Expr.Acc && e.args.es.size==2)
+        assert(e is Expr.Call && e.tk.str=="f" && e.clo is Expr.Acc && e.args.size==2)
     }
     @Test
     fun dd_02_call() {
         val l = lexer(" f() ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
-        assert(e is Expr.Call && e.clo.tk.str=="f" && e.clo is Expr.Acc && e.args.es.size==0)
+        assert(e is Expr.Call && e.clo.tk.str=="f" && e.clo is Expr.Acc && e.args.size==0)
     }
     @Test
     fun dd_03_call() {
         val l = lexer(" f(x,8)() ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
-        assert(e is Expr.Call && e.clo is Expr.Call && e.args.es.size==0)
+        assert(e is Expr.Call && e.clo is Expr.Call && e.args.size==0)
         assert(e.tostr() == "f(x,8)()")
     }
     @Test
@@ -151,7 +151,7 @@ class Parser_01 {
         val l = lexer(" [ 1.5F, x] ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
-        assert(e is Expr.Tuple && e.args.es.size==2)
+        assert(e is Expr.Tuple && e.args.size==2)
     }
     @Test
     fun ee_02_tuple() {
@@ -171,7 +171,7 @@ class Parser_01 {
         val l = lexer("[1.5F,] ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
-        assert(e is Expr.Tuple && e.args.es.size==1)
+        assert(e is Expr.Tuple && e.args.size==1)
     }
 
     // DICT
@@ -229,7 +229,7 @@ class Parser_01 {
         val l = lexer(" #[ 1,x , :number,2 ] ")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Vector && e.args.es.size==4)
+        assert(e is Expr.Vector && e.args.size==4)
     }
     @Test
     fun vector2() {
@@ -349,7 +349,7 @@ class Parser_01 {
         val l = lexer("var x")
         val parser = Parser(l)
         val e = parser.expr_prim()
-        assert(e is Expr.Dcl && e.tk.str=="var" && e.idtag.size==1 && e.idtag[0].first.str=="x")
+        assert(e is Expr.Dcl && e.tk.str=="var" && e.idtag.first.str=="x")
         assert(e.tostr() == "(var (x))")
     }
     @Test
@@ -357,7 +357,7 @@ class Parser_01 {
         val l = lexer("val x")
         val parser = Parser(l)
         val e = parser.expr_prim()
-        assert(e is Expr.Dcl && e.tk.str=="val" && e.idtag.size==1 && e.idtag[0].first.str=="x")
+        assert(e is Expr.Dcl && e.tk.str=="val" && e.idtag.first.str=="x")
         assert(e.tostr() == "(val (x))")
     }
     @Test
@@ -371,7 +371,7 @@ class Parser_01 {
         val l = lexer("var x = 1")
         val parser = Parser(l)
         val e = parser.expr_prim()
-        assert(e is Expr.Dcl && e.idtag.size==1 && e.idtag[0].first.str == "x" && e.src is Expr.Num)
+        assert(e is Expr.Dcl && e.idtag.first.str == "x" && e.src is Expr.Num)
         assert(e.tostr() == "(var (x) = 1)")
     }
 
@@ -680,84 +680,6 @@ class Parser_01 {
         //val e = parser.expr()
         //assert(trap { parser.expr() } == "anon : (lin 1, col 4) : expected \"[\" : have end of file")
         assert(trap { parser.expr() } == "anon : (lin 1, col 1) : expected expression : have \"...\"")
-    }
-    @Test
-    fun ss_07_len() {
-        val l = lexer("#...")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e is Expr.VA_len && e.tostr()=="#...") { e.tostr() }
-    }
-    @Test
-    fun ss_08_idx() {
-        val l = lexer("...[i]")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e is Expr.VA_idx && e.tostr()=="...[i]") { e.tostr() }
-    }
-    @Test
-    fun ss_09_set_err() {
-        val l = lexer("set ...[0] = 10")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 10) : set error : unexpected \"...\"")
-    }
-    @Test
-    fun ss_08_len() {
-        val l = lexer("f(...[0], #...)")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr() == "f(...[0],#...)") { e.tostr() }
-    }
-    @Test
-    fun ss_09_tup() {
-        val l = lexer("[...]")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e is Expr.Tuple && e.args.dots && e.tostr()=="[...]") { e.tostr() }
-    }
-    @Test
-    fun ss_10_vec() {
-        val l = lexer("#[...]")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e is Expr.Vector && e.args.dots && e.tostr()=="#[...]") { e.tostr() }
-    }
-    @Test
-    fun ss_11_do() {
-        val l = lexer("do { ... }")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : expected expression : have \"...\"")
-    }
-    @Test
-    fun ss_12_do() {
-        val l = lexer("do { (...) }")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e is Expr.Do && e.es.size==1) { e.tostr() }
-        assert(e.tostr()=="do {\n(...)\n}") { e.tostr() }
-    }
-
-    // EXPR LIST / VAR LIST
-
-    @Test
-    fun tt_01_list() {
-        val l = lexer("val (x,y)")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e is Expr.Dcl && e.idtag.size==2) { e.tostr() }
-        assert(e.tostr()=="(val (x,y))") { e.tostr() }
-    }
-    @Test
-    fun tt_02_list_err() {
-        val l = lexer("val (")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : expected identifier : have end of file")
-    }
-    @Test
-    fun tt_03_list_err() {
-        val l = lexer("val (x =")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : expected \")\" : have \"=\"")
     }
 
     // NATIVE

@@ -11,7 +11,7 @@ enum class Type {
 class Vars (val outer: Expr.Do, val ups: Ups) {
     val datas = mutableMapOf<String,LData>()
 
-    private val dcls: MutableList<Expr> = mutableListOf()
+    private val dcls: MutableList<Expr.Dcl> = mutableListOf()
     public val dcl_to_enc: MutableMap<Expr,Expr> = mutableMapOf()
     public val acc_to_dcl: MutableMap<Expr.Acc,Expr.Dcl> = mutableMapOf()
     public val enc_to_dcls: MutableMap<Expr,MutableList<Expr>> = mutableMapOf(
@@ -36,8 +36,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     //  - must allocate this space on call
 
     init {
-        //this.outer.locs()
-        //this.outer.traverse()
+        this.outer.traverse()
     }
 
     fun data (e: Expr): Pair<Int?,LData?>? {
@@ -143,35 +142,13 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         val dcl = this.acc_to_dcl[acc]!!
         return this.idx(X, dcl, acc)
     }
-    fun idx (X: String, def: Expr.Defer): Pair<String,String> {
-        assert(X == "X")
-        return this.idx(X, def, def)
-    }
-    fun idx (X: String, dcl: Expr, src: Expr): Pair<String,String> {
+    fun idx (X: String, dcl: Expr.Dcl, src: Expr): Pair<String,String> {
         val enc  = this.dcl_to_enc[dcl]!!
-        val dcls = this.enc_to_dcls[enc]!!
-
-        // (not used for upval)
-        // index of dcl inside its blk/proto
-        var I = 0
-        for (x in dcls) {
-            if (x == dcl) {
-                if (x is Expr.Dcl) {
-                    I += ii!!
-                }
-                break
-            } else {
-                if (x is Expr.Dcl) {
-                    I += x.idtag.size
-                } else {
-                    I++
-                }
-            }
-        }
 
         // number of upvals in enclosing proto
         // index of upval for dcl
         // (ignore if -1 not access to upval)
+        /*
         val proto_src = ups.first(src) { it is Expr.Proto }
         val (upvs,upv) = if (proto_src == null) Pair(0,-1) else {
             //println(proto_to_upvs[proto_src])
@@ -179,29 +156,16 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 Pair(it.size, it.indexOf(Pair(dcl,ii)))
             }
         }
+         */
         //println(listOf(upvs, upv, src.tostr()))
 
-        // enclosing proto of declaration block
-        // all blocks in between declaration block and proto
-        val proto_blk = ups.first(enc) { it is Expr.Proto }
-        val locs = ups.all_until(enc) { it == proto_blk }
-            //.let { println(it) ; it }
-            .drop(1)    // myself
-            .filter { it is Expr.Do }
-            .map { this.size(this.enc_to_dcls[it]!!) }
-            .sum()
-        //println(listOf(dcl.id.str,off,idx))
-
-        val id = when (dcl) {
-            is Expr.Dcl -> dcl.idtag[ii!!].first.str
-            is Expr.Defer -> "defer"
-            else -> error("impossible case")
-        }
+        val id = dcl.idtag.first.str
         return when (type(dcl,src)) {
             Type.GLOBAL -> {
                 val s = if (CEU >= 3) "CEU_GLOBAL_X->S" else "$X->S"
-                Pair(s, "(1 + CEU_ARGC + $locs + $I) /* global $id */")
+                Pair(s, "ceu_glb_$id")
             }
+            /*
             Type.LOCAL -> {
                 Pair("$X->S", "($X->clo + 1 + $X->args + $upvs + $locs + $I) /* local $id */")
             }
@@ -220,6 +184,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             Type.UPVAL -> {
                 Pair("$X->S", "($X->clo + 1 + $X->args + $upv) /* upval $id */")
             }
+             */
+            else -> TODO()
         }
     }
 
@@ -234,8 +200,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 if (this.pars.size > 0) {
                     this.pars.forEach { (id, tag) ->
                         val prv =
-                            dcls.firstOrNull { it is Expr.Dcl && it.idtag.any { it.first.str==id.str } } as Expr.Dcl?
-                        if (prv == null || (CEU>=99 && prv.idtag.size==1 && prv.idtag[0].first.str=="it")) {
+                            dcls.firstOrNull { it is Expr.Dcl && it.idtag.first.str==id.str } as Expr.Dcl?
+                        if (prv == null || (CEU>=99 && prv.idtag.first.str=="it")) {
                             // ok
                         } else {
                             err(id, "declaration error : variable \"${id.str}\" is already declared")
@@ -243,15 +209,15 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                         if (tag != null && !datas.containsKey(tag.str)) {
                             //err(tag, "declaration error : data ${tag.str} is not declared")
                         }
+                        val dcl = Expr.Dcl(
+                            Tk.Fix("val", this.tk.pos),
+                            Pair(id,tag),
+                            null
+                        )
+                        dcls.add(dcl)
+                        dcl_to_enc[dcl] = this
+                        enc_to_dcls[this]!!.add(dcl)
                     }
-                    val dcl = Expr.Dcl(
-                        Tk.Fix("val", this.tk.pos),
-                        this.pars,
-                        null
-                    )
-                    dcls.add(dcl)
-                    dcl_to_enc[dcl] = this
-                    enc_to_dcls[this]!!.add(dcl)
                 }
 
                 val base = dcls.size                                // 1. base before proto
@@ -291,27 +257,13 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
             }
             is Expr.Dcl    -> {
-                var prv_rep: Pair<Expr.Dcl,Tk.Id>? = null
-                for (me in this.idtag) {
-                    for (dcl in dcls) {
-                        if (dcl is Expr.Dcl) {
-                            for (he in dcl.idtag) {
-                                if (me.first.str == he.first.str) {
-                                    prv_rep = Pair(dcl, me.first)
-                                }
-                            }
-                        }
-                    }
-                }
-                val dups = (this.idtag.size != this.idtag.map { it.first.str }.toSet().size)
+                val (id,_) = this.idtag
+                val prv = dcls.firstOrNull { it.idtag.first.str == id.str }
                 when {
-                    dups -> {
-                        err(this.tk, "declaration error : duplicate identifiers")
-                    }
-                    (prv_rep == null) -> {}
-                    (CEU>=99 && prv_rep.first.idtag.size==1 && prv_rep.first.idtag[0].first.str=="it") -> {}
+                    (prv == null) -> {}
+                    (CEU>=99 && id.str=="it") -> {}
                     else -> {
-                        err(prv_rep.second, "declaration error : variable \"${prv_rep.second.str}\" is already declared")
+                        err(prv.tk, "declaration error : variable \"$id\" is already declared")
                     }
                 }
 
@@ -320,11 +272,9 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 dcl_to_enc[this] = blk
                 enc_to_dcls[blk]!!.add(this)
 
-                this.idtag.forEach {
-                    it.second.let {
-                        if (it !=null && !datas.containsKey(it.str)) {
-                            //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
-                        }
+                this.idtag.second.let {
+                    if (it !=null && !datas.containsKey(it.str)) {
+                        //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                     }
                 }
 
@@ -359,18 +309,12 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Pass   -> this.e.traverse()
 
             is Expr.Catch  -> { this.cnd.traverse() ; this.blk.traverse() }
-            is Expr.Defer  -> {
-                val blk = ups.first(this) { it is Expr.Do }!!
-                dcls.add(this)
-                dcl_to_enc[this] = blk
-                enc_to_dcls[blk]!!.add(this)
-                this.blk.traverse()
-            }
+            is Expr.Defer  -> this.blk.traverse()
 
-            is Expr.Yield  -> this.args.traverse()
-            is Expr.Resume -> { this.co.traverse() ; this.args.traverse() }
+            is Expr.Yield  -> this.arg.traverse()
+            is Expr.Resume -> { this.co.traverse() ; this.args.forEach { it.traverse() } }
 
-            is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.args.traverse() }
+            is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.args.forEach { it.traverse() } }
             is Expr.Delay  -> {}
             is Expr.Pub    -> this.tsk?.traverse()
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
@@ -378,7 +322,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Nat    -> {
                 nats[this] = this.tk.str.let {
                     assert(!it.contains("XXX")) { "TODO: native cannot contain XXX"}
-                    val set = mutableListOf<Dcl_Idx>()
+                    val set = mutableListOf<Expr.Dcl>()
                     var str = ""
                     var i = 0
 
@@ -430,15 +374,15 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Bool   -> {}
             is Expr.Char   -> {}
             is Expr.Num    -> {}
-            is Expr.Tuple  -> this.args.traverse()
-            is Expr.Vector -> this.args.traverse()
+            is Expr.Tuple  -> this.args.forEach { it.traverse() }
+            is Expr.Vector -> this.args.forEach { it.traverse() }
             is Expr.Dict   -> this.args.forEach { it.first.traverse() ; it.second.traverse() }
             is Expr.Index  -> {
                 this.col.traverse()
                 this.idx.traverse()
                 data(this)
             }
-            is Expr.Call   -> { this.clo.traverse() ; this.args.traverse() }
+            is Expr.Call   -> { this.clo.traverse() ; this.args.forEach { it.traverse() } }
         }
     }
 }

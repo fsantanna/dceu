@@ -59,6 +59,10 @@ fun Coder.main (tags: Tags): String {
         ceu_acc = (CEU_Value) { CEU_VALUE_NIL }); \
         ceu_tmp;                \
     }
+    #define CEU_ACC_INC() {     \
+        /*ceu_gc_inc(ceu_acc);*/ \
+        ceu_acc;                \
+    }
     """
     }
     fun h_enums (): String {

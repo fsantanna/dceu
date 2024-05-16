@@ -243,15 +243,15 @@ class Parser (lexer_: Lexer)
     }
 
     fun <T> list0 (sep: String?, close: String, func: () -> T): List<T> {
-        return list0(sep, {this.acceptFix(close)}, func)
+        return list0(sep, { this.acceptFix(close) }, func)
 
     }
     fun <T> list0 (sep: String?, close: ()->Boolean, func: () -> T): List<T> {
         val l = mutableListOf<T>()
-        while (!close()) {
+        if (!close()) {
             l.add(func())
-            if (sep!=null && !this.acceptFix(sep)) {
-                break
+            while (!(close() || sep==null || this.acceptFix_err(sep))) {
+                l.add(func())
             }
         }
         return l

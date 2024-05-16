@@ -114,7 +114,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
                     """
                     {
-                        CEU_Value up = ceux_peek(X->S, ${vars.idx("X",dcl.first,dcl.second,ups.pub[this]!!).second});
+                        CEU_Value up = ceux_peek(X->S, {vars.idx("X",dcl.first,dcl.second,ups.pub[this]!!).second});
                         ceu_gc_inc_val(up);
                         clo.Dyn->Clo.upvs.buf[$i] = up;
                     }
@@ -154,7 +154,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """
                     { // BLOCK | ${this.dump()}
                         // do not clear upvs
-                        //ceux_block_enter(X->S, X->clo+1+X->args+${upvs+vars.enc_to_base[this]!!}, ${vars.size(vars.enc_to_dcls[this]!!)} CEU4(COMMA X->exe));
+                        //ceux_block_enter(X->S, X->clo+1+X->args+{upvs+vars.enc_to_base[this]!!}, {vars.size(vars.enc_to_dcls[this]!!)} CEU4(COMMA X->exe));
                         
                         // GLOBALS (must be after ceux_block_enter)
                         ${(this == outer).cond { """
@@ -183,7 +183,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ${(CEU >= 2).cond { defers[this].cond { it.third } }}
                         
                         // out=0 when loop iterates (!CEU_BREAK)
-                        //ceux_block_leave(X->S, X->clo+1+X->args+${upvs+vars.enc_to_base[this]!!}, ${vars.size(vars.enc_to_dcls[this]!!)} CEU4(COMMA X->exe), ${(up is Expr.Loop).cond { "(!CEU_BREAK) ? 0 : " }} {rets.exts[this]!!});
+                        //ceux_block_leave(X->S, X->clo+1+X->args+{upvs+vars.enc_to_base[this]!!}, {vars.size(vars.enc_to_dcls[this]!!)} CEU4(COMMA X->exe), ${(up is Expr.Loop).cond { "(!CEU_BREAK) ? 0 : " }} {rets.exts[this]!!});
                         
                         ${(CEU >= 2).cond { this.check_error_aborted("NULL")} }
                     }
@@ -194,14 +194,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 // DCL (init) | ${this.dump()}
                 {
                     ${this.src!!.code()}
-                }
-                {
-                    ${this.idtag.mapIndexed { ii,_ ->
-                        val (stk,idx) = vars.idx("X",this,ii,this)
-                        """
-                        ceux_copy($stk, $idx, XX(-${this.idtag.size}+$ii));
-                        """
-                    }.joinToString("")}
+                    ${vars.idx("X",this,this)} = CEU_ACC_INC();
                 }
             """ }
             is Expr.Set -> """
@@ -247,14 +240,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     if (!v) {
                         ceux_pop(X->S, 1);            // (1)
                     } else {
-                        ${this.e.cond2({ """
+                        ${this.e.cond { """
                             ceux_pop(X->S, 1);        // (2)
                             ${it.code()}
-                        """ }, { """
-                            ${(rets.exts[this] == MULTI).cond { """
-                                CEU_ARITY = 1; //ceux_pop(X->S, 1);    // (3)
-                            """ }}
-                        """ })}
+                        """ }}
                         CEU_BREAK = 1;
                         goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
                     }
@@ -307,15 +296,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             }
             is Expr.Defer -> {
                 val bup = ups.first(this) { it is Expr.Do } as Expr.Do
-                val (stk,idx) = vars.idx("X",this)
-                assert(stk=="X->S" || stk=="CEU_GLOBAL_X->S") { stk }
                 val (ns,ini,end) = defers.getOrDefault(bup, Triple(mutableListOf(),"",""))
                 val inix = """
-                    ceux_repl(X->S, $idx, (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} });
+                    ceux_repl(X->S, $ idx, (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} });
                         // false: not reached, dont finalize
                 """
                 val endx = """
-                    if (ceux_peek(X->S,$idx).Bool) {     // if true: reached, finalize
+                    if (ceux_peek(X->S,$ idx).Bool) {     // if true: reached, finalize
                         ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });  // detect error inside
                         do {
                             ${this.blk.code()}
@@ -327,7 +314,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 ns.add(n)
                 defers[bup] = Triple(ns, ini+inix, endx+end)
                 """
-                ceux_repl(X->S, $idx, (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} });
+                ceux_repl(X->S, $ idx, (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} });
                         // true: reached, finalize
                 """
             }
@@ -337,7 +324,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """
                 ${this.co.code()}
                 ${this.args.code()}
-                ceux_resume(X, ceu_${this.args.n}, ${rets.exts[this]!!}, CEU_ACTION_RESUME CEU4(COMMA X->now));
+                ceux_resume(X, ceu_{this.args.n}, {rets.exts[this]!!}, CEU_ACTION_RESUME CEU4(COMMA X->now));
                 ${this.check_error_aborted(this.toerr())}
             """
             }
@@ -345,10 +332,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             is Expr.Yield -> {
                 """
                 { // YIELD ${this.dump()}
-                    ${this.args.code()}
+                    {this.args.code()}
                     X->exe->status = CEU_EXE_STATUS_YIELDED;
                     X->exe->pc = $n;
-                    return ceu_${this.args.n};
+                    return ceu_{this.args.n};
                 case $n: // YIELD ${this.dump()}
                     if (X->action == CEU_ACTION_ABORT) {
                         //ceux_push(X->S, 1, (CEU_Value){CEU_VALUE_NIL}); // fake out=1
@@ -360,15 +347,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         continue;
                     }
                 #endif
-                    ${rets.exts[this]!!.let { v -> (v != MULTI).cond { """
-                        ceux_yield_args(X, $v);
-                    """ }}}
+                    {rets.exts[this]!!.let { v -> (v != MULTI).cond { ""
+                        ceux_yield_args(X, $ v);
+                    "" }}}
                 }
             """
             }
 
             is Expr.Spawn -> {
-                assert(!this.args.dots)
                 """
                 { // SPAWN | ${this.dump()}
                     ${(CEU >= 5).cond { """
@@ -380,7 +366,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """ }}
                     ${this.tsk.code()}
                     ${this.args.code()}
-                    ceux_spawn(X, ceu_${this.args.n}, X->now);
+                    ceux_spawn(X, ceu_{this.args.n}, X->now);
                     ${this.check_error_aborted(this.toerr())}
                 } // SPAWN | ${this.dump()}
                 """
@@ -455,7 +441,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val body = vars.nats[this]!!.let { (set, str) ->
                     var x = str
                     for (dcl in set) {
-                        val (stk,idx) = vars.idx("X",dcl.first,dcl.second,this)
+                        val (stk,idx) = vars.idx("X", dcl, this)
                         //println(setOf(x, v))
                         x = x.replaceFirst("XXX", "ceux_peek($stk,$idx)")
                     }
@@ -501,13 +487,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             is Expr.Tuple -> """
                 { // TUPLE | ${this.dump()}
                     ${this.args.code()}
-                    ceux_tuple(X->S, ceu_${this.args.n});
+                    ceux_tuple(X->S, ceu_{this.args.n});
                 }
             """
             is Expr.Vector -> """
                 { // VECTOR | ${this.dump()}
                     ${this.args.code()}
-                    ceux_vector(X->S, ceu_${this.args.n});
+                    ceux_vector(X->S, ceu_{this.args.n});
                 }
             """
             is Expr.Dict -> """
