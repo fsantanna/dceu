@@ -24,7 +24,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     val defer_catch_spawn_tasks: MutableSet<Expr.Do> = mutableSetOf()
 
     init {
-        //outer.traverse()
+        outer.traverse()
 
         // xfuns -> funs
         fun f (proto: Expr.Proto) {

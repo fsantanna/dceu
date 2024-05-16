@@ -23,8 +23,8 @@ var CEU = 1
 //  - uninitialised value
 val VALGRIND = ""
 //val VALGRIND = "valgrind "
-//val THROW = false
-val THROW = true
+val THROW = false
+//val THROW = true
 
 var N = 1
 val D = "\$"

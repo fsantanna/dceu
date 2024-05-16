@@ -151,7 +151,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
          */
         //println(listOf(upvs, upv, src.tostr()))
 
-        val id = dcl.idtag.first.str
+        val id = dcl.idtag.first.str.idc()
         return when (type(dcl,src)) {
             Type.GLOBAL -> "ceu_glb_$id"
             Type.LOCAL -> "ceu_loc_$id"
@@ -236,7 +236,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     (prv == null) -> {}
                     (CEU>=99 && id.str=="it") -> {}
                     else -> {
-                        err(prv.tk, "declaration error : variable \"$id\" is already declared")
+                        err(id, "declaration error : variable \"${id.str}\" is already declared")
                     }
                 }
 
