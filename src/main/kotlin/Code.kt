@@ -175,13 +175,24 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """
                 }
             }
-            is Expr.Dcl -> (this.src!=null && !sta.funs.contains(this.src)).cond { """
-                // DCL (init) | ${this.dump()}
-                {
-                    ${this.src!!.code()}
-                    ${vars.idx("X",this,this)} = CEU_ACC_INC();
-                }
-            """ }
+            is Expr.Dcl -> {
+                val idx = vars.idx("X", this, this)
+                """
+                // DCL | ${this.dump()}
+                ${sta.funs.contains(this.src).cond2({"""
+                    // $idx: unused function
+                """},{"""
+                    CEU_Value $idx
+                    ${(this.src == null).cond2({ """
+                        = { CEU_VALUE_NIL };
+                    """ },{ """
+                        ;
+                        ${this.src!!.code()}
+                        ${vars.idx("X",this,this)} = CEU_ACC_INC();
+                    """ })}
+                """})}
+            """
+            }
             is Expr.Set -> """
                 { // SET | ${this.dump()}
                     ${this.src.code()}  // src is on the stack and should be returned
@@ -426,9 +437,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val body = vars.nats[this]!!.let { (set, str) ->
                     var x = str
                     for (dcl in set) {
-                        val (stk,idx) = vars.idx("X", dcl, this)
+                        val idx = vars.idx("X", dcl, this)
                         //println(setOf(x, v))
-                        x = x.replaceFirst("XXX", "ceux_peek($stk,$idx)")
+                        x = x.replaceFirst("XXX", idx)
                     }
                     x
                 }
@@ -451,15 +462,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 }
             }
             is Expr.Acc -> {
-                //val (stk,idx) = vars.idx("X",this)
+                val idx = vars.idx("X",this)
                 when {
                     this.isdst() -> """
                         // ACC - SET | ${this.dump()}
-                        ceux_repl(stk, idx, ceux_peek(X->S,XX(-1)));
+                        $idx = CEU_ACC_KEEP();
                     """
                     else -> """
                         // ACC - GET | ${this.dump()}
-                        CEU_ACC(ceu_glb_${this.tk.str});
+                        CEU_ACC($idx);
                     """
                 }
             }

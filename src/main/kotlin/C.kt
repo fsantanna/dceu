@@ -1505,8 +1505,12 @@ fun Coder.main (tags: Tags): String {
         }
     }
     void ceu_pro_print (int n, CEU_Value args[]) {
-        assert(n==1 && "bug found");
-        ceu_print1(args[0]);
+        for (int i=0; i<n; i++) {
+            if (i > 0) {
+                printf("\t");
+            }
+            ceu_print1(args[i]);
+        }
         CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
     }
     void ceu_pro_println (int n, CEU_Value args[]) {

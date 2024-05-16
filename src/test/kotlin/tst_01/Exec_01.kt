@@ -16,7 +16,7 @@ class Exec_01 {
         val out = test("""
             println(1,2)
         """)
-        assert(out == "10\n") { out }
+        assert(out == "1\t2\n") { out }
     }
     @Test
     fun aa_01_print() {

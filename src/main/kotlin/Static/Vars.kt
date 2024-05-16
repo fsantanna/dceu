@@ -130,11 +130,11 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         return dcl
     }
 
-    fun idx (X: String, acc: Expr.Acc): Pair<String,String> {
+    fun idx (X: String, acc: Expr.Acc): String {
         val dcl = this.acc_to_dcl[acc]!!
         return this.idx(X, dcl, acc)
     }
-    fun idx (X: String, dcl: Expr.Dcl, src: Expr): Pair<String,String> {
+    fun idx (X: String, dcl: Expr.Dcl, src: Expr): String {
         val enc  = this.dcl_to_enc[dcl]!!
 
         // number of upvals in enclosing proto
@@ -153,14 +153,9 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
         val id = dcl.idtag.first.str
         return when (type(dcl,src)) {
-            Type.GLOBAL -> {
-                val s = if (CEU >= 3) "CEU_GLOBAL_X->S" else "$X->S"
-                Pair(s, "ceu_glb_$id")
-            }
+            Type.GLOBAL -> "ceu_glb_$id"
+            Type.LOCAL -> "ceu_loc_$id"
             /*
-            Type.LOCAL -> {
-                Pair("$X->S", "($X->clo + 1 + $X->args + $upvs + $locs + $I) /* local $id */")
-            }
             Type.ARG -> {
                 assert(locs == 0)
                 Pair("$X->S", "ceux_arg($X, $I) /* arg $id */")
