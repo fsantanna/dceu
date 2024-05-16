@@ -36,14 +36,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         funs.addAll(xfuns.keys)     // assume none are acessed
     }
 
-    fun Expr.check_dots () {
-        if (!ups.first(this) { it is Expr.Proto }.let {
-            it==null || (it as Expr.Proto).dots
-        }) {
-            err(this.tk, "access error : expected enclosing \"...\" parameter declaration")
-        }
-    }
-
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {

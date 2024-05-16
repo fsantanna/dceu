@@ -1,7 +1,5 @@
 package dceu
 
-import kotlin.math.max
-
 typealias LData = List<Id_Tag>
 
 enum class Type {
@@ -28,15 +26,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     )
     public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
     public val proto_to_upvs: MutableMap<Expr.Proto,MutableSet<Expr.Dcl>> = mutableMapOf()
-
-    // Proto/Do
-    //  - Pair<Int,Int>
-    //      - initial offset for locals
-    //      - max number of simultaneous locals
-    //  - only locals, does not include Proto args/upvs
-    public val blk_to_locs: MutableMap<Expr.Do,Pair<Int,Int>> = mutableMapOf()
-    // proto_to_locs: max number of locals in proto
-    //  - must allocate this space on call
 
     init {
         this.outer.traverse()

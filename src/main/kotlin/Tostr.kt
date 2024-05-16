@@ -33,7 +33,7 @@ fun Clock.tostr (pre: Boolean): String {
 fun Expr.tostr (pre: Boolean = false): String {
     return when (this) {
         is Expr.Proto  -> {
-            val pars = (this.pars.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList())).joinToString(",")
+            val pars = this.pars.map { it.tostr(pre) }.joinToString(",")
             "(" + this.tk.str + this.nst.cond { " :nested" } + " (" + pars + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
         }
         is Expr.Do     -> {

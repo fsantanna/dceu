@@ -69,7 +69,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
                 pres.add("""
                     // PROTO | ${this.dump()}
-                    int ceu_f_$id (int ceu_n, CEU_Value ceu_args[]) {
+                    CEU_Value ceu_pro_$id (int ceu_n, CEU_Value ceu_args[]) {
                         ${isexe.cond{"""
                             X->exe->status = (X->action == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
                             switch (X->exe->pc) {
@@ -100,7 +100,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ${(!istsk).cond { "CEU_VALUE_CLO_${this.tk.str.uppercase()}," }}
                         ceu_f_$id,
                         ${this.pars.size},
-                        ${vars.blk_to_locs[this.blk]!!.second},
                         ${vars.proto_to_upvs[this]!!.size}
                         ${istsk.cond { ", ${if (isnst) "X->exe_task" else "NULL"}" }}
                     );
@@ -486,8 +485,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
             is Expr.Tuple -> """
                 { // TUPLE | ${this.dump()}
-                    ${this.args.code()}
-                    ceux_tuple(X->S, ceu_{this.args.n});
+                    CEU_Value ceu_args_$n[${this.args.size}];
+                    ${this.args.mapIndexed { i, it ->
+                        it.code() + """
+                            ceu_args_$n[$i] = CEU_ACC_KEEP();
+                        """
+                    }.joinToString("")}
+                    CEU_ACC (
+                        ceu_create_tuple(/*{bup.idc("block")},*/ ${this.args.size}, ceu_args_$n);
+                    );
                 }
             """
             is Expr.Vector -> """
@@ -559,7 +565,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             ceu_args_$n[$i] = CEU_ACC_KEEP();
                         """
                     }.joinToString("")}
-                    CEU_ACC(
+                    CEU_ACC (
                         ceu_clo.Dyn->Clo.proto(${this.args.size}, ceu_args_$n)
                     );
                     //{this.check_error_aborted(this.toerr())}

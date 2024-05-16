@@ -250,7 +250,7 @@ class Parser (lexer_: Lexer)
         val l = mutableListOf<T>()
         if (!close()) {
             l.add(func())
-            while (!(close() || sep==null || this.acceptFix_err(sep))) {
+            while (!close() && (sep==null || this.acceptFix_err(sep))) {
                 l.add(func())
             }
         }
@@ -530,31 +530,20 @@ class Parser (lexer_: Lexer)
                 }
                 this.acceptFix_err("(")
                 val pars = this.list0(",", ")") {
-                    if (this.acceptFix("...")) {
-                        this.checkFix_err(")")
-                        null
-                    } else {
-                        this.acceptEnu_err("Id")
-                        val xid = this.tk0 as Tk.Id
-                        val tag = if (!this.acceptEnu("Tag")) null else {
-                            this.tk0 as Tk.Tag
-                        }
-                        Pair(xid, tag)
+                    this.acceptEnu_err("Id")
+                    val xid = this.tk0 as Tk.Id
+                    val tag = if (!this.acceptEnu("Tag")) null else {
+                        this.tk0 as Tk.Tag
                     }
+                    Pair(xid, tag)
                 }
-                val (xva,xas) = if (pars.size>0 && pars.last()==null) {
-                    Pair(true, pars.dropLast(1).map { it as Pair<Tk.Id,Tk.Tag> })
-                } else {
-                    Pair(false, pars.map { it as Pair<Tk.Id,Tk.Tag> })
-                }
-                this.acceptFix_err(")")
                 val tag = when {
                     (tk0.str != "task") -> null
                     !this.acceptEnu("Tag") -> null
                     else -> this.tk0 as Tk.Tag
                 }
                 val blk = this.block(this.tk1)
-                val proto = Expr.Proto(tk0, nst, tag, xva, xas, blk)
+                val proto = Expr.Proto(tk0, nst, tag, pars, blk)
                 if (dcl == null) {
                     proto
                 } else {

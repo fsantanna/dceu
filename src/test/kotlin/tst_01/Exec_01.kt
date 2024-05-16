@@ -12,6 +12,13 @@ class Exec_01 {
     // PRINT
 
     @Test
+    fun aa_00_print_err() {
+        val out = test("""
+            println(1,2)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
     fun aa_01_print() {
         val out = test("""
             println(10)

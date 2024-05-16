@@ -634,54 +634,6 @@ class Parser_01 {
         assert(e.tostr() == "(skip if nil)") { e.tostr() }
     }
 
-    // VA / DOTS / VARARGS
-
-    @Test
-    fun ss_01_func_dots() {
-        val l = lexer("func (...) { println(...) }")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e is Expr.Proto && e.dots && e.pars.size==0)
-        assert(e.tostr() == "(func (...) {\nprintln(...)\n})") { e.tostr() }
-    }
-    @Test
-    fun ss_02_func_args_err() {
-        val l = lexer("func (..., a) { nil }")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 10) : expected \")\" : have \",\"")
-    }
-    @Test
-    fun ss_03_func_args_err() {
-        val l = lexer("println(...,a)")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 12) : expected \")\" : have \",\"")
-    }
-    @Test
-    fun ss_04_func_args_err() {
-        val l = lexer("var ...")
-        val parser = Parser(l)
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 5) : declaration error : unexpected ...")
-        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : expected identifier : have \"...\"")
-    }
-    @Test
-    fun ss_05_func_args_err() {
-        val l = lexer("set ... = 10")
-        val parser = Parser(l)
-        //val e = parser.expr()
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected \"[\" : have \"=\"")
-        //assert(e.tostr() == "set ... = 10") { e.tostr() }
-        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : expected expression : have \"...\"")
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 5) : set error : unexpected ...")
-    }
-    @Test
-    fun ss_06_err() {
-        val l = lexer("...")
-        val parser = Parser(l)
-        //val e = parser.expr()
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 4) : expected \"[\" : have end of file")
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : expected expression : have \"...\"")
-    }
-
     // NATIVE
 
     @Test

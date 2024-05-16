@@ -325,7 +325,7 @@ fun Coder.main (tags: Tags): String {
 
     void ceu_gc_inc_val (CEU_Value v);
 
-    CEU_Value ceu_create_tuple   (int n);
+    CEU_Value ceu_create_tuple   (int n, CEU_Value args[]);
     CEU_Value ceu_create_vector  (void);
     CEU_Value ceu_create_dict    (void);
     CEU_Value ceu_create_clo     (CEU_VALUE type, CEU_Proto proto, int pars, int locs, int upvs);
@@ -1184,18 +1184,19 @@ fun Coder.main (tags: Tags): String {
     }
     fun creates (): String {
         return """
-    CEU_Value ceu_create_tuple (int n) {
-        ceu_debug_add(CEU_VALUE_TUPLE);
+    CEU_Value ceu_create_tuple (int n, CEU_Value args[]) {
+        //ceu_debug_add(CEU_VALUE_TUPLE);
         CEU_Tuple* ret = malloc(sizeof(CEU_Tuple) + n*sizeof(CEU_Value));
         assert(ret != NULL);
         *ret = (CEU_Tuple) {
             CEU_VALUE_TUPLE, 0, (CEU_Value) { CEU_VALUE_NIL },
             n, {}
         };
-        memset(ret->buf, 0, n*sizeof(CEU_Value));
+        memcpy(ret->buf, args, n*sizeof(CEU_Value));
         return (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)ret} };
     }
     
+    #if 0
     int ceu_pro_tuple (CEUX* X) {
         assert(X->args == 1);
         CEU_Value arg = ceux_peek(X->S, ceux_arg(X,0));
@@ -1367,6 +1368,7 @@ fun Coder.main (tags: Tags): String {
         return (CEU_Value) { CEU_VALUE_TASKS, {.Dyn=(CEU_Dyn*)ret} };
     }
     #endif
+    #endif
     """
     }
     fun print (): String {
@@ -1404,7 +1406,6 @@ fun Coder.main (tags: Tags): String {
             case CEU_VALUE_POINTER:
                 printf("pointer: %p", v.Pointer);
                 break;
-        #if 0
             case CEU_VALUE_TUPLE:
                 printf("[");
                 for (int i=0; i<v.Dyn->Tuple.its; i++) {
@@ -1415,6 +1416,7 @@ fun Coder.main (tags: Tags): String {
                 }                    
                 printf("]");
                 break;
+        #if 0
             case CEU_VALUE_VECTOR:
                 if (v.Dyn->Vector.unit == CEU_VALUE_CHAR) {
                     printf("%s", v.Dyn->Vector.buf);
@@ -1987,7 +1989,6 @@ fun Coder.main (tags: Tags): String {
     
     int main (int ceu_argc, char** ceu_argv) {
         assert(CEU_TAG_nil == CEU_VALUE_NIL);
-        CEU_Value ceu_acc = { CEU_VALUE_NIL };
         
         ${do_while(this.code)}
 
@@ -2023,12 +2024,12 @@ fun Coder.main (tags: Tags): String {
     return (
         h_includes() + h_defines() + h_enums() +
         h_value_dyn() + h_tags() +
-        /* c_globals() + h_protos() +
+        x_globals() + /* h_protos() +
         dumps() + c_error + gc() + */ c_tags() +
         c_impls() + /*
         // block-task-up, hold, bcast
-        tuple_vector_dict() + creates() +
-        */ print() + /* eq_neq_len() +
+        tuple_vector_dict() + */ creates() +
+        print() + /* eq_neq_len() +
         // throw, pointer-to-string
         (CEU>=3).cond { c_exes } +
         (CEU>=4).cond { c_task } +
