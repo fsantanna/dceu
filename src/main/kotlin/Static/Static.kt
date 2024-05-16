@@ -9,7 +9,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     // void: block is innocuous -> should be a proxy to up block
     fun void (blk: Expr.Do): Boolean {
         // no declarations, no spawns, no tasks
-        val dcls = vars.enc_to_dcls[blk]!!
+        val dcls = vars.blk_to_dcls[blk]!!
         //println(listOf("-=-=-", blk.tk, ups.pub[blk]?.javaClass?.name))
         //println(blk.tostr())
         return when {

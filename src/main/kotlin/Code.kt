@@ -72,6 +72,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 pres.add("""
                     // PROTO | ${this.dump()}
                     void ceu_pro_$id (int ceu_n, CEU_Value ceu_args[]) {
+                        ${this.pars.map {
+                            """
+                            CEU_Value ceu_par_${it.first.str.idc()};
+                        """ }.joinToString("")}
                         ${isexe.cond{"""
                             X->exe->status = (X->action == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
                             switch (X->exe->pc) {

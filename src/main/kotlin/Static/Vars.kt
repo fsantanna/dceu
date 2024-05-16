@@ -3,7 +3,7 @@ package dceu
 typealias LData = List<Id_Tag>
 
 enum class Type {
-    GLOBAL, LOCAL, ARG, NESTED, UPVAL
+    GLOBAL, LOCAL, PARAM, NESTED, UPVAL
 }
 
 class Vars (val outer: Expr.Do, val ups: Ups) {
@@ -17,11 +17,11 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             null
         )
     }.toMutableList()
-    public  val dcl_to_enc: MutableMap<Expr.Dcl,Expr> = dcls.map {
+    public  val dcl_to_blk: MutableMap<Expr.Dcl,Expr.Do> = dcls.map {
         Pair(it, outer)
     }.toMap().toMutableMap()
     public val acc_to_dcl: MutableMap<Expr.Acc,Expr.Dcl> = mutableMapOf()
-    public val enc_to_dcls: MutableMap<Expr,MutableList<Expr>> = mutableMapOf(
+    public val blk_to_dcls: MutableMap<Expr.Do,MutableList<Expr>> = mutableMapOf(
         Pair(outer, dcls.toList().toMutableList())
     )
     public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
@@ -85,13 +85,13 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     }
 
     fun type (dcl: Expr, src: Expr): Type {
-        val enc = dcl_to_enc[dcl]!!
-        val xups = ups.all_until(src) { it == enc } // all ups between src -> dcl
+        val blk = dcl_to_blk[dcl]!!
+        val xups = ups.all_until(src) { it == blk } // all ups between src -> dcl
         return when {
-            (enc == outer) -> Type.GLOBAL
+            (blk == outer) -> Type.GLOBAL
+            (ups.pub[blk] is Expr.Proto) -> Type.PARAM
             xups.all { it !is Expr.Proto } -> Type.LOCAL
-            xups.all { it !is Expr.Proto || it==enc } -> Type.ARG
-            xups.all { it !is Expr.Proto || ups.isnst(it) || it==enc } -> Type.NESTED
+            xups.all { it !is Expr.Proto || ups.isnst(it) || it==blk } -> Type.NESTED
             else -> Type.UPVAL
         }
     }
@@ -110,7 +110,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             if (dcl.tk.str != "val") {
                 err(e.tk, "access error : outer variable \"${dcl.idtag.first.str}\" must be immutable")
             }
-            val orig = ups.first(dcl_to_enc[dcl]!!) { it is Expr.Proto }
+            val orig = ups.first(dcl_to_blk[dcl]!!) { it is Expr.Proto }
             //println(listOf(dcl.id.str, orig?.tk))
             val proto = ups.first(e) { it is Expr.Proto }!!
             ups.all_until(proto) { it == orig }
@@ -135,7 +135,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         return this.idx(X, dcl, acc)
     }
     fun idx (X: String, dcl: Expr.Dcl, src: Expr): String {
-        val enc  = this.dcl_to_enc[dcl]!!
+        val enc  = this.dcl_to_blk[dcl]!!
 
         // number of upvals in enclosing proto
         // index of upval for dcl
@@ -155,11 +155,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         return when (type(dcl,src)) {
             Type.GLOBAL -> "ceu_glb_$id"
             Type.LOCAL -> "ceu_loc_$id"
+            Type.PARAM -> "ceu_par_$id"
             /*
-            Type.ARG -> {
-                assert(locs == 0)
-                Pair("$X->S", "ceux_arg($X, $I) /* arg $id */")
-            }
             Type.NESTED -> {
                 val xups = ups.all_until(src) { it == enc } // all ups between src -> dcl
                 val n = xups.count { it is Expr.Proto && it!=enc }
@@ -179,47 +176,33 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
-                enc_to_dcls[this] = mutableListOf()
                 proto_to_upvs[this] = mutableSetOf()
                 if (this.tag !=null && !datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
-                if (this.pars.size > 0) {
-                    this.pars.forEach { (id, tag) ->
-                        val prv =
-                            dcls.firstOrNull { it is Expr.Dcl && it.idtag.first.str==id.str } as Expr.Dcl?
-                        if (prv == null || (CEU>=99 && prv.idtag.first.str=="it")) {
-                            // ok
-                        } else {
-                            err(id, "declaration error : variable \"${id.str}\" is already declared")
-                        }
-                        if (tag != null && !datas.containsKey(tag.str)) {
-                            //err(tag, "declaration error : data ${tag.str} is not declared")
-                        }
-                        val dcl = Expr.Dcl(
-                            Tk.Fix("val", this.tk.pos),
-                            Pair(id,tag),
-                            null
-                        )
-                        dcls.add(dcl)
-                        dcl_to_enc[dcl] = this
-                        enc_to_dcls[this]!!.add(dcl)
-                    }
-                }
-
                 this.blk.traverse()
-
-                if (this.pars.size > 0) {
-                    dcls.removeLast()   // remove pars
-                }
             }
             is Expr.Do     -> {
                 //val proto = ups.first(this) { it is Expr.Proto } as Expr.Proto
-                enc_to_dcls[this] = mutableListOf()
+                blk_to_dcls[this] = mutableListOf()
                 //println(listOf(this.tk,dcls.size,enc_to_base[proto]))
 
                 // X. restore this size after nested block
                 val size = dcls.size
+
+                // func (a,b,...) { ... }
+                val proto = ups.pub[this]
+                if (proto is Expr.Proto) {
+                    proto.pars.forEach { (id, tag) ->
+                        val dcl = Expr.Dcl(
+                            Tk.Fix("val", this.tk.pos),
+                            Pair(id,tag), null
+                        )
+                        dcls.add(dcl)
+                        dcl_to_blk[dcl] = this
+                        blk_to_dcls[this]!!.add(dcl)
+                    }
+                }
 
                 // nest into expressions
                 this.es.forEach { it.traverse() }
@@ -240,10 +223,10 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     }
                 }
 
-                val blk = ups.first(this) { it is Expr.Do }!!
+                val blk = ups.first(this) { it is Expr.Do }!! as Expr.Do
                 dcls.add(this)
-                dcl_to_enc[this] = blk
-                enc_to_dcls[blk]!!.add(this)
+                dcl_to_blk[this] = blk
+                blk_to_dcls[blk]!!.add(this)
 
                 this.idtag.second.let {
                     if (it !=null && !datas.containsKey(it.str)) {
