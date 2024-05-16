@@ -478,11 +478,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """
                 }
             }
-            is Expr.Nil  -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });"
-            is Expr.Tag  -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_${this.tk.str.idc()}} });"
-            is Expr.Bool -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} });"
-            is Expr.Char -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_CHAR, {.Char=${this.tk.str}} });"
-            is Expr.Num  -> "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} });"
+            is Expr.Nil  -> "CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));"
+            is Expr.Tag  -> "CEU_ACC(((CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_${this.tk.str.idc()}} }));"
+            is Expr.Bool -> "CEU_ACC(((CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} }));"
+            is Expr.Char -> "CEU_ACC(((CEU_Value) { CEU_VALUE_CHAR, {.Char=${this.tk.str}} }));"
+            is Expr.Num  -> "CEU_ACC(((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} }));"
 
             is Expr.Tuple -> """
                 { // TUPLE | ${this.dump()}
@@ -553,11 +553,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 { // CALL | ${this.dump()}
                     ${this.clo.code()}
                     CEU_Value ceu_clo = CEU_ACC_KEEP();
-                    ${this.args.code()}
+                    CEU_Value ceu_args_$n[${this.args.size}];
+                    ${this.args.mapIndexed { i,e ->
+                        e.code() + """
+                            ceu_args_$n[$i] = CEU_ACC_KEEP();
+                        """
+                    }.joinToString("")}
                     CEU_ACC(
-                        ceu_clo.clo->proto(${this.args.size}, TODO)
+                        ceu_clo.Dyn->Clo.proto(${this.args.size}, ceu_args_$n)
                     );
-                    ${this.check_error_aborted(this.toerr())}
+                    //{this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}
                 """
             }

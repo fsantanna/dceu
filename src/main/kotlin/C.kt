@@ -48,21 +48,21 @@ fun Coder.main (tags: Tags): String {
     #define CEU5(x)
     #endif
 
-    #define CEU_ACC(v) {        \
+    #define CEU_ACC(v) ({       \
         CEU_Value ceu_tmp = v;  \
         /*ceu_gc_inc(ceu_tmp);  \
         ceu_gc_dec(ceu_acc);*/  \
         ceu_acc = ceu_tmp;      \
-    }
-    #define CEU_ACC_KEEP(v) {   \
-        CEU_Value ceu_tmp = v;  \
-        ceu_acc = (CEU_Value) { CEU_VALUE_NIL }); \
-        ceu_tmp;                \
-    }
-    #define CEU_ACC_INC() {     \
+    })
+    #define CEU_ACC_KEEP() ({                       \
+        CEU_Value ceu_tmp = ceu_acc;                \
+        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };    \
+        ceu_tmp;                                    \
+    })
+    #define CEU_ACC_INC() ({     \
         /*ceu_gc_inc(ceu_acc);*/ \
-        ceu_acc;                \
-    }
+        ceu_acc;                 \
+    })
     """
     }
     fun h_enums (): String {
@@ -2015,8 +2015,6 @@ fun Coder.main (tags: Tags): String {
             }
         }
     #endif
-
-        ceux_n_set(X->S, 0);
         return 0;
     }
     """

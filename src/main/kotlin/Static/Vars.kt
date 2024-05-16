@@ -11,20 +11,23 @@ enum class Type {
 class Vars (val outer: Expr.Do, val ups: Ups) {
     val datas = mutableMapOf<String,LData>()
 
-    private val dcls: MutableList<Expr.Dcl> = mutableListOf()
-    public val dcl_to_enc: MutableMap<Expr,Expr> = mutableMapOf()
+    // enc (enclosure) = Dcl or Proto
+    private val dcls: MutableList<Expr.Dcl> = GLOBALS.map {
+        Expr.Dcl (
+            Tk.Fix("val", outer.tk.pos),
+            Pair(Tk.Id(it,outer.tk.pos,0), null),
+            null
+        )
+    }.toMutableList()
+    public  val dcl_to_enc: MutableMap<Expr.Dcl,Expr> = dcls.map {
+        Pair(it, outer)
+    }.toMap().toMutableMap()
     public val acc_to_dcl: MutableMap<Expr.Acc,Expr.Dcl> = mutableMapOf()
     public val enc_to_dcls: MutableMap<Expr,MutableList<Expr>> = mutableMapOf(
         Pair(outer, dcls.toList().toMutableList())
     )
     public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
     public val proto_to_upvs: MutableMap<Expr.Proto,MutableSet<Expr.Dcl>> = mutableMapOf()
-
-    // enc_to_base: base stack index at beginning of block
-    //  - must pop down to it on leave
-    //  - proto base is required bc block must be relative to it
-    //      - proto also has upvs at bebinning
-    public val enc_to_base: MutableMap<Expr,Int> = mutableMapOf()
 
     // Proto/Do
     //  - Pair<Int,Int>
@@ -105,7 +108,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     }
 
     fun acc (e: Expr, id: String): Expr.Dcl {
-        val dcl: Expr.Dcl? = dcls.findLast { it is Expr.Dcl && it.idtag.first.str==id } as Expr.Dcl?
+        val dcl: Expr.Dcl? = dcls.findLast { it.idtag.first.str==id } as Expr.Dcl?
         if (dcl == null) {
             err(e.tk, "access error : variable \"${id}\" is not declared")
         }
@@ -220,10 +223,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     }
                 }
 
-                val base = dcls.size                                // 1. base before proto
-                enc_to_base[this] = base                            //    and after args
-                //println(listOf("xxx", base))
-
                 this.blk.traverse()
 
                 if (this.pars.size > 0) {
@@ -234,16 +233,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 //val proto = ups.first(this) { it is Expr.Proto } as Expr.Proto
                 enc_to_dcls[this] = mutableListOf()
                 //println(listOf(this.tk,dcls.size,enc_to_base[proto]))
-
-                ups.first(ups.pub[this]!!) { it is Expr.Do || it is Expr.Proto }.let {
-                    enc_to_base[this] = if (it==null || it is Expr.Proto) 0 else {
-                        //println(listOf("yyy", enc_to_base[it], enc_to_locs[it], this, it))
-                        (enc_to_base[it]!! + blk_to_locs[it]!!.first)
-                    }
-                }
-                //println(listOf(enc_to_base[this], dcls.size - enc_to_base[proto]!!, dcls.size, enc_to_base[proto]))
-                //enc_to_base[this] = dcls.size - enc_to_base[proto]!!
-                //println(listOf("yyy", enc_to_base[this]))
 
                 // X. restore this size after nested block
                 val size = dcls.size
