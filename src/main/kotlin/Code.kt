@@ -1,5 +1,7 @@
 package dceu
 
+import kotlin.math.max
+
 fun do_while (code: String): String {
     return (CEU >= 2).cond { "do {" } + code + (CEU >= 2).cond { "} while (0);" }
 
@@ -469,7 +471,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
             is Expr.Tuple -> """
                 { // TUPLE | ${this.dump()}
-                    CEU_Value ceu_args_$n[${this.args.size}];
+                    CEU_Value ceu_args_$n[${max(1,this.args.size)}];
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
                             ceu_args_$n[$i] = CEU_ACC_KEEP();

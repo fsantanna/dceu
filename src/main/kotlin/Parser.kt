@@ -774,7 +774,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("]")
                 it
             }
-            this.checkFix("(")      -> {
+            this.acceptFix("(")      -> {
                 val e = this.expr()
                 this.acceptFix_err(")")
                 e
