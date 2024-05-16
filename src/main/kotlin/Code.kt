@@ -69,7 +69,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
                 pres.add("""
                     // PROTO | ${this.dump()}
-                    CEU_Value ceu_pro_$id (int ceu_n, CEU_Value ceu_args[]) {
+                    void ceu_pro_$id (int ceu_n, CEU_Value ceu_args[]) {
                         ${isexe.cond{"""
                             X->exe->status = (X->action == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
                             switch (X->exe->pc) {
@@ -84,11 +84,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                                 return ceu_exe_term(X);
                             } // close switch
                         """}}
-                        ${isexe.cond2({"""
-                            assert(0 && "bug found");
-                        """},{"""
-                            return CEU3(X->action==CEU_ACTION_ABORT ? 0 :) ceux_rets(X);
-                        """})}
                     }
                 """)
 
@@ -96,14 +91,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """ // CREATE | ${this.dump()}
                 {
                     ${isnst.cond { "assert(X->exe!=NULL && X->exe->type==CEU_VALUE_EXE_TASK);" }}
-                    CEU_Value clo = ceu_create_clo${istsk.cond { "_task" }} (
-                        ${(!istsk).cond { "CEU_VALUE_CLO_${this.tk.str.uppercase()}," }}
-                        ceu_f_$id,
-                        ${this.pars.size},
-                        ${vars.proto_to_upvs[this]!!.size}
-                        ${istsk.cond { ", ${if (isnst) "X->exe_task" else "NULL"}" }}
+                    CEU_ACC (
+                        ceu_create_clo${istsk.cond { "_task" }} (
+                            ${(!istsk).cond { "CEU_VALUE_CLO_${this.tk.str.uppercase()}," }}
+                            ceu_pro_$id,
+                            ${this.pars.size},
+                            ${vars.proto_to_upvs[this]!!.size}
+                            ${istsk.cond { ", ${if (isnst) "X->exe_task" else "NULL"}" }}
+                        )
                     );
-                    ceux_push(X->S, 1, clo);
                     ${isexe.cond { """
                         // TODO: use args+locs+upvs+tmps?
                         //clo.Dyn->Clo_Exe.mem_n = sizeof(CEU_Clo_Mem_$id);                    
@@ -155,18 +151,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         // do not clear upvs
                         //ceux_block_enter(X->S, X->clo+1+X->args+{upvs+vars.enc_to_base[this]!!}, {vars.size(vars.enc_to_dcls[this]!!)} CEU4(COMMA X->exe));
                         
-                        // GLOBALS (must be after ceux_block_enter)
-                        ${(this == outer).cond { """
-                        {
-                            ${GLOBALS.mapIndexed { i,id -> """
-                            {
-                                CEU_Value clo = ceu_create_clo(CEU_VALUE_CLO_FUNC, ceu_${id.idc()}_f, 0, 0, 0);
-                                ceux_repl(X->S, X->clo+1+X->args+$i, clo);
-                            }
-                            """ }.joinToString("")}
-                        }
-                        """ }}
-        
                         // defers init
                         ${defers[this].cond { it.second }}
                         
@@ -565,9 +549,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             ceu_args_$n[$i] = CEU_ACC_KEEP();
                         """
                     }.joinToString("")}
-                    CEU_ACC (
-                        ceu_clo.Dyn->Clo.proto(${this.args.size}, ceu_args_$n)
-                    );
+                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                    ceu_clo.Dyn->Clo.proto(${this.args.size}, ceu_args_$n);
                     //{this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}
                 """
