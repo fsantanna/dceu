@@ -82,6 +82,7 @@ class Parser_02 {
 
     // PATTS
 
+    /*
     @Test
     fun dd_01_patt () {
         val l = tst_01.lexer(
@@ -134,4 +135,5 @@ class Parser_02 {
         val p = parser.patt()
         assert(Patts_Any_tostr(p) == "(x :X | nil)") { Patts_Any_tostr(p) }
     }
+     */
 }

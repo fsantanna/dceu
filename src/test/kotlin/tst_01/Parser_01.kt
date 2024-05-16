@@ -733,7 +733,7 @@ class Parser_01 {
         val l = lexer("do { (...) }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Do && e.es.size==1 && e.es.last().let { it is Expr.Args && it.dots && it.es.size==0 }) { e.tostr() }
+        assert(e is Expr.Do && e.es.size==1) { e.tostr() }
         assert(e.tostr()=="do {\n(...)\n}") { e.tostr() }
     }
 

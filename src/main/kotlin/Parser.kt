@@ -243,7 +243,7 @@ class Parser (lexer_: Lexer)
     }
 
     fun <T> list0 (sep: String?, close: String, func: () -> T): List<T> {
-        return list0(sep, {this.checkFix(close)}, func)
+        return list0(sep, {this.acceptFix(close)}, func)
 
     }
     fun <T> list0 (sep: String?, close: ()->Boolean, func: () -> T): List<T> {
@@ -305,9 +305,9 @@ class Parser (lexer_: Lexer)
         return this.nest(when {
             (f is Expr.Call)  -> {
                 val args = if (pre) {
-                    e.tostr(true) + f.args.es.map { "," + it.tostr(true) }.joinToString("")
+                    e.tostr(true) + f.args.map { "," + it.tostr(true) }.joinToString("")
                 } else {
-                    f.args.es.map { it.tostr(true) + "," }.joinToString("") + e.tostr(true)
+                    f.args.map { it.tostr(true) + "," }.joinToString("") + e.tostr(true)
                 }
                 """
                 ${f.clo.tostr(true)}($args)
@@ -326,26 +326,6 @@ class Parser (lexer_: Lexer)
         })
     }
 
-    // yield, tuple, vector, call, *list*
-    fun args (clo: String): Expr.Args {
-        val tk0 = this.tk0 as Tk.Fix
-        val args = list0(",", clo) {
-            if (this.acceptFix("...")) {
-                this.checkFix_err(clo)
-                null
-            } else {
-                this.expr()
-            }
-        }
-        val (xva,xas) = if (args.size>0 && args.last()==null) {
-            Pair(true, args.dropLast(1).map { it as Expr })
-        } else {
-            Pair(false, args.map { it as Expr })
-        }
-        this.acceptFix_err(clo)
-        return Expr.Args(tk0, xva, xas)
-    }
-
     fun expr_prim (): Expr {
         return when {
             this.acceptFix("do") -> {
@@ -357,49 +337,21 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val par = this.acceptFix("(")
-                val fst = this.id_tag()
-                val lst1 = listOf(fst) + if (!par || !this.acceptFix(",")) emptyList() else {
-                    this.list0(",", ")") { this.id_tag() }
-                }
-                if (par) {
-                    this.acceptFix_err(")")
-                }
+                val idtag = this.id_tag()
                 val src = if (!this.acceptFix("=")) null else {
                     this.expr()
                 }
-                val lst2 = if (CEU < 99) lst1 else {
-                    val srcs = if (src is Expr.Args) src.es else listOf(src)
-                    val rep: List<Tk.Tag?> = List(lst1.size-srcs.size) { _ -> null }
-                    lst1.zip(srcs+rep).map { (a,b) ->
-                        Pair(a.first, when {
-                            (a.second != null) -> a.second
-                            (CEU < 99) -> null
-                            (b !is Expr.Call) -> null
-                            (b.clo !is Expr.Acc) -> null
-                            (b.clo.tk.str != "tag") -> null
-                            (b.args.es.size != 2) -> null
-                            (b.args.es[0] !is Expr.Tag) -> null
-                            (b.args.es[1] !is Expr.Tuple) -> null
-                            else -> b.args.es[0].tk as Tk.Tag
-                        })
-                    }
-                }
-                Expr.Dcl(tk0, lst2, src)
+                Expr.Dcl(tk0, idtag, src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val dst = this.expr()
-                if (dst is Expr.VA_idx) {
-                    err(this.tk0, "set error : unexpected \"...\"")
-                }
                 this.acceptFix_err("=")
                 val src = this.expr()
                 if (CEU>=99 && dst is Expr.Do && dst.es.let { it.size==3 && it[0] is Expr.Dcl && it[1] is Expr.Nat && it[2] is Expr.Index }) {
                     val dcl = dst.es[0] as Expr.Dcl
                     val c   = dst.es[1] as Expr.Nat
-                    assert(dcl.idtag.size == 1)
-                    val id  = dcl.idtag[0].first
+                    val id  = dcl.idtag.first
                     when (c.tk.str) {
                         "/* = */" -> this.nest("""
                             do {
@@ -701,8 +653,9 @@ class Parser (lexer_: Lexer)
             (CEU>=3 && this.acceptFix("yield")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("(")
-                val args = this.args(")")
-                Expr.Yield(tk0, args)
+                val arg = this.expr()
+                this.acceptFix_err(")")
+                Expr.Yield(tk0, arg)
             }
             (CEU>=3 && this.acceptFix("resume")) -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -741,7 +694,8 @@ class Parser (lexer_: Lexer)
             (CEU>=4 && this.acceptFix("broadcast")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("(")
-                val args = this.args(")")
+                val arg = this.expr()
+                this.acceptFix_err(")")
                 val xin = if (this.acceptFix("in")) {
                     this.expr()
                 } else {
@@ -749,7 +703,7 @@ class Parser (lexer_: Lexer)
                 }
                 Expr.Call(tk0,
                     Expr.Acc(Tk.Id("broadcast'", tk0.pos)),
-                    Expr.Args(args.tk_, args.dots, listOf(xin)+args.es)
+                    listOf(xin, arg)
                 )
             }
             (CEU>=4 && this.acceptFix("toggle")) -> {
@@ -801,12 +755,13 @@ class Parser (lexer_: Lexer)
             this.acceptEnu("Num")  -> Expr.Num(this.tk0 as Tk.Num)
             this.acceptFix("[")     -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val args = this.args("]")
+                val args = this.list0(",","]") { this.expr() }
                 Expr.Tuple(tk0, args)
             }
+            this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0(",","]") { this.expr() })
             this.acceptFix("#[")    -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val args = this.args("]")
+                val args = this.list0(",","]") { this.expr() }
                 Expr.Vector(tk0, args)
             }
             this.acceptFix("@[")    -> Expr.Dict(this.tk0 as Tk.Fix, list0(",", "]") {
@@ -830,20 +785,10 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("]")
                 it
             }
-            this.acceptFix("(")      -> {
-                val args = this.args(")")
-                when {
-                    (!args.dots && args.es.size==0) -> err(args.tk, "list error : expected expression") as Expr
-                    ( args.dots || args.es.size>=2) -> args
-                    else                            -> args.es.first()
-                }
-            }
-            this.acceptFix("#...")      -> Expr.VA_len(this.tk0 as Tk.Fix)
-            this.acceptFix("...[")    -> {
-                val tk0 = this.tk0 as Tk.Fix
+            this.checkFix("(")      -> {
                 val e = this.expr()
-                this.acceptFix_err("]")
-                Expr.VA_idx(tk0, e)
+                this.acceptFix_err(")")
+                e
             }
 
             (CEU>=99 && (this.acceptFix("while") || this.acceptFix("until"))) -> {
@@ -949,13 +894,13 @@ class Parser (lexer_: Lexer)
                 val call = this.expr_2_pre()
                 when {
                     (call !is Expr.Call) -> err(tkx, "resume-yield-all error : expected call")
-                    (call.args.es.size > 1) -> err(tkx, "resume-yield-all error : invalid number of arguments")
+                    (call.args.size > 1) -> err(tkx, "resume-yield-all error : invalid number of arguments")
                 }
                 call as Expr.Call
                 this.nest("""
                     do {
                         val ceu_co_$N = ${call.clo.tostr(true)}
-                        var ceu_arg_$N = ${if (call.args.es.size==0) "nil" else call.args.es[0].tostr(true)}
+                        var ceu_arg_$N = ${if (call.args.size==0) "nil" else call.args[0].tostr(true)}
                         var ceu_v_$N
                         loop {
                             set ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
@@ -1254,12 +1199,12 @@ class Parser (lexer_: Lexer)
                     else -> error("impossible case")
                 }
                 "(" -> {
-                    val args = this.args(")")
+                    val args = this.list0(",",")") { this.expr() }
                     when {
                         (e is Expr.Acc && e.tk.str in XOPERATORS) -> {
-                            when (args.es.size) {
-                                1 -> this.nest("${e.tostr(true)} ${args.es[0].tostr(true)}")
-                                2 -> this.nest("${args.es[0].tostr(true)} ${e.tostr(true)} ${args.es[1].tostr(true)}")
+                            when (args.size) {
+                                1 -> this.nest("${e.tostr(true)} ${args[0].tostr(true)}")
+                                2 -> this.nest("${args[0].tostr(true)} ${e.tostr(true)} ${args[1].tostr(true)}")
                                 else -> err(e.tk, "operation error : invalid number of arguments") as Expr
                             }
                         }
@@ -1304,7 +1249,7 @@ class Parser (lexer_: Lexer)
                 //println(listOf(op,e))
                 when {
                     (op.str == "not") -> this.nest("${op.pos.pre()}(if ${e.tostr(true)} { false } else { true })\n")
-                    else -> Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}", op.pos)), Expr.Args(Tk.Fix("(",op.pos), false, listOf(e)))
+                    else -> Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}", op.pos)), listOf(e))
                 }
             }
             else -> this.expr_3_met()
@@ -1350,7 +1295,7 @@ class Parser (lexer_: Lexer)
                 "in-not?" -> this.nest("in-not'(${e1.tostr(true)}, ${e2.tostr(true)})")
                 else -> {
                     val id = if (op.str[0] in OPERATORS) "{{${op.str}}}" else op.str
-                    Expr.Call(op, Expr.Acc(Tk.Id(id, op.pos)), Expr.Args(Tk.Fix("(",op.pos), false, listOf(e1,e2)))
+                    Expr.Call(op, Expr.Acc(Tk.Id(id, op.pos)), listOf(e1,e2))
                 }
             }
         )

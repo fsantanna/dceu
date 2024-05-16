@@ -8,18 +8,17 @@ enum class Type {
     GLOBAL, LOCAL, ARG, NESTED, UPVAL
 }
 
-class Vars (val outer: Expr.Call, val ups: Ups) {
-    val global = (outer.clo as Expr.Proto).blk
+class Vars (val outer: Expr.Do, val ups: Ups) {
     val datas = mutableMapOf<String,LData>()
 
     private val dcls: MutableList<Expr> = mutableListOf()
     public val dcl_to_enc: MutableMap<Expr,Expr> = mutableMapOf()
-    public val acc_to_dcl: MutableMap<Expr.Acc,Dcl_Idx> = mutableMapOf()
+    public val acc_to_dcl: MutableMap<Expr.Acc,Expr.Dcl> = mutableMapOf()
     public val enc_to_dcls: MutableMap<Expr,MutableList<Expr>> = mutableMapOf(
         Pair(outer, dcls.toList().toMutableList())
     )
-    public val nats: MutableMap<Expr.Nat,Pair<List<Dcl_Idx>,String>> = mutableMapOf()
-    public val proto_to_upvs: MutableMap<Expr.Proto,MutableSet<Dcl_Idx>> = mutableMapOf()
+    public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
+    public val proto_to_upvs: MutableMap<Expr.Proto,MutableSet<Expr.Dcl>> = mutableMapOf()
 
     // enc_to_base: base stack index at beginning of block
     //  - must pop down to it on leave
@@ -37,19 +36,15 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
     //  - must allocate this space on call
 
     init {
-        this.outer.locs()
-        this.outer.traverse()
-    }
-
-    fun size (lst: List<Expr>): Int {
-        return lst.map { if (it is Expr.Dcl) it.idtag.size else 1 }.sum()
+        //this.outer.locs()
+        //this.outer.traverse()
     }
 
     fun data (e: Expr): Pair<Int?,LData?>? {
         return when (e) {
             is Expr.Acc -> {
-                val (dcl,i) = acc_to_dcl[e]!!
-                dcl.idtag[i].second.let {
+                val dcl = acc_to_dcl[e]!!
+                dcl.idtag.second.let {
                     if (it == null) {
                         null
                     } else {
@@ -102,33 +97,19 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         val enc = dcl_to_enc[dcl]!!
         val xups = ups.all_until(src) { it == enc } // all ups between src -> dcl
         return when {
-            (enc == global) -> Type.GLOBAL
+            (enc == outer) -> Type.GLOBAL
             xups.all { it !is Expr.Proto } -> Type.LOCAL
             xups.all { it !is Expr.Proto || it==enc } -> Type.ARG
             xups.all { it !is Expr.Proto || ups.isnst(it) || it==enc } -> Type.NESTED
             else -> Type.UPVAL
-        }.let {
-            //println(listOf(src.tk.pos, src.tostr(), it))
-            it
         }
     }
 
-    fun acc (e: Expr, id: String): Dcl_Idx {
-        var dcl: Expr.Dcl? = null
-        var i: Int? = null
-        for (x in dcls.reversed()) {
-            if (x is Expr.Dcl) {
-                i = x.idtag.indexOfFirst { id == it.first.str }
-                if (i != -1) {
-                    dcl = x
-                    break
-                }
-            }
-        }
+    fun acc (e: Expr, id: String): Expr.Dcl {
+        val dcl: Expr.Dcl? = dcls.findLast { it is Expr.Dcl && it.idtag.first.str==id } as Expr.Dcl?
         if (dcl == null) {
             err(e.tk, "access error : variable \"${id}\" is not declared")
         }
-        i!!
         dcl!!
 
         // add upval to all protos upwards
@@ -136,7 +117,7 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
         // use blk bc of args
         if (type(dcl,e) == Type.UPVAL) {
             if (dcl.tk.str != "val") {
-                err(e.tk, "access error : outer variable \"${dcl.idtag[i].first.str}\" must be immutable")
+                err(e.tk, "access error : outer variable \"${dcl.idtag.first.str}\" must be immutable")
             }
             val orig = ups.first(dcl_to_enc[dcl]!!) { it is Expr.Proto }
             //println(listOf(dcl.id.str, orig?.tk))
@@ -148,25 +129,25 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 .filter { it is Expr.Proto }
                 .forEach {
                     //println(listOf(dcl.id.str, it.tk))
-                    this.proto_to_upvs[it]!!.add(Pair(dcl,i))
+                    this.proto_to_upvs[it]!!.add(dcl)
                 }
         }
 
         if (e is Expr.Acc) {        // TODO: what about Expr.Nat?
-            acc_to_dcl[e] = Pair(dcl,i)
+            acc_to_dcl[e] = dcl
         }
-        return Pair(dcl,i)
+        return dcl
     }
 
     fun idx (X: String, acc: Expr.Acc): Pair<String,String> {
-        val (dcl,ii) = this.acc_to_dcl[acc]!!
-        return this.idx(X, dcl, ii, acc)
+        val dcl = this.acc_to_dcl[acc]!!
+        return this.idx(X, dcl, acc)
     }
     fun idx (X: String, def: Expr.Defer): Pair<String,String> {
         assert(X == "X")
-        return this.idx(X, def, null, def)
+        return this.idx(X, def, def)
     }
-    fun idx (X: String, dcl: Expr, ii: Int?, src: Expr): Pair<String,String> {
+    fun idx (X: String, dcl: Expr, src: Expr): Pair<String,String> {
         val enc  = this.dcl_to_enc[dcl]!!
         val dcls = this.enc_to_dcls[enc]!!
 
@@ -239,48 +220,6 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
             Type.UPVAL -> {
                 Pair("$X->S", "($X->clo + 1 + $X->args + $upv) /* upval $id */")
             }
-        }
-    }
-
-    fun Expr.locs (): Int {
-        return when (this) {
-            is Expr.Proto  -> this.blk.locs()
-            is Expr.Do     -> {
-                val n = this.es.map {
-                    when (it) {
-                        is Expr.Defer -> 1
-                        is Expr.Dcl -> it.idtag.size
-                        else -> 0
-                    }
-                }.sum()
-                val nn = n + (this.es.maxOfOrNull { it.locs() } ?: 0)
-                blk_to_locs[this] = Pair(n, nn)
-                nn
-            }
-            is Expr.Dcl    -> this.idtag.size + (this.src?.locs() ?: 0)
-            is Expr.Set    -> this.dst.locs() + this.src.locs()
-            is Expr.If     -> this.cnd.locs() + max(this.t.locs(), this.f.locs())
-            is Expr.Loop   -> this.blk.locs()
-            is Expr.Break  -> this.cnd.locs() + (this.e?.locs() ?: 0)
-            is Expr.Skip   -> this.cnd.locs()
-            is Expr.Pass   -> this.e.locs()
-            is Expr.Catch  -> this.cnd.locs() + this.blk.locs()
-            is Expr.Defer  -> this.blk.locs()
-            is Expr.Yield  -> this.args.locs()
-            is Expr.Resume -> this.co.locs() + this.args.locs()
-            is Expr.Spawn  -> (this.tsks?.locs() ?: 0) + this.tsk.locs() + this.args.locs()
-            is Expr.Pub    -> this.tsk?.locs() ?: 0
-            is Expr.Toggle -> this.tsk.locs() + this.on.locs()
-            is Expr.Tuple  -> this.args.locs()
-            is Expr.Vector -> this.args.locs()
-            is Expr.Dict   -> this.args.sumOf { it.first.locs() ; it.second.locs() }
-            is Expr.Index  -> this.col.locs() + this.idx.locs()
-            is Expr.Call   -> this.clo.locs() + this.args.locs()
-            is Expr.VA_idx -> this.idx.locs()
-            is Expr.Enum, is Expr.Data, is Expr.Delay, is Expr.Nat, is Expr.Acc -> 0
-            is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> 0
-            is Expr.VA_len -> 0
-            is Expr.Args -> this.es.sumOf { it.locs() }
         }
     }
 
@@ -500,10 +439,6 @@ class Vars (val outer: Expr.Call, val ups: Ups) {
                 data(this)
             }
             is Expr.Call   -> { this.clo.traverse() ; this.args.traverse() }
-
-            is Expr.VA_len -> {}
-            is Expr.VA_idx -> this.idx.traverse()
-            is Expr.Args   -> this.es.forEach { it.traverse() }
         }
     }
 }

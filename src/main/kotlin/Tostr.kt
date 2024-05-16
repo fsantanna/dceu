@@ -43,7 +43,7 @@ fun Expr.tostr (pre: Boolean = false): String {
             }
         }
         is Expr.Dcl    -> {
-            "(" + this.tk_.str + " (" + this.idtag.map { it.tostr(pre) }.joinToString(",") + ")" + this.src.cond { " = ${it.tostr(pre)}" } + ")"
+            "(" + this.tk_.str + " " + this.idtag.tostr(pre) + this.src.cond { " = ${it.tostr(pre)}" } + ")"
         }
         is Expr.Set    -> "(set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre) + ")"
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
@@ -59,7 +59,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Catch  -> "catch (| " + this.cnd.tostr(pre) + ") " + this.blk.tostr(pre)
         is Expr.Defer  -> "defer " + this.blk.tostr(pre)
 
-        is Expr.Yield  -> "yield(" + this.args.tostr(pre) + ")"
+        is Expr.Yield  -> "yield(" + this.arg.tostr(pre) + ")"
         is Expr.Resume -> "(resume (" + this.co.tostr(pre) + ")(" + this.args.tostr(pre) + "))"
 
         is Expr.Spawn  -> "(spawn " + this.tsk.tostr(pre) + "(" + this.args.tostr(pre) + ")" + this.tsks.cond { " in ${this.tsks!!.tostr(pre)}" } + ")"
@@ -79,9 +79,6 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Dict   -> "@[" + this.args.map { "(${it.first.tostr(pre)},${it.second.tostr(pre)})" }.joinToString(",") + "]"
         is Expr.Index  -> this.col.tostr(pre) + "[" + this.idx.tostr(pre) + "]"
         is Expr.Call   -> this.clo.tostr(pre) + "(" + this.args.tostr(pre) + ")" // TODO: collapse broadcast'
-        is Expr.VA_len -> "#..."
-        is Expr.VA_idx -> "...[${this.idx.tostr(pre)}]"
-        is Expr.Args   -> (this.es.map { it.tostr(pre) } + (if (this.dots) listOf("...") else emptyList())).joinToString(",")
     }.let {
         when {
             !pre -> it
@@ -92,8 +89,5 @@ fun Expr.tostr (pre: Boolean = false): String {
 }
 
 fun List<Expr>.tostr (pre: Boolean=false): String {
-    fun args (e: Expr, s: String): String {
-        return if (e is Expr.Args) "("+s+")" else s
-    }
-    return this.map { args(it, it.tostr(pre)) }.joinToString("\n") + "\n"
+    return this.map { it.tostr(pre) }.joinToString("\n") + "\n"
 }

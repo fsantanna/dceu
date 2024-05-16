@@ -23,12 +23,12 @@ var CEU = 1
 //  - uninitialised value
 val VALGRIND = ""
 //val VALGRIND = "valgrind "
-val THROW = false
-//val THROW = true
+//val THROW = false
+val THROW = true
 
 var N = 1
 val D = "\$"
-var STACK = 256
+var STACK = 1024
 val MULTI = -1
 
 // VERSION
@@ -92,11 +92,11 @@ val TAGS = listOf (
 ))
 
 val GLOBALS = setOf (
-    "dump", "error", "next-dict", "print", "println",
-    "sup?", "tag",
+    /*"dump", "error", "next-dict", */"print", "println",
+    /*"sup?", "tag",
     "to-string-number", "to-string-pointer", "to-string-tag",
     "to-tag-string",
-    "tuple", "type", "{{#}}", "{{==}}", "{{/=}}",
+    "tuple", "type", "{{#}}", "{{==}}", "{{/=}}",*/
 ) + (if (CEU < 3) setOf() else setOf(
     "coroutine", "status"
 )) + (if (CEU < 4) setOf() else setOf(
@@ -117,12 +117,11 @@ sealed class Tk (val str: String, val pos: Pos) {
 }
 
 typealias Id_Tag  = Pair<Tk.Id,Tk.Tag?>
-typealias Dcl_Idx = Pair<Expr.Dcl,Int>
 
 sealed class Expr (val n: Int, val tk: Tk) {
-    data class Proto  (val tk_: Tk.Fix, val nst: Boolean, val tag: Tk.Tag?, val dots: Boolean, val pars: List<Pair<Tk.Id, Tk.Tag?>>, val blk: Do): Expr(N++, tk_)
+    data class Proto  (val tk_: Tk.Fix, val nst: Boolean, val tag: Tk.Tag?, val dots: Boolean, val pars: List<Id_Tag>, val blk: Do): Expr(N++, tk_)
     data class Do     (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
-    data class Dcl    (val tk_: Tk.Fix, val idtag: List<Id_Tag>, /*val poly: Boolean,*/ val src: Expr?):  Expr(N++, tk_)
+    data class Dcl    (val tk_: Tk.Fix, val idtag: Id_Tag, /*val poly: Boolean,*/ val src: Expr?):  Expr(N++, tk_)
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
     data class Loop   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
@@ -135,10 +134,10 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr.Do, val blk: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
 
-    data class Yield  (val tk_: Tk.Fix, val args: Expr.Args): Expr(N++, tk_)
-    data class Resume (val tk_: Tk.Fix, val co: Expr, val args: Expr.Args): Expr(N++, tk_)
+    data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
+    data class Resume (val tk_: Tk.Fix, val co: Expr, val args: List<Expr>): Expr(N++, tk_)
 
-    data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val tsk: Expr, val args: Expr.Args): Expr(N++, tk_)
+    data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val tsk: Expr, val args: List<Expr>): Expr(N++, tk_)
     data class Delay  (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Pub    (val tk_: Tk, val tsk: Expr?): Expr(N++, tk_)
     data class Toggle (val tk_: Tk.Fix, val tsk: Expr, val on: Expr): Expr(N++, tk_)
@@ -150,14 +149,11 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Bool   (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Char   (val tk_: Tk.Chr): Expr(N++, tk_)
     data class Num    (val tk_: Tk.Num): Expr(N++, tk_)
-    data class Tuple  (val tk_: Tk.Fix, val args: Expr.Args): Expr(N++, tk_)
-    data class Vector (val tk_: Tk.Fix, val args: Expr.Args): Expr(N++, tk_)
+    data class Tuple  (val tk_: Tk.Fix, val args: List<Expr>): Expr(N++, tk_)
+    data class Vector (val tk_: Tk.Fix, val args: List<Expr>): Expr(N++, tk_)
     data class Dict   (val tk_: Tk.Fix, val args: List<Pair<Expr,Expr>>): Expr(N++, tk_)
     data class Index  (val tk_: Tk, val col: Expr, val idx: Expr): Expr(N++, tk_)
-    data class Call   (val tk_: Tk, val clo: Expr, val args: Expr.Args): Expr(N++, tk_)
-    data class VA_len (val tk_: Tk.Fix): Expr(N++, tk_)
-    data class VA_idx (val tk_: Tk.Fix, val idx: Expr): Expr(N++, tk_)
-    data class Args   (val tk_: Tk.Fix, val dots: Boolean, val es: List<Expr>): Expr(N++, tk_)
+    data class Call   (val tk_: Tk, val clo: Expr, val args: List<Expr>): Expr(N++, tk_)
 }
 
 fun exec (cmds: List<String>): Pair<Boolean,String> {
@@ -195,26 +191,16 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
         }
         //readLine()
         val pos = Pos("anon", 0, 0)
-        val glbs = GLOBALS.map { Expr.Dcl(Tk.Fix("val",pos), listOf(Pair(Tk.Id(it,pos),null)), null) }
-        val outer = Expr.Call (
-            Tk.Fix("main", pos),
-            Expr.Proto (
-                Tk.Fix("func",pos), false, null,
-                true, listOf(),
-                Expr.Do(Tk.Fix("",pos), glbs + es)
-            ),
-            Expr.Args(Tk.Fix("(",pos), false, listOf())
-        )
+        val outer  = Expr.Do(Tk.Fix("", pos), es)
         val ups    = Ups(outer)
         val tags   = Tags(outer)
         val vars   = Vars(outer, ups)
         val sta    = Static(outer, ups, vars)
-        val rets   = Rets(outer, ups)
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
         if (verbose) {
             System.err.println("... ceu -> c ...")
         }
-        val coder = Coder(outer, ups, vars, sta, rets)
+        val coder = Coder(outer, ups, vars, sta)
         coder.main(tags)
     } catch (e: Throwable) {
         if (THROW) {

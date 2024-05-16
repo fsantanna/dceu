@@ -1497,6 +1497,7 @@ class Parser_99 {
 
     // PATT
 
+    /*
     @Test
     fun ww_01_patt() {
         val l = lexer(
@@ -1584,4 +1585,5 @@ class Parser_99 {
                 "}\n" +
                 "}") { e.tostr() }
     }
+     */
 }

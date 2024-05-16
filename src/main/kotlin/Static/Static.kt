@@ -1,11 +1,9 @@
 package dceu
 
-class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
+class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     // funs: const func is not used: do not generate code
     // val f = func ()
-    val xfuns: MutableMap<Expr.Proto, MutableSet<Expr.Proto>> = mutableMapOf(
-        Pair(outer.clo as Expr.Proto, mutableSetOf())
-    )
+    val xfuns: MutableMap<Expr.Proto, MutableSet<Expr.Proto>> = mutableMapOf()
     val funs: MutableSet<Expr.Proto> = mutableSetOf()
 
     // void: block is innocuous -> should be a proxy to up block
@@ -26,7 +24,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
     val defer_catch_spawn_tasks: MutableSet<Expr.Do> = mutableSetOf()
 
     init {
-        outer.traverse()
+        //outer.traverse()
 
         // xfuns -> funs
         fun f (proto: Expr.Proto) {
@@ -36,7 +34,6 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             }
         }
         funs.addAll(xfuns.keys)     // assume none are acessed
-        f(outer.clo as Expr.Proto)  // start with accesses from outer
     }
 
     fun Expr.check_dots () {
@@ -52,7 +49,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.Proto  -> {
                 if (this.nst) {
                     if (ups.first(ups.pub[this]!!) { it is Expr.Proto }.let {
-                        (CEU>=99 && it==outer.clo) /* bc of top-level spawn {...} */ ||
+                        //(CEU>=99 && it==outer.clo) /* bc of top-level spawn {...} */ ||
                         (it!=null && it.tk.str=="task") })
                     {
                         // ok
@@ -84,7 +81,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                 this.dst.traverse()
                 this.src.traverse()
                 if (this.dst is Expr.Acc) {
-                    val (dcl,_) = vars.acc_to_dcl[this.dst]!!
+                    val dcl = vars.acc_to_dcl[this.dst]!!
                     if (dcl.tk.str == "val") {
                         err(this.tk, "set error : destination is immutable")
                     }
@@ -143,7 +140,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             }
 
             is Expr.Yield  -> {
-                this.args.traverse()
+                this.arg.traverse()
                 when {
                     ups.any(this) { defer -> (defer is Expr.Defer) }
                         -> err(this.tk, "yield error : unexpected enclosing defer")
@@ -153,7 +150,7 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
                         }
                     }
                         -> err(this.tk, "yield error : unexpected enclosing catch")
-                    ups.first(this) { it is Expr.Proto }.let { it?.tk?.str=="func" && it!=outer.main() }
+                    ups.first(this) { it is Expr.Proto }.let { it?.tk?.str=="func" }
                         -> err(this.tk, "yield error : unexpected enclosing func")
                     (ups.exe(this) == null)
                         -> err(this.tk, "yield error : expected enclosing coro" + (if (CEU <= 3) "" else " or task"))
@@ -163,13 +160,13 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             }
             is Expr.Resume -> {
                 this.co.traverse()
-                this.args.traverse()
+                this.args.forEach { it.traverse() }
             }
 
             is Expr.Spawn  -> {
                 this.tsks?.traverse()
                 this.tsk.traverse()
-                this.args.traverse()
+                this.args.forEach { it.traverse() }
                 if (this.tsks == null) {
                     defer_catch_spawn_tasks.add(ups.first(this) { it is Expr.Do } as Expr.Do)
                 }
@@ -201,9 +198,9 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
-                val (dcl,_) = vars.acc_to_dcl[this]!!
+                val dcl = vars.acc_to_dcl[this]!!
                 if (xfuns.containsKey(dcl.src)) {
-                    val up = ups.first(this) { it is Expr.Proto && (it==outer.clo || (ups.pub[it] is Expr.Dcl)) }
+                    val up = ups.first(this) { it is Expr.Proto && (ups.pub[it] is Expr.Dcl) }
                     xfuns[up]!!.add(dcl.src as Expr.Proto)
                 }
             }
@@ -212,8 +209,8 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             is Expr.Bool   -> {}
             is Expr.Char   -> {}
             is Expr.Num    -> {}
-            is Expr.Tuple  -> this.args.traverse()
-            is Expr.Vector -> this.args.traverse()
+            is Expr.Tuple  -> this.args.forEach { it.traverse() }
+            is Expr.Vector -> this.args.forEach { it.traverse() }
             is Expr.Dict   -> this.args.forEach { (k,v) -> k.traverse() ; v.traverse() }
             is Expr.Index  -> {
                 this.col.traverse()
@@ -221,23 +218,11 @@ class Static (val outer: Expr.Call, val ups: Ups, val vars: Vars) {
             }
             is Expr.Call   -> {
                 this.clo.traverse()
-                this.args.traverse()
+                this.args.forEach { it.traverse() }
                 if (this.clo is Expr.Acc && this.clo.tk.str=="tasks") {
                     defer_catch_spawn_tasks.add(ups.first(this) { it is Expr.Do } as Expr.Do)
                 }
 
-            }
-
-            is Expr.VA_len -> this.check_dots()
-            is Expr.VA_idx -> {
-                this.check_dots()
-                this.idx.traverse()
-            }
-            is Expr.Args -> {
-                if (this.dots) {
-                    this.check_dots()
-                }
-                this.es.forEach { it.traverse() }
             }
         }
     }
