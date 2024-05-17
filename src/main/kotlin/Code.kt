@@ -144,8 +144,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ceu_${this.n} += ceu_argc;
                 """ }}
                  */
+
+                // func (a,b)
+                val proto = ups.pub[this]
+                val args = if (proto !is Expr.Proto) null else {
+                    proto.pars.mapIndexed { i,(id, _) -> """
+                        ceu_par_${id.str.idc()} = ($i < ceu_n) ? ceu_args[$i] : (CEU_Value) { CEU_VALUE_NIL };
+                    """
+                    }.joinToString("")
+                }
+
                 val void = sta.void(this)
                 if (void) {
+                    assert(args == null)
                     """
                     { // BLOCK | void | ${this.dump()}
                         $body
@@ -153,6 +164,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """
                 } else {
                     """
+                    ${args.cond { """
+                        // PROTO | ARGS | ${proto!!.dump()}
+                        $it
+                    """ }}
                     { // BLOCK | ${this.dump()}
                         // do not clear upvs
                         //ceux_block_enter(X->S, X->clo+1+X->args+{upvs+vars.enc_to_base[this]!!}, {vars.size(vars.enc_to_dcls[this]!!)} CEU4(COMMA X->exe));

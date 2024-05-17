@@ -2859,7 +2859,7 @@ class Exec_01 {
             """
             var f
             set f = func (xxx) {
-                ;;println(type(xxx))
+                ;;println(xxx)
                 xxx
             }
             var yyy
