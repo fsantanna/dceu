@@ -200,18 +200,27 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val issrc = (this.src != null)
                 """
                 // DCL | ${this.dump()}
-                ${if (sta.protos_use_unused.contains(this.src)) {
-                    "// $idx: unused function"
-                } else {
+                ${when {
+                    sta.protos_use_unused.contains(this.src) -> """
+                        // $idx: unused function
                     """
-                    ${issrc.cond { this.src!!.code()} }
-                    ${(!isglb).cond { "CEU_Value " }}
-                    $idx
-                    ${issrc.cond { " = CEU_ACC_INC()" }}
-                    ;
+                    (isglb && !issrc) -> """
+                        // $idx: uninited global
                     """
+                    (isglb && issrc) -> """
+                        ${this.src!!.code()}
+                        $idx = CEU_ACC_INC();
+                    """
+                    (!isglb && !issrc) -> """
+                        CEU_Value $idx = { CEU_VALUE_NIL };
+                    """
+                    (!isglb && issrc) -> """
+                        ${this.src!!.code()}
+                        CEU_Value $idx = CEU_ACC_INC();
+                    """
+                    else -> error("impossible case")
                 }}
-            """
+                """
             }
             is Expr.Set -> """
                 { // SET | ${this.dump()}
