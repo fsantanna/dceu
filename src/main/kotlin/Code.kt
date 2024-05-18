@@ -118,7 +118,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
                         """
                         CEU_Value upv = ${vars.idx("X",dcl,ups.pub[this]!!)};
-                        ceu_gc_inc(upv);
+                        //ceu_gc_inc(upv);
                         ceu_acc.Dyn->Clo.upvs.buf[$i] = upv;
                         """
                         }.joinToString("\n")}
@@ -520,7 +520,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         """
                     }.joinToString("")}
                     CEU_ACC (
-                        ceu_create_tuple(/*{bup.idc("block")},*/ ${this.args.size}, ceu_args_$n);
+                        ceu_create_tuple(/*{bup.idc("block")},*/ 1, ${this.args.size}, ceu_args_$n);
                     );
                 }
             """
@@ -532,53 +532,56 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             """
             is Expr.Dict -> """
                 { // DICT | ${this.dump()}
-                    ceux_push(X->S, 1, ceu_create_dict());
+                    CEU_Value ceu_dic_$n = ceu_create_dict();
                     ${this.args.map { """
                         {
                             ${it.first.code()}
+                            CEU_Value ceu_key_$n = CEU_ACC_KEEP();
                             ${it.second.code()}
-                            ceu_dict_set(X->S, &ceux_peek(X->S,XX(-3)).Dyn->Dict, ceux_peek(X->S,XX(-2)), ceux_peek(X->S,XX(-1)));
-                            CEU_ERROR_CHK_STK(continue, ${this.toerr()});
-                            ceux_drop(X->S, 2);
+                            CEU_Value ceu_val_$n = CEU_ACC_KEEP();
+                            ceu_dict_set(ceu_dic_$n, ceu_key_$n, ceu_val_$n);
+                            //ceu_gc_dec_val(ceu_key_$n);
+                            //ceu_gc_dec_val(ceu_col_$n);
+                            //CEU_ERROR_CHK_STK(continue, ${this.toerr()});
                         }
                     """ }.joinToString("")}
+                    CEU_ACC(ceu_dic_$n);
                 }
             """
             is Expr.Index -> {
                 val idx = vars.data(this).let { if (it == null) -1 else it.first!! }
                 """
                 { // INDEX | ${this.dump()}
+                    // VAL
+                    ${this.isdst().cond { """
+                        CEU_Value ceu_val_$n = CEU_ACC_KEEP();
+                    """ }}
+                    
+                    // COL
+                    ${this.col.code()}
+                    CEU_Value ceu_col_$n = CEU_ACC_KEEP();
+
                     // IDX
                     ${if (idx == -1) {
                         this.idx.code()
                     } else {
                         """
-                        ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=$idx} });
+                        CEU_ACC(((CEU_Value) { CEU_VALUE_NUMBER, {.Number=$idx} }));
                         """
                     }}
-                    
-                    // COL
-                    ${this.col.code()}
-                """ + when {
-                    this.isdst() -> {
-                        """
-                        {
-                            // [val,idx,col]
-                            ceux_col_set(X->S);
-                            // [val]
-                            CEU_ERROR_CHK_STK(continue, ${this.toerr()});
-                        }
-                        """
-                    }
-                    else -> """
-                        {
-                            // [idx,col]
-                            ceux_col_get(X->S);
-                            // [val]
-                            CEU_ERROR_CHK_STK(continue, ${this.toerr()});
-                        }
+                    CEU_Value ceu_idx_$n = CEU_ACC_KEEP();
+                """ +
+                if (this.isdst()) {
                     """
+                    ceu_col_set(ceu_col_$n, ceu_idx_$n, ceu_val_$n);
+                    ceu_acc = ceu_val_$n;
+                    """
+                } else {
+                    "CEU_ACC(ceu_col_get(ceu_col_$n, ceu_idx_$n));"
                 } + """
+                    //ceu_gc_dec_val(ceu_idx_$n);
+                    //ceu_gc_dec_val(ceu_col_$n);
+                    //CEU_ERROR_CHK_STK(continue, ${this.toerr()});
                 }
                 """
             }

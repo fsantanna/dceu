@@ -1065,13 +1065,11 @@ class Exec_01 {
                 println(y)
             }
             ;;`ceu_gc_collect();`
-            println("-=-=-=-=-=-=-=-=-")
             println(t)
         """)
         //assert(out == "anon : (lin 6, col 26) : drop error : value contains multiple references\n") { out }
         //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
         assert(out == "[99]\n" +
-                "-=-=-=-=-=-=-=-=-\n" +
                 "[1,[99],3]\n") { out }
     }
     @Test
