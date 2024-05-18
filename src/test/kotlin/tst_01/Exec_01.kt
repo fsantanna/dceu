@@ -355,7 +355,6 @@ class Exec_01 {
     }
     @Test
     fun be_02_rec() {
-        STACK = 128
         val out = test("""
             $PLUS
             val f = func (v) {
@@ -371,25 +370,23 @@ class Exec_01 {
     }
     @Test
     fun be_03_rec_rec() {
-        STACK = 64
         val out = test("""
             $PLUS
-            val (f,g) = (
-                func (v) {
-                    if v == 0 {
-                        0
-                    } else {
-                        v + g(v - 1)
-                    }
-                },
-                func (v) {
-                    if v == 0 {
-                        0
-                    } else {
-                        v + f(v - 1)
-                    }
-                },
-            )
+            var g
+            val f = func (v) {
+                if v == 0 {
+                    0
+                } else {
+                    v + g(v - 1)
+                }
+            }
+            set g = func (v) {
+                if v == 0 {
+                    0
+                } else {
+                    v + f(v - 1)
+                }
+            }
             println(f(4))
         """)
         assert(out == "10\n") { out }
@@ -565,7 +562,6 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple6_free() {
-        STACK = 128
         val out = test(
             """
             val f = func (v) {
@@ -583,7 +579,6 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple7_hold_err() {
-        STACK = 128
         val out = test("""
             val f = func (v) {
                 var x
@@ -601,7 +596,6 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple8_hold_err() {
-        STACK = 128
         val out = test(
             """
             val f = func (v) {
@@ -908,6 +902,20 @@ class Exec_01 {
         """
         )
         assert(out == "[[1]]\n") { out }
+    }
+    @Test
+    fun cc_07a_global() {
+        //DEBUG = true
+        val out = test("""
+            val e = func () {
+                nil
+            }
+            val g = func () {
+                e
+            }
+            println(g())
+        """)
+        assert(out.contains("func: 0x")) { out }
     }
     @Test
     fun cc_07_global() {
@@ -2829,10 +2837,8 @@ class Exec_01 {
     fun func1() {
         val out = test(
             """
-            var f
-            set f = func () { nil }
-            var x
-            set x = f()
+            val f = func () { nil }
+            val x = f()
             println(x)
         """
         )
@@ -4205,7 +4211,6 @@ class Exec_01 {
 
     @Test
     fun qq_01_tostring() {
-        STACK = 128
         val out = test("""
             `static char x[] = "abc";`
             println(to-string(`:pointer x`))
@@ -4215,7 +4220,6 @@ class Exec_01 {
     }
     @Test
     fun tostring1() {
-        STACK = 128
         val out = test(
             """
             var s
@@ -4238,7 +4242,6 @@ class Exec_01 {
     }
     @Test
     fun tonumber_tostring3() {
-        STACK = 128
         val out = test(
             """
             var s
@@ -5775,7 +5778,6 @@ class Exec_01 {
 
     @Test
     fun qq_01_copy() {
-        STACK = 128
         val out = test("""
             println(copy(10), copy([]))
         """, true)
@@ -5783,7 +5785,6 @@ class Exec_01 {
     }
     @Test
     fun qq_02_copy() {
-        STACK = 128
         val out = test("""
             val t = [1,2,3]
             val u = copy(t)
@@ -6005,7 +6006,6 @@ class Exec_01 {
 
     @Test
     fun zz_01_sum() {
-        STACK = 128
         val out = test("""
             var sum = func (n) {                                                            
                 var i = n                                                                   
@@ -6035,7 +6035,6 @@ class Exec_01 {
     }
     @Test
     fun zz_03_func_scope() {
-        STACK = 64
         val out = test("""
             val f = func (v) {
                 if v == nil {
@@ -6051,7 +6050,6 @@ class Exec_01 {
     }
     @Test
     fun zz_04_arthur() {
-        STACK = 128
         val out = test("""
             val tree1 = @[
                 (:left, @[

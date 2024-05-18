@@ -1,10 +1,17 @@
 package dceu
 
 class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
-    // funs: const func is not used: do not generate code
-    // val f = func ()
-    val xfuns: MutableMap<Expr.Proto, MutableSet<Expr.Proto>> = mutableMapOf()
-    val funs: MutableSet<Expr.Proto> = mutableSetOf()
+    // protos_unused: const proto is not used: do not generate code
+    val protos_use_unused: MutableSet<Expr.Proto> = mutableSetOf()
+    val protos_use_map: MutableMap<Expr.Proto, MutableSet<Expr.Proto>> = mutableMapOf()
+    fun protos_use_f (proto: Expr.Proto) {
+        if (protos_use_unused.contains(proto)) {     // if breaks recursion
+            protos_use_unused.remove(proto)          // found access, remove it
+            protos_use_map[proto]!!.forEach {
+                protos_use_f(it)
+            }
+        }
+    }
 
     // void: block is innocuous -> should be a proxy to up block
     fun void (blk: Expr.Do): Boolean {
@@ -25,15 +32,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
     init {
         outer.traverse()
-
-        // xfuns -> funs
-        fun f (proto: Expr.Proto) {
-            if (funs.contains(proto)) {     // if breaks recursion
-                funs.remove(proto)          // found access, remove it
-                xfuns[proto]!!.forEach { f(it) }
-            }
-        }
-        funs.addAll(xfuns.keys)     // assume none are acessed
     }
 
     fun Expr.traverse () {
@@ -64,8 +62,9 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> {
-                if (this.src is Expr.Proto) {
-                    xfuns[this.src] = mutableSetOf()
+                if (this.src is Expr.Proto && this.tk.str=="val") {
+                    protos_use_unused.add(this.src)
+                    protos_use_map[this.src] = mutableSetOf()
                 }
                 this.src?.traverse()
             }
@@ -191,9 +190,19 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
                 val dcl = vars.acc_to_dcl[this]!!
-                if (xfuns.containsKey(dcl.src)) {
-                    val up = ups.first(this) { it is Expr.Proto && (ups.pub[it] is Expr.Dcl) }
-                    xfuns[up]!!.add(dcl.src as Expr.Proto)
+                if (dcl.src is Expr.Proto && dcl.tk.str=="val") {
+                    // f is accessed
+                    //  - from an enclosing const g
+                    //      - g calls f
+                    //      - add f to g such that f is ok if g is ok
+                    //  - elsewhere
+                    //      - f is ok and all fs' accessed from f
+                    val up_proto = ups.first(this) { it is Expr.Proto && ups.pub[it].let { it is Expr.Dcl && it.tk.str=="val" } }
+                    when {
+                        (up_proto == null) -> protos_use_f(dcl.src)
+                        //!protos_use_unused.contains(up_proto) -> protos_use_f(dcl.src)
+                        else -> protos_use_map[up_proto]!!.add(dcl.src)
+                    }
                 }
             }
             is Expr.Nil    -> {}

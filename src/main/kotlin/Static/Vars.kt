@@ -21,7 +21,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         Pair(it, outer)
     }.toMap().toMutableMap()
     public val acc_to_dcl: MutableMap<Expr.Acc,Expr.Dcl> = mutableMapOf()
-    public val blk_to_dcls: MutableMap<Expr.Do,MutableList<Expr>> = mutableMapOf(
+    public val blk_to_dcls: MutableMap<Expr.Do,MutableList<Expr.Dcl>> = mutableMapOf(
         Pair(outer, dcls.toList().toMutableList())
     )
     public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()

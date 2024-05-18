@@ -430,10 +430,10 @@ fun Coder.main (tags: Tags): String {
         }
         puts("<<<<<<<<<<<");
     }
+    #if 0
     void ceu_dump_dyn (CEU_Dyn* dyn) {
         ceu_dump_val(ceu_dyn_to_val(dyn));
     }
-    #if 0
     void ceu_dump_block (CEU_Block* blk) {
         printf(">>> BLOCK: %p\n", blk);
         printf("    istop = %d\n", blk->istop);
@@ -767,10 +767,12 @@ fun Coder.main (tags: Tags): String {
         return ceu_error_s(X->S, "debug is off");
     #endif
     }
+    #endif
 
     int ceu_as_bool (CEU_Value v) {
         return !(v.type==CEU_VALUE_NIL || (v.type==CEU_VALUE_BOOL && !v.Bool));
     }
+    #if 0
     void ceu_pro_type (int n, CEU_Value args[]) {
         assert(n==1 && "bug found");
         ceu_gc_dec_args(n, args);
@@ -1571,23 +1573,19 @@ fun Coder.main (tags: Tags): String {
         }
         return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=v} };
     }
-    void ceu_pro_equals_equals (CEUX* X) {
-        assert(X->args == 2);
-        CEU_Value ret = _ceu_equals_equals_(ceux_peek(X->S, ceux_arg(X,0)), ceux_peek(X->S, ceux_arg(X,1)));
-        ceux_push(X->S, 1, ret);
-        return 1;
+    void ceu_pro_equals_equals (int n, CEU_Value args[]) {
+        assert(n == 2);
+        CEU_ACC(_ceu_equals_equals_(args[0], args[1]));
     }
-    void ceu_pro_slash_equals (CEUX* X) {
-        ceu_equals_equals_f(X);
-        CEU_Value ret = ceux_pop(X->S, 0);
-        assert(ret.type == CEU_VALUE_BOOL);
-        ret.Bool = !ret.Bool;
-        ceux_push(X->S, 1, ret);
-        return 1;
+    void ceu_pro_slash_equals (int n, CEU_Value args[]) {
+        ceu_pro_equals_equals(n, args);
+        assert(ceu_acc.type == CEU_VALUE_BOOL);
+        ceu_acc.Bool = !ceu_acc.Bool;
     }
     
-    void ceu_pro_hash (CEUX* X) {
-        assert(X->args == 1);
+    #if 0
+    void ceu_pro_hash (int n, CEU_Value args[]) {
+        assert(n == 1);
         CEU_Value v = ceux_peek(X->S, ceux_arg(X,0));
         CEU_Value ret;
         if (v.type == CEU_VALUE_VECTOR) {
@@ -1600,6 +1598,7 @@ fun Coder.main (tags: Tags): String {
         ceux_push(X->S, 1, ret);
         return 1;
     }
+    #endif
     """
     }
 
@@ -1980,17 +1979,26 @@ fun Coder.main (tags: Tags): String {
     """
 
     // GLOBALS
-    // GLOBALS
     fun c_globals (): String {
-        return GLOBALS.map { """
-            CEU_Clo ceu_clo_$it = {
+        val pres = GLOBALS.map {
+            val id = it.idc()
+            """
+            CEU_Clo ceu_clo_$id = {
                 CEU_VALUE_CLO_FUNC, 0, (CEU_Value) { CEU_VALUE_NIL },
-                ceu_pro_$it, { 0, NULL }
+                ceu_pro_$id, { 0, NULL }
             };
-            CEU_Value ceu_glb_$it = {
-                CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_clo_$it}
+            CEU_Value ceu_glb_$id = {
+                CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_clo_$id}
             };
-        """ }.joinToString("")
+            """
+        }.joinToString("")
+        val poss = vars.blk_to_dcls[outer]!!.map {
+            val id = it.idtag.first.str.idc()
+            """
+            CEU_Value ceu_glb_$id = { CEU_VALUE_NIL };    
+            """
+        }.joinToString("")
+        return pres + poss
     }
 
     // MAIN
@@ -2036,11 +2044,12 @@ fun Coder.main (tags: Tags): String {
         h_includes() + h_defines() + h_enums() +
         h_value_dyn() + h_tags() +
         x_globals() + /* h_protos() +
-        dumps() + c_error + gc() + */ c_tags() +
+        c_error + gc() + */ c_tags() +
         c_impls() + /*
         // block-task-up, hold, bcast
         tuple_vector_dict() + */ creates() +
-        print() + /* eq_neq_len() +
+        print() + eq_neq_len() +
+        dumps() + /*
         // throw, pointer-to-string
         (CEU>=3).cond { c_exes } +
         (CEU>=4).cond { c_task } +

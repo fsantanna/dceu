@@ -445,7 +445,6 @@ class Exec_03 {
 
     @Test
     fun ee_01_coro() {
-        STACK = 128
         val out = test("""
             $PLUS
             var t

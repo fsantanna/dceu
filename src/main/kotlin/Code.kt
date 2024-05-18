@@ -196,20 +196,21 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             }
             is Expr.Dcl -> {
                 val idx = vars.idx("X", this, this)
+                val isglb = (vars.dcl_to_blk[this] == outer)
+                val issrc = (this.src != null)
                 """
                 // DCL | ${this.dump()}
-                ${sta.funs.contains(this.src).cond2({"""
-                    // $idx: unused function
-                """},{"""
-                    CEU_Value $idx
-                    ${(this.src == null).cond2({ """
-                        = { CEU_VALUE_NIL };
-                    """ },{ """
-                        ;
-                        ${this.src!!.code()}
-                        ${vars.idx("X",this,this)} = CEU_ACC_INC();
-                    """ })}
-                """})}
+                ${if (sta.protos_use_unused.contains(this.src)) {
+                    "// $idx: unused function"
+                } else {
+                    """
+                    ${issrc.cond { this.src!!.code()} }
+                    ${(!isglb).cond { "CEU_Value " }}
+                    $idx
+                    ${issrc.cond { " = CEU_ACC_INC()" }}
+                    ;
+                    """
+                }}
             """
             }
             is Expr.Set -> """
@@ -223,7 +224,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 { // IF | ${this.dump()}
                     ${this.cnd.code()}
                     {
-                        int v = ceu_as_bool(ceux_peek(X->S, XX(-1)));
+                        int v = ceu_as_bool(ceu_acc);
                         //ceux_pop(X->S, 1);
                         if (v) {
                             ${this.t.code()}
@@ -465,18 +466,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 when (this.tk_.tag) {
                     null   -> body + "\n" + """
                         ${this.check_error_aborted(this.toerr())}
-                        ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+                        CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));
                     """
                     ":pre" -> {
                         pres.add(body)
-                        "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });"
+                        "CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));"
                     }
-                    ":ceu" -> "ceux_push(X->S, 1, $body);"
+                    ":ceu" -> "CEU_ACC($body);"
                     else -> {
                         val (TAG,Tag) = this.tk_.tag.drop(1).let {
                             Pair(it.uppercase(), it.first().uppercase()+it.drop(1))
                         }
-                        "ceux_push(X->S, 1, ((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} }));"
+                        "CEU_ACC(((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} }));"
                     }
                 }
             }
@@ -574,7 +575,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """
                 { // CALL | ${this.dump()}
                     ${this.clo.code()}
-                    CEU_Value ceu_clo = CEU_ACC_KEEP();
+                    CEU_Value ceu_clo_$n = CEU_ACC_KEEP();
                     CEU_Value ceu_args_$n[${this.args.size}];
                     ${this.args.mapIndexed { i,e ->
                         e.code() + """
@@ -582,7 +583,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         """
                     }.joinToString("")}
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
-                    ceu_clo.Dyn->Clo.proto(${this.args.size}, ceu_args_$n);
+                    ceu_clo_$n.Dyn->Clo.proto(${this.args.size}, ceu_args_$n);
                     //{this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}
                 """

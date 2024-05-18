@@ -48,7 +48,6 @@ class Exec_02 {
     }
     @Test
     fun ee_04_defer() {
-        STACK = 64
         val out = test("""
             do {
                 defer { println(3) }
@@ -62,7 +61,6 @@ class Exec_02 {
     }
     @Test
     fun ee_05_defer() {
-        STACK = 64
         val out = test("""
             var f
             set f = func () {
