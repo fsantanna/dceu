@@ -520,14 +520,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         """
                     }.joinToString("")}
                     CEU_ACC (
-                        ceu_create_tuple(/*{bup.idc("block")},*/ 1, ${this.args.size}, ceu_args_$n);
+                        ceu_create_tuple(1, ${this.args.size}, ceu_args_$n);
                     );
                 }
             """
             is Expr.Vector -> """
                 { // VECTOR | ${this.dump()}
-                    ${this.args.code()}
-                    ceux_vector(X->S, ceu_{this.args.n});
+                    CEU_Value ceu_vec_$n = ceu_create_vector();
+                    ${this.args.mapIndexed { i, it ->
+                         it.code() + """
+                         ceu_vector_set(&ceu_vec_$n.Dyn->Vector, $i, CEU_ACC_KEEP());
+                        """
+                    }.joinToString("")}
+                    CEU_ACC(ceu_vec_$n);
                 }
             """
             is Expr.Dict -> """
@@ -539,7 +544,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             CEU_Value ceu_key_$n = CEU_ACC_KEEP();
                             ${it.second.code()}
                             CEU_Value ceu_val_$n = CEU_ACC_KEEP();
-                            ceu_dict_set(ceu_dic_$n, ceu_key_$n, ceu_val_$n);
+                            ceu_dict_set(&ceu_dic_$n.Dyn->Dict, ceu_key_$n, ceu_val_$n);
                             //ceu_gc_dec_val(ceu_key_$n);
                             //ceu_gc_dec_val(ceu_col_$n);
                             //CEU_ERROR_CHK_STK(continue, ${this.toerr()});

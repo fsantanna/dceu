@@ -907,7 +907,16 @@ fun Coder.main (tags: Tags): String {
     }
     fun tuple_vector_dict (): String {
         return """
-    #if 0
+    // TUPLE
+    
+    void ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v) {
+        //ceu_gc_inc_val(v);
+        //ceu_gc_dec_val(tup->buf[i]);
+        tup->buf[i] = v;
+    }
+    
+    // VECTOR
+    
     #define ceu_sizeof(type, member) sizeof(((type *)0)->member)
     int ceu_type_to_size (int type) {
         switch (type) {
@@ -928,9 +937,7 @@ fun Coder.main (tags: Tags): String {
                 return ceu_sizeof(CEU_Value, Dyn);
         }
     }
-    #endif
     
-    #if 0
     CEU_Value ceu_vector_get (CEU_Vector* vec, int i) {
         assert(i>=0 && i<vec->its);
         int sz = ceu_type_to_size(vec->unit);
@@ -938,13 +945,42 @@ fun Coder.main (tags: Tags): String {
         memcpy(&ret.Number, vec->buf+i*sz, sz);
         return ret;
     }
-    #endif
     
-    void ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v) {
-        //ceu_gc_inc_val(v);
-        //ceu_gc_dec_val(tup->buf[i]);
-        tup->buf[i] = v;
+    void ceu_vector_set (CEU_Vector* vec, int i, CEU_Value v) {
+        if (v.type == CEU_VALUE_NIL) {           // pop
+            assert(i == vec->its-1);
+            CEU_Value ret = ceu_vector_get(vec, i);
+            assert(ret.type != CEU_VALUE_ERROR);
+            //ceu_gc_dec_val(ret);
+            vec->its--;
+        } else {
+            if (vec->its == 0) {
+                vec->unit = v.type;
+            } else {
+                assert(v.type == vec->unit);
+            }
+            int sz = ceu_type_to_size(vec->unit);
+            if (i == vec->its) {           // push
+                if (i == vec->max) {
+                    vec->max = vec->max*2 + 1;    // +1 if max=0
+                    vec->buf = realloc(vec->buf, vec->max*sz + 1);
+                    assert(vec->buf != NULL);
+                }
+                //ceu_gc_inc_val(v);
+                vec->its++;
+                vec->buf[sz*vec->its] = '\0';
+            } else {                            // set
+                CEU_Value ret = ceu_vector_get(vec, i);
+                assert(ret.type != CEU_VALUE_ERROR);
+                //ceu_gc_inc_val(v);
+                //ceu_gc_dec_val(ret);
+                assert(i < vec->its);
+            }
+            memcpy(vec->buf + i*sz, (char*)&v.Number, sz);
+        }
     }
+    
+    // DICT
     
     int ceu_dict_key_to_index (CEU_Dict* col, CEU_Value key, int* idx) {
         *idx = -1;
@@ -964,8 +1000,7 @@ fun Coder.main (tags: Tags): String {
         return 0;
     }
 
-    CEU_Value ceu_dict_get (CEU_Value col, CEU_Value key) {
-        CEU_Dict* dic = &col.Dyn->Dict;
+    CEU_Value ceu_dict_get (CEU_Dict* dic, CEU_Value key) {
         int i;
         int ok = ceu_dict_key_to_index(dic, key, &i);
         if (ok) {
@@ -975,8 +1010,7 @@ fun Coder.main (tags: Tags): String {
         }
     }
     
-    char* ceu_dict_set (CEU_Value col, CEU_Value key, CEU_Value val) {
-        CEU_Dict* dic = &col.Dyn->Dict;
+    char* ceu_dict_set (CEU_Dict* dic, CEU_Value key, CEU_Value val) {
         if (key.type == CEU_VALUE_NIL) {
             return "dict error : index cannot be nil";
         }
@@ -992,7 +1026,7 @@ fun Coder.main (tags: Tags): String {
         }
         assert(old != -1);
         
-        CEU_Value vv = ceu_dict_get(col, key);
+        CEU_Value vv = ceu_dict_get(dic, key);
         
         if (val.type == CEU_VALUE_NIL) {
             //ceu_gc_dec_val(vv);
@@ -1008,7 +1042,9 @@ fun Coder.main (tags: Tags): String {
             (*dic->buf)[old][1] = val;
         }
         return NULL;
-    }        
+    }
+    
+    // TUPLE / VECTOR / DICT
 
     char* ceu_col_check (CEU_Value col, CEU_Value idx) {
         if (col.type<CEU_VALUE_TUPLE || col.type>CEU_VALUE_DICT) {                
@@ -1054,7 +1090,7 @@ fun Coder.main (tags: Tags): String {
                 //ceu_vector_set(&col.Dyn->Vector, idx.Number, val);
                 break;
             case CEU_VALUE_DICT: {
-                assert(NULL == ceu_dict_set(col, idx, val));
+                assert(NULL == ceu_dict_set(&col.Dyn->Dict, idx, val));
                 break;
             }
             default:
@@ -1064,40 +1100,6 @@ fun Coder.main (tags: Tags): String {
     }
     
     #if 0
-    void ceu_vector_set (CEU_Vector* vec, int i, CEU_Value v) {
-        if (v.type == CEU_VALUE_NIL) {           // pop
-            assert(i == vec->its-1);
-            CEU_Value ret = ceu_vector_get(vec, i);
-            assert(ret.type != CEU_VALUE_ERROR);
-            ceu_gc_dec_val(ret);
-            vec->its--;
-        } else {
-            if (vec->its == 0) {
-                vec->unit = v.type;
-            } else {
-                assert(v.type == vec->unit);
-            }
-            int sz = ceu_type_to_size(vec->unit);
-            if (i == vec->its) {           // push
-                if (i == vec->max) {
-                    vec->max = vec->max*2 + 1;    // +1 if max=0
-                    vec->buf = realloc(vec->buf, vec->max*sz + 1);
-                    assert(vec->buf != NULL);
-                }
-                ceu_gc_inc_val(v);
-                vec->its++;
-                vec->buf[sz*vec->its] = '\0';
-            } else {                            // set
-                CEU_Value ret = ceu_vector_get(vec, i);
-                assert(ret.type != CEU_VALUE_ERROR);
-                ceu_gc_inc_val(v);
-                ceu_gc_dec_val(ret);
-                assert(i < vec->its);
-            }
-            memcpy(vec->buf + i*sz, (char*)&v.Number, sz);
-        }
-    }
-    
     void ceu_pro_next_dash_dict (CEUX* X) {
         assert(X->args==1 || X->args==2);
         CEU_Value dict = ceux_peek(X->S, ceux_arg(X,0));
@@ -1157,9 +1159,8 @@ fun Coder.main (tags: Tags): String {
         );
     }
     
-    #if 0
     CEU_Value ceu_create_vector (void) {
-        ceu_debug_add(CEU_VALUE_VECTOR);
+        //ceu_debug_add(CEU_VALUE_VECTOR);
         CEU_Vector* ret = malloc(sizeof(CEU_Vector));
         assert(ret != NULL);
         char* buf = malloc(1);  // because of '\0' in empty strings
@@ -1171,7 +1172,6 @@ fun Coder.main (tags: Tags): String {
         };
         return (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ret} };
     }
-    #endif
     
     CEU_Value ceu_create_dict (void) {
         //ceu_debug_add(CEU_VALUE_DICT);
@@ -1370,7 +1370,6 @@ fun Coder.main (tags: Tags): String {
                 }                    
                 printf("]");
                 break;
-        #if 0
             case CEU_VALUE_VECTOR:
                 if (v.Dyn->Vector.unit == CEU_VALUE_CHAR) {
                     printf("%s", v.Dyn->Vector.buf);
@@ -1387,7 +1386,6 @@ fun Coder.main (tags: Tags): String {
                     printf("]");
                 }
                 break;
-        #endif
             case CEU_VALUE_DICT:
                 printf("@[");
                 int comma = 0;
@@ -1994,9 +1992,10 @@ fun Coder.main (tags: Tags): String {
         c_error + gc() + */ c_tags() +
         c_impls() + /*
         // block-task-up, hold, bcast
-        */ creates() +
-        print() + eq_neq_len() +
-        tuple_vector_dict() + dumps() + /*
+        */
+        eq_neq_len() +
+        creates() + tuple_vector_dict() +
+        print() + dumps() + /*
         // throw, pointer-to-string
         (CEU>=3).cond { c_exes } +
         (CEU>=4).cond { c_task } +
