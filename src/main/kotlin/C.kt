@@ -178,7 +178,8 @@ fun Coder.main (tags: Tags): String {
         CEU_Value (*buf)[0][2]; // resizable CEU_Value[n][2]
     } CEU_Dict;
 
-    typedef void (*CEU_Proto) (int n, CEU_Value args[]);
+    struct CEU_Clo;
+    typedef void (*CEU_Proto) (struct CEU_Clo*, int n, CEU_Value args[]);
 
     #define _CEU_Clo_                   \
         _CEU_Dyn_                       \
@@ -1506,7 +1507,7 @@ fun Coder.main (tags: Tags): String {
                 assert(0 && "bug found");
         }
     }
-    void ceu_pro_print (int n, CEU_Value args[]) {
+    void ceu_pro_print (CEU_Clo* _1, int n, CEU_Value args[]) {
         for (int i=0; i<n; i++) {
             if (i > 0) {
                 printf("\t");
@@ -1515,8 +1516,8 @@ fun Coder.main (tags: Tags): String {
         }
         CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
     }
-    void ceu_pro_println (int n, CEU_Value args[]) {
-        ceu_pro_print(n, args);
+    void ceu_pro_println (CEU_Clo* _1, int n, CEU_Value args[]) {
+        ceu_pro_print(_1, n, args);
         printf("\n");
         CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
     }
@@ -1573,12 +1574,12 @@ fun Coder.main (tags: Tags): String {
         }
         return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=v} };
     }
-    void ceu_pro_equals_equals (int n, CEU_Value args[]) {
+    void ceu_pro_equals_equals (CEU_Clo* _1, int n, CEU_Value args[]) {
         assert(n == 2);
         CEU_ACC(_ceu_equals_equals_(args[0], args[1]));
     }
-    void ceu_pro_slash_equals (int n, CEU_Value args[]) {
-        ceu_pro_equals_equals(n, args);
+    void ceu_pro_slash_equals (CEU_Clo* _1, int n, CEU_Value args[]) {
+        ceu_pro_equals_equals(_1, n, args);
         assert(ceu_acc.type == CEU_VALUE_BOOL);
         ceu_acc.Bool = !ceu_acc.Bool;
     }

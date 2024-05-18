@@ -71,10 +71,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
                 pres.add("""
                     // PROTO | ${this.dump()}
-                    void ceu_pro_$id (int ceu_n, CEU_Value ceu_args[]) {
-                        ${this.pars.map {
-                            """
+                    void ceu_pro_$id (CEU_Clo* ceu_clo, int ceu_n, CEU_Value ceu_args[]) {
+                        ${this.pars.map { """
                             CEU_Value ceu_par_${it.first.str.idc()};
+                        """ }.joinToString("")}
+                        ${vars.proto_to_upvs[this]!!.mapIndexed { i, dcl -> """
+                            CEU_Value ceu_upv_${dcl.idtag.first.str.idc()} = ceu_clo->upvs.buf[$i];                            
                         """ }.joinToString("")}
                         ${isexe.cond{"""
                             X->exe->status = (X->action == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
@@ -112,15 +114,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """ }}
                     
                     // UPVALS = ${vars.proto_to_upvs[this]!!.size}
-                    ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
-                    """
-                    {
-                        CEU_Value up = ceux_peek(X->S, {vars.idx("X",dcl.first,dcl.second,ups.pub[this]!!).second});
-                        ceu_gc_inc_val(up);
-                        clo.Dyn->Clo.upvs.buf[$i] = up;
+                    {                        
+                        ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
+                        """
+                        CEU_Value upv = ${vars.idx("X",dcl,ups.pub[this]!!)};
+                        ceu_gc_inc(upv);
+                        ceu_acc.Dyn->Clo.upvs.buf[$i] = upv;
+                        """
+                        }.joinToString("\n")}
                     }
-                    """
-                    }.joinToString("\n")}
                 }
                 """
             }
@@ -592,7 +594,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         """
                     }.joinToString("")}
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
-                    ceu_clo_$n.Dyn->Clo.proto(${this.args.size}, ceu_args_$n);
+                    ceu_clo_$n.Dyn->Clo.proto((CEU_Clo*)ceu_clo_$n.Dyn, ${this.args.size}, ceu_args_$n);
                     //{this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}
                 """
