@@ -89,10 +89,10 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         val xups = ups.all_until(src) { it == blk } // all ups between src -> dcl
         return when {
             (blk == outer) -> Type.GLOBAL
+            xups.any { it is Expr.Proto } -> Type.UPVAL
             (ups.pub[blk] is Expr.Proto) -> Type.PARAM
-            xups.all { it !is Expr.Proto } -> Type.LOCAL
-            xups.all { it !is Expr.Proto || ups.isnst(it) || it==blk } -> Type.NESTED
-            else -> Type.UPVAL
+            //xups.all { it !is Expr.Proto || ups.isnst(it) || it==blk } -> Type.NESTED
+            else -> Type.LOCAL
         }
     }
 
@@ -152,6 +152,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         //println(listOf(upvs, upv, src.tostr()))
 
         val id = dcl.idtag.first.str.idc()
+        //println(listOf(src.tk.pos.lin, id, type(dcl,src)))
         return when (type(dcl,src)) {
             Type.GLOBAL -> "ceu_glb_$id"
             Type.LOCAL -> "ceu_loc_$id"
@@ -169,7 +170,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 Pair("$X->S", "($X->clo + 1 + $X->args + $upv) /* upval $id */")
             }
              */
-            else -> TODO()
+            else -> "ceu_upv_$id"
         }
     }
 
