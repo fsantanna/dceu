@@ -458,9 +458,15 @@ fun Coder.main (tags: Tags): String {
     #endif
 
     #if CEU <= 1
-    #define CEU_ERROR_CHK(cmd,pre) {                                               \
+    #define CEU_ERROR_CHK_ACC(cmd,pre) {                                               \
         if (ceu_acc.type == CEU_VALUE_ERROR) {                                      \
             fprintf(stderr, " |  %s\n v  error : %s\n", pre, ceu_acc.Error);  \
+            exit(0);                                                                \
+        }                                                                           \
+    }
+    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre) {                                               \
+        if ((ptr) != NULL) {                                      \
+            fprintf(stderr, " |  %s\n v  error : %s\n", pre, ptr);  \
             exit(0);                                                                \
         }                                                                           \
     }
@@ -1074,23 +1080,25 @@ fun Coder.main (tags: Tags): String {
     }
     
     char* ceu_col_set (CEU_Value col, CEU_Value idx, CEU_Value val) {
-        assert(NULL == ceu_col_check(col,idx));
-        CEU_Value ok = { CEU_VALUE_NIL };
+        char* err = ceu_col_check(col,idx);
+        if (err != NULL) {
+            return err;
+        }
         switch (col.type) {
             case CEU_VALUE_TUPLE:
                 ceu_tuple_set(&col.Dyn->Tuple, idx.Number, val);
                 break;
             case CEU_VALUE_VECTOR:
-                //ceu_vector_set(&col.Dyn->Vector, idx.Number, val);
+                ceu_vector_set(&col.Dyn->Vector, idx.Number, val);
                 break;
             case CEU_VALUE_DICT: {
-                assert(NULL == ceu_dict_set(&col.Dyn->Dict, idx, val));
+                err = ceu_dict_set(&col.Dyn->Dict, idx, val);
                 break;
             }
             default:
                 assert(0 && "bug found");
         }
-        return NULL;
+        return err;
     }
     
     #if 0

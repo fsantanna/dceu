@@ -546,10 +546,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             CEU_Value ceu_key_$n = CEU_ACC_KEEP();
                             ${it.second.code()}
                             CEU_Value ceu_val_$n = CEU_ACC_KEEP();
-                            ceu_dict_set(&ceu_dic_$n.Dyn->Dict, ceu_key_$n, ceu_val_$n);
+                            CEU_ERROR_CHK_PTR (
+                                continue,
+                                ceu_dict_set(&ceu_dic_$n.Dyn->Dict, ceu_key_$n, ceu_val_$n),
+                                ${this.toerr()}
+                            );
                             //ceu_gc_dec_val(ceu_key_$n);
                             //ceu_gc_dec_val(ceu_col_$n);
-                            //CEU_ERROR_CHK_STK(continue, ${this.toerr()});
+                            //CEU_ERROR_CHK_STK(continue, );
                         }
                     """ }.joinToString("")}
                     CEU_ACC(ceu_dic_$n);
@@ -580,15 +584,21 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """ +
                 if (this.isdst()) {
                     """
-                    ceu_col_set(ceu_col_$n, ceu_idx_$n, ceu_val_$n);
+                    CEU_ERROR_CHK_PTR (
+                        continue,
+                        ceu_col_set(ceu_col_$n, ceu_idx_$n, ceu_val_$n),
+                        ${this.toerr()}
+                    );
                     ceu_acc = ceu_val_$n;
                     """
                 } else {
-                    "CEU_ACC(ceu_col_get(ceu_col_$n, ceu_idx_$n));"
+                    """
+                    CEU_ACC(ceu_col_get(ceu_col_$n, ceu_idx_$n));
+                    CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
+                    """
                 } + """
                     //ceu_gc_dec_val(ceu_idx_$n);
                     //ceu_gc_dec_val(ceu_col_$n);
-                    CEU_ERROR_CHK(continue, ${this.toerr()});
                 }
                 """
             }
