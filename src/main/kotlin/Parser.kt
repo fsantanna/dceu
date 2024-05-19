@@ -250,7 +250,16 @@ class Parser (lexer_: Lexer)
         val l = mutableListOf<T>()
         if (!close()) {
             l.add(func())
-            while (!close() && (sep==null || this.acceptFix_err(sep))) {
+            while (true) {
+                if (close()) {
+                    break
+                }
+                if (sep != null) {
+                    this.acceptFix_err(sep)
+                    if (close()) {
+                        break
+                    }
+                }
                 l.add(func())
             }
         }
@@ -564,7 +573,6 @@ class Parser (lexer_: Lexer)
                     }
                     Pair(tag, nat)
                 }
-                this.acceptFix_err("}")
                 Expr.Enum(tk0, tags)
             }
             this.acceptFix("data") -> {
@@ -598,7 +606,6 @@ class Parser (lexer_: Lexer)
                             Pair(Pair(id, xtag), emptyList())
                         }
                     }.unzip()
-                    this.acceptFix_err("]")
                     return dtss.flatten() + listOf(Expr.Data(xme, ids)) + when {
                         (CEU < 99) -> emptyList()
                         !this.acceptFix("{") -> emptyList()

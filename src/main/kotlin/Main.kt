@@ -94,7 +94,7 @@ val GLOBALS = setOf (
     /*"sup?", "tag",
     "to-string-number", "to-string-pointer", "to-string-tag",
     "to-tag-string", */
-    "tuple", /*"type", "{{#}}",*/ "{{==}}", "{{/=}}",
+    "tuple", "type", /*"{{#}}",*/ "{{==}}", "{{/=}}",
 ) + (if (CEU < 3) setOf() else setOf(
     "coroutine", "status"
 )) + (if (CEU < 4) setOf() else setOf(

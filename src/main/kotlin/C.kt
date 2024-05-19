@@ -442,7 +442,7 @@ fun Coder.main (tags: Tags): String {
 
     // EXIT / ERROR / ASSERT
     val c_error = """
-    #define CEU_ERROR_IS(S)  ((S)->n>0 && ceux_peek((S),(S)->n-1).type==CEU_VALUE_ERROR)
+    #if 0
     #define CEU_ERROR_RET(S) (CEU_ERROR_IS(S) ? (3+ceux_peek(S,(S)->n-3).Number) : 0)
 
     #define CEU_ERROR_CHK_VAL(cmd,v,pre) ({     \
@@ -456,14 +456,12 @@ fun Coder.main (tags: Tags): String {
         ceu_error_s(X->S, msg);                 \
         CEU_ERROR_CHK_STK(cmd,pre);             \
     }
+    #endif
 
     #if CEU <= 1
-    #define CEU_ERROR_CHK_STK(cmd,pre) {                                            \
-        if (CEU_ERROR_IS(X->S)) {                                                   \
-            CEU_Value msg = ceux_peek(X->S, XX(-2));                                \
-            assert(msg.type==CEU_VALUE_POINTER && msg.Pointer!=NULL);               \
-            fprintf(stderr, " |  %s\n v  error : %s\n", pre, (char*) msg.Pointer);  \
-            ceux_n_set(X->S, 0);                                                    \
+    #define CEU_ERROR_CHK(cmd,pre) {                                               \
+        if (ceu_acc.type == CEU_VALUE_ERROR) {                                      \
+            fprintf(stderr, " |  %s\n v  error : %s\n", pre, ceu_acc.Error);  \
             exit(0);                                                                \
         }                                                                           \
     }
@@ -489,6 +487,7 @@ fun Coder.main (tags: Tags): String {
     }
     #endif
 
+    #if 0
     int ceu_error_e (CEU_Stack* S, CEU_Value e) {
         assert(e.type==CEU_VALUE_ERROR && e.Error!=NULL);
         ceux_push(S, 1, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=0} });
@@ -521,7 +520,8 @@ fun Coder.main (tags: Tags): String {
     #else
         return ceu_error_v(X->S, ceux_peek(X->S, ceux_arg(X,0)));
     #endif
-    }        
+    }
+    #endif
     """
 
     // GC
@@ -762,13 +762,13 @@ fun Coder.main (tags: Tags): String {
     int ceu_as_bool (CEU_Value v) {
         return !(v.type==CEU_VALUE_NIL || (v.type==CEU_VALUE_BOOL && !v.Bool));
     }
-    #if 0
-    void ceu_pro_type (int n, CEU_Value args[]) {
+    void ceu_pro_type (CEU_Clo* _1, int n, CEU_Value args[]) {
         assert(n==1 && "bug found");
-        ceu_gc_dec_args(n, args);
-        CEU_ACC((CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0].type} });
+        //ceu_gc_dec_args(n, args);
+        CEU_ACC(((CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0].type} }));
     }
     
+    #if 0
     CEU_Value _ceu_sup_ (CEU_Value sup, CEU_Value sub) {
         if (sup.type!=CEU_VALUE_TAG || sub.type!=CEU_VALUE_TAG) {
             return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} };
@@ -1048,24 +1048,27 @@ fun Coder.main (tags: Tags): String {
 
     char* ceu_col_check (CEU_Value col, CEU_Value idx) {
         if (col.type<CEU_VALUE_TUPLE || col.type>CEU_VALUE_DICT) {                
-            "index error : expected collection";
+            return "index error : expected collection";
         }
         if (col.type != CEU_VALUE_DICT) {
             if (idx.type != CEU_VALUE_NUMBER) {
-                "index error : expected number";
+                return "index error : expected number";
             }
             if (col.type==CEU_VALUE_TUPLE && (idx.Number<0 || idx.Number>=col.Dyn->Tuple.its)) {                
-                "index error : out of bounds";
+                return "index error : out of bounds";
             }
             if (col.type==CEU_VALUE_VECTOR && (idx.Number<0 || idx.Number>col.Dyn->Vector.its)) {                
-                "index error : out of bounds";
+                return "index error : out of bounds";
             }
         }
         return NULL;
     }
     
     CEU_Value ceu_col_get (CEU_Value col, CEU_Value idx) {
-        assert(NULL == ceu_col_check(col,idx));
+        char* err = ceu_col_check(col,idx);
+        if (err != NULL) {
+            return (CEU_Value) { CEU_VALUE_ERROR, {.Error=err} };
+        }
         switch (col.type) {
             case CEU_VALUE_TUPLE:
                 return col.Dyn->Tuple.buf[(int) idx.Number];
@@ -1989,7 +1992,7 @@ fun Coder.main (tags: Tags): String {
         h_includes() + h_defines() + h_enums() +
         h_value_dyn() + h_tags() +
         x_globals() + /* h_protos() +
-        c_error + gc() + */ c_tags() +
+        */ c_error + /*gc() + */ c_tags() +
         c_impls() + /*
         // block-task-up, hold, bcast
         */

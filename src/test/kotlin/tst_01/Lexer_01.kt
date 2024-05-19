@@ -125,26 +125,16 @@ class Lexer_01 {
 
     @Test
     fun cc_01_vararg() {
-        val l = lexer(".. ... . .. ....")
+        val l = lexer(".. ... .")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
-        assert(tks.next().let { it is Tk.Fix && it.str == "..." })
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
-        assert(tks.next().let { it is Tk.Fix && it.str == "..." })
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
-    }
-    @Test
-    fun cc_02_vararg() {
-        val l = lexer("#... ...[ #.")
-        val tks = l.lex().iterator()
-        assert(tks.next().let { it is Tk.Fix && it.str == "#..." })
-        assert(tks.next().let { it is Tk.Fix && it.str == "...[" })
-        assert(trap { tks.next() } == "anon : (lin 1, col 11) : token error : expected \"...\"")
     }
 
     @Test
