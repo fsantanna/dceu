@@ -462,10 +462,10 @@ class Parser_01 {
     fun expr_do1_err() {
         val l = lexer("do{}")
         val parser = Parser(l)
-        val e = parser.expr()
-        assert(e is Expr.Do && e.es.isEmpty())
-        assert(e.tostr() == "do {\n\n}") { e.tostr() }
-        //assert(trap { parser.expr_prim() } == "anon : (lin 1, col 4) : expected expression : have \"}\"")
+        //val e = parser.expr()
+        //assert(e is Expr.Do && e.es.isEmpty())
+        //assert(e.tostr() == "do {\n\n}") { e.tostr() }
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 4) : expected expression : have \"}\"")
     }
     @Test
     fun expr_do2() {
@@ -503,11 +503,11 @@ class Parser_01 {
 
     @Test
     fun expr_func1_err() {
-        val l = lexer("func () {}")
+        val l = lexer("func () {nil}")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Proto)
-        assert(e.tostr() == "(func () {\n\n})") { e.tostr() }
+        assert(e.tostr() == "(func () {\nnil\n})") { e.tostr() }
         //assert(trap { parser.expr_prim() } == "anon : (lin 1, col 10) : expected expression : have \"}\"")
     }
     @Test
@@ -556,9 +556,17 @@ class Parser_01 {
             val f = func () { }
         """)
         val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 2, col 31) : expected expression : have \"}\"")
+    }
+    @Test
+    fun pq_02_rec() {
+        val l = lexer("""
+            val f = func () { nil }
+        """)
+        val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "(val f = (func () {\n" +
-                "\n" +
+                "nil\n" +
                 "}))") { e.tostr() }
     }
 

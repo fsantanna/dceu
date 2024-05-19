@@ -1337,11 +1337,14 @@ class Parser (lexer_: Lexer)
 
     fun exprs (): List<Expr> {
         val ret = mutableListOf<Expr>()
+        //if (CEU < 99) {
+            ret.add(this.expr())
+        //}
         while (!this.checkFix("}") && !this.checkEnu("Eof")) {
             ret.add(this.expr())
         }
         ret.forEachIndexed { i,e ->
-            val ok = (i == ret.lastIndex) || !e.is_innocuous()
+            val ok = (i == ret.size-1) || !e.is_innocuous()
             if (!ok) {
                 err(e.tk, "expression error : innocuous expression")
             }
