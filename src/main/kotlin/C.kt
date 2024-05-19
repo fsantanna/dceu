@@ -339,7 +339,6 @@ fun Coder.main (tags: Tags): String {
     void ceu_print1 (CEU_Value v);
     CEU_Value _ceu_equals_equals_ (CEU_Value e1, CEU_Value e2);
 
-    char* ceu_to_dash_string_dash_tag (int tag);
     #if CEU >= 3
     int ceu_isexe_dyn (CEU_Dyn* dyn);
     int ceu_isexe_val (CEU_Value val);
@@ -513,20 +512,23 @@ fun Coder.main (tags: Tags): String {
         ceux_push(S, 1, (CEU_Value) { CEU_VALUE_ERROR, {.Error=NULL} });
         return 3;
     }
+    #endif
 
-    void ceu_pro_error (CEUX* X) {
+    void ceu_pro_error (CEU_Clo* _1, int n, CEU_Value args[]) {
+    #if CEU < 2
+        assert(n == 1);
+        CEU_Value tag = args[0];
+        assert(tag.type == CEU_VALUE_TAG);
+        CEU_ACC (
+            ((CEU_Value) { CEU_VALUE_ERROR, {.Error=ceu_tag_to_string(tag.Tag)} })
+        );
+    #else
         if (X->args == 0) {
             ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
         }
-    #if CEU < 2
-        CEU_Value arg = ceux_peek(X->S, ceux_arg(X,0));
-        assert(arg.type == CEU_VALUE_TAG);
-        return ceu_error_s(X->S, ceu_to_dash_string_dash_tag(arg.Tag));
-    #else
         return ceu_error_v(X->S, ceux_peek(X->S, ceux_arg(X,0)));
     #endif
     }
-    #endif
     """
 
     // GC
@@ -742,7 +744,39 @@ fun Coder.main (tags: Tags): String {
                 .joinToString("") + """
                 CEU_Tags_Names* CEU_TAGS = $last;
             """
+        } +
+        """
+    char* ceu_tag_to_string (int tag) {
+        CEU_Tags_Names* cur = CEU_TAGS;
+        while (cur != NULL) {
+            if (cur->tag == tag) {
+                return cur->name;
+            }
+            cur = cur->next;
         }
+        assert(0 && "bug found");
+    }
+    
+    void ceu_pro_tag (CEU_Clo* _1, int n, CEU_Value args[]) {
+        assert(n==1 || n==2);
+        if (n == 1) {
+            CEU_Value dyn = args[0];
+            if (dyn.type < CEU_VALUE_DYNAMIC) {
+                CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));
+            } else {
+                CEU_ACC(dyn.Dyn->Any.tag);
+            }
+        } else {
+            CEU_Value dyn = args[0];
+            if (dyn.type < CEU_VALUE_DYNAMIC) {
+                // nothing to set
+            } else {
+                dyn.Dyn->Any.tag = args[1];
+            }
+            CEU_ACC(dyn);
+        }
+    }            
+        """
     }
 
     // IMPLS
@@ -805,26 +839,6 @@ fun Coder.main (tags: Tags): String {
         );
     }
     
-    void ceu_pro_tag (CEU_Clo* _1, int n, CEU_Value args[]) {
-        assert(n==1 || n==2);
-        if (n == 1) {
-            CEU_Value dyn = args[0];
-            if (dyn.type < CEU_VALUE_DYNAMIC) {
-                CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));
-            } else {
-                CEU_ACC(dyn.Dyn->Any.tag);
-            }
-        } else {
-            CEU_Value dyn = args[0];
-            if (dyn.type < CEU_VALUE_DYNAMIC) {
-                // nothing to set
-            } else {
-                dyn.Dyn->Any.tag = args[1];
-            }
-            CEU_ACC(dyn);
-        }
-    }
-    
     #if 0
     // TO-TAG-*
 
@@ -848,17 +862,6 @@ fun Coder.main (tags: Tags): String {
     
     // TO-STRING-*
 
-    char* ceu_to_dash_string_dash_tag (int tag) {
-        CEU_Tags_Names* cur = CEU_TAGS;
-        while (cur != NULL) {
-            if (cur->tag == tag) {
-                return cur->name;
-            }
-            cur = cur->next;
-        }
-        assert(0 && "bug found");
-    }
-    
     #if 0
     CEU_Value ceu_to_dash_string_dash_pointer (const char* ptr) {
         assert(ptr != NULL);
@@ -1344,7 +1347,7 @@ fun Coder.main (tags: Tags): String {
                 printf("error: %s", (v.Error==NULL ? "(null)" : v.Error));
                 break;
             case CEU_VALUE_TAG:
-                printf("%s", ceu_to_dash_string_dash_tag(v.Tag));
+                printf("%s", ceu_tag_to_string(v.Tag));
                 break;
             case CEU_VALUE_BOOL:
                 if (v.Bool) {
@@ -1991,7 +1994,9 @@ fun Coder.main (tags: Tags): String {
         h_includes() + h_defines() + h_enums() +
         h_value_dyn() + h_tags() +
         x_globals() + /* h_protos() +
-        */ c_error + /*gc() + */ c_tags() +
+        */
+        c_tags() +
+        c_error + /*gc() + */
         c_impls() + /*
         // block-task-up, hold, bcast
         */
