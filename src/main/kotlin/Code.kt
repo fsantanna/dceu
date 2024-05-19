@@ -260,29 +260,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             """
             is Expr.Break -> """ // BREAK | ${this.dump()}
                 ${this.cnd.code()}
-                {
-                    int v = ceu_as_bool(ceux_peek(X->S, XX(-1)));
-                        // pop condition:
-                        //  1. when false, clear for next iteration
-                        //  2. when true,  but return e is given
-                        //  3. when true,  but ret=0
-                    if (!v) {
-                        ceux_pop(X->S, 1);            // (1)
-                    } else {
-                        ${this.e.cond { """
-                            ceux_pop(X->S, 1);        // (2)
-                            ${it.code()}
-                        """ }}
-                        CEU_BREAK = 1;
-                        goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
-                    }
+                if (ceu_as_bool(ceu_acc)) {
+                    ${this.e.cond { """
+                        ceux_pop(X->S, 1);        // (2)
+                        ${it.code()}
+                    """ }}
+                    CEU_BREAK = 1;
+                    goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
                 }
             """
             is Expr.Skip -> """ // SKIP | ${this.dump()}
                 ${this.cnd.code()}
                 {
-                    int v = ceu_as_bool(ceux_peek(X->S, XX(-1)));
-                    ceux_pop(X->S, 1);
+                    int v = ceu_as_bool(ceu_acc);
                     if (v) {
                         goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
                     }
@@ -615,6 +605,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     }.joinToString("")}
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                     ceu_clo_$n.Dyn->Clo.proto((CEU_Clo*)ceu_clo_$n.Dyn, ${this.args.size}, ceu_args_$n);
+                    CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
                     //{this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}
                 """

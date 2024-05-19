@@ -305,8 +305,8 @@ fun Coder.main (tags: Tags): String {
     fun x_globals (): String {
         return """
     CEU_Value ceu_acc = { CEU_VALUE_NIL };
-    #if 0
     int CEU_BREAK = 0;
+    #if 0
     #if CEU >= 4
     uint32_t CEU_TIME = 0;
     CEU_Exe_Task CEU_GLOBAL_TASK = {
@@ -779,7 +779,70 @@ fun Coder.main (tags: Tags): String {
         """
     }
 
-    // IMPLS
+    fun c_to (): String {
+        return """
+    // TO-TAG-STRING
+    void ceu_pro_to_dash_tag_dash_string (CEU_Clo* _1, int n, CEU_Value args[]) {
+        assert(n == 1);
+        CEU_Value str = args[0];
+        assert(str.type==CEU_VALUE_VECTOR && str.Dyn->Vector.unit==CEU_VALUE_CHAR);
+        CEU_Tags_Names* cur = CEU_TAGS;
+        CEU_Value ret = (CEU_Value) { CEU_VALUE_NIL };
+        while (cur != NULL) {
+            if (!strcmp(cur->name,str.Dyn->Vector.buf)) {
+                ret = (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} };
+                break;
+            }
+            cur = cur->next;
+        }
+        CEU_ACC(ret);
+    }
+    
+    // TO-STRING-*
+
+    #if 0
+    CEU_Value ceu_to_dash_string_dash_pointer (const char* ptr) {
+        assert(ptr != NULL);
+        CEU_Value str = ceu_create_vector();
+        int len = strlen(ptr);
+        for (int i=0; i<len; i++) {
+            CEU_Value chr = { CEU_VALUE_CHAR, {.Char=ptr[i]} };
+            ceu_vector_set(&str.Dyn->Vector, i, chr);
+        }
+        return str;
+    }
+    
+    void ceu_pro_to_dash_string_dash_pointer (CEUX* X) {
+        assert(X->args == 1);
+        CEU_Value ptr = ceux_peek(X->S, ceux_arg(X,0));
+        assert(ptr.type==CEU_VALUE_POINTER && ptr.Pointer!=NULL);
+        ceux_push(X->S, 1, ceu_to_dash_string_dash_pointer(ptr.Pointer));
+        return 1;
+    }
+
+    void ceu_pro_to_dash_string_dash_tag (CEUX* X) {
+        assert(X->args == 1);
+        CEU_Value t = ceux_peek(X->S, ceux_arg(X,0));
+        assert(t.type == CEU_VALUE_TAG);        
+        ceux_push(X->S, 1, ceu_to_dash_string_dash_pointer(ceu_to_dash_string_dash_tag(t.Tag)));
+        return 1;
+    }
+
+    void ceu_pro_to_dash_string_dash_number (CEUX* X) {
+        assert(X->args == 1);
+        CEU_Value n = ceux_peek(X->S, ceux_arg(X,0));
+        assert(n.type == CEU_VALUE_NUMBER);
+        
+        char str[255];
+        snprintf(str, 255, "%g", n.Number);
+        assert(strlen(str) < 255);
+
+        ceux_push(X->S, 1, ceu_to_dash_string_dash_pointer(str));
+        return 1;
+    }
+    #endif
+    """
+    }
     fun c_impls (): String {
         return """
     #if 0
@@ -837,72 +900,7 @@ fun Coder.main (tags: Tags): String {
         CEU_ACC (
             _ceu_sup_(args[0], args[1])
         );
-    }
-    
-    #if 0
-    // TO-TAG-*
-
-    void ceu_pro_to_dash_tag_dash_string (CEUX* X) {
-        assert(X->args == 1);
-        CEU_Value str = ceux_peek(X->S, ceux_arg(X,0));
-        assert(str.type==CEU_VALUE_VECTOR && str.Dyn->Vector.unit==CEU_VALUE_CHAR);
-        CEU_Tags_Names* cur = CEU_TAGS;
-        CEU_Value ret = (CEU_Value) { CEU_VALUE_NIL };
-        while (cur != NULL) {
-            if (!strcmp(cur->name,str.Dyn->Vector.buf)) {
-                ret = (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} };
-                break;
-            }
-            cur = cur->next;
-        }
-        ceux_push(X->S, 1, ret);
-        return 1;
-    }
-    #endif
-    
-    // TO-STRING-*
-
-    #if 0
-    CEU_Value ceu_to_dash_string_dash_pointer (const char* ptr) {
-        assert(ptr != NULL);
-        CEU_Value str = ceu_create_vector();
-        int len = strlen(ptr);
-        for (int i=0; i<len; i++) {
-            CEU_Value chr = { CEU_VALUE_CHAR, {.Char=ptr[i]} };
-            ceu_vector_set(&str.Dyn->Vector, i, chr);
-        }
-        return str;
-    }
-    
-    void ceu_pro_to_dash_string_dash_pointer (CEUX* X) {
-        assert(X->args == 1);
-        CEU_Value ptr = ceux_peek(X->S, ceux_arg(X,0));
-        assert(ptr.type==CEU_VALUE_POINTER && ptr.Pointer!=NULL);
-        ceux_push(X->S, 1, ceu_to_dash_string_dash_pointer(ptr.Pointer));
-        return 1;
-    }
-
-    void ceu_pro_to_dash_string_dash_tag (CEUX* X) {
-        assert(X->args == 1);
-        CEU_Value t = ceux_peek(X->S, ceux_arg(X,0));
-        assert(t.type == CEU_VALUE_TAG);        
-        ceux_push(X->S, 1, ceu_to_dash_string_dash_pointer(ceu_to_dash_string_dash_tag(t.Tag)));
-        return 1;
-    }
-
-    void ceu_pro_to_dash_string_dash_number (CEUX* X) {
-        assert(X->args == 1);
-        CEU_Value n = ceux_peek(X->S, ceux_arg(X,0));
-        assert(n.type == CEU_VALUE_NUMBER);
-        
-        char str[255];
-        snprintf(str, 255, "%g", n.Number);
-        assert(strlen(str) < 255);
-
-        ceux_push(X->S, 1, ceu_to_dash_string_dash_pointer(str));
-        return 1;
-    }
-    #endif
+    }    
     """
     }
     fun tuple_vector_dict (): String {
@@ -1104,15 +1102,14 @@ fun Coder.main (tags: Tags): String {
         return err;
     }
     
-    #if 0
-    void ceu_pro_next_dash_dict (CEUX* X) {
-        assert(X->args==1 || X->args==2);
-        CEU_Value dict = ceux_peek(X->S, ceux_arg(X,0));
+    void ceu_pro_next_dash_dict (CEU_Clo* _1, int n, CEU_Value args[]) {
+        assert(n==1 || n==2);
+        CEU_Value dict = args[0];
         CEU_Value ret;
         if (dict.type != CEU_VALUE_DICT) {
-            return ceu_error_s(X->S, "next-dict error : expected dict");
+            ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="next-dict error : expected dict"} };
         } else {
-            CEU_Value key = (X->args == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : ceux_peek(X->S, ceux_arg(X,1));
+            CEU_Value key = (n == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : args[1];
             if (key.type == CEU_VALUE_NIL) {
                 if (dict.Dyn->Dict.max == 0) {
                     ret = (CEU_Value) { CEU_VALUE_NIL };
@@ -1131,10 +1128,8 @@ fun Coder.main (tags: Tags): String {
                 }
             }
         }
-        ceux_push(X->S, 1, ret);
-        return 1;
+        CEU_ACC(ret);
     }    
-    #endif
     """
     }
     fun creates (): String {
@@ -1533,22 +1528,19 @@ fun Coder.main (tags: Tags): String {
         ceu_acc.Bool = !ceu_acc.Bool;
     }
     
-    #if 0
-    void ceu_pro_hash (int n, CEU_Value args[]) {
+    void ceu_pro_hash (CEU_Clo* _1, int n, CEU_Value args[]) {
         assert(n == 1);
-        CEU_Value v = ceux_peek(X->S, ceux_arg(X,0));
+        CEU_Value v = args[0];
         CEU_Value ret;
         if (v.type == CEU_VALUE_VECTOR) {
             ret = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=v.Dyn->Vector.its} };
         } else if (v.type == CEU_VALUE_TUPLE) {
             ret = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=v.Dyn->Tuple.its} };
         } else {
-            return ceu_error_s(X->S, "length error : not a vector");
+            ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="length error : not a vector"} };
         }
-        ceux_push(X->S, 1, ret);
-        return 1;
+        CEU_ACC(ret);
     }
-    #endif
     """
     }
 
@@ -1997,7 +1989,7 @@ fun Coder.main (tags: Tags): String {
         */
         c_tags() +
         c_error + /*gc() + */
-        c_impls() + /*
+        c_to() + c_impls() + /*
         // block-task-up, hold, bcast
         */
         eq_neq_len() +

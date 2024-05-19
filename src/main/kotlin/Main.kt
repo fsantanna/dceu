@@ -90,11 +90,11 @@ val TAGS = listOf (
 ))
 
 val GLOBALS = setOf (
-    /*"dump",*/ "error", /*"next-dict",*/ "print", "println",
+    /*"dump",*/ "error", "next-dict", "print", "println",
     "sup?", "tag",
-    /*"to-string-number", "to-string-pointer", "to-string-tag",
-    "to-tag-string", */
-    "tuple", "type", /*"{{#}}",*/ "{{==}}", "{{/=}}",
+    /*"to-string-number", "to-string-pointer", "to-string-tag", */
+    "to-tag-string",
+    "tuple", "type", "{{#}}", "{{==}}", "{{/=}}",
 ) + (if (CEU < 3) setOf() else setOf(
     "coroutine", "status"
 )) + (if (CEU < 4) setOf() else setOf(
