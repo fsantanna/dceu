@@ -92,7 +92,7 @@ val TAGS = listOf (
 val GLOBALS = setOf (
     /*"dump",*/ "error", "next-dict", "print", "println",
     "sup?", "tag",
-    /*"to-string-number", "to-string-pointer", "to-string-tag", */
+    "to-string-number", "to-string-pointer", "to-string-tag",
     "to-tag-string",
     "tuple", "type", "{{#}}", "{{==}}", "{{/=}}",
 ) + (if (CEU < 3) setOf() else setOf(

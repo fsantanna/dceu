@@ -1550,7 +1550,8 @@ class Exec_01 {
             val t = #[nil,nil,10]
             println(#t, t[0])
         """)
-        assert(out.contains("ceux_vector: Assertion `v.type != CEU_VALUE_NIL' failed")) { out }
+        //assert(out.contains("ceu_vector_set: Assertion `v.type != CEU_VALUE_NIL' failed")) { out }
+        assert(out.contains("ceu_vector_set: Assertion `i == vec->its-1' failed.")) { out }
     }
     @Test
     fun BUG_ee_18_vector_f() {
@@ -1649,12 +1650,13 @@ class Exec_01 {
             println(do {})
         """)
         //assert(out == "nil\n") { out }
-        assert(out == "\n") { out }
+        //assert(out == "\n") { out }
+        assert(out == "anon : (lin 2, col 25) : expected expression : have \"}\"\n") { out }
     }
     @Test
     fun do_02x() {
         val out = test("""
-            println(do {}, nil)
+            println(do {nil}, nil)
         """)
         assert(out == "nil\tnil\n") { out }
     }
