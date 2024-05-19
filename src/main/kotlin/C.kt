@@ -324,7 +324,6 @@ fun Coder.main (tags: Tags): String {
     int ceu_as_bool (CEU_Value v);
     CEU_Value ceu_dyn_to_val (CEU_Dyn* dyn);
 
-    void ceu_pro_tags (CEUX* X);
     int ceu_type_to_size (int type);
 
     void ceu_gc_inc_val (CEU_Value v);
@@ -768,7 +767,6 @@ fun Coder.main (tags: Tags): String {
         CEU_ACC(((CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0].type} }));
     }
     
-    #if 0
     CEU_Value _ceu_sup_ (CEU_Value sup, CEU_Value sub) {
         if (sup.type!=CEU_VALUE_TAG || sub.type!=CEU_VALUE_TAG) {
             return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} };
@@ -794,41 +792,34 @@ fun Coder.main (tags: Tags): String {
             ))
         } };
     }
-    void ceu_pro_sup_question_ (CEUX* X) {
-        assert(X->args >= 2);
-        CEU_Value sup = ceux_peek(X->S, ceux_arg(X,0));
-        CEU_Value sub = ceux_peek(X->S, ceux_arg(X,1));
-        CEU_Value ret = _ceu_sup_(sup, sub);
-        ceux_push(X->S, 1, ret);
-        return 1;
+    void ceu_pro_sup_question_ (CEU_Clo* _1, int n, CEU_Value args[]) {
+        assert(n >= 2);
+        CEU_ACC (
+            _ceu_sup_(args[0], args[1])
+        );
     }
     
-    void ceu_pro_tag (CEUX* X) {
-        assert(X->args==1 || X->args==2);
-        if (X->args == 1) {
-            // [dyn]
-            CEU_Value dyn = ceux_peek(X->S, ceux_arg(X,0));
+    void ceu_pro_tag (CEU_Clo* _1, int n, CEU_Value args[]) {
+        assert(n==1 || n==2);
+        if (n == 1) {
+            CEU_Value dyn = args[0];
             if (dyn.type < CEU_VALUE_DYNAMIC) {
-                ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+                CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));
             } else {
-                ceux_push(X->S, 1, dyn.Dyn->Any.tag);
+                CEU_ACC(dyn.Dyn->Any.tag);
             }
-            ceux_rem_n(X->S, XX(-2), 1);
-            // [tag]
         } else {
-            // [tag,dyn]
-            CEU_Value dyn = ceux_peek(X->S, ceux_arg(X,1));
+            CEU_Value dyn = args[0];
             if (dyn.type < CEU_VALUE_DYNAMIC) {
                 // nothing to set
             } else {
-                dyn.Dyn->Any.tag = ceux_peek(X->S, ceux_arg(X,0));
+                dyn.Dyn->Any.tag = args[1];
             }
-            ceux_rem_n(X->S, XX(-2), 1);
-            // [dyn]
+            CEU_ACC(dyn);
         }
-        return 1;
     }
     
+    #if 0
     // TO-TAG-*
 
     void ceu_pro_to_dash_tag_dash_string (CEUX* X) {
@@ -1073,10 +1064,10 @@ fun Coder.main (tags: Tags): String {
             case CEU_VALUE_TUPLE:
                 return col.Dyn->Tuple.buf[(int) idx.Number];
             case CEU_VALUE_VECTOR:
-                //return ceu_vector_get(&col.Dyn->Vector, idx.Number);
+                return ceu_vector_get(&col.Dyn->Vector, idx.Number);
                 break;
             case CEU_VALUE_DICT:
-                //return ceu_dict_get(&col.Dyn->Dict, idx);
+                return ceu_dict_get(&col.Dyn->Dict, idx);
             default:
                 assert(0 && "bug found");
         }

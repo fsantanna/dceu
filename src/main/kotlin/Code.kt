@@ -117,9 +117,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     {                        
                         ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
                         """
-                        CEU_Value upv = ${vars.idx("X",dcl,ups.pub[this]!!)};
-                        //ceu_gc_inc(upv);
-                        ceu_acc.Dyn->Clo.upvs.buf[$i] = upv;
+                        {
+                            CEU_Value upv = ${vars.idx("X",dcl,ups.pub[this]!!)};
+                            //ceu_gc_inc(upv);
+                            ceu_acc.Dyn->Clo.upvs.buf[$i] = upv;
+                        }
                         """
                         }.joinToString("\n")}
                     }
