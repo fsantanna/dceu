@@ -346,7 +346,7 @@ val to :To = do {
     func to-pointer (v) {
         match v {
             :pointer => v
-            :tag     => `:pointer ceu_to_dash_string_dash_tag($v.Tag)`
+            :tag     => `:pointer ceu_tag_to_pointer($v.Tag)`
             :tuple   => `:pointer $v.Dyn->Tuple.buf`
             :vector  => `:pointer $v.Dyn->Vector.buf`
             :dict    => `:pointer $v.Dyn->Dict.buf`

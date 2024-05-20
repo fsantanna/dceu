@@ -468,7 +468,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 }
                 when (this.tk_.tag) {
                     null   -> body + "\n" + """
-                        ${this.check_error_aborted(this.toerr())}
+                        /*${this.check_error_aborted(this.toerr())}*/
                         CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));
                     """
                     ":pre" -> {
@@ -597,6 +597,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 { // CALL | ${this.dump()}
                     ${this.clo.code()}
                     CEU_Value ceu_clo_$n = CEU_ACC_KEEP();
+                    if (ceu_clo_$n.type != CEU_VALUE_CLO_FUNC) {
+                        CEU_ERROR_CHK_PTR (
+                            continue,
+                            "call error : expected function",
+                            ${this.toerr()}
+                        );
+                    }
                     CEU_Value ceu_args_$n[${this.args.size}];
                     ${this.args.mapIndexed { i,e ->
                         e.code() + """

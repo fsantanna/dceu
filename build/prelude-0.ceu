@@ -213,7 +213,7 @@ val to-tag = func (v) {
 
 val to-pointer = func (v) {
     if type(v) == :tag {
-        `:pointer ceu_to_dash_string_dash_tag($v.Tag)`
+        `:pointer ceu_tag_to_pointer($v.Tag)`
     } else {
         if type(v) == :vector {
             `:pointer $v.Dyn->Vector.buf`
