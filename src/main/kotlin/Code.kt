@@ -72,12 +72,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 pres.add("""
                     // PROTO | ${this.dump()}
                     void ceu_pro_$id (CEU_Clo* ceu_clo, int ceu_n, CEU_Value ceu_args[]) {
-                        ${this.pars.map { """
-                            CEU_Value ceu_par_${it.first.str.idc()};
-                        """ }.joinToString("")}
-                        ${vars.proto_to_upvs[this]!!.mapIndexed { i, dcl -> """
-                            CEU_Value ceu_upv_${dcl.idtag.first.str.idc()} = ceu_clo->upvs.buf[$i];                            
-                        """ }.joinToString("")}
+                        //{ // pars
+                            ${this.pars.mapIndexed { i,(id,_) -> """
+                                CEU_Value ceu_par_${id.str.idc()} = ($i < ceu_n) ? ceu_args[$i] : (CEU_Value) { CEU_VALUE_NIL };
+                            """ }.joinToString("")}
+                            for (int i=${this.pars.size}; i<ceu_n; i++) {
+                                ceu_gc_dec_val(ceu_args[i]);
+                            }
+                        //}
+                        //{ // upvs
+                            ${vars.proto_to_upvs[this]!!.mapIndexed { i, dcl -> """
+                                CEU_Value ceu_upv_${dcl.idtag.first.str.idc()} = ceu_clo->upvs.buf[$i];                            
+                            """ }.joinToString("")}
+                        //}
                         ${isexe.cond{"""
                             X->exe->status = (X->action == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
                             switch (X->exe->pc) {
@@ -88,6 +95,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                                     }
                         """}}
                         ${do_while(code)}
+                        { // args gc-dec
+                            ${this.pars.map { """
+                                ceu_gc_dec_val(ceu_par_${it.first.str});
+                            """ }.joinToString("")}
+                        }
+
                         ${isexe.cond{"""
                                 return ceu_exe_term(X);
                             } // close switch
@@ -149,18 +162,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """ }}
                  */
 
-                // func (a,b)
-                val proto = ups.pub[this]
-                val args = if (proto !is Expr.Proto) null else {
-                    proto.pars.mapIndexed { i,(id, _) -> """
-                        ceu_par_${id.str.idc()} = ($i < ceu_n) ? ceu_args[$i] : (CEU_Value) { CEU_VALUE_NIL };
-                    """
-                    }.joinToString("")
-                }
-
                 val void = sta.void(this)
                 if (void) {
-                    assert(args == null)
                     """
                     { // BLOCK | void | ${this.dump()}
                         $body
@@ -168,10 +171,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """
                 } else {
                     """
-                    ${args.cond { """
-                        // PROTO | ARGS | ${proto!!.dump()}
-                        $it
-                    """ }}
                     { // BLOCK | ${this.dump()}
                         // do not clear upvs
                         //ceux_block_enter(X->S, X->clo+1+X->args+{upvs+vars.enc_to_base[this]!!}, {vars.size(vars.enc_to_dcls[this]!!)} CEU4(COMMA X->exe));
@@ -190,9 +189,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         // defers execute
                         ${(CEU >= 2).cond { defers[this].cond { it.third } }}
                         
-                        // out=0 when loop iterates (!CEU_BREAK)
-                        //ceux_block_leave(X->S, X->clo+1+X->args+{upvs+vars.enc_to_base[this]!!}, {vars.size(vars.enc_to_dcls[this]!!)} CEU4(COMMA X->exe), ${(up is Expr.Loop).cond { "(!CEU_BREAK) ? 0 : " }} {rets.exts[this]!!});
-                        
+                        { // dcls gc-dec
+                            ${vars.blk_to_dcls[this]!!.map { """
+                                ceu_gc_dec_val(${vars.idx("",it,it)});
+                            """ }.joinToString("")}
+                        }                        
                         ${(CEU >= 2).cond { this.check_error_aborted("NULL")} }
                     }
                     """

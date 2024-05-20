@@ -1144,7 +1144,7 @@ fun Coder.main (tags: Tags): String {
     fun creates (): String {
         return """
     CEU_Value ceu_create_tuple (int cpy, int n, CEU_Value args[]) {
-        //ceu_debug_add(CEU_VALUE_TUPLE);
+        ceu_debug_add(CEU_VALUE_TUPLE);
         CEU_Tuple* ret = malloc(sizeof(CEU_Tuple) + n*sizeof(CEU_Value));
         assert(ret != NULL);
         *ret = (CEU_Tuple) {
@@ -1169,7 +1169,7 @@ fun Coder.main (tags: Tags): String {
     }
     
     CEU_Value ceu_create_vector (void) {
-        //ceu_debug_add(CEU_VALUE_VECTOR);
+        ceu_debug_add(CEU_VALUE_VECTOR);
         CEU_Vector* ret = malloc(sizeof(CEU_Vector));
         assert(ret != NULL);
         char* buf = malloc(1);  // because of '\0' in empty strings
@@ -1183,7 +1183,7 @@ fun Coder.main (tags: Tags): String {
     }
     
     CEU_Value ceu_create_dict (void) {
-        //ceu_debug_add(CEU_VALUE_DICT);
+        ceu_debug_add(CEU_VALUE_DICT);
         CEU_Dict* ret = malloc(sizeof(CEU_Dict));
         assert(ret != NULL);
         *ret = (CEU_Dict) {
@@ -1194,7 +1194,7 @@ fun Coder.main (tags: Tags): String {
     }
     
     CEU_Value ceu_create_clo (CEU_VALUE type, CEU_Proto proto, int pars, int upvs) {
-        //ceu_debug_add(type);
+        ceu_debug_add(type);
         CEU_Clo* ret = malloc(CEU4(type==CEU_VALUE_CLO_TASK ? sizeof(CEU_Clo_Task) :) sizeof(CEU_Clo));
         assert(ret != NULL);
         CEU_Value* buf = malloc(upvs * sizeof(CEU_Value));
