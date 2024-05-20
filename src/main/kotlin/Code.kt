@@ -119,7 +119,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         """
                         {
                             CEU_Value upv = ${vars.idx("X",dcl,ups.pub[this]!!)};
-                            //ceu_gc_inc(upv);
+                            ceu_gc_inc_val(upv);
                             ceu_acc.Dyn->Clo.upvs.buf[$i] = upv;
                         }
                         """
@@ -541,9 +541,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                                 ceu_dict_set(&ceu_dic_$n.Dyn->Dict, ceu_key_$n, ceu_val_$n),
                                 ${this.toerr()}
                             );
-                            //ceu_gc_dec_val(ceu_key_$n);
-                            //ceu_gc_dec_val(ceu_col_$n);
-                            //CEU_ERROR_CHK_STK(continue, );
+                            ceu_gc_dec_val(ceu_key_$n);
+                            ceu_gc_dec_val(ceu_val_$n);
                         }
                     """ }.joinToString("")}
                     CEU_ACC(ceu_dic_$n);
@@ -587,8 +586,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
                     """
                 } + """
-                    //ceu_gc_dec_val(ceu_idx_$n);
-                    //ceu_gc_dec_val(ceu_col_$n);
+                    ceu_gc_dec_val(ceu_col_$n);
+                    ceu_gc_dec_val(ceu_idx_$n);
                 }
                 """
             }
