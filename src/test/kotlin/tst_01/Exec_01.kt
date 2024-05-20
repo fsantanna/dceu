@@ -2730,7 +2730,7 @@ class Exec_01 {
             """
             var x
             set x = 10
-            set x = if (nil) {} else { 1 }
+            set x = if (nil) {nil} else { 1 }
             println(x)
         """.trimIndent()
         )
@@ -2744,7 +2744,7 @@ class Exec_01 {
             """
             var x
             set x = 10
-            set x = if (false) {1} else {}
+            set x = if (false) {1} else {nil}
             println(x)
         """.trimIndent()
         )
@@ -3138,11 +3138,11 @@ class Exec_01 {
         val out = test(
             """
             do {
-                val f = func () {}
+                val f = func () {nil}
                 f()
             }
             do {
-                val f = func () {}
+                val f = func () {nil}
                 f()
             }
             println(:ok)
@@ -3703,9 +3703,9 @@ class Exec_01 {
         assert(out == "10\n") { out }
     }
     @Test
-    fun on_20_nat_error() {
+    fun TODO_on_20_nat_error() {
         val out = test("""
-            `ceu_error_s(X->S, "C error");`
+            `CEU_ERROR_CHK_PTR(continue, "C error");`
         """)
         assert(out == " |  anon : (lin 2, col 13) : ```ceu_error_s(X->S, .C error.);```\n" +
                 " v  error : C error\n") { out }

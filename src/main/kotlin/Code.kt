@@ -67,7 +67,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val istsk = (this.tk.str == "task")
                 val isnst = ups.isnst(this)
                 val code = this.blk.code()
-                val id = this.idc()
+                val id = this.idc() + (ups.first(this) { it is Expr.Do } != outer).cond { "_${this.n}" }
 
                 pres.add("""
                     // PROTO | ${this.dump()}

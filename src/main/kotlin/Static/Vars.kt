@@ -96,6 +96,17 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         }
     }
 
+    fun check (id: Tk.Id) {
+        val prv = dcls.firstOrNull { it.idtag.first.str == id.str }
+        when {
+            (prv == null) -> {}
+            (CEU>=99 && id.str=="it") -> {}
+            else -> {
+                err(id, "declaration error : variable \"${id.str}\" is already declared")
+            }
+        }
+    }
+
     fun acc (e: Expr, id: String): Expr.Dcl {
         val dcl: Expr.Dcl? = dcls.findLast { it.idtag.first.str==id } as Expr.Dcl?
         if (dcl == null) {
@@ -195,6 +206,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 val proto = ups.pub[this]
                 if (proto is Expr.Proto) {
                     proto.pars.forEach { (id, tag) ->
+                        check(id)
                         val dcl = Expr.Dcl(
                             Tk.Fix("val", this.tk.pos),
                             Pair(id,tag), null
@@ -214,15 +226,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
             }
             is Expr.Dcl    -> {
-                val (id,_) = this.idtag
-                val prv = dcls.firstOrNull { it.idtag.first.str == id.str }
-                when {
-                    (prv == null) -> {}
-                    (CEU>=99 && id.str=="it") -> {}
-                    else -> {
-                        err(id, "declaration error : variable \"${id.str}\" is already declared")
-                    }
-                }
+                check(this.idtag.first)
 
                 val blk = ups.first(this) { it is Expr.Do }!! as Expr.Do
                 dcls.add(this)
