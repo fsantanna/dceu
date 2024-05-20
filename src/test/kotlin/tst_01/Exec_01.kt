@@ -4817,7 +4817,7 @@ class Exec_01 {
     //  MEM-GC-REF-COUNT
 
     @Test
-    fun gc0() {
+    fun gc_01() {
         DEBUG = true
         val out = test(
             """
@@ -4829,13 +4829,13 @@ class Exec_01 {
             ;;println(`:number CEU_GC.free`)
         """
         )
-        assert(out == ">>> GC: 18\n" +
-                "    alloc = 19\n" +
+        assert(out == ">>> GC: 2\n" +
+                "    alloc = 3\n" +
                 "    free  = 1\n"
         ) { out }
     }
     @Test
-    fun gc1() {
+    fun gc_01x() {
         DEBUG = true
         val out = test(
             """
@@ -4846,12 +4846,12 @@ class Exec_01 {
         """
         )
         //assert(out == "1\n") { out }
-        assert(out == ">>> GC: 19\n" +
-                "    alloc = 20\n" +
+        assert(out == ">>> GC: 3\n" +
+                "    alloc = 4\n" +
                 "    free  = 1\n") { out }
     }
     @Test
-    fun gc2() {
+    fun gc_02() {
         DEBUG = true
         val out = test(
             """
@@ -4869,7 +4869,7 @@ class Exec_01 {
                 "    free  = 2\n") { out }
     }
     @Test
-    fun gc3_cycle() {
+    fun gc_03_cycle() {
         DEBUG = true
         val out = test(
             """
@@ -4888,7 +4888,7 @@ class Exec_01 {
                 "    free  = 0\n") { out }
     }
     @Test
-    fun gc4() {
+    fun gc_04() {
         DEBUG = true
         val out = test(
             """
@@ -4903,7 +4903,7 @@ class Exec_01 {
         assert(out == "0\n2\n") { out }
     }
     @Test
-    fun gc5() {
+    fun gc_05() {
         DEBUG = true
         val out = test(
             """
@@ -4919,7 +4919,7 @@ class Exec_01 {
         //assert(out == "0\n") { out }
     }
     @Test
-    fun gc6() {
+    fun gc_06() {
         DEBUG = true
         val out = test(
             """
@@ -4931,7 +4931,7 @@ class Exec_01 {
         assert(out == "3\n") { out }
     }
     @Test
-    fun gc7() {
+    fun gc_07() {
         DEBUG = true
         val out = test(
             """
@@ -4947,7 +4947,7 @@ class Exec_01 {
         //assert(out == "0\n") { out }
     }
     @Test
-    fun gc7x() {
+    fun gc_07x() {
         DEBUG = true
         val out = test(
             """
@@ -4960,7 +4960,7 @@ class Exec_01 {
         //assert(out == "0\n") { out }
     }
     @Test
-    fun gc7y() {
+    fun gc_07y() {
         DEBUG = true
         val out = test(
             """
@@ -4975,7 +4975,7 @@ class Exec_01 {
         assert(out == "2\n") { out }
     }
     @Test
-    fun gc8() {
+    fun gc_08() {
         DEBUG = true
         val out = test(
             """
@@ -4993,7 +4993,7 @@ class Exec_01 {
         //assert(out == "0\t0\n0\t0\n") { out }
     }
     @Test
-    fun gc9_err() {
+    fun gc_09_err() {
         val out = test(
             """
             var out
@@ -5009,7 +5009,7 @@ class Exec_01 {
         assert(out == "[1,2,3]\n") { out }
     }
     @Test
-    fun gc10() {
+    fun gc_10() {
         val out = test(
             """
             do {
@@ -5026,7 +5026,7 @@ class Exec_01 {
         //assert(out == "0\n0\n") { out }
     }
     @Test
-    fun gc11() {
+    fun gc_11() {
         val out = test(
             """
             var f = func (v) {
@@ -5042,7 +5042,7 @@ class Exec_01 {
         //assert(out == "0\n") { out }
     }
     @Test
-    fun gc12() {
+    fun gc_12() {
         val out = test(
             """
             println([])
@@ -5053,7 +5053,7 @@ class Exec_01 {
         assert(out == "[]\n1\n") { out }
     }
     @Test
-    fun gc15_arg() {
+    fun gc_15_arg() {
         val out = test(
             """
             var f = func (v) {
@@ -5066,7 +5066,7 @@ class Exec_01 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun gc16_grow() {
+    fun gc_16_grow() {
         DEBUG = true
         val out = test("""
             val t = []

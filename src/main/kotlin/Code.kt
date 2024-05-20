@@ -465,9 +465,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     x
                 }
                 when (this.tk_.tag) {
-                    null   -> body + "\n" + """
-                        /*${this.check_error_aborted(this.toerr())}*/
+                    null   -> """
                         CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));
+                        $body 
+                        /*${this.check_error_aborted(this.toerr())}*/
                     """
                     ":pre" -> {
                         pres.add(body)
