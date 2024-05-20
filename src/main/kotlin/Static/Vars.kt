@@ -130,11 +130,11 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         return dcl
     }
 
-    fun idx (X: String, acc: Expr.Acc): String {
+    fun idx (acc: Expr.Acc): String {
         val dcl = this.acc_to_dcl[acc]!!
-        return this.idx(X, dcl, acc)
+        return this.idx(dcl, acc)
     }
-    fun idx (X: String, dcl: Expr.Dcl, src: Expr): String {
+    fun idx (dcl: Expr.Dcl, src: Expr): String {
         val enc  = this.dcl_to_blk[dcl]!!
 
         // number of upvals in enclosing proto

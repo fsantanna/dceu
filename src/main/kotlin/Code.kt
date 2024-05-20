@@ -131,7 +131,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
                         """
                         {
-                            CEU_Value upv = ${vars.idx("X",dcl,ups.pub[this]!!)};
+                            CEU_Value upv = ${vars.idx(dcl, ups.pub[this]!!)};
                             ceu_gc_inc_val(upv);
                             ceu_acc.Dyn->Clo.upvs.buf[$i] = upv;
                         }
@@ -191,7 +191,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         
                         { // dcls gc-dec
                             ${vars.blk_to_dcls[this]!!.map { """
-                                ceu_gc_dec_val(${vars.idx("",it,it)});
+                                ceu_gc_dec_val(${vars.idx(it, it)});
                             """ }.joinToString("")}
                         }                        
                         ${(CEU >= 2).cond { this.check_error_aborted("NULL")} }
@@ -200,7 +200,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 }
             }
             is Expr.Dcl -> {
-                val idx = vars.idx("X", this, this)
+                val idx = vars.idx(this, this)
                 val isglb = (vars.dcl_to_blk[this] == outer)
                 val issrc = (this.src != null)
                 """
@@ -461,7 +461,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val body = vars.nats[this]!!.let { (set, str) ->
                     var x = str
                     for (dcl in set) {
-                        val idx = vars.idx("X", dcl, this)
+                        val idx = vars.idx(dcl, this)
                         //println(setOf(x, v))
                         x = x.replaceFirst("XXX", idx)
                     }
@@ -486,7 +486,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 }
             }
             is Expr.Acc -> {
-                val idx = vars.idx("X",this)
+                val idx = vars.idx(this)
                 when {
                     this.isdst() -> """
                         // ACC - SET | ${this.dump()}
