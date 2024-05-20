@@ -4864,8 +4864,8 @@ class Exec_01 {
         )
         //assert(out == "2\n") { out }
         //assert(out == "0\n") { out }
-        assert(out == ">>> GC: 18\n" +
-                "    alloc = 20\n" +
+        assert(out == ">>> GC: 2\n" +
+                "    alloc = 4\n" +
                 "    free  = 2\n") { out }
     }
     @Test
@@ -4883,8 +4883,8 @@ class Exec_01 {
         """
         )
         //assert(out == "0\n") { out }
-        assert(out == ">>> GC: 20\n" +
-                "    alloc = 20\n" +
+        assert(out == ">>> GC: 4\n" +
+                "    alloc = 4\n" +
                 "    free  = 0\n") { out }
     }
     @Test

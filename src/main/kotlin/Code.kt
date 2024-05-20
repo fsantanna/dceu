@@ -95,11 +95,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                                     }
                         """}}
                         ${do_while(code)}
-                        { // args gc-dec
-                            ${this.pars.map { """
-                                ceu_gc_dec_val(ceu_par_${it.first.str});
-                            """ }.joinToString("")}
-                        }
 
                         ${isexe.cond{"""
                                 return ceu_exe_term(X);
@@ -187,9 +182,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ${(CEU >= 2).cond { defers[this].cond { it.third } }}
                         
                         { // dcls gc-dec
-                            ${vars.blk_to_dcls[this]!!.map { """
-                                ceu_gc_dec_val(${vars.idx(it, it)});
-                            """ }.joinToString("")}
+                            ${vars.blk_to_dcls[this]!!
+                                //.filter { !GLOBALS.contains(it.idtag.first.str) }
+                                .map { """
+                                    ceu_gc_dec_val(${vars.idx(it, it)});
+                                """ }
+                                .joinToString("")
+                            }
                         }                        
                         ${(CEU >= 2).cond { this.check_error_aborted("NULL")} }
                     }
@@ -211,14 +210,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """
                     (isglb && issrc) -> """
                         ${this.src!!.code()}
-                        $idx = CEU_ACC_INC();
+                        ceu_gc_inc_val(ceu_acc);
+                        $idx = ceu_acc;
                     """
                     (!isglb && !issrc) -> """
                         CEU_Value $idx = { CEU_VALUE_NIL };
                     """
                     (!isglb && issrc) -> """
                         ${this.src!!.code()}
-                        CEU_Value $idx = CEU_ACC_INC();
+                        ceu_gc_inc_val(ceu_acc);
+                        CEU_Value $idx = ceu_acc;
                     """
                     else -> error("impossible case")
                 }}
@@ -488,7 +489,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 when {
                     this.isdst() -> """
                         // ACC - SET | ${this.dump()}
-                        $idx = CEU_ACC_INC();
+                        ceu_gc_dec_val($idx);
+                        ceu_gc_inc_val(ceu_acc);
+                        $idx = ceu_acc;
                     """
                     else -> """
                         // ACC - GET | ${this.dump()}
@@ -520,7 +523,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     CEU_Value ceu_vec_$n = ceu_create_vector();
                     ${this.args.mapIndexed { i, it ->
                          it.code() + """
-                         ceu_vector_set(&ceu_vec_$n.Dyn->Vector, $i, CEU_ACC_KEEP());
+                         ceu_vector_set(&ceu_vec_$n.Dyn->Vector, $i, ceu_acc);
                         """
                     }.joinToString("")}
                     CEU_ACC(ceu_vec_$n);
@@ -605,11 +608,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     CEU_Value ceu_args_$n[${this.args.size}];
                     ${this.args.mapIndexed { i,e ->
                         e.code() + """
-                            ceu_args_$n[$i] = CEU_ACC_INC();
+                            ceu_args_$n[$i] = CEU_ACC_KEEP();
                         """
                     }.joinToString("")}
-                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                     ceu_clo_$n.Dyn->Clo.proto((CEU_Clo*)ceu_clo_$n.Dyn, ${this.args.size}, ceu_args_$n);
+                    ceu_gc_dec_val(ceu_clo_$n);
                     CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
                     //{this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}

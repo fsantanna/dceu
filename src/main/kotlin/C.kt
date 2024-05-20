@@ -59,10 +59,6 @@ fun Coder.main (tags: Tags): String {
         ceu_acc = (CEU_Value) { CEU_VALUE_NIL };    \
         ceu_tmp;                                    \
     })
-    #define CEU_ACC_INC() ({        \
-        ceu_gc_inc_val(ceu_acc);    \
-        ceu_acc;                    \
-    })
     """
     }
     fun h_enums (): String {
@@ -408,10 +404,17 @@ fun Coder.main (tags: Tags): String {
         }
         puts("<<<<<<<<<<<");
     }
-    #if 0
     void ceu_dump_dyn (CEU_Dyn* dyn) {
         ceu_dump_val(ceu_dyn_to_val(dyn));
     }
+    void ceu_pro_dump (CEU_Clo* _1, int n, CEU_Value args[]) {
+        for (int i=0; i<n; i++) {
+            ceu_dump_val(args[i]);
+        }
+        CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
+        ceu_gc_dec_args(n, args);
+    }
+    #if 0
     void ceu_dump_block (CEU_Block* blk) {
         printf(">>> BLOCK: %p\n", blk);
         printf("    istop = %d\n", blk->istop);
@@ -853,22 +856,10 @@ fun Coder.main (tags: Tags): String {
     }
     fun c_impls (): String {
         return """
-    #if 0
     CEU_Value ceu_dyn_to_val (CEU_Dyn* dyn) {
         return (CEU_Value) { dyn->Any.type, {.Dyn=dyn} };
     }
     
-    void ceu_pro_dump (CEUX* X) {
-        assert(X->args == 1);
-    #ifdef CEU_DEBUG
-        ceu_dump_val(ceux_peek(X->S, ceux_arg(X,0)));
-        return 0;
-    #else
-        return ceu_error_s(X->S, "debug is off");
-    #endif
-    }
-    #endif
-
     int ceu_as_bool (CEU_Value v) {
         return !(v.type==CEU_VALUE_NIL || (v.type==CEU_VALUE_BOOL && !v.Bool));
     }
@@ -1938,7 +1929,7 @@ fun Coder.main (tags: Tags): String {
             val id = it.idc()
             """
             CEU_Clo ceu_clo_$id = {
-                CEU_VALUE_CLO_FUNC, 0, (CEU_Value) { CEU_VALUE_NIL },
+                CEU_VALUE_CLO_FUNC, 1, (CEU_Value) { CEU_VALUE_NIL },
                 ceu_pro_$id, { 0, NULL }
             };
             CEU_Value ceu_glb_$id = {
