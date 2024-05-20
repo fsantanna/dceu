@@ -237,7 +237,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ${this.cnd.code()}
                     {
                         int v = ceu_as_bool(ceu_acc);
-                        //ceux_pop(X->S, 1);
                         if (v) {
                             ${this.t.code()}
                         } else {
@@ -253,7 +252,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     if (CEU_BREAK) {
                         CEU_BREAK = 0;
                     } else {
-                        //ceux_pop(X->S, 1);
                         goto CEU_LOOP_START_${this.n};
                     }
             """
@@ -261,7 +259,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 ${this.cnd.code()}
                 if (ceu_as_bool(ceu_acc)) {
                     ${this.e.cond { """
-                        ceux_pop(X->S, 1);        // (2)
                         ${it.code()}
                     """ }}
                     CEU_BREAK = 1;

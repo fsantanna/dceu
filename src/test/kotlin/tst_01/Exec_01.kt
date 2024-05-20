@@ -1449,8 +1449,8 @@ class Exec_01 {
             #[1,nil,3]  ;; v[2] = nil, but #v===1
         """
         )
-        //assert(out.contains("ceu_vector_set: Assertion `i == vec->its-1' failed.")) { out }
-        assert(out.contains("ceux_vector: Assertion `v.type != CEU_VALUE_NIL' failed.")) { out }
+        assert(out.contains("ceu_vector_set: Assertion `i == vec->its-1' failed.")) { out }
+        //assert(out.contains("ceux_vector: Assertion `v.type != CEU_VALUE_NIL' failed.")) { out }
     }
     @Test
     fun vector6b_err() {
@@ -4044,7 +4044,7 @@ class Exec_01 {
     // TAGS
 
     @Test
-    fun tags1() {
+    fun gg_01_tags() {
         val out = test(
             """
             println(:xxx)
@@ -4057,7 +4057,7 @@ class Exec_01 {
         assert(out == ":xxx\nfalse\ntrue\ntrue\nfalse\n") { out }
     }
     @Test
-    fun tags2() {
+    fun gg_02_tags() {
         val out = test(
             """
             func () {
@@ -4071,7 +4071,7 @@ class Exec_01 {
         assert(out == ":xxx\n:xxx\n") { out }
     }
     @Test
-    fun tags3() {
+    fun gg_03_tags() {
         val out = test(
             """
             func () {
@@ -4085,7 +4085,7 @@ class Exec_01 {
         assert(out == "anon : (lin 3, col 25) : tag error : parent tag :Xxx is not declared\n") { out }
     }
     @Test
-    fun tags3a() {
+    fun gg_04_tags() {
         val out = test(
             """
             func () {
@@ -4099,7 +4099,7 @@ class Exec_01 {
         assert(out == ":Xxx\n:1\n") { out }
     }
     @Test
-    fun TODO_tags4_err() {
+    fun TODO_gg_05_tags_err() {
         val out = test(
             """
             println(tag())
@@ -4108,7 +4108,7 @@ class Exec_01 {
         assert(out.contains("ceu_tag_f: Assertion `X->args==1 || X->args==2' failed")) { out }
     }
     @Test
-    fun tags4() {
+    fun gg_06_tags() {
         val out = test(
             """
             println(tag([]))
@@ -4118,7 +4118,7 @@ class Exec_01 {
         //assert(out.contains("[]\n")) { out }
     }
     @Test
-    fun tags5() {
+    fun gg_07_tags() {
         val out = test(
             """
             println(tag(:2,1))   ;; OK (was TODO: error message)
@@ -4128,7 +4128,7 @@ class Exec_01 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun tags6_err() {
+    fun gg_08_tags_err() {
         val out = test(
             """
             println(tag(tag(2,[])))
@@ -4138,7 +4138,7 @@ class Exec_01 {
         //assert(out.contains("Assertion `tag.type == CEU_VALUE_TAG'")) { out }
     }
     @Test
-    fun tags7_err() {
+    fun gg_09_tags_err() {
         val out = test("""
             println(tag(:x,[]))
             println(tag(1,[]))
@@ -4147,7 +4147,7 @@ class Exec_01 {
         //assert(out.contains("Assertion `bool.type == CEU_VALUE_BOOL' failed")) { out }
     }
     @Test
-    fun tags8() {
+    fun gg_10_tags() {
         val out = test(
             """
             var t
@@ -4165,7 +4165,7 @@ class Exec_01 {
         assert(out == ":x []\t:x []\ttrue\n[]\t[]\ttrue\n") { out }
     }
     @Test
-    fun tags8x() {
+    fun gg_11_tags() {
         val out = test(
             """
             val t = []
@@ -4177,7 +4177,7 @@ class Exec_01 {
         assert(out == ":x []\t:x []\ttrue\ttrue\n") { out }
     }
     @Test
-    fun tags9() {
+    fun gg_12_tags() {
         val out = test(
             """
             var t
@@ -4193,7 +4193,7 @@ class Exec_01 {
         assert(out == "true\ntrue\nfalse\n") { out }
     }
     @Test
-    fun tags10() {
+    fun gg_13_tags() {
         val out = test(
             """
             println(:x-a-x, :i.j.a)
@@ -4202,7 +4202,7 @@ class Exec_01 {
         assert(out == "anon : (lin 2, col 29) : tag error : parent tag :i.j is not declared\n") { out }
     }
     @Test
-    fun tags10a() {
+    fun gg_14_tags() {
         val out = test(
             """
             println(:x-a-x, :i-j-a)
@@ -4211,7 +4211,7 @@ class Exec_01 {
         assert(out == ":x-a-x\t:i-j-a\n") { out }
     }
     @Test
-    fun tags11() {
+    fun gg_15_tags() {
         val out = test(
             """
             var t = tag(:T,   [])
@@ -4224,7 +4224,7 @@ class Exec_01 {
         assert(out == "15\t271\ntrue\tfalse\ntrue\ttrue\n") { out }
     }
     @Test
-    fun tags12() {
+    fun gg_16_tags() {
         val out = test(
             """
             do :A
@@ -4248,7 +4248,7 @@ class Exec_01 {
         assert(out == "true\ntrue\nfalse\nfalse\nfalse\ntrue\n") { out }
     }
     @Test
-    fun tags13() {
+    fun gg_17_tags() {
         DEBUG = true
         val out = test(
             """
@@ -4268,7 +4268,7 @@ class Exec_01 {
         assert(out == ":Z\n0\n") { out }
     }
     @Test
-    fun tags14() {
+    fun gg_18_tags() {
         val out = test("""
             var t = []
             println(tag(:X, t))
@@ -5661,7 +5661,7 @@ class Exec_01 {
     // OPTIMIZATION / CODE
 
     @Test
-    fun ss_01_code() {
+    fun ss_01_code_unused() {
         val out = test("""
             var f = func () {
                 nil
@@ -5675,12 +5675,12 @@ class Exec_01 {
             val i = func () {
                 42
             }
-            println(`:ceu ${D}f`)
             println(`:ceu ${D}g`)
             println(`:ceu ${D}h`)
             println(i())
+            println(`:ceu ${D}f`)
         """)
-        assert(out == "nil\nnil\nnil\n42\n") { out }
+        assert(out.contains("nil\nnil\n42\nfunc: 0x")) { out }
     }
 
     // ALL

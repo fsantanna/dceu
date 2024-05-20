@@ -781,13 +781,13 @@ fun Coder.main (tags: Tags): String {
         } else {
             CEU_Value tag = args[0];
             CEU_Value dyn = args[1];
-            assert(tag.type == CEU_VALUE_TAG);
+            ceu_gc_inc_val(tag);
             if (dyn.type < CEU_VALUE_DYNAMIC) {
                 // nothing to set
             } else {
                 dyn.Dyn->Any.tag = tag;
             }
-            ceu_acc = dyn;  // do not gc_inc/dec
+            CEU_ACC(dyn);
         }
         ceu_gc_dec_args(n, args);
     }            
@@ -936,7 +936,9 @@ fun Coder.main (tags: Tags): String {
     }
     
     CEU_Value ceu_vector_get (CEU_Vector* vec, int i) {
-        assert(i>=0 && i<vec->its);
+        if (i<0 || i>=vec->its) {
+            return (CEU_Value) { CEU_VALUE_ERROR, {.Error="index error : out of bounds"} };
+        }        
         int sz = ceu_type_to_size(vec->unit);
         CEU_Value ret = (CEU_Value) { vec->unit };
         memcpy(&ret.Number, vec->buf+i*sz, sz);
