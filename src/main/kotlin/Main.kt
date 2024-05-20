@@ -9,7 +9,7 @@ var DUMP = true
 var DEBUG = false
 var CEU = 1
 
-    // 1: dyn-lex                           ;; 3 "definitely lost"
+    // 1: dyn-lex                           ;; 20 "definitely lost"
     // 2: defer, throw/catch, patts         ;; 5 "definitely lost"
     // 3: coro, yield, resume               ;; 0 "definitely lost"
     // 4: task, pub, bcast, toggle, delay   ;; 2 "definitely lost"
@@ -64,8 +64,10 @@ val XOPERATORS = if (CEU < 99) setOf() else {
 }
 
 val TAGS = listOf (
-    ":nil", ":error", ":tag", ":bool", ":char", ":number", ":pointer",
-    ":dynamic",
+    ":nil", ":tag", ":bool", ":char", ":number", ":pointer",
+) + (if (CEU < 2) listOf(":error") else emptyList()) + listOf(
+    ":dynamic", // error before or after dynamic
+) + (if (CEU >= 2) listOf(":error") else emptyList()) + listOf(
     ":func",
 ) + (if (CEU < 3) listOf() else listOf(
     ":coro",

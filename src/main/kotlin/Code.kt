@@ -48,7 +48,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
         val exe = ups.exe(this)
         val defer = ups.first_without(this, { it is Expr.Defer }, { it is Expr.Proto })
         return """
-            CEU_ERROR_CHK_STK(continue, $msg);
+            CEU_ERROR_CHK_ACC(continue, $msg);
             ${(CEU>=3 && exe!=null && defer==null).cond { """
                 if (X->exe->status == CEU_EXE_STATUS_TERMINATED) {
                     continue;
@@ -139,11 +139,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             is Expr.Do -> {
                 val body = this.es.code()   // before defers[this] check
                 val up = ups.pub[this]
-                val upvs = ups.first(this) { it is Expr.Proto }.let {
-                    if (it == null) 0 else {
-                        vars.proto_to_upvs[it]!!.size
-                    }
-                }
 
                 val void = sta.void(this)
                 if (void) {
@@ -313,24 +308,21 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val bup = ups.first(this) { it is Expr.Do } as Expr.Do
                 val (ns,ini,end) = defers.getOrDefault(bup, Triple(mutableListOf(),"",""))
                 val inix = """
-                    ceux_repl(X->S, $ idx, (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} });
-                        // false: not reached, dont finalize
+                    int ceu_defer_$n = 0;   // not yet reached
                 """
                 val endx = """
-                    if (ceux_peek(X->S,$ idx).Bool) {     // if true: reached, finalize
-                        ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });  // detect error inside
+                    if (ceu_defer_$n) {     // if true: reached, finalize
                         do {
                             ${this.blk.code()}
                         } while (0);    // catch throw
-                        assert(!CEU_ERROR_IS(X->S) && "TODO: error in defer");
-                        ceux_pop(X->S, 1);
+                        assert(ceu_acc.type!=CEU_VALUE_ERROR && "TODO: error in defer");
                     }
                 """
                 ns.add(n)
                 defers[bup] = Triple(ns, ini+inix, endx+end)
                 """
-                ceux_repl(X->S, $ idx, (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} });
-                        // true: reached, finalize
+                ceu_defer_$n = 1;   // now reached
+                CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));
                 """
             }
 
@@ -466,7 +458,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     null   -> """
                         CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));
                         $body 
-                        /*${this.check_error_aborted(this.toerr())}*/
+                        ${this.check_error_aborted(this.toerr())}
                     """
                     ":pre" -> {
                         pres.add(body)
@@ -610,8 +602,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     }.joinToString("")}
                     ceu_clo_$n.Dyn->Clo.proto((CEU_Clo*)ceu_clo_$n.Dyn, ${this.args.size}, ceu_args_$n);
                     ceu_gc_dec_val(ceu_clo_$n);
-                    CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
-                    //{this.check_error_aborted(this.toerr())}
+                    ${this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}
                 """
             }
