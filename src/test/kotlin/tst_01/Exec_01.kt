@@ -1580,6 +1580,16 @@ class Exec_01 {
         assert(out == "a\nabba\nabba\n") { out }
     }
 
+    // ARGC / ARGV
+
+    @Test
+    fun ff_01_argc() {
+        val out = test("""
+            println(ARGS)
+        """)
+        assert(out == "[./out.exe]\n") { out }
+    }
+
     // SET
 
     @Test

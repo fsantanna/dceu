@@ -149,18 +149,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         vars.proto_to_upvs[it]!!.size
                     }
                 }
-                /*
-                {(this == outer.args).cond { """
-                    // ... args ...
-                    {
-                        for (int i=0; i<ceu_argc; i++) {
-                            CEU_Value vec = ceu_to_dash_string_dash_pointer(ceu_argv[i]);
-                            ceux_push(X->S, 1, vec);
-                        }
-                    }
-                    ceu_${this.n} += ceu_argc;
-                """ }}
-                 */
 
                 val void = sta.void(this)
                 if (void) {
@@ -172,8 +160,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 } else {
                     """
                     { // BLOCK | ${this.dump()}
-                        // do not clear upvs
-                        //ceux_block_enter(X->S, X->clo+1+X->args+{upvs+vars.enc_to_base[this]!!}, {vars.size(vars.enc_to_dcls[this]!!)} CEU4(COMMA X->exe));
+                        ${(this == outer).cond { """
+                        { // ARGC / ARGV
+                            CEU_Value args[ceu_argc];
+                            for (int i=0; i<ceu_argc; i++) {
+                                args[i] = ceu_pointer_to_string(ceu_argv[i]);
+                                ceu_gc_inc_val(args[i]);
+                            }
+                            ceu_glb_ARGS = ceu_create_tuple(1, ceu_argc, args);
+                            ceu_gc_inc_val(ceu_glb_ARGS);
+                        }
+                        """ }}
                         
                         // defers init
                         ${defers[this].cond { it.second }}
@@ -490,7 +487,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 when {
                     this.isdst() -> """
                         // ACC - SET | ${this.dump()}
-                        $idx = CEU_ACC_KEEP();
+                        $idx = CEU_ACC_INC();
                     """
                     else -> """
                         // ACC - GET | ${this.dump()}
@@ -607,7 +604,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     CEU_Value ceu_args_$n[${this.args.size}];
                     ${this.args.mapIndexed { i,e ->
                         e.code() + """
-                            ceu_args_$n[$i] = CEU_ACC_KEEP();
+                            ceu_args_$n[$i] = CEU_ACC_INC();
                         """
                     }.joinToString("")}
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
