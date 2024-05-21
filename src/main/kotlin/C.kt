@@ -493,15 +493,17 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_pointer_to_string (const char* ptr);
     CEU_Value ceu_create_vector (void);
 
-    #define CEU_ERROR_CHK_ACC(cmd,pre) {        \
-        if (ceu_acc.type == CEU_VALUE_ERROR) {  \
-            ceu_vector_set (                    \
-                ceu_acc.Dyn->Error.vec,         \
-                ceu_acc.Dyn->Error.vec->its,    \
-                ceu_pointer_to_string(pre)      \
-            );                                  \
-            cmd;                                \
-        }                                       \
+    #define CEU_ERROR_CHK_ACC(cmd,pre) {            \
+        if (ceu_acc.type == CEU_VALUE_ERROR) {      \
+            if (pre != NULL) { /* opt stack msg */  \
+                ceu_vector_set (                    \
+                    ceu_acc.Dyn->Error.vec,         \
+                    ceu_acc.Dyn->Error.vec->its,    \
+                    ceu_pointer_to_string(pre)      \
+                );                                  \
+            }                                       \
+            cmd;                                    \
+        }                                           \
     }
     
     #define CEU_ERROR_PTR(ptr) ceu_create_error(ceu_pointer_to_string(ptr))
@@ -884,6 +886,10 @@ fun Coder.main (tags: Tags): String {
         return """
     CEU_Value ceu_dyn_to_val (CEU_Dyn* dyn) {
         return (CEU_Value) { dyn->Any.type, {.Dyn=dyn} };
+    }
+    
+    int ceu_is_string (CEU_Value v) {
+        return (v.type == CEU_VALUE_VECTOR) && (v.Dyn->Vector.its > 0) && (v.Dyn->Vector.unit == CEU_VALUE_CHAR);
     }
     
     int ceu_as_bool (CEU_Value v) {
@@ -1988,14 +1994,19 @@ fun Coder.main (tags: Tags): String {
 
         // uncaught throw
         if (ceu_acc.type == CEU_VALUE_ERROR) {
-            for (int i=0; i<ceu_acc.Dyn->Error.vec->its; i++) {
-                CEU_Value s = ceu_vector_get(ceu_acc.Dyn->Error.vec, i);
-                assert(s.type == CEU_VALUE_VECTOR);
+            CEU_Vector* vec = ceu_acc.Dyn->Error.vec;
+            CEU_Value   val = *(ceu_acc.Dyn->Error.val);
+            for (int i=vec->its-1; i>=0; i--) {
+                CEU_Value s = ceu_vector_get(vec, i);
+                assert(ceu_is_string(s));
                 printf(" |  ");
                 puts(s.Dyn->Vector.buf);
             }
-            printf(" v  error : ");
-            ceu_print1(*(ceu_acc.Dyn->Error.val));
+            printf(" v  ");
+            if (!ceu_is_string(val)) {
+                printf("error : ");
+            }
+            ceu_print1(val);
             puts("");
         }
         
