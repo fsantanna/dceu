@@ -1281,7 +1281,7 @@ class Parser_99 {
     fun TODO_col_op_06_where() {
         val l = lexer("spawn T(v) where {nil}")
         val parser = Parser(l)
-        val e = parser.expr()
+        //val e = parser.expr()
         assert(trap { parser.expr() } == "anon : (lin 1, col XX) : spawn error : expected call")
     }
     @Test

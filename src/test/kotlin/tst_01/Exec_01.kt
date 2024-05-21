@@ -241,7 +241,7 @@ class Exec_01 {
             val t = [[nil]]
             dump(t[0])
         """)
-        //assert(out.contains("hold  = 2")) { out }
+        assert(out.contains("hold  = 2")) { out }
     }
     @Test
     fun bb_13_block() {

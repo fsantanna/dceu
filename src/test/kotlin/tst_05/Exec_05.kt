@@ -2312,7 +2312,7 @@ class Exec_05 {
             }
             println(999)
         """)
-        //assert(out == "[10]\n999\n") { out }
+        assert(out == "[10]\n999\n") { out }
         //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
         //assert(out == "anon : (lin 9, col 17) : declaration error : incompatible scopes\n:error\n") { out }
     }

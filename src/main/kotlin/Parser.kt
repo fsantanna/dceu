@@ -374,7 +374,7 @@ class Parser (lexer_: Lexer)
                                 set ${id.str}[#${id.str}] = ${src.tostr(true)}
                             }
                         """)
-                        "/* - */" -> err(tk0, "set error : expected assignable destination") as Expr
+                        "/* - */" -> err(tk0, "set error : expected assignable destination")
                         else -> error("impossible case")
                     }
                 } else {
@@ -637,7 +637,6 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val pat = this.patt (
                     null,
-                    // [pay,err,blk]
                     "`:ceu *(ceu_acc.Dyn->Error.val)`",
                     null
                 )
@@ -660,7 +659,6 @@ class Parser (lexer_: Lexer)
                 if (call !is Expr.Call) {
                     err(tkx, "resume error : expected call")
                 }
-                call as Expr.Call
                 Expr.Resume(tk0, call.clo, call.args)
             }
 
@@ -682,7 +680,6 @@ class Parser (lexer_: Lexer)
                 val tsks = if (CEU<5 || !this.acceptFix("in")) null else {
                     this.expr()
                 }
-                call as Expr.Call
                 Expr.Spawn(tk0, tsks, call.clo, call.args)
             }
             (CEU>=4 && this.acceptFix("delay")) -> Expr.Delay(this.tk0 as Tk.Fix)
@@ -820,7 +817,7 @@ class Parser (lexer_: Lexer)
                 this.nest("""
                     do {
                         ;;`/* IFS | ${tk0.dump()} */`
-                        ${ifs.mapIndexed { i,(cnd,idtag_es) ->
+                        ${ifs.map { (cnd,idtag_es) ->
                             val (idtag,es) = idtag_es
                             val idtagx = if (idtag != null) idtag else Pair(Tk.Id("ceu_$N",tk0.pos),null)
                             if (cnd == null) {
@@ -1198,7 +1195,7 @@ class Parser (lexer_: Lexer)
                             when (args.size) {
                                 1 -> this.nest("${e.tostr(true)} ${args[0].tostr(true)}")
                                 2 -> this.nest("${args[0].tostr(true)} ${e.tostr(true)} ${args[1].tostr(true)}")
-                                else -> err(e.tk, "operation error : invalid number of arguments") as Expr
+                                else -> err(e.tk, "operation error : invalid number of arguments")
                             }
                         }
                         else -> Expr.Call(e.tk, e, args)

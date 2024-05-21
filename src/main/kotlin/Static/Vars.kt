@@ -44,17 +44,13 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
             }
             is Expr.Pub -> {
-                when {
-                    (e.tsk == null) -> {
-                        val task = ups.first_task_outer(e)
-                        if (task?.tag == null) null else {
-                            Pair(null, this.datas[task.tag.str]!!)
-                        }
+                if (e.tsk != null) {
+                    this.data(e.tsk)
+                } else {
+                    val task = ups.first_task_outer(e)
+                    if (task?.tag == null) null else {
+                        Pair(null, this.datas[task.tag.str]!!)
                     }
-                    (e.tsk != null) -> {
-                        this.data(e.tsk)
-                    }
-                    else -> error("impossible case")
                 }
             }
             is Expr.Index -> {
@@ -70,7 +66,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                         when {
                             (v == null) -> {
                                 err(e.idx.tk, "index error : undeclared data field ${e.idx.tk.str}")
-                                error("unreachable")
                             }
                             (v.second == null) -> Pair(idx, null)
                             else -> {
@@ -108,11 +103,10 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     }
 
     fun acc (e: Expr, id: String): Expr.Dcl {
-        val dcl: Expr.Dcl? = dcls.findLast { it.idtag.first.str==id } as Expr.Dcl?
+        val dcl: Expr.Dcl? = dcls.findLast { it.idtag.first.str==id }
         if (dcl == null) {
             err(e.tk, "access error : variable \"${id}\" is not declared")
         }
-        dcl!!
 
         // add upval to all protos upwards
         // stop at declaration (orig)
@@ -146,22 +140,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         return this.idx(dcl, acc)
     }
     fun idx (dcl: Expr.Dcl, src: Expr): String {
-        val enc  = this.dcl_to_blk[dcl]!!
-
-        // number of upvals in enclosing proto
-        // index of upval for dcl
-        // (ignore if -1 not access to upval)
-        /*
-        val proto_src = ups.first(src) { it is Expr.Proto }
-        val (upvs,upv) = if (proto_src == null) Pair(0,-1) else {
-            //println(proto_to_upvs[proto_src])
-            proto_to_upvs[proto_src]!!.let {
-                Pair(it.size, it.indexOf(Pair(dcl,ii)))
-            }
-        }
-         */
-        //println(listOf(upvs, upv, src.tostr()))
-
         val id = dcl.idtag.first.str.idc()
         //println(listOf(src.tk.pos.lin, id, type(dcl,src)))
         return when (type(dcl,src)) {
@@ -170,6 +148,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             Type.PARAM -> "ceu_par_$id"
             /*
             Type.NESTED -> {
+                val enc  = this.dcl_to_blk[dcl]!!
                 val xups = ups.all_until(src) { it == enc } // all ups between src -> dcl
                 val n = xups.count { it is Expr.Proto && it!=enc }
                 val XX = "$X${"->exe->clo.Dyn->Clo_Task.up_tsk->X".repeat(n)}"

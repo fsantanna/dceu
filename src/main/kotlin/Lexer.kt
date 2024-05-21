@@ -235,7 +235,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     yield(Tk.Tag(tag, pos))
                 }
                 (x.isLetter() || x=='_') -> {
-                    val id = x + read2While2 { x,y -> x.isLetterOrDigit() || x in listOf('_','\'','?','!') || (x=='-' && y.isLetter()) }
+                    val id = x + read2While2 { a,b -> a.isLetterOrDigit() || a in listOf('_','\'','?','!') || (a=='-' && b.isLetter()) }
                     when {
                         XOPERATORS.contains(id) -> yield(Tk.Op(id, pos))
                         KEYWORDS.contains(id) -> yield(Tk.Fix(id, pos))
@@ -283,7 +283,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     yield(Tk.Nat(nat, pos, tag))
                 }
                 (x == '^') -> {
-                    val (n2,x2) = read2()
+                    val (_,x2) = read2()
                     if (x2 != '[') {
                         err(pos, "token ^ error : expected \"^[\"")
                     }
@@ -394,7 +394,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     }
                     yield(Tk.Fix("#[", pos))
                     var i = 0
-                    while (i < v!!.length) {
+                    while (i < v.length) {
                         if (i > 0) {
                             yield(Tk.Fix(",", pos))
                         }

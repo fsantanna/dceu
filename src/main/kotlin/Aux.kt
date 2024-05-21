@@ -111,10 +111,10 @@ fun String.quote (n: Int): String {
 
 }
 
-fun err (pos: Pos, str: String) {
+fun err (pos: Pos, str: String): Nothing {
     error(pos.file + " : (lin ${pos.lin}, col ${pos.col}) : $str")
 }
-fun err (tk: Tk, str: String) {
+fun err (tk: Tk, str: String): Nothing {
     err(tk.pos, str)
 }
 fun err_expected (tk: Tk, str: String) {

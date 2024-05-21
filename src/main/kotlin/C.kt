@@ -1992,6 +1992,7 @@ fun Coder.main (tags: Tags): String {
             ${this.code}
         } while (0);
 
+    #if CEU >= 2
         // uncaught throw
         if (ceu_acc.type == CEU_VALUE_ERROR) {
             CEU_Vector* vec = ceu_acc.Dyn->Error.vec;
@@ -2009,6 +2010,7 @@ fun Coder.main (tags: Tags): String {
             ceu_print1(val);
             puts("");
         }
+    #endif
         
         CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));
         return 0;

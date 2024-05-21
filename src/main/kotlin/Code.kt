@@ -10,7 +10,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
         return ups.pub[this].let {
             when {
                 (it !is Expr.Dcl) -> this.n.toString()
-                (it.src != this) -> error("bug found") as String
+                (it.src != this) -> error("bug found")
                 else -> it.idtag.first.str.idc()
             }
         }
