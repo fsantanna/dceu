@@ -638,7 +638,7 @@ class Parser (lexer_: Lexer)
                 val pat = this.patt (
                     null,
                     // [pay,err,blk]
-                    "`:ceu ceux_peek(X->S, XX(-1-1-1))`",
+                    "`:ceu *(ceu_acc.Dyn->Error.val)`",
                     null
                 )
                 val blk = this.block()

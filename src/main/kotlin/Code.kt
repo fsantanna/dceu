@@ -151,19 +151,22 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """
                     { // BLOCK | ${this.dump()}
                         ${(this == outer).cond { """
-                        { // ARGC / ARGV
-                            CEU_Value args[ceu_argc];
-                            for (int i=0; i<ceu_argc; i++) {
-                                args[i] = ceu_pointer_to_string(ceu_argv[i]);
-                                ceu_gc_inc_val(args[i]);
+                            { // ARGC / ARGV
+                                CEU_Value args[ceu_argc];
+                                for (int i=0; i<ceu_argc; i++) {
+                                    args[i] = ceu_pointer_to_string(ceu_argv[i]);
+                                    ceu_gc_inc_val(args[i]);
+                                }
+                                ceu_glb_ARGS = ceu_create_tuple(1, ceu_argc, args);
+                                ceu_gc_inc_val(ceu_glb_ARGS);
                             }
-                            ceu_glb_ARGS = ceu_create_tuple(1, ceu_argc, args);
-                            ceu_gc_inc_val(ceu_glb_ARGS);
-                        }
-                        """ }}
+                        """}}
                         
-                        // defers init
-                        ${defers[this].cond { it.second }}
+                        ${defers[this].cond { """
+                            { // BLOCK | defers | init | ${this.dump()}
+                                ${it.second}
+                            }
+                        """ }}
                         
                         ${do_while ( """    
                             $body
@@ -172,9 +175,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             """ }}
                         """)}
     
-                        // BLOCK (escape) | ${this.dump()}
-                        // defers execute
-                        ${(CEU >= 2).cond { defers[this].cond { it.third } }}
+                        ${defers[this].cond { """
+                            { // BLOCK | defers | term | ${this.dump()}
+                                CEU_Value ceu_acc_$n = CEU_ACC_KEEP();
+                                ${it.third}
+                                CEU_ACC(ceu_acc_$n);
+                            }
+                        """ }}
                         
                         { // dcls gc-dec
                             ${vars.blk_to_dcls[this]!!

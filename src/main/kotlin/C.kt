@@ -183,7 +183,7 @@ fun Coder.main (tags: Tags): String {
 
     typedef struct CEU_Error {
         _CEU_Dyn_
-        CEU_Value* err;
+        CEU_Value*  val;
         CEU_Vector* vec;
     } CEU_Error;
 
@@ -463,7 +463,7 @@ fun Coder.main (tags: Tags): String {
         }                                       \
     }
     
-    #define CEU_ERROR_PTR(ptr) ((CEU_Value) { CEU_VALUE_ERROR, {.Error=ptr })
+    #define CEU_ERROR_PTR(ptr) ((CEU_Value) { CEU_VALUE_ERROR, {.Error=ptr} })
 
     #define CEU_ERROR_CHK_PTR(cmd,ptr,pre) {    \
         if ((ptr) != NULL) {                    \
