@@ -2,11 +2,6 @@ package dceu
 
 import kotlin.math.max
 
-fun do_while (code: String): String {
-    return (CEU >= 2).cond { "do {" } + code + (CEU >= 2).cond { "} while (0);" }
-
-}
-
 class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) {
     val pres: MutableList<String> = mutableListOf()
     val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
@@ -94,7 +89,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                                         return 1;
                                     }
                         """}}
-                        ${do_while(code)}
+                        
+                        $code
 
                         ${isexe.cond{"""
                                 return ceu_exe_term(X);
@@ -149,7 +145,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """
                 } else {
                     """
-                    { // BLOCK | ${this.dump()}
+                    do { // BLOCK | ${this.dump()}
                         ${(this == outer).cond { """
                             { // ARGC / ARGV
                                 CEU_Value args[ceu_argc];
@@ -168,12 +164,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             }
                         """ }}
                         
-                        ${do_while ( """    
                             $body
                             ${(up is Expr.Loop).cond { """
                                 CEU_LOOP_STOP_${up!!.n}:
                             """ }}
-                        """)}
     
                         ${defers[this].cond { """
                             { // BLOCK | defers | term | ${this.dump()}
@@ -193,7 +187,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             }
                         }                        
                         ${(CEU >= 2).cond { this.check_error_aborted("NULL")} }
-                    }
+                    } while (0);
                     """
                 }
             }
@@ -296,7 +290,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         // [msgs,val,err]
                         ${this.cnd.code()}                  // ceu_ok = 1|0
                         assert(ceu_acc.type!=CEU_VALUE_ERROR && "TODO: throw in catch condition");
-                        if (!ceu_as_bool(ceu_acc) {         // condition fail: rethrow error, escape catch block
+                        if (!ceu_as_bool(ceu_acc)) {        // condition fail: rethrow error, escape catch block
                             continue;
                         } else {                            // condition true: catch error, continue after catch block
                             CEU_ACC(*ceu_acc.Dyn->Error.val);

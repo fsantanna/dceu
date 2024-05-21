@@ -1970,7 +1970,9 @@ fun Coder.main (tags: Tags): String {
     int main (int ceu_argc, char** ceu_argv) {
         assert(CEU_TAG_nil == CEU_VALUE_NIL);
         
-        ${do_while(this.code)}
+        do {
+            ${this.code}
+        } while (0);
 
         // uncaught throw
     #if 0
