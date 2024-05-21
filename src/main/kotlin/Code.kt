@@ -66,22 +66,22 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
                 pres.add("""
                     // PROTO | ${this.dump()}
-                    void ceu_pro_$id (CEUX* ceux, int ceu_n, CEU_Value ceu_args[]) {
+                    void ceu_pro_$id (CEUX* ceux) {
                         //{ // pars
                             ${this.pars.mapIndexed { i,(id,_) -> """
-                                CEU_Value ceu_par_${id.str.idc()} = ($i < ceu_n) ? ceu_args[$i] : (CEU_Value) { CEU_VALUE_NIL };
+                                CEU_Value ceu_par_${id.str.idc()} = ($i < ceu_n) ? ceux->args[$i] : (CEU_Value) { CEU_VALUE_NIL };
                             """ }.joinToString("")}
-                            for (int i=${this.pars.size}; i<ceu_n; i++) {
-                                ceu_gc_dec_val(ceu_args[i]);
+                            for (int i=${this.pars.size}; i<ceux->n; i++) {
+                                ceu_gc_dec_val(ceux->args[i]);
                             }
                         //}
                         //{ // upvs
                             ${vars.proto_to_upvs[this]!!.mapIndexed { i, dcl -> """
-                                CEU_Value ceu_upv_${dcl.idtag.first.str.idc()} = CEUX_CLO->upvs.buf[$i];                            
+                                CEU_Value ceu_upv_${dcl.idtag.first.str.idc()} = ceux->clo->upvs.buf[$i];                            
                             """ }.joinToString("")}
                         //}
                         ${isexe.cond{"""
-                            ceux->status = (ceu_action == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
+                            ceux->status = (ceux->act == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
                             switch (ceux->pc) {
                                 case 0:
                                     if (ceu_action == CEU_ACTION_ABORT) {
@@ -599,7 +599,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             ceu_args_$n[$i] = CEU_ACC_KEEP();
                         """
                     }.joinToString("")}
-                    ceu_clo_$n.Dyn->Clo.proto((CEU_Clo*)ceu_clo_$n.Dyn, ${this.args.size}, ceu_args_$n);
+                    CEUX ceux_$n = {
+                        (CEU_Clo*) ceu_clo_$n.Dyn,
+                        ${this.args.size},
+                        ceu_args_$n
+                    };
+                    ceu_clo_$n.Dyn->Clo.proto(&ceux_$n);
                     ceu_gc_dec_val(ceu_clo_$n);
                     ${this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}
