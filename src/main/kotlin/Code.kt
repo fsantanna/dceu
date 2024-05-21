@@ -285,20 +285,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             continue;   // do not execute next statement, instead free up block
                         }
                     """ }}
-                    if (CEU_ERROR_IS(X->S)) {       // caught internal throw
+                    if (ceu_acc.type == CEU_VALUE_ERROR) {  // caught internal throw
                         // [msgs,val,err]
-                        ${this.cnd.code()}          // ceu_ok = 1|0
-                        assert(!CEU_ERROR_IS(X->S) && "TODO: throw in catch condition");
-                        if (!ceu_as_bool(ceux_pop(X->S, XX(-1)))) {  // condition fail: rethrow error, escape catch block
+                        ${this.cnd.code()}                  // ceu_ok = 1|0
+                        assert(ceu_acc.type!=CEU_VALUE_ERROR && "TODO: throw in catch condition");
+                        if (!ceu_as_bool(ceu_acc) {         // condition fail: rethrow error, escape catch block
                             continue;
-                        } else {        // condition true: catch error, continue after catch block
-                            // [...,n,pay,err,cnd]
-                            CEU_Value pay = ceux_peek(X->S, XX(-2));
-                            ceu_gc_inc_val(pay);
-                            CEU_Value n   = ceux_peek(X->S, XX(-3));
-                            assert(n.type==CEU_VALUE_NUMBER && "bug found");
-                            ceux_drop(X->S, n.Number+1+1+1);
-                            ceux_push(X->S, 0, pay); // evaluates catch to pay as a whole
+                        } else {                            // condition true: catch error, continue after catch block
+                            CEU_ACC(*ceu_acc.Dyn->Error.val);
                         }
                     }
                 }
