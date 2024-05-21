@@ -66,7 +66,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
                 pres.add("""
                     // PROTO | ${this.dump()}
-                    void ceu_pro_$id (CEU_Clo* ceu_clo, int ceu_n, CEU_Value ceu_args[]) {
+                    void ceu_pro_$id (CEUX* ceux, int ceu_n, CEU_Value ceu_args[]) {
                         //{ // pars
                             ${this.pars.mapIndexed { i,(id,_) -> """
                                 CEU_Value ceu_par_${id.str.idc()} = ($i < ceu_n) ? ceu_args[$i] : (CEU_Value) { CEU_VALUE_NIL };
@@ -77,12 +77,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         //}
                         //{ // upvs
                             ${vars.proto_to_upvs[this]!!.mapIndexed { i, dcl -> """
-                                CEU_Value ceu_upv_${dcl.idtag.first.str.idc()} = ceu_clo->upvs.buf[$i];                            
+                                CEU_Value ceu_upv_${dcl.idtag.first.str.idc()} = CEUX_CLO->upvs.buf[$i];                            
                             """ }.joinToString("")}
                         //}
                         ${isexe.cond{"""
-                            ceu_exe->status = (ceu_action == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
-                            switch (ceu_exe->pc) {
+                            ceux->status = (ceu_action == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
+                            switch (ceux->pc) {
                                 case 0:
                                     if (ceu_action == CEU_ACTION_ABORT) {
                                         CEU_ACC((CEU_Value) { CEU_VALUE_NIL }));
