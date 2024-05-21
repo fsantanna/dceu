@@ -159,9 +159,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         """}}
                         
                         ${defers[this].cond { """
-                            { // BLOCK | defers | init | ${this.dump()}
+                            //{ // BLOCK | defers | init | ${this.dump()}
                                 ${it.second}
-                            }
+                            //}
                         """ }}
                         
                             $body
@@ -288,12 +288,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """ }}
                     if (ceu_acc.type == CEU_VALUE_ERROR) {  // caught internal throw
                         // [msgs,val,err]
+                        CEU_Value ceu_acc_$n = ceu_acc;
+                        ceu_gc_inc_val(ceu_acc);
                         ${this.cnd.code()}                  // ceu_ok = 1|0
                         assert(ceu_acc.type!=CEU_VALUE_ERROR && "TODO: throw in catch condition");
                         if (!ceu_as_bool(ceu_acc)) {        // condition fail: rethrow error, escape catch block
+                            ceu_acc = ceu_acc_$n;
                             continue;
                         } else {                            // condition true: catch error, continue after catch block
-                            CEU_ACC(*ceu_acc.Dyn->Error.val);
+                            CEU_ACC(*(ceu_acc_$n.Dyn->Error.val));
+                            ceu_gc_dec_val(ceu_acc_$n);
                         }
                     }
                 }

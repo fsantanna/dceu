@@ -387,6 +387,12 @@ fun Coder.main (tags: Tags): String {
             //printf("    next  = %p\n", v.Dyn->Any.hld.next);
             printf("    ----\n");
             switch (v.type) {
+        #if CEU >= 2
+                case CEU_VALUE_ERROR:
+                    printf("    val = %p\n", v.Dyn->Error.val);
+                    printf("    vec = %p\n", v.Dyn->Error.vec);
+                    break;
+        #endif
         #if CEU >= 4
                 case CEU_VALUE_EXE_TASK:
                     printf("    status = %d\n", v.Dyn->Exe_Task.status);
@@ -608,6 +614,12 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_vector_get (CEU_Vector* vec, int i);
     void ceu_gc_free (CEU_Dyn* dyn) {
         switch (dyn->Any.type) {
+#if CEU >= 2
+            case CEU_VALUE_ERROR:
+                ceu_gc_dec_val(*(dyn->Error.val));
+                ceu_gc_dec_dyn((CEU_Dyn*)dyn->Error.vec);
+                break;
+#endif
             case CEU_VALUE_CLO_FUNC:
 #if CEU >= 3
             case CEU_VALUE_CLO_CORO:
@@ -1975,29 +1987,19 @@ fun Coder.main (tags: Tags): String {
         } while (0);
 
         // uncaught throw
-    #if 0
-        if (CEU_ERROR_IS(X->S)) {
-            // [...,n,pay,err]
-            CEU_Value n = ceux_peek(X->S, XX(-3));
-            assert(n.type == CEU_VALUE_NUMBER);
-            // ignore i=0 (main call)
-            for (int i=1; i<n.Number; i++) {
+        if (ceu_acc.type == CEU_VALUE_ERROR) {
+            for (int i=0; i<ceu_acc.Dyn->Error.vec->its; i++) {
+                CEU_Value s = ceu_vector_get(ceu_acc.Dyn->Error.vec, i);
+                assert(s.type == CEU_VALUE_VECTOR);
                 printf(" |  ");
-                CEU_Value pre = ceux_peek(X->S, XX(-4-i));
-                assert(pre.type==CEU_VALUE_POINTER && pre.Pointer!=NULL);
-                printf("%s\n", (char*) pre.Pointer);
+                puts(s.Dyn->Vector.buf);
             }
-            CEU_Value pay = ceux_peek(X->S, XX(-2));
-            if (pay.type == CEU_VALUE_POINTER) {
-                assert(pay.Pointer != NULL);
-                printf(" v  %s\n", (char*) pay.Pointer);     // payload is primitive error
-            } else {
-                printf(" v  error : ");
-                ceu_print1(ceux_peek(X->S, XX(-2)));
-                puts("");
-            }
+            printf(" v  error : ");
+            ceu_print1(*(ceu_acc.Dyn->Error.val));
+            puts("");
         }
-    #endif
+        
+        CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));
         return 0;
     }
     """
