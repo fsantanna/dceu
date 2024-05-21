@@ -81,12 +81,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             """ }.joinToString("")}
                         //}
                         ${isexe.cond{"""
-                            X->exe->status = (X->action == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
-                            switch (X->exe->pc) {
+                            ceu_exe->status = (ceu_action == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
+                            switch (ceu_exe->pc) {
                                 case 0:
-                                    if (X->action == CEU_ACTION_ABORT) {
-                                        ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
-                                        return 1;
+                                    if (ceu_action == CEU_ACTION_ABORT) {
+                                        CEU_ACC((CEU_Value) { CEU_VALUE_NIL }));
+                                        return;
                                     }
                         """}}
                         

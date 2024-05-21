@@ -187,9 +187,9 @@ fun Coder.main (tags: Tags): String {
         CEU_Vector* vec;
     } CEU_Error;
 
-    struct CEU_Clo;
-    typedef void (*CEU_Proto) (struct CEU_Clo*, int n, CEU_Value args[]);
-
+    struct CEU_Frame;
+    typedef void (*CEU_Proto) (struct CEU_Frame* ceu_frame);
+    
     #define _CEU_Clo_                   \
         _CEU_Dyn_                       \
         CEU_Proto proto;                \
@@ -215,8 +215,8 @@ fun Coder.main (tags: Tags): String {
         CEU_EXE_STATUS status;          \
         CEU_Value clo;                  \
         /*struct CEU_Frame frame;*/     \
-        int pc;                         \
-        struct CEUX* X;
+        int pc;
+        //struct CEUX* X;
         
     typedef struct CEU_Exe {
         _CEU_Exe_
@@ -290,6 +290,17 @@ fun Coder.main (tags: Tags): String {
         struct CEU_Track    Track;
     #endif
     } CEU_Dyn;        
+
+    typedef struct CEU_Frame {
+    #if CEU < 3
+        CEU_Clo* clo;
+    #else
+        CEU_Exe* exe;   // (has exe->clo)
+        int action;
+    #endif
+        int n;
+        int args;
+    } CEU_Frame;
     """
     }
     fun h_tags (): String {
@@ -662,10 +673,10 @@ fun Coder.main (tags: Tags): String {
                 if (dyn->Exe.status != CEU_EXE_STATUS_TERMINATED) {
                     assert(dyn->Any.type == CEU_VALUE_EXE_CORO);
                     dyn->Any.refs++;            // currently 0->1: needs ->2 to prevent double gc
-                    ceu_abort_exe((CEU_Exe*)dyn);
+                    //ceu_abort_exe((CEU_Exe*)dyn);
                     dyn->Any.refs--;
                 }
-                ceux_n_set(dyn->Exe.X->S, 0);
+                //ceux_n_set(dyn->Exe.X->S, 0);
                 ceu_gc_dec_val(dyn->Exe.clo);
 #if CEU >= 4
                 if (dyn->Any.type == CEU_VALUE_EXE_TASK) {
@@ -673,8 +684,8 @@ fun Coder.main (tags: Tags): String {
                     ceu_dyn_unlink(dyn);
                 }
 #endif
-                free(dyn->Exe.X->S);
-                free(dyn->Exe.X);
+                //free(dyn->Exe.X->S);
+                //free(dyn->Exe.X);
                 break;
             }
 #endif
@@ -1244,6 +1255,7 @@ fun Coder.main (tags: Tags): String {
         return clo;
     }
     #endif
+    #endif
     
     #if CEU >= 3
     CEU_Value ceu_create_exe (int type, int sz, CEU_Value clo) {
@@ -1252,25 +1264,22 @@ fun Coder.main (tags: Tags): String {
         ceu_gc_inc_val(clo);
         
         CEU_Exe* ret = malloc(sz);
-        assert(ret != NULL);
-        CEUX* X = malloc(sizeof(CEUX));
-        CEU_Stack* S = malloc(sizeof(CEU_Stack));
-        assert(X!=NULL && S!=NULL);
-        S->n = 0;
-        ceux_push(S, 1, clo);   // [clo]
-        //S->buf = <dynamic>    // TODO
-        *X = (CEUX) { S, 0, -1, -1, CEU_ACTION_INVALID, {.exe=ret} CEU4(COMMA CEU_TIME-1 COMMA NULL) };
+        //CEUX* X = malloc(sizeof(CEUX));
+        assert(ret!=NULL);
+        //assert(X!=NULL && S!=NULL);
+        //*X = (CEUX) { S, 0, -1, -1, CEU_ACTION_INVALID, {.exe=ret} CEU4(COMMA CEU_TIME-1 COMMA NULL) };
             // X->up is set on resume, not here on creation
 
         *ret = (CEU_Exe) {
             type, 0, (CEU_Value) { CEU_VALUE_NIL },
-            CEU_EXE_STATUS_YIELDED, clo, 0, X
+            CEU_EXE_STATUS_YIELDED, clo, 0 //, X
         };
         
         return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
     }
     #endif
     
+    #if 0
     #if CEU >= 4
     CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Dyn* up_dyn, CEU_Block* up_blk) {
     #if CEU >= 5
@@ -1589,36 +1598,35 @@ fun Coder.main (tags: Tags): String {
         int ceu_isexe_dyn (CEU_Dyn* dyn) {
             return (dyn->Any.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask_dyn(dyn)));
         }
-        void ceu_pro_coroutine (CEUX* X) {
-            assert(X->args == 1);
-            CEU_Value coro = ceux_peek(X->S, ceux_arg(X,0));
+        void ceu_pro_coroutine (CEU_Clo* _1, int n, CEU_Value args[]) {
+            assert(n == 1);
+            CEU_Value coro = args[0];
             CEU_Value ret;
             if (coro.type != CEU_VALUE_CLO_CORO) {
-                return ceu_error_s(X->S, "coroutine error : expected coro");
+                ret = CEU_ERROR_PTR("coroutine error : expected coro");
             } else {
                 ret = ceu_create_exe(CEU_VALUE_EXE_CORO, sizeof(CEU_Exe), coro);
             }
-            ceux_push(X->S, 1, ret);
-            return 1;
+            CEU_ACC(ret);
         }        
 
-        void ceu_pro_status (CEUX* X) {
-            assert(X->args == 1);
-            CEU_Value exe = ceux_peek(X->S, ceux_arg(X,0));
+        void ceu_pro_status (CEU_Clo* _1, int n, CEU_Value args[]) {
+            assert(n == 1);
+            CEU_Value exe = args[0];
             CEU_Value ret;
             if (exe.type!=CEU_VALUE_EXE_CORO CEU4(&& !ceu_istask_val(exe))) {
         #if CEU < 4
-                return ceu_error_s(X->S, "status error : expected running coroutine");
+                ret = CEU_ERROR_PTR("status error : expected running coroutine");
         #else
-                return ceu_error_s(X->S, "status error : expected running coroutine or task");
+                ret = CEU_ERROR_PTR("status error : expected running coroutine or task");
         #endif
             } else {
                 ret = (CEU_Value) { CEU_VALUE_TAG, {.Tag=exe.Dyn->Exe.status + CEU_TAG_yielded - 1} };
             }
-            ceux_push(X->S, 1, ret);
-            return 1;
+            CEU_ACC(ret);
         }
-        
+
+        #if 0
         int ceu_exe_term (CEUX* X) {
             if (X->exe->status == CEU_EXE_STATUS_TERMINATED) {
                 // leave -> outer ref -> gc_dec -> term
@@ -1723,6 +1731,7 @@ fun Coder.main (tags: Tags): String {
                 }
             }
         }
+        #endif
         #endif
     """
     val c_task = """ // TASK
@@ -2030,14 +2039,14 @@ fun Coder.main (tags: Tags): String {
         */
         eq_neq_len() +
         creates() + tuple_vector_dict() +
-        c_to() + print() + dumps() + /*
-        // throw, pointer-to-string
+        c_to() + print() + dumps() +
         (CEU>=3).cond { c_exes } +
-        (CEU>=4).cond { c_task } +
-        (CEU>=4).cond { c_bcast } +
-        (CEU>=5).cond { c_tasks } +
-        // isexe-coro-status-exe-kill, task, track
-         */
+                /*
+                (CEU>=4).cond { c_task } +
+                (CEU>=4).cond { c_bcast } +
+                (CEU>=5).cond { c_tasks } +
+                // isexe-coro-status-exe-kill, task, track
+                 */
         c_globals() +
         main()
     )
