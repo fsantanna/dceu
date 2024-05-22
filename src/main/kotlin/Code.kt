@@ -91,7 +91,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         
                         //{ // pars
                             ${this.pars.mapIndexed { i,(id,_) -> """
-                                CEU_Value ceu_par_${id.str.idc()} = ($i < ceux->n) ? ceux->args[$i] : (CEU_Value) { CEU_VALUE_NIL };
+                                ${sta.ismem(this.blk).cond2({ """
+                                    ceu_mem->${id.str.idc()}
+                                """ },{ """
+                                    CEU_Value ceu_par_${id.str.idc()}
+                                """ })}
+                                    = ($i < ceux->n) ? ceux->args[$i] : (CEU_Value) { CEU_VALUE_NIL };
                             """ }.joinToString("")}
                             for (int i=${this.pars.size}; i<ceux->n; i++) {
                                 ceu_gc_dec_val(ceux->args[i]);
@@ -112,11 +117,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 {
                     ${isnst.cond { "assert(X->exe!=NULL && X->exe->type==CEU_VALUE_EXE_TASK);" }}
                     CEU_ACC (
-                        ceu_create_clo${istsk.cond { "_task" }} (
-                            ${(!istsk).cond { "CEU_VALUE_CLO_${this.tk.str.uppercase()}," }}
+                        ceu_create_clo_${this.tk.str} (
                             ceu_pro_$id,
                             ${this.pars.size},
                             ${vars.proto_to_upvs[this]!!.size}
+                            ${isexe.cond {", sizeof(CEU_Pro_$id)"}}
                             ${istsk.cond { ", ${if (isnst) "X->exe_task" else "NULL"}" }}
                         )
                     );
@@ -130,7 +135,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
                         """
                         {
-                            CEU_Value upv = ${vars.idx(dcl, ups.pub[this]!!)};
+                            CEU_Value upv = ${sta.idx(dcl, ups.pub[this]!!)};
                             ceu_gc_inc_val(upv);
                             ceu_acc.Dyn->Clo.upvs.buf[$i] = upv;
                         }
@@ -189,7 +194,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             ${vars.blk_to_dcls[this]!!
                                 //.filter { !GLOBALS.contains(it.idtag.first.str) }
                                 .map { """
-                                    ceu_gc_dec_val(${vars.idx(it, it)});
+                                    ceu_gc_dec_val(${sta.idx(it, it)});
                                 """ }
                                 .joinToString("")
                             }
@@ -200,9 +205,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 }
             }
             is Expr.Dcl -> {
-                val idx = vars.idx(this, this)
+                val idx = sta.idx(this, this)
                 val isglb = (vars.dcl_to_blk[this] == outer)
                 val issrc = (this.src != null)
+                val ismem = sta.ismem(vars.dcl_to_blk[this]!!)
                 """
                 // DCL | ${this.dump()}
                 ${when {
@@ -218,12 +224,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         $idx = ceu_acc;
                     """
                     (!isglb && !issrc) -> """
-                        CEU_Value $idx = { CEU_VALUE_NIL };
+                        ${(!ismem).cond { "CEU_Value " }} $idx = (CEU_Value) { CEU_VALUE_NIL };
                     """
                     (!isglb && issrc) -> """
                         ${this.src!!.code()}
                         ceu_gc_inc_val(ceu_acc);
-                        CEU_Value $idx = ceu_acc;
+                        ${(!ismem).cond { "CEU_Value " }} $idx = ceu_acc;
                     """
                     else -> error("impossible case")
                 }}
@@ -472,7 +478,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val body = vars.nats[this]!!.let { (set, str) ->
                     var x = str
                     for (dcl in set) {
-                        val idx = vars.idx(dcl, this)
+                        val idx = sta.idx(dcl, this)
                         //println(setOf(x, v))
                         x = x.replaceFirst("XXX", idx)
                     }
@@ -498,7 +504,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 }
             }
             is Expr.Acc -> {
-                val idx = vars.idx(this)
+                val idx = sta.idx(this)
                 when {
                     this.isdst() -> """
                         // ACC - SET | ${this.dump()}

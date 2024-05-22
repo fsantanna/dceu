@@ -154,7 +154,34 @@ class Exec_03 {
             val v = resume co()
             println(v)
         """)
-        assert(out == "1\n") { out }
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun cc_01_par() {
+        val out = test("""
+            val CO = coro (v) {
+                v
+            }
+            val co = coroutine(CO)
+            val v = resume co(10)
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun cc_01_par_yield() {
+        val out = test("""
+            val CO = coro (v) {
+                val v' = v
+                yield(nil)
+                v'
+            }
+            val co = coroutine(CO)
+            resume co(10)
+            val v = resume co(10)
+            println(v)
+        """)
+        assert(out == "10\n") { out }
     }
     @Test
     fun cc_02_resume_dead_err() {

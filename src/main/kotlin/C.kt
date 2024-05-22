@@ -214,19 +214,21 @@ fun Coder.main (tags: Tags): String {
         _CEU_Clo_
     } CEU_Clo;
     
-    #if CEU >= 4
-    typedef struct CEU_Clo_Task {
-        _CEU_Clo_                       \
-        struct CEU_Exe_Task* up_tsk;    \
-    } CEU_Clo_Task;
-    #endif
-    
     #if CEU >= 3
+    #define _CEU_Clo_Exe_   \
+        _CEU_Clo_           \
+        int mem_n;
+        
+    typedef struct CEU_Clo_Exe {
+        _CEU_Clo_Exe_
+    } CEU_Clo_Exe;    
+
     #define _CEU_Exe_                   \
         _CEU_Dyn_                       \
         CEU_Clo* clo;                   \
         CEU_EXE_STATUS status;          \
-        int pc;
+        int pc;                         \
+        char* mem;
         
     typedef struct CEU_Exe {
         _CEU_Exe_
@@ -234,6 +236,11 @@ fun Coder.main (tags: Tags): String {
     #endif
     
     #if CEU >= 4
+    typedef struct CEU_Clo_Task {
+        _CEU_Clo_Exe_                   \
+        struct CEU_Exe_Task* up_tsk;    \
+    } CEU_Clo_Task;
+    
     typedef struct CEU_Links {
         struct {
             union CEU_Dyn* dyn;
@@ -248,15 +255,7 @@ fun Coder.main (tags: Tags): String {
             union CEU_Dyn* lst;
         } dn;
     } CEU_Links;
-    #endif
-    
-    #if CEU >= 5
-        #define CEU_LNKS(dyn) ((dyn)->Any.type==CEU_VALUE_TASKS ? &(dyn)->Tasks.lnks : &(dyn)->Exe_Task.lnks)
-    #else
-        #define CEU_LNKS(dyn) (&((CEU_Exe_Task*) dyn)->lnks)
-    #endif
 
-    #if CEU >= 4
     typedef struct CEU_Exe_Task {
         _CEU_Exe_
         uint32_t time;      // last sleep time, only awakes if CEU_TIME>time 
@@ -265,6 +264,12 @@ fun Coder.main (tags: Tags): String {
     } CEU_Exe_Task;
     #endif
     
+    #if CEU >= 5
+        #define CEU_LNKS(dyn) ((dyn)->Any.type==CEU_VALUE_TASKS ? &(dyn)->Tasks.lnks : &(dyn)->Exe_Task.lnks)
+    #else
+        #define CEU_LNKS(dyn) (&((CEU_Exe_Task*) dyn)->lnks)
+    #endif
+
     #if CEU >= 5
     typedef struct CEU_Tasks {
         _CEU_Dyn_
@@ -286,6 +291,9 @@ fun Coder.main (tags: Tags): String {
         struct CEU_Vector   Vector;
         struct CEU_Dict     Dict;
         struct CEU_Clo      Clo;
+    #if CEU >= 3
+        struct CEU_Clo_Exe  Clo_Exe;
+    #endif
     #if CEU >= 4
         struct CEU_Clo_Task Clo_Task;
     #endif
@@ -1228,9 +1236,9 @@ fun Coder.main (tags: Tags): String {
         return (CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)ret} };
     }
     
-    CEU_Value ceu_create_clo (CEU_VALUE type, CEU_Proto proto, int pars, int upvs) {
+    CEU_Value _ceu_create_clo_ (CEU_VALUE type, int size, CEU_Proto proto, int pars, int upvs) {
         ceu_debug_add(type);
-        CEU_Clo* ret = malloc(CEU4(type==CEU_VALUE_CLO_TASK ? sizeof(CEU_Clo_Task) :) sizeof(CEU_Clo));
+        CEU_Clo* ret = malloc(size);
         assert(ret != NULL);
         CEU_Value* buf = malloc(upvs * sizeof(CEU_Value));
         assert(buf != NULL);
@@ -1243,6 +1251,16 @@ fun Coder.main (tags: Tags): String {
             { upvs, buf }
         };
         return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
+    }
+
+    CEU_Value ceu_create_clo_func (CEU_Proto proto, int pars, int upvs) {
+        return _ceu_create_clo_(CEU_VALUE_CLO_FUNC, sizeof(CEU_Clo), proto, pars, upvs);
+    }
+
+    CEU_Value ceu_create_clo_coro (CEU_Proto proto, int pars, int upvs, int mem_n) {
+        CEU_Value clo = _ceu_create_clo_(CEU_VALUE_CLO_CORO, sizeof(CEU_Clo_Exe), proto, pars, upvs);
+        clo.Dyn->Clo_Exe.mem_n = mem_n;
+        return clo;
     }
 
     #if 0
@@ -1263,15 +1281,12 @@ fun Coder.main (tags: Tags): String {
         ceu_gc_inc_val(clo);
         
         CEU_Exe* ret = malloc(sz);
-        //CEUX* X = malloc(sizeof(CEUX));
-        assert(ret!=NULL);
-        //assert(X!=NULL && S!=NULL);
-        //*X = (CEUX) { S, 0, -1, -1, CEU_ACTION_INVALID, {.exe=ret} CEU4(COMMA CEU_TIME-1 COMMA NULL) };
-            // X->up is set on resume, not here on creation
+        char* mem = malloc(clo.Dyn->Clo_Exe.mem_n);
+        assert(ret!=NULL && mem!=NULL);
 
         *ret = (CEU_Exe) {
             type, 0, (CEU_Value) { CEU_VALUE_NIL },
-            &clo.Dyn->Clo, CEU_EXE_STATUS_YIELDED, 0 //, X
+            &clo.Dyn->Clo, CEU_EXE_STATUS_YIELDED, 0, mem
         };
         
         return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
