@@ -67,19 +67,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 pres.add("""
                     // PROTO | ${this.dump()}
                     void ceu_pro_$id (CEUX* ceux) {
-                        //{ // pars
-                            ${this.pars.mapIndexed { i,(id,_) -> """
-                                CEU_Value ceu_par_${id.str.idc()} = ($i < ceux->n) ? ceux->args[$i] : (CEU_Value) { CEU_VALUE_NIL };
-                            """ }.joinToString("")}
-                            for (int i=${this.pars.size}; i<ceux->n; i++) {
-                                ceu_gc_dec_val(ceux->args[i]);
-                            }
-                        //}
                         //{ // upvs
                             ${vars.proto_to_upvs[this]!!.mapIndexed { i, dcl -> """
                                 CEU_Value ceu_upv_${dcl.idtag.first.str.idc()} = ceux->clo->upvs.buf[$i];                            
                             """ }.joinToString("")}
                         //}
+
                         ${isexe.cond{"""
                             ceux->exe->status = (ceux->act == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
                             switch (ceux->exe->pc) {
@@ -90,6 +83,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                                     }
                         """}}
                         
+                        //{ // pars
+                            ${this.pars.mapIndexed { i,(id,_) -> """
+                                CEU_Value ceu_par_${id.str.idc()} = ($i < ceux->n) ? ceux->args[$i] : (CEU_Value) { CEU_VALUE_NIL };
+                            """ }.joinToString("")}
+                            for (int i=${this.pars.size}; i<ceux->n; i++) {
+                                ceu_gc_dec_val(ceux->args[i]);
+                            }
+                        //}
+
                         $code
 
                         ${isexe.cond{"""
@@ -354,15 +356,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ${this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}
             """
-            is Expr.Resume -> {
-                //assert(!this.args.dots && this.args.es.size<=1)
-                """
-                ${this.co.code()}
-                ${this.args.code()}
-                ceux_resume(X, ceu_{this.args.n}, {rets.exts[this]!!}, CEU_ACTION_RESUME CEU4(COMMA X->now));
-                ${this.check_error_aborted(this.toerr())}
-            """
-            }
 
             is Expr.Yield -> {
                 """
@@ -376,9 +369,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         CEU_ACC((CEU_Value) { CEU_VALUE_NIL }); // to be ignored in further move/checks
                         continue;
                     }
+                    CEU_ACC((ceux->n > 0) ? ceux->args[0] : (CEU_Value) { CEU_VALUE_NIL });
                 #if CEU >= 4
                     if (ceux->act == CEU_ACTION_ERROR) {
-                        CEU_ACC(ceu_args[0]);   // error value
                         continue;
                     }
                 #endif
