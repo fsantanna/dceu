@@ -1257,11 +1257,13 @@ fun Coder.main (tags: Tags): String {
         return _ceu_create_clo_(CEU_VALUE_CLO_FUNC, sizeof(CEU_Clo), proto, pars, upvs);
     }
 
+    #if CEU >= 3
     CEU_Value ceu_create_clo_coro (CEU_Proto proto, int pars, int upvs, int mem_n) {
         CEU_Value clo = _ceu_create_clo_(CEU_VALUE_CLO_CORO, sizeof(CEU_Clo_Exe), proto, pars, upvs);
         clo.Dyn->Clo_Exe.mem_n = mem_n;
         return clo;
     }
+    #endif
 
     #if 0
     #if CEU >= 4

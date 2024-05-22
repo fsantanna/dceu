@@ -208,7 +208,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val idx = sta.idx(this, this)
                 val isglb = (vars.dcl_to_blk[this] == outer)
                 val issrc = (this.src != null)
-                val ismem = sta.ismem(vars.dcl_to_blk[this]!!)
                 """
                 // DCL | ${this.dump()}
                 ${when {
@@ -224,12 +223,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         $idx = ceu_acc;
                     """
                     (!isglb && !issrc) -> """
-                        ${(!ismem).cond { "CEU_Value " }} $idx = (CEU_Value) { CEU_VALUE_NIL };
+                        ${sta.dcl(this)} $idx = (CEU_Value) { CEU_VALUE_NIL };
                     """
                     (!isglb && issrc) -> """
                         ${this.src!!.code()}
                         ceu_gc_inc_val(ceu_acc);
-                        ${(!ismem).cond { "CEU_Value " }} $idx = ceu_acc;
+                        ${sta.dcl(this)} $idx = ceu_acc;
                     """
                     else -> error("impossible case")
                 }}

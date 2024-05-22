@@ -66,6 +66,14 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             else -> "ceu_upv_$id"
         }
     }
+    fun idx (e: Expr, idc: String): String {
+        val ismem = this.ismem(ups.first(e) { it is Expr.Do } as Expr.Do)
+        return if (ismem) "(ceu_mem->$idc)" else "ceu_$idc"
+    }
+    fun dcl (e: Expr): String {
+        val ismem = this.ismem(ups.first(e) { it is Expr.Do } as Expr.Do)
+        return if (ismem) "" else "CEU_Value"
+    }
 
     init {
         outer.traverse()
