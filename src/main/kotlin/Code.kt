@@ -69,7 +69,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ${isexe.cond { """
                         typedef struct {
                             ${Mem(ups, vars, sta, defers).pub(this.blk)}
-                        } CEU_Proto_$id;                        
+                        } CEU_Pro_$id;                        
                     """ }}
                     void ceu_pro_$id (CEUX* ceux) {
                         //{ // upvs
@@ -79,6 +79,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         //}
 
                         ${isexe.cond{"""
+                            CEU_Pro_$id* ceu_mem = (CEU_Pro_$id*) ceux->exe->mem;                    
                             ceux->exe->status = (ceux->act == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
                             switch (ceux->exe->pc) {
                                 case 0:

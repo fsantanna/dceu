@@ -56,7 +56,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
 
     fun Expr.mem (): String {
         return when (this) {
-            is Expr.Do -> (sta.ylds.contains(this) && !sta.void(this)).cond {
+            is Expr.Do -> sta.ismem(this).cond {
                 """
                 struct { // BLOCK | ${this.dump()}
                     //CEU_Block _block_$n;

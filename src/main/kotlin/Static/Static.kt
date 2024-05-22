@@ -33,6 +33,10 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     }
     val defer_catch_spawn_tasks: MutableSet<Expr.Do> = mutableSetOf()
 
+    fun ismem (blk: Expr.Do): Boolean {
+        return ylds.contains(blk) && !void(blk)
+    }
+
     init {
         outer.traverse()
     }
