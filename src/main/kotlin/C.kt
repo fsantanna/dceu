@@ -1619,6 +1619,7 @@ fun Coder.main (tags: Tags): String {
             } else {
                 ret = ceu_create_exe(CEU_VALUE_EXE_CORO, sizeof(CEU_Exe), coro);
             }
+            ceu_gc_dec_val(coro);
             CEU_ACC(ret);
         }        
 
