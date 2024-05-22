@@ -16,10 +16,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
         }
     }
 
-    fun Expr.isdst (): Boolean {
-        return ups.pub[this].let { it is Expr.Set && it.dst==this }
-    }
-
     fun Expr.up_task_real_c (): String {
         val n = ups.all_until(this) {
                 it is Expr.Proto && it.tk.str=="task" && !ups.isnst(it)
@@ -53,7 +49,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
     }
 
     fun Expr.code(): String {
-        if (this.isdst()) {
+        if (ups.isdst(this)) {
             assert(this is Expr.Acc || this is Expr.Index || this is Expr.Pub)
         }
         return when (this) {
@@ -434,7 +430,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         CEU_ERROR_THR_S(continue, "pub error : expected task", ${this.toerr()});
                     }
                 """ }}
-                ${this.isdst().cond2({ """
+                ${ups.isdst(this).cond2({ """
                     // [v,(tsk)]
                     CEU_Value v = ceux_peek(X->S, XX(${this.tsk.cond2({"-2"},{"-1"})}));
                     ceu_gc_inc_val(v);
@@ -505,7 +501,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             is Expr.Acc -> {
                 val idx = sta.idx(this)
                 when {
-                    this.isdst() -> """
+                    ups.isdst(this) -> """
                         // ACC - SET | ${this.dump()}
                         ceu_gc_dec_val($idx);
                         ceu_gc_inc_val(ceu_acc);
@@ -570,16 +566,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             """
             is Expr.Index -> {
                 val idx = vars.data(this).let { if (it == null) -1 else it.first!! }
+                val id_col = sta.idx(this, "col_$n")
+                val id_val = sta.idx(this, "val_$n")
                 """
                 { // INDEX | ${this.dump()}
                     // VAL
-                    ${this.isdst().cond { """
-                        CEU_Value ceu_val_$n = CEU_ACC_KEEP();
+                    ${ups.isdst(this).cond { """
+                        ${sta.dcl(this)} $id_val = CEU_ACC_KEEP();
                     """ }}
                     
                     // COL
                     ${this.col.code()}
-                    CEU_Value ceu_col_$n = CEU_ACC_KEEP();
+                    ${sta.dcl(this)} $id_col = CEU_ACC_KEEP();
 
                     // IDX
                     ${if (idx == -1) {
@@ -591,22 +589,22 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     }}
                     CEU_Value ceu_idx_$n = CEU_ACC_KEEP();
                 """ +
-                if (this.isdst()) {
+                if (ups.isdst(this)) {
                     """
                     CEU_ERROR_CHK_PTR (
                         continue,
-                        ceu_col_set(ceu_col_$n, ceu_idx_$n, ceu_val_$n),
+                        ceu_col_set($id_col, ceu_idx_$n, $id_val),
                         ${this.toerr()}
                     );
-                    ceu_acc = ceu_val_$n;
+                    ceu_acc = $id_val;
                     """
                 } else {
                     """
-                    CEU_ACC(ceu_col_get(ceu_col_$n, ceu_idx_$n));
+                    CEU_ACC(ceu_col_get($id_col, ceu_idx_$n));
                     CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
                     """
                 } + """
-                    ceu_gc_dec_val(ceu_col_$n);
+                    ceu_gc_dec_val($id_col);
                     ceu_gc_dec_val(ceu_idx_$n);
                 }
                 """

@@ -56,6 +56,10 @@ class Ups (val outer: Expr.Do) {
     fun isnst (proto: Expr.Proto): Boolean {
         return (proto.nst && (CEU<99 || this.any(this.pub[proto]!!) { it is Expr.Proto }))
     }
+    fun isdst (e: Expr): Boolean {
+        return this.pub[e].let { it is Expr.Set && it.dst==e }
+    }
+
 
     fun Expr.traverse (): Map<Expr,Expr> {
         fun Expr.map (l: List<Expr>): Map<Expr,Expr> {

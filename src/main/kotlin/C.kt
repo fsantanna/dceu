@@ -683,7 +683,6 @@ fun Coder.main (tags: Tags): String {
                     //ceu_abort_exe((CEU_Exe*)dyn);
                     dyn->Any.refs--;
                 }
-                //ceux_n_set(dyn->Exe.X->S, 0);
                 ceu_gc_dec_dyn((CEU_Dyn*)dyn->Exe.clo);
 #if CEU >= 4
                 if (dyn->Any.type == CEU_VALUE_EXE_TASK) {
@@ -691,8 +690,7 @@ fun Coder.main (tags: Tags): String {
                     ceu_dyn_unlink(dyn);
                 }
 #endif
-                //free(dyn->Exe.X->S);
-                //free(dyn->Exe.X);
+                free(dyn->Exe.mem);
                 break;
             }
 #endif

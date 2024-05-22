@@ -169,7 +169,10 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
                 """
             is Expr.Index -> """
                 struct { // INDEX
-                    CEU_Value idx_$n;
+                    CEU_Value col_$n;
+                    ${ups.isdst(this).cond { """
+                        CEU_Value val_$n;
+                    """ }}
                     $union {
                         ${this.col.mem()}
                         ${this.idx.mem()}

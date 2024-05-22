@@ -1610,6 +1610,23 @@ class Exec_03 {
         assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
     }
 
+    // TMP / VAR
+
+    @Test
+    fun oo_01_tmp_index() {
+        val out = test("""
+            val CO = coro () {
+                val t = [1,2,3]
+                t[yield(nil)]
+            }
+            val co = coroutine(CO)
+            resume co()
+            val v = resume co(1)
+            println(v)
+        """)
+        assert(out == "2\n") { out }
+    }
+
     // YIELD / MULTI
 
     @Test
