@@ -45,7 +45,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
         return """
             CEU_ERROR_CHK_ACC(continue, $msg);
             ${(CEU>=3 && exe!=null && defer==null).cond { """
-                if (X->exe->status == CEU_EXE_STATUS_TERMINATED) {
+                if (ceux->exe->status == CEU_EXE_STATUS_TERMINATED) {
                     continue;
                 }
             """ }}
@@ -69,7 +69,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     void ceu_pro_$id (CEUX* ceux) {
                         //{ // pars
                             ${this.pars.mapIndexed { i,(id,_) -> """
-                                CEU_Value ceu_par_${id.str.idc()} = ($i < ceu_n) ? ceux->args[$i] : (CEU_Value) { CEU_VALUE_NIL };
+                                CEU_Value ceu_par_${id.str.idc()} = ($i < ceux->n) ? ceux->args[$i] : (CEU_Value) { CEU_VALUE_NIL };
                             """ }.joinToString("")}
                             for (int i=${this.pars.size}; i<ceux->n; i++) {
                                 ceu_gc_dec_val(ceux->args[i]);
@@ -81,11 +81,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             """ }.joinToString("")}
                         //}
                         ${isexe.cond{"""
-                            ceux->status = (ceux->act == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
-                            switch (ceux->pc) {
+                            ceux->exe->status = (ceux->act == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
+                            switch (ceux->exe->pc) {
                                 case 0:
-                                    if (ceu_action == CEU_ACTION_ABORT) {
-                                        CEU_ACC((CEU_Value) { CEU_VALUE_NIL }));
+                                    if (ceux->act == CEU_ACTION_ABORT) {
+                                        CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
                                         return;
                                     }
                         """}}
@@ -93,7 +93,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         $code
 
                         ${isexe.cond{"""
-                                return ceu_exe_term(X);
+                                //return ceu_exe_term(X);
                             } // close switch
                         """}}
                     }
@@ -338,24 +338,21 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             is Expr.Yield -> {
                 """
                 { // YIELD ${this.dump()}
-                    {this.args.code()}
-                    X->exe->status = CEU_EXE_STATUS_YIELDED;
-                    X->exe->pc = $n;
-                    return ceu_{this.args.n};
+                    ${this.arg.code()}
+                    ceux->exe->status = CEU_EXE_STATUS_YIELDED;
+                    ceux->exe->pc = $n;
+                    return;
                 case $n: // YIELD ${this.dump()}
-                    if (X->action == CEU_ACTION_ABORT) {
+                    if (ceux->act == CEU_ACTION_ABORT) {
                         //ceux_push(X->S, 1, (CEU_Value){CEU_VALUE_NIL}); // fake out=1
                         continue;
                     }
                 #if CEU >= 4
-                    if (X->action == CEU_ACTION_ERROR) {
+                    if (ceux->act == CEU_ACTION_ERROR) {
                         //assert(X->args>1 && CEU_ERROR_IS(X->S) && "TODO: varargs resume");
                         continue;
                     }
                 #endif
-                    {rets.exts[this]!!.let { v -> (v != MULTI).cond { ""
-                        ceux_yield_args(X, $ v);
-                    "" }}}
                 }
             """
             }
@@ -601,6 +598,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     }.joinToString("")}
                     CEUX ceux_$n = {
                         (CEU_Clo*) ceu_clo_$n.Dyn,
+                    #if CEU >= 3
+                        NULL, CEU_ACTION_INVALID,
+                    #endif
                         ${this.args.size},
                         ceu_args_$n
                     };

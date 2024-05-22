@@ -66,7 +66,7 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 3
     typedef enum CEU_ACTION {
         CEU_ACTION_INVALID = -1,    // default to force set
-        CEU_ACTION_CALL,
+        //CEU_ACTION_CALL,
         CEU_ACTION_RESUME,
         CEU_ACTION_ABORT,           // awake exe to finalize defers and release memory
     #if CEU >= 4
@@ -1459,7 +1459,6 @@ fun Coder.main (tags: Tags): String {
                     printf("]");
                 }
                 break;
-    #if 0
     #if CEU >= 3
             case CEU_VALUE_CLO_CORO:
                 printf("coro: %p", v.Dyn);
@@ -1487,7 +1486,6 @@ fun Coder.main (tags: Tags): String {
             case CEU_VALUE_TRACK:
                 printf("track: %p", v.Dyn);
                 break;
-    #endif
     #endif
             default:
                 assert(0 && "bug found");
