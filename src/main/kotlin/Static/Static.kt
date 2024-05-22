@@ -13,6 +13,9 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         }
     }
 
+    // at least 1 yield (including subs) or nested coro/task
+    val ylds:   MutableSet<Expr.Do>  = mutableSetOf()
+
     // void: block is innocuous -> should be a proxy to up block
     fun void (blk: Expr.Do): Boolean {
         // no declarations, no spawns, no tasks
@@ -148,6 +151,9 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     //ups.any(this) { it is Expr.Do && it.arg!=null }
                     //    -> err(this.tk, "yield error : unexpected enclosing thus")
                 }
+                ups.all_until(this) { it is Expr.Proto }
+                    .filter  { it is Expr.Do }              // all blocks up to proto
+                    .forEach { ylds.add(it as Expr.Do) }
             }
             is Expr.Resume -> {
                 this.co.traverse()

@@ -142,6 +142,21 @@ class Exec_03 {
         assert(out == "1\n") { out }
     }
     @Test
+    fun cc_01_var() {
+        val out = test("""
+            val CO = coro () {
+                val v = 10
+                yield(nil)
+                v
+            }
+            val co = coroutine(CO)
+            resume co()
+            val v = resume co()
+            println(v)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
     fun cc_02_resume_dead_err() {
         val out = test("""
             val co = coroutine(coro () {nil})

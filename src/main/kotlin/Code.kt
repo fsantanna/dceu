@@ -66,6 +66,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
                 pres.add("""
                     // PROTO | ${this.dump()}
+                    ${isexe.cond { """
+                        typedef struct {
+                            ${Mem(ups, vars, sta, defers).pub(this.blk)}
+                        } CEU_Proto_$id;                        
+                    """ }}
                     void ceu_pro_$id (CEUX* ceux) {
                         //{ // upvs
                             ${vars.proto_to_upvs[this]!!.mapIndexed { i, dcl -> """
