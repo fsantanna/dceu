@@ -224,7 +224,7 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 3
     #define _CEU_Exe_                   \
         _CEU_Dyn_                       \
-        CEU_Value clo;                  \
+        CEU_Clo* clo;                   \
         CEU_EXE_STATUS status;          \
         int pc;
         
@@ -676,7 +676,7 @@ fun Coder.main (tags: Tags): String {
                     dyn->Any.refs--;
                 }
                 //ceux_n_set(dyn->Exe.X->S, 0);
-                ceu_gc_dec_val(dyn->Exe.clo);
+                ceu_gc_dec_dyn((CEU_Dyn*)dyn->Exe.clo);
 #if CEU >= 4
                 if (dyn->Any.type == CEU_VALUE_EXE_TASK) {
                     ceu_gc_dec_val(((CEU_Exe_Task*)dyn)->pub);
@@ -1271,7 +1271,7 @@ fun Coder.main (tags: Tags): String {
 
         *ret = (CEU_Exe) {
             type, 0, (CEU_Value) { CEU_VALUE_NIL },
-            clo, CEU_EXE_STATUS_YIELDED, 0 //, X
+            &clo.Dyn->Clo, CEU_EXE_STATUS_YIELDED, 0 //, X
         };
         
         return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };

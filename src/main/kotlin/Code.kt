@@ -325,6 +325,35 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """
             }
 
+            is Expr.Resume -> """
+                { // RESUME | ${this.dump()}
+                    ${this.co.code()}
+                    CEU_Value ceu_coro_$n = CEU_ACC_KEEP();
+                    if (ceu_coro_$n.type!=CEU_VALUE_EXE_CORO || (ceu_coro_$n.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED)) {                
+                        CEU_ERROR_CHK_PTR (
+                            continue,
+                            "resume error : expected yielded coro",
+                            ${this.toerr()}
+                        );
+                    }
+                    CEU_Value ceu_args_$n[${this.args.size}];
+                    ${this.args.mapIndexed { i,e ->
+                        e.code() + """
+                            ceu_args_$n[$i] = CEU_ACC_KEEP();
+                        """
+                    }.joinToString("")}
+                    CEUX ceux_$n = {
+                        ceu_coro_$n.Dyn->Exe.clo,
+                        (CEU_Exe*) ceu_coro_$n.Dyn,
+                        CEU_ACTION_RESUME,
+                        ${this.args.size},
+                        ceu_args_$n
+                    };
+                    ceu_coro_$n.Dyn->Exe.clo->proto(&ceux_$n);
+                    ceu_gc_dec_val(ceu_coro_$n);
+                    ${this.check_error_aborted(this.toerr())}
+                } // CALL | ${this.dump()}
+            """
             is Expr.Resume -> {
                 //assert(!this.args.dots && this.args.es.size<=1)
                 """
@@ -344,12 +373,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     return;
                 case $n: // YIELD ${this.dump()}
                     if (ceux->act == CEU_ACTION_ABORT) {
-                        //ceux_push(X->S, 1, (CEU_Value){CEU_VALUE_NIL}); // fake out=1
+                        CEU_ACC((CEU_Value) { CEU_VALUE_NIL }); // to be ignored in further move/checks
                         continue;
                     }
                 #if CEU >= 4
                     if (ceux->act == CEU_ACTION_ERROR) {
-                        //assert(X->args>1 && CEU_ERROR_IS(X->S) && "TODO: varargs resume");
+                        CEU_ACC(ceu_args[0]);   // error value
                         continue;
                     }
                 #endif
@@ -578,8 +607,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 }
                 """
             }
-            is Expr.Call -> {
-                """
+            is Expr.Call -> """
                 { // CALL | ${this.dump()}
                     ${this.clo.code()}
                     CEU_Value ceu_clo_$n = CEU_ACC_KEEP();
@@ -608,8 +636,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ceu_gc_dec_val(ceu_clo_$n);
                     ${this.check_error_aborted(this.toerr())}
                 } // CALL | ${this.dump()}
-                """
-            }
+            """
         }
     }
 }
