@@ -1674,6 +1674,24 @@ class Exec_03 {
         """)
         assert(out == "[1,2,3]\n") { out }
     }
+    @Test
+    fun oo_05_tmp_vector() {
+        val out = test("""
+            val CO = coro () {
+                val t = #[yield(nil),yield(nil),yield(nil)]
+                yield(nil)
+                t
+            }
+            val co = coroutine(CO)
+            resume co()
+            resume co(1)
+            resume co(2)
+            resume co(3)
+            val t = resume co()
+            println(t)
+        """)
+        assert(out == "#[1,2,3]\n") { out }
+    }
 
     // YIELD / MULTI
 

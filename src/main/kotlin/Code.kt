@@ -519,32 +519,38 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             is Expr.Char -> "CEU_ACC(((CEU_Value) { CEU_VALUE_CHAR, {.Char=${this.tk.str}} }));"
             is Expr.Num  -> "CEU_ACC(((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} }));"
 
-            is Expr.Tuple -> """
+            is Expr.Tuple -> {
+                val id_args = sta.idx(this,"args_$n")
+                """
                 { // TUPLE | ${this.dump()}
                     ${(!sta.ismem(this)).cond { """
                         CEU_Value ceu_args_$n[${this.args.size}];
                     """ }}
                     ${this.args.mapIndexed { i, it ->
-                        it.code() + """
-                            ${sta.idx(this,"args_$n")}[$i] = CEU_ACC_KEEP();
+                    it.code() + """
+                            $id_args[$i] = CEU_ACC_KEEP();
                         """
-                    }.joinToString("")}
+                }.joinToString("")}
                     CEU_ACC (
-                        ceu_create_tuple(1, ${this.args.size}, ${sta.idx(this,"args_$n")});
+                        ceu_create_tuple(1, ${this.args.size}, $id_args);
                     );
                 }
             """
-            is Expr.Vector -> """
+            }
+            is Expr.Vector -> {
+                val id_vec = sta.idx(this,"vec_$n")
+                """
                 { // VECTOR | ${this.dump()}
-                    CEU_Value ceu_vec_$n = ceu_create_vector();
+                    ${sta.dcl(this)} $id_vec = ceu_create_vector();
                     ${this.args.mapIndexed { i, it ->
-                         it.code() + """
-                         ceu_vector_set(&ceu_vec_$n.Dyn->Vector, $i, ceu_acc);
+                    it.code() + """
+                         ceu_vector_set(&$id_vec.Dyn->Vector, $i, ceu_acc);
                         """
-                    }.joinToString("")}
-                    CEU_ACC(ceu_vec_$n);
+                }.joinToString("")}
+                    CEU_ACC($id_vec);
                 }
             """
+            }
             is Expr.Dict -> """
                 { // DICT | ${this.dump()}
                     CEU_Value ceu_dic_$n = ceu_create_dict();
