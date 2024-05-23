@@ -482,6 +482,13 @@ class Exec_03 {
         """)
         assert(out == "1\t2\n1.000000\t2.000000\n") { out }
     }
+    @Test
+    fun dd_03_tup() {
+        val out = test("""
+            println([])
+        """,)
+        assert(out == "[]\n") { out }
+    }
 
     // ORIGINAL
 
@@ -1709,22 +1716,37 @@ class Exec_03 {
         """)
         assert(out == "@[(1,10),(2,20)]\n") { out }
     }
-
-    // YIELD / MULTI
-
     @Test
-    fun oo_01_yield() {
+    fun oo_07_tmp_fun() {
         val out = test("""
+            val f = func (a,b,c) {
+                b
+            }
             val CO = coro () {
-                yield(1,2)
-                (3,4)
+                f(1,yield(nil),3)
             }
             val co = coroutine(CO)
-            val (a,b) = resume co()
-            val (c,d) = resume co()
-            println(a,b,c,d)
+            resume co()
+            val v = resume co(10)
+            println(v)
         """)
-        assert(out == "1\t2\t3\t4\n") { out }
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun oo_08_tmp() {
+        val out = test("""
+            val CO = coro () {
+                val f = func (x) {
+                    x
+                }
+                f(yield(nil))
+            }
+            val co = coroutine(CO)
+            resume co()
+            val v = resume co([])
+            println(v)
+        """,)
+        assert(out == "[]\n") { out }
     }
 
     // ALL

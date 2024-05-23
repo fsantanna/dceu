@@ -524,7 +524,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """
                 { // TUPLE | ${this.dump()}
                     ${(!sta.ismem(this)).cond { """
-                        CEU_Value ceu_args_$n[${this.args.size}];
+                        CEU_Value ceu_args_$n[${max(1,this.args.size)}];
                     """ }}
                     ${this.args.mapIndexed { i, it ->
                     it.code() + """

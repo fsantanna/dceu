@@ -396,6 +396,13 @@ class Exec_01 {
     // INDEX / TUPLE
 
     @Test
+    fun cc_00_tuple() {
+        val out = test("""
+            println([])
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
     fun cc_index01_err() {
         val out = test(
             """
