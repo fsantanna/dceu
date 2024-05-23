@@ -1692,6 +1692,23 @@ class Exec_03 {
         """)
         assert(out == "#[1,2,3]\n") { out }
     }
+    @Test
+    fun oo_06_tmp_dict() {
+        val out = test("""
+            val CO = coro () {
+                val t = @[(1,yield(nil)),(yield(nil),20)]
+                yield(nil)
+                t
+            }
+            val co = coroutine(CO)
+            resume co()
+            resume co(10)
+            resume co(2)
+            val t = resume co()
+            println(t)
+        """)
+        assert(out == "@[(1,10),(2,20)]\n") { out }
+    }
 
     // YIELD / MULTI
 

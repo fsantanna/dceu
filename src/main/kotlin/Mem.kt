@@ -162,8 +162,8 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
                     CEU_Value key_$n;
                     $union {
                         ${this.args.map {
-                    listOf(it.first.mem(),it.second.mem())
-                }.flatten().joinToString("")}
+                            listOf(it.first.mem(),it.second.mem())
+                        }.flatten().joinToString("")}
                     };
                 };
                 """

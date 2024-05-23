@@ -551,27 +551,31 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 }
             """
             }
-            is Expr.Dict -> """
+            is Expr.Dict -> {
+                val id_dic = sta.idx(this,"dic_$n")
+                val id_key = sta.idx(this,"key_$n")
+                """
                 { // DICT | ${this.dump()}
-                    CEU_Value ceu_dic_$n = ceu_create_dict();
+                    ${sta.dcl(this)} $id_dic = ceu_create_dict();
                     ${this.args.map { """
                         {
                             ${it.first.code()}
-                            CEU_Value ceu_key_$n = CEU_ACC_KEEP();
+                            ${sta.dcl(this)} $id_key = CEU_ACC_KEEP();
                             ${it.second.code()}
                             CEU_Value ceu_val_$n = CEU_ACC_KEEP();
                             CEU_ERROR_CHK_PTR (
                                 continue,
-                                ceu_dict_set(&ceu_dic_$n.Dyn->Dict, ceu_key_$n, ceu_val_$n),
+                                ceu_dict_set(&${id_dic}.Dyn->Dict, $id_key, ceu_val_$n),
                                 ${this.toerr()}
                             );
-                            ceu_gc_dec_val(ceu_key_$n);
+                            ceu_gc_dec_val($id_key);
                             ceu_gc_dec_val(ceu_val_$n);
                         }
                     """ }.joinToString("")}
-                    CEU_ACC(ceu_dic_$n);
+                    CEU_ACC($id_dic);
                 }
             """
+            }
             is Expr.Index -> {
                 val idx = vars.data(this).let { if (it == null) -1 else it.first!! }
                 val id_col = sta.idx(this, "col_$n")
