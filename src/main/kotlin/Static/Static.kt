@@ -36,6 +36,9 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     fun ismem (blk: Expr.Do): Boolean {
         return ylds.contains(blk) && !void(blk)
     }
+    fun ismem (e: Expr): Boolean {
+        return this.ismem(ups.first(e) { it is Expr.Do } as Expr.Do)
+    }
 
     fun idx (acc: Expr.Acc): String {
         val dcl = vars.acc_to_dcl[acc]!!
@@ -67,12 +70,10 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         }
     }
     fun idx (e: Expr, idc: String): String {
-        val ismem = this.ismem(ups.first(e) { it is Expr.Do } as Expr.Do)
-        return if (ismem) "(ceu_mem->$idc)" else "ceu_$idc"
+        return if (this.ismem(e)) "(ceu_mem->$idc)" else "ceu_$idc"
     }
     fun dcl (e: Expr): String {
-        val ismem = this.ismem(ups.first(e) { it is Expr.Do } as Expr.Do)
-        return if (ismem) "" else "CEU_Value"
+        return if (this.ismem(e)) "" else "CEU_Value"
     }
 
     init {

@@ -521,14 +521,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
             is Expr.Tuple -> """
                 { // TUPLE | ${this.dump()}
-                    CEU_Value ceu_args_$n[${max(1,this.args.size)}];
+                    ${(!sta.ismem(this)).cond { """
+                        CEU_Value ceu_args_$n[${this.args.size}];
+                    """ }}
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
-                            ceu_args_$n[$i] = CEU_ACC_KEEP();
+                            ${sta.idx(this,"args_$n")}[$i] = CEU_ACC_KEEP();
                         """
                     }.joinToString("")}
                     CEU_ACC (
-                        ceu_create_tuple(1, ${this.args.size}, ceu_args_$n);
+                        ceu_create_tuple(1, ${this.args.size}, ${sta.idx(this,"args_$n")});
                     );
                 }
             """
@@ -611,6 +613,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             }
             is Expr.Call -> """
                 { // CALL | ${this.dump()}
+                    ${(!sta.ismem(this)).cond { """
+                        CEU_Value ceu_args_$n[${this.args.size}];
+                    """ }}
+                    ${this.args.mapIndexed { i,e ->
+                        e.code() + """
+                            ${sta.idx(this,"args_$n")}[$i] = CEU_ACC_KEEP();
+                        """
+                    }.joinToString("")}
                     ${this.clo.code()}
                     CEU_Value ceu_clo_$n = CEU_ACC_KEEP();
                     if (ceu_clo_$n.type != CEU_VALUE_CLO_FUNC) {
@@ -620,19 +630,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             ${this.toerr()}
                         );
                     }
-                    CEU_Value ceu_args_$n[${this.args.size}];
-                    ${this.args.mapIndexed { i,e ->
-                        e.code() + """
-                            ceu_args_$n[$i] = CEU_ACC_KEEP();
-                        """
-                    }.joinToString("")}
                     CEUX ceux_$n = {
                         (CEU_Clo*) ceu_clo_$n.Dyn,
                     #if CEU >= 3
                         NULL, CEU_ACTION_INVALID,
                     #endif
                         ${this.args.size},
-                        ceu_args_$n
+                        ${sta.idx(this, "args_$n")}
                     };
                     ceu_clo_$n.Dyn->Clo.proto(&ceux_$n);
                     ceu_gc_dec_val(ceu_clo_$n);

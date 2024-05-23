@@ -142,7 +142,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
 
             is Expr.Tuple -> """
                 struct { // TUPLE
-                    CEU_Value tup_$n;
+                    CEU_Value args_$n[${this.args.size}];
                     $union {
                         ${this.args.map { it.mem() }.joinToString("")}
                     };

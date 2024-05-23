@@ -1626,6 +1626,54 @@ class Exec_03 {
         """)
         assert(out == "2\n") { out }
     }
+    @Test
+    fun oo_02_tmp_call() {
+        val out = test("""
+            val f = func (a,b,c) {
+                a
+            }
+            val CO = coro () {
+                val t = [1,2,3]
+                f(1,yield(nil),3)
+            }
+            val co = coroutine(CO)
+            resume co()
+            val v = resume co(2)
+            println(v)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun oo_03_tmp_tuple() {
+        val out = test("""
+            val CO = coro () {
+                [1,yield(nil),3]
+            }
+            val co = coroutine(CO)
+            resume co()
+            val v = resume co(2)
+            println(v)
+        """)
+        assert(out == "[1,2,3]\n") { out }
+    }
+    @Test
+    fun oo_04_tmp_tuple() {
+        val out = test("""
+            val CO = coro () {
+                val t = [yield(nil),yield(nil),yield(nil)]
+                yield(nil)
+                t
+            }
+            val co = coroutine(CO)
+            resume co()
+            resume co(1)
+            resume co(2)
+            resume co(3)
+            val t = resume co()
+            println(t)
+        """)
+        assert(out == "[1,2,3]\n") { out }
+    }
 
     // YIELD / MULTI
 
