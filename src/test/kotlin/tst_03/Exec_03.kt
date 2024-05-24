@@ -519,8 +519,7 @@ class Exec_03 {
     @Test
     fun ee_02_coro_defer() {
         val out = test("""
-            var T
-            set T = coro () {
+            val T = coro () {
                 defer {
                     println(3)
                 }

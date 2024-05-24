@@ -14,7 +14,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     }
 
     // at least 1 yield (including subs) or nested coro/task
-    val ylds:   MutableSet<Expr.Do>  = mutableSetOf()
+    val ylds: MutableSet<Expr.Do>  = mutableSetOf()
 
     // void: block is innocuous -> should be a proxy to up block
     fun void (blk: Expr.Do): Boolean {
@@ -72,8 +72,8 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     fun idx (e: Expr, idc: String): String {
         return if (this.ismem(e)) "(ceu_mem->$idc)" else "ceu_$idc"
     }
-    fun dcl (e: Expr): String {
-        return if (this.ismem(e)) "" else "CEU_Value"
+    fun dcl (e: Expr, tp: String="CEU_Value"): String {
+        return if (this.ismem(e)) "" else tp
     }
 
     init {

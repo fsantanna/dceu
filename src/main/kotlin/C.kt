@@ -632,6 +632,10 @@ fun Coder.main (tags: Tags): String {
     }
 
     CEU_Value ceu_vector_get (CEU_Vector* vec, int i);
+#if CEU >= 3
+    void ceu_abort_exe (CEU_Exe* exe);
+#endif
+    
     void ceu_gc_free (CEU_Dyn* dyn) {
         switch (dyn->Any.type) {
 #if CEU >= 2
@@ -680,7 +684,7 @@ fun Coder.main (tags: Tags): String {
                 if (dyn->Exe.status != CEU_EXE_STATUS_TERMINATED) {
                     assert(dyn->Any.type == CEU_VALUE_EXE_CORO);
                     dyn->Any.refs++;            // currently 0->1: needs ->2 to prevent double gc
-                    //ceu_abort_exe((CEU_Exe*)dyn);
+                    ceu_abort_exe((CEU_Exe*)dyn);
                     dyn->Any.refs--;
                 }
                 ceu_gc_dec_dyn((CEU_Dyn*)dyn->Exe.clo);
@@ -1714,7 +1718,8 @@ fun Coder.main (tags: Tags): String {
             }
         }
         #endif
-
+        #endif
+        
         void ceu_abort_exe (CEU_Exe* exe) {
             assert(ceu_isexe_dyn((CEU_Dyn*) exe));
             switch (exe->status) {
@@ -1729,6 +1734,18 @@ fun Coder.main (tags: Tags): String {
         #endif
                 case CEU_EXE_STATUS_YIELDED:
                 {
+                    CEU_Value args[1];
+                    CEUX ceux = {
+                        exe->clo,
+                        (CEU_Exe*) exe,
+                        CEU_ACTION_ABORT,
+                        0,
+                        args
+                    };
+                    exe->clo->proto(&ceux);
+                    assert(ceu_acc.type!=CEU_VALUE_ERROR && "TODO: error in abort");
+
+                    #if 0
                     // TODO - fake S/X - should propagate up to calling stack
                     // TODO - fake now - should receive as arg (not CEU_TIME)
                     CEU_Stack S = { 0, {} };
@@ -1741,10 +1758,10 @@ fun Coder.main (tags: Tags): String {
                         assert(CEU_ERROR_IS(&S) && "TODO: abort should not return");
                         assert(0 && "TODO: error in ceu_exe_kill");
                     }
+                    #endif
                 }
             }
         }
-        #endif
         #endif
     """
     val c_task = """ // TASK
