@@ -116,7 +116,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         //}
 
                         ${isexe.cond{"""
-                                //return ceu_exe_term(X);
+                                //ceu_exe_term(X);
+                                ceux->exe->status = CEU_EXE_STATUS_TERMINATED;
                             } // close switch
                         """}}
                     }
