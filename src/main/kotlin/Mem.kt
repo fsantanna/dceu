@@ -1,5 +1,7 @@
 package dceu
 
+import kotlin.math.max
+
 val union = "union"
 //val union = "struct"
 
@@ -150,7 +152,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
 
             is Expr.Tuple -> """
                 struct { // TUPLE
-                    CEU_Value args_$n[${this.args.size}];
+                    CEU_Value args_$n[${max(1,this.args.size)}];
                     $union {
                         ${this.args.map { it.mem() }.joinToString("")}
                     };
