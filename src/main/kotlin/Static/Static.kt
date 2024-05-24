@@ -14,10 +14,10 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     }
 
     // at least 1 yield (including subs) or nested coro/task
-    val ylds: MutableSet<Expr.Do>  = mutableSetOf()
+    val ylds: MutableSet<Expr>  = mutableSetOf()
 
     // void: block is innocuous -> should be a proxy to up block
-    fun void (blk: Expr.Do): Boolean {
+    fun void (blk: Expr): Boolean {
         // no declarations, no spawns, no tasks
         val dcls = vars.blk_to_dcls[blk]!!
         //println(listOf("-=-=-", blk.tk, ups.pub[blk]?.javaClass?.name))
@@ -33,11 +33,9 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     }
     val defer_catch_spawn_tasks: MutableSet<Expr.Do> = mutableSetOf()
 
-    fun ismem (blk: Expr.Do): Boolean {
-        return ylds.contains(blk) && !void(blk)
-    }
     fun ismem (e: Expr): Boolean {
-        return this.ismem(ups.first(e) { it is Expr.Do } as Expr.Do)
+        val up = ups.first(e) { it is Expr.Do || it is Expr.Proto }!!
+        return ylds.contains(up) && !void(up)
     }
 
     fun idx (acc: Expr.Acc): String {
@@ -195,8 +193,8 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     //    -> err(this.tk, "yield error : unexpected enclosing thus")
                 }
                 ups.all_until(this) { it is Expr.Proto }
-                    .filter  { it is Expr.Do }              // all blocks up to proto
-                    .forEach { ylds.add(it as Expr.Do) }
+                    .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
+                    .forEach { ylds.add(it) }
             }
             is Expr.Resume -> {
                 this.co.traverse()
