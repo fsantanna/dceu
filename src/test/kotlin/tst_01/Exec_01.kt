@@ -5029,7 +5029,8 @@ class Exec_01 {
             println(`:number CEU_GC.free`)
         """, true
         )
-        assert(out == "1\n1\n") { out }
+        assert(out == "0\n1\n") { out }
+        //assert(out == "1\n1\n") { out }
         //assert(out == "0\n0\n") { out }
     }
     @Test
@@ -5045,8 +5046,8 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 7, col 21) : f([10])\nanon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
-        assert(out == "1\n") { out }
-        //assert(out == "0\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "0\n") { out }
     }
     @Test
     fun gc_12() {

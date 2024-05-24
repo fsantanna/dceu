@@ -103,6 +103,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             $code
                         } while (0);
 
+                        //{ // pars
+                            ${this.pars.mapIndexed { i,(id,_) -> """
+                                ceu_gc_dec_val (
+                                    ${sta.ismem(this.blk).cond2({ """
+                                        ceu_mem->${id.str.idc()}
+                                    """ },{ """
+                                        ceu_par_${id.str.idc()}
+                                    """ })}
+                                );
+                            """ }.joinToString("")}
+                        //}
+
                         ${isexe.cond{"""
                                 //return ceu_exe_term(X);
                             } // close switch
@@ -169,21 +181,24 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             }
                         """}}
                         
-                        ${vars.blk_to_dcls[this]!!.filter { ! }}
-                                //.filter { !GLOBALS.contains(it.idtag.first.str) }
-                        
-                        ${(!sta.ismem(this)).cond { """
-                            //{ // inline vars dcls
-                                ${vars.blk_to_dcls[this]!!.map { """
-                                    CEU_Value ${sta.idx(it,it)};
-                                """ }.joinToString("")}
-                            //}
-                        """ }}
-                        { // vars inits
-                            ${vars.blk_to_dcls[this]!!.map { """
-                                ${sta.idx(it,it)} = (CEU_Value) { CEU_VALUE_NIL };
-                            """ }.joinToString("")}
-                        }
+                        ${(this != outer).cond { 
+                            vars.blk_to_dcls[this]!!.let { dcls ->
+                                """
+                                ${(!sta.ismem(this)).cond { """
+                                    //{ // inline vars dcls
+                                        ${dcls.map { """
+                                            CEU_Value ${sta.idx(it,it)};
+                                        """ }.joinToString("")}
+                                    //}
+                                """ }}
+                                { // vars inits
+                                    ${dcls.map { """
+                                        ${sta.idx(it,it)} = (CEU_Value) { CEU_VALUE_NIL };
+                                    """ }.joinToString("")}
+                                }
+                                """
+                            }
+                        }}
                     
                         ${defers[this].cond { """
                             //{ // BLOCK | defers | init | ${this.dump()}
@@ -222,31 +237,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             }
             is Expr.Dcl -> {
                 val idx = sta.idx(this, this)
-                val isglb = (vars.dcl_to_blk[this] == outer)
-                val issrc = (this.src != null)
                 """
                 // DCL | ${this.dump()}
                 ${when {
                     sta.protos_use_unused.contains(this.src) -> """
                         // $idx: unused function
                     """
-                    (isglb && !issrc) -> """
-                        // $idx: uninited global
-                    """
-                    (isglb && issrc) -> """
+                    (this.src != null) -> """
                         ${this.src!!.code()}
                         ceu_gc_inc_val(ceu_acc);
                         $idx = ceu_acc;
                     """
-                    (!isglb && !issrc) -> """
-                        $idx = (CEU_Value) { CEU_VALUE_NIL };
-                    """
-                    (!isglb && issrc) -> """
-                        ${this.src!!.code()}
-                        ceu_gc_inc_val(ceu_acc);
-                        $idx = ceu_acc;
-                    """
-                    else -> error("impossible case")
+                    else -> ""
                 }}
                 """
             }
