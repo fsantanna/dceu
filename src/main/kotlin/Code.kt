@@ -99,7 +99,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             }
                         //}
 
-                        $code
+                        do {
+                            $code
+                        } while (0);
 
                         ${isexe.cond{"""
                                 //return ceu_exe_term(X);
@@ -154,7 +156,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """
                 } else {
                     """
-                    do { // BLOCK | ${this.dump()}
+                    { // BLOCK | ${this.dump()}
                         ${(this == outer).cond { """
                             { // ARGC / ARGV
                                 CEU_Value args[ceu_argc];
@@ -167,16 +169,34 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             }
                         """}}
                         
+                        ${vars.blk_to_dcls[this]!!.filter { ! }}
+                                //.filter { !GLOBALS.contains(it.idtag.first.str) }
+                        
+                        ${(!sta.ismem(this)).cond { """
+                            //{ // inline vars dcls
+                                ${vars.blk_to_dcls[this]!!.map { """
+                                    CEU_Value ${sta.idx(it,it)};
+                                """ }.joinToString("")}
+                            //}
+                        """ }}
+                        { // vars inits
+                            ${vars.blk_to_dcls[this]!!.map { """
+                                ${sta.idx(it,it)} = (CEU_Value) { CEU_VALUE_NIL };
+                            """ }.joinToString("")}
+                        }
+                    
                         ${defers[this].cond { """
                             //{ // BLOCK | defers | init | ${this.dump()}
                                 ${it.second}
                             //}
                         """ }}
                         
+                        do { // BLOCK | ${this.dump()}
                             $body
                             ${(up is Expr.Loop).cond { """
                                 CEU_LOOP_STOP_${up!!.n}:
                             """ }}
+                        } while (0);
     
                         ${defers[this].cond { """
                             { // BLOCK | defers | term | ${this.dump()}
@@ -196,7 +216,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             }
                         }                        
                         ${(CEU >= 2).cond { this.check_error_aborted("NULL")} }
-                    } while (0);
+                    }
                     """
                 }
             }
@@ -219,12 +239,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         $idx = ceu_acc;
                     """
                     (!isglb && !issrc) -> """
-                        ${sta.dcl(this)} $idx = (CEU_Value) { CEU_VALUE_NIL };
+                        $idx = (CEU_Value) { CEU_VALUE_NIL };
                     """
                     (!isglb && issrc) -> """
                         ${this.src!!.code()}
                         ceu_gc_inc_val(ceu_acc);
-                        ${sta.dcl(this)} $idx = ceu_acc;
+                        $idx = ceu_acc;
                     """
                     else -> error("impossible case")
                 }}
@@ -315,11 +335,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             is Expr.Defer -> {
                 val bup = ups.first(this) { it is Expr.Do } as Expr.Do
                 val (ns,ini,end) = defers.getOrDefault(bup, Triple(mutableListOf(),"",""))
+                val id = sta.idx(this, "defer_$n")
                 val inix = """
-                    int ceu_defer_$n = 0;   // not yet reached
+                    ${sta.dcl(this,"int")} $id = 0;   // not yet reached
                 """
                 val endx = """
-                    if (ceu_defer_$n) {     // if true: reached, finalize
+                    if ($id) {     // if true: reached, finalize
                         do {
                             ${this.blk.code()}
                         } while (0);    // catch throw
@@ -329,7 +350,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 ns.add(n)
                 defers[bup] = Triple(ns, ini+inix, endx+end)
                 """
-                ceu_defer_$n = 1;   // now reached
+                $id = 1;   // now reached
                 CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));
                 """
             }
