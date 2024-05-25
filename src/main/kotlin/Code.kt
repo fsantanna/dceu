@@ -402,7 +402,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         CEU_ACC((CEU_Value) { CEU_VALUE_NIL }); // to be ignored in further move/checks
                         continue;
                     }
-                    CEU_ACC((ceux->n > 0) ? ceux->args[0] : (CEU_Value) { CEU_VALUE_NIL });
+                    ceu_gc_dec_val(ceu_acc);
+                    ceu_acc = ((ceux->n > 0) ? ceux->args[0] : (CEU_Value) { CEU_VALUE_NIL });
                 #if CEU >= 4
                     if (ceux->act == CEU_ACTION_ERROR) {
                         continue;
@@ -660,6 +661,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ${this.clo.code()}
                     CEU_Value ceu_clo_$n = CEU_ACC_KEEP();
                     if (ceu_clo_$n.type != CEU_VALUE_CLO_FUNC) {
+                        ceu_gc_dec_val(ceu_clo_$n);
                         CEU_ERROR_CHK_PTR (
                             continue,
                             "call error : expected function",

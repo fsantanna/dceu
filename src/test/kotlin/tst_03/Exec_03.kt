@@ -1796,17 +1796,29 @@ class Exec_03 {
     @Test
     fun zz_04_valgrind() {
         val out = test("""
-            val clo1 = coro () {
+            val CO1 = coro () {
                 nil
             }
-            val clo2 = coro () {
-                coroutine (clo1) ()
+            val CO2 = coro () {
+                coroutine (CO1) ()
             }
-            resume (coroutine (clo2)) ()
+            resume (coroutine (CO2)) ()
             println(:ok)
         """)
-        assert(out == " |  anon : (lin 8, col 13) : (resume (coroutine(clo2))())\n" +
-                " |  anon : (lin 6, col 17) : coroutine(clo1)()\n" +
+        assert(out == " |  anon : (lin 8, col 13) : (resume (coroutine(CO2))())\n" +
+                " |  anon : (lin 6, col 17) : coroutine(CO1)()\n" +
+                " v  call error : expected function\n") { out }
+    }
+    @Test
+    fun zz_05_valgrind() {
+        val out = test("""
+            val CO1 = coro () {
+                nil
+            }
+            coroutine (CO1) ()
+            println(:ok)
+        """)
+        assert(out == " |  anon : (lin 5, col 13) : coroutine(CO1)()\n" +
                 " v  call error : expected function\n") { out }
     }
 }

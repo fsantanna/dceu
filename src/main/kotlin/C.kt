@@ -1645,6 +1645,7 @@ fun Coder.main (tags: Tags): String {
             } else {
                 ret = (CEU_Value) { CEU_VALUE_TAG, {.Tag=exe.Dyn->Exe.status + CEU_TAG_yielded - 1} };
             }
+            ceu_gc_dec_val(exe);
             CEU_ACC(ret);
         }
 
