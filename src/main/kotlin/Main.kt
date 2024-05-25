@@ -10,7 +10,7 @@ var DEBUG = false
 var CEU = 1
 
     // 1: dyn-lex                           ;; 20 "definitely lost"
-    // 2: defer, throw/catch, patts         ;; 5 "definitely lost"
+    // 2: defer, throw/catch, patts         ;; 6 "definitely lost"
     // 3: coro, yield, resume               ;; 0 "definitely lost"
     // 4: task, pub, bcast, toggle, delay   ;; 2 "definitely lost"
     // 5: tasks                             ;; 0 "definitely lost"

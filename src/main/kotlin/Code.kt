@@ -364,6 +364,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ${this.co.code()}
                     CEU_Value ceu_coro_$n = CEU_ACC_KEEP();
                     if (ceu_coro_$n.type!=CEU_VALUE_EXE_CORO || (ceu_coro_$n.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED)) {                
+                        ceu_gc_dec_val(ceu_coro_$n);
                         CEU_ERROR_CHK_PTR (
                             continue,
                             "resume error : expected yielded coro",

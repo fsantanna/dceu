@@ -1621,14 +1621,14 @@ fun Coder.main (tags: Tags): String {
         }
         void ceu_pro_coroutine (CEUX* X) {
             assert(X->n == 1);
-            CEU_Value coro = X->args[0];
+            CEU_Value clo = X->args[0];
             CEU_Value ret;
-            if (coro.type != CEU_VALUE_CLO_CORO) {
+            if (clo.type != CEU_VALUE_CLO_CORO) {
                 ret = CEU_ERROR_PTR("coroutine error : expected coro");
             } else {
-                ret = ceu_create_exe(CEU_VALUE_EXE_CORO, sizeof(CEU_Exe), coro);
+                ret = ceu_create_exe(CEU_VALUE_EXE_CORO, sizeof(CEU_Exe), clo);
             }
-            ceu_gc_dec_val(coro);
+            ceu_gc_dec_val(clo);
             CEU_ACC(ret);
         }        
 
