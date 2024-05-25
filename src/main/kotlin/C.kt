@@ -49,10 +49,12 @@ fun Coder.main (tags: Tags): String {
     #endif
 
     #define CEU_ACC(v) ({               \
-        CEU_Value ceu_tmp = ceu_acc;    \
-        ceu_acc = v;                    \
-        ceu_gc_inc_val(ceu_acc);        \
-        ceu_gc_dec_val(ceu_tmp);        \
+        CEU_Value ceu_old = ceu_acc;    \
+        CEU_Value ceu_new = v;          \
+        ceu_acc = (CEU_Value) { CEU_VALUE_NIL }; \
+        ceu_gc_inc_val(ceu_new);        \
+        ceu_gc_dec_val(ceu_old);        \
+        ceu_acc = ceu_new;              \
         ceu_acc;                        \
     })
     #define CEU_ACC_KEEP() ({                       \
