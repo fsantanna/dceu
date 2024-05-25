@@ -563,6 +563,7 @@ fun Coder.main (tags: Tags): String {
         CEU_ACC (
             ceu_create_error((X->n == 1) ? X->args[0] : ((CEU_Value) { CEU_VALUE_NIL }));
         );
+        ceu_gc_dec_args(X->n, X->args);
     }
 
     #endif
@@ -643,8 +644,9 @@ fun Coder.main (tags: Tags): String {
         switch (dyn->Any.type) {
 #if CEU >= 2
             case CEU_VALUE_ERROR:
-                ceu_gc_dec_val(*(dyn->Error.val));
                 ceu_gc_dec_dyn((CEU_Dyn*)dyn->Error.vec);
+                ceu_gc_dec_val(*(dyn->Error.val));
+                free(dyn->Error.val);
                 break;
 #endif
             case CEU_VALUE_CLO_FUNC:

@@ -218,12 +218,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             { // BLOCK | defers | term | ${this.dump()}
                                 CEU_Value ceu_acc_$n = CEU_ACC_KEEP();
                                 ${it.third}
-                                CEU_ACC(ceu_acc_$n);
+                                ceu_acc = ceu_acc_$n;
                             }
                         """ }}
                         
                         { // dcls gc-dec
                             ${vars.blk_to_dcls[this]!!
+                                .asReversed()
                                 //.filter { !GLOBALS.contains(it.idtag.first.str) }
                                 .map { """
                                     ceu_gc_dec_val(${sta.idx(it, it)});

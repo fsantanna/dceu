@@ -186,7 +186,7 @@ class Exec_02 {
                 println(9)
             }
             println(1)
-        """.trimIndent())
+        """)
         //assert(out == "anon : (lin 2, col 5) : throw error : expected tag\n") { out }
         assert(out == " |  anon : (lin 2, col 5) : error([])\n" +
                 " v  error : []\n") { out }
