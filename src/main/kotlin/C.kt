@@ -244,6 +244,9 @@ fun Coder.main (tags: Tags): String {
         struct CEU_Exe_Task* up_tsk;    \
     } CEU_Clo_Task;
     
+    // block points to first task/tasks
+    typedef union CEU_Dyn* CEU_Block;
+
     typedef struct CEU_Links {
         struct {
             union CEU_Dyn* dyn;
@@ -342,6 +345,15 @@ fun Coder.main (tags: Tags): String {
     }
     fun h_protos (): String {
         return """
+    CEU_Value ceu_vector_get (CEU_Vector* vec, int i);
+#if CEU >= 3
+    void ceu_abort_exe (CEU_Exe* exe);
+#endif
+#if CEU >= 4
+    void ceu_dyn_unlink (CEU_Dyn* dyn);
+#endif
+
+    #if 0
     void ceu_pro_type (CEUX* X);
     int ceu_as_bool (CEU_Value v);
     CEU_Value ceu_dyn_to_val (CEU_Dyn* dyn);
@@ -373,7 +385,6 @@ fun Coder.main (tags: Tags): String {
     int ceu_bcast_tasks (CEUX* X1, CEU_ACTION act, uint32_t now, CEU_Dyn* dyn2);
     int ceu_istask_dyn (CEU_Dyn* dyn);
     int ceu_istask_val (CEU_Value val);
-    void ceu_dyn_unlink (CEU_Dyn* dyn);
     #endif
     #if CEU >= 5
     #undef ceu_abort_dyn
@@ -381,6 +392,7 @@ fun Coder.main (tags: Tags): String {
     #undef ceu_bcast_dyn
     #define ceu_bcast_dyn(a,b,c,d) (d->Any.type==CEU_VALUE_TASKS ? ceu_bcast_tasks(a,b,c,d) : ceu_bcast_task(a,b,c,(CEU_Exe_Task*)d))
     void ceu_abort_tasks (CEU_Tasks* tsks);
+    #endif
     #endif
     """
     }
@@ -635,11 +647,6 @@ fun Coder.main (tags: Tags): String {
         ceu_gc_inc_dyn(val.Dyn);
     }
 
-    CEU_Value ceu_vector_get (CEU_Vector* vec, int i);
-#if CEU >= 3
-    void ceu_abort_exe (CEU_Exe* exe);
-#endif
-    
     void ceu_gc_free (CEU_Dyn* dyn) {
         switch (dyn->Any.type) {
 #if CEU >= 2
@@ -1614,10 +1621,10 @@ fun Coder.main (tags: Tags): String {
     val c_exes = """
         #if CEU >= 3
         int ceu_isexe_val (CEU_Value val) {
-            return (val.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask_val(val)));
+            return (val.type==CEU_VALUE_EXE_CORO CEU4(|| val.type==CEU_VALUE_EXE_TASK));
         }
         int ceu_isexe_dyn (CEU_Dyn* dyn) {
-            return (dyn->Any.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask_dyn(dyn)));
+            return (dyn->Any.type==CEU_VALUE_EXE_CORO CEU4(|| dyn->Any.type==CEU_VALUE_EXE_TASK));
         }
         void ceu_pro_coroutine (CEUX* X) {
             assert(X->n == 1);
@@ -2066,8 +2073,7 @@ fun Coder.main (tags: Tags): String {
     return (
         h_includes() + h_defines() + h_enums() +
         h_value_dyn() + h_tags() +
-        x_globals() + /* h_protos() +
-        */
+        x_globals() + h_protos() +
         gc() + c_tags() +
         c_error +
         c_impls() + /*
