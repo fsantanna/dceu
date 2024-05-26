@@ -197,7 +197,12 @@ fun Coder.main (tags: Tags): String {
     typedef struct CEUX {
         struct CEU_Clo* clo;
     #if CEU >= 3
-        struct CEU_Exe* exe;
+        union {
+            struct CEU_Exe* exe;
+    #if CEU >= 4
+            struct CEU_Exe_Task* exe_task;
+    #endif
+        };
         CEU_ACTION act;
     #endif
         int n;
@@ -240,8 +245,8 @@ fun Coder.main (tags: Tags): String {
     
     #if CEU >= 4
     typedef struct CEU_Clo_Task {
-        _CEU_Clo_Exe_                   \
-        struct CEU_Exe_Task* up_tsk;    \
+        _CEU_Clo_Exe_
+        struct CEU_Exe_Task* up_tsk;
     } CEU_Clo_Task;
     
     // block points to first task/tasks
@@ -1643,7 +1648,7 @@ fun Coder.main (tags: Tags): String {
             assert(X->n == 1);
             CEU_Value exe = X->args[0];
             CEU_Value ret;
-            if (exe.type!=CEU_VALUE_EXE_CORO CEU4(&& !ceu_istask_val(exe))) {
+            if (exe.type!=CEU_VALUE_EXE_CORO CEU4(&& exe.type!=CEU_VALUE_EXE_TASK)) {
         #if CEU < 4
                 ret = CEU_ERROR_PTR("status error : expected running coroutine");
         #else
@@ -1841,6 +1846,7 @@ fun Coder.main (tags: Tags): String {
     """
     val c_bcast = """
         #if CEU >= 4
+        #if 0
         int ceu_bcast_tasks (CEUX* X1, CEU_ACTION act, uint32_t now, CEU_Dyn* dyn2) {
             //assert(dyn2!=NULL && (dyn2->type==CEU_VALUE_EXE_TASK CEU5(|| dyn2->type==CEU_VALUE_TASKS)));
             int ret = 0;
@@ -1927,15 +1933,16 @@ fun Coder.main (tags: Tags): String {
             int ret = ceu_bcast_tasks(CEU_GLOBAL_X, CEU_ACTION_RESUME, CEU_TIME, (CEU_Dyn*) &CEU_GLOBAL_TASK);
             return ret;
         }
+        #endif
         
         void ceu_pro_broadcast_plic_ (CEUX* X) {
-            assert(X->args == 2);
+            assert(X->n == 2);
             //ceu_bstk_assert(bstk);
 
-            assert(CEU_TIME < UINT32_MAX);
-            CEU_TIME++;
+            //assert(CEU_TIME < UINT32_MAX);
+            //CEU_TIME++;
 
-            CEU_Value xin = ceux_peek(X->S, ceux_arg(X,0));
+            CEU_Value xin = X->args[0];
             int ret;
             if (xin.type == CEU_VALUE_TAG) {
                 if (xin.Tag == CEU_TAG_global) {
@@ -2083,9 +2090,9 @@ fun Coder.main (tags: Tags): String {
         creates() + tuple_vector_dict() +
         c_to() + print() + dumps() +
         (CEU>=3).cond { c_exes } +
+        (CEU>=4).cond { c_task } +
+        (CEU>=4).cond { c_bcast } +
                 /*
-                (CEU>=4).cond { c_task } +
-                (CEU>=4).cond { c_bcast } +
                 (CEU>=5).cond { c_tasks } +
                 // isexe-coro-status-exe-kill, task, track
                  */
