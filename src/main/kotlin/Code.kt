@@ -671,7 +671,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     CEUX ceux_$n = {
                         (CEU_Clo*) ceu_clo_$n.Dyn,
                     #if CEU >= 3
-                        NULL, CEU_ACTION_INVALID,
+                        {NULL}, CEU_ACTION_INVALID,
                     #endif
                         ${this.args.size},
                         ${sta.idx(this, "args_$n")}

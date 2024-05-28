@@ -1284,15 +1284,13 @@ fun Coder.main (tags: Tags): String {
     }
     #endif
 
-    #if 0
     #if CEU >= 4
     CEU_Value ceu_create_clo_task (CEU_Proto proto, int pars, int locs, int upvs, CEU_Exe_Task* up_tsk) {
-        CEU_Value clo = ceu_create_clo(CEU_VALUE_CLO_TASK, proto, pars, locs, upvs);
+        CEU_Value clo = _ceu_create_clo_(CEU_VALUE_CLO_TASK, sizeof(CEU_Clo_Exe), proto, pars, upvs);
         assert(clo.type == CEU_VALUE_CLO_TASK);
         clo.Dyn->Clo_Task.up_tsk = up_tsk;
         return clo;
     }
-    #endif
     #endif
     
     #if CEU >= 3
@@ -1314,7 +1312,6 @@ fun Coder.main (tags: Tags): String {
     }
     #endif
     
-    #if 0
     #if CEU >= 4
     CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Dyn* up_dyn, CEU_Block* up_blk) {
     #if CEU >= 5
@@ -1368,7 +1365,6 @@ fun Coder.main (tags: Tags): String {
 
         return ret;
     }
-    #endif
     
     #if CEU >= 5
     CEU_Value ceu_create_tasks (int max, CEU_Exe_Task* up_tsk, CEU_Block* up_blk) {
@@ -1755,7 +1751,7 @@ fun Coder.main (tags: Tags): String {
                     CEU_Value args[1];
                     CEUX ceux = {
                         exe->clo,
-                        (CEU_Exe*) exe,
+                        {(CEU_Exe*) exe},
                         CEU_ACTION_ABORT,
                         0,
                         args
@@ -1943,7 +1939,6 @@ fun Coder.main (tags: Tags): String {
             //CEU_TIME++;
 
             CEU_Value xin = X->args[0];
-            int ret;
             if (xin.type == CEU_VALUE_TAG) {
                 if (xin.Tag == CEU_TAG_global) {
                     ret = ceu_bcast_tasks(X, CEU_ACTION_RESUME, CEU_TIME, (CEU_Dyn*) &CEU_GLOBAL_TASK);
@@ -1954,21 +1949,19 @@ fun Coder.main (tags: Tags): String {
                         ret = ceu_bcast_task(X, CEU_ACTION_RESUME, CEU_TIME, X->exe_task);
                     }
                 } else {
-                    ret = ceu_error_s(X->S, "broadcast error : invalid target");
+                    CEU_ACC(CEU_ERROR_PTR("broadcast error : invalid target"));
                 }
             } else {
                 if (ceu_istask_val(xin)) {
                     if (xin.Dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {
-                        ret = 0;
+                        // nothing
                     } else {
                         ret = ceu_bcast_task(X, CEU_ACTION_RESUME, CEU_TIME, &xin.Dyn->Exe_Task);
                     }
                 } else {
-                    ret = ceu_error_s(X->S, "broadcast error : invalid target");
+                    CEU_ACC(CEU_ERROR_PTR("broadcast error : invalid target"));
                 }
             }
-
-            return ret;
         }
         #endif
     """
