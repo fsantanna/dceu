@@ -119,7 +119,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
             is Expr.Yield -> this.arg.mem()
             is Expr.Resume -> """
                 struct {
-                    CEU_Value co_${this.n};
+                    CEU_Value args_$n[${this.args.size}];
                     $union {
                         ${this.co.mem()}
                         ${this.args.map { it.mem() }.joinToString("")}

@@ -361,6 +361,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
             is Expr.Resume -> """
                 { // RESUME | ${this.dump()}
+                    ${(!sta.ismem(this)).cond { """
+                        CEU_Value ceu_args_$n[${this.args.size}];
+                    """ }}
+                    ${this.args.mapIndexed { i,e ->
+                        e.code() + """
+                                    ${sta.idx(this,"args_$n")}[$i] = CEU_ACC_KEEP();
+                                """
+                    }.joinToString("")}
+                    
                     ${this.co.code()}
                     CEU_Value ceu_coro_$n = CEU_ACC_KEEP();
                     if (ceu_coro_$n.type!=CEU_VALUE_EXE_CORO || (ceu_coro_$n.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED)) {                
@@ -371,12 +380,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             ${this.toerr()}
                         );
                     }
-                    CEU_Value ceu_args_$n[${this.args.size}];
-                    ${this.args.mapIndexed { i,e ->
-                        e.code() + """
-                            ceu_args_$n[$i] = CEU_ACC_KEEP();
-                        """
-                    }.joinToString("")}
+
                     CEUX ceux_$n = {
                         ceu_coro_$n.Dyn->Exe.clo,
                         (CEU_Exe*) ceu_coro_$n.Dyn,
