@@ -244,10 +244,10 @@ fun Coder.main (tags: Tags): String {
     #endif
     
     #if CEU >= 4
-    typedef struct CEU_Clo_Task {
+    typedef struct CEU_Clo_Exe_Task {
         _CEU_Clo_Exe_
         struct CEU_Exe_Task* up_tsk;
-    } CEU_Clo_Task;
+    } CEU_Clo_Exe_Task;
     
     // block points to first task/tasks
     typedef union CEU_Dyn* CEU_Block;
@@ -306,7 +306,7 @@ fun Coder.main (tags: Tags): String {
         struct CEU_Clo_Exe  Clo_Exe;
     #endif
     #if CEU >= 4
-        struct CEU_Clo_Task Clo_Task;
+        struct CEU_Clo_Exe_Task Clo_Task;
     #endif
     #if CEU >= 3
         struct CEU_Exe      Exe;
@@ -1286,7 +1286,7 @@ fun Coder.main (tags: Tags): String {
 
     #if CEU >= 4
     CEU_Value ceu_create_clo_task (CEU_Proto proto, int pars, int locs, int upvs, CEU_Exe_Task* up_tsk) {
-        CEU_Value clo = _ceu_create_clo_(CEU_VALUE_CLO_TASK, sizeof(CEU_Clo_Exe), proto, pars, upvs);
+        CEU_Value clo = _ceu_create_clo_(CEU_VALUE_CLO_TASK, sizeof(CEU_Clo_Exe_Task), proto, pars, upvs);
         assert(clo.type == CEU_VALUE_CLO_TASK);
         clo.Dyn->Clo_Task.up_tsk = up_tsk;
         return clo;
@@ -1341,7 +1341,7 @@ fun Coder.main (tags: Tags): String {
         
         ceu_gc_inc_dyn((CEU_Dyn*) dyn);    // up_blk/tsks holds a strong reference
 
-        dyn->time = CEU_TIME;
+        //dyn->time = CEU_TIME;
         dyn->pub = (CEU_Value) { CEU_VALUE_NIL };
 
         dyn->lnks = (CEU_Links) { {up_dyn,NULL}, {NULL,NULL}, {NULL,NULL} };
@@ -1941,12 +1941,12 @@ fun Coder.main (tags: Tags): String {
             CEU_Value xin = X->args[0];
             if (xin.type == CEU_VALUE_TAG) {
                 if (xin.Tag == CEU_TAG_global) {
-                    ret = ceu_bcast_tasks(X, CEU_ACTION_RESUME, CEU_TIME, (CEU_Dyn*) &CEU_GLOBAL_TASK);
+                    //ret = ceu_bcast_tasks(X, CEU_ACTION_RESUME, CEU_TIME, (CEU_Dyn*) &CEU_GLOBAL_TASK);
                 } else if (xin.Tag == CEU_TAG_task) {
                     if (X->exe_task == NULL) {
-                        ret = ceu_bcast_tasks(X, CEU_ACTION_RESUME, CEU_TIME, (CEU_Dyn*) &CEU_GLOBAL_TASK);
+                        //ret = ceu_bcast_tasks(X, CEU_ACTION_RESUME, CEU_TIME, (CEU_Dyn*) &CEU_GLOBAL_TASK);
                     } else {
-                        ret = ceu_bcast_task(X, CEU_ACTION_RESUME, CEU_TIME, X->exe_task);
+                        //ret = ceu_bcast_task(X, CEU_ACTION_RESUME, CEU_TIME, X->exe_task);
                     }
                 } else {
                     CEU_ACC(CEU_ERROR_PTR("broadcast error : invalid target"));
@@ -1956,7 +1956,7 @@ fun Coder.main (tags: Tags): String {
                     if (xin.Dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {
                         // nothing
                     } else {
-                        ret = ceu_bcast_task(X, CEU_ACTION_RESUME, CEU_TIME, &xin.Dyn->Exe_Task);
+                        //ceu_bcast_task(X, CEU_ACTION_RESUME, CEU_TIME, &xin.Dyn->Exe_Task);
                     }
                 } else {
                     CEU_ACC(CEU_ERROR_PTR("broadcast error : invalid target"));
