@@ -366,8 +366,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """ }}
                     ${this.args.mapIndexed { i,e ->
                         e.code() + """
-                                    ${sta.idx(this,"args_$n")}[$i] = CEU_ACC_KEEP();
-                                """
+                            ${sta.idx(this,"args_$n")}[$i] = CEU_ACC_KEEP();
+                        """
                     }.joinToString("")}
                     
                     ${this.co.code()}
@@ -386,7 +386,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         (CEU_Exe*) ceu_coro_$n.Dyn,
                         CEU_ACTION_RESUME,
                         ${this.args.size},
-                        ceu_args_$n
+                        ${sta.idx(this,"args_$n")}
                     };
                     ceu_coro_$n.Dyn->Exe.clo->proto(&ceux_$n);
                     ceu_gc_dec_val(ceu_coro_$n);
