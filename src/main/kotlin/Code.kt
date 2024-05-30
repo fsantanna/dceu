@@ -427,9 +427,30 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });"
                         })}
                     """ }}
+                    
+                    ${(!sta.ismem(this)).cond { """
+                        CEU_Value ceu_args_$n[${this.args.size}];
+                    """ }}
+                    ${this.args.mapIndexed { i,e ->
+                        e.code() + """
+                            ${sta.idx(this,"args_$n")}[$i] = CEU_ACC_KEEP();
+                        """
+                    }.joinToString("")}
+
                     ${this.tsk.code()}
-                    ${this.args.code()}
-                    ceux_spawn(X, ceu_{this.args.n}, X->now);
+                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, NULL, NULL);                    
+                    CEU_ERROR_CHK_VAL(continue, ceu_exe_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+
+                    CEUX ceux_$n = {
+                        ceu_exe_$n.Dyn->Exe.clo,
+                        (CEU_Exe*) ceu_exe_$n.Dyn,
+                        CEU_ACTION_RESUME,
+                        ${this.args.size},
+                        ${sta.idx(this,"args_$n")}
+                    };
+                    ceu_exe_$n.Dyn->Exe.clo->proto(&ceux_$n);
+                    ceu_acc = ceu_exe_$n;
+                    //ceu_gc_dec_val(ceu_exe_$n);
                     ${this.check_error_aborted(this.toerr())}
                 } // SPAWN | ${this.dump()}
                 """

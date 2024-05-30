@@ -306,7 +306,7 @@ fun Coder.main (tags: Tags): String {
         struct CEU_Clo_Exe  Clo_Exe;
     #endif
     #if CEU >= 4
-        struct CEU_Clo_Exe_Task Clo_Task;
+        struct CEU_Clo_Exe_Task Clo_Exe_Task;
     #endif
     #if CEU >= 3
         struct CEU_Exe      Exe;
@@ -531,12 +531,14 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_pointer_to_string (const char* ptr);
     CEU_Value ceu_create_vector (void);
 
-    #define CEU_ERROR_CHK_ACC(cmd,pre) {            \
-        if (ceu_acc.type == CEU_VALUE_ERROR) {      \
+    #define CEU_ERROR_CHK_ACC(cmd,pre) CEU_ERROR_CHK_VAL(cmd,ceu_acc,pre)
+
+    #define CEU_ERROR_CHK_VAL(cmd,v,pre) {          \
+        if ((v).type == CEU_VALUE_ERROR) {          \
             if (pre != NULL) { /* opt stack msg */  \
                 ceu_vector_set (                    \
-                    ceu_acc.Dyn->Error.vec,         \
-                    ceu_acc.Dyn->Error.vec->its,    \
+                    v.Dyn->Error.vec,               \
+                    v.Dyn->Error.vec->its,          \
                     ceu_pointer_to_string(pre)      \
                 );                                  \
             }                                       \
@@ -1285,10 +1287,10 @@ fun Coder.main (tags: Tags): String {
     #endif
 
     #if CEU >= 4
-    CEU_Value ceu_create_clo_task (CEU_Proto proto, int pars, int locs, int upvs, CEU_Exe_Task* up_tsk) {
+    CEU_Value ceu_create_clo_task (CEU_Proto proto, int pars, int upvs, int mem_n, CEU_Exe_Task* up_tsk) {
         CEU_Value clo = _ceu_create_clo_(CEU_VALUE_CLO_TASK, sizeof(CEU_Clo_Exe_Task), proto, pars, upvs);
-        assert(clo.type == CEU_VALUE_CLO_TASK);
-        clo.Dyn->Clo_Task.up_tsk = up_tsk;
+        clo.Dyn->Clo_Exe_Task.mem_n = mem_n;
+        clo.Dyn->Clo_Exe_Task.up_tsk = up_tsk;
         return clo;
     }
     #endif
@@ -1346,6 +1348,7 @@ fun Coder.main (tags: Tags): String {
 
         dyn->lnks = (CEU_Links) { {up_dyn,NULL}, {NULL,NULL}, {NULL,NULL} };
 
+#if 0
         if (CEU5(dyn!=NULL && ceu_isexe_dyn(up_dyn) &&) *up_blk==NULL) {
             dyn->lnks.up.blk = up_blk;    // only the first task points up
             *up_blk = (CEU_Dyn*) dyn;
@@ -1362,6 +1365,7 @@ fun Coder.main (tags: Tags): String {
             }
             up_lnks->dn.lst = (CEU_Dyn*) dyn;
         }
+#endif
 
         return ret;
     }
