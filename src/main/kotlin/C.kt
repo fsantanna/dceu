@@ -531,14 +531,12 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_pointer_to_string (const char* ptr);
     CEU_Value ceu_create_vector (void);
 
-    #define CEU_ERROR_CHK_ACC(cmd,pre) CEU_ERROR_CHK_VAL(cmd,ceu_acc,pre)
-
-    #define CEU_ERROR_CHK_VAL(cmd,v,pre) {          \
-        if ((v).type == CEU_VALUE_ERROR) {          \
+    #define CEU_ERROR_CHK_ACC(cmd,pre) {            \
+        if (ceu_acc.type == CEU_VALUE_ERROR) {      \
             if (pre != NULL) { /* opt stack msg */  \
                 ceu_vector_set (                    \
-                    v.Dyn->Error.vec,               \
-                    v.Dyn->Error.vec->its,          \
+                    ceu_acc.Dyn->Error.vec,         \
+                    ceu_acc.Dyn->Error.vec->its,    \
                     ceu_pointer_to_string(pre)      \
                 );                                  \
             }                                       \

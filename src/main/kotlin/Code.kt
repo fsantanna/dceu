@@ -438,8 +438,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     }.joinToString("")}
 
                     ${this.tsk.code()}
-                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, NULL, NULL);                    
-                    CEU_ERROR_CHK_VAL(continue, ceu_exe_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, NULL, NULL);
+                    CEU_ACC(ceu_exe_$n);
+                    CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
 
                     CEUX ceux_$n = {
                         ceu_exe_$n.Dyn->Exe.clo,
