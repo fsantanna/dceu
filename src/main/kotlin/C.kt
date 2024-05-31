@@ -699,7 +699,7 @@ fun Coder.main (tags: Tags): String {
             case CEU_VALUE_EXE_TASK:
 #endif
                 if (dyn->Exe.status != CEU_EXE_STATUS_TERMINATED) {
-                    assert(dyn->Any.type == CEU_VALUE_EXE_CORO);
+                    //assert(dyn->Any.type == CEU_VALUE_EXE_CORO);
                     dyn->Any.refs++;            // currently 0->1: needs ->2 to prevent double gc
                     ceu_abort_exe((CEU_Exe*)dyn);
                     dyn->Any.refs--;

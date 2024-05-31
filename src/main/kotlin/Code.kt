@@ -383,7 +383,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
                     CEUX ceux_$n = {
                         ceu_coro_$n.Dyn->Exe.clo,
-                        (CEU_Exe*) ceu_coro_$n.Dyn,
+                        {(CEU_Exe*) ceu_coro_$n.Dyn},
                         CEU_ACTION_RESUME,
                         ${this.args.size},
                         ${sta.idx(this,"args_$n")}
@@ -444,7 +444,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
                     CEUX ceux_$n = {
                         ceu_exe_$n.Dyn->Exe.clo,
-                        (CEU_Exe*) ceu_exe_$n.Dyn,
+                        {(CEU_Exe*) ceu_exe_$n.Dyn},
                         CEU_ACTION_RESUME,
                         ${this.args.size},
                         ${sta.idx(this,"args_$n")}
