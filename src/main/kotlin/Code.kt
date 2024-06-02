@@ -418,6 +418,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             }
 
             is Expr.Spawn -> {
+                val blk = ups.first(this) { it is Expr.Do } as Expr.Do
+                val blkc = sta.idx(blk, "block")
                 """
                 { // SPAWN | ${this.dump()}
                     ${(CEU >= 5).cond { """
@@ -438,7 +440,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     }.joinToString("")}
 
                     ${this.tsk.code()}
-                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, NULL, NULL);
+                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, NULL, $blkc);
                     CEU_ACC(ceu_exe_$n);
                     CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
 
