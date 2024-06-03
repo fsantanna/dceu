@@ -168,8 +168,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     }
                     """
                 } else {
+                    val blkc = sta.idx(this, "block_$n")
                     """
                     { // BLOCK | ${this.dump()}
+                        ${(!sta.ismem(this)).cond { "CEU_Block" }} $blkc = NULL;
                         ${(this == outer).cond { """
                             { // ARGC / ARGV
                                 CEU_Value args[ceu_argc];
@@ -419,7 +421,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
             is Expr.Spawn -> {
                 val blk = ups.first(this) { it is Expr.Do } as Expr.Do
-                val blkc = sta.idx(blk, "block")
+                val blkc = sta.idx(blk, "block_${blk.n}")
                 """
                 { // SPAWN | ${this.dump()}
                     ${(CEU >= 5).cond { """
@@ -440,9 +442,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     }.joinToString("")}
 
                     ${this.tsk.code()}
-                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, NULL, $blkc);
+                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, (CEU_Dyn*)&CEU_GLOBAL_TASK, &$blkc);
                     CEU_ACC(ceu_exe_$n);
                     CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
+                    ceu_gc_inc_val(ceu_exe_$n);
 
                     CEUX ceux_$n = {
                         ceu_exe_$n.Dyn->Exe.clo,
@@ -453,21 +456,20 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     };
                     ceu_exe_$n.Dyn->Exe.clo->proto(&ceux_$n);
                     ceu_acc = ceu_exe_$n;
-                    //ceu_gc_dec_val(ceu_exe_$n);
                     ${this.check_error_aborted(this.toerr())}
                 } // SPAWN | ${this.dump()}
                 """
             }
             is Expr.Delay -> """
                 // DELAY | ${this.dump()}
-                X->exe_task->time = CEU_TIME;
+                ceux->exe_task->time = CEU_TIME;
             """
             is Expr.Pub -> {
                 val exe = if (this.tsk != null) "" else {
                     ups.first_task_outer(this).let { outer ->
                         val xups = ups.all_until(this) { it == outer } // all ups between this -> outer
                         val n = xups.count { it is Expr.Proto }
-                        "X${"->exe_task->clo.Dyn->Clo_Task.up_tsk->X".repeat(n-1)}->exe_task"
+                        "ceux${"->exe_task->clo.Dyn->Clo_Task.up_tsk->X".repeat(n-1)}->exe_task"
                     }
                 }
             """
@@ -505,24 +507,42 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             }
             """
             }
-            is Expr.Toggle -> """{  // TOGGLE | ${this.dump()}
-                ${this.tsk.code()}
-                ${this.on.code()}
-                {   // TOGGLE | ${this.dump()}
-                    CEU_Value tsk = ceux_peek(X->S, XX(-2));
-                    int on = ceu_as_bool(ceux_peek(X->S, XX(-1)));
-                    if (!ceu_istask_val(tsk)) {
-                        CEU_ERROR_THR_S(continue, "toggle error : expected yielded task", ${this.toerr()});
+            is Expr.Toggle -> {
+                val id = sta.idx(this, "tsk_$n")
+                """
+                {  // TOGGLE | ${this.dump()}
+                    ${this.tsk.code()}
+                    ${sta.dcl(this,"CEU_Value")} $id = CEU_ACC_KEEP();
+                    ${this.on.code()}
+                    {   // TOGGLE | ${this.dump()}
+                        int on = ceu_as_bool(ceu_acc);
+                        if (!ceu_istask_val($id)) {
+                            CEU_ERROR_CHK_PTR (
+                                continue,
+                                "toggle error : expected yielded task",
+                                ${this.toerr()}
+                            );
+                        }
+                        if (on && $id.Dyn->Exe_Task.status!=CEU_EXE_STATUS_TOGGLED) {                
+                            CEU_ERROR_CHK_PTR (
+                                continue,
+                                "toggle error : expected toggled task",
+                                ${this.toerr()}
+                            );
+                        }
+                        if (!on && $id.Dyn->Exe_Task.status!=CEU_EXE_STATUS_YIELDED) {                
+                            CEU_ERROR_CHK_PTR (
+                                continue,
+                                "toggle error : expected yielded task",
+                                ${this.toerr()}
+                            );
+                        }
+                        $id.Dyn->Exe_Task.status = (on ? CEU_EXE_STATUS_YIELDED : CEU_EXE_STATUS_TOGGLED);
                     }
-                    if (on && tsk.Dyn->Exe_Task.status!=CEU_EXE_STATUS_TOGGLED) {                
-                        CEU_ERROR_THR_S(continue, "toggle error : expected toggled task", ${this.toerr()});
-                    }
-                    if (!on && tsk.Dyn->Exe_Task.status!=CEU_EXE_STATUS_YIELDED) {                
-                        CEU_ERROR_THR_S(continue, "toggle error : expected yielded task", ${this.toerr()});
-                    }
-                    tsk.Dyn->Exe_Task.status = (on ? CEU_EXE_STATUS_YIELDED : CEU_EXE_STATUS_TOGGLED);
+                    ceu_gc_dec_val($id);
                 }
-            }"""
+            """
+            }
 
             is Expr.Nat -> {
                 val body = vars.nats[this]!!.let { (set, str) ->

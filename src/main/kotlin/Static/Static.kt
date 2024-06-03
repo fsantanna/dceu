@@ -34,8 +34,14 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     val defer_catch_spawn_tasks: MutableSet<Expr.Do> = mutableSetOf()
 
     fun ismem (e: Expr): Boolean {
+        val proto = ups.first(e) { it is Expr.Proto }
         val up = ups.first(e) { it is Expr.Do || it is Expr.Proto }!!
-        return ylds.contains(up) && !void(up)
+        return when {
+            (proto == null) -> false
+            void(up) -> false
+            ylds.contains(up) -> true
+            else -> false
+        }
     }
 
     fun idx (acc: Expr.Acc): String {

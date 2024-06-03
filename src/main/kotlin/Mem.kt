@@ -137,7 +137,14 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
                     };
                 };
             """
-            is Expr.Pub -> this.tsk?.mem() ?: ""
+            is Expr.Pub -> """
+                struct { // PUB
+                    ${ups.isdst(this).cond { """
+                        CEU_Value val_$n;
+                    """ }}
+                    ${this.tsk?.mem() ?: ""}
+                };
+            """.trimIndent()
             is Expr.Toggle -> """
                 struct { // TOGGLE
                     CEU_Value tsk_${this.n};

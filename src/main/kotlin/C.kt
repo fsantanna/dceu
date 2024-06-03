@@ -1886,8 +1886,7 @@ fun Coder.main (tags: Tags): String {
             if (tsk->status == CEU_EXE_STATUS_TOGGLED) {
                 // do nothing
             } else {
-                //ceu_bcast_tasks(X1, act, now, (CEU_Dyn*) tsk);
-                assert(0 && "TODO");
+                ceu_bcast_tasks((CEU_Dyn*) tsk, CEU_ACTION_RESUME, now, evt);
                 assert(ceu_acc.type != CEU_VALUE_ERROR);
             }
 
