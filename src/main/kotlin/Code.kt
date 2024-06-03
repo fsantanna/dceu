@@ -465,6 +465,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 ceux->exe_task->time = CEU_TIME;
             """
             is Expr.Pub -> {
+                val id = sta.idx(this, "val_$n")
                 val exe = if (this.tsk != null) "" else {
                     ups.first_task_outer(this).let { outer ->
                         val xups = ups.all_until(this) { it == outer } // all ups between this -> outer
@@ -474,35 +475,28 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 }
             """
             { // PUB | ${this.dump()}
-                ${this.tsk.cond { it.code() }}
-                CEU_Value tsk = ${this.tsk.cond2({"""
-                    ceux_peek(X->S, XX(-1))
+                ${ups.isdst(this).cond{ """
+                    ${sta.dcl(this,"CEU_Value")} $id = CEU_ACC_KEEP();
+                """ }}
+                ${this.tsk.cond2({"""
+                    ${it.code()}
+                    CEU_Value tsk = ceu_acc;
+                    if (!ceu_istask_val(tsk)) {
+                        CEU_ERROR_CHK_PTR (
+                            continue,
+                            "pub error : expected task",
+                            ${this.toerr()}
+                        );
+                    }
                 """},{"""
                     //ceu_dyn_to_val((CEU_Dyn*)${up_task_real_c()});
-                    ceu_dyn_to_val((CEU_Dyn*)$exe)
+                    CEU_Value tsk = ceu_dyn_to_val((CEU_Dyn*)$exe);
                 """})}
-                ;
-                ${this.tsk.cond { """
-                    if (!ceu_istask_val(tsk)) {
-                        CEU_ERROR_THR_S(continue, "pub error : expected task", ${this.toerr()});
-                    }
-                """ }}
                 ${ups.isdst(this).cond2({ """
-                    // [v,(tsk)]
-                    CEU_Value v = ceux_peek(X->S, XX(${this.tsk.cond2({"-2"},{"-1"})}));
-                    ceu_gc_inc_val(v);
                     ceu_gc_dec_val(tsk.Dyn->Exe_Task.pub);
-                    tsk.Dyn->Exe_Task.pub = v;
-                    ${this.tsk.cond { "ceux_pop(X->S, 1);" }}
-                    // [v]
+                    tsk.Dyn->Exe_Task.pub = $id;
                 """ },{ """
-                    // [(tsk)]
-                    ${this.tsk.cond2({"""
-                        ceux_repl(X->S, XX(-1), tsk.Dyn->Exe_Task.pub);                        
-                    """},{"""
-                        ceux_push(X->S, 1, tsk.Dyn->Exe_Task.pub);
-                    """})}
-                    // [pub]
+                    CEU_ACC(tsk.Dyn->Exe_Task.pub);
                 """ })}
             }
             """
