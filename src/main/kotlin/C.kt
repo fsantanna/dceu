@@ -204,6 +204,10 @@ fun Coder.main (tags: Tags): String {
     #endif
         };
         CEU_ACTION act;
+    #if CEU >= 4
+        //uint32_t now;
+        struct CEUX* up;
+    #endif
     #endif
         int n;
         CEU_Value* args;
@@ -1752,6 +1756,9 @@ fun Coder.main (tags: Tags): String {
                         exe->clo,
                         {.exe = (CEU_Exe*) exe},
                         CEU_ACTION_ABORT,
+        #if CEU >= 4
+                        NULL,   // TODO: no access to up(ceux)
+        #endif
                         0,
                         args
                     };
@@ -1779,6 +1786,16 @@ fun Coder.main (tags: Tags): String {
     """
     val c_task = """ // TASK
         #if CEU >= 4
+        CEU_Exe_Task* ceu_task_up (CEUX* ceux) {
+            if (ceux->exe!=NULL && ceux->exe->type==CEU_VALUE_EXE_TASK) {
+                return (CEU_Exe_Task*) ceux->exe;
+            } else if (ceux->up == NULL) {
+                return &CEU_GLOBAL_TASK;
+            } else {
+                return ceu_task_up(ceux->up);
+            }
+        }
+        
         void ceu_dyn_unlink (CEU_Dyn* dyn) {
             CEU_Links* me_lnks = CEU_LNKS(dyn);
             {   // UP-DYN-DN
@@ -1922,6 +1939,7 @@ fun Coder.main (tags: Tags): String {
                         tsk->clo,
                         {.exe_task = tsk},
                         CEU_ACTION_RESUME,
+                        NULL,   // TODO: no access to up(ceux)
                         1,
                         evt
                     };
@@ -2017,7 +2035,7 @@ fun Coder.main (tags: Tags): String {
                 }
                 max = xmax.Number;
             }
-            CEU_Value ret = ceu_create_tasks(max, ceu_up_tsk(X), ceu_up_blk(X->S));
+            CEU_Value ret = ceu_create_tasks(max, ceu_task_up(X), ceu_up_blk(X->S));
             ceux_push(X->S, 1, ret);
             return 1;
         }
@@ -2054,6 +2072,13 @@ fun Coder.main (tags: Tags): String {
     
     int main (int ceu_argc, char** ceu_argv) {
         assert(CEU_TAG_nil == CEU_VALUE_NIL);
+        
+    #if CEU >= 4
+        CEUX _ceux_ = {
+            NULL, {NULL}, CEU_ACTION_INVALID, NULL, 0, NULL
+        };
+        CEUX* ceux = &_ceux_;
+    #endif
         
         do {
             ${this.code}

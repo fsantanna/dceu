@@ -387,6 +387,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ceu_coro_$n.Dyn->Exe.clo,
                         {.exe = (CEU_Exe*) ceu_coro_$n.Dyn},
                         CEU_ACTION_RESUME,
+                    #if CEU >= 4
+                        ceux,
+                    #endif
                         ${this.args.size},
                         ${sta.idx(this,"args_$n")}
                     };
@@ -442,7 +445,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     }.joinToString("")}
 
                     ${this.tsk.code()}
-                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, (CEU_Dyn*)&CEU_GLOBAL_TASK, &$blkc);
+                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, (CEU_Dyn*)ceu_task_up(ceux), &$blkc);
                     CEU_ACC(ceu_exe_$n);
                     CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
                     ceu_gc_inc_val(ceu_exe_$n);
@@ -451,6 +454,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ceu_exe_$n.Dyn->Exe.clo,
                         {.exe = (CEU_Exe*) ceu_exe_$n.Dyn},
                         CEU_ACTION_RESUME,
+                        ceux,
                         ${this.args.size},
                         ${sta.idx(this,"args_$n")}
                     };
@@ -714,6 +718,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         (CEU_Clo*) ceu_clo_$n.Dyn,
                     #if CEU >= 3
                         {NULL}, CEU_ACTION_INVALID,
+                    #endif
+                    #if CEU >= 4
+                        ceux,
                     #endif
                         ${this.args.size},
                         ${sta.idx(this, "args_$n")}
