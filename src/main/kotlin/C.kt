@@ -1623,7 +1623,7 @@ fun Coder.main (tags: Tags): String {
     }
 
     val c_exes = """
-        #if CEU >= 3
+    #if CEU >= 3
         int ceu_isexe_val (CEU_Value val) {
             return (val.type==CEU_VALUE_EXE_CORO CEU4(|| val.type==CEU_VALUE_EXE_TASK));
         }
@@ -1660,65 +1660,48 @@ fun Coder.main (tags: Tags): String {
             CEU_ACC(ret);
         }
 
-        #if 0
-        int ceu_exe_term (CEUX* X) {
+        void ceu_bcast_task (CEU_Exe_Task* tsk, uint32_t now, CEU_Value* evt);
+
+        void ceu_exe_term (CEUX* X) {
             if (X->exe->status == CEU_EXE_STATUS_TERMINATED) {
-                // leave -> outer ref -> gc_dec -> term
-                return 0;
+                return;
             }
             X->exe->status = CEU_EXE_STATUS_TERMINATED;
-            int ret = 0;
     #if CEU >= 4
-            if (X->exe->type == CEU_VALUE_EXE_TASK) {
-                // task return value in pub(t)
-                ceu_gc_dec_val(X->exe_task->pub);
-                if (X->action==CEU_ACTION_ABORT || ceux_n_get(X->S)==0) {
-                    X->exe_task->pub = (CEU_Value) { CEU_VALUE_NIL };
-                } else {
-                    X->exe_task->pub = ceux_peek(X->S, XX(-1));
-                }
-                ceu_gc_inc_val(X->exe_task->pub);
-                
-                // do not bcast aborted task b/c
-                // it would awake parents that actually need to
-                // respond/catch the error (thus not awake)
-                if (X->action != CEU_ACTION_ABORT) {
-                    CEU_Exe_Task* tsk = ((CEU_Exe_Task*) X->exe);
-                    CEU_Dyn* up;
+            if (X->exe->type != CEU_VALUE_EXE_TASK) {
+                return;
+            }
+            if (X->act == CEU_ACTION_ABORT) {
+                return;
+            }
+            assert(ceu_acc.type != CEU_VALUE_ERROR);
+            
+            // do not bcast aborted task b/c
+            // it would awake parents that actually need to
+            // respond/catch the error (thus not awake)
+            CEU_Exe_Task* tsk = ((CEU_Exe_Task*) X->exe);
+            CEU_Exe_Task* up;
     #if CEU >= 5
-                    if (tsk->lnks.up.dyn!=NULL && tsk->lnks.up.dyn->Any.type==CEU_VALUE_TASKS) {
-                        // tsk <- pool <- tsk
-                        up = CEU_LNKS(tsk->lnks.up.dyn)->up.dyn;
-                    } else
-    #endif
-                    {
-                        // tsk <- tsk
-                        up = tsk->lnks.up.dyn;
-                    }
-                    if (up!=NULL && !CEU_ERROR_IS(X->S)) {
-                        assert(CEU_TIME < UINT32_MAX);
-                        CEU_TIME++;
-                        int i = ceux_push(X->S, 1, ceu_dyn_to_val((CEU_Dyn*) X->exe));   // bcast myself
-                        ret = ceu_bcast_dyn(X, CEU_ACTION_RESUME, CEU_TIME, up);
-                        //assert(ret == 0);
-                        assert(X->exe->refs >= 2);  // ensures that the unlink below is safe (otherwise call gc_inc)
-                        ceux_rem_n(X->S, i, 1);
-                    }
-                    ceu_gc_dec_dyn((CEU_Dyn*) X->exe);  // only if natural termination
-                }
-                
-                if (!CEU_ERROR_IS(X->S)) {
-                    ceux_n_set(X->S, 0);
-                }
-                return ret;
+            if (tsk->lnks.up.dyn!=NULL && tsk->lnks.up.dyn->Any.type==CEU_VALUE_TASKS) {
+                // tsk <- pool <- tsk
+                up = CEU_LNKS(tsk->lnks.up.dyn)->up.dyn;
             } else
     #endif
             {
-                return ceux_rets(X);
+                // tsk <- tsk
+                up = (CEU_Exe_Task*) tsk->lnks.up.dyn;
+                assert(up->type == CEU_VALUE_EXE_TASK);
             }
+            assert(up != NULL);
+            assert(CEU_TIME < UINT32_MAX);
+            CEU_TIME++;
+            CEU_Value evt = ceu_dyn_to_val((CEU_Dyn*) X->exe);
+            ceu_bcast_task(up, CEU_TIME, &evt);
+            ceu_gc_dec_dyn((CEU_Dyn*) X->exe);  // only if natural termination
+    #endif
         }
 
-        #if CEU >= 5
+    #if CEU >= 5
         void ceu_abort_tasks (CEU_Tasks* tsks) {
             if (tsks->lnks.up.dyn == NULL) {
                 return;     // already unlinked/killed
@@ -1734,8 +1717,7 @@ fun Coder.main (tags: Tags): String {
                 cur = nxt;
             }
         }
-        #endif
-        #endif
+    #endif
         
         void ceu_abort_exe (CEU_Exe* exe) {
             assert(ceu_isexe_dyn((CEU_Dyn*) exe));
