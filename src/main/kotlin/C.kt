@@ -1770,13 +1770,13 @@ fun Coder.main (tags: Tags): String {
     """
     val c_task = """ // TASK
         #if CEU >= 4
-        CEU_Exe_Task* ceu_task_up (CEUX* ceux) {
-            if (ceux->exe!=NULL && ceux->exe->type==CEU_VALUE_EXE_TASK) {
-                return (CEU_Exe_Task*) ceux->exe;
-            } else if (ceux->up == NULL) {
+        CEU_Exe_Task* ceu_task_up (CEUX* X) {
+            if (X->exe!=NULL && X->exe->type==CEU_VALUE_EXE_TASK) {
+                return (CEU_Exe_Task*) X->exe;
+            } else if (X->up == NULL) {
                 return &CEU_GLOBAL_TASK;
             } else {
-                return ceu_task_up(ceux->up);
+                return ceu_task_up(X->up);
             }
         }
         
@@ -1957,13 +1957,9 @@ fun Coder.main (tags: Tags): String {
             
             if (xin.type == CEU_VALUE_TAG) {
                 if (xin.Tag == CEU_TAG_global) {
-                    //ret = ceu_bcast_tasks(X, CEU_ACTION_RESUME, CEU_TIME, (CEU_Dyn*) &CEU_GLOBAL_TASK);
+                    ceu_bcast_tasks((CEU_Dyn*) &CEU_GLOBAL_TASK, CEU_ACTION_RESUME, CEU_TIME, &evt);
                 } else if (xin.Tag == CEU_TAG_task) {
-                    if (X->exe_task == NULL) {
-                        ceu_bcast_tasks((CEU_Dyn*)&CEU_GLOBAL_TASK, CEU_ACTION_RESUME, CEU_TIME, &evt);
-                    } else {
-                        //ret = ceu_bcast_task(X, CEU_ACTION_RESUME, CEU_TIME, X->exe_task);
-                    }
+                    ceu_bcast_tasks((CEU_Dyn*) ceu_task_up(X), CEU_ACTION_RESUME, CEU_TIME, &evt);
                 } else {
                     CEU_ACC(CEU_ERROR_PTR("broadcast error : invalid target"));
                 }
@@ -1972,6 +1968,7 @@ fun Coder.main (tags: Tags): String {
                     if (xin.Dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {
                         // nothing
                     } else {
+                        assert(0 && "TODO");
                         //ceu_bcast_task(X, CEU_ACTION_RESUME, CEU_TIME, &xin.Dyn->Exe_Task);
                     }
                 } else {
