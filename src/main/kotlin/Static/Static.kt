@@ -50,12 +50,13 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     }
     fun idx (dcl: Expr.Dcl, src: Expr): String {
         val id = dcl.idtag.first.str.idc()
+        val idx = id + "_" + dcl.n
         val ismem = this.ismem(vars.dcl_to_blk[dcl]!!)
         //println(listOf(src.tk.pos.lin, id, type(dcl,src)))
         return when (vars.type(dcl,src)) {
             Type.GLOBAL -> "ceu_glb_$id"
-            Type.LOCAL -> if (ismem) "(ceu_mem->$id)" else "ceu_loc_$id"
-            Type.PARAM -> if (ismem) "(ceu_mem->$id)" else "ceu_par_$id"
+            Type.LOCAL -> if (ismem) "(ceu_mem->$idx)" else "ceu_loc_$id"
+            Type.PARAM -> if (ismem) "(ceu_mem->$id)"  else "ceu_par_$id"
             /*
             Type.NESTED -> {
                 val enc  = this.dcl_to_blk[dcl]!!

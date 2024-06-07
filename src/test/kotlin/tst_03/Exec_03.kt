@@ -64,6 +64,23 @@ class Exec_03 {
         """)
         assert(out == "anon : (lin 3, col 47) : yield error : unexpected enclosing func\n") { out }
     }
+    @Test
+    fun aa_07_val_same() {
+        val out = test("""
+            coro () {
+                do {
+                    val x
+                    yield(nil)
+                }
+                do {
+                    val x
+                    yield(nil)
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // NATIVE
 
