@@ -1660,7 +1660,9 @@ fun Coder.main (tags: Tags): String {
             CEU_ACC(ret);
         }
 
+    #if CEU >= 4
         void ceu_bcast_task (CEU_Exe_Task* tsk, uint32_t now, CEU_Value* evt);
+    #endif
 
         void ceu_exe_term (CEUX* X) {
             if (X->exe->status == CEU_EXE_STATUS_TERMINATED) {

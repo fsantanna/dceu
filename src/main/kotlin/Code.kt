@@ -170,7 +170,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     val blkc = sta.idx(this, "block_$n")
                     """
                     { // BLOCK | ${this.dump()}
-                        ${(!sta.ismem(this)).cond { "CEU_Block" }} $blkc = NULL;
+                        ${(CEU >= 4).cond { """
+                             ${(!sta.ismem(this)).cond { "CEU_Block" }} $blkc = NULL;
+                        """}}
                         ${(this == outer).cond { """
                             { // ARGC / ARGV
                                 CEU_Value args[ceu_argc];

@@ -903,4 +903,44 @@ class Parser_01 {
         val e = parser.exprs()
         assert(e.tostr() == "println(:X-a)\n") { e.tostr() }
     }
+
+    // INNOCUOUS
+
+    @Test
+    fun yy_01_innoc() {
+        val l = lexer("""
+            do {
+                1
+            }
+            nil
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : expression error : innocuous expression")
+    }
+    @Test
+    fun yy_02_innoc() {
+        val l = lexer("""
+            do {
+                var x
+                set x = [0]
+                x   ;; escape but no access
+            }
+            println(1)
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : expression error : innocuous expression")
+    }
+    @Test
+    fun yy_03_innoc() {
+        val l = lexer("""
+            do {
+                do {
+                    1
+                }
+                nil
+            }
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 3, col 17) : expression error : innocuous expression")
+    }
 }

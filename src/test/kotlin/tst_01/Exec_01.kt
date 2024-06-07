@@ -60,7 +60,7 @@ class Exec_01 {
             do {
                 var g
                 set g = f
-                nil
+                ;;nil
             }
             println(f)
         """)
@@ -626,7 +626,7 @@ class Exec_01 {
             do {
                 var x
                 set x = [0]
-                x   ;; escape but no access
+                ;;x   ;; escape but no access
             }
             println(1)
         """
@@ -1758,7 +1758,7 @@ class Exec_01 {
                 }
                 do {
                     val x = f           ;; nested do, but could be in par block from bcast
-                    nil
+                    ;;nil
                 }
             }
             println(:ok)
@@ -2079,7 +2079,7 @@ class Exec_01 {
                 val t1 = []
                 do {
                     val t2 = []
-                    [t1,[],t2]
+                    do [t1,[],t2]
                 }
             }
             println(:ok)
@@ -4658,7 +4658,7 @@ class Exec_01 {
             """
             do {
                 val t = []
-                [t]
+                do [t]
             }
             println(:ok)
         """
@@ -4830,7 +4830,7 @@ class Exec_01 {
             """
             do {
                 val xxx = []    ;; gc'd by block
-                nil
+                ;;nil
             }
             `ceu_dump_gc();`
             ;;println(`:number CEU_GC.free`)
@@ -5022,7 +5022,7 @@ class Exec_01 {
             do {
                 do {
                     var v = []
-                    ;;;drop;;;(v)
+                    do;;;drop;;;(v)
                 }
                 println(`:number CEU_GC.free`)
             }
@@ -5080,15 +5080,15 @@ class Exec_01 {
             val t = []
             do {
                 val x = [t]
-                nil
+                ;;nil
             }
             do {
                 val x = [t]
-                nil
+                ;;nil
             }
             do {
                 val x = [t]
-                nil
+                ;;nil
             }
             dump(t)
         """)

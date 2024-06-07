@@ -188,7 +188,7 @@ class Exec_02 {
             println(1)
         """)
         //assert(out == "anon : (lin 2, col 5) : throw error : expected tag\n") { out }
-        assert(out == " |  anon : (lin 2, col 5) : error([])\n" +
+        assert(out == " |  anon : (lin 3, col 17) : error([])\n" +
                 " v  error : []\n") { out }
     }
     @Test

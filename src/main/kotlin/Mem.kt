@@ -69,7 +69,9 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
             is Expr.Do -> sta.ismem(this).cond {
                 """
                 struct { // BLOCK | ${this.dump()}
-                    CEU_Block block_$n;
+                    ${(CEU >= 4).cond { """
+                        CEU_Block block_$n;
+                    """ }}
                     ${vars.blk_to_dcls[this]!!.map { """
                         CEU_Value ${it.idtag.first.str.idc()};
                     """ }.joinToString("") }
