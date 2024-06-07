@@ -87,6 +87,15 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
+                if (this.tk.str == "task") {
+                    val es = this.blk.es.dropLastWhile { it is Expr.Delay }
+                    val lst = es.lastOrNull()
+                    when {
+                        (lst == null) -> {}
+                        lst.is_innocuous() -> err(lst.tk, "expression error : innocuous expression")
+                        else -> {}
+                    }
+                }
                 if (this.nst) {
                     if (ups.first(ups.pub[this]!!) { it is Expr.Proto }.let {
                         //(CEU>=99 && it==outer.clo) /* bc of top-level spawn {...} */ ||

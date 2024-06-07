@@ -72,6 +72,15 @@ class Exec_04 {
         )
         assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro or task\n") { out }
     }
+    @Test
+    fun aa_06_innoc() {
+        val out = test("""
+            val T = task () {
+                :ok ;; innocuous
+            }
+        """)
+        assert(out == "anon : (lin 3, col 17) : expression error : innocuous expression\n") { out }
+    }
 
     // SPAWN
 
@@ -617,7 +626,7 @@ class Exec_04 {
                 val evt = yield(nil)
                 set pub = evt
                 println(:in, pub)
-                :ok
+                set pub = :ok
             }
             val t = spawn T() 
             do {
@@ -656,7 +665,8 @@ class Exec_04 {
             println(broadcast(1))
         """
         )
-        assert(out == "\n") { out }
+        assert(out == "nil\n") { out }
+        //assert(out == "\n") { out }
         //assert(out == "true\n") { out }
     }
     @Test

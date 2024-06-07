@@ -1340,10 +1340,12 @@ class Parser (lexer_: Lexer)
         while (!this.checkFix("}") && !this.checkEnu("Eof")) {
             ret.add(this.expr())
         }
-        ret.forEachIndexed { i,e ->
-            val ok = (i == ret.size-1) || !e.is_innocuous()
-            if (!ok) {
-                err(e.tk, "expression error : innocuous expression")
+        val es = ret.dropLastWhile { it is Expr.Delay }  // ignore delay at the end
+        es.forEachIndexed { i, e ->
+            when {
+                (i == es.size - 1) -> {}   // last can be innocuous (just return)
+                !e.is_innocuous() -> {}     // others must do something
+                else -> err(e.tk, "expression error : innocuous expression")
             }
         }
         return ret
