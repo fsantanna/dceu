@@ -460,8 +460,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ${sta.idx(this,"args_$n")}
                     };
                     ceu_exe_$n.Dyn->Exe.clo->proto(&ceux_$n);
-                    ceu_acc = ceu_exe_$n;
                     ${this.check_error_aborted(this.toerr())}
+                    ceu_acc = ceu_exe_$n;
                 } // SPAWN | ${this.dump()}
                 """
             }
