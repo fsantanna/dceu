@@ -1953,7 +1953,6 @@ fun Coder.main (tags: Tags): String {
 
             CEU_Value xin = X->args[0];
             CEU_Value evt = X->args[1];
-            ceu_gc_inc_val(evt);
             
             if (xin.type == CEU_VALUE_TAG) {
                 if (xin.Tag == CEU_TAG_global) {
@@ -1975,7 +1974,7 @@ fun Coder.main (tags: Tags): String {
                     CEU_ACC(CEU_ERROR_PTR("broadcast error : invalid target"));
                 }
             }
-            ceu_gc_dec_val(evt);
+            ceu_gc_dec_args(X->n, X->args);
         }
         #endif
     """

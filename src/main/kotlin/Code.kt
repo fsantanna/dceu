@@ -412,8 +412,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         CEU_ACC((CEU_Value) { CEU_VALUE_NIL }); // to be ignored in further move/checks
                         continue;
                     }
-                    ceu_gc_dec_val(ceu_acc);
-                    ceu_acc = ((ceux->n > 0) ? ceux->args[0] : (CEU_Value) { CEU_VALUE_NIL });
+                    CEU_ACC(((ceux->n > 0) ? ceux->args[0] : (CEU_Value) { CEU_VALUE_NIL }));
                 #if CEU >= 4
                     if (ceux->act == CEU_ACTION_ERROR) {
                         continue;
@@ -449,7 +448,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, (CEU_Dyn*)ceu_task_up(ceux), &$blkc);
                     CEU_ACC(ceu_exe_$n);
                     CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
-                    ceu_gc_inc_val(ceu_exe_$n);
+                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
 
                     CEUX ceux_$n = {
                         ceu_exe_$n.Dyn->Exe.clo,
@@ -461,6 +460,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     };
                     ceu_exe_$n.Dyn->Exe.clo->proto(&ceux_$n);
                     ${this.check_error_aborted(this.toerr())}
+                    ceu_gc_dec_val(ceu_acc);
                     ceu_acc = ceu_exe_$n;
                 } // SPAWN | ${this.dump()}
                 """
