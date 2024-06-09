@@ -227,12 +227,9 @@ fun Coder.main (tags: Tags): String {
     } CEU_Clo;
     
     #if CEU >= 3
-    #define _CEU_Clo_Exe_   \
-        _CEU_Clo_           \
-        int mem_n;
-        
     typedef struct CEU_Clo_Exe {
-        _CEU_Clo_Exe_
+        _CEU_Clo_
+        int mem_n;
     } CEU_Clo_Exe;    
 
     #define _CEU_Exe_                   \
@@ -248,11 +245,6 @@ fun Coder.main (tags: Tags): String {
     #endif
     
     #if CEU >= 4
-    typedef struct CEU_Clo_Exe_Task {
-        _CEU_Clo_Exe_
-        struct CEU_Exe_Task* up_tsk;
-    } CEU_Clo_Exe_Task;
-    
     // block points to first task/tasks
     typedef union CEU_Dyn* CEU_Block;
 
@@ -308,9 +300,6 @@ fun Coder.main (tags: Tags): String {
         struct CEU_Clo      Clo;
     #if CEU >= 3
         struct CEU_Clo_Exe  Clo_Exe;
-    #endif
-    #if CEU >= 4
-        struct CEU_Clo_Exe_Task Clo_Exe_Task;
     #endif
     #if CEU >= 3
         struct CEU_Exe      Exe;
@@ -1285,18 +1274,7 @@ fun Coder.main (tags: Tags): String {
         clo.Dyn->Clo_Exe.mem_n = mem_n;
         return clo;
     }
-    #endif
 
-    #if CEU >= 4
-    CEU_Value ceu_create_clo_task (CEU_Proto proto, int pars, int upvs, int mem_n, CEU_Exe_Task* up_tsk) {
-        CEU_Value clo = _ceu_create_clo_(CEU_VALUE_CLO_TASK, sizeof(CEU_Clo_Exe_Task), proto, pars, upvs);
-        clo.Dyn->Clo_Exe_Task.mem_n = mem_n;
-        clo.Dyn->Clo_Exe_Task.up_tsk = up_tsk;
-        return clo;
-    }
-    #endif
-    
-    #if CEU >= 3
     CEU_Value ceu_create_exe (int type, int sz, CEU_Value clo) {
         ceu_debug_add(type);
         assert(clo.type==CEU_VALUE_CLO_CORO CEU4(|| clo.type==CEU_VALUE_CLO_TASK));
@@ -1316,6 +1294,12 @@ fun Coder.main (tags: Tags): String {
     #endif
     
     #if CEU >= 4
+    CEU_Value ceu_create_clo_task (CEU_Proto proto, int pars, int upvs, int mem_n) {
+        CEU_Value clo = _ceu_create_clo_(CEU_VALUE_CLO_TASK, sizeof(CEU_Clo_Exe), proto, pars, upvs);
+        clo.Dyn->Clo_Exe.mem_n = mem_n;
+        return clo;
+    }
+
     CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Dyn* up_dyn, CEU_Block* up_blk) {
     #if CEU >= 5
         int ceu_tasks_n (CEU_Tasks* tsks) {

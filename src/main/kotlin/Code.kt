@@ -132,7 +132,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             ${this.pars.size},
                             ${vars.proto_to_upvs[this]!!.size}
                             ${isexe.cond {", sizeof(CEU_Pro_$id)"}}
-                            ${istsk.cond { ", ${if (isnst) "X->exe_task" else "NULL"}" }}
                         )
                     );
                     ${isexe.cond { """
