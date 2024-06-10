@@ -53,6 +53,16 @@ fun Expr.has_block (): Boolean {
     }
 }
 
+fun Expr.Proto.id (outer: Expr.Do, ups: Ups): String {
+    return ups.pub[this].let {
+        when {
+            (it !is Expr.Dcl) -> this.n.toString()
+            (it.src != this) -> error("bug found")
+            else -> it.idtag.first.str.idc() + (ups.first(this) { it is Expr.Do } != outer).cond { "_${this.n}" }
+        }
+    }
+}
+
 fun Expr.is_innocuous (): Boolean {
     return when (this) {
         is Expr.Do -> this.es.lastOrNull()?.is_innocuous() ?: true

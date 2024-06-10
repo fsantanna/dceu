@@ -14,7 +14,9 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     }
 
     // at least 1 yield (including subs) or nested coro/task
-    val ylds: MutableSet<Expr>  = mutableSetOf()
+    // Do or Proto that requires mem:
+    //  - yields or contains nested task
+    val mems: MutableSet<Expr>  = mutableSetOf()
 
     // void: block is innocuous -> should be a proxy to up block
     fun void (blk: Expr): Boolean {
@@ -39,7 +41,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         return when {
             (proto == null) -> false
             void(up) -> false
-            ylds.contains(up) -> true
+            mems.contains(up) -> true
             else -> false
         }
     }
@@ -60,9 +62,9 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             Type.PARAM -> if (ismem) "(ceu_mem->$id)"  else "ceu_par_$id"
             Type.NESTED -> {
                 val xups = ups.all_until(src) { it == blk } // all ups between src -> dcl
-                val n1 = ups.first(blk) { it is Expr.Proto }!!.n
-                val n2 = xups.count { it is Expr.Proto && it!=blk }
-                "((struct CEU_Pro_$n1*)ceux->exe_task->${"lnks.up.tsk->".repeat(n2)}mem)->$idx"
+                val xid = (ups.first(blk) { it is Expr.Proto } as Expr.Proto).id(outer, ups)
+                val xn = xups.count { it is Expr.Proto && it!=blk }
+                "((CEU_Pro_$xid*)ceux->exe_task->${"lnks.up.tsk->".repeat(xn)}mem)->$idx"
             }
             else -> "ceu_upv_$id"
         }
@@ -99,6 +101,9 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     } else {
                         err(this.tk, "task :nested error : expected enclosing task")
                     }
+                    ups.all_until(ups.pub[this]!!) { it is Expr.Proto }
+                        .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
+                        .forEach { mems.add(it) }
 
                     /*
                     val up1 = ups.pub[this]
@@ -203,7 +208,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
                 ups.all_until(this) { it is Expr.Proto }
                     .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
-                    .forEach { ylds.add(it) }
+                    .forEach { mems.add(it) }
             }
             is Expr.Resume -> {
                 this.co.traverse()

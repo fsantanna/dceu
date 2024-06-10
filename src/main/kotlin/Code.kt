@@ -7,15 +7,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
     val pres: MutableList<Pair<String,String>> = mutableListOf()
     val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
     val code: String = outer.code()
-    fun Expr.Proto.idc (): String {
-        return ups.pub[this].let {
-            when {
-                (it !is Expr.Dcl) -> this.n.toString()
-                (it.src != this) -> error("bug found")
-                else -> it.idtag.first.str.idc()
-            }
-        }
-    }
 
     fun Expr.up_task_real_c (): String {
         val n = ups.all_until(this) {
@@ -59,7 +50,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val istsk = (this.tk.str == "task")
                 val isnst = ups.isnst(this)
                 val code = this.blk.code()
-                val id = this.idc() + (ups.first(this) { it is Expr.Do } != outer).cond { "_${this.n}" }
+                val id = this.id(outer,ups)
 
                 pres.add(Pair("""
                     // PROTO | ${this.dump()}
