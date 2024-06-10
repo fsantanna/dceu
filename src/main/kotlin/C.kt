@@ -248,9 +248,13 @@ fun Coder.main (tags: Tags): String {
     // block points to first task/tasks
     typedef union CEU_Dyn* CEU_Block;
 
+    struct CEU_Exe_Task;
     typedef struct CEU_Links {
         struct {
-            union CEU_Dyn* dyn;
+            union {
+                union CEU_Dyn* dyn;
+                struct CEU_Exe_Task* tsk;     // (also to access outer var from nested)
+            };
             CEU_Block* blk;
         } up;
         struct {
@@ -1675,7 +1679,7 @@ fun Coder.main (tags: Tags): String {
     #endif
             {
                 // tsk <- tsk
-                up = (CEU_Exe_Task*) tsk->lnks.up.dyn;
+                up = tsk->lnks.up.tsk;
                 assert(up->type == CEU_VALUE_EXE_TASK);
             }
             assert(up != NULL);
@@ -2032,7 +2036,9 @@ fun Coder.main (tags: Tags): String {
     // MAIN
     fun main (): String {
         return """
-    ${this.pres.joinToString("")}
+    ${this.pres.unzip().let { (mems,protos) ->
+        mems.joinToString("") + protos.joinToString("")
+    }}
     
     int main (int ceu_argc, char** ceu_argv) {
         assert(CEU_TAG_nil == CEU_VALUE_NIL);

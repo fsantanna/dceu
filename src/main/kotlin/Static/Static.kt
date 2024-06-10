@@ -51,26 +51,19 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     fun idx (dcl: Expr.Dcl, src: Expr): String {
         val id = dcl.idtag.first.str.idc()
         val idx = id + "_" + dcl.n
-        val ismem = this.ismem(vars.dcl_to_blk[dcl]!!)
+        val blk = vars.dcl_to_blk[dcl]!!
+        val ismem = this.ismem(blk)
         //println(listOf(src.tk.pos.lin, id, type(dcl,src)))
         return when (vars.type(dcl,src)) {
             Type.GLOBAL -> "ceu_glb_$id"
             Type.LOCAL -> if (ismem) "(ceu_mem->$idx)" else "ceu_loc_$id"
             Type.PARAM -> if (ismem) "(ceu_mem->$id)"  else "ceu_par_$id"
-            /*
             Type.NESTED -> {
-                val enc  = this.dcl_to_blk[dcl]!!
-                val xups = ups.all_until(src) { it == enc } // all ups between src -> dcl
-                val n = xups.count { it is Expr.Proto && it!=enc }
-                val XX = "$X${"->exe->clo.Dyn->Clo_Task.up_tsk->X".repeat(n)}"
-                val (_,idx) = this.idx(XX,dcl,ii,if (enc is Expr.Proto) enc.blk else dcl)
-                //println(listOf(n,id,XX,idx,dcl,src))
-                Pair("$XX->S /* nested */", idx)
+                val xups = ups.all_until(src) { it == blk } // all ups between src -> dcl
+                val n1 = ups.first(blk) { it is Expr.Proto }!!.n
+                val n2 = xups.count { it is Expr.Proto && it!=blk }
+                "((struct CEU_Pro_$n1*)ceux->exe_task->${"lnks.up.tsk->".repeat(n2)}mem)->$idx"
             }
-            Type.UPVAL -> {
-                Pair("$X->S", "($X->clo + 1 + $X->args + $upv) /* upval $id */")
-            }
-             */
             else -> "ceu_upv_$id"
         }
     }

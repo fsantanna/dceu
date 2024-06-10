@@ -81,12 +81,13 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
     fun type (dcl: Expr, src: Expr): Type {
         val blk = dcl_to_blk[dcl]!!
-        val xups = ups.first(src) { it is Expr.Proto || it==blk }
+        val up  = ups.first(src) { it is Expr.Proto || it==blk }
+        val xups = ups.all_until(src) { it == blk } // all ups between src -> dcl
         return when {
             (blk == outer) -> Type.GLOBAL
-            (xups is Expr.Do) -> Type.LOCAL
-            (xups == blk) -> Type.PARAM
-            //xups.all { it !is Expr.Proto || ups.isnst(it) || it==blk } -> Type.NESTED
+            (up is Expr.Do) -> Type.LOCAL
+            (up == blk) -> Type.PARAM
+            xups.all { it !is Expr.Proto || ups.isnst(it) || it==blk } -> Type.NESTED
             else -> Type.UPVAL
         }
     }

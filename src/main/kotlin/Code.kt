@@ -3,7 +3,8 @@ package dceu
 import kotlin.math.max
 
 class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) {
-    val pres: MutableList<String> = mutableListOf()
+    // Pair<mems,protos>: need to separate b/c protos must be inner->outer, while mems outer->inner
+    val pres: MutableList<Pair<String,String>> = mutableListOf()
     val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
     val code: String = outer.code()
     fun Expr.Proto.idc (): String {
@@ -60,13 +61,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val code = this.blk.code()
                 val id = this.idc() + (ups.first(this) { it is Expr.Do } != outer).cond { "_${this.n}" }
 
-                pres.add("""
+                pres.add(Pair("""
                     // PROTO | ${this.dump()}
                     ${isexe.cond { """
-                        typedef struct {
+                        typedef struct CEU_Pro_$id {
                             ${Mem(ups, vars, sta, defers).pub(this)}
                         } CEU_Pro_$id;                        
                     """ }}
+                ""","""
+                    // PROTO | ${this.dump()}
                     void ceu_pro_$id (CEUX* ceux) {
                         //{ // upvs
                             ${vars.proto_to_upvs[this]!!.mapIndexed { i, dcl -> """
@@ -120,12 +123,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             } // close switch
                         """}}
                     }
-                """)
+                """))
 
                 //assert(!this.isva) { "TODO" }
                 """ // CREATE | ${this.dump()}
                 {
-                    ${isnst.cond { "assert(X->exe!=NULL && X->exe->type==CEU_VALUE_EXE_TASK);" }}
+                    ${isnst.cond { "assert(ceux->exe!=NULL && ceux->exe->type==CEU_VALUE_EXE_TASK);" }}
                     CEU_ACC (
                         ceu_create_clo_${this.tk.str} (
                             ceu_pro_$id,
@@ -559,7 +562,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ${this.check_error_aborted(this.toerr())}
                     """
                     ":pre" -> {
-                        pres.add(body)
+                        pres.add(Pair("",body))
                         "CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));"
                     }
                     ":ceu" -> "CEU_ACC($body);"
