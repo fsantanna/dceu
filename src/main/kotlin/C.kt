@@ -399,7 +399,11 @@ fun Coder.main (tags: Tags): String {
     }
     fun dumps (): String {
         return """
-#ifdef CEU_DEBUG
+#ifndef CEU_DEBUG
+    void ceu_pro_dump (CEUX* X) {
+        assert(0 && "DEBUG is off");
+    }
+#else
     #if 0
     void ceu_dump_frame (CEU_Frame* frame) {
         printf(">>> FRAME: %p\n", frame);
