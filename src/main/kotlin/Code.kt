@@ -8,16 +8,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
     val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
     val code: String = outer.code()
 
-    fun Expr.up_task_real_c (): String {
-        val n = ups.all_until(this) {
-                it is Expr.Proto && it.tk.str=="task" && !ups.isnst(it)
-            }
-            .filter { it is Expr.Proto } // but count all protos in between
-            .count()
-        val (x,y) = Pair("ceu_frame_up_frame(".repeat(n-1), ")".repeat(n-1))
-        return "(($x ceu_frame $y)->exe_task)"
-    }
-
     fun List<Expr>.code (): String {
         return this.map { it.code() }.joinToString("")
     }
@@ -466,9 +456,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val id = sta.idx(this, "val_$n")
                 val exe = if (this.tsk != null) "" else {
                     ups.first_task_outer(this).let { outer ->
-                        val xups = ups.all_until(this) { it == outer } // all ups between this -> outer
-                        val n = xups.count { it is Expr.Proto }
-                        "ceux${"->exe_task->clo.Dyn->Clo_Task.up_tsk->X".repeat(n-1)}->exe_task"
+                        val n = ups.all_until(this) {
+                            it is Expr.Proto && it.tk.str=="task" && !ups.isnst(it)
+                        }
+                            .filter { it is Expr.Proto } // but count all protos in between
+                            .count() - 1
+                        "(ceux->exe_task${"->lnks.up.tsk".repeat(n)})"
                     }
                 }
             """
@@ -487,7 +480,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         );
                     }
                 """},{"""
-                    //ceu_dyn_to_val((CEU_Dyn*)${up_task_real_c()});
                     CEU_Value tsk = ceu_dyn_to_val((CEU_Dyn*)$exe);
                 """})}
                 ${ups.isdst(this).cond2({ """

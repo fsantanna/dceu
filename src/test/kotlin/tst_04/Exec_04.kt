@@ -78,8 +78,10 @@ class Exec_04 {
             val T = task () {
                 :ok ;; innocuous
             }
+            println(:ok)
         """)
-        assert(out == "anon : (lin 3, col 17) : expression error : innocuous expression\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : expression error : innocuous expression\n") { out }
     }
 
     // SPAWN
@@ -626,7 +628,7 @@ class Exec_04 {
                 val evt = yield(nil)
                 set pub = evt
                 println(:in, pub)
-                set pub = :ok
+                :ok
             }
             val t = spawn T() 
             do {
@@ -1111,6 +1113,19 @@ class Exec_04 {
     }
     @Test
     fun dd_18_xceu() {
+        val out = test("""
+            spawn (task () {
+                spawn (task () {
+                    yield(nil)
+                }) ()
+                nil
+            }) ()
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun dd_19_xceu() {
         val out = test("""
             spawn task () {
                 var evt1 = yield(nil)
@@ -2843,6 +2858,7 @@ class Exec_04 {
             """
             val t = task () {
                 set pub = []
+                pub
             }
             val a = spawn (t) ()
             val x = a.pub
@@ -2892,6 +2908,7 @@ class Exec_04 {
                 do {
                     val x = []
                     set pub = x
+                    pub
                 }
             }
             val t = spawn T()
@@ -3112,7 +3129,7 @@ class Exec_04 {
         val out = test("""
             var t
             set t = task () {
-                set pub = 10
+                ;;;set pub =;;; 10
             }
             var a = spawn t()
             println(a.pub + a.pub)
@@ -3542,6 +3559,7 @@ class Exec_04 {
             var t
             set t = task () {
                 set pub = []
+                pub
             }
             var a = spawn (t) ()
             var x
@@ -3561,6 +3579,7 @@ class Exec_04 {
             var t
             set t = task () {
                 set ;;;task.;;;pub = @[]
+                pub
             }
             var a = spawn (t) ()
             var x
@@ -3578,6 +3597,7 @@ class Exec_04 {
             var t
             set t = task () {
                 set ;;;task.;;;pub = #[]
+                pub
             }
             var a = spawn (t) ()
             var x
@@ -3596,6 +3616,7 @@ class Exec_04 {
                 set pub = func () {
                     10
                 }
+                pub
             }
             var T
             set T = task (u) {
@@ -4058,6 +4079,37 @@ class Exec_04 {
 
     // ABORTION
 
+    @Test
+    fun mm_00a_abortion() {
+        val out = test(
+            """
+            spawn (task () {
+                spawn (task () {
+                    defer {
+                        println(:defer)
+                    }
+                } )()
+            } )()
+       """
+        )
+        assert(out == ":1\n:2\n:3\n:defer\n:4\n") { out }
+    }
+    @Test
+    fun mm_00b_abortion() {
+        val out = test(
+            """
+            spawn (task () {
+                spawn (task () {
+                    defer {
+                        println(:defer)
+                    }
+                    yield(nil)
+                } )()
+            } )()
+       """
+        )
+        assert(out == ":1\n:2\n:3\n:defer\n:4\n") { out }
+    }
     @Test
     fun mm_01_abortion() {
         val out = test(

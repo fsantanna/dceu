@@ -1664,7 +1664,10 @@ fun Coder.main (tags: Tags): String {
             if (X->act == CEU_ACTION_ABORT) {
                 return;
             }
-            assert(ceu_acc.type != CEU_VALUE_ERROR);
+            
+            ceu_gc_dec_val(X->exe_task->pub);
+            X->exe_task->pub = ceu_acc;
+            ceu_gc_inc_val(X->exe_task->pub);
             
             // do not bcast aborted task b/c
             // it would awake parents that actually need to
@@ -1955,8 +1958,7 @@ fun Coder.main (tags: Tags): String {
                     if (xin.Dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {
                         // nothing
                     } else {
-                        assert(0 && "TODO");
-                        //ceu_bcast_task(X, CEU_ACTION_RESUME, CEU_TIME, &xin.Dyn->Exe_Task);
+                        ceu_bcast_task(&xin.Dyn->Exe_Task, CEU_TIME, &evt);
                     }
                 } else {
                     CEU_ACC(CEU_ERROR_PTR("broadcast error : invalid target"));
