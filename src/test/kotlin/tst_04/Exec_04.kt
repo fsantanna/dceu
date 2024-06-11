@@ -291,6 +291,22 @@ class Exec_04 {
         //assert(out == ("anon : (lin 4, col 21) : access error : variable \"delay\" is not declared\n")) { out }
     }
     @Test
+    fun bj_02y_delay() {
+        val out = test(
+            """
+            spawn (task () {
+                yield(nil)
+                println(2)
+            }) ()
+            ;;println(:1)
+            broadcast(nil)
+            ;;println(:2)
+            println(:ok)
+        """
+        )
+        assert(out == "2\n:ok\n") { out }
+    }
+    @Test
     fun bj_02_delay() {
         val out = test(
             """
