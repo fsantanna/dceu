@@ -13,7 +13,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         }
     }
 
-    // at least 1 yield (including subs) or nested coro/task
+    // at least 1 yield (including subs) or nested coro/task or spawn (block needs mem)
     // Do or Proto that requires mem:
     //  - yields or contains nested task
     val mems: MutableSet<Expr>  = mutableSetOf()
@@ -36,10 +36,17 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     val defer_catch_spawn_tasks: MutableSet<Expr.Do> = mutableSetOf()
 
     fun ismem (e: Expr): Boolean {
-        val proto = ups.first(e) { it is Expr.Proto }
+        val proto = ups.first(e) { it is Expr.Proto }.let {
+            when {
+                (it == null) -> null
+                (it.tk.str == "func") -> null
+                else -> it
+            }
+        }
         val up = ups.first(e) { it is Expr.Do || it is Expr.Proto }!!
         return when {
             (proto == null) -> false
+            //true -> true
             void(up) -> false
             mems.contains(up) -> true
             else -> false
@@ -83,6 +90,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
+                /*
                 if (this.tk.str == "task") {
                     val es = this.blk.es.dropLastWhile { it is Expr.Delay }
                     val lst = es.lastOrNull()
@@ -92,6 +100,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                         else -> {}
                     }
                 }
+                 */
                 if (this.nst) {
                     if (ups.first(ups.pub[this]!!) { it is Expr.Proto }.let {
                         //(CEU>=99 && it==outer.clo) /* bc of top-level spawn {...} */ ||
@@ -222,6 +231,10 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 if (this.tsks == null) {
                     defer_catch_spawn_tasks.add(ups.first(this) { it is Expr.Do } as Expr.Do)
                 }
+                assert(this.tsks == null)
+                ups.all_until(this) { it is Expr.Proto }
+                    .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
+                    .forEach { mems.add(it) }
                 /*
                 when {
                     (ups.first(this) { f -> ((f is Expr.Proto) && f.tk.str == "func") } != null)

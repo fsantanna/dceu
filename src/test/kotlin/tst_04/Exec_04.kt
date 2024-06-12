@@ -4101,14 +4101,13 @@ class Exec_04 {
             """
             spawn (task () {
                 spawn (task () {
-                    defer {
-                        println(:defer)
-                    }
+                    nil
                 } )()
             } )()
+            println(:ok)
        """
         )
-        assert(out == ":1\n:2\n:3\n:defer\n:4\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun mm_00b_abortion() {
@@ -4119,8 +4118,24 @@ class Exec_04 {
                     defer {
                         println(:defer)
                     }
+                } )()
+            } )()
+       """
+        )
+        assert(out == ":defer\n") { out }
+    }
+    @Test
+    fun mm_00c_abortion() {
+        val out = test(
+            """
+            spawn (task () {
+                spawn (task () {
+                    defer {
+                        println(:defer)
+                    }
                     yield(nil)
                 } )()
+                nil
             } )()
        """
         )

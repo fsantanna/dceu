@@ -1334,7 +1334,9 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ret = ceu_create_exe(CEU_VALUE_EXE_TASK, sizeof(CEU_Exe_Task), clo);
         CEU_Exe_Task* dyn = &ret.Dyn->Exe_Task;
         
-        ceu_gc_inc_dyn((CEU_Dyn*) dyn);    // up_blk/tsks holds a strong reference
+        ceu_gc_inc_dyn((CEU_Dyn*) dyn);
+            // up_blk/tsks holds a strong reference
+            // removed on natural termination
 
         dyn->time = CEU_TIME;
         dyn->pub = (CEU_Value) { CEU_VALUE_NIL };
