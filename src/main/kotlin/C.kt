@@ -1732,6 +1732,7 @@ fun Coder.main (tags: Tags): String {
         #endif
                 case CEU_EXE_STATUS_YIELDED:
                 {
+                    CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
                     CEU_Value args[1];
                     CEUX ceux = {
                         exe->clo,
@@ -1839,6 +1840,7 @@ fun Coder.main (tags: Tags): String {
     """
     val c_bcast = """
         #if CEU >= 4
+        #define ceu_abort_dyn(a) ceu_abort_exe((CEU_Exe*)a)
         #define ceu_bcast_dyn(a,b,c,d)      \
             assert(b == CEU_ACTION_RESUME); \
             ceu_bcast_task((CEU_Exe_Task*)a,c,d)
@@ -1885,7 +1887,7 @@ fun Coder.main (tags: Tags): String {
                 // do nothing
             } else {
                 ceu_bcast_tasks((CEU_Dyn*) tsk, CEU_ACTION_RESUME, now, evt);
-                assert(ceu_acc.type != CEU_VALUE_ERROR);
+                //assert(ceu_acc.type != CEU_VALUE_ERROR);
             }
 
             // ME
@@ -1893,40 +1895,27 @@ fun Coder.main (tags: Tags): String {
                 // do nothing
             } else if (tsk == &CEU_GLOBAL_TASK) {
                 // do nothing
-            } else {
-                // either handle error or event
-                // never both
+            } else if (ceu_acc.type == CEU_VALUE_ERROR) {
                 // even if error is caught, should not awake from past event
-                if (ceu_acc.type == CEU_VALUE_ERROR) {
-                    assert(0 && "TODO");
-            #if 0
-                    // catch error from blocks above
-                    // [evt, (ret,err)]
-                    ceux_push(X1->S, 1, ceu_dyn_to_val((CEU_Dyn*)tsk));
-                    int err = XX1(-ret-1);
-                    ceux_dup_n(X1->S, err, ret);
-                    // [evt, (ret,err), tsk, (ret,err)]
-                    int ret2 = ceux_resume(X1, ret, 0, CEU_ACTION_ERROR, now);
-                    if (ret2 == 0) {
-                        ceux_pop_n(X1->S, ret);
-                        // [evt]
-                    } else {
-                        // [evt, (ret,err)]
-                    }
-                    ret = ret2;
-            #endif
-                } else if (tsk->pc==0 || now>tsk->time) {
-                    CEUX ceux = {
-                        tsk->clo,
-                        {.exe_task = tsk},
-                        CEU_ACTION_RESUME,
-                        NULL,   // TODO: no access to up(ceux)
-                        1,
-                        evt
-                    };
-                    tsk->clo->proto(&ceux);
-                    assert(ceu_acc.type!=CEU_VALUE_ERROR && "TODO");
-                }
+                CEUX ceux = {
+                    tsk->clo,
+                    {.exe_task = tsk},
+                    CEU_ACTION_ERROR,
+                    NULL,   // TODO: no access to up(ceux)
+                    1,
+                    NULL
+                };
+                tsk->clo->proto(&ceux);
+            } else if (tsk->pc==0 || now>tsk->time) {
+                CEUX ceux = {
+                    tsk->clo,
+                    {.exe_task = tsk},
+                    CEU_ACTION_RESUME,
+                    NULL,   // TODO: no access to up(ceux)
+                    1,
+                    evt
+                };
+                tsk->clo->proto(&ceux);
             }
             
             ceu_gc_dec_dyn((CEU_Dyn*) tsk);

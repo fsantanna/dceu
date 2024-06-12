@@ -200,13 +200,30 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             """ }}
                         } while (0);
     
+                        CEU_Value ceu_acc_$n = CEU_ACC_KEEP();
+
                         ${defers[this].cond { """
                             { // BLOCK | defers | term | ${this.dump()}
-                                CEU_Value ceu_acc_$n = CEU_ACC_KEEP();
                                 ${it.third}
-                                ceu_acc = ceu_acc_$n;
                             }
                         """ }}
+                        
+                        ${(CEU >= 4).cond { """
+                            if ($blkc != NULL) {
+                                CEU_LNKS($blkc)->up.blk = NULL; // also on ceu_task_unlink (if unlinked before leave)
+                            }
+                            {
+                                CEU_Block cur = ceu_task_get($blkc);
+                                while (cur != NULL) {
+                                    ceu_abort_dyn(cur);
+                                    CEU_Dyn* nxt = ceu_task_get(CEU_LNKS(cur)->sd.nxt);
+                                    ceu_gc_dec_dyn(cur); // TODO: could affect nxt?
+                                    cur = nxt;
+                                }
+                            }                            
+                        """ }}
+
+                        ceu_acc = ceu_acc_$n;
                         
                         { // dcls gc-dec
                             ${vars.blk_to_dcls[this]!!
@@ -392,15 +409,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     return;
                 case $n: // YIELD ${this.dump()}
                     if (ceux->act == CEU_ACTION_ABORT) {
-                        CEU_ACC((CEU_Value) { CEU_VALUE_NIL }); // to be ignored in further move/checks
+                        //CEU_ACC((CEU_Value) { CEU_VALUE_NIL }); // to be ignored in further move/checks
                         continue;
                     }
-                    CEU_ACC(((ceux->n > 0) ? ceux->args[0] : (CEU_Value) { CEU_VALUE_NIL }));
                 #if CEU >= 4
                     if (ceux->act == CEU_ACTION_ERROR) {
                         continue;
                     }
                 #endif
+                    CEU_ACC(((ceux->n > 0) ? ceux->args[0] : (CEU_Value) { CEU_VALUE_NIL }));
                 }
             """
             }

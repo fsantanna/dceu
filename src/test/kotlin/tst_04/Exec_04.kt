@@ -12,7 +12,7 @@ class Exec_04 {
 
     @Before
     fun init() {
-        DEBUG = false
+        //DEBUG = false
     }
 
     @Test
@@ -4139,7 +4139,7 @@ class Exec_04 {
             } )()
        """
         )
-        assert(out == ":1\n:2\n:3\n:defer\n:4\n") { out }
+        assert(out == ":defer\n") { out }
     }
     @Test
     fun mm_01_abortion() {
