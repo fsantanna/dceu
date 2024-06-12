@@ -26,6 +26,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         //println(blk.tostr())
         return when {
             //true -> false
+            ismem(blk) -> false
             (ups.pub[blk] is Expr.Loop) -> false
             !dcls.isEmpty() -> false
             (ups.pub[blk] is Expr.Proto) -> false
@@ -47,7 +48,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         return when {
             (proto == null) -> false
             //true -> true
-            void(up) -> false
             mems.contains(up) -> true
             else -> false
         }
@@ -59,14 +59,14 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     }
     fun idx (dcl: Expr.Dcl, src: Expr): String {
         val id = dcl.idtag.first.str.idc()
-        val idx = id + "_" + dcl.n
         val blk = vars.dcl_to_blk[dcl]!!
+        val idx = id + "_" + blk.n
         val ismem = this.ismem(blk)
         //println(listOf(src.tk.pos.lin, id, type(dcl,src)))
         return when (vars.type(dcl,src)) {
             Type.GLOBAL -> "ceu_glb_$id"
             Type.LOCAL -> if (ismem) "(ceu_mem->$idx)" else "ceu_loc_$id"
-            Type.PARAM -> if (ismem) "(ceu_mem->$id)"  else "ceu_par_$id"
+            Type.PARAM -> if (ismem) "(ceu_mem->$idx)" else "ceu_par_$id"
             Type.NESTED -> {
                 val xups = ups.all_until(src) { it == blk } // all ups between src -> dcl
                 val xid = (ups.first(blk) { it is Expr.Proto } as Expr.Proto).id(outer, ups)

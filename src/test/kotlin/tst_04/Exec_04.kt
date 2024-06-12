@@ -1553,8 +1553,8 @@ class Exec_04 {
         )
         //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
         //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic alien field\n:error\n") { out }
-        //assert(out == "2\n") { out }
-        assert(out == "3\n") { out }
+        assert(out == "2\n") { out }
+        //assert(out == "3\n") { out }
         //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
         //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -5221,7 +5221,7 @@ class Exec_04 {
             println(`:number CEU_GC.free`)
             """
         )
-        assert(out == "2\n") { out }
+        assert(out == "0\n") { out }
     }
 
     // DEPTH
@@ -5446,6 +5446,22 @@ class Exec_04 {
         """
         )
         assert(out == ":e1\n:e2\n") { out }
+    }
+    @Test
+    fun pp_02x_throw() {
+        val out = test(
+            """
+            task () {
+                catch (it|nil) {
+                    loop {
+                        yield(nil)
+                    }
+                }
+            }
+            println(:ok)
+        """
+        )
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun pp_03_throw() {

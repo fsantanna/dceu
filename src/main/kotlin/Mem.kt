@@ -7,7 +7,14 @@ val union = "union"
 
 class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>>) {
     fun pub (e: Expr.Proto): String {
-        return e.mem()
+        return """
+            struct { // PROTO | ${e.dump()}
+                ${e.pars.map { """
+                    CEU_Value ${it.first.str.idc()}_${e.n};
+                """ }.joinToString("") }
+                ${e.blk.mem()}
+            };
+        """
     }
 
     fun Expr.coexists (): Boolean {
@@ -58,14 +65,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
 
     fun Expr.mem (): String {
         return when (this) {
-            is Expr.Proto -> """
-                struct { // PROTO | ${this.dump()}
-                    ${this.pars.map { """
-                        CEU_Value ${it.first.str.idc()};
-                    """ }.joinToString("") }
-                    ${this.blk.mem()}
-                };
-            """
+            is Expr.Proto -> ""
             is Expr.Do -> sta.ismem(this).cond {
                 """
                 struct { // BLOCK | ${this.dump()}
@@ -73,7 +73,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
                         CEU_Block block_$n;
                     """ }}
                     ${vars.blk_to_dcls[this]!!.map { """
-                        CEU_Value ${it.idtag.first.str.idc()}_${it.n};
+                        CEU_Value ${it.idtag.first.str.idc()}_${this.n};
                     """ }.joinToString("") }
                     ${defers[this].cond { it.first.map { """
                         int defer_${it};

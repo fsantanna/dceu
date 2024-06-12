@@ -72,7 +72,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         //{ // pars
                             ${this.pars.mapIndexed { i,(id,_) -> """
                                 ${sta.ismem(this.blk).cond2({ """
-                                    ceu_mem->${id.str.idc()}
+                                    ceu_mem->${id.str.idc()}_${this.n}
                                 """ },{ """
                                     CEU_Value ceu_par_${id.str.idc()}
                                 """ })}
@@ -91,7 +91,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             ${this.pars.mapIndexed { i,(id,_) -> """
                                 ceu_gc_dec_val (
                                     ${sta.ismem(this.blk).cond2({ """
-                                        ceu_mem->${id.str.idc()}
+                                        ceu_mem->${id.str.idc()}_${this.n}
                                     """ },{ """
                                         ceu_par_${id.str.idc()}
                                     """ })}
