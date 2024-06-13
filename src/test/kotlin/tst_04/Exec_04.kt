@@ -4779,7 +4779,25 @@ class Exec_04 {
         )
         assert(out == ":1\n:2\n:3\n") { out }
     }
-
+    @Test
+    fun mp_04x_abort() {
+        val out = test(
+            """
+            spawn (task () {
+                spawn (task () {
+                    yield(nil)
+                    spawn (task () {
+                        broadcast(nil) in :global
+                    }) ()
+                }) ()
+                yield(nil)
+            }) ()
+            broadcast(nil) in :global
+            println(:ok)
+        """
+        )
+        assert(out == ":ok\n") { out }
+    }
     @Test
     fun mp_04_abort() {
         val out = test(

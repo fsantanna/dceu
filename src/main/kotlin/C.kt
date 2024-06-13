@@ -339,7 +339,7 @@ fun Coder.main (tags: Tags): String {
     CEU_Exe_Task CEU_GLOBAL_TASK = {
         CEU_VALUE_EXE_TASK, 1, (CEU_Value) { CEU_VALUE_NIL },
         NULL, CEU_EXE_STATUS_YIELDED, 0, NULL,
-        0, {}, { {NULL,NULL}, {NULL,NULL}, {NULL,NULL} }
+        0, {}, { {{NULL},NULL}, {NULL,NULL}, {NULL,NULL} }
     };
     #endif
     """
@@ -1341,7 +1341,7 @@ fun Coder.main (tags: Tags): String {
         dyn->time = CEU_TIME;
         dyn->pub = (CEU_Value) { CEU_VALUE_NIL };
 
-        dyn->lnks = (CEU_Links) { {up_dyn,NULL}, {NULL,NULL}, {NULL,NULL} };
+        dyn->lnks = (CEU_Links) { {{up_dyn},NULL}, {NULL,NULL}, {NULL,NULL} };
 
         if (CEU5(dyn!=NULL && ceu_isexe_dyn(up_dyn) &&) *up_blk==NULL) {
             dyn->lnks.up.blk = up_blk;    // only the first task points up

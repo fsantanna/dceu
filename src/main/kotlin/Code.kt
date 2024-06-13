@@ -17,14 +17,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
         return "\"${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : $src\""
     }
 
-    fun Expr.check_error_aborted (msg: String): String {
+    fun Expr.check_error_aborted (cmd: String, msg: String): String {
         val exe = ups.exe(this)
         val defer = ups.first_without(this, { it is Expr.Defer }, { it is Expr.Proto })
         return """
-            CEU_ERROR_CHK_ACC(continue, $msg);
+            CEU_ERROR_CHK_ACC($cmd, $msg);
             ${(CEU>=3 && exe!=null && defer==null).cond { """
                 if (ceux->exe->status == CEU_EXE_STATUS_TERMINATED) {
-                    continue;
+                    $cmd;
                 }
             """ }}
         """
@@ -235,7 +235,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                                 .joinToString("")
                             }
                         }                        
-                        ${(CEU >= 2).cond { this.check_error_aborted("NULL")} }
+                        ${(CEU >= 2).cond { this.check_error_aborted("continue", "NULL")} }
                     }
                     """
                 }
@@ -396,7 +396,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     };
                     ceu_coro_$n.Dyn->Exe.clo->proto(&ceux_$n);
                     ceu_gc_dec_val(ceu_coro_$n);
-                    ${this.check_error_aborted(this.toerr())}
+                    ${this.check_error_aborted("continue", this.toerr())}
                 } // CALL | ${this.dump()}
             """
 
@@ -447,8 +447,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
                     ${this.tsk.code()}
                     CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, (CEU_Dyn*)ceu_task_up(ceux), &$blkc);
-                    ceu_gc_dec_val(ceu_acc);
-                    ceu_acc = ceu_exe_$n;
+                    CEU_ACC(ceu_exe_$n);
                     CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
 
@@ -461,9 +460,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ${sta.idx(this,"args_$n")}
                     };
                     ceu_exe_$n.Dyn->Exe.clo->proto(&ceux_$n);
-                    ${this.check_error_aborted(this.toerr())}
-                    ceu_gc_dec_val(ceu_acc);
-                    ceu_acc = ceu_exe_$n;
+                    {
+                        int ceu_err_$n = 0;
+                        ${this.check_error_aborted("{ceu_err_$n=1;}", this.toerr())}
+                        ceu_gc_dec_val(ceu_acc);
+                        if (ceu_err_$n) {
+                            continue;
+                        }
+                        ceu_acc = ceu_exe_$n;
+                    }
                 } // SPAWN | ${this.dump()}
                 """
             }
@@ -519,6 +524,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ${this.on.code()}
                     {   // TOGGLE | ${this.dump()}
                         int on = ceu_as_bool(ceu_acc);
+                        int ceu_err_$n = 0;
                         if (!ceu_istask_val($id)) {
                             CEU_ERROR_CHK_PTR (
                                 continue,
@@ -526,23 +532,26 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                                 ${this.toerr()}
                             );
                         }
-                        if (on && $id.Dyn->Exe_Task.status!=CEU_EXE_STATUS_TOGGLED) {                
+                        if (!ceu_err_$n && on && $id.Dyn->Exe_Task.status!=CEU_EXE_STATUS_TOGGLED) {                
                             CEU_ERROR_CHK_PTR (
-                                continue,
+                                {ceu_err_$n = 1;},
                                 "toggle error : expected toggled task",
                                 ${this.toerr()}
                             );
                         }
-                        if (!on && $id.Dyn->Exe_Task.status!=CEU_EXE_STATUS_YIELDED) {                
+                        if (!ceu_err_$n && !on && $id.Dyn->Exe_Task.status!=CEU_EXE_STATUS_YIELDED) {                
                             CEU_ERROR_CHK_PTR (
-                                continue,
+                                {ceu_err_$n = 1;},
                                 "toggle error : expected yielded task",
                                 ${this.toerr()}
                             );
                         }
+                        ceu_gc_dec_val($id);
+                        if (ceu_err_$n) {
+                            continue;
+                        }
                         $id.Dyn->Exe_Task.status = (on ? CEU_EXE_STATUS_YIELDED : CEU_EXE_STATUS_TOGGLED);
                     }
-                    ceu_gc_dec_val($id);
                 }
             """
             }
@@ -561,7 +570,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     null   -> """
                         CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));
                         $body 
-                        ${this.check_error_aborted(this.toerr())}
+                        ${this.check_error_aborted("continue", this.toerr())}
                     """
                     ":pre" -> {
                         pres.add(Pair("",body))
@@ -732,7 +741,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     };
                     ceu_clo_$n.Dyn->Clo.proto(&ceux_$n);
                     ceu_gc_dec_val(ceu_clo_$n);
-                    ${this.check_error_aborted(this.toerr())}
+                    ${this.check_error_aborted("continue", this.toerr())}
                 } // CALL | ${this.dump()}
             """
         }
