@@ -1785,6 +1785,36 @@ class Exec_04 {
     // THROW / CATCH
 
     @Test
+    fun ee_00x_throw() {
+        val out = test(
+            """
+            catch (it|false) {
+                spawn (task () {
+                    error(:xxx)
+                })()
+            }
+            println(10)
+        """
+        )
+        assert(out == " |  anon : (lin 3, col 17) : (spawn (task () { error(:xxx) })())\n" +
+                " |  anon : (lin 4, col 21) : error(:xxx)\n" +
+                " v  error : :xxx\n") { out }
+    }
+    @Test
+    fun ee_00y_throw() {
+        val out = test(
+            """
+            catch (it|true) {
+                spawn (task () {
+                    error(:xxx)
+                })()
+            }
+            println(10)
+        """
+        )
+        assert(out == "10\n") { out }
+    }
+    @Test
     fun ee_01_throw() {
         val out = test(
             """

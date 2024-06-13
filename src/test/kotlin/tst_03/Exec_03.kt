@@ -403,6 +403,19 @@ class Exec_03 {
         assert(out == ":y\n") { out }
     }
     @Test
+    fun cc_17x_tags() {
+        val out = test("""
+            val CO = coro () {
+                yield(nil)
+            }
+            val co = coroutine(CO)
+            resume co()
+            resume co([])
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
     fun cc_17_tags() {
         val out = test("""
             val CO = coro () {

@@ -1907,6 +1907,7 @@ fun Coder.main (tags: Tags): String {
                 };
                 tsk->clo->proto(&ceux);
             } else if (tsk->pc==0 || now>tsk->time) {
+                ceu_gc_inc_val(*evt);
                 CEUX ceux = {
                     tsk->clo,
                     {.exe_task = tsk},
