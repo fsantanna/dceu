@@ -447,7 +447,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
                     ${this.tsk.code()}
                     CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, (CEU_Dyn*)ceu_task_up(ceux), &$blkc);
-                    CEU_ACC(ceu_exe_$n);
+                    ceu_gc_dec_val(ceu_acc);
+                    ceu_acc = ceu_exe_$n;
                     CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
 
