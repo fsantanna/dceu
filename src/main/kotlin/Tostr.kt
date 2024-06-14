@@ -66,6 +66,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Delay  -> "delay"
         is Expr.Pub    -> this.tsk.cond { it.tostr(pre)+"." } + "pub"
         is Expr.Toggle -> "(toggle ${this.tsk.tostr(pre)}(${this.on.tostr(pre)}))"
+        is Expr.Tasks  -> "tasks(" + this.max.tostr(pre) + ")"
 
         is Expr.Nat    -> "```" + this.tk_.tag.cond { it+" " } + this.tk.str + "```"
         is Expr.Acc    -> this.ign.cond { "__" } + this.tk.str

@@ -88,6 +88,7 @@ class Ups (val outer: Expr.Do) {
             is Expr.Delay  -> emptyMap()
             is Expr.Pub    -> this.map(listOfNotNull(this.tsk))
             is Expr.Toggle -> this.map(listOf(this.tsk, this.on))
+            is Expr.Tasks  -> this.map(listOf(this.max))
 
             is Expr.Nat    -> emptyMap()
             is Expr.Acc    -> emptyMap()

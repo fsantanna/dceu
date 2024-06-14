@@ -36,6 +36,8 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
             is Expr.Pub    -> this.tsk?.coexists() ?: false
             is Expr.Toggle -> this.tsk.coexists() || this.on.coexists()
 
+            is Expr.Tasks  -> this.max.coexists()
+
             is Expr.Tuple  -> this.args.any { it.coexists() }
             is Expr.Vector -> this.args.any { it.coexists() }
             is Expr.Dict   -> this.args.any { it.first.coexists() || it.second.coexists() }
@@ -156,6 +158,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
                     };
                 };
             """
+            is Expr.Tasks  -> this.max.mem()
 
             is Expr.Tuple -> """
                 struct { // TUPLE

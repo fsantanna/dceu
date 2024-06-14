@@ -730,6 +730,17 @@ class Parser (lexer_: Lexer)
                     Expr.Toggle(tk0, tsk, on)
                 }
             }
+            (CEU>=5 && this.acceptFix("tasks")) -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptFix_err("(")
+                val nn = if (this.checkFix(")")) {
+                    Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy()))
+                } else {
+                    this.expr()
+                }
+                this.acceptFix_err(")")
+                Expr.Tasks(tk0, nn)
+            }
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)
             this.acceptEnu("Id")   -> when {

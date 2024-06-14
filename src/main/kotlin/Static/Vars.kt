@@ -229,6 +229,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Delay  -> {}
             is Expr.Pub    -> this.tsk?.traverse()
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
+            is Expr.Tasks  -> this.max.traverse()
 
             is Expr.Nat    -> {
                 nats[this] = this.tk.str.let {

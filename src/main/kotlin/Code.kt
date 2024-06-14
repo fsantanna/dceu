@@ -402,7 +402,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ${this.check_error_aborted("continue", this.toerr())}
                 } // CALL | ${this.dump()}
             """
-
             is Expr.Yield -> {
                 """
                 { // YIELD ${this.dump()}
@@ -552,6 +551,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     }
                 }
             """
+            }
+            is Expr.Tasks -> {
+                val blk = ups.first(this) { it is Expr.Do } as Expr.Do
+                val blkc = sta.idx(blk, "block_${blk.n}")
+                """
+                {  // TASKS | ${this.dump()}
+                    ${this.max.code()}
+                    CEU_Value ceu_tsks_$n = ceu_create_tasks(ceux, &$blkc, ceu_acc);
+                    CEU_ACC(ceu_tsks_$n);
+                    CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
+                }
+                """
             }
 
             is Expr.Nat -> {

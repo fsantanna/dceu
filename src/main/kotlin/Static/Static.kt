@@ -260,6 +260,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
             }
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
+            is Expr.Tasks  -> this.max.traverse()
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {

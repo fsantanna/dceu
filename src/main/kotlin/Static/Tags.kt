@@ -64,6 +64,7 @@ class Tags (outer: Expr.Do) {
             is Expr.Delay  -> {}
             is Expr.Pub    -> this.tsk?.traverse()
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
+            is Expr.Tasks  -> this.max.traverse()
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {}

@@ -254,6 +254,9 @@ fun Coder.main (tags: Tags): String {
             union {
                 union CEU_Dyn* dyn;
                 struct CEU_Exe_Task* tsk;     // (also to access outer var from nested)
+    #if CEU >= 5
+                struct CEU_Tasks* tsks;
+    #endif
             };
             CEU_Block* blk;
         } up;
@@ -341,59 +344,6 @@ fun Coder.main (tags: Tags): String {
         NULL, CEU_EXE_STATUS_YIELDED, 0, NULL,
         0, {}, { {{NULL},NULL}, {NULL,NULL}, {NULL,NULL} }
     };
-    #endif
-    """
-    }
-    fun h_protos (): String {
-        return """
-    CEU_Value ceu_vector_get (CEU_Vector* vec, int i);
-#if CEU >= 3
-    void ceu_abort_exe (CEU_Exe* exe);
-#endif
-#if CEU >= 4
-    void ceu_dyn_unlink (CEU_Dyn* dyn);
-#endif
-
-    #if 0
-    void ceu_pro_type (CEUX* X);
-    int ceu_as_bool (CEU_Value v);
-    CEU_Value ceu_dyn_to_val (CEU_Dyn* dyn);
-
-    int ceu_type_to_size (int type);
-
-    void ceu_gc_inc_val (CEU_Value v);
-
-    CEU_Value ceu_create_vector  (void);
-    CEU_Value ceu_create_dict    (void);
-    CEU_Value ceu_create_clo     (CEU_VALUE type, CEU_Proto proto, int pars, int upvs);
-    #if CEU >= 4
-    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Dyn* up_dyn, CEU_Block* up_blk);
-    CEU_Value ceu_create_track   (CEU_Exe_Task* task);
-    #endif
-
-    void ceu_print1 (CEU_Value v);
-    CEU_Value _ceu_equals_equals_ (CEU_Value e1, CEU_Value e2);
-
-    #if CEU >= 3
-    int ceu_isexe_dyn (CEU_Dyn* dyn);
-    int ceu_isexe_val (CEU_Value val);
-    void ceu_abort_exe (CEU_Exe* exe);
-    #endif
-    #if CEU >= 4
-    #define ceu_abort_dyn(a) ceu_abort_exe((CEU_Exe*)a)
-    #define ceu_bcast_dyn(a,b,c,d) ceu_bcast_task(a,b,c,(CEU_Exe_Task*)d)
-    int ceu_bcast_task (CEUX* X1, CEU_ACTION act, uint32_t now, CEU_Exe_Task* tsk2);
-    int ceu_bcast_tasks (CEUX* X1, CEU_ACTION act, uint32_t now, CEU_Dyn* dyn2);
-    int ceu_istask_dyn (CEU_Dyn* dyn);
-    int ceu_istask_val (CEU_Value val);
-    #endif
-    #if CEU >= 5
-    #undef ceu_abort_dyn
-    #define ceu_abort_dyn(a) (a->Any.type==CEU_VALUE_TASKS ? ceu_abort_tasks((CEU_Tasks*)a) : ceu_abort_exe((CEU_Exe*)a))
-    #undef ceu_bcast_dyn
-    #define ceu_bcast_dyn(a,b,c,d) (d->Any.type==CEU_VALUE_TASKS ? ceu_bcast_tasks(a,b,c,d) : ceu_bcast_task(a,b,c,(CEU_Exe_Task*)d))
-    void ceu_abort_tasks (CEU_Tasks* tsks);
-    #endif
     #endif
     """
     }
@@ -651,6 +601,8 @@ fun Coder.main (tags: Tags): String {
             return;
         ceu_gc_inc_dyn(val.Dyn);
     }
+
+    CEU_Value ceu_vector_get (CEU_Vector* vec, int i);
 
     void ceu_gc_free (CEU_Dyn* dyn) {
         switch (dyn->Any.type) {
@@ -1308,6 +1260,10 @@ fun Coder.main (tags: Tags): String {
         return clo;
     }
 
+    #if CEU >= 5
+    int ceu_isexe_dyn (CEU_Dyn* dyn);
+    #endif
+    
     CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Dyn* up_dyn, CEU_Block* up_blk) {
     #if CEU >= 5
         int ceu_tasks_n (CEU_Tasks* tsks) {
@@ -1363,14 +1319,26 @@ fun Coder.main (tags: Tags): String {
         return ret;
     }
     
-    #if CEU >= 5
-    CEU_Value ceu_create_tasks (int max, CEU_Exe_Task* up_tsk, CEU_Block* up_blk) {
+    #if CEU >= 5        
+    CEU_Exe_Task* ceu_task_up (CEUX* X);
+    CEU_Value ceu_create_tasks (CEUX* X, CEU_Block* up_blk, CEU_Value max) {
+        CEU_Exe_Task* up_tsk = ceu_task_up(X);
+
+        int xmax = 0;
+        if (max.type == CEU_VALUE_NIL) {
+            // ok
+        } else if (max.type==CEU_VALUE_NUMBER && max.Number>0) {
+            xmax = max.Number;
+        } else {
+            return CEU_ERROR_PTR("tasks error : expected positive number");
+        }
+
         CEU_Tasks* ret = malloc(sizeof(CEU_Tasks));
         assert(ret != NULL);
 
         *ret = (CEU_Tasks) {
             CEU_VALUE_TASKS, 0, (CEU_Value) { CEU_VALUE_NIL },
-            max, { {(CEU_Dyn*)up_tsk,NULL}, {NULL,NULL}, {NULL,NULL} }
+            xmax, { {{(CEU_Dyn*)up_tsk},NULL}, {NULL,NULL}, {NULL,NULL} }
         };
         
         ceu_gc_inc_dyn((CEU_Dyn*) ret);    // up_blk/tsks holds a strong reference
@@ -1683,7 +1651,7 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 5
             if (tsk->lnks.up.dyn!=NULL && tsk->lnks.up.dyn->Any.type==CEU_VALUE_TASKS) {
                 // tsk <- pool <- tsk
-                up = CEU_LNKS(tsk->lnks.up.dyn)->up.dyn;
+                up = CEU_LNKS(tsk->lnks.up.dyn)->up.tsk;
             } else
     #endif
             {
@@ -1699,6 +1667,14 @@ fun Coder.main (tags: Tags): String {
             ceu_gc_dec_dyn((CEU_Dyn*) X->exe);  // only if natural termination
     #endif
         }
+
+    #if CEU >= 4
+    #if CEU >= 5
+        #define ceu_abort_dyn(a) (a->Any.type==CEU_VALUE_TASKS ? ceu_abort_tasks((CEU_Tasks*)a) : ceu_abort_exe((CEU_Exe*)a))
+    #else
+        #define ceu_abort_dyn(a) ceu_abort_exe((CEU_Exe*)a)
+    #endif
+    #endif
 
     #if CEU >= 5
         void ceu_abort_tasks (CEU_Tasks* tsks) {
@@ -1967,12 +1943,14 @@ fun Coder.main (tags: Tags): String {
     val c_tasks = """
         #if CEU >= 5
         void ceu_pro_next_dash_tasks (CEUX* X) {
-            assert(X->args==1 || X->args==2);
-            CEU_Value tsks = ceux_peek(X->S, ceux_arg(X,0));
+            assert(X->n==1 || X->n==2);
+            CEU_Value tsks = X->args[0];
             if (tsks.type != CEU_VALUE_TASKS) {
-                return ceu_error_s(X->S, "next-tasks error : expected tasks");
+                CEU_ACC(CEU_ERROR_PTR("next-tasks error : expected tasks"));
+                goto _END_;
             }
-            CEU_Value key = (X->args == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : ceux_peek(X->S,ceux_arg(X,1));
+
+            CEU_Value key = (X->n == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : X->args[1];
             CEU_Dyn* nxt = NULL;
             switch (key.type) {
                 case CEU_VALUE_NIL:
@@ -1982,28 +1960,17 @@ fun Coder.main (tags: Tags): String {
                     nxt = key.Dyn->Exe_Task.lnks.sd.nxt;
                     break;
                 default:
-                    return ceu_error_s(X->S, "next-tasks error : expected task");
+                    CEU_ACC(CEU_ERROR_PTR("next-tasks error : expected task"));
+                    goto _END_;
             }
             if (nxt == NULL) {
-                ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });
+                CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
             } else {
-                ceux_push(X->S, 1, ceu_dyn_to_val(nxt));
+                CEU_ACC(ceu_dyn_to_val(nxt));
             }
-            return 1;
-        }
-        void ceu_pro_tasks (CEUX* X) {
-            assert(X->args <= 1);
-            int max = 0;
-            if (X->args == 1) {
-                CEU_Value xmax = ceux_peek(X->S, ceux_arg(X,0));
-                if (xmax.type!=CEU_VALUE_NUMBER || xmax.Number<=0) {                
-                    return ceu_error_s(X->S, "tasks error : expected positive number");
-                }
-                max = xmax.Number;
-            }
-            CEU_Value ret = ceu_create_tasks(max, ceu_task_up(X), ceu_up_blk(X->S));
-            ceux_push(X->S, 1, ret);
-            return 1;
+            
+        _END_:
+            ceu_gc_dec_args(X->n, X->args);
         }
         #endif
     """
@@ -2080,24 +2047,14 @@ fun Coder.main (tags: Tags): String {
 
     return (
         h_includes() + h_defines() + h_enums() +
-        h_value_dyn() + h_tags() +
-        x_globals() + h_protos() +
-        gc() + c_tags() +
-        c_error +
-        c_impls() + /*
-        // block-task-up, hold, bcast
-        */
-        eq_neq_len() +
-        creates() + tuple_vector_dict() +
+        h_value_dyn() + h_tags() + x_globals() +
+        gc() + c_tags() + c_error + c_impls() +
+        eq_neq_len() + creates() + tuple_vector_dict() +
         c_to() + print() + dumps() +
         (CEU>=3).cond { c_exes } +
         (CEU>=4).cond { c_task } +
         (CEU>=4).cond { c_bcast } +
-                /*
-                (CEU>=5).cond { c_tasks } +
-                // isexe-coro-status-exe-kill, task, track
-                 */
-        c_globals() +
-        main()
+        (CEU>=5).cond { c_tasks } +
+        c_globals() + main()
     )
 }
