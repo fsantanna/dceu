@@ -463,9 +463,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ${sta.idx(this,"args_$n")}
                     };
                     ceu_exe_$n.Dyn->Exe.clo->proto(&ceux_$n);
-                    CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
+                    CEU_ERROR_CHK_ACC({ceu_gc_dec_val(ceu_exe_$n);continue;}, ${this.toerr()});
                     ceu_gc_dec_val(ceu_acc);
-                    ${this.check_aborted("continue", this.toerr())}
+                    ${this.check_aborted("{ceu_gc_dec_val(ceu_exe_$n);continue;}", this.toerr())}
                     ceu_acc = ceu_exe_$n;
                 } // SPAWN | ${this.dump()}
                 """
