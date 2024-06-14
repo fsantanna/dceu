@@ -609,6 +609,9 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 4
     void ceu_dyn_unlink (CEU_Dyn* dyn);
     #endif
+    #if CEU >= 5
+    void ceu_abort_tasks (CEU_Tasks* tsks);
+    #endif
 
     void ceu_gc_free (CEU_Dyn* dyn) {
         switch (dyn->Any.type) {
@@ -1683,6 +1686,7 @@ fun Coder.main (tags: Tags): String {
     #endif
 
     #if CEU >= 5
+        CEU_Dyn* ceu_task_get (CEU_Dyn* cur);
         void ceu_abort_tasks (CEU_Tasks* tsks) {
             if (tsks->lnks.up.dyn == NULL) {
                 return;     // already unlinked/killed
@@ -1822,7 +1826,6 @@ fun Coder.main (tags: Tags): String {
     """
     val c_bcast = """
         #if CEU >= 4
-        #define ceu_abort_dyn(a) ceu_abort_exe((CEU_Exe*)a)
         #define ceu_bcast_dyn(a,b,c,d)      \
             assert(b == CEU_ACTION_RESUME); \
             ceu_bcast_task((CEU_Exe_Task*)a,c,d)
