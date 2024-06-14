@@ -169,7 +169,7 @@ class Parser (lexer_: Lexer)
             this.acceptEnu_err("Id")
             this.tk0 as Tk.Id
         } else {
-            Tk.Id("it", this.tk0.pos)
+            Tk.Id("it", this.tk0.pos.copy())
         }
 
         val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
@@ -282,11 +282,11 @@ class Parser (lexer_: Lexer)
         this.acceptFix_err("{")
         val tk0 = this.tk0
         val idtag = when {
-            !this.acceptFix(",") -> if (!it) null else Pair(Tk.Id("it", tk0.pos), null)
+            !this.acceptFix(",") -> if (!it) null else Pair(Tk.Id("it", tk0.pos.copy()), null)
             this.acceptEnu("Tag") -> {
                 val tag = this.tk0 as Tk.Tag
                 this.acceptFix_err("=>")
-                Pair(Tk.Id("it", tk0.pos), tag)
+                Pair(Tk.Id("it", tk0.pos.copy()), tag)
             }
             else -> {
                 this.acceptEnu_err("Id")
@@ -449,7 +449,7 @@ class Parser (lexer_: Lexer)
                 }
 
                 val par = this.acceptFix("(")
-                val fst = if (this.checkEnu("Id")) this.id_tag() else Pair(Tk.Id("it",this.tk0.pos),null)
+                val fst = if (this.checkEnu("Id")) this.id_tag() else Pair(Tk.Id("it",this.tk0.pos.copy()),null)
                 val lst = listOf(fst) + if (!par || !this.acceptFix(",")) emptyList() else {
                     this.list0(",", ")") { this.id_tag() }
                 }
@@ -576,13 +576,13 @@ class Parser (lexer_: Lexer)
                 Expr.Enum(tk0, tags)
             }
             this.acceptFix("data") -> {
-                val pos = this.tk0.pos
+                val pos = this.tk0.pos.copy()
                 this.acceptEnu_err("Tag")
                 val tag = this.tk0 as Tk.Tag
 
                 fun one (pre: Tk.Tag?, me: Tk.Tag): List<Expr.Data> {
                     val xme = if (pre == null) me else {
-                        Tk.Tag(pre.str+'.'+me.str.drop(1), me.pos)
+                        Tk.Tag(pre.str+'.'+me.str.drop(1), me.pos.copy())
                     }
                     this.acceptFix_err("=")
                     this.acceptFix_err("[")
@@ -591,7 +591,7 @@ class Parser (lexer_: Lexer)
                             if (!KEYWORDS.contains(this.tk0.str)) {
                                 err(this.tk0, "invalid field : unexpected \"${this.tk0.str}\"")
                             }
-                            Tk.Id(this.tk0.str, this.tk0.pos)
+                            Tk.Id(this.tk0.str, this.tk0.pos.copy())
                         } else {
                             this.acceptEnu_err("Id")
                             this.tk0 as Tk.Id
@@ -600,7 +600,7 @@ class Parser (lexer_: Lexer)
                             this.tk0 as Tk.Tag
                         }
                         if (this.checkFix("=")) {
-                            val xxtag = if (xtag!=null) xtag else Tk.Tag(":ceu_$N",id.pos)
+                            val xxtag = if (xtag!=null) xtag else Tk.Tag(":ceu_$N",id.pos.copy())
                             Pair(Pair(id, xxtag), one(null, xxtag))
                         } else {
                             Pair(Pair(id, xtag), emptyList())
@@ -692,10 +692,10 @@ class Parser (lexer_: Lexer)
                 val xin = if (this.acceptFix("in")) {
                     this.expr()
                 } else {
-                    Expr.Tag(Tk.Tag(":task",this.tk0.pos))
+                    Expr.Tag(Tk.Tag(":task",this.tk0.pos.copy()))
                 }
                 Expr.Call(tk0,
-                    Expr.Acc(Tk.Id("broadcast'", tk0.pos)),
+                    Expr.Acc(Tk.Id("broadcast'", tk0.pos.copy())),
                     listOf(xin, arg)
                 )
             }
@@ -760,7 +760,7 @@ class Parser (lexer_: Lexer)
             this.acceptFix("@[")    -> Expr.Dict(this.tk0 as Tk.Fix, list0(",", "]") {
                 val tk1 = this.tk1
                 val k = if (this.acceptEnu("Id")) {
-                    val e = Expr.Tag(Tk.Tag(':' + tk1.str, tk1.pos))
+                    val e = Expr.Tag(Tk.Tag(':' + tk1.str, tk1.pos.copy()))
                     this.acceptFix_err("=")
                     e
                 } else {
@@ -803,7 +803,7 @@ class Parser (lexer_: Lexer)
                 val ifs = list0(null, "}") {
                     val cnd = when {
                         this.acceptFix("do") -> null
-                        this.acceptFix("else") -> Expr.Bool(Tk.Fix("true",this.tk0.pos))
+                        this.acceptFix("else") -> Expr.Bool(Tk.Fix("true",this.tk0.pos.copy()))
                         else -> this.expr()
                     }
                     val es = if (this.acceptFix("=>")) {
@@ -819,7 +819,7 @@ class Parser (lexer_: Lexer)
                         ;;`/* IFS | ${tk0.dump()} */`
                         ${ifs.map { (cnd,idtag_es) ->
                             val (idtag,es) = idtag_es
-                            val idtagx = if (idtag != null) idtag else Pair(Tk.Id("ceu_$N",tk0.pos),null)
+                            val idtagx = if (idtag != null) idtag else Pair(Tk.Id("ceu_$N",tk0.pos.copy()),null)
                             if (cnd == null) {
                                 es.tostr(true) // do ...
                             } else {
@@ -955,8 +955,8 @@ class Parser (lexer_: Lexer)
                         val pat = when {
                             (par && checkFix(")")) ->
                                 Pair(
-                                    listOf(Pair(Tk.Id("it", this.tk0.pos), null)),
-                                    Expr.Bool(Tk.Fix("true", this.tk0.pos))
+                                    listOf(Pair(Tk.Id("it", this.tk0.pos.copy()), null)),
+                                    Expr.Bool(Tk.Fix("true", this.tk0.pos.copy()))
                                 )
                             else -> TODO() //this.patt()
                         }
@@ -1171,7 +1171,7 @@ class Parser (lexer_: Lexer)
                         this.acceptEnu_err("Tag")
                         val tag = this.tk0
                         this.acceptFix_err(")")
-                        val acc = Expr.Acc(Tk.Id("ceu_$n", e.tk.pos))
+                        val acc = Expr.Acc(Tk.Id("ceu_$n", e.tk.pos.copy()))
                         this.nest("""
                             ${e.tostr(true)} thus { ,ceu_$n ${tag.str} =>
                                 ${this.expr_4_suf(acc).tostr(true)}
@@ -1183,9 +1183,9 @@ class Parser (lexer_: Lexer)
                         if (!KEYWORDS.contains(this.tk0.str)) {
                             err(this.tk0, "invalid field : unexpected \"${this.tk0.str}\"")
                         }
-                        Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':' + this.tk0.str, this.tk0.pos)))
+                        Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':' + this.tk0.str, this.tk0.pos.copy())))
                     }
-                    this.acceptEnu_err("Id") -> Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':' + this.tk0.str, this.tk0.pos)))
+                    this.acceptEnu_err("Id") -> Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':' + this.tk0.str, this.tk0.pos.copy())))
                     else -> error("impossible case")
                 }
                 "(" -> {
@@ -1239,7 +1239,7 @@ class Parser (lexer_: Lexer)
                 //println(listOf(op,e))
                 when {
                     (op.str == "not") -> this.nest("${op.pos.pre()}(if ${e.tostr(true)} { false } else { true })\n")
-                    else -> Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}", op.pos)), listOf(e))
+                    else -> Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}", op.pos.copy())), listOf(e))
                 }
             }
             else -> this.expr_3_met()
@@ -1247,7 +1247,7 @@ class Parser (lexer_: Lexer)
     }
     fun expr_1_bin (xop: String? = null, xe1: Expr? = null): Expr {
         val e1 = if (xe1 != null) xe1 else this.expr_2_pre()
-        val ok = this.tk1.pos.isSameLine(this.tk0.pos) && // x or \n y (ok) // x \n or y (not allowed) // problem with '==' in 'ifs'
+        val ok = this.tk1.pos.isSameLine(this.tk0.pos.copy()) && // x or \n y (ok) // x \n or y (not allowed) // problem with '==' in 'ifs'
                     this.acceptEnu("Op")
         if (!ok) {
             return e1
@@ -1285,7 +1285,7 @@ class Parser (lexer_: Lexer)
                 "in-not?" -> this.nest("in-not'(${e1.tostr(true)}, ${e2.tostr(true)})")
                 else -> {
                     val id = if (op.str[0] in OPERATORS) "{{${op.str}}}" else op.str
-                    Expr.Call(op, Expr.Acc(Tk.Id(id, op.pos)), listOf(e1,e2))
+                    Expr.Call(op, Expr.Acc(Tk.Id(id, op.pos.copy())), listOf(e1,e2))
                 }
             }
         )
