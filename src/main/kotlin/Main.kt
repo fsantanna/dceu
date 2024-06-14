@@ -49,6 +49,8 @@ val KEYWORDS: SortedSet<String> = (
         "coro", "resume", "yield",
     )) + (if (CEU < 4) setOf() else setOf(
         "broadcast", "delay", "in", "pub", "spawn", "task", "toggle",
+    )) + (if (CEU < 4) setOf() else setOf(
+        "tasks",
     )) + (if (CEU < 99) setOf() else setOf(
         "await", "every", "ifs", "match",
         "par", "par-and", "par-or",
@@ -102,7 +104,7 @@ val GLOBALS = setOf (
 )) + (if (CEU < 4) setOf() else setOf(
     "broadcast'"
 )) + (if (CEU < 5) setOf() else setOf(
-    "next-tasks", "tasks",
+    "next-tasks",
 ))
 
 sealed class Tk (val str: String, val pos: Pos) {
@@ -141,6 +143,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Delay  (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Pub    (val tk_: Tk, val tsk: Expr?): Expr(N++, tk_)
     data class Toggle (val tk_: Tk.Fix, val tsk: Expr, val on: Expr): Expr(N++, tk_)
+    data class Tasks  (val tk_: Tk.Fix, val max: Expr): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id, val ign: Boolean=false): Expr(N++, tk_)

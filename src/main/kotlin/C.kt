@@ -603,6 +603,12 @@ fun Coder.main (tags: Tags): String {
     }
 
     CEU_Value ceu_vector_get (CEU_Vector* vec, int i);
+    #if CEU >= 3
+    void ceu_abort_exe (CEU_Exe* exe);
+    #endif
+    #if CEU >= 4
+    void ceu_dyn_unlink (CEU_Dyn* dyn);
+    #endif
 
     void ceu_gc_free (CEU_Dyn* dyn) {
         switch (dyn->Any.type) {
