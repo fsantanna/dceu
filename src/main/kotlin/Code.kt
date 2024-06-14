@@ -17,16 +17,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
         return "\"${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : $src\""
     }
 
-    fun Expr.check_error_aborted (cmd: String, msg: String): String {
+    fun Expr.check_aborted (cmd: String, msg: String): String {
         val exe = ups.exe(this)
         val defer = ups.first_without(this, { it is Expr.Defer }, { it is Expr.Proto })
+        return (CEU>=3 && exe!=null && defer==null).cond { """
+            if (ceux->exe->status == CEU_EXE_STATUS_TERMINATED) {
+                $cmd;
+            }
+        """ }
+    }
+    fun Expr.check_error_aborted (cmd: String, msg: String): String {
         return """
             CEU_ERROR_CHK_ACC($cmd, $msg);
-            ${(CEU>=3 && exe!=null && defer==null).cond { """
-                if (ceux->exe->status == CEU_EXE_STATUS_TERMINATED) {
-                    $cmd;
-                }
-            """ }}
+            ${this.check_aborted(cmd, msg)}
         """
     }
 
@@ -460,15 +463,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ${sta.idx(this,"args_$n")}
                     };
                     ceu_exe_$n.Dyn->Exe.clo->proto(&ceux_$n);
-                    {
-                        int ceu_err_$n = 0;
-                        ${this.check_error_aborted("{ceu_err_$n=1;}", this.toerr())}
-                        ceu_gc_dec_val(ceu_acc);
-                        if (ceu_err_$n) {
-                            continue;
-                        }
-                        ceu_acc = ceu_exe_$n;
-                    }
+                    CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
+                    ceu_gc_dec_val(ceu_acc);
+                    ${this.check_aborted("continue", this.toerr())}
+                    ceu_acc = ceu_exe_$n;
                 } // SPAWN | ${this.dump()}
                 """
             }
