@@ -455,11 +455,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     }.joinToString("")}
 
                     ${this.tsk.code()}
-                    CEU_Dyn* ceu_$n = ${when {
+                    CEU_Dyn* ceu_a_$n = ${when {
                         (CEU<5 || this.tsks==null) -> "(CEU_Dyn*)ceu_task_up(ceux)"
                         else -> sta.idx(this,"tsks_$n") + ".Dyn"
                     }};
-                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, ceu_$n, &$blkc);
+                    CEU_Block* ceu_b_$n = ${this.tsks.cond2({"NULL"}, {"&$blkc"})};
+                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, ceu_a_$n, ceu_b_$n);
                     CEU_ACC(ceu_exe_$n);
                     CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
                     

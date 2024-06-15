@@ -418,10 +418,10 @@ class Exec_05 {
     fun ab_02_pool_max_err() {
         val out = test(
             """
-            tasks(nil)
+            tasks(false)
         """
         )
-        assert(out == " |  anon : (lin 2, col 13) : tasks(nil)\n" +
+        assert(out == " |  anon : (lin 2, col 13) : tasks(false)\n" +
                 " v  tasks error : expected positive number\n") { out }
     }
     @Test
@@ -2518,7 +2518,7 @@ class Exec_05 {
             val T = task (v) {
                 println(:ok)
                 loop {
-                    val it = yield()
+                    val it = yield(nil)
                     break if {{==}}(it,:FIN)
                 }
             }
@@ -2528,7 +2528,7 @@ class Exec_05 {
                 loop {
                     do {
                         loop {
-                            val it = yield()
+                            val it = yield(nil)
                             break if it==:CHK
                         }
                         val xxx = #[next-tasks(ts)]
