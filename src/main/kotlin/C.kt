@@ -432,22 +432,6 @@ fun Coder.main (tags: Tags): String {
 
     // EXIT / ERROR / ASSERT
     val c_error = """
-    #if 0
-    #define CEU_ERROR_RET(S) (CEU_ERROR_IS(S) ? (3+ceux_peek(S,(S)->n-3).Number) : 0)
-
-    #define CEU_ERROR_CHK_VAL(cmd,v,pre) ({     \
-        if (v.type == CEU_VALUE_ERROR) {        \
-            ceu_error_e(X->S,v);                \
-            CEU_ERROR_CHK_STK(cmd,pre);         \
-        };                                      \
-        v;                                      \
-    })
-    #define CEU_ERROR_THR_S(cmd,msg,pre) {      \
-        ceu_error_s(X->S, msg);                 \
-        CEU_ERROR_CHK_STK(cmd,pre);             \
-    }
-    #endif
-
     #if CEU <= 1
     
     #define CEU_ERROR_CHK_ACC(cmd,pre) {        \

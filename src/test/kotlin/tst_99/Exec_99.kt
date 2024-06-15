@@ -28,8 +28,8 @@ class Exec_99 {
         val out = test("""
             println(do {})
         """)
-        //assert(out == "nil\n") { out }
-        assert(out == "\n") { out }
+        assert(out == "nil\n") { out }
+        //assert(out == "\n") { out }
     }
     @Test
     fun aa_03_if() {
@@ -57,8 +57,8 @@ class Exec_99 {
             println(if [] {})
         """)
         //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
-        //assert(out == "nil\n") { out }
-        assert(out == "\n") { out }
+        assert(out == "nil\n") { out }
+        //assert(out == "\n") { out }
     }
     @Test
     fun aa_06_if() {
@@ -72,8 +72,8 @@ class Exec_99 {
         val out = test("""
             println(func () {} ())
         """)
-        //assert(out == "nil\n") { out }
-        assert(out == "\n") { out }
+        assert(out == "nil\n") { out }
+        //assert(out == "\n") { out }
     }
 
     // AS
@@ -386,6 +386,15 @@ class Exec_99 {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun cj_05_ifs() {
+        val out = test("""
+            match nil {
+                |10 { ,v => println(v) }
+            }
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // IF cnd => t => f
 
@@ -602,6 +611,17 @@ class Exec_99 {
             println(x)
         """)
         assert(out == "true\n") { out }
+    }
+    @Test
+    fun ff_10x_ifs() {
+        val out = test("""
+            $IS ; $COMP
+            match 20 {
+                :no => println(:no)
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun ff_11_ifs() {

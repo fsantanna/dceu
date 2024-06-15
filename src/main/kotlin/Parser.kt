@@ -153,7 +153,6 @@ class Parser (lexer_: Lexer)
             }
             Pair(u,e)
         }
-        this.acceptOp_err(">")
         return l
     }
 
@@ -233,7 +232,7 @@ class Parser (lexer_: Lexer)
                 if (not $xi) {
                     val ${Pair(id,tag).tostr(true)} = $xv
                     if $cnd {
-                        set $xi = `:ceu ceux_peek(X->S, XX(-2))`
+                        set $xi = `:ceu ceu_acc`
                         ${xf.cond { it() } }
                     }
                 }
@@ -452,9 +451,6 @@ class Parser (lexer_: Lexer)
                 val fst = if (this.checkEnu("Id")) this.id_tag() else Pair(Tk.Id("it",this.tk0.pos.copy()),null)
                 val lst = listOf(fst) + if (!par || !this.acceptFix(",")) emptyList() else {
                     this.list0(",", ")") { this.id_tag() }
-                }
-                if (par) {
-                    this.acceptFix_err(")")
                 }
 
                 val id = fst.first.str
@@ -824,7 +820,6 @@ class Parser (lexer_: Lexer)
                     }
                     Pair(cnd, es)
                 }
-                this.acceptFix_err("}")
                 this.nest("""
                     do {
                         ;;`/* IFS | ${tk0.dump()} */`
@@ -860,7 +855,7 @@ class Parser (lexer_: Lexer)
                                 val (idtag, es) = this.lambda(false)
                                 """
                                 do {
-                                    ${idtag.cond { "val ${it.tostr(true)} = `:ceu ceux_peek(X->S, XX(-2))`" }}
+                                    ${idtag.cond { "val ${it.tostr(true)} = `:ceu ceu_acc`" }}
                                     ${es.tostr(true)}
                                 }
                                 """
@@ -1345,11 +1340,16 @@ class Parser (lexer_: Lexer)
 
     fun exprs (): List<Expr> {
         val ret = mutableListOf<Expr>()
-        //if (CEU < 99) {
+        if (CEU < 99) {
             ret.add(this.expr())
-        //}
+        }
         while (!this.checkFix("}") && !this.checkEnu("Eof")) {
             ret.add(this.expr())
+        }
+        if (CEU >= 99) {
+            if (ret.size == 0) {
+                ret.add(Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy())))
+            }
         }
         val es = ret.dropLastWhile { it is Expr.Delay }  // ignore delay at the end
         es.forEachIndexed { i, e ->
