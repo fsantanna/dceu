@@ -13,9 +13,8 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         }
     }
 
-    // at least 1 yield (including subs) or nested coro/task or spawn (block needs mem)
     // Do or Proto that requires mem:
-    //  - yields or contains nested task
+    //  - yield // nested coro/task // spawn/tasks (block needs mem)
     val mems: MutableSet<Expr>  = mutableSetOf()
 
     // void: block is innocuous -> should be a proxy to up block
@@ -26,7 +25,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         //println(blk.tostr())
         return when {
             //true -> false
-            ismem(blk) -> false
+            ismem(blk,true) -> false
             (ups.pub[blk] is Expr.Loop) -> false
             !dcls.isEmpty() -> false
             (ups.pub[blk] is Expr.Proto) -> false
@@ -36,7 +35,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     }
     val defer_catch_spawn_tasks: MutableSet<Expr.Do> = mutableSetOf()
 
-    fun ismem (e: Expr): Boolean {
+    fun ismem (e: Expr, out: Boolean=false): Boolean {
         val proto = ups.first(e) { it is Expr.Proto }.let {
             when {
                 (it == null) -> null
@@ -46,7 +45,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         }
         val up = ups.first(e) { it is Expr.Do || it is Expr.Proto }!!
         return when {
-            (proto == null) -> false
+            (!out && proto==null) -> false
             //true -> true
             mems.contains(up) -> true
             else -> false
@@ -230,11 +229,12 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.args.forEach { it.traverse() }
                 if (this.tsks == null) {
                     defer_catch_spawn_tasks.add(ups.first(this) { it is Expr.Do } as Expr.Do)
+
+                    // tasks is the one relevant, not the spawn itself
+                    ups.all_until(this) { it is Expr.Proto }
+                        .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
+                        .forEach { mems.add(it) }
                 }
-                assert(this.tsks == null)
-                ups.all_until(this) { it is Expr.Proto }
-                    .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
-                    .forEach { mems.add(it) }
                 /*
                 when {
                     (ups.first(this) { f -> ((f is Expr.Proto) && f.tk.str == "func") } != null)
@@ -260,7 +260,12 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
             }
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
-            is Expr.Tasks  -> this.max.traverse()
+            is Expr.Tasks  -> {
+                this.max.traverse()
+                ups.all_until(this) { it is Expr.Proto }
+                    .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
+                    .forEach { mems.add(it) }
+            }
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {

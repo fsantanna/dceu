@@ -1826,9 +1826,15 @@ fun Coder.main (tags: Tags): String {
     """
     val c_bcast = """
         #if CEU >= 4
+        #if CEU >= 5
+        #define ceu_bcast_dyn(a,b,c,d)      \
+            assert(b == CEU_ACTION_RESUME); \
+            (a->Any.type==CEU_VALUE_TASKS ? ceu_bcast_tasks(a,b,c,d) : ceu_bcast_task((CEU_Exe_Task*)a,c,d))
+        #else
         #define ceu_bcast_dyn(a,b,c,d)      \
             assert(b == CEU_ACTION_RESUME); \
             ceu_bcast_task((CEU_Exe_Task*)a,c,d)
+        #endif
             
         void ceu_bcast_task (CEU_Exe_Task* tsk, uint32_t now, CEU_Value* evt);
 
@@ -1907,15 +1913,6 @@ fun Coder.main (tags: Tags): String {
             ceu_gc_dec_dyn((CEU_Dyn*) tsk);
         }
 
-        #if 0
-        int ceu_broadcast_global (void) {
-            assert(CEU_TIME < UINT32_MAX);
-            CEU_TIME++;
-            int ret = ceu_bcast_tasks(CEU_GLOBAL_X, CEU_ACTION_RESUME, CEU_TIME, (CEU_Dyn*) &CEU_GLOBAL_TASK);
-            return ret;
-        }
-        #endif
-        
         void ceu_pro_broadcast_plic_ (CEUX* X) {
             assert(X->n == 2);
             //ceu_bstk_assert(bstk);

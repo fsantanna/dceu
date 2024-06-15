@@ -62,7 +62,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Yield  -> "yield(" + this.arg.tostr(pre) + ")"
         is Expr.Resume -> "(resume (" + this.co.tostr(pre) + ")(" + this.args.map { it.tostr(pre) }.joinToString(",") + "))"
 
-        is Expr.Spawn  -> "(spawn " + this.tsk.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")" + this.tsks.cond { " in ${this.tsks!!.tostr(pre)}" } + ")"
+        is Expr.Spawn  -> "(spawn " + this.tsk.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")" + this.tsks.cond { " in ${it.tostr(pre)}" } + ")"
         is Expr.Delay  -> "delay"
         is Expr.Pub    -> this.tsk.cond { it.tostr(pre)+"." } + "pub"
         is Expr.Toggle -> "(toggle ${this.tsk.tostr(pre)}(${this.on.tostr(pre)}))"

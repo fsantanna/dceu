@@ -430,17 +430,24 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val blkc = sta.idx(blk, "block_${blk.n}")
                 """
                 { // SPAWN | ${this.dump()}
-                    ${(CEU >= 5).cond { """
-                        ${this.tsks.cond2({
-                            it.code()
-                        },{
-                            "ceux_push(X->S, 1, (CEU_Value) { CEU_VALUE_NIL });"
-                        })}
-                    """ }}
-                    
                     ${(!sta.ismem(this)).cond { """
+                        CEU_Value ceu_tsks_$n;
                         CEU_Value ceu_args_$n[${this.args.size}];
                     """ }}
+
+                    ${(CEU>=5 && this.tsks!=null).cond {
+                        this.tsks!!.code() + """
+                            ${sta.idx(this,"tsks_$n")} = ceu_acc;                            
+                        if (ceu_acc.type != CEU_VALUE_TASKS) {
+                            CEU_ERROR_CHK_PTR (
+                                continue,
+                                "spawn error : invalid pool",
+                                ${this.toerr()}
+                            );
+                        }
+                        """
+                    }}
+                    
                     ${this.args.mapIndexed { i,e ->
                         e.code() + """
                             ${sta.idx(this,"args_$n")}[$i] = CEU_ACC_KEEP();
@@ -448,24 +455,33 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     }.joinToString("")}
 
                     ${this.tsk.code()}
-                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, (CEU_Dyn*)ceu_task_up(ceux), &$blkc);
+                    CEU_Dyn* ceu_$n = ${when {
+                        (CEU<5 || this.tsks==null) -> "(CEU_Dyn*)ceu_task_up(ceux)"
+                        else -> sta.idx(this,"tsks_$n") + ".Dyn"
+                    }};
+                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, ceu_$n, &$blkc);
                     CEU_ACC(ceu_exe_$n);
                     CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
-                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
-
-                    CEUX ceux_$n = {
-                        ceu_exe_$n.Dyn->Exe.clo,
-                        {.exe = (CEU_Exe*) ceu_exe_$n.Dyn},
-                        CEU_ACTION_RESUME,
-                        ceux,
-                        ${this.args.size},
-                        ${sta.idx(this,"args_$n")}
-                    };
-                    ceu_exe_$n.Dyn->Exe.clo->proto(&ceux_$n);
-                    CEU_ERROR_CHK_ACC({ceu_gc_dec_val(ceu_exe_$n);continue;}, ${this.toerr()});
-                    ceu_gc_dec_val(ceu_acc);
-                    ${this.check_aborted("{ceu_gc_dec_val(ceu_exe_$n);continue;}", this.toerr())}
-                    ceu_acc = ceu_exe_$n;
+                    
+                    ${(CEU>=5 && this.tsks!=null).cond { """
+                        if (ceu_acc.type != CEU_VALUE_NIL)
+                    """ }}
+                    {
+                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                        CEUX ceux_$n = {
+                            ceu_exe_$n.Dyn->Exe.clo,
+                            {.exe = (CEU_Exe*) ceu_exe_$n.Dyn},
+                            CEU_ACTION_RESUME,
+                            ceux,
+                            ${this.args.size},
+                            ${sta.idx(this,"args_$n")}
+                        };
+                        ceu_exe_$n.Dyn->Exe.clo->proto(&ceux_$n);
+                        CEU_ERROR_CHK_ACC({ceu_gc_dec_val(ceu_exe_$n);continue;}, ${this.toerr()});
+                        ceu_gc_dec_val(ceu_acc);
+                        ${this.check_aborted("{ceu_gc_dec_val(ceu_exe_$n);continue;}", this.toerr())}
+                        ceu_acc = ceu_exe_$n;
+                    }
                 } // SPAWN | ${this.dump()}
                 """
             }
