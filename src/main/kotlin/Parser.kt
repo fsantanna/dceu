@@ -156,32 +156,30 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun patt (xi: String?, xv: String, xf: (() -> String)?): String {
-        // Patt : (id :Tag | cnd)
-        //      | (id :Tag [{<Patt>,}] | cnd)
-        //      | (id :Tag <op> <expr> | cnd)
-        //      | (id :Tag <const> | cnd)
+    fun patt (): Pair<Id_Tag, String> {
+        // Patt : ([id] [:Tag] [
+        //          (<op> <expr>) |
+        //          <const> |
+        //          `[´{<Patt>,}]
+        //        ] [| cnd])
 
         val par = this.acceptFix("(")
 
-        val id = if (CEU<99 || this.checkEnu("Id")) {
+        val id: Tk.Id = if (CEU<99 || this.checkEnu("Id")) {
             this.acceptEnu_err("Id")
             this.tk0 as Tk.Id
         } else {
             Tk.Id("it", this.tk0.pos.copy())
         }
 
-        val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
+        val tag: Tk.Tag? = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
 
-        val cnd: String = when {
-            (CEU<99 || this.checkOp("|")) -> {
-                this.acceptOp_err("|")
-                this.expr().tostr(true)
-            }
-
-            // (== 10)
-            // ({{even?}})
-            this.acceptEnu("Op") -> {
+        val mid: String? = when {
+            (CEU < 99) -> null
+            !this.checkOp("|") && this.acceptEnu("Op") -> {
+                // ambiguous with `|´
+                // (== 10)
+                // ({{even?}})
                 val op = this.tk0.str.let {
                     if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
                 }
@@ -192,13 +190,11 @@ class Parser (lexer_: Lexer)
                     "$op(${id.str}, ${e.tostr(true)})"
                 }
             }
-
-            // const
             (this.checkFix("nil") || this.checkFix("false") || this.checkFix("true") || this.checkEnu("Chr") || this.checkEnu("Num")) -> {
+                // const
                 val e = this.expr()
-                "${id.str} === ${e.tostr(true)}"
+                "(${id.str} === ${e.tostr(true)})"
             }
-
             // [...]
             /*
             this.acceptFix("[") -> {
@@ -211,14 +207,26 @@ class Parser (lexer_: Lexer)
                 """))
             }
              */
-
-            else -> "true"
+            else -> null
         }
+
+        val pos: String? = if (CEU>=99 && !this.checkOp("|")) null else {
+            this.acceptOp_err("|")
+            this.expr().tostr(true)
+        }
+
+        val cnd = "(true" +
+                tag.cond { " and (${id.str} is? ${it.str})" } +
+                mid.cond { " and $it" } +
+                pos.cond { " and $it" } + ")"
 
         if (par) {
             this.acceptFix_err(")")
         }
 
+        return Pair(Pair(id,tag), cnd)
+
+        /*
         return when {
             (xi==null && xf==null) -> // catch
                 """
@@ -239,6 +247,7 @@ class Parser (lexer_: Lexer)
                 """
             else -> TODO("patt: xi vs xf")
         }
+         */
     }
 
     fun <T> list0 (sep: String?, close: String, func: () -> T): List<T> {
@@ -518,7 +527,7 @@ class Parser (lexer_: Lexer)
                             do {
                                 val ceu_$N :Iterator = to-iter(${iter.tostr(true)})
                                 loop {
-                                    val (${lst.map { it.tostr(true) }.joinToString(",")}) = ceu_$N.f(ceu_$N)
+                                    val ${lst.map { it.tostr(true) }.joinToString(",")} = ceu_$N.f(ceu_$N)
                                     break(nil) if (ceu_$N.f == nil)
                                     ${blk.es.tostr(true)}
                                 }
@@ -631,11 +640,13 @@ class Parser (lexer_: Lexer)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val pat = this.patt (
-                    null,
-                    "`:ceu *(ceu_acc.Dyn->Error.val)`",
-                    null
-                )
+                val (id_tag,cnd) = this.patt()
+                val pat = """
+                    do {
+                        val ${id_tag.tostr(true)} = `:ceu *(ceu_acc.Dyn->Error.val)`
+                        $cnd
+                    }
+                """
                 val blk = this.block()
                 Expr.Catch(tk0, this.nest(pat) as Expr.Do, blk)
             }
@@ -644,7 +655,11 @@ class Parser (lexer_: Lexer)
             (CEU>=3 && this.acceptFix("yield")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("(")
-                val arg = this.expr()
+                val arg = if (CEU>=99 && this.checkFix(")")) {
+                    Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy()))
+                } else {
+                    this.expr()
+                }
                 this.acceptFix_err(")")
                 Expr.Yield(tk0, arg)
             }
@@ -848,14 +863,14 @@ class Parser (lexer_: Lexer)
                 val xv = this.expr()
                 this.acceptFix_err("{")
                 fun case (): String {
-                    fun cons (): String {
+                    fun cons (v: String): String {
                         return when {
                             this.acceptFix("=>") -> this.expr().tostr(true)
                             else -> {
                                 val (idtag, es) = this.lambda(false)
                                 """
                                 do {
-                                    ${idtag.cond { "val ${it.tostr(true)} = `:ceu ceu_acc`" }}
+                                    ${idtag.cond { "val ${it.tostr(true)} = $v" }}
                                     ${es.tostr(true)}
                                 }
                                 """
@@ -864,26 +879,33 @@ class Parser (lexer_: Lexer)
 
                     }
                     return when {
-                        this.acceptFix("}") -> "false"
+                        this.acceptFix("}") -> "nil"
                         this.acceptFix("else") -> {
-                            val ret = cons()
+                            val ret = cons("ceu_v_$n")
                             this.acceptFix_err("}")
                             ret
                         }
                         else -> {
-                            val cur = this.patt("ceu_ok_$n", "ceu_v_$n", ::cons)
-                            val nxt = case()
-                            "($cur) or ($nxt)"
+                            val (id_tag,cnd) = this.patt()
+                            val xn = N++
+                            """
+                            val ${id_tag.tostr(true)} = ceu_v_$n
+                            val ceu_ok_$xn = $cnd
+                            if ceu_ok_$xn {
+                                ${cons("ceu_ok_$xn")}
+                            } else {
+                                ${case()}
+                            }
+                            """
                         }
                     }
                 }
                 this.nest("""
                     do {
                         val ceu_v_$n = ${xv.tostr(true)}
-                        var ceu_ok_$n = false
                         ${case()}
                     }
-                """)
+                """) //.let { println(it);it })
             }
             (CEU>=99 && this.acceptFix("resume-yield-all")) -> {
                 val tkx = this.tk1
