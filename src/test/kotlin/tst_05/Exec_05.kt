@@ -506,6 +506,7 @@ class Exec_05 {
             val ts = tasks()
             println(`:number CEU_GC.free`)
             spawn (task () { nil }) () in ts
+            nil
             println(`:number CEU_GC.free`)
         """)
         assert(out == "0\n2\n") { out }
