@@ -156,14 +156,7 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun patt (xv: String, xcnt: Triple<String?,()->String,String?>?): String {
-        // Patt receives
-        //  xv: value to test
-        //  (arg,code,ret):
-        //  - arg:  var to assign result of xv test
-        //  - code: code to execute if xv satisfies
-        //  - ret:  var to assign result of code
-        //
+    fun patt (): Pair<Id_Tag, String> {
         // Patt : ([id] [:Tag] [
         //          (<op> <expr>) |
         //          <const> |
@@ -202,32 +195,20 @@ class Parser (lexer_: Lexer)
                 val e = this.expr()
                 "(${id.str} === ${e.tostr(true)})"
             }
+            // [...]
             this.acceptFix("[") -> {
-                // [...]
-                fun f (i: Int): String {
-                    if (this.checkFix("]")) {
-                        xxx
-                    } else {
-                        this.patt("${id.str}[$i]", Triple(null, { f(i+1) }, null))
-                    }
+                val l = this.list0(",","]") {
+                    this.patt()
                 }
-                var i = 0
-                while (true) {
-                    this.patt(, null)
-                    i++
-                }
-                this.acceptFix_err("]")
                 """
-                assert(type(${id.str})==:tuple, "TODO: error")
-                if ${l.size} <= #${id.str} {
-                    ${l.foldRightIndexed("true") { i,(id_tag,cnd),acc -> """
-                        val ${id_tag.tostr(true)} = ${id.str}[i]
-                        if $cnd {
-                            $acc
-                        } else {
-                            nil
+                do {
+                    ;;assert(type(${id.str})==:tuple, "TODO: error")
+                    ${l.foldRightIndexed("true") { i, (idtag, cnd), acc -> """
+                        do {
+                            val ${idtag.tostr(true)} = ${id.str}[$i]
+                            $cnd and $acc
                         }
-                    """ }}
+                    """}}
                 }
                 """
             }
@@ -248,31 +229,7 @@ class Parser (lexer_: Lexer)
             this.acceptFix_err(")")
         }
 
-        return when {
-            (xcnt == null) -> // catch
-                """
-                do {
-                    val ${Pair(id,tag).tostr(true)} = $xv
-                    $cnd
-                }
-                """
-            else -> { // match
-                val (arg,code,ret) = xcnt
-                val xarg = arg ?: "ceu_arg_${N++}"
-                """
-                do {
-                    val ${Pair(id, tag).tostr(true)} = $xv
-                    val $xarg = $cnd
-                    if $xarg {
-                        ${ret.cond { "set $it = " }} ${code()}
-                        true
-                    } else {
-                        false
-                    }
-                }
-                """
-            }
-        }
+        return Pair(Pair(id,tag), cnd)
     }
 
     fun <T> list0 (sep: String?, close: String, func: () -> T): List<T> {
@@ -665,10 +622,15 @@ class Parser (lexer_: Lexer)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val xv = "`:ceu *(ceu_acc.Dyn->Error.val)`"
-                val cnd = this.patt(xv,null)
+                val (id_tag,cnd) = this.patt()
+                val pat = """
+                    do {
+                        val ${id_tag.tostr(true)} = `:ceu *(ceu_acc.Dyn->Error.val)`
+                        $cnd
+                    }
+                """
                 val blk = this.block()
-                Expr.Catch(tk0, this.nest(cnd) as Expr.Do, blk)
+                Expr.Catch(tk0, this.nest(pat) as Expr.Do, blk)
             }
             (CEU>=2 && this.acceptFix("defer")) -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 
@@ -883,15 +845,14 @@ class Parser (lexer_: Lexer)
                 val xv = this.expr()
                 this.acceptFix_err("{")
                 fun case (): String {
-                    val xn = N++
-                    fun cons (): String {
+                    fun cons (v: String): String {
                         return when {
                             this.acceptFix("=>") -> this.expr().tostr(true)
                             else -> {
                                 val (idtag, es) = this.lambda(false)
                                 """
                                 do {
-                                    ${idtag.cond { "val ${it.tostr(true)} = ceu_arg_$xn" }}
+                                    ${idtag.cond { "val ${it.tostr(true)} = $v" }}
                                     ${es.tostr(true)}
                                 }
                                 """
@@ -901,16 +862,18 @@ class Parser (lexer_: Lexer)
                     return when {
                         this.acceptFix("}") -> "nil"
                         this.acceptFix("else") -> {
-                            val ret = cons()
+                            val ret = cons("ceu_v_$n")
                             this.acceptFix_err("}")
                             ret
                         }
                         else -> {
-                            val cnd = this.patt("ceu_v_$n", Triple("ceu_arg_$xn", ::cons, "ceu_ret_$xn"))
+                            val (id_tag,cnd) = this.patt()
+                            val xn = N++
                             """
-                            var ceu_ret_$xn
-                            if $cnd {
-                                ceu_ret_$xn
+                            val ${id_tag.tostr(true)} = ceu_v_$n
+                            val ceu_ok_$xn = $cnd
+                            if ceu_ok_$xn {
+                                ${cons("ceu_ok_$xn")}
                             } else {
                                 ${case()}
                             }
