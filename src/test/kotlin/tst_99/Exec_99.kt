@@ -754,8 +754,8 @@ class Exec_99 {
     fun fh_00_ifs () {
         val out = test("""
             $IS ; $COMP
-            val x = match (10,20) {
-                (10,20) => :ok
+            val x = match [10,20] {
+                [10,20] => :ok
             }
             println(x)
         """)
@@ -949,6 +949,15 @@ class Exec_99 {
                 [v,x] = src
         """)
         assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun fj_00() {
+        val out = test("""
+            match [1,2] {
+                [x,y] => println(x,y)
+            }
+        """)
+        assert(out == "1\t2\n") { out }
     }
     @Test
     fun fj_01() {

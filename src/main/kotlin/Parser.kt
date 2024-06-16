@@ -156,7 +156,14 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun patt (): Pair<Id_Tag, String> {
+    fun patt (xv: String, xcnt: Triple<String,()->String,String>?): String {
+        // Patt receives
+        //  xv: value to test
+        //  (arg,code,ret):
+        //  - arg:  var to assign result of xv test
+        //  - code: code to execute if xv satisfies
+        //  - ret:  var to assign result of code
+        //
         // Patt : ([id] [:Tag] [
         //          (<op> <expr>) |
         //          <const> |
@@ -195,16 +202,26 @@ class Parser (lexer_: Lexer)
                 val e = this.expr()
                 "(${id.str} === ${e.tostr(true)})"
             }
-            // [...]
             /*
             this.acceptFix("[") -> {
+                // [...]
                 val l = this.list0(",","]") {
-                    this.xpatt()
+                    this.patt()
                 }
                 this.acceptFix_err("]")
-                Pair(l.unzip().first.flatten(), this.nest("""
-                    assert(type(${id.str})==:tuple, "TODO: error") 
-                """))
+                """
+                assert(type(${id.str})==:tuple, "TODO: error")
+                if ${l.size} <= #${id.str} {
+                    ${l.foldRightIndexed("true") { i,(id_tag,cnd),acc -> """
+                        val ${id_tag.tostr(true)} = ${id.str}[i]
+                        if $cnd {
+                            $acc
+                        } else {
+                            nil
+                        }
+                    """ }}
+                }
+                """
             }
              */
             else -> null
@@ -224,30 +241,30 @@ class Parser (lexer_: Lexer)
             this.acceptFix_err(")")
         }
 
-        return Pair(Pair(id,tag), cnd)
-
-        /*
         return when {
-            (xi==null && xf==null) -> // catch
+            (xcnt == null) -> // catch
                 """
                 do {
                     val ${Pair(id,tag).tostr(true)} = $xv
                     $cnd
                 }
                 """
-            (xi!=null && xf!=null) -> // match
+            else -> { // match
+                val (arg,code,ret) = xcnt
                 """
-                if (not $xi) {
-                    val ${Pair(id,tag).tostr(true)} = $xv
-                    if $cnd {
-                        set $xi = `:ceu ceu_acc`
-                        ${xf.cond { it() } }
+                do {
+                    val ${Pair(id, tag).tostr(true)} = $xv
+                    val $arg = $cnd
+                    if $arg {
+                        set $ret = ${code()}
+                        true
+                    } else {
+                        false
                     }
                 }
                 """
-            else -> TODO("patt: xi vs xf")
+            }
         }
-         */
     }
 
     fun <T> list0 (sep: String?, close: String, func: () -> T): List<T> {
@@ -640,15 +657,10 @@ class Parser (lexer_: Lexer)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val (id_tag,cnd) = this.patt()
-                val pat = """
-                    do {
-                        val ${id_tag.tostr(true)} = `:ceu *(ceu_acc.Dyn->Error.val)`
-                        $cnd
-                    }
-                """
+                val xv = "`:ceu *(ceu_acc.Dyn->Error.val)`"
+                val cnd = this.patt(xv,null)
                 val blk = this.block()
-                Expr.Catch(tk0, this.nest(pat) as Expr.Do, blk)
+                Expr.Catch(tk0, this.nest(cnd) as Expr.Do, blk)
             }
             (CEU>=2 && this.acceptFix("defer")) -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 
@@ -863,36 +875,34 @@ class Parser (lexer_: Lexer)
                 val xv = this.expr()
                 this.acceptFix_err("{")
                 fun case (): String {
-                    fun cons (v: String): String {
+                    val xn = N++
+                    fun cons (): String {
                         return when {
                             this.acceptFix("=>") -> this.expr().tostr(true)
                             else -> {
                                 val (idtag, es) = this.lambda(false)
                                 """
                                 do {
-                                    ${idtag.cond { "val ${it.tostr(true)} = $v" }}
+                                    ${idtag.cond { "val ${it.tostr(true)} = ceu_arg_$xn" }}
                                     ${es.tostr(true)}
                                 }
                                 """
                             }
                         }
-
                     }
                     return when {
                         this.acceptFix("}") -> "nil"
                         this.acceptFix("else") -> {
-                            val ret = cons("ceu_v_$n")
+                            val ret = cons()
                             this.acceptFix_err("}")
                             ret
                         }
                         else -> {
-                            val (id_tag,cnd) = this.patt()
-                            val xn = N++
+                            val cnd = this.patt("ceu_v_$n", Triple("ceu_arg_$xn", ::cons, "ceu_ret_$xn"))
                             """
-                            val ${id_tag.tostr(true)} = ceu_v_$n
-                            val ceu_ok_$xn = $cnd
-                            if ceu_ok_$xn {
-                                ${cons("ceu_ok_$xn")}
+                            var ceu_ret_$xn
+                            if $cnd {
+                                ceu_ret_$xn
                             } else {
                                 ${case()}
                             }
@@ -905,7 +915,7 @@ class Parser (lexer_: Lexer)
                         val ceu_v_$n = ${xv.tostr(true)}
                         ${case()}
                     }
-                """) //.let { println(it);it })
+                """.let { println(it);it })
             }
             (CEU>=99 && this.acceptFix("resume-yield-all")) -> {
                 val tkx = this.tk1
