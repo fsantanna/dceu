@@ -220,10 +220,14 @@ class Parser (lexer_: Lexer)
             this.expr().tostr(true)
         }
 
-        val cnd = "(true" +
+        val cnd = if (CEU < 99) {
+            pos!!
+        } else {
+            "(true" +
                 tag.cond { " and (${id.str} is? ${it.str})" } +
                 mid.cond { " and $it" } +
                 pos.cond { " and $it" } + ")"
+        }
 
         if (par) {
             this.acceptFix_err(")")
@@ -886,7 +890,7 @@ class Parser (lexer_: Lexer)
                         val ceu_v_$n = ${xv.tostr(true)}
                         ${case()}
                     }
-                """.let { println(it);it })
+                """) //.let { println(it);it })
             }
             (CEU>=99 && this.acceptFix("resume-yield-all")) -> {
                 val tkx = this.tk1
