@@ -156,7 +156,7 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun patt (xv: String, xcnt: Triple<String,()->String,String>?): String {
+    fun patt (xv: String, xcnt: Triple<String?,()->String,String?>?): String {
         // Patt receives
         //  xv: value to test
         //  (arg,code,ret):
@@ -202,11 +202,19 @@ class Parser (lexer_: Lexer)
                 val e = this.expr()
                 "(${id.str} === ${e.tostr(true)})"
             }
-            /*
             this.acceptFix("[") -> {
                 // [...]
-                val l = this.list0(",","]") {
-                    this.patt()
+                fun f (i: Int): String {
+                    if (this.checkFix("]")) {
+                        xxx
+                    } else {
+                        this.patt("${id.str}[$i]", Triple(null, { f(i+1) }, null))
+                    }
+                }
+                var i = 0
+                while (true) {
+                    this.patt(, null)
+                    i++
                 }
                 this.acceptFix_err("]")
                 """
@@ -223,7 +231,6 @@ class Parser (lexer_: Lexer)
                 }
                 """
             }
-             */
             else -> null
         }
 
@@ -251,12 +258,13 @@ class Parser (lexer_: Lexer)
                 """
             else -> { // match
                 val (arg,code,ret) = xcnt
+                val xarg = arg ?: "ceu_arg_${N++}"
                 """
                 do {
                     val ${Pair(id, tag).tostr(true)} = $xv
-                    val $arg = $cnd
-                    if $arg {
-                        set $ret = ${code()}
+                    val $xarg = $cnd
+                    if $xarg {
+                        ${ret.cond { "set $it = " }} ${code()}
                         true
                     } else {
                         false
