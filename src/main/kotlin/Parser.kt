@@ -201,11 +201,12 @@ class Parser (lexer_: Lexer)
                     this.patt()
                 }
                 """
-                do {
-                    ;;assert(type(${id.str})==:tuple, "TODO: error")
-                    ${l.foldRightIndexed("true") { i, (idtag, cnd), acc -> """
+                if type(${id.str}) == :tuple {
+                    val ceu_tup_$N = ${id.str}
+                    ${l.foldRightIndexed("true") { i, (idtag, cnd), acc ->
+                        """
                         do {
-                            val ${idtag.tostr(true)} = ${id.str}[$i]
+                            val ${idtag.tostr(true)} = ceu_tup_$N[$i]
                             $cnd and $acc
                         }
                     """}}

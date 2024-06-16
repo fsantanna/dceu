@@ -765,9 +765,9 @@ class Exec_99 {
     fun fh_01_ifs () {
         val out = test("""
             $IS ; $COMP
-            val x = match (10,20) {
-                (30,40) => error(:no)
-                (10,20) => :ok
+            val x = match [10,20] {
+                [30,40] => error(:no)
+                [10,20] => :ok
             }
             println(x)
         """)
@@ -778,7 +778,7 @@ class Exec_99 {
         val out = test("""
             $IS ; $COMP
             val x = match 1 {
-                (1,2) => error(:no)     ;; 2 compares to nil
+                [1,2] => error(:no)     ;; 2 compares to nil
                 1 => :ok
             }
             println(x)
@@ -790,20 +790,22 @@ class Exec_99 {
         val out = test("""
             $IS ; $COMP
             val x = match 1 {
-                (1,nil) => (:ok)     ;; 2 compares to nil
+                [1,nil] => (:ok)     ;; 2 compares to nil
                 1 => error(:no)
             }
             println(x)
         """)
-        assert(out == ":ok\n") { out }
+        //assert(out == ":ok\n") { out }
+        assert(out == " |  anon : (lin 5, col 22) : error(:no)\n" +
+                " v  error : :no\n") { out }
     }
     @Test
     fun fh_03_ifs () {
         val out = test("""
             $IS ; $COMP
-            val x = match (1,2) {
-                1 => :ok
-                (1,2) => error(:no)
+            val x = match [1,2] {
+                1 => error(:no)
+                [1,2] => :ok
             }
             println(x)
         """)
@@ -933,23 +935,6 @@ class Exec_99 {
 
     // PATTS / TUPLES
 
-    @Test
-    fun REM_00() {
-        val out = test("""
-            
-            x :X ==10 | ...
-            x :X | ...
-            x :X [] | ...
-            
-            match nil {
-                [10]  => error()
-            }
-            
-            match src {
-                [v,x] = src
-        """)
-        assert(out == ":ok\n") { out }
-    }
     @Test
     fun fj_00() {
         val out = test("""
