@@ -758,6 +758,13 @@ class Exec_99 {
                 [10,20] => :ok
             }
             println(x)
+            ;;;
+            val x:X = v[0]
+            if x==10 {
+                val y:Y = v[1]
+                if y==20 {
+                    :ok, true, 2
+            ;;;
         """)
         assert(out == ":ok\n") { out }
     }
@@ -941,6 +948,24 @@ class Exec_99 {
             match [1,2] {
                 [x,y] => println(x,y)
             }
+            
+            val ID = [1,2]
+            if ID is :tuple {
+                val tup = ID
+                do {
+                    val x = tup[0]
+                    ;;if it == 1 {
+                        do {
+                            val y = tup[1]
+                            ;;if it == 2 {
+                                println(x,y)
+                            ;;}
+                        }
+                    ;;}
+                }
+            }
+            
+                
         """)
         assert(out == "1\t2\n") { out }
     }

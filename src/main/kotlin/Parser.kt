@@ -156,13 +156,14 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun patt (): Pair<Id_Tag, String> {
+    fun patt (): Triple<Id_Tag, String, Int> {
         // Patt : ([id] [:Tag] [
         //          (<op> <expr>) |
         //          <const> |
         //          `[´{<Patt>,}]
         //        ] [| cnd])
 
+        var clos = 0
         val par = this.acceptFix("(")
 
         val id: Tk.Id = if (CEU<99 || this.checkEnu("Id")) {
@@ -200,6 +201,7 @@ class Parser (lexer_: Lexer)
                 val l = this.list0(",","]") {
                     this.patt()
                 }
+                clos += 1 + l.size
                 """
                 if type(${id.str}) == :tuple {
                     val ceu_tup_$N = ${id.str}
@@ -207,10 +209,9 @@ class Parser (lexer_: Lexer)
                         """
                         do {
                             val ${idtag.tostr(true)} = ceu_tup_$N[$i]
-                            $cnd and $acc
-                        }
+                            if $cnd {
+                                $acc
                     """}}
-                }
                 """
             }
             else -> null
@@ -224,17 +225,16 @@ class Parser (lexer_: Lexer)
         val cnd = if (CEU < 99) {
             pos!!
         } else {
-            "(true" +
-                tag.cond { " and (${id.str} is? ${it.str})" } +
-                mid.cond { " and $it" } +
-                pos.cond { " and $it" } + ")"
+            tag.cond { clos++ ; "if (${id.str} is? ${it.str}) {" } +
+            mid.cond { clos++ ; "if $it {" } +
+            pos.cond { clos++ ; "if $it {" }
         }
 
         if (par) {
             this.acceptFix_err(")")
         }
 
-        return Pair(Pair(id,tag), cnd)
+        return Triple(Pair(id,tag), cnd, clos)
     }
 
     fun <T> list0 (sep: String?, close: String, func: () -> T): List<T> {
@@ -627,7 +627,8 @@ class Parser (lexer_: Lexer)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val (id_tag,cnd) = this.patt()
+                val (id_tag,cnd,clos) = this.patt()
+                assert(clos == 0)
                 val pat = """
                     do {
                         val ${id_tag.tostr(true)} = `:ceu *(ceu_acc.Dyn->Error.val)`
@@ -872,14 +873,15 @@ class Parser (lexer_: Lexer)
                             ret
                         }
                         else -> {
-                            val (id_tag,cnd) = this.patt()
+                            val (id_tag,cnd,clos) = this.patt()
                             val xn = N++
                             """
                             val ${id_tag.tostr(true)} = ceu_v_$n
-                            val ceu_ok_$xn = $cnd
-                            if ceu_ok_$xn {
+                            var ceu_ok_$xn
+                            $cnd
                                 ${cons("ceu_ok_$xn")}
-                            } else {
+                                ${"}".repeat(clos)}
+                            if not ceu_ok_$xn {
                                 ${case()}
                             }
                             """
