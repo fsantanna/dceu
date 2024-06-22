@@ -217,6 +217,7 @@ class Parser (lexer_: Lexer)
                     """}}
                 """
             }
+             */
             else -> null
         }
 
@@ -243,7 +244,9 @@ class Parser (lexer_: Lexer)
             do {
                 val ${Pair(id,tag).tostr(true)} = $xv
                 val ceu_cnd_$nn = $cnd
-                ${xcnt.cond { it("ceu_cnd_$nn") }}
+                if ceu_cnd_$nn {
+                    ${xcnt.cond { it("ceu_cnd_$nn") }}
+                }
                 ceu_cnd_$nn
             }
         """.trimIndent()
