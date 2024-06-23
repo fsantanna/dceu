@@ -156,9 +156,9 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun patt (xv: String, xcnt: ((xcnd: String) -> String)?): String {
-        // v: value to test
-        // cont?: optional continuation to execute if success
+    fun patt (xv: String, xcnt: () -> String): String {
+        // xv: value to test
+        // xcont?: optional continuation to execute if success
         // returns code that evaluates to boolean as a whole
 
         // Patt : ([id] [:Tag] [
@@ -166,6 +166,8 @@ class Parser (lexer_: Lexer)
         //          <const> |
         //          `[´{<Patt>,}]
         //        ] [| cnd])
+
+        val f1: (String) -> String = { it }
 
         val par = this.acceptFix("(")
 
@@ -177,9 +179,20 @@ class Parser (lexer_: Lexer)
         }
 
         val tag: Tk.Tag? = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
+        val f2: (String) -> String = if (tag == null) f1 else {
+            { cnt ->
+                f1 (
+                    """
+                    if ${id.str} is? ${tag.str} {
+                        $cnt
+                    }                    
+                    """
+                )
+            }
+        }
 
-        val mid: String? = when {
-            (CEU < 99) -> null
+        val f3: (String) -> String = when {
+            (CEU < 99) -> f2
             !this.checkOp("|") && this.acceptEnu("Op") -> {
                 // ambiguous with `|´
                 // (== 10)
@@ -188,16 +201,34 @@ class Parser (lexer_: Lexer)
                     if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
                 }
                 val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
-                if (e == null) {
+                val cnd = if (e == null) {
                     "$op(${id.str})"
                 } else {
                     "$op(${id.str}, ${e.tostr(true)})"
+                }
+                { cnt ->
+                    f2 (
+                        """
+                        if $cnd {
+                            $cnt    
+                        }
+                        """
+                    )
                 }
             }
             (this.checkFix("nil") || this.checkFix("false") || this.checkFix("true") || this.checkEnu("Chr") || this.checkEnu("Num")) -> {
                 // const
                 val e = this.expr()
-                "(${id.str} === ${e.tostr(true)})"
+                ;
+                { cnt ->
+                    f2 (
+                        """
+                        if ${id.str} === ${e.tostr(true)} {
+                            $cnt
+                        }
+                        """
+                    )
+                }
             }
             // [...]
             this.acceptFix("[") -> {
@@ -218,36 +249,32 @@ class Parser (lexer_: Lexer)
                 """
             }
              */
-            else -> null
+            else -> f2
         }
 
-        val pos: String? = if (CEU>=99 && !this.checkOp("|")) null else {
+        val f4: (String) -> String = if (CEU>=99 && !this.checkOp("|")) f3 else {
             this.acceptOp_err("|")
-            this.expr().tostr(true)
-        }
-
-        val cnd = if (CEU < 99) {
-            pos!!
-        } else {
-            "true" +
-            tag.cond { " and (${id.str} is? ${it.str})" } +
-            mid.cond { " and $it" } +
-            pos.cond { " and $it" }
+            val e = this.expr().tostr(true)
+            ;
+            { cnt ->
+                f3 (
+                    """
+                    if $e {
+                        $cnt
+                    }
+                    """
+                )
+            }
         }
 
         if (par) {
             this.acceptFix_err(")")
         }
 
-        val nn = N++
         return """
             do {
                 val ${Pair(id,tag).tostr(true)} = $xv
-                val ceu_cnd_$nn = $cnd
-                if ceu_cnd_$nn {
-                    ${xcnt.cond { it("ceu_cnd_$nn") }}
-                }
-                ceu_cnd_$nn
+                ${f4(xcnt())}
             }
         """.trimIndent()
     }
@@ -642,7 +669,7 @@ class Parser (lexer_: Lexer)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val pat = this.patt("`:ceu *(ceu_acc.Dyn->Error.val)`", null)
+                val pat = this.patt("`:ceu *(ceu_acc.Dyn->Error.val)`", {"true"})
                 val blk = this.block()
                 Expr.Catch(tk0, this.nest(pat) as Expr.Do, blk)
             }
@@ -859,36 +886,36 @@ class Parser (lexer_: Lexer)
                 val xv = this.expr()
                 this.acceptFix_err("{")
                 fun case (): String {
-                    fun cont (ret: String): (String) -> String {
-                        return { cnd: String ->
-                            when {
-                                this.acceptFix("=>") -> {
-                                    val e = this.expr()
-                                    """
-                                    set $ret = ${e.tostr(true)}
-                                    """
+                    fun cont (): String {
+                        return when {
+                            this.acceptFix("=>") -> {
+                                val e = this.expr()
+                                """
+                                set ceu_ret_$nn = ${e.tostr(true)}
+                                true
+                                """
+                            }
+                            else -> {
+                                val (idtag, es) = this.lambda(false)
+                                """
+                                set ceu_ret_$nn = do {
+                                    ${idtag.cond { "val ${it.tostr(true)} = `:ceu ceu_acc`" }}
+                                    ${es.tostr(true)}
                                 }
-                                else -> {
-                                    val (idtag, es) = this.lambda(false)
-                                    """
-                                    set $ret = do {
-                                        ${idtag.cond { "val ${it.tostr(true)} = $cnd" }}
-                                        ${es.tostr(true)}
-                                    }
-                                    """
-                                }
+                                true
+                                """
                             }
                         }
                     }
                     return when {
                         this.acceptFix("}") -> "nil"
                         this.acceptFix("else") -> {
-                            val ret = cont("ceu_ret_$nn")("true")
+                            val ret = cont()
                             this.acceptFix_err("}")
-                            ret
+                            "do { $ret }"
                         }
                         else -> {
-                            val pat = this.patt("ceu_val_$nn", cont("ceu_ret_$nn"))
+                            val pat = this.patt("ceu_val_$nn", ::cont)
                             """
                             ($pat or ${case()})
                             """
