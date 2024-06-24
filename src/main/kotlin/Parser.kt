@@ -156,18 +156,12 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun patt (xv: String, xcnt: () -> String): String {
-        // xv: value to test
-        // xcont?: optional continuation to execute if success
-        // returns code that evaluates to boolean as a whole
-
+    fun patt (): Patt {
         // Patt : ([id] [:Tag] [
         //          (<op> <expr>) |
         //          <const> |
         //          `[´{<Patt>,}]
         //        ] [| cnd])
-
-        val f1: (String) -> String = { it }
 
         val par = this.acceptFix("(")
 
@@ -179,20 +173,9 @@ class Parser (lexer_: Lexer)
         }
 
         val tag: Tk.Tag? = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
-        val f2: (String) -> String = if (tag == null) f1 else {
-            { cnt ->
-                f1 (
-                    """
-                    if ${id.str} is? ${tag.str} {
-                        $cnt
-                    }                    
-                    """
-                )
-            }
-        }
 
-        val f3: (String) -> String = when {
-            (CEU < 99) -> f2
+        val f: (Expr)->Patt = when {
+            (CEU < 99) -> { pos -> Patt.None(id,tag,pos) }
             !this.checkOp("|") && this.acceptEnu("Op") -> {
                 // ambiguous with `|´
                 // (== 10)
@@ -200,83 +183,73 @@ class Parser (lexer_: Lexer)
                 val op = this.tk0.str.let {
                     if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
                 }
-                val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
-                val cnd = if (e == null) {
+                val e2 = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
+                val xe = if (e2 == null) {
                     "$op(${id.str})"
                 } else {
-                    "$op(${id.str}, ${e.tostr(true)})"
-                }
-                { cnt ->
-                    f2 (
-                        """
-                        if $cnd {
-                            $cnt    
-                        }
-                        """
-                    )
-                }
+                    "$op(${id.str}, ${e2.tostr(true)})"
+                }.let { this.nest(it) }
+                ;
+                { pos -> Patt.One(id,tag,xe,pos) }
             }
             (this.checkFix("nil") || this.checkFix("false") || this.checkFix("true") || this.checkEnu("Chr") || this.checkEnu("Num")) -> {
                 // const
                 val e = this.expr()
+                val xe = this.nest("${id.str} === ${e.tostr(true)}")
                 ;
-                { cnt ->
-                    f2 (
-                        """
-                        if ${id.str} === ${e.tostr(true)} {
-                            $cnt
-                        }
-                        """
-                    )
-                }
+                { pos -> Patt.One(id,tag,xe,pos) }
             }
             // [...]
             this.acceptFix("[") -> {
                 val l = this.list0(",","]") {
                     this.patt()
                 }
-                clos += 1 + l.size
-                """
-                if type(${id.str}) == :tuple {
-                    val ceu_tup_$N = ${id.str}
-                    ${l.foldRightIndexed("true") { i, (idtag, cnd), acc ->
-                        """
-                        do {
-                            val ${idtag.tostr(true)} = ceu_tup_$N[$i]
-                            if $cnd {
-                                $acc
-                    """}}
-                """
+                ;
+                { pos -> Patt.Tup(id,tag,l,pos) }
             }
-             */
-            else -> f2
+            else -> { pos -> Patt.None(id,tag,pos) }
         }
 
-        val f4: (String) -> String = if (CEU>=99 && !this.checkOp("|")) f3 else {
+        val pos = if (CEU>=99 && !this.checkOp("|")) {
+            Expr.Bool(Tk.Fix("true",this.tk0.pos.copy()))
+        } else {
             this.acceptOp_err("|")
-            val e = this.expr().tostr(true)
-            ;
-            { cnt ->
-                f3 (
-                    """
-                    if $e {
-                        $cnt
-                    }
-                    """
-                )
-            }
+            this.expr()
         }
 
         if (par) {
             this.acceptFix_err(")")
         }
 
+        return f(pos)
+    }
+
+    fun Patt.code (v: String, cnt: String): String {
+        val idtag = Pair(this.id, this.tag)
         return """
             do {
-                val ${Pair(id,tag).tostr(true)} = $xv
-                ${f4(xcnt())}
+                val ${idtag.tostr(true)} = $v
+                ${this.tag.cond{ "if ${this.id.str} is? ${it.str} {" }}
+                ${when (this) {
+                    is Patt.None -> """
+                        if ${this.pos.tostr(true)} {
+                            $cnt
+                        }
+                    """
+                    is Patt.One  -> """
+                        if ${this.pos.tostr(true)} {
+                            if ${this.e.tostr(true)} {
+                                $cnt
+                            }
+                        }                        
+                    """
+                    is Patt.Tup  -> """
+                        
+                    """
+                }}
+                ${this.tag.cond{ "}" }}
             }
-        """.trimIndent()
+        """
     }
 
     fun <T> list0 (sep: String?, close: String, func: () -> T): List<T> {
@@ -669,9 +642,11 @@ class Parser (lexer_: Lexer)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val pat = this.patt("`:ceu *(ceu_acc.Dyn->Error.val)`", {"true"})
+                val pat1 = this.patt()
+                val pat2 = pat1.code("`:ceu *(ceu_acc.Dyn->Error.val)`","true")
+                val pat3 = this.nest(pat2) as Expr.Do
                 val blk = this.block()
-                Expr.Catch(tk0, this.nest(pat) as Expr.Do, blk)
+                Expr.Catch(tk0, pat3, blk)
             }
             (CEU>=2 && this.acceptFix("defer")) -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 
@@ -915,9 +890,10 @@ class Parser (lexer_: Lexer)
                             "do { $ret }"
                         }
                         else -> {
-                            val pat = this.patt("ceu_val_$nn", ::cont)
+                            val pat1 = this.patt()
+                            val pat2 = pat1.code("ceu_val_$nn", cont())
                             """
-                            ($pat or ${case()})
+                            (${pat2.trimEnd()} or ${case()})
                             """
                         }
                     }

@@ -107,6 +107,12 @@ val GLOBALS = setOf (
     "next-tasks",
 ))
 
+sealed class Patt (val id: Tk.Id, val tag: Tk.Tag?, val pos: Expr) {
+    data class None (val id_: Tk.Id, val tag_: Tk.Tag?, val pos_: Expr): Patt(id_,tag_,pos_)
+    data class One  (val id_: Tk.Id, val tag_: Tk.Tag?, val e: Expr, val pos_: Expr): Patt(id_,tag_,pos_)
+    data class Tup  (val id_: Tk.Id, val tag_: Tk.Tag?, val l: List<Patt>, val pos_: Expr): Patt(id_,tag_,pos_)
+}
+
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos, val n_: Int=N++): Tk("", pos_)
     data class Fix (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
