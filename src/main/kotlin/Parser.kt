@@ -237,15 +237,30 @@ class Parser (lexer_: Lexer)
                         }
                     """
                     is Patt.One  -> """
-                        if ${this.pos.tostr(true)} {
-                            if ${this.e.tostr(true)} {
+                        if ${this.e.tostr(true)} {
+                            if ${this.pos.tostr(true)} {
                                 $cnt
                             }
                         }                        
                     """
-                    is Patt.Tup  -> """
-                        
-                    """
+                    is Patt.Tup  -> {
+                        val nn = N++
+                        val cnt2 = """
+                            if ${this.pos.tostr(true)} {
+                                $cnt
+                            }                            
+                        """
+                        """
+                        if (type(${id.str})==:tuple) and (#${id.str} >= ${l.size}) {
+                            val ceu_tup_$nn = ${id.str}
+                            if ${this.pos.tostr(true)} {
+                                ${this.l.foldRightIndexed(cnt2) { i,x,acc ->
+                                    x.code("ceu_tup_$nn[$i]", acc)
+                                }}
+                            }
+                        }
+                        """
+                    }
                 }}
                 ${this.tag.cond{ "}" }}
             }

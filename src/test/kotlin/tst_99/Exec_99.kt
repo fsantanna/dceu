@@ -972,10 +972,12 @@ class Exec_99 {
     @Test
     fun fj_01() {
         val out = test("""
+            $COMP
             match [1,2] {
                 [10,x]  => error()
                 [1,2,3] => error()
                 [1,2]   => println(:ok)
+                else    => error()
             }
         """)
         assert(out == ":ok\n") { out }
@@ -983,6 +985,7 @@ class Exec_99 {
     @Test
     fun fj_02() {
         val out = test("""
+            $COMP
             match [1,2] {
                 [1] => println(:ok)
             }
@@ -1011,6 +1014,7 @@ class Exec_99 {
     @Test
     fun fj_05() {
         val out = test("""
+            $IS ; $COMP
             match :X [] {
                 :X [1] => error()
                 :Y []  => error()
@@ -1022,17 +1026,18 @@ class Exec_99 {
     @Test
     fun fj_06() {
         val out = test("""
+            $COMP
             match [1,[:x,:y],2] {
                 [1,xy,3]    => error()
                 [1,[x,y],2] => println(x,y)
             }
         """)
-        assert(out == ":ok\n") { out }
+        assert(out == ":x\t:y\n") { out }
     }
     @Test
     fun fj_07_err() {
         val out = test("""
-            $ASR
+            $COMP
             match nil {
                 [] => println(:ok)
             }
