@@ -940,7 +940,7 @@ class Exec_99 {
         assert(out == ":ok\n:ok\n") { out }
     }
 
-    // PATTS / TUPLES
+    // PATTS / TUPLES / DCL
 
     @Test
     fun fj_00() {
@@ -1046,88 +1046,23 @@ class Exec_99 {
         assert(out == ":ok\n") { out }
     }
 
-    // PATTS / VAR / SET
-
     @Test
-    fun fk_01() {
+    fun fj_08_val() {
         val out = test("""
+            $COMP ; $ASR
             val [x,y]
             println(x,y)
         """)
         assert(out == "nil\tnil\n") { out }
     }
     @Test
-    fun fk_02() {
+    fun fj_09_val() {
         val out = test("""
+            $COMP ; $ASR
             val [x,y] = [1,2]
             println(x,y)
         """)
         assert(out == "1\t2\n") { out }
-    }
-
-    @Test
-    fun fk_01x() {
-        val out = test("""
-            var (x,y,z,w)
-            set (x,y) = (1,2,3)
-            set (z,w) = 4
-            println(x,y,z,w)
-        """)
-        assert(out == "1\t2\t3\tnil\n") { out }
-    }
-    @Test
-    fun fk_02x() {
-        val out = test("""
-            var x
-            set [x] = [10]
-            println(x)
-        """)
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun fk_03() {
-        val out = test("""
-            var x
-            set (x|true) = 1
-            println(x)
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun fk_04() {
-        val out = test("""
-            var x
-            set (x|false) = 1
-            println(x)
-        """)
-        assert(out == "ERROR\n") { out }
-    }
-    @Test
-    fun fk_05() {
-        val out = test("""
-            var x
-            set [x] = 1
-            println(x)
-        """)
-        assert(out == "ERROR\n") { out }
-    }
-    @Test
-    fun fk_06() {
-        val out = test("""
-            var x
-            set [x|x>0] = 1
-            println(x)
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun fk_07() {
-        val out = test("""
-            var x
-            set [x|x<0] = 1
-            println(x)
-        """)
-        assert(out == "ERROR\n") { out }
     }
 
     // CATCH

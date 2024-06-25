@@ -234,6 +234,38 @@ class Parser (lexer_: Lexer)
         """
     }
 
+    fun Patt.code2 (v: String?): String {
+        val idtag = Pair(this.id, this.tag)
+        return """
+            group {
+                val ${idtag.tostr(true)} = ${v.cond2({it},{"nil"})}
+                ${when (this) {
+                    is Patt.None -> """
+                        assert(${this.pos.tostr(true)}, :Patt)
+                    """
+                    is Patt.One  -> """
+                        assert(${this.e.tostr(true)}, :Patt)
+                        assert(${this.pos.tostr(true)}, :Patt)
+                    """
+                    is Patt.Tup  -> {
+                        val nn = N++
+                        """
+                        ${v.cond { """
+                            assert((type(${id.str})==:tuple) and (#${id.str}>=${l.size}), :Patt)
+                            val ceu_tup_$nn = ${id.str}
+                        """ }}
+                        assert(${this.pos.tostr(true)}, :Patt)
+                        ${this.l.mapIndexed { i,x ->
+                            x.code2(if (v == null) null else "ceu_tup_$nn[$i]")
+                        }.joinToString("")}
+                        assert(${this.pos.tostr(true)}, :Patt)
+                        """
+                    }
+                }}
+            }
+        """
+    }
+
     fun Patt.code3 (v: String, cnt: String): String {
         val idtag = Pair(this.id, this.tag)
         return """
@@ -241,37 +273,37 @@ class Parser (lexer_: Lexer)
                 val ${idtag.tostr(true)} = $v
                 ${this.tag.cond{ "if ${this.id.str} is? ${it.str} {" }}
                 ${when (this) {
-                    is Patt.None -> """
+            is Patt.None -> """
                         if ${this.pos.tostr(true)} {
                             $cnt
                         }
                     """
-                    is Patt.One  -> """
+            is Patt.One  -> """
                         if ${this.e.tostr(true)} {
                             if ${this.pos.tostr(true)} {
                                 $cnt
                             }
                         }
                     """
-                    is Patt.Tup  -> {
-                        val nn = N++
-                        val cnt2 = """
+            is Patt.Tup  -> {
+                val nn = N++
+                val cnt2 = """
                             if ${this.pos.tostr(true)} {
                                 $cnt
                             }
                         """
-                        """
+                """
                         if (type(${id.str})==:tuple) and (#${id.str} >= ${l.size}) {
                             val ceu_tup_$nn = ${id.str}
                             if ${this.pos.tostr(true)} {
                                 ${this.l.foldRightIndexed(cnt2) { i,x,acc ->
-                                    x.code3("ceu_tup_$nn[$i]", acc)
-                                }}
+                    x.code3("ceu_tup_$nn[$i]", acc)
+                }}
                             }
                         }
                         """
-                    }
-                }}
+            }
+        }}
                 ${this.tag.cond{ "}" }}
             }
         """
@@ -382,11 +414,21 @@ class Parser (lexer_: Lexer)
             this.acceptFix("group") -> Expr.Group(this.tk0 as Tk.Fix, this.block().es)
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val idtag = this.id_tag()
-                val src = if (!this.acceptFix("=")) null else {
-                    this.expr()
+                if (CEU<99 || !this.checkFix("[")) {
+                    val idtag = this.id_tag()
+                    val src = if (!this.acceptFix("=")) null else {
+                        this.expr()
+                    }
+                    Expr.Dcl(tk0, idtag, src)
+                } else {
+                    val pat = this.patt()
+                    val src = if (this.acceptFix("=")) {
+                        this.expr().tostr(true)
+                    } else {
+                        null
+                    }
+                    this.nest(pat.code2(src)) as Expr.Group
                 }
-                Expr.Dcl(tk0, idtag, src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
