@@ -224,7 +224,17 @@ class Parser (lexer_: Lexer)
         return f(pos)
     }
 
-    fun Patt.code (v: String, cnt: String): String {
+    fun Patt.code1 (v: String): String {
+        val idtag = Pair(this.id, this.tag)
+        return """
+            do {
+                val ${idtag.tostr(true)} = $v
+                ${this.pos.tostr(true)}
+            }
+        """
+    }
+
+    fun Patt.code3 (v: String, cnt: String): String {
         val idtag = Pair(this.id, this.tag)
         return """
             do {
@@ -241,21 +251,21 @@ class Parser (lexer_: Lexer)
                             if ${this.pos.tostr(true)} {
                                 $cnt
                             }
-                        }                        
+                        }
                     """
                     is Patt.Tup  -> {
                         val nn = N++
                         val cnt2 = """
                             if ${this.pos.tostr(true)} {
                                 $cnt
-                            }                            
+                            }
                         """
                         """
                         if (type(${id.str})==:tuple) and (#${id.str} >= ${l.size}) {
                             val ceu_tup_$nn = ${id.str}
                             if ${this.pos.tostr(true)} {
                                 ${this.l.foldRightIndexed(cnt2) { i,x,acc ->
-                                    x.code("ceu_tup_$nn[$i]", acc)
+                                    x.code3("ceu_tup_$nn[$i]", acc)
                                 }}
                             }
                         }
@@ -659,7 +669,12 @@ class Parser (lexer_: Lexer)
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val pat1 = this.patt()
-                val pat2 = pat1.code("`:ceu *(ceu_acc.Dyn->Error.val)`","true")
+                val pat2 = if (CEU < 99) {
+                    pat1.code1("`:ceu *(ceu_acc.Dyn->Error.val)`")
+                } else {
+                    pat1.code3("`:ceu *(ceu_acc.Dyn->Error.val)`","true")
+
+                }
                 val pat3 = this.nest(pat2) as Expr.Do
                 val blk = this.block()
                 Expr.Catch(tk0, pat3, blk)
@@ -907,7 +922,7 @@ class Parser (lexer_: Lexer)
                         }
                         else -> {
                             val pat1 = this.patt()
-                            val pat2 = pat1.code("ceu_val_$nn", cont())
+                            val pat2 = pat1.code3("ceu_val_$nn", cont())
                             """
                             (${pat2.trimEnd()} or ${case()})
                             """

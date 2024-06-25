@@ -5835,10 +5835,9 @@ class Exec_04 {
                 error(99)
             }
         """)
-        assert(out == "anon : (lin 19, col 17) : throw(99)\n" +
-                "throw error : uncaught exception\n" +
-                "65\n" +
-                "99\n") { out }
+        assert(out == "65\n" +
+                " |  anon : (lin 20, col 17) : error(99)\n" +
+                " v  error : 99\n") { out }
     }
 
     // ORIGINAL
