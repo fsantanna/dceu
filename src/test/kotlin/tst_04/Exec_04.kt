@@ -5739,6 +5739,94 @@ class Exec_04 {
         assert(out == "1\n2\n3\n4\n") { out }
     }
 
+    // GROUP
+
+    @Test
+    fun qq_01_group() {
+        val out = test("""
+            var T
+            set T = task (v) {
+                println(v)
+            }
+            var t
+            set t = export [] {
+                var v
+                set v = 10
+                spawn T(v)  
+            }
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun qq_02_group_no_more_spawn_export() {
+        val out = test("""
+            export [T] {
+                var T
+                set T = task (v) {
+                    println(v)
+                }
+            }
+            export [t] {
+                var t
+                set t = spawn export [] {
+                    export [v] {
+                        var v
+                        set v = 10
+                    }
+                    T(v)
+                }
+            }
+            println(type(t))
+        """)
+        //assert(out == "10\n:x-task\n") { out }
+        assert(out == "anon : (lin 15, col 21) : call error : expected function\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun qq_03_group() {
+        val out = test("""
+            var f
+            set f = func () {
+                nil
+            }
+            spawn task () :fake {
+                export [] {
+                    f()
+                }
+            }()
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun qq_04_group() {
+        val out = test("""
+            export [f] {
+                var cur = nil
+                val f = func () {
+                    set cur = 65
+                    cur
+                }
+            }
+            val co = spawn (coro () {
+                yield(nil)
+                loop {
+                    val v = f()
+                    yield(v)
+                }
+            }) ()
+            loop {
+                var v = resume co()
+                println(v)
+                throw(99)
+            }
+        """)
+        assert(out == "anon : (lin 19, col 17) : throw(99)\n" +
+                "throw error : uncaught exception\n" +
+                "65\n" +
+                "99\n") { out }
+    }
+
     // ORIGINAL
 
     @Test

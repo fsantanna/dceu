@@ -5691,6 +5691,99 @@ class Exec_01 {
         assert(out.contains("nil\nnil\n42\nfunc: 0x")) { out }
     }
 
+    // GROUP
+
+    @Test
+    fun tt_01_group() {
+        val out = test("""
+            group ;;;[a];;; {
+                val a = 10
+            }
+            group ;;;[x];;; {
+                var x
+                set x = a
+            }
+            print(x)
+        """)
+        assert(out == "10") { out }
+    }
+    @Test
+    fun tt_02_export_err() {
+        val out = test("""
+            ;;export [] {
+            do {
+                var a       ;; invisible
+                set a = 10
+            }
+            var x
+            set x = a
+            print(x)
+        """)
+        assert(out == "anon : (lin 8, col 21) : access error : variable \"a\" is not declared\n") { out }
+    }
+    @Test
+    fun tt_03_export() {
+        val out = test("""
+            val x = group ;;;[];;; {
+                val a = []
+                a
+            }
+            print(x)
+        """)
+        assert(out == "[]") { out }
+    }
+    @Test
+    fun tt_04_export() {
+        val out = test("""
+            group ;;;[aaa];;; {
+                val aaa = 10
+            }
+            group ;;;[bbb];;; {
+                val bbb = 20
+            }
+            println(aaa,bbb)
+        """)
+        assert(out == "10\t20\n") { out }
+    }
+    @Test
+    fun tt_05_export() {
+        val out = test("""
+            group ;;;[f];;; {
+                val v = []
+                val f = func () {
+                    v
+                }
+                ;;println(v, f)
+            }
+            do {
+                val x = f
+                nil
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun tt_06_export() {
+        val out = test("""
+            do {
+                group ;;;[f];;; {
+                    val v = []
+                    val f = func () {
+                        v
+                    }
+                    ;;println(v, f)
+                }
+                do {
+                    val x = f
+                    nil
+                }
+                println(:ok)
+            }
+        """)
+        assert(out == ":ok\n") { out }
+    }
+
     // ALL
 
     @Test

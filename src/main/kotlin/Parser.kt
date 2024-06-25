@@ -369,6 +369,7 @@ class Parser (lexer_: Lexer)
                     Expr.Pass(this.tk0 as Tk.Fix, this.expr())
                 }
             }
+            this.acceptFix("group") -> Expr.Group(this.tk0 as Tk.Fix, this.block().es)
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val idtag = this.id_tag()

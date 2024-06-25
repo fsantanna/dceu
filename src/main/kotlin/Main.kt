@@ -40,7 +40,7 @@ val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 val KEYWORDS: SortedSet<String> = (
     setOf (
         "break", "data", "do", "else",
-        "enum", "false", "func", "if",
+        "enum", "false", "func", "group", "if",
         "loop", "nil", "set", "skip",
         "true", "val", "var",
     ) + (if (CEU < 2) setOf() else setOf (
@@ -49,7 +49,7 @@ val KEYWORDS: SortedSet<String> = (
         "coro", "resume", "yield",
     )) + (if (CEU < 4) setOf() else setOf(
         "broadcast", "delay", "in", "pub", "spawn", "task", "toggle",
-    )) + (if (CEU < 4) setOf() else setOf(
+    )) + (if (CEU < 5) setOf() else setOf(
         "tasks",
     )) + (if (CEU < 99) setOf() else setOf(
         "await", "every", "ifs", "match",
@@ -129,6 +129,7 @@ typealias Id_Tag  = Pair<Tk.Id,Tk.Tag?>
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val nst: Boolean, val tag: Tk.Tag?, val pars: List<Id_Tag>, val blk: Do): Expr(N++, tk_)
     data class Do     (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
+    data class Group  (val tk_: Tk.Fix, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Fix, val idtag: Id_Tag, /*val poly: Boolean,*/ val src: Expr?):  Expr(N++, tk_)
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)

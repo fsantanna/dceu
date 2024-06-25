@@ -42,6 +42,7 @@ fun Expr.tostr (pre: Boolean = false): String {
                 else -> "{\n" + this.es.tostr(pre) + "}"
             }
         }
+        is Expr.Group -> "group {\n" + this.es.tostr(pre) + "}"
         is Expr.Dcl    -> {
             "(" + this.tk_.str + " " + this.idtag.tostr(pre) + this.src.cond { " = ${it.tostr(pre)}" } + ")"
         }

@@ -243,6 +243,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """
                 }
             }
+            is Expr.Group -> "// GROUP | ${this.dump()}\n" + this.es.code()
             is Expr.Dcl -> {
                 val idx = sta.idx(this, this)
                 """

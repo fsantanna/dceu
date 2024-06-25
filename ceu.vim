@@ -13,7 +13,7 @@ set cpo&vim
 let s:ft = matchstr(&ft, '^\([^.]\)\+')
 
 syn keyword Statement   break data do else
-syn keyword Statement   enum false func if
+syn keyword Statement   enum false func group if
 syn keyword Statement   loop nil set skip
 syn keyword Statement   true val var
 syn keyword Statement   catch defer

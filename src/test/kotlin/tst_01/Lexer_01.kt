@@ -69,7 +69,7 @@ class Lexer_01 {
         assert(tks.next().let { it is Tk.Id  && it.str == "task" })
         //assert(tks.next().let { it is Tk.Fix && it.str == "poly" })
         assert(tks.next().let { it is Tk.Id  && it.str == "poly" })
-        assert(tks.next().let { it is Tk.Id  && it.str == "group" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "group" })
         assert(tks.next().let { it is Tk.Id  && it.str == "track" })
         assert(tks.next().let { it is Tk.Fix && it.str == "enum" })
         assert(tks.next().let { it is Tk.Id  && it.str == "XXX" })

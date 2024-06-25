@@ -874,6 +874,49 @@ class Parser_01 {
         assert(e.tostr() == "(data :U = [t :T])\n") { e.tostr() }
     }
 
+    // GROUP
+
+    @Test
+    fun tt_01_export_err() {
+        val l = lexer("group {}")
+        val parser = Parser(l)
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected \"[\" : have \"{\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : expected expression : have \"}\"")
+    }
+    @Test
+    fun tt_02_export_err() {
+        val l = lexer("group ;;;[:x];;; {}")
+        val parser = Parser(l)
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected identifier : have \":x\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 19) : expected expression : have \"}\"")
+    }
+    @Test
+    fun tt_03_export() {
+        val l = lexer("group ;;;[];;; { nil }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Group /*&& e.ids.isEmpty()*/ && e.es.size==1)
+        assert(e.tostr() == "group {\nnil\n}") { e.tostr() }
+    }
+    @Test
+    fun tt_04_export() {
+        val l = lexer("group ;;;[x];;; { nil }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Group /*&& e.ids.first()=="x"*/ && e.es.size==1)
+        //assert(e.tostr() == "group [x] {\nnil\n}") { e.tostr() }
+        assert(e.tostr() == "group {\nnil\n}") { e.tostr() }
+    }
+    @Test
+    fun tt_05_export() {
+        val l = lexer("group ;;;[x,y];;; { nil }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Group /*&& e.ids.last()=="y"*/ && e.es.size==1 /*&& e.ids.size==2*/)
+        //assert(e.tostr() == "group [x,y] {\nnil\n}") { e.tostr() }
+        assert(e.tostr() == "group {\nnil\n}") { e.tostr() }
+    }
+
     // DASH
 
     @Test
