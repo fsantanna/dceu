@@ -1046,10 +1046,27 @@ class Exec_99 {
         assert(out == ":ok\n") { out }
     }
 
-    // PATTS / SET
+    // PATTS / VAR / SET
 
     @Test
     fun fk_01() {
+        val out = test("""
+            val [x,y]
+            println(x,y)
+        """)
+        assert(out == "nil\tnil\n") { out }
+    }
+    @Test
+    fun fk_02() {
+        val out = test("""
+            val [x,y] = [1,2]
+            println(x,y)
+        """)
+        assert(out == "1\t2\n") { out }
+    }
+
+    @Test
+    fun fk_01x() {
         val out = test("""
             var (x,y,z,w)
             set (x,y) = (1,2,3)
@@ -1059,7 +1076,7 @@ class Exec_99 {
         assert(out == "1\t2\t3\tnil\n") { out }
     }
     @Test
-    fun fk_02() {
+    fun fk_02x() {
         val out = test("""
             var x
             set [x] = [10]

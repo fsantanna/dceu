@@ -226,8 +226,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             }                            
                         """ }}
 
-                        ceu_acc = ceu_acc_$n;
-                        
                         { // dcls gc-dec
                             ${vars.blk_to_dcls[this]!!
                                 .asReversed()
@@ -238,6 +236,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                                 .joinToString("")
                             }
                         }                        
+
+                        ceu_acc = ceu_acc_$n;
+                        
                         ${(CEU >= 2).cond { this.check_error_aborted("continue", "NULL")} }
                     }
                     """

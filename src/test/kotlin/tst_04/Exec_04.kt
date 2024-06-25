@@ -5749,7 +5749,7 @@ class Exec_04 {
                 println(v)
             }
             var t
-            set t = export [] {
+            set t = group ;;;[];;; {
                 var v
                 set v = 10
                 spawn T(v)  
@@ -5760,16 +5760,16 @@ class Exec_04 {
     @Test
     fun qq_02_group_no_more_spawn_export() {
         val out = test("""
-            export [T] {
+            group ;;;[T];;; {
                 var T
                 set T = task (v) {
                     println(v)
                 }
             }
-            export [t] {
+            group ;;;[t];;; {
                 var t
-                set t = spawn export [] {
-                    export [v] {
+                set t = spawn group ;;;[];;; {
+                    group ;;;[v];;; {
                         var v
                         set v = 10
                     }
@@ -5778,9 +5778,22 @@ class Exec_04 {
             }
             println(type(t))
         """)
+        assert(out == "anon : (lin 17, col 13) : spawn error : expected call\n") { out }
         //assert(out == "10\n:x-task\n") { out }
-        assert(out == "anon : (lin 15, col 21) : call error : expected function\n" +
-                ":error\n") { out }
+        //assert(out == "anon : (lin 15, col 21) : call error : expected function\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun qq_02x_group_no_more_spawn_export() {
+        val out = test("""
+            spawn group {
+                nil
+            }
+        """)
+        assert(out == "anon : (lin 5, col 9) : spawn error : expected call\n") { out }
+        //assert(out == "10\n:x-task\n") { out }
+        //assert(out == "anon : (lin 15, col 21) : call error : expected function\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun qq_03_group() {
@@ -5789,8 +5802,8 @@ class Exec_04 {
             set f = func () {
                 nil
             }
-            spawn task () :fake {
-                export [] {
+            spawn task () ;;;:fake;;; {
+                group ;;;[];;; {
                     f()
                 }
             }()
@@ -5801,24 +5814,25 @@ class Exec_04 {
     @Test
     fun qq_04_group() {
         val out = test("""
-            export [f] {
+            group ;;;[f];;; {
                 var cur = nil
                 val f = func () {
                     set cur = 65
                     cur
                 }
             }
-            val co = spawn (coro () {
+            val co = coroutine (coro () {
                 yield(nil)
                 loop {
                     val v = f()
                     yield(v)
                 }
-            }) ()
+            })
+            resume co ()
             loop {
                 var v = resume co()
                 println(v)
-                throw(99)
+                error(99)
             }
         """)
         assert(out == "anon : (lin 19, col 17) : throw(99)\n" +

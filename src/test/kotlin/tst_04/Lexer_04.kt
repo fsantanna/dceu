@@ -17,7 +17,7 @@ class Lexer_04 {
         assert(tks.next().let { it is Tk.Fix && it.str == "broadcast" })
         assert(tks.next().let { it is Tk.Fix && it.str == "in" })
         assert(tks.next().let { it is Tk.Fix && it.str == "delay" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "tasks" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "tasks" })
         assert(tks.next().let { it is Tk.Fix && it.str == "pub" })
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())

@@ -1133,6 +1133,35 @@ class Exec_03 {
         )
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun hh_06_throw() {
+        val out = test(
+            """
+            val CO = coro () {
+                error(:ok)
+            }
+            val co = coroutine(CO)
+            resume co()
+        """
+        )
+        assert(out == " |  anon : (lin 6, col 13) : (resume (co)())\n" +
+                " |  anon : (lin 3, col 17) : error(:ok)\n" +
+                " v  error : :ok\n") { out }
+    }
+    @Test
+    fun hh_07_throw() {
+        val out = test("""
+            val co = coroutine (coro () {
+                nil
+            })
+            println(:1)
+            error(99)
+            println(:2)
+        """)
+        assert(out == ":1\n" +
+                " |  anon : (lin 6, col 13) : error(99)\n" +
+                " v  error : 99\n") { out }
+    }
 
     // STATUS
 
