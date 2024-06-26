@@ -85,8 +85,21 @@ val [{{>}}, {{<}}, {{>=}}, {{<=}}] = do {
 ;; ITERATORS: tuple, dict, x-coro, coro, tasks
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-data :Iterator = [f,s,i]
+data :Iterator = [f,s,i,tp]
 val to-iter = do {
+    func iter-ret (itr :Iterator) {
+        val tp = if itr.tp is? :tuple => itr.tp => [itr.tp]
+        val ret = tuple(#tp)
+        loop j in { 0 => #tp{ {
+            set ret[j] = match tp[j] {
+                :idx => itr.i
+                :key => itr.i
+                :val => itr.s[i]
+            }
+        }
+        if #tp==1 => ret[0] => ret
+    }
+
     func iter-tuple (itr :Iterator) {
         val i = itr.i
         if i >= #itr.s {
@@ -94,7 +107,7 @@ val to-iter = do {
             nil
         } else {
             set itr.i = i + 1
-            (itr.s[i], i)
+            iter-step(itr)
         }
     }
 
@@ -105,7 +118,7 @@ val to-iter = do {
             nil
         } else {
             set itr.i = k
-            (itr.s[k], k)
+            iter-step(itr)
         }
     }
 
@@ -144,12 +157,12 @@ val to-iter = do {
         itr.i
     }
 
-    func (v) {
+    func (v, tp) {
         match type(v) {
-            | sup?(:Iterator, tag(v)) => v
-            ==:tuple    => :Iterator [iter-tuple, v, 0]
-            ==:vector   => :Iterator [iter-tuple, v, 0]
-            ==:dict     => :Iterator [iter-dict,  v, nil]
+            | sup?(:Iterator, tag(v)) { set v.tp=tp ; v }
+            ==:tuple    => :Iterator [iter-tuple, v, 0, tp]
+            ==:vector   => :Iterator [iter-tuple, v, 0, tp]
+            ==:dict     => :Iterator [iter-dict,  v, nil, tp]
             ==:func     => :Iterator [iter-func,  v, nil]
             ==:coro     => :Iterator [iter-coro, v]
             ==:exe-coro => :Iterator [iter-xcoro, v]
@@ -178,14 +191,14 @@ val [{{===}}, {{=/=}}] = do {
         } where {
             func equals-tuple-vector (v1', v2') {
                 (#v1' == #v2') and not (
-                    loop (v,i) in v1' {
+                    loop [i,v] in to-iter(v1',[:idx,:val]) {
                         while (v2'[i] === v)
                     }
                 )
             }
             func contains-dict? (v1', v2') {
                 not (
-                    loop (v,k) in v1' {
+                    loop [k,v] in to-iter(v1',[:key,:val]) {
                         while (v2'[k] === v)
                     }
                 )
@@ -218,7 +231,7 @@ val [in', in-not'] = do {
         if (type(xs) == :dict) and xs[v] { ,it =>
             it
         } else {
-            loop (b,a) in xs {
+            loop [a,b] in to-iter(xs,[:key,:val]) {
                 until match xs {
                     :dict   => (v === a) and b
                     :tuple  => (v === b) and b
@@ -358,7 +371,7 @@ val to :To = do {
             :tuple => col
             :vector {
                 val tup = tuple(#col)
-                loop (v,i) in col {
+                loop [i,v] in to-iter(col, [:idx,:val]) {
                     set tup[i] = v
                 }
                 tup
@@ -366,21 +379,21 @@ val to :To = do {
             else => error(:TODO)
         }
     }
-    func to-vector (col) {
+    func to-vector (col, tp) {
         val ret = #[]
-        loop v in col {
+        loop v in to-iter(col,tp) {
             set ret[+] = v
         }
         ret
     }
     func to-dict (col) {
         val ret = @[]
-        loop (v,k) in col {
-            val (k',v') =
+        loop [k,v] in to-iter(col,[:key,:val]) {
+            val [k',v'] =
                 if type(v) == :tuple {
-                    (v[0], v[1])    ;; [(:x,1),(:y,2)]
+                    [v[0], v[1]]    ;; [(:x,1),(:y,2)]
                 } else {
-                    (v, k or true)  ;; [:x,:y]
+                    [v, k or true]  ;; [:x,:y]
                 }
             set ret[k'] = v'
         }

@@ -102,7 +102,7 @@ class JS_99 {
         val out = test("""
             coro objectEntries (obj) {
                 yield()
-                loop (v,k) in obj {
+                loop [v,k] in to-iter(obj,[:val,:key]) {
                     yield(k, v)
                 }
             }
@@ -237,7 +237,7 @@ class JS_99 {
     fun x_09() {
         val out = test("""
             coro genFunc () {
-                loop (v,i) in to.iter(#['a','b'],:all) {
+                loop [v,i] in to.iter(#['a','b'],[:val,:idx]) {
                     yield(;;;drop;;;([i,v]))
                 }
             }

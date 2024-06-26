@@ -526,20 +526,20 @@ class Parser (lexer_: Lexer)
                     return Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, this.block().es))
                 }
 
-                val par = this.acceptFix("(")
-                val fst = if (this.checkEnu("Id")) this.id_tag() else Pair(Tk.Id("it",this.tk0.pos.copy()),null)
-                val lst = listOf(fst) + if (!par || !this.acceptFix(",")) emptyList() else {
-                    this.list0(",", ")") { this.id_tag() }
+                val ids = when {
+                    this.checkFix("[")  -> this.patt()
+                    this.checkFix("{")  -> Tk.Id("it",this.tk0.pos.copy())
+                    this.checkFix("in") -> Tk.Id("it",this.tk0.pos.copy())
+                    else -> this.id_tag()
                 }
-
-                val id = fst.first.str
 
                 when {
                     this.checkFix("{") -> {
                         val blk = this.block()
+                        val id = (ids as Tk.Id).str
                         this.nest("""
                             do {
-                                var ${fst.tostr()} = 0
+                                var $id = 0
                                 loop {
                                     ${blk.es.tostr(true)}
                                     set $id = $id + 1
@@ -549,6 +549,8 @@ class Parser (lexer_: Lexer)
                     }
                     !this.acceptFix_err("in") -> error("impossible case")
                     (this.acceptFix("{") || this.acceptFix("}")) -> {
+                        val id = (ids as Id_Tag).first.str
+
                         // [x -> y]
                         val tkA = this.tk0 as Tk.Fix
                         val eA = this.expr()
@@ -578,7 +580,7 @@ class Parser (lexer_: Lexer)
                         this.nest("""
                             do {
                                 val ceu_ste_$N = ${if (step == null) 1 else step.tostr(true)}
-                                var ${fst.tostr(true)} = ${eA.tostr(true)} $op (
+                                var $id = ${eA.tostr(true)} $op (
                                     ${if (tkA.str == "{") 0 else "ceu_ste_$N"}
                                 )
                                 val ceu_lim_$N = ${eB.tostr(true)}
@@ -593,11 +595,16 @@ class Parser (lexer_: Lexer)
                     else -> {
                         val iter = this.expr()
                         val blk = this.block()
+                        val dcl_set = when (ids) {
+                            is Tk.Id -> "val ${ids.str} = ceu_$N.f(ceu_$N)"
+                            is Patt  -> ids.code2("ceu_$N.f(ceu_$N)")
+                            else     -> "val ${(ids as Id_Tag).first.str} = ceu_$N.f(ceu_$N)"
+                        }
                         this.nest("""
                             do {
                                 val ceu_$N :Iterator = to-iter(${iter.tostr(true)})
                                 loop {
-                                    val ${lst.map { it.tostr(true) }.joinToString(",")} = ceu_$N.f(ceu_$N)
+                                    $dcl_set
                                     break(nil) if (ceu_$N.f == nil)
                                     ${blk.es.tostr(true)}
                                 }
