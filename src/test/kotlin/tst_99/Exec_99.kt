@@ -2117,7 +2117,7 @@ class Exec_99 {
         val out = test("""
             val t = @[x=1, y=2, z=3]
             loop k in to-iter(t,:key) {
-                println(v)
+                println(k)
             }
         """, true)
         assert(out == ":x\n:y\n:z\n") { out }
@@ -2126,7 +2126,7 @@ class Exec_99 {
     fun fg_06_dict_iter_val() {
         val out = test("""
             val t = @[x=1, y=2, z=3]
-            loop v in to-iter(t) {
+            loop v in to-iter(t,:val) {
                 println(v)
             }
         """, true)
@@ -2147,6 +2147,16 @@ class Exec_99 {
         val out = test("""
             val t = @[x=1, y=2, z=3]
             loop [v,k] in to-iter(t,[:val,:key]) {
+                println(k,v)
+            }
+        """, true)
+        assert(out == ":x\t1\n:y\t2\n:z\t3\n") { out }
+    }
+    @Test
+    fun fg_08x_dict_iter_all() {
+        val out = test("""
+            val t = @[x=1, y=2, z=3]
+            loop [v,k] in to-iter(t) {
                 println(k,v)
             }
         """, true)

@@ -110,16 +110,15 @@ val [{{<}}, {{<=}}, {{>}}] = do {
 data :Iterator = [f,s,i,tp]
 val to-iter = do {
     func iter-ret (itr :Iterator, idx) {
-        val tp = if type(itr.tp)==:tuple => itr.tp => [itr.tp]
-        val ret = tuple(#tp)
-        loop j in {0 => #tp{ {
-            set ret[j] = match tp[j] {
+        val ret = tuple(#itr.tp)
+        loop j in {0 => #itr.tp{ {
+            set ret[j] = match itr.tp[j] {
                 == :idx => itr.i
                 == :key => itr.i
                 == :val => itr.s[idx]
             }
         }
-        if #tp==1 => ret[0] => ret
+        if #itr.tp==1 => ret[0] => ret
     }
 
     func iter-tuple (itr :Iterator) {
@@ -179,15 +178,25 @@ val to-iter = do {
         itr.i
     }
 
-    func (v, tp) {
+    func (v :Iterator, tp) {
+        func tp' (def) {
+            match type(tp) {
+                == nil    => def
+                == :tuple => tp
+                else      => [tp]
+            }
+        }
         match type(v) {
-            | sup?(:Iterator, tag(v)) { set v.tp=tp ; v }
-            ==:tuple    => :Iterator [iter-tuple, v, 0, tp]
-            ==:vector   => :Iterator [iter-tuple, v, 0, tp]
-            ==:dict     => :Iterator [iter-dict,  v, nil, tp]
-            ==:func     => :Iterator [iter-func,  v, nil]
-            ==:coro     => :Iterator [iter-coro, v]
-            ==:exe-coro => :Iterator [iter-xcoro, v]
+            | sup?(:Iterator, tag(v)) {
+                set v.tp = tp or v.tp
+                v
+            }
+            ==:tuple    => :Iterator [iter-tuple, v, 0, tp'([:val])]
+            ==:vector   => :Iterator [iter-tuple, v, 0, tp'([:val])]
+            ==:dict     => :Iterator [iter-dict,  v, nil, tp'([:key,:val])]
+            ==:func     => :Iterator [iter-func,  v, nil, nil]
+            ==:coro     => :Iterator [iter-coro, v, nil, nil]
+            ==:exe-coro => :Iterator [iter-xcoro, v, nil, nil]
             ==:tasks    => :Iterator [iter-tasks, v, nil, nil]
             else        => nil
         }
