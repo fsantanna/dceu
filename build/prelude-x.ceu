@@ -1,5 +1,40 @@
-var assert
 data :Clock = [ms]
+
+func {{+}} (v1, v2) {
+    if (type(v1) /= :number) or (type(v2) /= :number) {
+        error(:error)
+    }
+    `:number ($v1.Number + $v2.Number)`
+}
+
+func {{>=}} (v1,v2) {
+    ifs {
+        (type(v1) == :tag)    and (type(v2) == :tag)    => `:bool ($v1.Tag    >= $v2.Tag)`
+        (type(v1) == :number) and (type(v2) == :number) => `:bool ($v1.Number >= $v2.Number)`
+        else => error(:error)
+    }
+}
+
+func xx-string? (v) {
+    ((type(v)==:vector) and (#v>=0)) and (type(v[0])==:char)
+}
+
+func xx-cat-move (v1, v2) {
+    loop i in {0 => #v2{ {
+        set v1[+] = v2[i]
+    }
+    v1
+}
+
+func assert (v, msg) {
+    ifs {
+        v => v
+        type(msg)==:func  => error(msg())
+        msg->xx-string?() => error(xx-cat-move(xx-cat-move(#[], "assertion error : ", msg)))
+        (msg == nil)      => error("assertion error")
+        else => error(msg)
+    }
+}
 
 func debug (v) {
     println(v)
@@ -10,13 +45,7 @@ func debug (v) {
 ;; ARITHMETIC: +  -  *  **  /  //  %
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-val [{{+}}, {{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}] = do {
-    func add (v1, v2) {
-        if (type(v1) /= :number) or (type(v2) /= :number) {
-            error(:error)
-        }
-        `:number ($v1.Number + $v2.Number)`
-    }
+val [{{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}] = do {
     func sub (v1, v2) {
         ifs {
             (type(v1) == :number) and (v2 == nil)          => `:number (- $v1.Number)`
@@ -54,31 +83,24 @@ val [{{+}}, {{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}] = do {
         }
         `:number fmod($v1.Number, $v2.Number)`
     }
-    [add, sub, mul, exp, div, div', rem]
+    [sub, mul, exp, div, div', rem]
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; RELATIONAL:  >=  >  <=  <
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-val [{{>}}, {{<}}, {{>=}}, {{<=}}] = do {
-    func gt (v1,v2) {
-        ifs {
-            (type(v1) == :tag)    and (type(v2) == :tag)    => `:bool ($v1.Tag    > $v2.Tag)`
-            (type(v1) == :number) and (type(v2) == :number) => `:bool ($v1.Number > $v2.Number)`
-            else => error(:error)
-        }
-    }
+val [{{<}}, {{<=}}, {{>}}] = do {
     func lt (v1,v2) {
-        not ((v1 == v2) or (v1 > v2))
-    }
-    func gte (v1,v2) {
-        (v1 == v2) or (v1 > v2)
+        not (v1 >= v2)
     }
     func lte (v1,v2) {
-        (v1 == v2) or (v1 < v2)
+        (v1 == v2) or lt(v1,v2)
     }
-    [gt, lt, gte, lte]
+    func gt (v1,v2) {
+        not lte(v1,v2)
+    }
+    [lt, lte, gt]
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -87,14 +109,14 @@ val [{{>}}, {{<}}, {{>=}}, {{<=}}] = do {
 
 data :Iterator = [f,s,i,tp]
 val to-iter = do {
-    func iter-ret (itr :Iterator) {
-        val tp = if itr.tp is? :tuple => itr.tp => [itr.tp]
+    func iter-ret (itr :Iterator, idx) {
+        val tp = if type(itr.tp)==:tuple => itr.tp => [itr.tp]
         val ret = tuple(#tp)
-        loop j in { 0 => #tp{ {
+        loop j in {0 => #tp{ {
             set ret[j] = match tp[j] {
-                :idx => itr.i
-                :key => itr.i
-                :val => itr.s[i]
+                == :idx => itr.i
+                == :key => itr.i
+                == :val => itr.s[idx]
             }
         }
         if #tp==1 => ret[0] => ret
@@ -107,7 +129,7 @@ val to-iter = do {
             nil
         } else {
             set itr.i = i + 1
-            iter-step(itr)
+            iter-ret(itr, i)
         }
     }
 
@@ -118,7 +140,7 @@ val to-iter = do {
             nil
         } else {
             set itr.i = k
-            iter-step(itr)
+            iter-ret(itr, k)
         }
     }
 
@@ -192,21 +214,21 @@ val [{{===}}, {{=/=}}] = do {
             func equals-tuple-vector (v1', v2') {
                 (#v1' == #v2') and not (
                     loop [i,v] in to-iter(v1',[:idx,:val]) {
-                        while (v2'[i] === v)
+                        while eq(v2'[i], v)
                     }
                 )
             }
             func contains-dict? (v1', v2') {
                 not (
                     loop [k,v] in to-iter(v1',[:key,:val]) {
-                        while (v2'[k] === v)
+                        while eq(v2'[k], v)
                     }
                 )
             }
          }
     }
     func neq (v1,v2) {
-        not (v1 === v2)
+        not eq(v1,v2)
     }
     [eq, neq]
 }
@@ -221,7 +243,7 @@ val [is', is-not'] = do {
         }
     }
     func x-is-not (v1,v2) {
-        not is'(v1,v2)
+        not x-is(v1,v2)
     }
     [x-is, x-is-not]
 }
@@ -242,7 +264,7 @@ val [in', in-not'] = do {
         }
     }
     func x-in-not (v, xs) {
-        not in'(v,xs)
+        not x-in(v,xs)
     }
     [x-in, x-in-not]
 }
@@ -269,9 +291,6 @@ val [static?, dynamic?, string?] = do {
     func x-dynamic? (tp) {
         `:bool ($tp.Tag > CEU_VALUE_DYNAMIC)`
     }
-    func x-string? (v) {
-        ((type(v)==:vector) and (#v>0)) and (type(v[0])==:char)
-    }
     ;;;
     func x-f (tp) {
         func (v) {
@@ -279,7 +298,7 @@ val [static?, dynamic?, string?] = do {
         }
     }
     [
-        x-static?, x-dynamic?, x-string?,
+        x-static?, x-dynamic?, xx-string?,
         x-f(:nil), x-f(:tag), x-f(:bool), x-f(:char), x-f(:number), x-f(:pointer),
         x-f(:func), x-f(:coro), x-f(:task),
         x-f(:tuple), x-f(:vector), x-f(:dict),
@@ -287,7 +306,7 @@ val [static?, dynamic?, string?] = do {
         x-f(:tasks),
     ]
     ;;;
-    [x-static?, x-dynamic?, x-string?]
+    [x-static?, x-dynamic?, xx-string?]
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -429,15 +448,10 @@ val [{{<++}}, {{++}}] = do {
     func x-cat-move (v1, v2) {
         assert(type(v1) == :vector)
         assert(type(v2) == :vector)
-        do {
-            loop i in {0 => #v2{ {
-                set v1[+] = v2[i]
-            }
-        }
-        v1
+        xx-cat-move(v1, v2)
     }
     func x-cat-copy (v1, v2) {
-        (#[] <++ v1) <++ v2
+        x-cat-move(x-cat-move(#[], v1), v2)
     }
     [x-cat-move, x-cat-copy]
 }
@@ -564,15 +578,5 @@ func copy (v) {
         else {
             error(:TODO)
         }
-    }
-}
-
-set assert = func (v, msg) {
-    ifs {
-        v => v
-        type(msg)==:func => error(msg())
-        msg->string?     => error("assertion error : " ++ msg)
-        (msg == nil)     => error("assertion error")
-        else => error(msg)
     }
 }

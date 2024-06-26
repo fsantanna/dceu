@@ -260,6 +260,13 @@ class Exec_99 {
         assert(out == "true\nfalse\ntrue\n") { out }
     }
     @Test
+    fun bc_03x_is() {
+        val out = test("""
+            println(nil)
+        """, true)
+        assert(out == "nil\n") { out }
+    }
+    @Test
     fun bc_04_is() {
         val out = test("""
             println({{is?}}    (4, :nil))

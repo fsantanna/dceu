@@ -156,7 +156,7 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun patt (): Patt {
+    fun patt (xid: String? = "it"): Patt {
         // Patt : ([id] [:Tag] [
         //          (<op> <expr>) |
         //          <const> |
@@ -165,11 +165,13 @@ class Parser (lexer_: Lexer)
 
         val par = this.acceptFix("(")
 
-        val id: Tk.Id = if (CEU<99 || this.checkEnu("Id")) {
-            this.acceptEnu_err("Id")
-            this.tk0 as Tk.Id
-        } else {
-            Tk.Id("it", this.tk0.pos.copy())
+        val id: Tk.Id = when {
+            (CEU<99 || this.checkEnu("Id")) -> {
+                this.acceptEnu_err("Id")
+                this.tk0 as Tk.Id
+            }
+            (xid == null) -> Tk.Id("ceu_$N", this.tk0.pos.copy())
+            else -> Tk.Id(xid, this.tk0.pos.copy())
         }
 
         val tag: Tk.Tag? = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
@@ -202,7 +204,7 @@ class Parser (lexer_: Lexer)
             // [...]
             this.acceptFix("[") -> {
                 val l = this.list0(",","]") {
-                    this.patt()
+                    this.patt(xid)
                 }
                 ;
                 { pos -> Patt.Tup(id,tag,l,pos) }
@@ -251,7 +253,7 @@ class Parser (lexer_: Lexer)
                         val nn = N++
                         """
                         ${v.cond { """
-                            assert((type(${id.str})==:tuple) and (#${id.str}>=${l.size}), :Patt)
+                            assert((type(${id.str})==:tuple) and (#${id.str}==${l.size}), :Patt)
                             val ceu_tup_$nn = ${id.str}
                         """ }}
                         assert(${this.pos.tostr(true)}, :Patt)
@@ -421,7 +423,7 @@ class Parser (lexer_: Lexer)
                     }
                     Expr.Dcl(tk0, idtag, src)
                 } else {
-                    val pat = this.patt()
+                    val pat = this.patt(null)
                     val src = if (this.acceptFix("=")) {
                         this.expr().tostr(true)
                     } else {
@@ -527,7 +529,7 @@ class Parser (lexer_: Lexer)
                 }
 
                 val ids = when {
-                    this.checkFix("[")  -> this.patt()
+                    this.checkFix("[")  -> this.patt("it")
                     this.checkFix("{")  -> Tk.Id("it",this.tk0.pos.copy())
                     this.checkFix("in") -> Tk.Id("it",this.tk0.pos.copy())
                     else -> this.id_tag()
@@ -595,21 +597,23 @@ class Parser (lexer_: Lexer)
                     else -> {
                         val iter = this.expr()
                         val blk = this.block()
+                        val nn = N
                         val dcl_set = when (ids) {
-                            is Tk.Id -> "val ${ids.str} = ceu_$N.f(ceu_$N)"
-                            is Patt  -> ids.code2("ceu_$N.f(ceu_$N)")
-                            else     -> "val ${(ids as Id_Tag).first.str} = ceu_$N.f(ceu_$N)"
+                            is Tk.Id -> "val ${ids.str} = ceu_$nn.f(ceu_$nn)"
+                            is Patt  -> ids.code2("ceu_$nn.f(ceu_$nn)")
+                            else     -> "val ${(ids as Id_Tag).first.str} = ceu_$nn.f(ceu_$nn)"
                         }
+                        //println(blk.es.tostr())
                         this.nest("""
                             do {
-                                val ceu_$N :Iterator = to-iter(${iter.tostr(true)})
+                                val ceu_$nn :Iterator = to-iter(${iter.tostr(true)})
                                 loop {
                                     $dcl_set
-                                    break(nil) if (ceu_$N.f == nil)
+                                    break(nil) if (ceu_$nn.f == nil)
                                     ${blk.es.tostr(true)}
                                 }
                             }
-                        """)
+                        """) //.let { println(it);it })
                     }
                 }
             }
@@ -717,7 +721,7 @@ class Parser (lexer_: Lexer)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val pat1 = this.patt()
+                val pat1 = this.patt("it")
                 val pat2 = if (CEU < 99) {
                     pat1.code1("`:ceu *(ceu_acc.Dyn->Error.val)`")
                 } else {
@@ -970,7 +974,7 @@ class Parser (lexer_: Lexer)
                             "do { $ret }"
                         }
                         else -> {
-                            val pat1 = this.patt()
+                            val pat1 = this.patt("it")
                             val pat2 = pat1.code3("ceu_val_$nn", cont())
                             """
                             (${pat2.trimEnd()} or ${case()})
