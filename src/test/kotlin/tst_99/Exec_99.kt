@@ -2156,7 +2156,7 @@ class Exec_99 {
     fun fg_08x_dict_iter_all() {
         val out = test("""
             val t = @[x=1, y=2, z=3]
-            loop [v,k] in to-iter(t) {
+            loop [k,v] in to-iter(t) {
                 println(k,v)
             }
         """, true)
@@ -2221,7 +2221,8 @@ class Exec_99 {
         """, true)
         //assert(out == "anon : (lin 3, col 36) : expected \",\" : have \"{\"") { out }
         //assert(out == "anon : (lin 3, col 30) : expected identifier : have \"(\"") { out }
-        assert(out == "anon : (lin 3, col 18) : expected \"in\" : have \"[\"\n") { out }
+        //assert(out == "anon : (lin 3, col 18) : expected \"in\" : have \"[\"\n") { out }
+        assert(out == "anon : (lin 3, col 21) : expected \",\" : have \"in\"\n") { out }
     }
     @Test
     fun fg_15_dict_iter() {

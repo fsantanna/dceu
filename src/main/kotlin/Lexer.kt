@@ -343,7 +343,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     val (n7, x7) = read2()
                     when {
                         iseof(n7) -> unread2(n7)
-                        (x7 == '\n') -> {}  // skip leading \n
+                        //(x7 == '\n') -> {}  // skip leading \n
                         else -> unread2(n7) //err(pos, "token ^ error : expected end of line")
                     }
 
@@ -413,7 +413,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     yield(Tk.Fix("]", pos))
                 }
                 else -> {
-                    TODO("$x - $pos")
+                    err(pos, "token error : unexpected $x")
                 }
             }
         }

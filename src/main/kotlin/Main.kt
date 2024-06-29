@@ -60,7 +60,7 @@ val KEYWORDS: SortedSet<String> = (
     ))
 ).toSortedSet()
 
-val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%', '#', '@')
+val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '|', '&', '~', '%')
 val XOPERATORS = if (CEU < 99) setOf() else {
     setOf("and", "in?", "in-not?", "is?", "is-not?", "not", "or")
 }

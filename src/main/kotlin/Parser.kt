@@ -599,17 +599,18 @@ class Parser (lexer_: Lexer)
                         val blk = this.block()
                         val nn = N
                         val dcl_set = when (ids) {
-                            is Tk.Id -> "val ${ids.str} = ceu_itr_$nn.f(ceu_itr_$nn)"
-                            is Patt  -> ids.code2("ceu_itr_$nn.f(ceu_itr_$nn)")
-                            else     -> "val ${(ids as Id_Tag).first.str} = ceu_itr_$nn.f(ceu_itr_$nn)"
+                            is Tk.Id -> "val ${ids.str} = ceu_val_$nn"
+                            is Patt  -> ids.code2("ceu_val_$nn")
+                            else     -> "val ${(ids as Id_Tag).first.str} = ceu_val_$nn"
                         }
                         //println(blk.es.tostr())
                         this.nest("""
                             do {
                                 val ceu_itr_$nn :Iterator = to-iter(${iter.tostr(true)})
                                 loop {
-                                    $dcl_set
+                                    val ceu_val_$nn = ceu_itr_$nn.f(ceu_itr_$nn)
                                     break(nil) if (ceu_itr_$nn.f == nil)
+                                    $dcl_set
                                     ${blk.es.tostr(true)}
                                 }
                             }
