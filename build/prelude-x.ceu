@@ -113,8 +113,8 @@ val to-iter = do {
         val ret = tuple(#itr.tp)
         loop j in {0 => #itr.tp{ {
             set ret[j] = match itr.tp[j] {
-                == :idx => itr.i
-                == :key => itr.i
+                == :idx => idx
+                == :key => idx
                 == :val => itr.s[idx]
             }
         }
@@ -178,17 +178,18 @@ val to-iter = do {
         itr.i
     }
 
-    func (v :Iterator, tp) {
+    func (v, tp) {
         func tp' (def) {
             match type(tp) {
-                == nil    => def
+                == :nil    => def
                 == :tuple => tp
                 else      => [tp]
             }
         }
         match type(v) {
             | sup?(:Iterator, tag(v)) {
-                set v.tp = tp or v.tp
+                val v' :Iterator = v
+                set v'.tp = tp'(v'.tp)
                 v
             }
             ==:tuple    => :Iterator [iter-tuple, v, 0, tp'([:val])]

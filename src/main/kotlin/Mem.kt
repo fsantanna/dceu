@@ -88,7 +88,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
             is Expr.Group -> """
                 $union {
                     ${this.es.map { it.mem() }.joinToString("")}
-                }
+                };
             """
             is Expr.Dcl -> this.src.cond { it.mem() }
             is Expr.Set -> """

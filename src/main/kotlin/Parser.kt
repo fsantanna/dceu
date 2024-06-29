@@ -170,7 +170,7 @@ class Parser (lexer_: Lexer)
                 this.acceptEnu_err("Id")
                 this.tk0 as Tk.Id
             }
-            (xid == null) -> Tk.Id("ceu_$N", this.tk0.pos.copy())
+            (xid == null) -> Tk.Id("ceu_patt_$N", this.tk0.pos.copy())
             else -> Tk.Id(xid, this.tk0.pos.copy())
         }
 
@@ -599,17 +599,17 @@ class Parser (lexer_: Lexer)
                         val blk = this.block()
                         val nn = N
                         val dcl_set = when (ids) {
-                            is Tk.Id -> "val ${ids.str} = ceu_$nn.f(ceu_$nn)"
-                            is Patt  -> ids.code2("ceu_$nn.f(ceu_$nn)")
-                            else     -> "val ${(ids as Id_Tag).first.str} = ceu_$nn.f(ceu_$nn)"
+                            is Tk.Id -> "val ${ids.str} = ceu_itr_$nn.f(ceu_itr_$nn)"
+                            is Patt  -> ids.code2("ceu_itr_$nn.f(ceu_itr_$nn)")
+                            else     -> "val ${(ids as Id_Tag).first.str} = ceu_itr_$nn.f(ceu_itr_$nn)"
                         }
                         //println(blk.es.tostr())
                         this.nest("""
                             do {
-                                val ceu_$nn :Iterator = to-iter(${iter.tostr(true)})
+                                val ceu_itr_$nn :Iterator = to-iter(${iter.tostr(true)})
                                 loop {
                                     $dcl_set
-                                    break(nil) if (ceu_$nn.f == nil)
+                                    break(nil) if (ceu_itr_$nn.f == nil)
                                     ${blk.es.tostr(true)}
                                 }
                             }
@@ -686,7 +686,7 @@ class Parser (lexer_: Lexer)
                             this.tk0 as Tk.Tag
                         }
                         if (this.checkFix("=")) {
-                            val xxtag = if (xtag!=null) xtag else Tk.Tag(":ceu_$N",id.pos.copy())
+                            val xxtag = if (xtag!=null) xtag else Tk.Tag(":ceu_tag_$N",id.pos.copy())
                             Pair(Pair(id, xxtag), one(null, xxtag))
                         } else {
                             Pair(Pair(id, xtag), emptyList())
@@ -922,7 +922,7 @@ class Parser (lexer_: Lexer)
                         ;;`/* IFS | ${tk0.dump()} */`
                         ${ifs.map { (cnd,idtag_es) ->
                             val (idtag,es) = idtag_es
-                            val idtagx = if (idtag != null) idtag else Pair(Tk.Id("ceu_$N",tk0.pos.copy()),null)
+                            val idtagx = if (idtag != null) idtag else Pair(Tk.Id("ceu_ifs_$N",tk0.pos.copy()),null)
                             if (cnd == null) {
                                 es.tostr(true) // do ...
                             } else {
@@ -1051,11 +1051,11 @@ class Parser (lexer_: Lexer)
                         spw as Expr.Spawn
                         val ret = this.nest("""
                             do {
-                                val ceu_$N = ${spw.tostr(true)}
-                                if (status(ceu_$N) /= :terminated) {
-                                    await(|it==ceu_$N)
+                                val ceu_spw_$N = ${spw.tostr(true)}
+                                if (status(ceu_spw_$N) /= :terminated) {
+                                    await(|it==ceu_spw_$N)
                                 }
-                                ceu_$N.pub
+                                ceu_spw_$N.pub
                             }
                         """)
                         if (par) {
@@ -1147,14 +1147,14 @@ class Parser (lexer_: Lexer)
                 this.nest("""
                     ${pre0}do {
                         ${pars.mapIndexed { i,body -> """
-                            val ceu_${i}_$n = spawn {
+                            val ceu_par_${i}_$n = spawn {
                                 ${body.es.tostr(true)}
                             }
                         """}.joinToString("")}
                         loop {
                             break if (
                                 ${pars.mapIndexed { i,_ -> """
-                                    (((status(ceu_${i}_$n) == :terminated) and (ceu_${i}_$n.pub or true)) or
+                                    (((status(ceu_par_${i}_$n) == :terminated) and (ceu_par_${i}_$n.pub or true)) or
                                 """}.joinToString("")} false ${")".repeat(pars.size)}
                             )
                             yield()
@@ -1176,14 +1176,14 @@ class Parser (lexer_: Lexer)
                 this.nest("""
                     ${pre0}do {
                         ${pars.mapIndexed { i,body -> """
-                            val ceu_${i}_$n = spawn {
+                            val ceu_par_${i}_$n = spawn {
                                 ${body.es.tostr(true)}
                             }
                         """}.joinToString("")}
                         loop {
                             break(nil) if (
                                 ${pars.mapIndexed { i,_ -> """
-                                    ((status(ceu_${i}_$n) == :terminated) and
+                                    ((status(ceu_par_${i}_$n) == :terminated) and
                                 """}.joinToString("")} true ${")".repeat(pars.size)}
                             )
                             yield()
@@ -1251,15 +1251,15 @@ class Parser (lexer_: Lexer)
                     } else {
                         val ret = when (this.tk0.str) {
                             "=" -> this.nest("""
-                                ${e.tostr(true)} thus { ,ceu_$N =>
+                                ${e.tostr(true)} thus { ,ceu_ppp_$N =>
                                     `/* = */`
-                                    ceu_$N[#ceu_$N-1]
+                                    ceu_ppp_$N[#ceu_ppp_$N-1]
                                 }
                             """)
                             "+" -> this.nest("""
-                                ${e.tostr(true)} thus { ,ceu_$N =>
+                                ${e.tostr(true)} thus { ,ceu_ppp_$N =>
                                     `/* + */`
-                                    ceu_$N[#ceu_$N]
+                                    ceu_ppp_$N[#ceu_ppp_$N]
                                 }
                             """)
                             "-" -> this.nest("""
@@ -1283,9 +1283,9 @@ class Parser (lexer_: Lexer)
                         this.acceptEnu_err("Tag")
                         val tag = this.tk0
                         this.acceptFix_err(")")
-                        val acc = Expr.Acc(Tk.Id("ceu_$n", e.tk.pos.copy()))
+                        val acc = Expr.Acc(Tk.Id("ceu_cast_$n", e.tk.pos.copy()))
                         this.nest("""
-                            ${e.tostr(true)} thus { ,ceu_$n ${tag.str} =>
+                            ${e.tostr(true)} thus { ,ceu_cast_$n ${tag.str} =>
                                 ${this.expr_4_suf(acc).tostr(true)}
                             }
                         """) //.let { println(it);it })
@@ -1373,19 +1373,19 @@ class Parser (lexer_: Lexer)
             when (op.str) {
                 "and" -> this.nest("""
                     do {
-                        val ceu_${e1.n} = ${e1.tostr(true)}
-                        if ceu_${e1.n} {
+                        val ceu_and_${e1.n} = ${e1.tostr(true)}
+                        if ceu_and_${e1.n} {
                             ${e2.tostr(true)}
                         } else {
-                            ceu_${e1.n}
+                            ceu_and_${e1.n}
                         }
                     }
                 """)
                 "or" -> this.nest("""
                     do {
-                        val ceu_${e1.n} = ${e1.tostr(true)}
-                        if ceu_${e1.n} {
-                            ceu_${e1.n}
+                        val ceu_or_${e1.n} = ${e1.tostr(true)}
+                        if ceu_or_${e1.n} {
+                            ceu_or_${e1.n}
                         } else {
                             ${e2.tostr(true)}
                         }
