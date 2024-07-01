@@ -350,6 +350,22 @@ class Exec_99 {
         assert(out == "anon : (lin 2, col 20) : expected \"(\" : have \"{\"\n") { out }
         //assert(out == "10\n") { out }
     }
+    @Test
+    fun TODO_cc_07_func_rec() {
+        val out = test("""
+            $PLUS
+            do {
+                func f (v) {
+                    if v /= 0 {
+                        println(v)
+                        f(v - 1)
+                    }
+                }
+                f(3)
+            }
+        """)
+        assert(out == "3\n2\n1\n") { out }
+    }
 
     // IF / ID-TAG
 
@@ -952,27 +968,10 @@ class Exec_99 {
     @Test
     fun fj_00() {
         val out = test("""
+            $COMP
             match [1,2] {
                 [x,y] => println(x,y)
             }
-            
-            val ID = [1,2]
-            if ID is :tuple {
-                val tup = ID
-                do {
-                    val x = tup[0]
-                    ;;if it == 1 {
-                        do {
-                            val y = tup[1]
-                            ;;if it == 2 {
-                                println(x,y)
-                            ;;}
-                        }
-                    ;;}
-                }
-            }
-            
-                
         """)
         assert(out == "1\t2\n") { out }
     }
@@ -1002,6 +1001,7 @@ class Exec_99 {
     @Test
     fun fj_03() {
         val out = test("""
+            $COMP
             match [1,2] {
                 [x] => println(x)
             }
@@ -1011,6 +1011,7 @@ class Exec_99 {
     @Test
     fun fj_04() {
         val out = test("""
+            $COMP
             match [1,2] {
                 [x,|false] => error()
                 [|it==1,y] => println(y)
@@ -1115,10 +1116,10 @@ class Exec_99 {
                 }
                 println(9)
             }[0]
-            println(:gc, `:number CEU_GC.free`) ;; error might be caught, so zero but no check
+            println(:gc, `:number CEU_GC.free`) ;; TODO: not checked
             println(:x, x)
         """, true)
-        assert(out == ":gc\t5\n:x\t10\n") { out }
+        assert(out == ":gc\t8\n:x\t10\n") { out }
     }
     @Test
     fun gg_04_catch_err() {
@@ -1269,7 +1270,7 @@ class Exec_99 {
             }
             println(t)
         """, true)
-        assert(out == "[35,1000,1001,1002,10,11,12,36,31,101,37]\n") { out }
+        assert(out == "[42,1000,1001,1002,10,11,12,43,36,101,44]\n") { out }
     }
 
     //
@@ -1315,8 +1316,9 @@ class Exec_99 {
     @Test
     fun hi_04x_tags() {
         val out = test("""
+            $ASR
             data :T = [x]
-            val (a,b) = (:T [1], :T [2])
+            val [a:T,b:T] = [:T [1], :T [2]]
             println(a.x, b.x)
         """)
         assert(out == "1\t2\n") { out }
@@ -2237,7 +2239,26 @@ class Exec_99 {
     @Test
     fun fg_16_string_concat() {
         val out = test("""
+            $PLUS ; $COMP
+            func f (v1, v2) {
+                ;;println(:X, v1, v2)
+                loop i in {0 => #v2{ {
+                    ;;println(i, v2[i])
+                    set v1[+] = v2[i]
+                }
+                v1
+            }
             val s = #[]
+            val t = #[1]
+            println(f(s,t))
+        """)
+        assert(out == "#[1]\n") { out }
+    }
+    @Test
+    fun fg_16x_string_concat() {
+        val out = test("""
+            val s = #[]
+            ;;println(#['9'])
             s <++ #['1']
             s <++ #['2']
             s <++ #['3']
@@ -2524,7 +2545,7 @@ class Exec_99 {
         val out = test("""
             val t2 = #[[1],[2],[3]]
             val t3 = #[]
-            loop (v) in to-iter(t2) {
+            loop v in to-iter(t2) {
                 set t3[+] = v
             }
             println(t3)
@@ -2547,15 +2568,15 @@ class Exec_99 {
     @Test
     fun fh_01z_iter() {
         val out = test("""
-            $PLUS
+            $PLUS ; $ASR
             func iter-tuple (itr) {
-                val i = itr[3]
+                val i = itr[2]
                 if i == #itr[1] {
                     set itr[0] = nil
                     nil
                 } else {
-                    set itr[3] = i + 1
-                    (i, itr[1][i])
+                    set itr[2] = i + 1
+                    [i, itr[1][i]]
                 }
             }
             func to-iter (v) { v }
@@ -2567,7 +2588,7 @@ class Exec_99 {
                 set t3[+] = v
             }
             println(t3)
-        """, false)
+        """)
         assert(out == "#[1,2,3]\n") { out }
     }
     @Test

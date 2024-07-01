@@ -391,7 +391,25 @@ class Exec_01 {
         """)
         assert(out == "10\n") { out }
     }
-
+    @Test
+    fun TODO_be_04_rec() {
+        val out = test("""
+            $PLUS
+            do {
+                val f = func (v) {
+                    println(:F, f)      ;; f is upval which is assigned nil
+                    if v /= 0 {
+                        println(v)
+                        f(v - 1)
+                    } else {
+                        nil
+                    }
+                }
+                f(3)
+            }
+        """)
+        assert(out == "3\n2\n1\n") { out }
+    }
 
     // INDEX / TUPLE
 
