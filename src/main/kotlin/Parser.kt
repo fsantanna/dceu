@@ -1082,31 +1082,29 @@ class Parser (lexer_: Lexer)
                         ret
                     }
                     else -> {
-                        val pat = when {
-                            (par && checkFix(")")) ->
-                                Pair(
-                                    listOf(Pair(Tk.Id("it", this.tk0.pos.copy()), null)),
-                                    Expr.Bool(Tk.Fix("true", this.tk0.pos.copy()))
-                                )
-                            else -> TODO() //this.patt()
-                        }
-                        val (idstags,_) = pat
-                        val idtag = idstags.first()  // XXX
+                        val pat1 = this.patt("it")
                         if (par) {
                             this.acceptFix_err(")")
                         } else {
                             this.checkFix_err("{")
                         }
-                        val cnt = if (!this.checkFix("{")) null else this.block().es
+                        val nn = N++
+                        val cnt = if (!this.checkFix("{")) "true" else """
+                            set ceu_ret_$nn = group {
+                                ${this.block().es.tostr(true)}
+                            }
+                            true
+                        """
+                        val pat2 = pat1.code3("ceu_ret_$nn", cnt)
                         this.nest("""
-                            do {
-                                var ${idtag.tostr(true)}
+                            group {
+                                var ceu_ret_$nn
                                 loop {
-                                    set ${idtag.first.str} = ${pre}yield()
-                                    until pat.code                                
+                                    set ceu_ret_$nn = ${pre}yield()
+                                    until $pat2                                
                                 }
                                 delay
-                                ${cnt.cond2({ it.tostr(true) }, { idtag.first.str })}
+                                ceu_ret_$nn
                             }
                         """
                         ) //.let { println(it.tostr());it }
@@ -1118,14 +1116,20 @@ class Parser (lexer_: Lexer)
                 val pat = if (clk) {
                     clock().tostr(true)
                 } else {
-                    TODO()
-                    //this.patt().tostr(true)
+                    this.patt().tostr(true)
                 }
                 val blk = this.block()
+                val nn = N++
                 this.nest("""
                     loop {
-                        await $pat ${(!clk).cond{"{"}}
-                            ${blk.es.tostr(true)}
+                        until await $pat ${(!clk).cond{"{"}}
+                            var ceu_brk_$nn = true
+                            loop {
+                                ${blk.es.tostr(true)}
+                                set ceu_brk_$nn = false
+                                until true
+                            }
+                            ceu_brk_$nn
                         ${(!clk).cond{"}"}}
                     }
                 """)

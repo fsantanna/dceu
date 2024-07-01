@@ -30,6 +30,14 @@ fun Clock.tostr (pre: Boolean): String {
     return "<" + this.map { it.second.tostr(pre) + " " + it.first.str }.joinToString(",") + ">"
 }
 
+fun Patt.tostr (pre: Boolean = false): String {
+    return when (this) {
+        is Patt.None -> "(${Pair(this.id,this.tag).tostr(pre)} | ${this.pos.tostr(true)})"
+        is Patt.One  -> "(${Pair(this.id,this.tag).tostr(pre)} | ${this.e.tostr(pre)} and ${this.pos.tostr(true)})"
+        is Patt.Tup  -> TODO()
+    }
+}
+
 fun Expr.tostr (pre: Boolean = false): String {
     return when (this) {
         is Expr.Proto  -> {
