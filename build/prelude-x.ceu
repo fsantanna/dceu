@@ -145,12 +145,12 @@ val to-iter = do {
 
     func iter-xcoro (itr :Iterator) {
         val co = itr.s
-        (resume co()) --> func (...) {
+        (resume co()) --> func (x) {
             if (status(co) == :terminated) {
                 set itr.f = nil
                 nil
             } else {
-                (...)
+                x
             }
         }
     }
@@ -540,19 +540,19 @@ func tag-or (t1,t2) {
     `:tag $t1.Tag | $t2.Tag`
 }
 
-func next (v, ...) {
+func next (v, x) {
     match v {
-        :exe-coro => resume v(...)
-        :tasks    => next-tasks(v, ...)
-        :dict     => next-dict(v, ...)
+        :exe-coro => resume v(x)
+        :tasks    => next-tasks(v, x)
+        :dict     => next-dict(v, x)
         :Iterator => it.f(v)
         else      => error(:error)
     }
 }
 
-func create-resume (CO, ...) {
+func create-resume (CO, x) {
     val co = coroutine(CO)
-    assert(resume co(...) == nil)
+    assert(resume co(x) == nil)
     co
 }
 
