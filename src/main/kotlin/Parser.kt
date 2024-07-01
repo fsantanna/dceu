@@ -417,11 +417,22 @@ class Parser (lexer_: Lexer)
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 if (CEU<99 || !this.checkFix("[")) {
-                    val idtag = this.id_tag()
+                    val (id,tag1) = this.id_tag()
                     val src = if (!this.acceptFix("=")) null else {
                         this.expr()
                     }
-                    Expr.Dcl(tk0, idtag, src)
+                    val tag2 = when {
+                        (CEU < 99) -> null
+                        (tag1 != null) -> tag1
+                        (src !is Expr.Call) -> null
+                        (src.clo !is Expr.Acc) -> null
+                        (src.clo.tk.str != "tag") -> null
+                        (src.args.size != 2) -> null
+                        (src.args[0] !is Expr.Tag) -> null
+                        (src.args[1] !is Expr.Tuple) -> null
+                        else -> src.args[0].tk as Tk.Tag
+                    }
+                    Expr.Dcl(tk0, Pair(id,tag2), src)
                 } else {
                     val pat = this.patt(null)
                     val src = if (this.acceptFix("=")) {
@@ -538,7 +549,10 @@ class Parser (lexer_: Lexer)
                 when {
                     this.checkFix("{") -> {
                         val blk = this.block()
-                        val id = (ids as Tk.Id).str
+                        val id = when (ids) {
+                            is Tk.Id -> ids.str
+                            else -> (ids as Id_Tag).first.str
+                        }
                         this.nest("""
                             do {
                                 var $id = 0
@@ -551,7 +565,10 @@ class Parser (lexer_: Lexer)
                     }
                     !this.acceptFix_err("in") -> error("impossible case")
                     (this.acceptFix("{") || this.acceptFix("}")) -> {
-                        val id = (ids as Id_Tag).first.str
+                        val id = when (ids) {
+                            is Tk.Id -> ids.str
+                            else -> (ids as Id_Tag).first.str
+                        }
 
                         // [x -> y]
                         val tkA = this.tk0 as Tk.Fix
@@ -601,7 +618,7 @@ class Parser (lexer_: Lexer)
                         val dcl_set = when (ids) {
                             is Tk.Id -> "val ${ids.str} = ceu_val_$nn"
                             is Patt  -> ids.code2("ceu_val_$nn")
-                            else     -> "val ${(ids as Id_Tag).first.str} = ceu_val_$nn"
+                            else     -> "val ${(ids as Id_Tag).tostr(true)} = ceu_val_$nn"
                         }
                         //println(blk.es.tostr())
                         this.nest("""

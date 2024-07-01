@@ -4127,6 +4127,7 @@ class Exec_99 {
             }
         """)
         assert(out == "[]\n") { out }
+        //assert(out == "true\n") { out }
     }
     @Test
     fun kk_11_await_thus_yield() {
