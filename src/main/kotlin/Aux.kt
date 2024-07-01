@@ -10,7 +10,7 @@ fun trap (f: ()->Unit): String {
 }
 
 fun Pos.isSameLine (oth: Pos): Boolean {
-    return (this.file==oth.file && this.lin==oth.lin)
+    return (this.file==oth.file && this.lin==oth.lin && this.brks==oth.brks)
 }
 
 fun <T> T?.cond2 (f: (v:T)->String, g: (()->String)?): String {

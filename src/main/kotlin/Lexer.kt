@@ -6,11 +6,16 @@ import java.io.Reader
 import java.io.StringReader
 import java.lang.Integer.max
 
-data class Lex(var file: String, var lin: Int, var col: Int, var xcol: Int, val reader: PushbackReader)
-data class Pos (val file: String, val lin: Int, val col: Int)
+data class Lex (
+    var file: String,
+    var lin: Int, var col: Int, var brks: Int,
+    var prv: Int, // previous col before \n to restore on unread
+    val reader: PushbackReader
+)
+data class Pos (val file: String, val lin: Int, val col: Int, val brks: Int)
 
 fun Lex.toPos (): Pos {
-    return Pos(this.file, this.lin, this.col)
+    return Pos(this.file, this.lin, this.col, this.brks)
 }
 
 fun FileX (path: String): File {
@@ -29,7 +34,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
             N = 1
         }
         for (inp in inps) {
-            stack.addFirst(Lex(inp.first.first, inp.first.second, inp.first.third, 0, PushbackReader(inp.second,2)))
+            stack.addFirst(Lex(inp.first.first, inp.first.second, inp.first.third, 0, 0, PushbackReader(inp.second,2)))
         }
     }
 
@@ -42,11 +47,11 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
         val pos = stack.first()
         val n = pos.reader.read()
         val x = n.toChar()
-        pos.xcol = pos.col
-        if (x == '\n') {
-            pos.lin++; pos.col=1
-        } else if (!iseof(n)) {
-            pos.col++
+        pos.prv = pos.col
+        when {
+            (x == ';')  -> pos.brks++
+            (x == '\n') -> { pos.lin++; pos.col=1}
+            !iseof(n)   -> pos.col++
         }
         return Pair(n,x)
     }
@@ -56,7 +61,8 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
         pos.reader.unread(n)
         when {
             iseof(n) -> {}
-            (x == '\n') -> { pos.lin--; pos.col=pos.xcol }
+            (x == ';') -> pos.brks--
+            (x == '\n') -> { pos.lin--; pos.col=pos.prv }
             else -> pos.col = pos.col-1
         }
     }
@@ -268,7 +274,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                                 err(stack.first().toPos(), "native error : expected \"$open\"")
                             }
                             (x2 == '`') -> {
-                                val xxx = stack.first().toPos().let { Pos(it.file,it.lin,it.col-1) }
+                                val xxx = stack.first().toPos().let { Pos(it.file,it.lin,it.col-1,it.brks) }
                                 val close = x2 + read2While('`')
                                 if (open == close) {
                                     break
@@ -353,7 +359,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                             if (!f.exists()) {
                                 err(pos, "token ^ error : file not found : $file")
                             }
-                            stack.addFirst(Lex(file, 1, 1, 0, PushbackReader(StringReader(f.readText()), 2)))
+                            stack.addFirst(Lex(file, 1, 1, 0, 0, PushbackReader(StringReader(f.readText()), 2)))
                         }
 
                         (lin != null) -> stack.first().let {

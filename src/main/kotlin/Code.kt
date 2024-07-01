@@ -254,7 +254,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         // $idx: unused function
                     """
                     (this.src != null) -> """
-                        ${this.src!!.code()}
+                        ${this.src.code()}
                         ceu_gc_inc_val(ceu_acc);
                         $idx = ceu_acc;
                     """

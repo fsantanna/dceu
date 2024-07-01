@@ -200,7 +200,7 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
             System.err.println("... analysing ...")
         }
         //readLine()
-        val pos = Pos("anon", 0, 0)
+        val pos = Pos("anon", 0, 0, 0)
         val ARGS   = Expr.Dcl(Tk.Fix("val",pos), Pair(Tk.Id("ARGS",pos),null), null)
         val outer  = Expr.Do(Tk.Fix("", pos), listOf(ARGS)+es)
         val ups    = Ups(outer)
