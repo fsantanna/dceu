@@ -199,7 +199,7 @@ val to-iter = do {
             ==:coro     => :Iterator [iter-coro, v, nil, nil]
             ==:exe-coro => :Iterator [iter-xcoro, v, nil, nil]
             ==:tasks    => :Iterator [iter-tasks, v, nil, nil]
-            else        => nil
+            else        => error(:TODO)
         }
     }
 }
@@ -210,7 +210,7 @@ val to-iter = do {
 ;; IN, IN-NOT
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-val [{{===}}, {{=/=}}] = do {
+val [{{===}}, {{=/=}}] = group {
     func eq (v1,v2) {
         val t1 = type(v1)
         val t2 = type(v2)
