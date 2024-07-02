@@ -5217,7 +5217,7 @@ class Exec_01 {
             data :T = []
             var t :T
             println(t.x)
-        """, true
+        """
         )
         assert(out == "anon : (lin 4, col 23) : index error : undeclared data field :x\n") { out }
     }

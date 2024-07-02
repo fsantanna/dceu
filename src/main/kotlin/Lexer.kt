@@ -49,8 +49,8 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
         val x = n.toChar()
         pos.prv = pos.col
         when {
-            (x == ';')  -> pos.brks++
             (x == '\n') -> { pos.lin++; pos.col=1}
+            (x == ';')  -> { pos.col++ ; pos.brks++ }
             !iseof(n)   -> pos.col++
         }
         return Pair(n,x)
@@ -349,7 +349,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     val (n7, x7) = read2()
                     when {
                         iseof(n7) -> unread2(n7)
-                        //(x7 == '\n') -> {}  // skip leading \n
+                        (x7 == '\n') -> {}  // skip leading \n
                         else -> unread2(n7) //err(pos, "token ^ error : expected end of line")
                     }
 

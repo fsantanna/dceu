@@ -422,7 +422,7 @@ class Parser (lexer_: Lexer)
                         this.expr()
                     }
                     val tag2 = when {
-                        (CEU < 99) -> null
+                        (CEU < 99) -> tag1
                         (tag1 != null) -> tag1
                         (src !is Expr.Call) -> null
                         (src.clo !is Expr.Acc) -> null
