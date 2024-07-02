@@ -94,7 +94,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         when {
             !pre -> it
             (it.length>0 && it[0]=='(') -> '(' + this.tk.pos.pre() + it.drop(1)
-            else -> this.tk.pos.pre() + it + this.tk.pos.pre()
+            else -> this.tk.pos.pre() + it
         }
     }
 }

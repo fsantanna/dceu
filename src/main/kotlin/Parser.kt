@@ -144,7 +144,7 @@ class Parser (lexer_: Lexer)
     fun clock (): Clock {
         this.acceptOp_err("<")
         val us = listOf(":h", ":min", ":s", ":ms")
-        val l = list0(",", {this.checkOp(">")}) {
+        val l = list0(",", {this.acceptOp(">")}) {
             val e = this.expr()
             this.acceptEnu_err("Tag")
             val u = this.tk0 as Tk.Tag
@@ -1049,14 +1049,10 @@ class Parser (lexer_: Lexer)
                         val ret = this.nest("""
                             do {
                                 var ceu_clk_$N = $clk
-                                loop {
-                                    val ceu_evt_$N :Clock = ${pre}yield()
-                                    if ceu_evt_$N is? :Clock {
-                                        set ceu_clk_$N = ceu_clk_$N - ceu_evt_$N.ms
-                                    }
-                                    until (ceu_clk_$N <= 0)
-                                }
-                                delay
+                                await(:Clock | do {
+                                    set ceu_clk_$N = ceu_clk_$N - it.ms
+                                    (ceu_clk_$N <= 0)
+                                })
                             }
                         """)
                         if (par) {
@@ -1218,8 +1214,7 @@ class Parser (lexer_: Lexer)
                 val pat = if (this.checkOp("<")) {
                     clock().tostr(true)
                 } else {
-                    TODO()
-                    //this.patt().tostr(true)
+                    this.patt().tostr(true)
                 }
                 val blk = this.block()
                 this.nest("""
@@ -1450,11 +1445,11 @@ class Parser (lexer_: Lexer)
                 val (id_tag,es) = lambda(true)
                 id_tag!!
                 this.nest( """
-                        do {
-                            ${id_tag.first.pos.pre()}val ${id_tag.tostr(true)} = ${e.tostr(true)}
-                            ${es.tostr(true)}
-                        }
-                    """)
+                    do {
+                        ${id_tag.first.pos.pre()}val ${id_tag.tostr(true)} = ${e.tostr(true)}
+                        ${es.tostr(true)}
+                    }
+                """)
             }
             "-->" -> this.expr_0_out(op.str, method(this.expr_1_bin(), e, true))
             "<--" -> method(e, this.expr_0_out(op.str), false)

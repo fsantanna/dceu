@@ -5891,7 +5891,7 @@ class Exec_99 {
         """, true)
         assert(out == "10\n" +
                 " |  anon : (lin 3, col 13) : assert(nil)\n" +
-                " |  build/prelude-x.ceu : (lin 480, col 25) : error(#['a','s','s','e','r','t','i','o','n...\n" +
+                " |  build/prelude-x.ceu : (lin 34, col 30) : error(#['a','s','s','e','r','t','i','o','n...\n" +
                 " v  error : assertion error\n") { out }
     }
     @Test
@@ -5932,7 +5932,7 @@ class Exec_99 {
             assert(false, 10)
         """, true)
         assert(out == " |  anon : (lin 2, col 13) : assert(false,10)\n" +
-                " |  build/prelude-x.ceu : (lin 481, col 17) : error(msg)\n" +
+                " |  build/prelude-x.ceu : (lin 35, col 17) : error(msg)\n" +
                 " v  error : 10\n") { out }
     }
     @Test
@@ -5941,7 +5941,7 @@ class Exec_99 {
             assert(false, :type [])
         """, true)
         assert(out == " |  anon : (lin 2, col 13) : assert(false,tag(:type,[]))\n" +
-                " |  build/prelude-x.ceu : (lin 481, col 17) : error(msg)\n" +
+                " |  build/prelude-x.ceu : (lin 35, col 17) : error(msg)\n" +
                 " v  error : :type []\n") { out }
     }
 
