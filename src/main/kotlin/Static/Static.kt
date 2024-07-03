@@ -101,13 +101,13 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
                  */
                 if (this.nst) {
-                    if (ups.first(ups.pub[this]!!) { it is Expr.Proto }.let {
-                        //(CEU>=99 && it==outer.clo) /* bc of top-level spawn {...} */ ||
-                        (it!=null && it.tk.str=="task") })
-                    {
-                        // ok
-                    } else {
-                        //err(this.tk, "task :nested error : expected enclosing task")
+                    when {
+                        ups.first(ups.pub[this]!!) { it is Expr.Proto }.let {
+                            (it!=null && it.tk.str=="task")
+                        } -> {}
+                        (CEU<99 || ups.first(ups.pub[this]!!) { it is Expr.Proto }!=null) -> err(this.tk, "task :nested error : expected enclosing task")
+                        (ups.pub[this] !is Expr.Spawn) -> err(this.tk, "task :nested error : expected enclosing spawn")
+                        else -> {}
                     }
                     ups.all_until(ups.pub[this]!!) { it is Expr.Proto }
                         .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto

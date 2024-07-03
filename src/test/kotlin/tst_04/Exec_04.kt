@@ -3796,6 +3796,7 @@ class Exec_04 {
             println(:ok)
         """
         )
+        //assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing spawn\n") { out }
         assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing task\n") { out }
     }
     @Test

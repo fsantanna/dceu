@@ -884,7 +884,7 @@ class Parser_01 {
         assert(trap { parser.expr() } == "anon : (lin 1, col 8) : expected expression : have \"}\"")
     }
     @Test
-    fun tt_02_export_err() {
+    fun BUG_tt_02_export_err() {
         val l = lexer("group ;;;[:x];;; {}")
         val parser = Parser(l)
         //assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected identifier : have \":x\"")
