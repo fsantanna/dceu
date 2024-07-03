@@ -849,14 +849,25 @@ class Exec_99 {
     // IFS / NO CATCH ALL
 
     @Test
+    fun fi_00_catch_all() {
+        val out = test("""
+            $ASR
+            data :T = [v]
+            match [10] {
+                do (t :T) => println(t.v)
+            }
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
     fun fi_01_ifs_no_catch_all() {
         val out = test("""
-            $IS ; $COMP
+            $ASR ; $IS ; $COMP
             data :T = [v]
             var x = match [20] {
                 false         => error()
-                (t :T| false) {}
-                ;;do (t :T)
+                ;;(t :T| false) {}
+                do (t :T)
                 (|t.v == 10)  => error()
                 (|t.v == 20)  => :ok
                 else          => error()
@@ -868,7 +879,7 @@ class Exec_99 {
     @Test
     fun fi_02_ifs_no_catch_all() {
         val out = test("""
-            $IS ; $COMP
+            $ASR ; $IS ; $COMP
             data :T = [v]
             var x = match [20] {
                 false         => error()
@@ -885,7 +896,7 @@ class Exec_99 {
     @Test
     fun fi_03_ifs_no_catch_all() {
         val out = test("""
-            $IS ; $COMP
+            $ASR ; $IS ; $COMP
             data :T = [v]
             var x = match [20] {
                 false         => error()
@@ -899,12 +910,12 @@ class Exec_99 {
             }
             println(x)
         """)
-        assert(out == ":ok\n") { out }
+        assert(out == ":ok\n:ok\n") { out }
     }
     @Test
     fun fi_03x_ifs_no_catch_all() {
         val out = test("""
-            $IS ; $COMP
+            $ASR ; $IS ; $COMP
             data :T = [v]
             var x = match :T [20] {
                 false         => error()
@@ -1806,7 +1817,7 @@ class Exec_99 {
         val out = test("""
             coro () {
                 catch (it| do {
-                    do it
+                    ;;;do;;; it
                     yield(nil) thus { ,it => nil }
                 } )
                 {
@@ -4387,7 +4398,7 @@ class Exec_99 {
                 var rect = []
                 spawn {
                     every :X {
-                        do rect
+                        ;;;do;;; rect
                     }
                 }
             }
@@ -4591,7 +4602,7 @@ class Exec_99 {
             }
         """)
         //assert(out == "anon : (lin 2, col 27) : expected non-pool spawn : have \"spawn\"") { out }
-        assert(out == " |  anon : (lin 4, col 14) : (spawn (task :nested () { (var (x) = do { ...\n" +
+        assert(out == " |  anon : (lin 4, col 14) : (spawn (task :nested () { (var x = do { (v...\n" +
                 " |  anon : (lin 3, col 31) : (spawn nil() in nil)\n" +
                 " v  spawn error : expected task\n") { out }
     }
@@ -5790,7 +5801,7 @@ class Exec_99 {
     @Test
     fun xc_06_string_to_tag() {
         val out = test("""
-            do :xyz
+            ;;;do;;; :xyz
             println(to-tag-string(":x"))
             println(to-tag-string(":xyz"))
             println(to-tag-string("xyz"))
@@ -5900,7 +5911,7 @@ class Exec_99 {
         assert(out == "10\n" +
                 " |  anon : (lin 3, col 13) : assert(nil)\n" +
                 " |  build/prelude-x.ceu : (lin 34, col 30) : error(#['a','s','s','e','r','t','i','o','n...\n" +
-                " v  error : assertion error\n") { out }
+                " v  assertion error\n") { out }
     }
     @Test
     fun za_06_copy() {

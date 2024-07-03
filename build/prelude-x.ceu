@@ -16,7 +16,7 @@ func {{>=}} (v1,v2) {
 }
 
 func xx-string? (v) {
-    ((type(v)==:vector) and (#v>=0)) and (type(v[0])==:char)
+    (type(v)==:vector) and (#v>=1) and (type(v[0])==:char)
 }
 
 func xx-cat-move (v1, v2) {

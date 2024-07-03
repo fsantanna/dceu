@@ -988,6 +988,22 @@ class Parser (lexer_: Lexer)
                             this.acceptFix_err("}")
                             "do { $ret }"
                         }
+                        this.acceptFix("do") -> {
+                            val pat1 = this.patt("it")
+                            val pat2 = pat1.code2("ceu_val_$nn")
+                            val cnt = if (this.checkFix("{") || this.checkFix("=>")) {
+                                cont()
+                            } else {
+                                null
+                            }
+                            """
+                            do {
+                                $pat2
+                                ${cnt.cond { it }}
+                                ${case()}
+                            }
+                            """
+                        }
                         else -> {
                             val pat1 = this.patt("it")
                             val pat2 = pat1.code3("ceu_val_$nn", cont())
@@ -1107,27 +1123,33 @@ class Parser (lexer_: Lexer)
                 }
             }
             (CEU>=99 && this.acceptFix("every")) -> {
-                val clk = this.checkOp("<")
-                val pat = if (clk) {
-                    clock().tostr(true)
-                } else {
-                    this.patt().tostr(true)
-                }
-                val blk = this.block()
                 val nn = N++
-                this.nest("""
-                    loop {
-                        until await $pat {
-                            var ceu_brk_$nn = true
-                            loop {
-                                ${blk.es.tostr(true)}
-                                set ceu_brk_$nn = false
-                                until true
-                            }
-                            ceu_brk_$nn
+                if (this.checkOp("<")) {
+                    val clk = clock()
+                    val blk = this.block()
+                    this.nest("""
+                        loop {
+                            await ${clk.tostr(true)}
+                            ${blk.es.tostr(true)}
                         }
-                    }
-                """)
+                    """)
+                } else {
+                    val pat = this.patt()
+                    val blk = this.block()
+                    this.nest("""
+                        loop {
+                            until await ${pat.tostr(true)} {
+                                var ceu_brk_$nn = true
+                                loop {
+                                    ${blk.es.tostr(true)}
+                                    set ceu_brk_$nn = false
+                                    until true
+                                }
+                                ceu_brk_$nn
+                            }
+                        }
+                    """)
+                }
             }
             (CEU>=99 && this.acceptFix("par")) -> {
                 val pre0 = this.tk0.pos.pre()
