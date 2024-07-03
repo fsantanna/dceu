@@ -85,21 +85,21 @@ class Parser_03 {
     @Test
     fun cc_01_resume() {
         val l = lexer("""
-            resume co(1,...)
+            resume co(1;;;,...;;;)
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(resume (co)(1,...))") { e.tostr() }
+        assert(e.tostr() == "(resume (co)(1))") { e.tostr() }
 
     }
     @Test
     fun cc_02_yield() {
         val l = lexer("""
-            yield(1,...)
+            yield(1;;;,...;;;)
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "yield(1,...)") { e.tostr() }
+        assert(e.tostr() == "yield(1)") { e.tostr() }
     }
     @Test
     fun cc_03_yield() {
@@ -107,7 +107,8 @@ class Parser_03 {
             yield()
         """)
         val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr() == "yield()") { e.tostr() }
+        //val e = parser.expr()
+        //assert(e.tostr() == "yield(nil)") { e.tostr() }
+        assert(trap { parser.expr() } == "anon : (lin 2, col 19) : expected expression : have \")\"")
     }
 }

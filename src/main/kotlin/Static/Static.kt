@@ -107,7 +107,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     {
                         // ok
                     } else {
-                        err(this.tk, "task :nested error : expected enclosing task")
+                        //err(this.tk, "task :nested error : expected enclosing task")
                     }
                     ups.all_until(ups.pub[this]!!) { it is Expr.Proto }
                         .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
@@ -159,10 +159,9 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 while (up is Expr.Do) {
                     up = ups.pub[up]    // skip nested do's from late declarations
                 }
-                if (up is Expr.Loop) {
-                    // ok
-                } else {
-                    err(this.tk, "break error : expected immediate parent loop")
+                val fst = ups.first(this) { it is Expr.Loop || it is Expr.Proto }
+                if (fst is Expr.Proto) {
+                    err(this.tk, "break error : expected parent loop")
                 }
                 this.cnd.traverse()
                 this.e?.traverse()

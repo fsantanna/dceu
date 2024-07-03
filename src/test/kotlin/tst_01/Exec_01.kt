@@ -3366,7 +3366,8 @@ class Exec_01 {
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
+        assert(out == "anon : (lin 4, col 21) : break error : expected parent loop\n") { out }
     }
     @Test
     fun TODO_oo_10_loop() {
