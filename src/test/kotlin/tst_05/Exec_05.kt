@@ -1587,7 +1587,8 @@ class Exec_05 {
             }
             var t = spawn T()
             var x = ;;;track;;;(t)
-            val v = ;;;detrack;;;(x) ;;;{ it => it;;;.pub ;;}
+            ;;val v = ;;;detrack;;;(x) ;;;{ it => it;;;.pub ;;}
+            val v = (x).pub
             broadcast(nil)
             println(v)
         """)

@@ -26,7 +26,6 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
             is Expr.Break  -> this.cnd.coexists() || (this.e?.coexists() ?: false)
             is Expr.Skip   -> this.cnd.coexists()
             is Expr.Loop   -> this.blk.coexists()
-            is Expr.Pass   -> this.e.coexists()
 
             is Expr.Catch  -> this.cnd.coexists()
 
@@ -115,7 +114,6 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
                 };
             """
             is Expr.Skip -> this.cnd.mem()
-            is Expr.Pass -> this.e.mem()
 
             is Expr.Catch -> """
                 $union { // CATCH

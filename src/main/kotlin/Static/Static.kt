@@ -149,7 +149,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Loop   -> {
                 this.blk.es.last().let {
                     if (it.is_innocuous()) {
-                        err(it.tk, "loop error : innocuous last expression")
+                        //err(it.tk, "loop error : innocuous last expression")
                     }
                 }
                 this.blk.traverse()
@@ -177,7 +177,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
             is Expr.Enum   -> {}
             is Expr.Data   -> {}
-            is Expr.Pass   -> this.e.traverse()
 
             is Expr.Catch  -> {
                 //defer_catch_spawn_tasks.add(this.blk)

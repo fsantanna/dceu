@@ -138,7 +138,6 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Skip   (val tk_: Tk.Fix, val cnd: Expr): Expr(N++, tk_)
     data class Enum   (val tk_: Tk.Fix, val tags: List<Pair<Tk.Tag,Tk.Nat?>>): Expr(N++, tk_)
     data class Data   (val tk_: Tk.Tag, val ids: List<Id_Tag>): Expr(N++, tk_)
-    data class Pass   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
 
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr.Do, val blk: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)

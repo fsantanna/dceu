@@ -313,7 +313,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             """
             is Expr.Enum -> "// ENUM | ${this.dump()}\n"
             is Expr.Data -> "// DATA | ${this.dump()}\n"
-            is Expr.Pass -> "// PASS | ${this.dump()}\n" + this.e.code()
 
             is Expr.Catch -> {
                 """

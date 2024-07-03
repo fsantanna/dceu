@@ -165,7 +165,7 @@ class Exec_04 {
         //assert(out == ":1\n:2\n1\n") { out }
         //assert(out.contains("x-coro: 0x")) { out }
         assert(out == " |  anon : (lin 8, col 21) : (resume (t)())\n" +
-                " |  anon : (lin 3, col 17) : (spawn (coro () { yield(nil) })())\n" +
+                " |  anon : (lin 3, col 17) : (spawn (coro () { yield(nil); })())\n" +
                 " v  spawn error : expected task\n") { out }
     }
     @Test
@@ -234,7 +234,7 @@ class Exec_04 {
             println(5)
         """)
         //assert(out == "1\n2\n3\n4\n5\n") { out }
-        assert(out == " |  anon : (lin 13, col 22) : (spawn if true { t } else { nil }())\n" +
+        assert(out == " |  anon : (lin 13, col 22) : (spawn if true { t; } else { nil; }())\n" +
                 " v  spawn error : expected task\n") { out }
     }
     @Test
@@ -1796,7 +1796,7 @@ class Exec_04 {
             println(10)
         """
         )
-        assert(out == " |  anon : (lin 3, col 17) : (spawn (task () { error(:xxx) })())\n" +
+        assert(out == " |  anon : (lin 3, col 17) : (spawn (task () { error(:xxx); })())\n" +
                 " |  anon : (lin 4, col 21) : error(:xxx)\n" +
                 " v  error : :xxx\n") { out }
     }
@@ -1842,7 +1842,7 @@ class Exec_04 {
         """
         )
         assert(
-            out == " |  anon : (lin 2, col 13) : (spawn (task () { error(:err) })())\n" +
+            out == " |  anon : (lin 2, col 13) : (spawn (task () { error(:err); })())\n" +
                     " |  anon : (lin 3, col 17) : error(:err)\n" +
                     " v  error : :err\n"
         ) { out }
@@ -1923,7 +1923,7 @@ class Exec_04 {
         //        " |  anon : (lin 4, col 17) : error(:err)\n" +
         //        " v  error : :err\n") { out }
         assert(
-            out == " |  anon : (lin 6, col 13) : (spawn (task () { nil })())\n" +
+            out == " |  anon : (lin 6, col 13) : (spawn (task () { nil; })())\n" +
                     " |  anon : (lin 4, col 17) : error(:err)\n" +
                     " v  error : :err\n"
         ) { out }
@@ -3076,7 +3076,7 @@ class Exec_04 {
         """
         )
         assert(
-            out == " |  anon : (lin 2, col 13) : (spawn (task () { (set pub[:x] = 10) nil }...\n" +
+            out == " |  anon : (lin 2, col 13) : (spawn (task () { (set pub[:x] = 10); nil;...\n" +
                     " |  anon : (lin 3, col 21) : pub[:x]\n" +
                     " v  index error : expected collection\n"
         ) { out }
@@ -5864,7 +5864,7 @@ class Exec_04 {
         """
         )
         assert(
-            out == " |  anon : (lin 2, col 13) : (spawn (func () { nil })())\n" +
+            out == " |  anon : (lin 2, col 13) : (spawn (func () { nil; })())\n" +
                     " v  spawn error : expected task\n"
         ) { out }
     }

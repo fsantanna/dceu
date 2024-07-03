@@ -406,13 +406,7 @@ class Parser (lexer_: Lexer)
 
     fun expr_prim (): Expr {
         return when {
-            this.acceptFix("do") -> {
-                if (this.checkFix("{")) {
-                    Expr.Do(this.tk0, this.block().es)
-                } else {
-                    Expr.Pass(this.tk0 as Tk.Fix, this.expr())
-                }
-            }
+            this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
             this.acceptFix("group") -> Expr.Group(this.tk0 as Tk.Fix, this.block().es)
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -1230,7 +1224,7 @@ class Parser (lexer_: Lexer)
                 if (TEST) {
                     blk
                 } else {
-                    Expr.Pass(this.tk0 as Tk.Fix, Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy())))
+                    Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy()))
                 }
             }
             else -> {
@@ -1479,7 +1473,7 @@ class Parser (lexer_: Lexer)
             when {
                 (i == es.size - 1) -> {}   // last can be innocuous (just return)
                 !e.is_innocuous() -> {}     // others must do something
-                else -> err(e.tk, "expression error : innocuous expression")
+                //else -> err(e.tk, "expression error : innocuous expression")
             }
         }
         return ret

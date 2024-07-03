@@ -129,7 +129,7 @@ class Exec_03 {
         val out = test("""
             coroutine(func () {nil})
         """)
-        assert(out == " |  anon : (lin 2, col 13) : coroutine((func () { nil }))\n" +
+        assert(out == " |  anon : (lin 2, col 13) : coroutine((func () { nil; }))\n" +
                 " v  coroutine error : expected coro\n") { out }
     }
 

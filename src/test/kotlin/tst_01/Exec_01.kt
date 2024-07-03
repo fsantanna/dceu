@@ -425,16 +425,17 @@ class Exec_01 {
         val out = test(
             """
             [1,2,3][1]
-            nil
+            println(nil)
         """
         )
-        assert(out == "anon : (lin 2, col 13) : expression error : innocuous expression\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : expression error : innocuous expression\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun cc_index01() {
         val out = test(
             """
-            do [1,2,3][1]
+            ;;;do;;; [1,2,3][1]
             println(1)
         """
         )
@@ -502,7 +503,7 @@ class Exec_01 {
     fun cc_tuple4_free() {
         val out = test(
             """
-            do [1,2,3]
+            ;;;do;;; [1,2,3]
             println(1)
         """
         )
@@ -512,7 +513,7 @@ class Exec_01 {
     fun cc_tuple46_free() {
         val out = test(
             """
-            do [[]]
+            ;;;do;;; [[]]
             println(1)
         """
         )
@@ -522,7 +523,7 @@ class Exec_01 {
     fun cc_vec_free() {
         val out = test(
             """
-            do #[]
+            ;;;do;;; #[]
             println(1)
         """
         )
@@ -532,7 +533,7 @@ class Exec_01 {
     fun cc_dic_free() {
         val out = test(
             """
-            do @[]
+            ;;;do;;; @[]
             println(1)
         """
         )
@@ -542,7 +543,7 @@ class Exec_01 {
     fun cc_tuple45_free() {
         val out = test(
             """
-            do [1,2,3][1]
+            ;;;do;;; [1,2,3][1]
             println(1)
         """
         )
@@ -1151,7 +1152,7 @@ class Exec_01 {
                 var x = [nil]
                 var y = [x]
                 set x[0] = y
-                do ;;;drop;;;(x)
+                ;;;do drop;;;(x)
                 y
             }
             println(z[0][0] == z)
@@ -2046,12 +2047,12 @@ class Exec_01 {
             }
             do {
                 val t = []
-                do [f, t]
+                ;;;do;;; [f, t]
                 nil
             }
             do {
                 val t = []
-                do [f, t]
+                ;;;do;;; [f, t]
                 nil
             }
             println(:ok)
@@ -2067,7 +2068,7 @@ class Exec_01 {
                 val t1 = []
                 do {
                     val t2 = []
-                    do [t1,[],t2]
+                    ;;;do;;; [t1,[],t2]
                     nil
                 }
             }
@@ -2082,7 +2083,7 @@ class Exec_01 {
             val t1 = []
             do {
                 val t2 = []
-                do [t1,t2]
+                ;;;do;;; [t1,t2]
                 nil
             }
             println(:ok)
@@ -2097,7 +2098,7 @@ class Exec_01 {
                 val t1 = []
                 do {
                     val t2 = []
-                    do [t1,[],t2]
+                    ;;;do;;; [t1,[],t2]
                 }
             }
             println(:ok)
@@ -2112,7 +2113,7 @@ class Exec_01 {
             """
             val t1 = [9]
             do {
-                do [t1]
+                ;;;do;;; [t1]
             }
             println(:ok)
         """
@@ -2127,7 +2128,7 @@ class Exec_01 {
                 val t1 = []
                 do {
                     val t2 = []
-                    do #[t1,[],t2]
+                    ;;;do;;; #[t1,[],t2]
                     nil
                 }
             }
@@ -2144,7 +2145,7 @@ class Exec_01 {
                 val t1 = []
                 do {
                     val t2 = []
-                    do @[(t1,t2)]
+                    ;;;do;;; @[(t1,t2)]
                     nil
                 }
             }
@@ -2921,8 +2922,8 @@ class Exec_01 {
     fun func8() {
         val out = test(
             """
-            do 1
-            do (1)
+            ;;;do;;; 1
+            ;;;do;;; (1)
         """
         )
         //assert(out == "anon : (lin 2, col 2) : call error : \"(\" in the next line") { out }
@@ -3231,7 +3232,7 @@ class Exec_01 {
             loop {
                 break if ok
                 set ok = true
-                do []
+                ;;;do;;; []
                 skip if true
             }
             println(:out)
@@ -3659,7 +3660,7 @@ class Exec_01 {
                 println(v)
                 v
             }
-            do f
+            ;;;do;;; f
             var f' = `:ceu ${D}f`
             println(f'(10))
         """
@@ -3961,7 +3962,7 @@ class Exec_01 {
     fun ff_01_string_to_tag() {
         val out = test(
             """
-            do :xyz
+            ;;;do;;; :xyz
             println(to-tag-string(#[':','x']))
             println(to-tag(#[':','x','y','z']))
             println(to-tag-string(#['x','y','z']))
@@ -4014,7 +4015,7 @@ class Exec_01 {
     @Test
     fun ff_06_string_to_tag() {
         val out = test("""
-            do :xyz
+            ;;;do;;; :xyz
             println(to-tag-string(":x"))
             println(to-tag-string(":xyz"))
             println(to-tag-string("xyz"))
@@ -4252,16 +4253,16 @@ class Exec_01 {
     fun gg_16_tags() {
         val out = test(
             """
-            do :A
-            do :A.I
-            do :A.I.X
-            do :A.I.Y
-            do :A.J
-            do :A.J.X
-            do :B
-            do :B.I
-            do :B.I.X
-            do :B.I.X.a
+            ;;;do;;; :A
+            ;;;do;;; :A.I
+            ;;;do;;; :A.I.X
+            ;;;do;;; :A.I.Y
+            ;;;do;;; :A.J
+            ;;;do;;; :A.J.X
+            ;;;do;;; :B
+            ;;;do;;; :B.I
+            ;;;do;;; :B.I.X
+            ;;;do;;; :B.I.X.a
             println(sup?(:A, :A.I))
             println(sup?(:A, :A.I.X))
             println(sup?(:A.I.X, :A.I.Y))
@@ -4307,19 +4308,19 @@ class Exec_01 {
     fun enum01() {
         val out = test(
             """
-            do :antes
+            ;;;do;;; :antes
             enum {
                 :x = `1000`,
                 :y, :z,
                 :a = `10`,
                 :b, :c
             }
-            do :meio
+            ;;;do;;; :meio
             enum {
                 :i = `100`,
                 :j,
             }
-            do :depois
+            ;;;do;;; :depois
             println (
                 to-number(:antes),
                 to-number(:x),
@@ -4676,7 +4677,7 @@ class Exec_01 {
             """
             do {
                 val t = []
-                do [t]
+                ;;;do;;; [t]
             }
             println(:ok)
         """
@@ -4880,9 +4881,9 @@ class Exec_01 {
         DEBUG = true
         val out = test(
             """
-            do []  ;; ;;;not;;; checked
-            do []  ;; ;;;not;;; checked
-            do nil
+            ;;;do;;; []  ;; ;;;not;;; checked
+            ;;;do;;; []  ;; ;;;not;;; checked
+            ;;;do;;; nil
             `ceu_dump_gc();`
             ;;println(`:number CEU_GC.free`)
         """
@@ -4964,7 +4965,7 @@ class Exec_01 {
                 v
             }
             #( #[ f([1]) ] )
-            do nil
+            ;;;do;;; nil
             println(`:number CEU_GC.free`)
         """
         )
@@ -4976,8 +4977,8 @@ class Exec_01 {
         DEBUG = true
         val out = test(
             """
-            do #[ [1] ]
-            do nil
+            ;;;do;;; #[ [1] ]
+            ;;;do;;; nil
             println(`:number CEU_GC.free`)
         """
         )
@@ -4993,7 +4994,7 @@ class Exec_01 {
                 [2]
             }
             f([1])
-            do nil
+            ;;;do;;; nil
             println(`:number CEU_GC.free`)
         """
         )
@@ -5040,7 +5041,7 @@ class Exec_01 {
             do {
                 do {
                     var v = []
-                    do;;;drop;;;(v)
+                    ;;;do;;; ;;;drop;;;(v)
                 }
                 println(`:number CEU_GC.free`)
             }

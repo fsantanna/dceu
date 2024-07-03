@@ -12,7 +12,7 @@ class Parser_04 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Proto && e.pars.size==2)
-        assert(e.tostr() == "(task (a,b) {\n10\n})") { e.tostr() }
+        assert(e.tostr() == "(task (a,b) {\n10;\n})") { e.tostr() }
     }
     @Test
     fun aa_02_task() {
@@ -29,12 +29,12 @@ class Parser_04 {
         val e = parser.exprs()
         assert(e.tostr() == """
             (set t = (task (v) {
-            (set v = yield(1))
-            yield(2)
-            }))
-            coroutine(t)
-            (set v = (resume (a)(1)))
-            (resume (a)(2))
+            (set v = yield(1));
+            yield(2);
+            }));
+            coroutine(t);
+            (set v = (resume (a)(1)));
+            (resume (a)(2));
             
         """.trimIndent()) { e.tostr() }
     }
@@ -64,7 +64,7 @@ class Parser_04 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "(spawn T(2))\n") { e.tostr() }
+        assert(e.tostr() == "(spawn T(2));\n") { e.tostr() }
     }
     @Test
     fun bb_04_spawn_err() {
@@ -74,8 +74,8 @@ class Parser_04 {
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.tostr() == "(spawn (task () {\n" +
-                "nil\n" +
-                "})())\n") { e.tostr() }
+                "nil;\n" +
+                "})());\n") { e.tostr() }
         //assert(trap { parser.exprs() } == "anon : (lin 2, col 19) : spawn error : unexpected \"task\"")
     }
     @Test
@@ -86,8 +86,8 @@ class Parser_04 {
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.tostr() == "(spawn (task () {\n" +
-                "nil\n" +
-                "})())\n") { e.tostr() }
+                "nil;\n" +
+                "})());\n") { e.tostr() }
     }
     @Test
     fun todo_bb_06_spawn_dots_err() {   // TODO: ... should be allowed
@@ -107,7 +107,7 @@ class Parser_04 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "delay\n") { e.tostr() }
+        assert(e.tostr() == "delay;\n") { e.tostr() }
     }
 
     // BCAST
@@ -164,7 +164,7 @@ class Parser_04 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "broadcast'(nil,[])\n") { e.tostr() }
+        assert(e.tostr() == "broadcast'(nil,[]);\n") { e.tostr() }
     }
     @Test
     fun cc_06_bcast() {
@@ -173,7 +173,7 @@ class Parser_04 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "broadcast'(t,nil)\n") { e.tostr() }
+        assert(e.tostr() == "broadcast'(t,nil);\n") { e.tostr() }
     }
 
     // PUB
@@ -185,7 +185,7 @@ class Parser_04 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "pub\n") { e.tostr() }
+        assert(e.tostr() == "pub;\n") { e.tostr() }
         //assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \"(\" : have end of file")
     }
     @Test
@@ -212,7 +212,7 @@ class Parser_04 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "pub\n(set pub = 10)\n") { e.tostr() }
+        assert(e.tostr() == "pub;\n(set pub = 10);\n") { e.tostr() }
     }
     @Test
     fun dd_02_pub() {
@@ -222,7 +222,7 @@ class Parser_04 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "t.pub\n(set t.pub = 10)\n") { e.tostr() }
+        assert(e.tostr() == "t.pub;\n(set t.pub = 10);\n") { e.tostr() }
     }
     @Test
     fun dd_03_pub_tag() {
@@ -233,7 +233,7 @@ class Parser_04 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "(task () :X {\nnil\n})\n") { e.tostr() }
+        assert(e.tostr() == "(task () :X {\nnil;\n});\n") { e.tostr() }
     }
     @Test
     fun dd_04_pub() {
@@ -242,7 +242,7 @@ class Parser_04 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "pub()\n") { e.tostr() }
+        assert(e.tostr() == "pub();\n") { e.tostr() }
     }
     @Test
     fun dd_05_pub() {
@@ -276,7 +276,7 @@ class Parser_04 {
         val l = lexer("task (a,b) :nested { 10 }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(task (a,b) :nested {\n10\n})") { e.tostr() }
+        assert(e.tostr() == "(task (a,b) :nested {\n10;\n})") { e.tostr() }
     }
 
     // TOGGLE
@@ -286,7 +286,7 @@ class Parser_04 {
         val l = lexer("toggle t(true)")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "(toggle t(true))\n") { e.tostr() }
+        assert(e.tostr() == "(toggle t(true));\n") { e.tostr() }
     }
     @Test
     fun ee_02_toggle_err() {

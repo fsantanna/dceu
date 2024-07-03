@@ -320,17 +320,17 @@ class Parser_01 {
     fun exprs_seq2() {
         val l = lexer("; f () \n (1) ; h()\ni() ;\n;")
         val parser = Parser(l)
-        //println(parser.exprs().tostr())
-        //assert(es.tostr() == "f()\n1\nh()\ni()\n") { es.tostr() }
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 3) : expression error : innocuous expression")
+        val es = parser.exprs()
+        assert(es.tostr() == "f();\n1;\nh();\ni();\n") { es.tostr() }
+        //assert(trap { parser.exprs() } == "anon : (lin 2, col 3) : expression error : innocuous expression")
     }
     @Test
     fun exprs_seq2a() {
-        val l = lexer("; f () \n do (1) ; h()\ni() ;\n;")
+        val l = lexer("; f () \n ;;;do;;; (1) ; h()\ni() ;\n;")
         val parser = Parser(l)
         // TODO: ambiguous
         val es = parser.exprs()
-        assert(es.tostr() == "f();\n(do 1);\nh();\ni();\n") { es.tostr() }
+        assert(es.tostr() == "f();\n1;\nh();\ni();\n") { es.tostr() }
         //assert(ceu.trap { parser.exprs() } == "anon : (lin 2, col 3) : call error : \"(\" in the next line")
     }
     @Test
@@ -574,10 +574,10 @@ class Parser_01 {
 
     @Test
     fun qq_01_loop_err() {
-        val l = lexer("loop { do nil }")
+        val l = lexer("loop { ;;;do;;; nil }")
         val parser = Parser(l)
         val e1 = parser.expr() as Expr.Loop
-        assert(e1.blk.tostr() == "{\n(do nil);\n}") { e1.blk.tostr() }
+        assert(e1.blk.tostr() == "{\nnil;\n}") { e1.blk.tostr() }
     }
     @Test
     fun qq_02_loop_err() {
@@ -958,7 +958,9 @@ class Parser_01 {
             nil
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : expression error : innocuous expression")
+        val e = parser.exprs()
+        assert(e.tostr() == "do {\n1;\n};\nnil;\n") { e.tostr() }
+        //assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : expression error : innocuous expression")
     }
     @Test
     fun yy_02_innoc() {
@@ -971,7 +973,9 @@ class Parser_01 {
             println(1)
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : expression error : innocuous expression")
+        val e = parser.exprs()
+        //assert(e.tostr() == "do { 1; };\nnil;\n") { e.tostr() }
+        //assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : expression error : innocuous expression")
     }
     @Test
     fun yy_03_innoc() {
@@ -984,6 +988,7 @@ class Parser_01 {
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 3, col 17) : expression error : innocuous expression")
+        val e = parser.exprs()
+        //assert(trap { parser.exprs() } == "anon : (lin 3, col 17) : expression error : innocuous expression")
     }
 }

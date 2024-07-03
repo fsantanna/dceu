@@ -12,7 +12,7 @@ class Parser_02 {
         val l = lexer("defer { nil }")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "defer {\nnil\n}\n") { e.tostr() }
+        assert(e.tostr() == "defer {\nnil;\n};\n") { e.tostr() }
     }
 
     // THROW / CATCH
@@ -39,7 +39,7 @@ class Parser_02 {
         val l = lexer("it")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "it\n") { e.tostr() }
+        assert(e.tostr() == "it;\n") { e.tostr() }
     }
     @Test
     fun cc_02_as() {

@@ -77,7 +77,6 @@ class Ups (val outer: Expr.Do) {
             is Expr.Skip   -> this.map(listOf(this.cnd))
             is Expr.Enum   -> emptyMap()
             is Expr.Data   -> emptyMap()
-            is Expr.Pass   -> this.map(listOf(this.e))
 
             is Expr.Catch  -> this.map(listOf(this.cnd, this.blk))
             is Expr.Defer  -> this.map(listOf(this.blk))

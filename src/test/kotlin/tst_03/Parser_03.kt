@@ -25,7 +25,7 @@ class Parser_03 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Proto && e.pars.size==2)
-        assert(e.tostr() == "(coro (a,b) {\n10\n})") { e.tostr() }
+        assert(e.tostr() == "(coro (a,b) {\n10;\n})") { e.tostr() }
     }
     @Test
     fun aa_04_coro_nested() {

@@ -38,7 +38,6 @@ fun Expr.has_block (): Boolean {
         is Expr.Group -> this.es.any { it.has_block() }
         is Expr.Dcl -> this.src?.has_block() ?: false
         is Expr.Set -> this.src.has_block()
-        is Expr.Pass -> this.e.has_block()
         is Expr.Break -> this.cnd.has_block() || (this.e?.has_block() ?: false)
         is Expr.Skip -> this.cnd.has_block()
         is Expr.Yield -> this.arg.has_block()
