@@ -515,19 +515,14 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("break") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val e = if (!this.checkFix("(")) null else {
+                this.acceptFix_err("(")
+                val e = if (this.checkFix(")")) null else {
                     this.expr()
                 }
-                this.acceptFix_err("if")
-                val cnd = this.expr()
-                Expr.Break(tk0, cnd, e)
+                this.acceptFix_err(")")
+                Expr.Break(tk0, e)
             }
-            this.acceptFix("skip") -> {
-                val tk0 = this.tk0 as Tk.Fix
-                this.acceptFix_err("if")
-                val cnd = this.expr()
-                Expr.Skip(tk0, cnd)
-            }
+            this.acceptFix("skip") -> Expr.Skip(this.tk0 as Tk.Fix)
             this.acceptFix("loop") -> {
                 if (CEU<99 || this.checkFix("{")) {
                     return Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, this.block().es))
@@ -598,7 +593,9 @@ class Parser (lexer_: Lexer)
                                 )
                                 val ceu_lim_$N = ${eB.tostr(true)}
                                 loop {
-                                    break(false) if ($id $cmp ceu_lim_$N)
+                                    if ($id $cmp ceu_lim_$N) {
+                                        break(false)
+                                    }
                                     ${blk.es.tostr(true)}
                                     set $id = $id $op ceu_ste_$N
                                 }                                
@@ -620,7 +617,9 @@ class Parser (lexer_: Lexer)
                                 val ceu_itr_$nn :Iterator = to-iter(${iter.tostr(true)})
                                 loop {
                                     val ceu_val_$nn = ceu_itr_$nn.f(ceu_itr_$nn)
-                                    break(nil) if (ceu_itr_$nn.f == nil)
+                                    if (ceu_itr_$nn.f == nil) {
+                                        break(nil)
+                                    }
                                     $dcl_set
                                     ${blk.es.tostr(true)}
                                 }
@@ -902,7 +901,11 @@ class Parser (lexer_: Lexer)
                 val cnd = this.expr().let { if (tk0.str=="until") it else {
                     this.nest("not ${it.tostr(true)}")
                 } }
-                Expr.Break(tk0, cnd, null)
+                this.nest("""
+                    if ${cnd.tostr(true)} {
+                        break()
+                    }
+                """)
             }
             (CEU>=99 && this.acceptFix("\\")) -> {
                 val (id_tag,es) = lambda(true)
@@ -1018,7 +1021,9 @@ class Parser (lexer_: Lexer)
                         var ceu_v_$N
                         loop {
                             set ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
-                            break(ceu_v_$N) if (status(ceu_co_$N) == :terminated)
+                            if (status(ceu_co_$N) == :terminated) {
+                                break(ceu_v_$N)
+                            }
                             set ceu_arg_$N = yield(ceu_v_$N)
                         }
                     }
@@ -1112,7 +1117,7 @@ class Parser (lexer_: Lexer)
                 val nn = N++
                 this.nest("""
                     loop {
-                        until await $pat ${(!clk).cond{"{"}}
+                        until await $pat {
                             var ceu_brk_$nn = true
                             loop {
                                 ${blk.es.tostr(true)}
@@ -1120,7 +1125,7 @@ class Parser (lexer_: Lexer)
                                 until true
                             }
                             ceu_brk_$nn
-                        ${(!clk).cond{"}"}}
+                        }
                     }
                 """)
             }
@@ -1164,7 +1169,7 @@ class Parser (lexer_: Lexer)
                             }
                         """}.joinToString("")}
                         loop {
-                            break if (
+                            until (
                                 ${pars.mapIndexed { i,_ -> """
                                     (((status(ceu_par_${i}_$n) == :terminated) and (ceu_par_${i}_$n.pub or true)) or
                                 """}.joinToString("")} false ${")".repeat(pars.size)}
@@ -1193,7 +1198,7 @@ class Parser (lexer_: Lexer)
                             }
                         """}.joinToString("")}
                         loop {
-                            break(nil) if (
+                            until (
                                 ${pars.mapIndexed { i,_ -> """
                                     ((status(ceu_par_${i}_$n) == :terminated) and
                                 """}.joinToString("")} true ${")".repeat(pars.size)}

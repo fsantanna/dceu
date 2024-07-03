@@ -73,15 +73,15 @@ class Ups (val outer: Expr.Do) {
             is Expr.Set    -> this.map(listOf(this.dst, this.src))
             is Expr.If     -> this.map(listOf(this.cnd, this.t, this.f))
             is Expr.Loop   -> this.map(listOf(this.blk))
-            is Expr.Break  -> this.map(listOfNotNull(this.cnd, this.e))
-            is Expr.Skip   -> this.map(listOf(this.cnd))
+            is Expr.Break  -> this.map(listOfNotNull(this.e))
+            is Expr.Skip   -> emptyMap()
             is Expr.Enum   -> emptyMap()
             is Expr.Data   -> emptyMap()
 
             is Expr.Catch  -> this.map(listOf(this.cnd, this.blk))
             is Expr.Defer  -> this.map(listOf(this.blk))
 
-            is Expr.Yield  -> this.map(listOf(this.arg))
+            is Expr.Yield  -> this.map(listOf(this.e))
             is Expr.Resume -> this.map(listOf(this.co)+this.args)
 
             is Expr.Spawn  -> this.map(listOfNotNull(this.tsks,this.tsk) + this.args)

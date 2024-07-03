@@ -198,8 +198,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.Loop   -> this.blk.traverse()
-            is Expr.Break  -> { this.cnd.traverse() ; this.e?.traverse() }
-            is Expr.Skip   -> this.cnd.traverse()
+            is Expr.Break  -> this.e?.traverse()
+            is Expr.Skip   -> {}
             is Expr.Enum   -> {}
             is Expr.Data   -> {
                 val sup = this.tk.str.dropLastWhile { it != '.' }.dropLast(1)
@@ -222,7 +222,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Catch  -> { this.cnd.traverse() ; this.blk.traverse() }
             is Expr.Defer  -> this.blk.traverse()
 
-            is Expr.Yield  -> this.arg.traverse()
+            is Expr.Yield  -> this.e.traverse()
             is Expr.Resume -> { this.co.traverse() ; this.args.forEach { it.traverse() } }
 
             is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.args.forEach { it.traverse() } }

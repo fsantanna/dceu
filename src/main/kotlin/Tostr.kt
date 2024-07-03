@@ -57,8 +57,8 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Set    -> "(set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre) + ")"
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
         is Expr.Loop   -> "loop " + this.blk.tostr(pre)
-        is Expr.Break  -> "(break" + this.e.cond { "("+it.tostr(pre)+")" } + " if " + this.cnd.tostr(pre) + ")"
-        is Expr.Skip   -> "(skip if " + this.cnd.tostr(pre) + ")"
+        is Expr.Break  -> "break(" + this.e.cond { it.tostr(pre) } + ")"
+        is Expr.Skip   -> "skip"
         is Expr.Enum   -> "enum {\n" + this.tags.map {
             (tag,e) -> tag.str + e.cond { " = " + "`" + it.str + "`" }
         }.joinToString(",\n") + "\n}"
@@ -67,7 +67,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Catch  -> "catch (| " + this.cnd.tostr(pre) + ") " + this.blk.tostr(pre)
         is Expr.Defer  -> "defer " + this.blk.tostr(pre)
 
-        is Expr.Yield  -> "yield(" + this.arg.tostr(pre) + ")"
+        is Expr.Yield  -> "yield(" + this.e.tostr(pre) + ")"
         is Expr.Resume -> "(resume (" + this.co.tostr(pre) + ")(" + this.args.map { it.tostr(pre) }.joinToString(",") + "))"
 
         is Expr.Spawn  -> "(spawn " + this.tsk.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")" + this.tsks.cond { " in ${it.tostr(pre)}" } + ")"

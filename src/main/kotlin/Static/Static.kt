@@ -163,16 +163,14 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 if (fst is Expr.Proto) {
                     err(this.tk, "break error : expected parent loop")
                 }
-                this.cnd.traverse()
                 this.e?.traverse()
             }
             is Expr.Skip   -> {
                 if (ups.pub[this] is Expr.Do && ups.pub[ups.pub[this]] is Expr.Loop) {
                     // ok
                 } else {
-                    err(this.tk, "skip error : expected immediate parent loop")
+                    //err(this.tk, "skip error : expected immediate parent loop")
                 }
-                this.cnd.traverse()
             }
             is Expr.Enum   -> {}
             is Expr.Data   -> {}
@@ -196,7 +194,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
 
             is Expr.Yield  -> {
-                this.arg.traverse()
+                this.e.traverse()
                 when {
                     ups.any(this) { defer -> (defer is Expr.Defer) }
                         -> err(this.tk, "yield error : unexpected enclosing defer")

@@ -293,23 +293,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     }
             """
             is Expr.Break -> """ // BREAK | ${this.dump()}
-                ${this.cnd.code()}
-                if (ceu_as_bool(ceu_acc)) {
-                    ${this.e.cond { """
-                        ${it.code()}
-                    """ }}
-                    CEU_BREAK = 1;
-                    goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
-                }
+            {
+                ${this.e.cond { """
+                    ${it.code()}
+                """ }}
+                CEU_BREAK = 1;
+                goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
+            }
             """
             is Expr.Skip -> """ // SKIP | ${this.dump()}
-                ${this.cnd.code()}
-                {
-                    int v = ceu_as_bool(ceu_acc);
-                    if (v) {
-                        goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
-                    }
-                }
+                goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
             """
             is Expr.Enum -> "// ENUM | ${this.dump()}\n"
             is Expr.Data -> "// DATA | ${this.dump()}\n"
@@ -406,7 +399,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             is Expr.Yield -> {
                 """
                 { // YIELD ${this.dump()}
-                    ${this.arg.code()}
+                    ${this.e.code()}
                     ceux->exe->status = CEU_EXE_STATUS_YIELDED;
                     ceux->exe->pc = $n;
                     return;

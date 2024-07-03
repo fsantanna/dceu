@@ -157,7 +157,9 @@ val to-string = func (v) {
         val n = `:number strlen($v.Pointer)`
         var str = #[]
         loop {
-            break if (i == n)
+            if (i == n) {
+                break(nil)
+            } else { nil }
             set str[#str] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
             set i = i + 1
         }
@@ -242,7 +244,9 @@ val copy = func (v) {
             val ret = tuple(#v)
             var i=0
             loop {
-                break if i == #v
+                if i == #v {
+                    break(nil)
+                } else { nil }
                 set ret[i] = copy(v[i])
                 set i = i + 1
             }
@@ -252,7 +256,9 @@ val copy = func (v) {
                 val ret = #[]
                 var i=0
                 loop {
-                    break if i == #v
+                    if i == #v {
+                        break(nil)
+                    } else { nil }
                     set ret[i] = copy(v[i])
                     set i = i + 1
                 }
@@ -263,7 +269,9 @@ val copy = func (v) {
                     var k = nil
                     loop {
                         set k = next-dict(v, k)
-                        break if k == nil
+                        if k == nil {
+                            break(nil)
+                        } else { nil }
                         set ret[copy(k)] = copy(v[k])
                     }
                     ;;;drop;;;(ret)
@@ -291,13 +299,15 @@ val detrack'' = func (trk) {
 ;;;
 val await = func (e) {
     loop {
-        break if yield(nil) { as it =>
+        if yield(nil) { as it =>
             if type(e) == :func {
                 e(it)
             } else {
                 is?(e, it)
             }
-        }
+        } {
+            break
+        } else { nil }
     }
 }
 ;;;

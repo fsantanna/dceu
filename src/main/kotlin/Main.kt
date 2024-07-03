@@ -134,15 +134,15 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
     data class Loop   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
-    data class Break  (val tk_: Tk.Fix, val cnd: Expr, val e: Expr?): Expr(N++, tk_)
-    data class Skip   (val tk_: Tk.Fix, val cnd: Expr): Expr(N++, tk_)
+    data class Break  (val tk_: Tk.Fix, val e: Expr?): Expr(N++, tk_)
+    data class Skip   (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Enum   (val tk_: Tk.Fix, val tags: List<Pair<Tk.Tag,Tk.Nat?>>): Expr(N++, tk_)
     data class Data   (val tk_: Tk.Tag, val ids: List<Id_Tag>): Expr(N++, tk_)
 
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr.Do, val blk: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
 
-    data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
+    data class Yield  (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val co: Expr, val args: List<Expr>): Expr(N++, tk_)
 
     data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val tsk: Expr, val args: List<Expr>): Expr(N++, tk_)

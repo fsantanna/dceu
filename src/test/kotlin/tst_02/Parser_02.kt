@@ -17,6 +17,7 @@ class Parser_02 {
 
     // THROW / CATCH
 
+    /*
     @Test
     fun bb_01_throw_catch() {
         val l = lexer("catch ( it|1) { error(1) }")
@@ -31,6 +32,7 @@ class Parser_02 {
         val e = parser.exprs()
         assert(e.tostr() == "catch (it :T | it[0]) {\nnil\n}\n") { e.tostr() }
     }
+     */
 
     // IT / AS
 

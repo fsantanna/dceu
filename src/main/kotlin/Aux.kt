@@ -31,16 +31,15 @@ fun Expr.Call.main (): Expr.Proto {
 
 fun Expr.has_block (): Boolean {
     return when (this) {
-        is Expr.Proto, is Expr.Enum, is Expr.Data, is Expr.Delay -> false
+        is Expr.Proto, is Expr.Skip, is Expr.Enum, is Expr.Data, is Expr.Delay -> false
         is Expr.Nat, is Expr.Acc, is Expr.Nil -> false
         is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> false
         is Expr.Do, is Expr.If, is Expr.Loop, is Expr.Catch, is Expr.Defer -> true
         is Expr.Group -> this.es.any { it.has_block() }
         is Expr.Dcl -> this.src?.has_block() ?: false
         is Expr.Set -> this.src.has_block()
-        is Expr.Break -> this.cnd.has_block() || (this.e?.has_block() ?: false)
-        is Expr.Skip -> this.cnd.has_block()
-        is Expr.Yield -> this.arg.has_block()
+        is Expr.Break -> this.e?.has_block() ?: false
+        is Expr.Yield -> this.e.has_block()
         is Expr.Resume -> this.args.any { it.has_block() }
         is Expr.Spawn -> this.args.any { it.has_block() }
         is Expr.Pub -> this.tsk?.has_block() ?: false

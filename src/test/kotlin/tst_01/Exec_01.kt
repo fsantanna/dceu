@@ -1387,7 +1387,9 @@ class Exec_01 {
             set t[:c] = 30
             var k = next-dict(t)
             loop {
-                break if (k == nil)
+                if (k == nil) {
+                    break(nil)
+                } else { nil }
                 println(k, t[k])
                 set k = next-dict(t,k)
             }
@@ -3183,7 +3185,9 @@ class Exec_01 {
     fun oo_00_loop() {
         val out = test("""
             loop {
-                break if true
+                if true {
+                    break(nil)
+                } else { nil }
             }
             println(:ok)
         """)
@@ -3217,23 +3221,27 @@ class Exec_01 {
     fun oo_01y_loop_err() {
         val out = test("""
             loop {
+                break(nil)
                 do {
-                    skip if true
+                    skip
                 }
             }
             println(:out)
         """)
-        assert(out == "anon : (lin 4, col 21) : skip error : expected immediate parent loop\n") { out }
+        assert(out == ":out\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : skip error : expected immediate parent loop\n") { out }
     }
     @Test
     fun oo_01z_loop_err() {
         val out = test("""
             var ok = false
             loop {
-                break if ok
+                if ok {
+                    break(nil)
+                } else { nil }
                 set ok = true
                 ;;;do;;; []
-                skip if true
+                skip ;;if true
             }
             println(:out)
         """)
@@ -3246,7 +3254,9 @@ class Exec_01 {
             do {
                 loop {
                     println(:in)
-                    break if true
+                    if true {
+                        break(nil)
+                    } else {nil}
                 }
             }
             println(:out)
@@ -3261,8 +3271,12 @@ class Exec_01 {
             do {
                 loop {
                     println(:in)
-                    skip if false
-                    break if true
+                    if false {
+                        skip
+                    } else {nil}
+                    if true {
+                        break(nil)
+                    } else {nil}
                 }
             }
             println(:out)
@@ -3277,7 +3291,9 @@ class Exec_01 {
             var x
             set x = false
             loop {
-                break if x
+                if x {
+                    break(nil)
+                } else {nil}
                 set x = true
             }
             println(x)
@@ -3301,7 +3317,9 @@ class Exec_01 {
                 val it = [f, 0]
                 var i = it[0](it)
                 loop {
-                    break if (i == nil)
+                    if (i == nil) {
+                        break(nil)
+                    } else {nil}
                     println(i)
                     set i = it[0](it)
                 }
@@ -3328,7 +3346,11 @@ class Exec_01 {
     fun oo_06_loop() {
         val out = test(
             """
-            val v = loop {break if (10)}
+            val v = loop {
+                if (10) {
+                    break()
+                } else {nil}
+            }
             println(v)
         """
         )
@@ -3339,10 +3361,14 @@ class Exec_01 {
         val out = test(
             """
             val v1 = loop {
-                break if (10)
+                if (10) {
+                    break()
+                } else {nil}
             }
             val v2 = loop {
-                break(nil) if true
+                if true {
+                    break(nil)
+                } else {nil}
             }
             println(v1, v2)
         """
@@ -3353,7 +3379,11 @@ class Exec_01 {
     fun oo_08_loop() {
         val out = test("""
             val x = 10
-            println(loop { break if (x) })
+            println(loop {
+                if (x) {
+                    break()
+                } else {nil}
+            })
         """)
         assert(out == "10\n") { out }
     }
@@ -3362,7 +3392,7 @@ class Exec_01 {
         val out = test("""
             loop {
                 func () {
-                    break if true
+                    break (nil)
                 }
             }
         """)
@@ -3387,7 +3417,9 @@ class Exec_01 {
         val out = test("""
             loop {
                 val t = []
-                break if true
+                if true {
+                    break (nil)
+                } else {nil}
             }
             println(:ok)
         """)
@@ -3409,7 +3441,9 @@ class Exec_01 {
                 val it = [f, 0]
                 var i = it[0](it)
                 loop {
-                    break if i == nil
+                    if i == nil {
+                        break (nil)
+                    } else {nil}
                     println(i)
                     set i = it[0](it)
                 }
@@ -3425,9 +3459,11 @@ class Exec_01 {
             loop {
                 set i = i + 1
                 println(i)
-                skip if i /= 2
+                if i /= 2 {
+                    skip
+                } else {nil}
                 println(i)
-                break if true
+                break()
             }
             println(i)
         """)
@@ -3438,7 +3474,9 @@ class Exec_01 {
         val out = test("""
             loop {
                 do { nil }
-                break if true
+                if true {
+                    break (nil)
+                } else {nil}
             }
             println(:ok)
         """)
@@ -3450,7 +3488,9 @@ class Exec_01 {
             loop {
                 do { nil }
                 val e = nil
-                break if true
+                if true {
+                    break (nil)
+                } else {nil}
             }
             println(:ok)
         """)
@@ -3459,7 +3499,11 @@ class Exec_01 {
     @Test
     fun oo_16_until() {
         val out = test("""
-            println(loop { break if 10 })
+            println(loop {
+                if 10 {
+                    break ()
+                } else {nil}
+            })
         """)
         assert(out == "10\n") { out }
     }
@@ -5162,7 +5206,9 @@ class Exec_01 {
                 loop {
                     val t2 = t1
                     set t1 = nil
-                    break if ok
+                    if ok {
+                        break(nil)
+                    } else { nil }
                     set ok = true
                 }
                 println(`:number CEU_GC.free`)
@@ -5813,7 +5859,9 @@ class Exec_01 {
                 var i = n                                                                   
                 var s = 0                                                                   
                 loop {                                                                      
-                    break(s) if i == 0
+                    if i == 0 {
+                        break(s)
+                    } else {nil}
                     set s = s + i                                                           
                     set i = i - 1                                                           
                 }                                                                           

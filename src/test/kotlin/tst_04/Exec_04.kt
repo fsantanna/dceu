@@ -407,7 +407,9 @@ class Exec_04 {
             var i = 0
             loop {
                 broadcast(nil)
-                break if i == 254
+                if i == 254 {
+                    break()
+                } else {nil}
                 set i = i + 1
             }
             val t = spawn (task () {
@@ -458,7 +460,7 @@ class Exec_04 {
             spawn (task () {
                 val v = do {
                     loop {
-                        (break (100) if true)
+                        (break (100) ;;;if true;;;)
                     }
                     delay
                 }
@@ -1057,7 +1059,7 @@ class Exec_04 {
                             val x = it
                             println(:in, it)    ;; TODO: 10
                         }
-                        break if true
+                        break()
                    }     
                 val x
             }
@@ -1619,7 +1621,9 @@ class Exec_04 {
             spawn task () {
                 var evt = yield(nil)
                 loop {
-                    break if evt[:type]==:x
+                    if evt[:type]==:x {
+                        break()
+                    } else {nil}
                     set evt = yield(nil)
                 }
                 println(99)
@@ -2683,7 +2687,7 @@ class Exec_04 {
             """
             var ang = 0
             loop {
-                break if true
+                break() ;; if true
                 ang
             }
             println(:ok)
@@ -4206,7 +4210,9 @@ class Exec_04 {
             println(:1)
             var x = 0
             loop {
-                break if x == 2
+                if x == 2 {
+                    break()
+                } else {nil}
                 set x = x + 1
                 println(:2)
                 spawn( task () {
@@ -6386,7 +6392,9 @@ class Exec_04 {
             spawn (task () {
                 println(loop {
                     val t = [10]
-                    break if t[0]
+                    if t[0] {
+                        break ()
+                    } else {nil}
                     yield(nil) ;;thus { it => nil }
                 })
             }) ()
@@ -6456,19 +6464,25 @@ class Exec_04 {
                 loop {
                     var evt = yield(nil);
                     loop {
-                        break if evt==10
+                        if evt==10 {
+                            break ()
+                        } else {nil}
                         set evt = yield(nil)
                     }
                     println(:1)
                     var t = spawn task () {
                         var evt2 = yield(nil);
                         loop {
-                            break if evt2==10 
+                            if evt2==10 {
+                                break ()
+                            } else {nil}
                             set evt2 = yield(nil)
                         }
                     } ()
                     loop {
-                        break if status(t)==:terminated
+                        if status(t)==:terminated {
+                            break ()
+                        } else {nil}
                         set evt = yield(nil)
                         delay
                     }
@@ -6727,9 +6741,11 @@ class Exec_04 {
                 spawn (task () {
                     loop {
                         yield(nil)
-                        skip if (func () {
+                        if (func () {
                             true
-                        } ())
+                        } ()) {
+                            skip
+                        } else {nil}
                     }
                 }) ()
                 spawn (task () {
@@ -6767,7 +6783,7 @@ class Exec_04 {
                 }) ()
                 loop {
                     yield(nil)
-                    break if true
+                    break() ;; if true
                 }
             }) ()
             broadcast(nil)
@@ -6829,7 +6845,7 @@ class Exec_04 {
                 println(do {
                     loop {
                         yield(nil)
-                        break if true
+                        break() ;; if true
                     }
                     delay
                     nil

@@ -230,8 +230,12 @@ class Exec_99 {
             func in' (v, xs) {
                 var i = 0
                 loop {
-                    break(false) if i == #xs
-                    break(true) if v == xs[i]
+                    if i == #xs {
+                        break(false)
+                    }
+                    if v == xs[i] {
+                        break(true)
+                    }
                     set i = i + 1
                 }
             }            
@@ -2085,7 +2089,7 @@ class Exec_99 {
             loop v in it {
                 until not v
                 println(v)
-                break if true
+                break() ;; if true
             }
         """)
         assert(out == "1\n") { out }
@@ -2882,7 +2886,7 @@ class Exec_99 {
             val ts = tasks()
             spawn T() in ts
             val x = loop t in ts {
-                break(;;;drop;;;(t)) if true
+                break(;;;drop;;;(t)) ;;if true
             }
             println(x)
         """, true)
@@ -2899,7 +2903,7 @@ class Exec_99 {
             val ts = tasks()
             spawn T() in ts
             val x = loop t in ts {
-                break(copy(t)) if true
+                break(copy(t)) ;;if true
             }
             println(x)
         """, true)
@@ -3140,7 +3144,9 @@ class Exec_99 {
             val co = coroutine(bar)
             loop {
                 val v = resume co()
-                break if status(co) == :terminated
+                if status(co) == :terminated {
+                    break()
+                }
                 print(v)
             }
             println()
@@ -3193,7 +3199,9 @@ class Exec_99 {
             val co = coroutine(bar)
             loop {
                 val v = resume co()
-                break if status(co) == :terminated
+                if status(co) == :terminated {
+                    break ()
+                }
                 print(v)
             }
             println()
@@ -3502,7 +3510,7 @@ class Exec_99 {
                 println(v)
             }
         """)
-        assert(out == "nil\n") { out }
+        assert(out == "true\n") { out }
     }
     @Test
     fun jj_07_paror() {
