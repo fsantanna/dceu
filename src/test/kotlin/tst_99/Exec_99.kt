@@ -1251,19 +1251,19 @@ class Exec_99 {
     @Test
     fun hh_01_enum() {
         val out = test("""
-            do :antes
+            ;;;do;;; :antes
             enum {
                 :x = `1000`,
                 :y, :z,
                 :a = `10`,
                 :b, :c
             }
-            do :meio
+            ;;;do;;; :meio
             enum {
                 :i = `100`,     ;; ignored b/c of itr.i in to-iter-tuple
                 :j,
             }
-            do :depois
+            ;;;do;;; :depois
             val t = [:antes, :x, :y, :z, :a, :b, :c, :meio, :i, :j, :depois]
             loop [i,v] in to.iter(t, [:idx,:val]) {
                 set t[i] = to.number(v)
@@ -2680,7 +2680,7 @@ class Exec_99 {
     fun fi_01_ret() {
         val out = test("""
             println(loop i in {0 => 1} {
-                do nil
+                ;;;do;;; nil
             })
         """, true)
         assert(out == "false\n") { out }
@@ -2700,7 +2700,7 @@ class Exec_99 {
             val ts = tasks()
             spawn ((task(){yield()})()) in ts
             println(loop i in ts {
-                do nil
+                ;;;do;;; nil
             })
         """, true)
         assert(out == "nil\n") { out }
@@ -2865,7 +2865,7 @@ class Exec_99 {
     @Test
     fun fi_16_while() {
         val out = test("""
-            val v = loop { while false do nil }
+            val v = loop { while false ;;;do;;; nil }
             println(v)
         """)
         assert(out == "true\n") { out }
@@ -3069,9 +3069,9 @@ class Exec_99 {
     fun gg_04_yield() {
         val out = test("""
             val CO = coro () {
-                do nil
+                ;;;do;;; nil
                 yield() thus { ,it => println(it);it }
-                do nil
+                ;;;do;;; nil
                 nil
             }
             val co1 = coroutine(CO)
@@ -3091,7 +3091,7 @@ class Exec_99 {
     fun gg_05_yield() {
         val out = test("""
             val CO = coro () {
-                do nil
+                ;;;do;;; nil
                 yield() thus {}
                 nil
             }
@@ -5856,7 +5856,7 @@ class Exec_99 {
             val ts = tasks()
             loop in {1=>10} {
                 ;;dump(ts)
-                do [ts]
+                ;;;do;;; [ts]
             }
             println(:ok)
         """, true)
@@ -5953,7 +5953,7 @@ class Exec_99 {
             func g () {
             }
             coro bar () {
-                do [g, coroutine(coro () {})]
+                ;;;do;;; [g, coroutine(coro () {})]
                 nil
             }
             val it = [g, coroutine(bar)]
@@ -6504,7 +6504,7 @@ class Exec_99 {
             task T (v) {
                 par {
                     every :X {
-                        do v
+                        ;;;do;;; v
                     }
                 } with {
                 }

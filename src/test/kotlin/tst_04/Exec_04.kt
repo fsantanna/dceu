@@ -443,7 +443,7 @@ class Exec_04 {
         val out = test("""
             spawn (task () {
                 val v = do {
-                    do 100
+                    ;;;do;;; 100
                     delay
                 }
                 println(v)
@@ -577,7 +577,7 @@ class Exec_04 {
             """
             val T = task (t1) {
                 val t2 = []
-                do [t1,[],t2]
+                ;;;do;;; [t1,[],t2]
                 yield(nil) ;;thus { it => nil }
             }
             do {
@@ -2683,11 +2683,14 @@ class Exec_04 {
             """
             var ang = 0
             loop {
+                break if true
                 ang
             }
+            println(:ok)
         """
         )
-        assert(out == "anon : (lin 4, col 17) : loop error : innocuous last expression\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : loop error : innocuous last expression\n") { out }
     }
 
     @Test
@@ -3201,7 +3204,7 @@ class Exec_04 {
         val out = test("""
             var T
             set T = task () {
-                do pub ;; useless test
+                ;;;do;;; pub ;; useless test
                 nil
             }
             spawn T()

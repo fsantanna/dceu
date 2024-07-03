@@ -194,7 +194,7 @@ class Exec_05 {
         val out = test("""
             var T
             set T = task () {
-                do [1,2,3]
+                ;;;do;;; [1,2,3]
                 yield(nil)
             }
             var ts
@@ -1417,7 +1417,7 @@ class Exec_05 {
             var y
             val t = ;;detrack(x) { it =>
                 set y = x ;;it  ;; ERR: cannot expose it
-                do nil
+                ;;;do;;; nil
             ;;}
             broadcast(nil)
             println(status(t))
@@ -1441,7 +1441,7 @@ class Exec_05 {
             spawn (task () {
                 ;;detrack(x) { it =>
                     set pub = x ;;it  ;; ERR: cannot expose it
-                    do nil
+                    ;;;do;;; nil
                 ;;}
                 broadcast(nil) in :global
                 println(status(pub))
@@ -2104,7 +2104,7 @@ class Exec_05 {
                 loop ;;;in :tasks ts, zzz;;; {
                     set zzz = next-tasks(ts, zzz)
                     break if (if zzz { false } else { true })
-                    do nil
+                    ;;;do;;; nil
                 }
                 set yyy = xxx
                 ;;pass nil ;; otherwise scope err for yyy/xxx
@@ -2127,7 +2127,7 @@ class Exec_05 {
             loop ;;;in :tasks ts, xxx;;; {
                 set xxx = next-tasks(ts, xxx)
                 break if (if xxx { false } else { true })
-                do xxx
+                ;;;do;;; xxx
             }
             println(1)
         """
