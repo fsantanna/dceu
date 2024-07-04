@@ -17,22 +17,30 @@ class Parser_02 {
 
     // THROW / CATCH
 
-    /*
     @Test
     fun bb_01_throw_catch() {
         val l = lexer("catch ( it|1) { error(1) }")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "catch (it | 1) {\nerror(1)\n}\n") { e.tostr() }
+        assert(e.tostr() == "catch' (do {\n" +
+                "(val it = ```:ceu  *(ceu_acc.Dyn->Error.val)```);\n" +
+                "1;\n" +
+                "}) {\n" +
+                "error(1);\n" +
+                "};\n") { e.tostr() }
     }
     @Test
     fun bb_02_throw_catch() {
         val l = lexer("catch (it :T| it[0]) { nil }")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "catch (it :T | it[0]) {\nnil\n}\n") { e.tostr() }
+        assert(e.tostr() == "catch' (do {\n" +
+                "(val it :T = ```:ceu  *(ceu_acc.Dyn->Error.val)```);\n" +
+                "it[0];\n" +
+                "}) {\n" +
+                "nil;\n" +
+                "};\n") { e.tostr() }
     }
-     */
 
     // IT / AS
 
