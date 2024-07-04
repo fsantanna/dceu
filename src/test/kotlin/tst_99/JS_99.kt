@@ -102,8 +102,8 @@ class JS_99 {
         val out = test("""
             coro objectEntries (obj) {
                 yield()
-                loop [v,k] in to-iter(obj,[:val,:key]) {
-                    yield(k, v)
+                loop kv in to-iter(obj) {
+                    yield(kv)
                 }
             }
             
@@ -112,8 +112,8 @@ class JS_99 {
                 last  = "Doe",
             ]
             val co = create-resume(objectEntries, jane)
-            loop (i,v) in to.iter(co) {
-                println((to.string(i) ++ ": ") ++ v)
+            loop [k,v] in to.iter(co) {
+                println((to.string(k) ++ ": ") ++ v)
             }
         """, true)
         assert(out == ":first: Jane\n:last: Doe\n") { out }
@@ -156,9 +156,9 @@ class JS_99 {
             }
         """, true)
         assert(out.contains("json :good\n" +
-                " |  anon : (lin 31, col 14) : (spawn (task :nested () { (val (co1) = corout...)\n" +
-                " |  anon : (lin 32, col 47) : (resume (ceu_co_22181)(ceu_arg_22181))\n" +
-                " |  anon : (lin 23, col 47) : (resume (ceu_co_21353)(ceu_arg_21353))\n" +
+                " |  anon : (lin 31, col 14) : (spawn (task :nested () { (val co1 = corou...\n" +
+                " |  anon : (lin 32, col 47) : (resume (ceu_co_51100)(ceu_arg_51100))\n" +
+                " |  anon : (lin 23, col 47) : (resume (ceu_co_50331)(ceu_arg_50331))\n" +
                 " |  anon : (lin 5, col 25) : error(:error)\n" +
                 " v  error : :error\n")) { out }
     }
@@ -177,7 +177,7 @@ class JS_99 {
             println(resume genObj())
             println(resume genObj())
         """, true)
-        assert(out == "a\nb\n\n") { out }
+        assert(out == "a\nb\nnil\n") { out }
     }
 
     // 22.3.1 Ways of iterating over a generator
@@ -360,7 +360,7 @@ class JS_99 {
             println(resume genObj('a'))
             println(resume genObj('b'))
         """, true)
-        assert(out == ":started\n\n1\ta\n\n2\tb\n:result\n") { out }
+        assert(out == ":started\nnil\n1\ta\nnil\n2\tb\n:result\n") { out }
     }
 
     // 22.4.1.1 The first next()
