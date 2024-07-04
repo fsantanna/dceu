@@ -30,7 +30,7 @@ func assert (v, msg) {
     ifs {
         v => v
         type(msg)==:func  => error(msg())
-        msg->xx-string?() => error(xx-cat-move(xx-cat-move(#[], "assertion error : ", msg)))
+        msg->xx-string?() => error(xx-cat-move(xx-cat-move(#[], "assertion error : "), msg))
         (msg == nil)      => error("assertion error")
         else => error(msg)
     }

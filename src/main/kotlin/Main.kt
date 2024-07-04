@@ -44,7 +44,7 @@ val KEYWORDS: SortedSet<String> = (
         "loop", "nil", "set", "skip",
         "true", "val", "var",
     ) + (if (CEU < 2) setOf() else setOf (
-        "catch", "defer",
+        "catch", "catch'", "defer",
     )) + (if (CEU < 3) setOf() else setOf(
         "coro", "resume", "yield",
     )) + (if (CEU < 4) setOf() else setOf(

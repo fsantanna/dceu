@@ -5933,8 +5933,8 @@ class Exec_99 {
             assert(1 is-not? :number)
         """, true)
         assert(out.contains(" |  anon : (lin 3, col 17) : assert(is'([],:bool),#['o','k'])\n" +
-                " |  build/prelude-x.ceu : (lin 479, col 25) : error({{++}}(#['a','s','s','e','r','t','i'...\n" +
-                " v  error : assertion error : ok\n")) { out }
+                " |  build/prelude-x.ceu : (lin 33, col 30) : error(xx-cat-move(xx-cat-move(#[],#['a','s...\n" +
+                " v  assertion error : ok\n")) { out }
     }
     @Test
     fun TODO_za_08_comp() {     // fp.*
@@ -6076,11 +6076,12 @@ class Exec_99 {
                 }
             }
             task T (u) {
-                println(u.pub())
+                println(u.pub)
             }
             spawn T (spawn U())
         """, true)
-        assert(out == "10\n") { out }
+        //assert(out == "10\n") { out }
+        assert(out == "nil\n") { out }
         //assert(out == "anon : (lin 10, col 28) : U()\n" +
         //        "anon : (lin 2, col 23) : block escape error : incompatible scopes\n:error\n") { out }
     }
@@ -6304,7 +6305,8 @@ class Exec_99 {
                 }
             }
         """)
-        assert(out == "anon : (lin 3, col 51) : access error : variable \"is'\" is not declared\n") { out }
+        //assert(out == "anon : (lin 3, col 51) : access error : variable \"is'\" is not declared\n") { out }
+        assert(out == "anon : (lin 4, col 27) : access error : variable \"is'\" is not declared\n") { out }
     }
     @Test
     fun zb_20_all_line() {

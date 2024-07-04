@@ -743,6 +743,14 @@ class Parser (lexer_: Lexer)
                 val blk = this.block()
                 Expr.Catch(tk0, pat3, blk)
             }
+            (CEU>=2 && this.acceptFix("catch'")) -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptFix_err("(")
+                val cnd = this.expr() as Expr.Do
+                this.acceptFix_err(")")
+                val blk = this.block()
+                Expr.Catch(tk0, cnd, blk)
+            }
             (CEU>=2 && this.acceptFix("defer")) -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 
             (CEU>=3 && this.acceptFix("yield")) -> {
