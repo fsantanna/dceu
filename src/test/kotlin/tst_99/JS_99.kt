@@ -708,9 +708,9 @@ class JS_99 {
         assert(out == "1: ;; is', is-not'\n" +
                 "2: \n" +
                 "3: val not = func (v) {\n" +
-                "1: var assert\n" +
-                "2: data :Clock = [ms]\n" +
-                "3: \n") { out }
+                "1: data :Clock = [ms]\n" +
+                "2: \n" +
+                "3: func {{+}} (v1, v2) {\n") { out }
     }
 
     // 22.6.2.2.1 Step 1 – tokenize
