@@ -614,7 +614,7 @@ class Parser (lexer_: Lexer)
                         //println(blk.es.tostr())
                         this.nest("""
                             do {
-                                val ceu_itr_$nn :Iterator = to-iter(${iter.tostr(true)})
+                                val ceu_itr_$nn :Iterator = ${iter.tk.pos.pre()}to-iter(${iter.tostr(true)})
                                 loop {
                                     val ceu_val_$nn = ceu_itr_$nn.f(ceu_itr_$nn)
                                     if (ceu_itr_$nn.f == nil) {

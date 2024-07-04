@@ -2423,8 +2423,9 @@ class Exec_99 {
             }
         """, true)
         //assert(out.contains("assertion error : expected :Iterator")) { out }
-        assert(out.contains(" |  anon : (lin 2, col 23) : ceu_21966[:f]\n" +
-                " v  index error : expected collection\n")) { out }
+        assert(out.contains(" |  anon : (lin 2, col 23) : to-iter(nil)\n" +
+                " |  build/prelude-x.ceu : (lin 202, col 28) : error(#['i','t','e','r','a','t','o','r',' ...\n" +
+                " v  iterator error : invalid collection\n")) { out }
     }
     @Test
     fun fx_03_iter() {
@@ -4598,12 +4599,13 @@ class Exec_99 {
     fun kn_04_await_task_err() {
         val out = test("""
             spawn {
-                var x = await spawn nil() in nil
+                val ts = tasks()
+                var x = await spawn nil() in ts
             }
         """)
         //assert(out == "anon : (lin 2, col 27) : expected non-pool spawn : have \"spawn\"") { out }
-        assert(out == " |  anon : (lin 4, col 14) : (spawn (task :nested () { (var x = do { (v...\n" +
-                " |  anon : (lin 3, col 31) : (spawn nil() in nil)\n" +
+        assert(out == " |  anon : (lin 5, col 14) : (spawn (task :nested () { (val ts = tasks(...\n" +
+                " |  anon : (lin 4, col 31) : (spawn nil() in ts)\n" +
                 " v  spawn error : expected task\n") { out }
     }
     @Test
