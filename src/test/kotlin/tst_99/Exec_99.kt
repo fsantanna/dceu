@@ -541,6 +541,19 @@ class Exec_99 {
         assert(out == "true\n") { out }
     }
     @Test
+    fun ff_12_ifs() {
+        val out = test("""
+            ifs {
+                true => error()
+            }
+        """)
+        assert(out == " |  anon : (lin 3, col 25) : error()\n" +
+                " v  error : nil\n") { out }
+    }
+
+    // MATCH
+
+    @Test
     fun ff_03x_ifs() {
         val out = test("""
             val x = match 20 {
@@ -664,16 +677,6 @@ class Exec_99 {
             println(x)
         """)
         assert(out == "true\n") { out }
-    }
-    @Test
-    fun ff_12_ifs() {
-        val out = test("""
-            ifs {
-                true => error()
-            }
-        """)
-        assert(out == " |  anon : (lin 3, col 25) : error()\n" +
-                " v  error : nil\n") { out }
     }
 
     // IFS / ORIGINAL
@@ -4503,6 +4506,22 @@ class Exec_99 {
             println(2)
         """, true)
         assert(out == "0\n1\n999\n2\n") { out }
+    }
+    @Test
+    fun km_11_every() {
+        val out = test(
+            """
+            $IS
+            task T () {
+                val v = every (|true) {
+                    until :ok
+                }
+                println(v)
+            }
+            spawn T()
+            broadcast (nil)
+        """)
+        assert(out == ":ok\n") { out }
     }
 
     // CLOCK

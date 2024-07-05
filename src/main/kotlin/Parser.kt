@@ -1145,16 +1145,20 @@ class Parser (lexer_: Lexer)
                     val pat = this.patt()
                     val blk = this.block()
                     this.nest("""
-                        loop {
-                            until await ${pat.tostr(true)} {
-                                var ceu_brk_$nn = true
-                                loop {
-                                    ${blk.es.tostr(true)}
-                                    set ceu_brk_$nn = false
-                                    until true
+                        do {
+                            var ceu_ret_$nn
+                            loop {
+                                until await ${pat.tostr(true)} {
+                                    var ceu_brk_$nn = true
+                                    set ceu_ret_$nn = loop {
+                                        ${blk.es.tostr(true)}
+                                        set ceu_brk_$nn = false
+                                        until true
+                                    }
+                                    ceu_brk_$nn
                                 }
-                                ceu_brk_$nn
                             }
+                            ceu_ret_$nn
                         }
                     """)
                 }
