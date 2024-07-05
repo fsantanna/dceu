@@ -20,7 +20,9 @@ class Parser_05 {
             spawn f() in ()
         """)
         val parser = Parser(l)
+        //parser.exprs()
         assert(trap { parser.exprs() } == "anon : (lin 2, col 27) : expected expression : have \")\"")
+        //assert(trap { parser.exprs() } == "anon : (lin 2, col 26) : list error : expected expression")
     }
     @Test
     fun aa_03_tasks_err() {
@@ -38,7 +40,7 @@ class Parser_05 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "(spawn T() in ts)\n") { e.tostr() }
+        assert(e.tostr() == "(spawn T() in ts);\n") { e.tostr() }
     }
 
     // DETRACK

@@ -1,172 +1,166 @@
 data :Clock = [ms]
 
+func {{+}} (v1, v2) {
+    if (type(v1) /= :number) or (type(v2) /= :number) {
+        error(:error)
+    }
+    `:number ($v1.Number + $v2.Number)`
+}
+
+func {{>=}} (v1,v2) {
+    ifs {
+        (type(v1) == :tag)    and (type(v2) == :tag)    => `:bool ($v1.Tag    >= $v2.Tag)`
+        (type(v1) == :number) and (type(v2) == :number) => `:bool ($v1.Number >= $v2.Number)`
+        else => error(:error)
+    }
+}
+
+func xx-string? (v) {
+    (type(v)==:vector) and (#v>=1) and (type(v[0])==:char)
+}
+
+func xx-cat-move (v1, v2) {
+    loop i in {0 => #v2{ {
+        set v1[+] = v2[i]
+    }
+    v1
+}
+
+func assert (v, msg) {
+    ifs {
+        v => v
+        type(msg)==:func  => error(msg())
+        msg->xx-string?() => error(xx-cat-move(xx-cat-move(#[], "assertion error : "), msg))
+        (msg == nil)      => error("assertion error")
+        else => error(msg)
+    }
+}
+
 func debug (v) {
     println(v)
     v
 }
 
-;; ARITHMETIC
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ARITHMETIC: +  -  *  **  /  //  %
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;export [{{+}}, {{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}]
-;;{
-    func {{+}} (v1, v2) {
-        if (type(v1) /= :number) or (type(v2) /= :number) {
-            error(:error)
-        }
-        `:number ($v1.Number + $v2.Number)`
-    }
-
-    func {{-}} (v1, v2) {
+val [{{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}] = do {
+    func sub (v1, v2) {
         ifs {
             (type(v1) == :number) and (v2 == nil)          => `:number (- $v1.Number)`
             (type(v1) /= :number) or  (type(v2) /= :number) => error(:error)
             else                                            => `:number ($v1.Number - $v2.Number)`
         }
     }
-
-    func {{*}} (v1, v2) {
+    func mul (v1, v2) {
         if (type(v1) /= :number) or (type(v2) /= :number) {
             error(:error)
         }
         `:number ($v1.Number * $v2.Number)`
     }
-
-    func {{**}} (v1, v2) {
+    func exp (v1, v2) {
         if (type(v1) /= :number) or (type(v2) /= :number) {
             error(:error)
         }
         `:number powf($v1.Number, $v2.Number)`
     }
-
-    func {{/}} (v1, v2) {
+    func div (v1, v2) {
         if (type(v1) /= :number) or (type(v2) /= :number) {
             error(:error)
         }
         `:number ($v1.Number / $v2.Number)`
     }
-
-    func {{//}} (v1, v2) {
+    func div' (v1, v2) {
         if (type(v1) /= :number) or (type(v2) /= :number) {
             error(:error)
         }
         `:number powf($v1.Number, 1/$v2.Number)`
     }
-
-    func {{%}} (v1, v2) {
+    func rem (v1, v2) {
         if (type(v1) /= :number) or (type(v2) /= :number) {
             error(:error)
         }
         `:number fmod($v1.Number, $v2.Number)`
     }
-;;}
+    [sub, mul, exp, div, div', rem]
+}
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; RELATIONAL:  >=  >  <=  <
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;export [{{>}}, {{<}}, {{>=}}, {{<=}}] {
-    func {{>}} (v1,v2) {
-        ifs {
-            (type(v1) == :tag)    and (type(v2) == :tag)    => `:bool ($v1.Tag    > $v2.Tag)`
-            (type(v1) == :number) and (type(v2) == :number) => `:bool ($v1.Number > $v2.Number)`
-            else => error(:error)
+val [{{<}}, {{<=}}, {{>}}] = do {
+    func lt (v1,v2) {
+        not (v1 >= v2)
+    }
+    func lte (v1,v2) {
+        (v1 == v2) or lt(v1,v2)
+    }
+    func gt (v1,v2) {
+        not lte(v1,v2)
+    }
+    [lt, lte, gt]
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ITERATORS: tuple, dict, x-coro, coro, tasks
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+data :Iterator = [f,s,i,tp]
+val to-iter = do {
+    func iter-ret (itr :Iterator, idx) {
+        val ret = tuple(#itr.tp)
+        loop j in {0 => #itr.tp{ {
+            set ret[j] = match itr.tp[j] {
+                == :idx => idx
+                == :key => idx
+                == :val => itr.s[idx]
+            }
         }
+        if #itr.tp==1 => ret[0] => ret
     }
 
-    func {{<}} (v1,v2) {
-        not ((v1 == v2) or (v1 > v2))
-    }
-
-    func {{>=}} (v1,v2) {
-        (v1 == v2) or (v1 > v2)
-    }
-
-    func {{<=}} (v1,v2) {
-        (v1 == v2) or (v1 < v2)
-    }
-;;}
-
-;; ASSERT
-
-func assert (v, msg) {
-    if not v {
-        if msg {
-            print("assertion error : ")
-            println(msg)
-        }
-        error(:assert)
-    }
-    v
-}
-
-;; TAG-OR
-
-func tag-or (t1,t2) {
-    assert(type(t1) == :tag)
-    assert(type(t2) == :tag)
-    `:tag $t1.Tag | $t2.Tag`
-}
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; MIN, MAX, BETWEEN
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-func min (v1, v2) {
-    ((v1 < v2) and v1) or v2
-}
-
-func max (v1, v2) {
-    ((v1 > v2) and v1) or v2
-}
-
-func between (min_max, v) {
-    max(min_max[0], min(min_max[1], v))
-}
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ITERATORS
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-data :Iterator = [f,s,tp,i]
-
-;;export [iter] {
     func iter-tuple (itr :Iterator) {
         val i = itr.i
         if i >= #itr.s {
+            set itr.f = nil
             nil
         } else {
             set itr.i = i + 1
-            val v = itr.s[i]
-            ifs itr.tp {
-                == :all => [i, v]
-                == :idx => i
-                == :val => v
-                else    => v
-            }
+            iter-ret(itr, i)
         }
     }
 
     func iter-dict (itr :Iterator) {
         val k = next-dict(itr.s,itr.i)
         if k == nil {
+            set itr.f = nil
             nil
         } else {
             set itr.i = k
-            val v = itr.s[k]
-            ifs itr.tp {
-                == :all => [k, v]
-                == :key => k
-                == :val => v
-                else    => k
-            }
+            iter-ret(itr, k)
         }
     }
 
     func iter-xcoro (itr :Iterator) {
         val co = itr.s
-        (resume co()) thus {
-            if (status(co) == :terminated)
-                => nil
-                => it
+        (resume co()) --> func (x) {
+            if (status(co) == :terminated) {
+                set itr.f = nil
+                nil
+            } else {
+                x
+            }
         }
+    }
+
+    func iter-func (itr :Iterator) {
+        val v = itr.s(itr)
+        if v == nil {
+            set itr.f = nil
+        }
+        v
     }
 
     func iter-coro (itr :Iterator) {
@@ -178,168 +172,393 @@ data :Iterator = [f,s,tp,i]
     func iter-tasks (itr :Iterator) {
         ;;error(:TODO)
         set itr.i = next-tasks(itr.s,itr.i)
+        if itr.i == nil {
+            set itr.f = nil
+        }
         itr.i
     }
 
-    func to-iter (v, tp) {
-        ifs type(v) {
-            ,sup?(:Iterator, tag(v)) => v
-            ==:tuple    => :Iterator [iter-tuple, v, tp, 0]
-            ==:vector   => :Iterator [iter-tuple, v, tp, 0]
-            ==:dict     => :Iterator [iter-dict,  v, tp, nil]
-            ==:func     => :Iterator [v]
-            ==:coro     => :Iterator [iter-coro, v]
-            ==:exe-coro => :Iterator [iter-xcoro, v]
+    func (v, tp) {
+        func tp' (def) {
+            match type(tp) {
+                == :nil    => def
+                == :tuple => tp
+                else      => [tp]
+            }
+        }
+        match type(v) {
+            | sup?(:Iterator, tag(v)) {
+                val v' :Iterator = v
+                set v'.tp = tp'(v'.tp)
+                v
+            }
+            ==:tuple    => :Iterator [iter-tuple, v, 0, tp'([:val])]
+            ==:vector   => :Iterator [iter-tuple, v, 0, tp'([:val])]
+            ==:dict     => :Iterator [iter-dict,  v, nil, tp'([:key,:val])]
+            ==:func     => :Iterator [iter-func,  v, nil, nil]
+            ==:coro     => :Iterator [iter-coro, v, nil, nil]
+            ==:exe-coro => :Iterator [iter-xcoro, v, nil, nil]
             ==:tasks    => :Iterator [iter-tasks, v, nil, nil]
-            else        => nil
+            else        => error("iterator error : invalid collection")
         }
     }
-;;}
+}
 
-;; IS, IS-NOT, === =/=
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; === =/=
+;; IS, IS-NOT
 ;; IN, IN-NOT
-
-func :rec {{===}} (v1,v2) {
-    val t1 = type(v1)
-    val t2 = type(v2)
-    ifs {
-        v1 == v2 => true
-        t1 /= t2 => false
-        (t1==:tuple) or (t1==:vector) => equals-tuple-vector(v1,v2)
-        t1 == :dict => contains-dict?(v1,v2) and contains-dict?(v2,v1)
-        else => false
-    } where {
-        func equals-tuple-vector (v1', v2') {
-            (#v1' == #v2') and not (
-                loop x in to-iter(v1',:all) {
-                    while (v2'[x[0]] === x[1])
-                }
-            )
-        }
-        func contains-dict? (v1', v2') {
-            not (
-                loop x in to-iter(v1',:all) {
-                    while (v2'[x[0]] === x[1])
-                }
-            )
-        }
-     }
-}
-
-func :rec {{=/=}} (v1,v2) {
-    not (v1 === v2)
-}
-
-func is' (v1,v2) {
-    ifs {
-        (v1 === v2)        => true
-        (type(v1) == v2)   => true
-        (type(v2) == :tag) => sup?(v2, tag(v1))
-        else => false
-    }
-}
-
-func is-not' (v1,v2) {
-    not is'(v1,v2)
-}
-
-func in' (v, xs) {
-    loop x in to-iter(xs) {
-       until (x == v)
-    }
-}
-
-func in-not' (v, xs) {
-    not in'(v,xs)
-}
-
-;;;
-func next (v, ...) {
-    ifs v {
-        :exe-coro => resume v(...)
-        :tasks    => next-tasks(v, ...)
-        :dict     => next-dict(v, ...)
-        :Iterator => v.f(v)
-        else      => error(:error)
-    }
-}
-
-;;;
-
-func create-resume (CO, arg) {
-    val co = coroutine(CO)
-    assert(resume co(arg) == nil)
-    co
-}
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; TO-*
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-func string? (v) {
-    ((type(v)==:vector) and (#v>0)) and (type(v[0])==:char)
-}
-
-func :rec to-string (v) {
-    ifs v {
-        {{string?}} => v
-        :nil        => "nil"
-        :tag        => to-string-tag(v)
-        :number     => to-string-number(v)
-        :char       => #[v]
-        :pointer    => to-string-pointer(v)
-        else        => nil
+val [{{===}}, {{=/=}}] = group {
+    func eq (v1,v2) {
+        val t1 = type(v1)
+        val t2 = type(v2)
+        ifs {
+            v1 == v2 => true
+            t1 /= t2 => false
+            (t1==:tuple) or (t1==:vector) => equals-tuple-vector(v1,v2)
+            t1 == :dict => contains-dict?(v1,v2) and contains-dict?(v2,v1)
+            else => false
+        } where {
+            func equals-tuple-vector (v1', v2') {
+                (#v1' == #v2') and not (
+                    loop [i,v] in to-iter(v1',[:idx,:val]) {
+                        while eq(v2'[i], v)
+                    }
+                )
+            }
+            func contains-dict? (v1', v2') {
+                not (
+                    loop [k,v] in to-iter(v1',[:key,:val]) {
+                        while eq(v2'[k], v)
+                    }
+                )
+            }
+         }
     }
-}
-
-func to-bool (v) {
-    not (not v)
-}
-
-func to-number (v) {
-    ifs v {
-        :tag        => `:number $v.Tag`
-        :char       => `:number $v.Char`
-        {{string?}} => `:number atoi($v.Dyn->Vector.buf)`
-        else        => nil
+    func neq (v1,v2) {
+        not eq(v1,v2)
     }
+    [eq, neq]
 }
 
-func to-tag (v) {
-    ifs v {
-        :tag        => v
-        {{string?}} => to-tag-string(v)
-        else        => nil
+val [is', is-not'] = do {
+    func x-is (v1,v2) {
+        ifs {
+            (v1 === v2)        => true
+            (type(v1) == v2)   => true
+            (type(v2) == :tag) => sup?(v2, tag(v1))
+            else => false
+        }
     }
+    func x-is-not (v1,v2) {
+        not x-is(v1,v2)
+    }
+    [x-is, x-is-not]
 }
 
-func to-pointer (v) {
-    ifs v {
-        :pointer => v
-        :tag     => `:pointer ceu_to_dash_string_dash_tag($v.Tag)`
-        :tuple   => `:pointer $v.Dyn->Tuple.buf`
-        :vector  => `:pointer $v.Dyn->Vector.buf`
-        :dict    => `:pointer $v.Dyn->Dict.buf`
-        else     => nil
+val [in', in-not'] = do {
+    func x-in (v, xs) {
+        if (type(xs) == :dict) and xs[v] { ,it =>
+            it
+        } else {
+            loop [a,b] in to-iter(xs,[:key,:val]) {
+                until match xs {
+                    :dict   => (v === a) and b
+                    :tuple  => (v === b) and b
+                    :vector => (v === b) and b
+                    else    => (v === a) and a
+                }
+            }
+        }
     }
+    func x-in-not (v, xs) {
+        not x-in(v,xs)
+    }
+    [x-in, x-in-not]
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TYPE-*
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-func type-static? (v) {
-    to-number(v) < `:number CEU_VALUE_DYNAMIC`
-}
-func type-dynamic? (v) {
-    to-number(v) > `:number CEU_VALUE_DYNAMIC`
+;;;
+data :Type = [
+    string?, static?, dynamic?,
+    ;;nil?, tag?, bool?, char?, number?, pointer?,
+    ;;func?, coro?, task?,
+    ;;tuple?, vector?, dict?,
+    ;;exe-coro?, exe-task?,
+    ;;tasks?,
+]
+;;;
+
+val [static?, dynamic?, string?] = do {
+    func x-static? (tp) {
+        `:bool ($tp.Tag < CEU_VALUE_DYNAMIC)`
+    }
+    func x-dynamic? (tp) {
+        `:bool ($tp.Tag > CEU_VALUE_DYNAMIC)`
+    }
+    ;;;
+    func x-f (tp) {
+        func (v) {
+            type(v) == tp
+        }
+    }
+    [
+        x-static?, x-dynamic?, xx-string?,
+        x-f(:nil), x-f(:tag), x-f(:bool), x-f(:char), x-f(:number), x-f(:pointer),
+        x-f(:func), x-f(:coro), x-f(:task),
+        x-f(:tuple), x-f(:vector), x-f(:dict),
+        x-f(:exe-coro), x-f(:exe-task),
+        x-f(:tasks),
+    ]
+    ;;;
+    [x-static?, x-dynamic?, xx-string?]
 }
 
-;; COPY
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; TO: string, bool, char, number, tag, pointer, iter
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-func :rec copy (v) {
-    ifs type(v) {
-        {{type-static?}} {
+data :To = [string, bool, char, number, tag, pointer, tuple, vector, dict, iter]
+
+val to :To = do {
+    func to-string (v) {
+        match v {
+            {{string?}} => v
+            :nil        => "nil"
+            :tag        => to-string-tag(v)
+            :number     => to-string-number(v)
+            :char       => #[v]
+            :pointer    => to-string-pointer(v)
+            else        => nil
+        }
+    }
+    func to-bool (v) {
+        not (not v)
+    }
+    func to-char (v) {
+        match v {
+            :char   => v
+            :number => `:char $v.Number`
+            {{string?}} {
+                ifs {
+                    (#v == 1) => v[0]
+                    (#v /= 2) => nil
+                    (v[0] /= '\\') => nil
+                    else {
+                        val t = @[
+                            ("\\a", '\a'),
+                            ("\\b", '\b'),
+                            ("\\f", '\f'),
+                            ("\\n", '\n'),
+                            ("\\r", '\r'),
+                            ("\\t", '\t'),
+                            ("\\v", '\v'),
+                            ("\\'", '\''),
+                            ("\\\"", '\"'),
+                            ("\\?", '\?'),
+                            ("\\\\", '\\'),
+                        ]
+                        v in? t
+                    }
+                }
+            }
+            else => nil
+        }
+    }
+    func to-number (v) {
+        match v {
+            :tag        => `:number $v.Tag`
+            :char       => `:number $v.Char`
+            {{string?}} => `:number atoi($v.Dyn->Vector.buf)`
+            else        => nil
+        }
+    }
+    func to-tag (v) {
+        match v {
+            :tag        => v
+            {{string?}} => to-tag-string(v)
+            else        => nil
+        }
+    }
+    func to-pointer (v) {
+        match v {
+            :pointer => v
+            :tag     => `:pointer ceu_tag_to_pointer($v.Tag)`
+            :tuple   => `:pointer $v.Dyn->Tuple.buf`
+            :vector  => `:pointer $v.Dyn->Vector.buf`
+            :dict    => `:pointer $v.Dyn->Dict.buf`
+            else     => nil
+        }
+    }
+    func to-tuple (col) {
+        match col {
+            :tuple => col
+            :vector {
+                val tup = tuple(#col)
+                loop [i,v] in to-iter(col, [:idx,:val]) {
+                    set tup[i] = v
+                }
+                tup
+            }
+            else => error(:TODO)
+        }
+    }
+    func to-vector (col, tp) {
+        val ret = #[]
+        loop v in to-iter(col,tp) {
+            set ret[+] = v
+        }
+        ret
+    }
+    func to-dict (col) {
+        val ret = @[]
+        loop [k,v] in to-iter(col,[:key,:val]) {
+            val [k',v'] =
+                if type(v) == :tuple {
+                    [v[0], v[1]]    ;; [(:x,1),(:y,2)]
+                } else {
+                    [v, k or true]  ;; [:x,:y]
+                }
+            set ret[k'] = v'
+        }
+        ret
+    }
+    ;;;
+    func to-tasks (...) {
+        val ret = #[]
+        val args = ...
+        loop v in args {
+            match v {
+                :exe-task {
+                    set ret[+] = v
+                }
+                :tasks {
+                    loop i in v {
+                        set ret[+] = i
+                    }
+                }
+            }
+        }
+        ret
+    }
+    ;;;
+    [to-string, to-bool, to-char, to-number, to-tag, to-pointer, to-tuple, to-vector, to-dict, to-iter]
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; CONCAT:  <++  ++
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+val [{{<++}}, {{++}}] = do {
+    func x-cat-move (v1, v2) {
+        assert(type(v1) == :vector)
+        assert(type(v2) == :vector)
+        xx-cat-move(v1, v2)
+    }
+    func x-cat-copy (v1, v2) {
+        x-cat-move(x-cat-move(#[], v1), v2)
+    }
+    [x-cat-move, x-cat-copy]
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; RANDOM: seed, next
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+data :Random = [seed,next]
+
+val random :Random = do {
+    func x-seed (n) {
+        if n {
+            `srand($n.Number);`
+        } else {
+            `srand(time(NULL));`
+        }
+    }
+    func x-next () {
+        `:number rand()`
+    }
+    [x-seed, x-next]
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; MATH: sin,cos,floor , min,max,between
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+data :Math = [
+    PI, sin, cos,
+    floor, ceil, round,
+    min, max, between,
+]
+
+val math :Math = do {
+    val PI = `:number M_PI`
+    func sin (v) {
+        `:number sin($v.Number)`
+    }
+    func cos (v) {
+        `:number cos($v.Number)`
+    }
+
+    func floor (v) {
+        `:number floor($v.Number)`
+    }
+    func ceil (v) {
+        `:number ceil($v.Number)`
+    }
+    func round (v) {
+        `:number round($v.Number)`
+    }
+
+    func min (v1, v2) {
+        ((v1 < v2) and v1) or v2
+    }
+    func max (v1, v2) {
+        ((v1 > v2) and v1) or v2
+    }
+    ;; TODO
+    ;; func between (v, [min,max]) {
+    func between (v, min_max) {
+        max(min_max[0], min(v, min_max[1]))
+    }
+
+    [PI,sin,cos , floor,ceil,round , min,max,between]
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; MISC: tag-or, next, create-resume, copy, assert
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+func tag-or (t1,t2) {
+    assert(type(t1) == :tag)
+    assert(type(t2) == :tag)
+    `:tag $t1.Tag | $t2.Tag`
+}
+
+func next (v, x) {
+    match v {
+        :exe-coro => resume v(x)
+        :tasks    => next-tasks(v, x)
+        :dict     => next-dict(v, x)
+        :Iterator => it.f(v)
+        else      => error(:error)
+    }
+}
+
+func create-resume (CO, x, y, z) {
+    val co = coroutine(CO)
+    assert(resume co(x,y,z) == nil)
+    co
+}
+
+func copy (v) {
+    match type(v) {
+        {{static?}} {
             v
         }
         :tuple {
@@ -370,95 +589,4 @@ func :rec copy (v) {
             error(:TODO)
         }
     }
-}
-
-func to-vector (col, tp) {
-    val ret = #[]
-    loop v in to-iter(col,tp) {
-        set ret[+] = v
-    }
-    ret
-}
-
-;;;
-func to-tasks (...) {
-    val ret = #[]
-    val args = ...
-    loop v in to-iter(args) {
-        ifs v {
-            :exe-task {
-                set ret[+] = v
-            }
-            :tasks {
-                loop i in v {
-                    set ret[+] = i
-                }
-            }
-        }
-    }
-    ret
-}
-;;;
-
-func to-set (col) {
-    val ret = @[]
-    loop in to-iter(col) {
-        set ret[it] = true
-    }
-    ret
-}
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; CONCAT:  <++  ++
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-func {{<++}} (v1, v2) {
-    assert(type(v1) == :vector)
-    assert(type(v2) == :vector)
-    do {
-        loop i in {0 => #v2{ {
-            set v1[+] = v2[i]
-        }
-    }
-    v1
-}
-
-func {{++}} (v1, v2) {
-    (#[] <++ v1) <++ v2
-}
-
-;; composition
-
-func {{<|<}} (f,g) {
-    func (v) {
-        f(g(v))
-    }
-}
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; RANDOM:  random-seed  random-next
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-func random-seed (n) {
-    if n {
-        `srand($n.Number);`
-    } else {
-        `srand(time(NULL));`
-    }
-}
-
-func random-next () {
-    `:number rand()`
-}
-
-func math-sin (v) {
-    `:number sin($v.Number)`
-}
-
-func math-cos (v) {
-    `:number cos($v.Number)`
-}
-
-func math-floor (v) {
-    `:number floor($v.Number)`
 }

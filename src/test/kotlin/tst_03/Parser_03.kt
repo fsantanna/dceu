@@ -24,8 +24,8 @@ class Parser_03 {
         val l = lexer("coro (a,b) { 10 }")
         val parser = Parser(l)
         val e = parser.expr_prim()
-        assert(e is Expr.Proto && e.args.size==2)
-        assert(e.tostr() == "(coro (a,b) {\n10\n})") { e.tostr() }
+        assert(e is Expr.Proto && e.pars.size==2)
+        assert(e.tostr() == "(coro (a,b) {\n10;\n})") { e.tostr() }
     }
     @Test
     fun aa_04_coro_nested() {
@@ -67,7 +67,7 @@ class Parser_03 {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(resume (f())(nil))") { e.tostr() }
+        assert(e.tostr() == "(resume (f())())") { e.tostr() }
     }
     @Test
     fun bb_07_yield_err() {
@@ -83,11 +83,32 @@ class Parser_03 {
     // MULTI ARGS
 
     @Test
-    fun todo_cc_01_resume_err() {   // TODO: multi args should be allowed
+    fun cc_01_resume() {
         val l = lexer("""
-            resume nil(1,2)
-        """.trimIndent())
+            resume co(1;;;,...;;;)
+        """)
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : resume error : invalid number of arguments")
+        val e = parser.expr()
+        assert(e.tostr() == "(resume (co)(1))") { e.tostr() }
+
+    }
+    @Test
+    fun cc_02_yield() {
+        val l = lexer("""
+            yield(1;;;,...;;;)
+        """)
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "yield(1)") { e.tostr() }
+    }
+    @Test
+    fun cc_03_yield() {
+        val l = lexer("""
+            yield()
+        """)
+        val parser = Parser(l)
+        //val e = parser.expr()
+        //assert(e.tostr() == "yield(nil)") { e.tostr() }
+        assert(trap { parser.expr() } == "anon : (lin 2, col 19) : expected expression : have \")\"")
     }
 }

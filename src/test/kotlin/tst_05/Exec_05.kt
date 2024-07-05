@@ -163,7 +163,9 @@ class Exec_05 {
             loop {
                 spawn T() in ts
                 set x = x + 1
-                break if x==500
+                if x==500 {
+                    break ()
+                } else {nil}
             }
             println(:ok)
         """)
@@ -194,7 +196,7 @@ class Exec_05 {
         val out = test("""
             var T
             set T = task () {
-                do [1,2,3]
+                ;;;do;;; [1,2,3]
                 yield(nil)
             }
             var ts
@@ -272,12 +274,14 @@ class Exec_05 {
                     var ok1
                     set ok1=false
                     loop {
-                        break if ok1
+                        if ok1 {
+                            break ()
+                        } else {nil}
                         val evt = yield(nil) if type(evt)/=:exe-task { set ok1=true } else { nil } }
                     }
                 ;;yield(nil)
                 if v {
-                    do { var ok; set ok=false; loop { break if ok ; val evt=yield(nil;) if type(evt)/=:exe-task { set ok=true } else { nil } } }
+                    do { var ok; set ok=false; loop { if ok {break()} else {nil}  ; val evt=yield(nil;) if type(evt)/=:exe-task { set ok=true } else { nil } } }
                     ;;yield(nil)
                 } else {
                     nil
@@ -306,7 +310,7 @@ class Exec_05 {
                 defer {
                     println(v)
                 }
-                catch (err,err==:ok) {
+                catch (err|err==:ok) {
                     spawn task () {
                         yield(nil)
                         if v == 1 {
@@ -340,7 +344,7 @@ class Exec_05 {
                 defer {
                     println(v)
                 }
-                catch (err,err==:ok) {
+                catch (err|err==:ok) {
                     spawn task () {
                         yield(nil)
                         if v == 2 {
@@ -390,7 +394,9 @@ class Exec_05 {
             var t
             loop {
                 set t = next-tasks(ts, t)
-                break if (if t { false } else { true })
+                if (if t { false } else { true }) {
+                    break ()
+                } else { nil }
                 var x = ;;;detrack;;;(t).pub
                 broadcast (nil) in ;;;detrack;;;(t)
                 println(x)
@@ -418,10 +424,10 @@ class Exec_05 {
     fun ab_02_pool_max_err() {
         val out = test(
             """
-            tasks(nil)
+            tasks(false)
         """
         )
-        assert(out == " |  anon : (lin 2, col 13) : tasks(nil)\n" +
+        assert(out == " |  anon : (lin 2, col 13) : tasks(false)\n" +
                 " v  tasks error : expected positive number\n") { out }
     }
     @Test
@@ -506,6 +512,7 @@ class Exec_05 {
             val ts = tasks()
             println(`:number CEU_GC.free`)
             spawn (task () { nil }) () in ts
+            nil
             println(`:number CEU_GC.free`)
         """)
         assert(out == "0\n2\n") { out }
@@ -1333,7 +1340,7 @@ class Exec_05 {
         val out = test(
             """
             spawn (task () {
-                catch (err, err==:ok) {
+                catch (err| err==:ok) {
                     spawn task () {
                         yield(nil)
                         error(:ok)
@@ -1416,7 +1423,7 @@ class Exec_05 {
             var y
             val t = ;;detrack(x) { it =>
                 set y = x ;;it  ;; ERR: cannot expose it
-                do nil
+                ;;;do;;; nil
             ;;}
             broadcast(nil)
             println(status(t))
@@ -1440,7 +1447,7 @@ class Exec_05 {
             spawn (task () {
                 ;;detrack(x) { it =>
                     set pub = x ;;it  ;; ERR: cannot expose it
-                    do nil
+                    ;;;do;;; nil
                 ;;}
                 broadcast(nil) in :global
                 println(status(pub))
@@ -1586,7 +1593,8 @@ class Exec_05 {
             }
             var t = spawn T()
             var x = ;;;track;;;(t)
-            val v = ;;;detrack;;;(x) ;;;{ it => it;;;.pub ;;}
+            ;;val v = ;;;detrack;;;(x) ;;;{ it => it;;;.pub ;;}
+            val v = (x).pub
             broadcast(nil)
             println(v)
         """)
@@ -1707,7 +1715,7 @@ class Exec_05 {
                 yield(nil) ; nil
             }
             val ts = tasks()
-            val t = catch ( it,true) {
+            val t = catch ( it|true) {
                 spawn T() in ts
                 do {
                     val u = next-tasks(ts)
@@ -1750,7 +1758,7 @@ class Exec_05 {
                 yield(nil) ; nil
             }
             val ts = tasks()
-            catch ( it,true) {
+            catch ( it|true) {
                 spawn T() in ts
                 do {
                     val t = next-tasks(ts)
@@ -1902,7 +1910,9 @@ class Exec_05 {
                 spawn T(1) in ts
                 loop {
                     val t = next-tasks(ts)
-                    break if (if t { false } else { true })
+                    if (if t { false } else { true }) {
+                        break ()
+                    } else {nil}
                     error(1)    ;; never reached
                 }
             }
@@ -1929,7 +1939,9 @@ class Exec_05 {
             var xxx = nil
             loop {
                 set xxx = next-tasks(ts, xxx)
-                break if (if xxx { false } else { true })
+                if (if xxx { false } else { true }) {
+                    break ()
+                } else {nil}
                 println(1)
                 broadcast (1)
             }
@@ -1950,13 +1962,17 @@ class Exec_05 {
             var xxx = nil
             loop {
                 set xxx = next-tasks(ts, xxx)
-                break if (if xxx { false } else { true })
+                if (if xxx { false } else { true }) {
+                    break ()
+                } else {nil}
                 println(1)
                 broadcast(1)
                 var yyy = nil
                 loop  {
                     set yyy = next-tasks(ts, yyy)
-                    break if (if yyy { false } else { true })
+                    if (if yyy { false } else { true }) {
+                        break ()
+                    } else {nil}
                     println(2)
                 }
             }
@@ -1974,7 +1990,9 @@ class Exec_05 {
             var xxx = nil
             loop {
                 set xxx = next-tasks(ts, xxx)
-                break if (if xxx { false } else { true })
+                if (if xxx { false } else { true }) {
+                    break ()
+                } else {nil}
                 set yyy = xxx
             }
             println(status(;;;detrack;;;(yyy)))
@@ -1993,7 +2011,9 @@ class Exec_05 {
             var xxx = nil
             loop {
                 set xxx = next-tasks(ts, xxx)
-                break if (if xxx { false } else { true })
+                if (if xxx { false } else { true }) {
+                    break ()
+                } else {nil}
                 set yyy = ;;;move;;;(xxx)
             }
             println(status(;;;detrack;;;(yyy)))
@@ -2048,7 +2068,9 @@ class Exec_05 {
             var xxx = nil
             loop ;;;in :tasks ts, xxx;;; {
                 set xxx = next-tasks(ts, xxx)
-                break if (if xxx { false } else { true })
+                if (if xxx { false } else { true }) {
+                    break ()
+                } else {nil}
                 broadcast(nil) in ;;;detrack;;;(xxx)
             }
         """)
@@ -2066,12 +2088,16 @@ class Exec_05 {
             var xxx = nil
             loop ;;;in :tasks ts, xxx;;; {
                 set xxx = next-tasks(ts, xxx)
-                break if (if xxx { false } else { true })
+                if (if xxx { false } else { true }) {
+                    break ()
+                } else {nil}
                 var yyy
                 var zzz = nil
                 loop ;;;in :tasks ts, zzz;;; {
                     set zzz = next-tasks(ts, zzz)
-                    break if (if zzz { false } else { true })
+                    if (if zzz { false } else { true }) {
+                        break ()
+                    } else {nil}
                     set yyy = ;;;copy;;;(zzz)
                     println(status(;;;detrack;;;(yyy)))
                 }
@@ -2096,13 +2122,17 @@ class Exec_05 {
             var xxx = nil
             loop ;;;in :tasks ts, xxx;;; {
                 set xxx = next-tasks(ts, xxx)
-                break if (if xxx { false } else { true })
+                if (if xxx { false } else { true }) {
+                    break ()
+                } else {nil}
                 var yyy
                 var zzz = nil
                 loop ;;;in :tasks ts, zzz;;; {
                     set zzz = next-tasks(ts, zzz)
-                    break if (if zzz { false } else { true })
-                    do nil
+                    if (if zzz { false } else { true }) {
+                        break ()
+                    } else {nil}
+                    ;;;do;;; nil
                 }
                 set yyy = xxx
                 ;;pass nil ;; otherwise scope err for yyy/xxx
@@ -2124,8 +2154,10 @@ class Exec_05 {
             var xxx = nil
             loop ;;;in :tasks ts, xxx;;; {
                 set xxx = next-tasks(ts, xxx)
-                break if (if xxx { false } else { true })
-                do xxx
+                if (if xxx { false } else { true }) {
+                    break ()
+                } else {nil}
+                ;;;do;;; xxx
             }
             println(1)
         """
@@ -2150,11 +2182,15 @@ class Exec_05 {
             var t1 = nil
             loop ;;;in :tasks ts, t1;;; {
                 set t1 = next-tasks(ts, t1)
-                break if (if t1 { false } else { true })
+                if (if t1 { false } else { true }) {
+                    break ()
+                } else {nil}
                 var t2 = nil
                 loop ;;;in :tasks ts, t2;;; {
                     set t2 = next-tasks(ts, t2)
-                    break if (if t2 { false } else { true })
+                    if (if t2 { false } else { true }) {
+                        break ()
+                    } else {nil}
                     println(;;;detrack;;;(t1).pub, ;;;detrack;;;(t2).pub)
                 }
             }
@@ -2176,7 +2212,9 @@ class Exec_05 {
             var t
             loop ;;;in :tasks ts, t;;; {
                 set t = next-tasks(ts,t)
-                break if (if t { false } else { true })
+                if (if t { false } else { true }) {
+                    break ()
+                } else {nil}
                 println(;;;detrack;;;(t).pub[0])
             }
         """)
@@ -2198,7 +2236,9 @@ class Exec_05 {
                 var xxx = nil
                 loop ;;;in :tasks ts, xxx;;; {
                     set xxx = next-tasks(ts, xxx)
-                    break if (if xxx { false } else { true })
+                    if (if xxx { false } else { true }) {
+                        break ()
+                    } else {nil}
                     println(1)
                     broadcast (1)
                 }
@@ -2219,7 +2259,9 @@ class Exec_05 {
             var xxx = nil
             loop ;;;in :tasks ts, xxx;;; {
                 set xxx = next-tasks(ts, xxx)
-                break if (if xxx { false } else { true })
+                if (if xxx { false } else { true }) {
+                    break ()
+                } else {nil}
                 val tsk = ;;;detrack;;;(xxx)
                 broadcast (nil)
             }
@@ -2240,7 +2282,9 @@ class Exec_05 {
             var trk = nil
             loop ;;;in :tasks ts, trk;;; {
                 set trk = next-tasks(ts, trk)
-                break if (if trk { false } else { true })
+                if (if trk { false } else { true }) {
+                    break ()
+                } else {nil}
                 val      tsk1 = ;;;detrack;;;(trk)
                 val ;;;:tmp;;; tsk2 = ;;;detrack;;;(trk)
             }
@@ -2259,7 +2303,9 @@ class Exec_05 {
             var xxx = nil
             loop ;;;in :tasks ts, xxx;;; {
                 set xxx = next-tasks(ts, xxx)
-                break if (if xxx { false } else { true })
+                if (if xxx { false } else { true }) {
+                    break ()
+                } else {nil}
                 do {
                     val zzz = ;;;detrack;;;(xxx)
                     nil
@@ -2284,7 +2330,9 @@ class Exec_05 {
             var t
             loop ;;;in :tasks ts, t;;; {
                 set t = next-tasks(ts,t)
-                break if (if t { false } else { true })
+                if (if t { false } else { true }) {
+                    break ()
+                } else {nil}
                 set x = ;;;detrack;;;(t).pub   ;; TODO: incompatible scope
             }
             println(999)
@@ -2305,14 +2353,16 @@ class Exec_05 {
             var xxx = nil
             loop {
                 set xxx = next-tasks(ts, xxx)
-                break if (if xxx { false } else { true })
+                if (if xxx { false } else { true }) {
+                    break ()
+                } else {nil}
                 var x = ;;;detrack;;;(xxx).pub
                 broadcast( nil )in ;;;detrack;;;(xxx)
                 println(x)
             }
             println(999)
         """)
-        //assert(out == "[10]\n999\n") { out }
+        assert(out == "[10]\n999\n") { out }
         //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
         //assert(out == "anon : (lin 9, col 17) : declaration error : incompatible scopes\n:error\n") { out }
     }
@@ -2328,7 +2378,9 @@ class Exec_05 {
             var xxx = nil
             loop {
                 set xxx = next-tasks(ts, xxx)
-                break if (if xxx { false } else { true })
+                if (if xxx { false } else { true }) {
+                    break ()
+                } else {nil}
                 var f = func (tt) {
                     var x = ;;;detrack;;;(tt).pub
                     broadcast(nil) in ;;;detrack;;;(tt)
@@ -2475,7 +2527,9 @@ class Exec_05 {
                     var t = nil
                     loop {
                         set t = next-tasks(ts,t)
-                        break if t==nil
+                        if t==nil {
+                            break ()
+                        } else {nil}
                         set vec[#vec] = t
                     }
                     println(vec)
@@ -2487,6 +2541,66 @@ class Exec_05 {
         //assert(out.contains("#[track: 0x")) { out }
         assert(out.contains("#[exe-task: 0x")) { out }
         //assert(out == (" v  anon : (lin 12, col 29) : store error : cannot hold reference to track or task in pool\n")) { out }
+    }
+
+    // TASKS / POOL / SIZE / MEM
+
+    @Test
+    fun kk_01_pool() {
+        val out = test("""
+            val T = task () {
+                println(:1)
+                yield(nil)
+                println(:2)
+            }
+            val ts = tasks(1)
+            var ok = false
+            loop {
+                spawn T() in ts
+                val t = next-tasks(ts)
+                ;;println(t)
+                broadcast(nil)
+                if ok {
+                    break ()
+                } else {nil}
+                set ok = true
+            }
+        """)
+        assert(out.contains(":1\n:2\n:1\n:2\n")) { out }
+    }
+    @Test
+    fun kk_02_pool() {
+        val out = test("""
+            val T = task (v) {
+                println(:ok)
+                loop {
+                    val it = yield(nil)
+                    if {{==}}(it,:FIN) {
+                        break ()
+                    } else {nil}
+                }
+            }
+            val ts = tasks(1)
+            spawn T() in ts
+            spawn (task () {
+                loop {
+                    do {
+                        loop {
+                            val it = yield(nil)
+                            if it==:CHK {
+                                break ()
+                            } else {nil}
+                        }
+                        val xxx = #[next-tasks(ts)]
+                    }
+                }
+            }) ()
+            spawn T() in ts
+            broadcast(:CHK)
+            broadcast(:FIN)
+            spawn T() in ts
+        """)
+        assert(out.contains(":ok\n:ok\n")) { out }
     }
 
     // ORIGINAL
@@ -2686,7 +2800,7 @@ class Exec_05 {
             var t = spawn T()
             var x = ;;;track;;;(t)
             spawn( task () {
-                catch ( err,err==:par-or ) {
+                catch ( err|err==:par-or ) {
                     spawn( task () {
                         yield(nil) ;;thus { it => it==t }
                         error(:par-or)
@@ -2823,7 +2937,9 @@ class Exec_05 {
             var t
             loop ;;;in :tasks ts, t;;; {
                 set t = next-tasks(ts,t)
-                break if (if t { false } else { true })
+                if (if t { false } else { true }) {
+                    break ()
+                } else {nil}
                 set x = ;;;copy;;;(t)
             }
             println(;;;detrack;;;(x).pub[0])   ;; 2
@@ -2850,7 +2966,9 @@ class Exec_05 {
                 var t
                 loop ;;;in :tasks ts, t;;; {
                     set t = next-tasks(ts,t)
-                    break if (if t { false } else { true })
+                    if (if t { false } else { true }) {
+                        break ()
+                    } else {nil}
                     set x = ;;;copy;;;(t)    ;; track(t) up_hold in
                 }
                 println(;;;detrack;;;(x).pub[0])   ;; 2
@@ -2872,11 +2990,13 @@ class Exec_05 {
             set ts = tasks()
             spawn T(1) in ts
             var x
-            set x = catch (_,true) {
+            set x = catch (_|true) {
                 var t
                 loop ;;;in :tasks ts, t;;; {
                     set t = next-tasks(ts,t)
-                    break if (if t { false } else { true })
+                    if (if t { false } else { true }) {
+                        break ()
+                    } else {nil}
                     error(;;;copy;;;(t))
                 }
             }
@@ -2899,11 +3019,13 @@ class Exec_05 {
             spawn T(1) in ts
             spawn T(2) in ts
             var x
-            set x = catch (_,true) {
+            set x = catch (_|true) {
                 var t
                 loop ;;;in :tasks ts, t;;; {
                     set t = next-tasks(ts,t)
-                    break if (if t { false } else { true })
+                    if (if t { false } else { true }) {
+                        break ()
+                    } else {nil}
                     error(;;;copy;;;(t))
                 }
             }
@@ -2928,7 +3050,9 @@ class Exec_05 {
             var t
             loop ;;;in :tasks ts, t;;; {
                 set t = next-tasks(ts,t)
-                break if (if t { false } else { true })
+                if (if t { false } else { true }) {
+                    break ()
+                } else {nil}
                 set x = ;;;copy;;;(t)
             }
             broadcast( nil )
@@ -2976,8 +3100,10 @@ class Exec_05 {
                 loop {
                     set tt[0] = next-tasks(ts,tt[0])
                     val t = tt[0]
-                    break(false) if {{==}}(t,nil)
-                    break((t)) if true
+                    if {{==}}(t,nil) {
+                        break(false)
+                    } else {nil}
+                    break((t)) ;;if true
                 }
             }
             println(x)
@@ -2993,8 +3119,10 @@ class Exec_05 {
                 loop {
                     set tt[0] = @[]
                     val t = tt[0]
-                    break(false) if {{==}}(t,nil)
-                    break((t)) if true
+                    if {{==}}(t,nil) {
+                        break(false)
+                    } else {nil}
+                    break((t)) ;;if true
                 }
             }
             println(x)

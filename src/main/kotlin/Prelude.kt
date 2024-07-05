@@ -58,7 +58,9 @@ fun AWAIT (v:String="(type(it) /= :exe-task)"): String {
     return """
         loop {
             val it = yield(nil)
-            break if ${AND(v, OR("it","true"))}
+            if ${AND(v, OR("it","true"))} {
+                break()
+            } else {nil}
         }
     """.replace("\n", " ")
 }
@@ -73,3 +75,9 @@ val IS = """
         }
     }
 """.replace("\n", " ")
+
+val ASR = """
+    func assert (v, msg) {
+        if v => v => error(msg)
+    }    
+"""

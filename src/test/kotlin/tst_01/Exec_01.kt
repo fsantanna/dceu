@@ -12,6 +12,13 @@ class Exec_01 {
     // PRINT
 
     @Test
+    fun aa_00_print_err() {
+        val out = test("""
+            println(1,2)
+        """)
+        assert(out == "1\t2\n") { out }
+    }
+    @Test
     fun aa_01_print() {
         val out = test("""
             println(10)
@@ -53,7 +60,7 @@ class Exec_01 {
             do {
                 var g
                 set g = f
-                nil
+                ;;nil
             }
             println(f)
         """)
@@ -234,7 +241,7 @@ class Exec_01 {
             val t = [[nil]]
             dump(t[0])
         """)
-        //assert(out.contains("hold  = 2")) { out }
+        assert(out.contains("refs  = 2")) { out }
     }
     @Test
     fun bb_13_block() {
@@ -325,24 +332,32 @@ class Exec_01 {
         """)
         assert(out == "6\n") { out }
     }
+    @Test
+    fun bd_02x_set_op() {
+        val out = test("""
+            val f = func (v1,v2) {
+                nil
+            }
+            println(f)
+        """)
+        assert(out.contains("func: 0x")) { out }
+    }
 
     // REC / FUNC
 
     @Test
     fun be_01_rec_err() {
         val out = test("""
-            func :rec () {
-                nil
-            }
+            val :rec x = 1
         """)
-        assert(out == "anon : (lin 2, col 13) : func :rec error : expected enclosing val declaration\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : val :rec error : invalid assignment\n") { out }
+        assert(out == "anon : (lin 2, col 17) : expected identifier : have \":rec\"\n") { out }
     }
     @Test
     fun be_02_rec() {
-        STACK = 128
         val out = test("""
             $PLUS
-            val f = func :rec (v) {
+            val f = func (v) {
                 if v == 0 {
                     0
                 } else {
@@ -354,48 +369,73 @@ class Exec_01 {
         assert(out == "10\n") { out }
     }
     @Test
-    fun TODO_be_03_rec_rec() {
-        STACK = 64
+    fun be_03_rec_rec() {
         val out = test("""
             $PLUS
-            val f,g =
-                func :rec (v) {
-                    if v == 0 {
-                        0
-                    } else {
-                        v + g(v - 1)
-                    }
-                },
-                func :rec (v) {
-                    if v == 0 {
-                        0
-                    } else {
-                        v + f(v - 1)
-                    }
-                },
+            var g
+            val f = func (v) {
+                if v == 0 {
+                    0
+                } else {
+                    v + g(v - 1)
+                }
+            }
+            set g = func (v) {
+                if v == 0 {
+                    0
+                } else {
+                    v + f(v - 1)
+                }
+            }
             println(f(4))
         """)
         assert(out == "10\n") { out }
     }
-
+    @Test
+    fun TODO_be_04_rec() {
+        val out = test("""
+            $PLUS
+            do {
+                val f = func (v) {
+                    println(:F, f)      ;; f is upval which is assigned nil
+                    if v /= 0 {
+                        println(v)
+                        f(v - 1)
+                    } else {
+                        nil
+                    }
+                }
+                f(3)
+            }
+        """)
+        assert(out == "3\n2\n1\n") { out }
+    }
 
     // INDEX / TUPLE
 
+    @Test
+    fun cc_00_tuple() {
+        val out = test("""
+            println([])
+        """)
+        assert(out == "[]\n") { out }
+    }
     @Test
     fun cc_index01_err() {
         val out = test(
             """
             [1,2,3][1]
-            nil
+            println(nil)
         """
         )
-        assert(out == "anon : (lin 2, col 13) : expression error : innocuous expression\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : expression error : innocuous expression\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun cc_index01() {
         val out = test(
             """
-            do [1,2,3][1]
+            ;;;do;;; [1,2,3][1]
             println(1)
         """
         )
@@ -463,7 +503,7 @@ class Exec_01 {
     fun cc_tuple4_free() {
         val out = test(
             """
-            do [1,2,3]
+            ;;;do;;; [1,2,3]
             println(1)
         """
         )
@@ -473,7 +513,7 @@ class Exec_01 {
     fun cc_tuple46_free() {
         val out = test(
             """
-            do [[]]
+            ;;;do;;; [[]]
             println(1)
         """
         )
@@ -483,7 +523,7 @@ class Exec_01 {
     fun cc_vec_free() {
         val out = test(
             """
-            do #[]
+            ;;;do;;; #[]
             println(1)
         """
         )
@@ -493,7 +533,7 @@ class Exec_01 {
     fun cc_dic_free() {
         val out = test(
             """
-            do @[]
+            ;;;do;;; @[]
             println(1)
         """
         )
@@ -503,7 +543,7 @@ class Exec_01 {
     fun cc_tuple45_free() {
         val out = test(
             """
-            do [1,2,3][1]
+            ;;;do;;; [1,2,3][1]
             println(1)
         """
         )
@@ -534,7 +574,7 @@ class Exec_01 {
     fun cc_tuple6a_free() {
         val out = test(
             """
-            val f = func :rec (v) {
+            val f = func (v) {
                 if v > 0 {
                     [f(v - 1)]
                 } else {
@@ -548,10 +588,9 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple6_free() {
-        STACK = 128
         val out = test(
             """
-            val f = func :rec (v) {
+            val f = func (v) {
                 if v > 0 {
                     [f(v - 1)]
                 } else {
@@ -566,9 +605,8 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple7_hold_err() {
-        STACK = 128
         val out = test("""
-            val f = func :rec (v) {
+            val f = func (v) {
                 var x
                 if v > 0 {
                     set x = f(v - 1)
@@ -584,10 +622,9 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple8_hold_err() {
-        STACK = 128
         val out = test(
             """
-            val f = func :rec (v) {
+            val f = func (v) {
                 if v > 0 {
                     val x = f(v - 1)
                     [x] ;; invalid return
@@ -608,7 +645,7 @@ class Exec_01 {
             do {
                 var x
                 set x = [0]
-                x   ;; escape but no access
+                ;;x   ;; escape but no access
             }
             println(1)
         """
@@ -828,20 +865,6 @@ class Exec_01 {
         //assert(out == ":x\t[]\n:t\tnil\n") { out }
     }
     @Test
-    fun cm_04_dots() {
-        val out = test(
-            """
-            var f = func (...) {
-                var x = [...]
-                ;;;drop;;;(x)
-            }
-            println(f(1,2,3))
-        """
-        )
-        assert(out == "[[1,2,3]]\n") { out }
-        //assert(out == "anon : (lin 4, col 22) : drop error : multiple references\n") { out }
-    }
-    @Test
     fun cm_04() {
         val out = test(
             """
@@ -877,6 +900,20 @@ class Exec_01 {
         """
         )
         assert(out == "[[1]]\n") { out }
+    }
+    @Test
+    fun cc_07a_global() {
+        //DEBUG = true
+        val out = test("""
+            val e = func () {
+                nil
+            }
+            val g = func () {
+                e
+            }
+            println(g())
+        """)
+        assert(out.contains("func: 0x")) { out }
     }
     @Test
     fun cc_07_global() {
@@ -1026,13 +1063,11 @@ class Exec_01 {
                 println(y)
             }
             ;;`ceu_gc_collect();`
-            println("-=-=-=-=-=-=-=-=-")
             println(t)
         """)
         //assert(out == "anon : (lin 6, col 26) : drop error : value contains multiple references\n") { out }
         //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
         assert(out == "[99]\n" +
-                "-=-=-=-=-=-=-=-=-\n" +
                 "[1,[99],3]\n") { out }
     }
     @Test
@@ -1117,7 +1152,7 @@ class Exec_01 {
                 var x = [nil]
                 var y = [x]
                 set x[0] = y
-                do ;;;drop;;;(x)
+                ;;;do drop;;;(x)
                 y
             }
             println(z[0][0] == z)
@@ -1352,7 +1387,9 @@ class Exec_01 {
             set t[:c] = 30
             var k = next-dict(t)
             loop {
-                break if (k == nil)
+                if (k == nil) {
+                    break(nil)
+                } else { nil }
                 println(k, t[k])
                 set k = next-dict(t,k)
             }
@@ -1441,6 +1478,7 @@ class Exec_01 {
         """
         )
         assert(out.contains("ceu_vector_set: Assertion `i == vec->its-1' failed.")) { out }
+        //assert(out.contains("ceux_vector: Assertion `v.type != CEU_VALUE_NIL' failed.")) { out }
     }
     @Test
     fun vector6b_err() {
@@ -1534,6 +1572,24 @@ class Exec_01 {
         """, true)
         assert(out == "#[1]\n") { out }
     }
+    @Test
+    fun ee_17_vector_nil_err() {
+        val out = test("""
+            val t = #[nil,nil,10]
+            println(#t, t[0])
+        """)
+        //assert(out.contains("ceu_vector_set: Assertion `v.type != CEU_VALUE_NIL' failed")) { out }
+        assert(out.contains("ceu_vector_set: Assertion `i == vec->its-1' failed.")) { out }
+    }
+    @Test
+    fun BUG_ee_18_vector_f() {
+        val out = test("""
+            func f () { ('z',0) }
+            val t = #['a', (f())]   ;; need way to adjust arity to 1
+            println(t)
+        """)
+        assert(out.contains("ceux_vector: Assertion `v.type != CEU_VALUE_NIL' failed")) { out }
+    }
 
     // STRINGS / CHAR
 
@@ -1550,6 +1606,16 @@ class Exec_01 {
         """
         )
         assert(out == "a\nabba\nabba\n") { out }
+    }
+
+    // ARGC / ARGV
+
+    @Test
+    fun ff_01_argc() {
+        val out = test("""
+            println(ARGS)
+        """)
+        assert(out == "[./out.exe]\n") { out }
     }
 
     // SET
@@ -1615,6 +1681,22 @@ class Exec_01 {
         """
         )
         assert(out == "") { out }
+    }
+    @Test
+    fun do_01x() {
+        val out = test("""
+            println(do {})
+        """)
+        //assert(out == "nil\n") { out }
+        //assert(out == "\n") { out }
+        assert(out == "anon : (lin 2, col 25) : expected expression : have \"}\"\n") { out }
+    }
+    @Test
+    fun do_02x() {
+        val out = test("""
+            println(do {nil}, nil)
+        """)
+        assert(out == "nil\tnil\n") { out }
     }
     @Test
     fun do2() {
@@ -1697,7 +1779,7 @@ class Exec_01 {
                 }
                 do {
                     val x = f           ;; nested do, but could be in par block from bcast
-                    nil
+                    ;;nil
                 }
             }
             println(:ok)
@@ -1967,12 +2049,12 @@ class Exec_01 {
             }
             do {
                 val t = []
-                do [f, t]
+                ;;;do;;; [f, t]
                 nil
             }
             do {
                 val t = []
-                do [f, t]
+                ;;;do;;; [f, t]
                 nil
             }
             println(:ok)
@@ -1988,7 +2070,7 @@ class Exec_01 {
                 val t1 = []
                 do {
                     val t2 = []
-                    do [t1,[],t2]
+                    ;;;do;;; [t1,[],t2]
                     nil
                 }
             }
@@ -2003,7 +2085,7 @@ class Exec_01 {
             val t1 = []
             do {
                 val t2 = []
-                do [t1,t2]
+                ;;;do;;; [t1,t2]
                 nil
             }
             println(:ok)
@@ -2018,7 +2100,7 @@ class Exec_01 {
                 val t1 = []
                 do {
                     val t2 = []
-                    [t1,[],t2]
+                    ;;;do;;; [t1,[],t2]
                 }
             }
             println(:ok)
@@ -2033,7 +2115,7 @@ class Exec_01 {
             """
             val t1 = [9]
             do {
-                do [t1]
+                ;;;do;;; [t1]
             }
             println(:ok)
         """
@@ -2048,7 +2130,7 @@ class Exec_01 {
                 val t1 = []
                 do {
                     val t2 = []
-                    do #[t1,[],t2]
+                    ;;;do;;; #[t1,[],t2]
                     nil
                 }
             }
@@ -2065,7 +2147,7 @@ class Exec_01 {
                 val t1 = []
                 do {
                     val t2 = []
-                    do @[(t1,t2)]
+                    ;;;do;;; @[(t1,t2)]
                     nil
                 }
             }
@@ -2671,17 +2753,31 @@ class Exec_01 {
         //assert(out == "nil\n") { out }
     }
     @Test
-    fun if3_err() {
+    fun if3_err_ok() {
         val out = test(
             """
             var x
             set x = 10
-            set x = if (nil) {} else { 1 }
+            set x = if (nil) {nil} else { 1 }
             println(x)
         """.trimIndent()
         )
         //assert(out == "anon : (lin 3, col 13) : if error : invalid condition\n") { out }
-        assert(out == "anon : (lin 3, col 19) : expected expression : have \"}\"\n") { out }
+        //assert(out == "anon : (lin 3, col 19) : expected expression : have \"}\"\n") { out }
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun if3x_err_ok() {
+        val out = test(
+            """
+            var x
+            set x = 10
+            set x = if (false) {1} else {nil}
+            println(x)
+        """.trimIndent()
+        )
+        //assert(out == "anon : (lin 3, col 13) : if error : invalid condition\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun if4_err() {
@@ -2703,6 +2799,16 @@ class Exec_01 {
         )
         //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
         assert(out == "1\n") { out }
+    }
+    @Test
+    fun if6_else() {
+        val out = test("""
+            val v = [1]
+            println(:v,v,{{#}}(v),v[0])
+            val x = {{/=}}(v[0],'\\')
+        """)
+        //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
+        assert(out == ":v\t[1]\t1\t1\n") { out }
     }
 
     // FUNC / CALL
@@ -2741,10 +2847,8 @@ class Exec_01 {
     fun func1() {
         val out = test(
             """
-            var f
-            set f = func () { nil }
-            var x
-            set x = f()
+            val f = func () { nil }
+            val x = f()
             println(x)
         """
         )
@@ -2771,7 +2875,7 @@ class Exec_01 {
             """
             var f
             set f = func (xxx) {
-                ;;println(type(xxx))
+                ;;println(xxx)
                 xxx
             }
             var yyy
@@ -2820,8 +2924,8 @@ class Exec_01 {
     fun func8() {
         val out = test(
             """
-            do 1
-            do (1)
+            ;;;do;;; 1
+            ;;;do;;; (1)
         """
         )
         //assert(out == "anon : (lin 2, col 2) : call error : \"(\" in the next line") { out }
@@ -3045,122 +3149,50 @@ class Exec_01 {
         """)
         assert(out == "-10\n") { out }
     }
-
-    // FUNC / ARGS / DOTS / ...
-
     @Test
-    fun nn_01_dots_tup() {
+    fun nn_24_func_args() {
         val out = test(
             """
-            var f = func (...) {
-                println(#..., ...[1])
+            val f = func (a,b) {
+                b
             }
-            f(1,2,3)
+            println(f(1,2))
         """
         )
-        assert(out == "3\t2\n") { out }
+        assert(out == "2\n") { out }
     }
     @Test
-    fun nn_02_dots_err() {
+    fun nn_25_func_dup() {
         val out = test(
             """
-            var f = func () {
-                println(...)
+            do {
+                val f = func () {nil}
+                f()
             }
-            f(1,2,3)
-        """
-        )
-        //assert(out == "anon : (lin 3, col 25) : access error : variable \"...\" is not declared") { out }
-        assert(out == "./out.exe\n") { out }
-    }
-    @Test
-    fun nn_03_dots() {
-        val out = test(
-            """
-            var f = func (...) {
-                println(...)
+            do {
+                val f = func () {nil}
+                f()
             }
-            f(1,2,3)
+            println(:ok)
         """
         )
-        assert(out == "1\t2\t3\n") { out }
-    }
-    @Test
-    fun nn_04_dots_gc() {
-        val out = test(
-            """
-            var f = func (...) {
-                println(...)
-            }
-            f(1,2,3)
-            println(`:number CEU_GC.free`)
-        """
-        )
-        assert(out == "1\t2\t3\n1\n") { out }
-    }
-    @Test
-    fun nn_05_dots() {
-        val out = test(
-            """
-            var f = func (...) {
-                println(...)
-            }
-            f([1,2,3])
-        """
-        )
-        assert(out == "[1,2,3]\n") { out }
-    }
-    @Test
-    fun nn_06_dots_tup() {
-        val out = test(
-            """
-            var f = func (x, ...) {
-                var y = ...
-                println(#..., y, ...)  ;; empty ... is not put into args
-            }
-            f(1)
-        """
-        )
-        assert(out == "0\t[]\n") { out }
-    }
-    @Test
-    fun nn_06_dots_tup_xx() {
-        val out = test(
-            """
-            var f = func (x, ...) {
-                println(1, ...)
-            }
-            f(nil)
-        """
-        )
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun nn_07_dots_main() {
-        val out = test(
-            """
-            println(...)
-        """
-        )
-        assert(out == "./out.exe\n") { out }
-    }
-    @Test
-    fun nn_08_dots_set() {
-        val out = test(
-            """
-            var f = func (...) {
-                set ... = 1
-                ...
-            }
-            println(f(1,2,3))
-        """
-        )
-        //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 3, col 21) : set error : unexpected ...\n") { out }
+        assert(out == ":ok\n") { out }
     }
 
     // LOOP
 
+    @Test
+    fun oo_00_loop() {
+        val out = test("""
+            loop {
+                if true {
+                    break(nil)
+                } else { nil }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
     @Test
     fun TODO_oo_01_loop_err() {
         val out = test("""
@@ -3189,23 +3221,27 @@ class Exec_01 {
     fun oo_01y_loop_err() {
         val out = test("""
             loop {
+                break(nil)
                 do {
-                    skip if true
+                    skip
                 }
             }
             println(:out)
         """)
-        assert(out == "anon : (lin 4, col 21) : skip error : expected immediate parent loop\n") { out }
+        assert(out == ":out\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : skip error : expected immediate parent loop\n") { out }
     }
     @Test
     fun oo_01z_loop_err() {
         val out = test("""
             var ok = false
             loop {
-                break if ok
+                if ok {
+                    break(nil)
+                } else { nil }
                 set ok = true
-                do []
-                skip if true
+                ;;;do;;; []
+                skip ;;if true
             }
             println(:out)
         """)
@@ -3218,7 +3254,9 @@ class Exec_01 {
             do {
                 loop {
                     println(:in)
-                    break if true
+                    if true {
+                        break(nil)
+                    } else {nil}
                 }
             }
             println(:out)
@@ -3233,8 +3271,12 @@ class Exec_01 {
             do {
                 loop {
                     println(:in)
-                    skip if false
-                    break if true
+                    if false {
+                        skip
+                    } else {nil}
+                    if true {
+                        break(nil)
+                    } else {nil}
                 }
             }
             println(:out)
@@ -3249,7 +3291,9 @@ class Exec_01 {
             var x
             set x = false
             loop {
-                break if x
+                if x {
+                    break(nil)
+                } else {nil}
                 set x = true
             }
             println(x)
@@ -3273,7 +3317,9 @@ class Exec_01 {
                 val it = [f, 0]
                 var i = it[0](it)
                 loop {
-                    break if (i == nil)
+                    if (i == nil) {
+                        break(nil)
+                    } else {nil}
                     println(i)
                     set i = it[0](it)
                 }
@@ -3300,7 +3346,11 @@ class Exec_01 {
     fun oo_06_loop() {
         val out = test(
             """
-            val v = loop {break if (10)}
+            val v = loop {
+                if (10) {
+                    break()
+                } else {nil}
+            }
             println(v)
         """
         )
@@ -3311,10 +3361,14 @@ class Exec_01 {
         val out = test(
             """
             val v1 = loop {
-                break if (10)
+                if (10) {
+                    break()
+                } else {nil}
             }
             val v2 = loop {
-                break(nil) if true
+                if true {
+                    break(nil)
+                } else {nil}
             }
             println(v1, v2)
         """
@@ -3325,7 +3379,11 @@ class Exec_01 {
     fun oo_08_loop() {
         val out = test("""
             val x = 10
-            println(loop { break if (x) })
+            println(loop {
+                if (x) {
+                    break()
+                } else {nil}
+            })
         """)
         assert(out == "10\n") { out }
     }
@@ -3334,11 +3392,12 @@ class Exec_01 {
         val out = test("""
             loop {
                 func () {
-                    break if true
+                    break (nil)
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
+        assert(out == "anon : (lin 4, col 21) : break error : expected parent loop\n") { out }
     }
     @Test
     fun TODO_oo_10_loop() {
@@ -3358,7 +3417,9 @@ class Exec_01 {
         val out = test("""
             loop {
                 val t = []
-                break if true
+                if true {
+                    break (nil)
+                } else {nil}
             }
             println(:ok)
         """)
@@ -3380,7 +3441,9 @@ class Exec_01 {
                 val it = [f, 0]
                 var i = it[0](it)
                 loop {
-                    break if i == nil
+                    if i == nil {
+                        break (nil)
+                    } else {nil}
                     println(i)
                     set i = it[0](it)
                 }
@@ -3396,9 +3459,11 @@ class Exec_01 {
             loop {
                 set i = i + 1
                 println(i)
-                skip if i /= 2
+                if i /= 2 {
+                    skip
+                } else {nil}
                 println(i)
-                break if true
+                break()
             }
             println(i)
         """)
@@ -3409,7 +3474,9 @@ class Exec_01 {
         val out = test("""
             loop {
                 do { nil }
-                break if true
+                if true {
+                    break (nil)
+                } else {nil}
             }
             println(:ok)
         """)
@@ -3421,11 +3488,24 @@ class Exec_01 {
             loop {
                 do { nil }
                 val e = nil
-                break if true
+                if true {
+                    break (nil)
+                } else {nil}
             }
             println(:ok)
         """)
         assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun oo_16_until() {
+        val out = test("""
+            println(loop {
+                if 10 {
+                    break ()
+                } else {nil}
+            })
+        """)
+        assert(out == "10\n") { out }
     }
 
     // NATIVE
@@ -3625,7 +3705,7 @@ class Exec_01 {
                 println(v)
                 v
             }
-            do f
+            ;;;do;;; f
             var f' = `:ceu ${D}f`
             println(f'(10))
         """
@@ -3694,11 +3774,11 @@ class Exec_01 {
         assert(out == "10\n") { out }
     }
     @Test
-    fun on_20_nat_error() {
+    fun TODO_on_20_nat_error() {
         val out = test("""
-            `ceu_error_s(X->S, "C error");`
+            `CEU_ERROR_CHK_PTR(continue, "C error");`
         """)
-        assert(out == " |  anon : (lin 2, col 13) : ```ceu_error_s(X->S, 'C error');```\n" +
+        assert(out == " |  anon : (lin 2, col 13) : ```ceu_error_s(X->S, .C error.);```\n" +
                 " v  error : C error\n") { out }
     }
 
@@ -3736,7 +3816,6 @@ class Exec_01 {
     }
     @Test
     fun op_arithX() {
-        STACK = 64
         val out = test("""
             println(((10 + -20)*2)/5)
         """, true
@@ -3884,7 +3963,6 @@ class Exec_01 {
 
     @Test
     fun qq_01_tostring() {
-        STACK = 128
         val out = test("""
             `static char x[] = "abc";`
             println(to-string(`:pointer x`))
@@ -3894,7 +3972,6 @@ class Exec_01 {
     }
     @Test
     fun tostring1() {
-        STACK = 128
         val out = test(
             """
             var s
@@ -3917,7 +3994,6 @@ class Exec_01 {
     }
     @Test
     fun tonumber_tostring3() {
-        STACK = 128
         val out = test(
             """
             var s
@@ -3931,7 +4007,7 @@ class Exec_01 {
     fun ff_01_string_to_tag() {
         val out = test(
             """
-            do :xyz
+            ;;;do;;; :xyz
             println(to-tag-string(#[':','x']))
             println(to-tag(#[':','x','y','z']))
             println(to-tag-string(#['x','y','z']))
@@ -3984,7 +4060,7 @@ class Exec_01 {
     @Test
     fun ff_06_string_to_tag() {
         val out = test("""
-            do :xyz
+            ;;;do;;; :xyz
             println(to-tag-string(":x"))
             println(to-tag-string(":xyz"))
             println(to-tag-string("xyz"))
@@ -4039,7 +4115,7 @@ class Exec_01 {
     // TAGS
 
     @Test
-    fun tags1() {
+    fun gg_01_tags() {
         val out = test(
             """
             println(:xxx)
@@ -4052,7 +4128,7 @@ class Exec_01 {
         assert(out == ":xxx\nfalse\ntrue\ntrue\nfalse\n") { out }
     }
     @Test
-    fun tags2() {
+    fun gg_02_tags() {
         val out = test(
             """
             func () {
@@ -4066,7 +4142,7 @@ class Exec_01 {
         assert(out == ":xxx\n:xxx\n") { out }
     }
     @Test
-    fun tags3() {
+    fun gg_03_tags() {
         val out = test(
             """
             func () {
@@ -4080,7 +4156,7 @@ class Exec_01 {
         assert(out == "anon : (lin 3, col 25) : tag error : parent tag :Xxx is not declared\n") { out }
     }
     @Test
-    fun tags3a() {
+    fun gg_04_tags() {
         val out = test(
             """
             func () {
@@ -4094,7 +4170,7 @@ class Exec_01 {
         assert(out == ":Xxx\n:1\n") { out }
     }
     @Test
-    fun TODO_tags4_err() {
+    fun TODO_gg_05_tags_err() {
         val out = test(
             """
             println(tag())
@@ -4103,7 +4179,7 @@ class Exec_01 {
         assert(out.contains("ceu_tag_f: Assertion `X->args==1 || X->args==2' failed")) { out }
     }
     @Test
-    fun tags4() {
+    fun gg_06_tags() {
         val out = test(
             """
             println(tag([]))
@@ -4113,7 +4189,7 @@ class Exec_01 {
         //assert(out.contains("[]\n")) { out }
     }
     @Test
-    fun tags5() {
+    fun gg_07_tags() {
         val out = test(
             """
             println(tag(:2,1))   ;; OK (was TODO: error message)
@@ -4123,7 +4199,7 @@ class Exec_01 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun tags6_err() {
+    fun gg_08_tags_err() {
         val out = test(
             """
             println(tag(tag(2,[])))
@@ -4133,7 +4209,7 @@ class Exec_01 {
         //assert(out.contains("Assertion `tag.type == CEU_VALUE_TAG'")) { out }
     }
     @Test
-    fun tags7_err() {
+    fun gg_09_tags_err() {
         val out = test("""
             println(tag(:x,[]))
             println(tag(1,[]))
@@ -4142,7 +4218,7 @@ class Exec_01 {
         //assert(out.contains("Assertion `bool.type == CEU_VALUE_BOOL' failed")) { out }
     }
     @Test
-    fun tags8() {
+    fun gg_10_tags() {
         val out = test(
             """
             var t
@@ -4160,7 +4236,7 @@ class Exec_01 {
         assert(out == ":x []\t:x []\ttrue\n[]\t[]\ttrue\n") { out }
     }
     @Test
-    fun tags8x() {
+    fun gg_11_tags() {
         val out = test(
             """
             val t = []
@@ -4172,7 +4248,7 @@ class Exec_01 {
         assert(out == ":x []\t:x []\ttrue\ttrue\n") { out }
     }
     @Test
-    fun tags9() {
+    fun gg_12_tags() {
         val out = test(
             """
             var t
@@ -4188,7 +4264,7 @@ class Exec_01 {
         assert(out == "true\ntrue\nfalse\n") { out }
     }
     @Test
-    fun tags10() {
+    fun gg_13_tags() {
         val out = test(
             """
             println(:x-a-x, :i.j.a)
@@ -4197,7 +4273,7 @@ class Exec_01 {
         assert(out == "anon : (lin 2, col 29) : tag error : parent tag :i.j is not declared\n") { out }
     }
     @Test
-    fun tags10a() {
+    fun gg_14_tags() {
         val out = test(
             """
             println(:x-a-x, :i-j-a)
@@ -4206,7 +4282,7 @@ class Exec_01 {
         assert(out == ":x-a-x\t:i-j-a\n") { out }
     }
     @Test
-    fun tags11() {
+    fun gg_15_tags() {
         val out = test(
             """
             var t = tag(:T,   [])
@@ -4216,22 +4292,22 @@ class Exec_01 {
             println(sup?(:T,tag(s)), sup?(:T.S,tag(s)))
         """, true
         )
-        assert(out == "16\t272\ntrue\tfalse\ntrue\ttrue\n") { out }
+        assert(out == "15\t271\ntrue\tfalse\ntrue\ttrue\n") { out }
     }
     @Test
-    fun tags12() {
+    fun gg_16_tags() {
         val out = test(
             """
-            do :A
-            do :A.I
-            do :A.I.X
-            do :A.I.Y
-            do :A.J
-            do :A.J.X
-            do :B
-            do :B.I
-            do :B.I.X
-            do :B.I.X.a
+            ;;;do;;; :A
+            ;;;do;;; :A.I
+            ;;;do;;; :A.I.X
+            ;;;do;;; :A.I.Y
+            ;;;do;;; :A.J
+            ;;;do;;; :A.J.X
+            ;;;do;;; :B
+            ;;;do;;; :B.I
+            ;;;do;;; :B.I.X
+            ;;;do;;; :B.I.X.a
             println(sup?(:A, :A.I))
             println(sup?(:A, :A.I.X))
             println(sup?(:A.I.X, :A.I.Y))
@@ -4243,7 +4319,7 @@ class Exec_01 {
         assert(out == "true\ntrue\nfalse\nfalse\nfalse\ntrue\n") { out }
     }
     @Test
-    fun tags13() {
+    fun gg_17_tags() {
         DEBUG = true
         val out = test(
             """
@@ -4263,7 +4339,7 @@ class Exec_01 {
         assert(out == ":Z\n0\n") { out }
     }
     @Test
-    fun tags14() {
+    fun gg_18_tags() {
         val out = test("""
             var t = []
             println(tag(:X, t))
@@ -4277,19 +4353,19 @@ class Exec_01 {
     fun enum01() {
         val out = test(
             """
-            do :antes
+            ;;;do;;; :antes
             enum {
                 :x = `1000`,
                 :y, :z,
                 :a = `10`,
                 :b, :c
             }
-            do :meio
+            ;;;do;;; :meio
             enum {
                 :i = `100`,
                 :j,
             }
-            do :depois
+            ;;;do;;; :depois
             println (
                 to-number(:antes),
                 to-number(:x),
@@ -4305,7 +4381,7 @@ class Exec_01 {
             )
         """, true
         )
-        assert(out == "16\t1000\t1001\t1002\t10\t11\t12\t17\t100\t101\t18\n") { out }
+        assert(out == "15\t1000\t1001\t1002\t10\t11\t12\t16\t100\t101\t17\n") { out }
     }
     @Test
     fun enum02() {
@@ -4331,6 +4407,16 @@ class Exec_01 {
         """
         )
         assert(out == "anon : (lin 3, col 17) : enum error : enum tag cannot contain '.'\n") { out }
+    }
+    @Test
+    fun enum04() {
+        val out = test(
+            """
+            enum { :x, :y }
+            println(:ok)
+        """
+        )
+        assert(out == ":ok\n") { out }
     }
 
     // CLOSURE / ESCAPE / FUNC / UPVALS
@@ -4636,7 +4722,7 @@ class Exec_01 {
             """
             do {
                 val t = []
-                [t]
+                ;;;do;;; [t]
             }
             println(:ok)
         """
@@ -4802,29 +4888,25 @@ class Exec_01 {
     //  MEM-GC-REF-COUNT
 
     @Test
-    fun gc0() {
+    fun gc_01() {
         DEBUG = true
         val out = test(
             """
             do {
                 val xxx = []    ;; gc'd by block
-                nil
+                ;;nil
             }
             `ceu_dump_gc();`
             ;;println(`:number CEU_GC.free`)
         """
         )
-        assert(out == ">>> GC: 18\n" +
-                "    alloc = 18\n" +
-                "    free  = 0\n"
+        assert(out == ">>> GC: 2\n" +
+                "    alloc = 3\n" +
+                "    free  = 1\n"
         ) { out }
-        //assert(out == ">>> GC: 17\n" +
-        //        "    alloc = 18\n" +
-        //        "    free  = 1\n"
-        //) { out }
     }
     @Test
-    fun gc1() {
+    fun gc_01x() {
         DEBUG = true
         val out = test(
             """
@@ -4835,30 +4917,30 @@ class Exec_01 {
         """
         )
         //assert(out == "1\n") { out }
-        assert(out == ">>> GC: 18\n" +
-                "    alloc = 19\n" +
+        assert(out == ">>> GC: 3\n" +
+                "    alloc = 4\n" +
                 "    free  = 1\n") { out }
     }
     @Test
-    fun gc2() {
+    fun gc_02() {
         DEBUG = true
         val out = test(
             """
-            do []  ;; ;;;not;;; checked
-            do []  ;; ;;;not;;; checked
-            do nil
+            ;;;do;;; []  ;; ;;;not;;; checked
+            ;;;do;;; []  ;; ;;;not;;; checked
+            ;;;do;;; nil
             `ceu_dump_gc();`
             ;;println(`:number CEU_GC.free`)
         """
         )
         //assert(out == "2\n") { out }
         //assert(out == "0\n") { out }
-        assert(out == ">>> GC: 17\n" +
-                "    alloc = 19\n" +
+        assert(out == ">>> GC: 2\n" +
+                "    alloc = 4\n" +
                 "    free  = 2\n") { out }
     }
     @Test
-    fun gc3_cycle() {
+    fun gc_03_cycle() {
         DEBUG = true
         val out = test(
             """
@@ -4872,12 +4954,12 @@ class Exec_01 {
         """
         )
         //assert(out == "0\n") { out }
-        assert(out == ">>> GC: 19\n" +
-                "    alloc = 19\n" +
+        assert(out == ">>> GC: 4\n" +
+                "    alloc = 4\n" +
                 "    free  = 0\n") { out }
     }
     @Test
-    fun gc4() {
+    fun gc_04() {
         DEBUG = true
         val out = test(
             """
@@ -4892,7 +4974,7 @@ class Exec_01 {
         assert(out == "0\n2\n") { out }
     }
     @Test
-    fun gc5() {
+    fun gc_05() {
         DEBUG = true
         val out = test(
             """
@@ -4904,11 +4986,11 @@ class Exec_01 {
             println(`:number CEU_GC.free`)
         """
         )
-        //assert(out == "1\n") { out }
-        assert(out == "0\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "0\n") { out }
     }
     @Test
-    fun gc6() {
+    fun gc_06() {
         DEBUG = true
         val out = test(
             """
@@ -4920,7 +5002,7 @@ class Exec_01 {
         assert(out == "3\n") { out }
     }
     @Test
-    fun gc7() {
+    fun gc_07() {
         DEBUG = true
         val out = test(
             """
@@ -4928,7 +5010,7 @@ class Exec_01 {
                 v
             }
             #( #[ f([1]) ] )
-            do nil
+            ;;;do;;; nil
             println(`:number CEU_GC.free`)
         """
         )
@@ -4936,12 +5018,12 @@ class Exec_01 {
         //assert(out == "0\n") { out }
     }
     @Test
-    fun gc7x() {
+    fun gc_07x() {
         DEBUG = true
         val out = test(
             """
-            do #[ [1] ]
-            do nil
+            ;;;do;;; #[ [1] ]
+            ;;;do;;; nil
             println(`:number CEU_GC.free`)
         """
         )
@@ -4949,7 +5031,7 @@ class Exec_01 {
         //assert(out == "0\n") { out }
     }
     @Test
-    fun gc7y() {
+    fun gc_07y() {
         DEBUG = true
         val out = test(
             """
@@ -4957,14 +5039,14 @@ class Exec_01 {
                 [2]
             }
             f([1])
-            do nil
+            ;;;do;;; nil
             println(`:number CEU_GC.free`)
         """
         )
         assert(out == "2\n") { out }
     }
     @Test
-    fun gc8() {
+    fun gc_08() {
         DEBUG = true
         val out = test(
             """
@@ -4978,11 +5060,11 @@ class Exec_01 {
             println(`:number CEU_GC.free`, `:number CEU_GC.free`)
         """
         )
-        //assert(out == "0\t0\n1\t1\n") { out }
-        assert(out == "0\t0\n0\t0\n") { out }
+        assert(out == "0\t0\n1\t1\n") { out }
+        //assert(out == "0\t0\n0\t0\n") { out }
     }
     @Test
-    fun gc9_err() {
+    fun gc_09_err() {
         val out = test(
             """
             var out
@@ -4998,24 +5080,25 @@ class Exec_01 {
         assert(out == "[1,2,3]\n") { out }
     }
     @Test
-    fun gc10() {
+    fun gc_10() {
         val out = test(
             """
             do {
                 do {
                     var v = []
-                    ;;;drop;;;(v)
+                    ;;;do;;; ;;;drop;;;(v)
                 }
                 println(`:number CEU_GC.free`)
             }
             println(`:number CEU_GC.free`)
         """, true
         )
+        assert(out == "0\n1\n") { out }
         //assert(out == "1\n1\n") { out }
-        assert(out == "0\n0\n") { out }
+        //assert(out == "0\n0\n") { out }
     }
     @Test
-    fun gc11() {
+    fun gc_11() {
         val out = test(
             """
             var f = func (v) {
@@ -5027,11 +5110,11 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 7, col 21) : f([10])\nanon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
-        assert(out == "1\n") { out }
-        //assert(out == "0\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "0\n") { out }
     }
     @Test
-    fun gc12() {
+    fun gc_12() {
         val out = test(
             """
             println([])
@@ -5042,7 +5125,7 @@ class Exec_01 {
         assert(out == "[]\n1\n") { out }
     }
     @Test
-    fun gc15_arg() {
+    fun gc_15_arg() {
         val out = test(
             """
             var f = func (v) {
@@ -5055,26 +5138,83 @@ class Exec_01 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun gc16_grow() {
+    fun gc_16_grow() {
         DEBUG = true
         val out = test("""
             val t = []
             do {
                 val x = [t]
-                nil
+                ;;nil
             }
             do {
                 val x = [t]
-                nil
+                ;;nil
             }
             do {
                 val x = [t]
-                nil
+                ;;nil
             }
             dump(t)
         """)
-        //assert(out.contains("refs  = 2")) { out }
-        assert(out.contains("refs  = 3")) { out }
+        assert(out.contains("refs  = 2")) { out }
+        //assert(out.contains("refs  = 3")) { out }
+    }
+    @Test
+    fun gc_17_pool() {
+        DEBUG = true
+        val out = test("""
+            do {
+                var t1 = []
+                do {
+                    val t2 = t1
+                    set t1 = nil
+                }
+                do {
+                    ;;val t3 = []
+                    println(`:number CEU_GC.free`)
+                }
+            }
+        """)
+        //assert(out == "0\n") { out }
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun gc_18_pool() {
+        DEBUG = true
+        val out = test("""
+            do {
+                var t1 = []
+                do {
+                    val t2 = t1
+                    set t1 = nil
+                }
+                do {
+                    val t3 = []
+                    println(`:number CEU_GC.free`)
+                }
+            }
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun gc_19_pool() {
+        DEBUG = true
+        val out = test("""
+            do {
+                var t1 = []
+                var ok = false
+                loop {
+                    val t2 = t1
+                    set t1 = nil
+                    if ok {
+                        break(nil)
+                    } else { nil }
+                    set ok = true
+                }
+                println(`:number CEU_GC.free`)
+            }
+        """)
+        assert(out == "1\n") { out }
     }
 
     // MISC
@@ -5125,7 +5265,7 @@ class Exec_01 {
             data :T = []
             var t :T
             println(t.x)
-        """, true
+        """
         )
         assert(out == "anon : (lin 4, col 23) : index error : undeclared data field :x\n") { out }
     }
@@ -5370,12 +5510,29 @@ class Exec_01 {
         )
         assert(out == "10\n") { out }
     }
+    @Test
+    fun pp_21_tplate_question() {
+        val out = test("""
+            data :T = [x?]
+            val t :T = [10]
+            println(t.x?, :x?)
+        """)
+        assert(out == "10\t:x?\n") { out }
+    }
+    @Test
+    fun pp_22_tplate_question() {
+        val out = test("""
+            data :T = [set]
+            val t :T = [10]
+            println(t.set, :set)
+        """)
+        assert(out == "10\t:set\n") { out }
+    }
 
     // COPY / tuple
 
     @Test
     fun qq_01_copy() {
-        STACK = 128
         val out = test("""
             println(copy(10), copy([]))
         """, true)
@@ -5383,7 +5540,6 @@ class Exec_01 {
     }
     @Test
     fun qq_02_copy() {
-        STACK = 128
         val out = test("""
             val t = [1,2,3]
             val u = copy(t)
@@ -5579,7 +5735,7 @@ class Exec_01 {
     // OPTIMIZATION / CODE
 
     @Test
-    fun ss_01_code() {
+    fun ss_01_code_unused() {
         val out = test("""
             var f = func () {
                 nil
@@ -5587,31 +5743,125 @@ class Exec_01 {
             val g = func () {
                 f()
             }
-            val h = func :rec () {
+            val h = func () {
                 h()
             }
             val i = func () {
                 42
             }
-            println(`:ceu ${D}f`)
             println(`:ceu ${D}g`)
             println(`:ceu ${D}h`)
             println(i())
+            println(`:ceu ${D}f`)
         """)
-        assert(out == "nil\nnil\nnil\n42\n") { out }
+        assert(out.contains("nil\nnil\n42\nfunc: 0x")) { out }
+    }
+
+    // GROUP
+
+    @Test
+    fun tt_01_group() {
+        val out = test("""
+            group ;;;[a];;; {
+                val a = 10
+            }
+            group ;;;[x];;; {
+                var x
+                set x = a
+            }
+            print(x)
+        """)
+        assert(out == "10") { out }
+    }
+    @Test
+    fun tt_02_export_err() {
+        val out = test("""
+            ;;export [] {
+            do {
+                var a       ;; invisible
+                set a = 10
+            }
+            var x
+            set x = a
+            print(x)
+        """)
+        assert(out == "anon : (lin 8, col 21) : access error : variable \"a\" is not declared\n") { out }
+    }
+    @Test
+    fun tt_03_export() {
+        val out = test("""
+            val x = group ;;;[];;; {
+                val a = []
+                a
+            }
+            print(x)
+        """)
+        assert(out == "[]") { out }
+    }
+    @Test
+    fun tt_04_export() {
+        val out = test("""
+            group ;;;[aaa];;; {
+                val aaa = 10
+            }
+            group ;;;[bbb];;; {
+                val bbb = 20
+            }
+            println(aaa,bbb)
+        """)
+        assert(out == "10\t20\n") { out }
+    }
+    @Test
+    fun tt_05_export() {
+        val out = test("""
+            group ;;;[f];;; {
+                val v = []
+                val f = func () {
+                    v
+                }
+                ;;println(v, f)
+            }
+            do {
+                val x = f
+                nil
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun tt_06_export() {
+        val out = test("""
+            do {
+                group ;;;[f];;; {
+                    val v = []
+                    val f = func () {
+                        v
+                    }
+                    ;;println(v, f)
+                }
+                do {
+                    val x = f
+                    nil
+                }
+                println(:ok)
+            }
+        """)
+        assert(out == ":ok\n") { out }
     }
 
     // ALL
 
     @Test
     fun zz_01_sum() {
-        STACK = 128
         val out = test("""
             var sum = func (n) {                                                            
                 var i = n                                                                   
                 var s = 0                                                                   
                 loop {                                                                      
-                    break(s) if i == 0
+                    if i == 0 {
+                        break(s)
+                    } else {nil}
                     set s = s + i                                                           
                     set i = i - 1                                                           
                 }                                                                           
@@ -5635,9 +5885,8 @@ class Exec_01 {
     }
     @Test
     fun zz_03_func_scope() {
-        STACK = 64
         val out = test("""
-            val f = func :rec (v) {
+            val f = func (v) {
                 if v == nil {
                     1
                 } else {
@@ -5651,7 +5900,6 @@ class Exec_01 {
     }
     @Test
     fun zz_04_arthur() {
-        STACK = 128
         val out = test("""
             val tree1 = @[
                 (:left, @[
@@ -5660,7 +5908,7 @@ class Exec_01 {
                 ]),
                 (:right, nil)
             ]
-            val itemCheck = func :rec (tree) {
+            val itemCheck = func (tree) {
                 if tree == nil {
                     1
                 }
@@ -5698,5 +5946,21 @@ class Exec_01 {
         //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
         assert(out == "[0]\n") { out }
+    }
+    @Test
+    fun zz_07_iter() {
+        val out = test("""
+            val a = 1
+            val b = 2
+            do {
+                val x = a
+                println(b)
+            }
+        """)
+        //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "2\n") { out }
     }
 }

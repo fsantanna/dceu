@@ -12,7 +12,7 @@ class Exec_04 {
 
     @Before
     fun init() {
-        DEBUG = false
+        //DEBUG = false
     }
 
     @Test
@@ -72,6 +72,17 @@ class Exec_04 {
         )
         assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro or task\n") { out }
     }
+    @Test
+    fun aa_06_innoc() {
+        val out = test("""
+            val T = task () {
+                :ok ;; innocuous
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : expression error : innocuous expression\n") { out }
+    }
 
     // SPAWN
 
@@ -98,7 +109,7 @@ class Exec_04 {
         """
         )
         assert(
-            out == " |  anon : (lin 4, col 13) : (resume (t)(nil))\n" +
+            out == " |  anon : (lin 4, col 13) : (resume (t)())\n" +
                     " v  resume error : expected yielded coro\n"
         ) { out }
     }
@@ -153,8 +164,8 @@ class Exec_04 {
         )
         //assert(out == ":1\n:2\n1\n") { out }
         //assert(out.contains("x-coro: 0x")) { out }
-        assert(out == " |  anon : (lin 8, col 21) : (resume (t)(nil))\n" +
-                " |  anon : (lin 3, col 17) : (spawn (coro () { yield(nil) })())\n" +
+        assert(out == " |  anon : (lin 8, col 21) : (resume (t)())\n" +
+                " |  anon : (lin 3, col 17) : (spawn (coro () { yield(nil); })())\n" +
                 " v  spawn error : expected task\n") { out }
     }
     @Test
@@ -223,7 +234,7 @@ class Exec_04 {
             println(5)
         """)
         //assert(out == "1\n2\n3\n4\n5\n") { out }
-        assert(out == " |  anon : (lin 13, col 22) : (spawn if true { t } else { nil }())\n" +
+        assert(out == " |  anon : (lin 13, col 22) : (spawn if true { t; } else { nil; }())\n" +
                 " v  spawn error : expected task\n") { out }
     }
     @Test
@@ -278,6 +289,22 @@ class Exec_04 {
         )
         assert(out.contains("anon : (lin 2, col 13) : delay error : expected enclosing task\n")) { out }
         //assert(out == ("anon : (lin 4, col 21) : access error : variable \"delay\" is not declared\n")) { out }
+    }
+    @Test
+    fun bj_02y_delay() {
+        val out = test(
+            """
+            spawn (task () {
+                yield(nil)
+                println(2)
+            }) ()
+            ;;println(:1)
+            broadcast(nil)
+            ;;println(:2)
+            println(:ok)
+        """
+        )
+        assert(out == "2\n:ok\n") { out }
     }
     @Test
     fun bj_02_delay() {
@@ -380,7 +407,9 @@ class Exec_04 {
             var i = 0
             loop {
                 broadcast(nil)
-                break if i == 254
+                if i == 254 {
+                    break()
+                } else {nil}
                 set i = i + 1
             }
             val t = spawn (task () {
@@ -416,7 +445,7 @@ class Exec_04 {
         val out = test("""
             spawn (task () {
                 val v = do {
-                    do 100
+                    ;;;do;;; 100
                     delay
                 }
                 println(v)
@@ -431,7 +460,7 @@ class Exec_04 {
             spawn (task () {
                 val v = do {
                     loop {
-                        (break (100) if true)
+                        (break (100) ;;;if true;;;)
                     }
                     delay
                 }
@@ -550,7 +579,7 @@ class Exec_04 {
             """
             val T = task (t1) {
                 val t2 = []
-                do [t1,[],t2]
+                ;;;do;;; [t1,[],t2]
                 yield(nil) ;;thus { it => nil }
             }
             do {
@@ -657,6 +686,7 @@ class Exec_04 {
         """
         )
         assert(out == "nil\n") { out }
+        //assert(out == "\n") { out }
         //assert(out == "true\n") { out }
     }
     @Test
@@ -1029,7 +1059,7 @@ class Exec_04 {
                             val x = it
                             println(:in, it)    ;; TODO: 10
                         }
-                        break if true
+                        break()
                    }     
                 val x
             }
@@ -1102,6 +1132,19 @@ class Exec_04 {
     @Test
     fun dd_18_xceu() {
         val out = test("""
+            spawn (task () {
+                spawn (task () {
+                    yield(nil)
+                }) ()
+                nil
+            }) ()
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun dd_19_xceu() {
+        val out = test("""
             spawn task () {
                 var evt1 = yield(nil)
                 val evtx = evt1
@@ -1158,6 +1201,7 @@ class Exec_04 {
         )
         //assert(out == "true\n") { out }
         assert(out == "nil\n") { out }
+        //assert(out == "\n") { out }
     }
     @Test
     fun de_04_bcast() {
@@ -1168,6 +1212,7 @@ class Exec_04 {
         )
         //assert(out == "true\n") { out }
         assert(out == "nil\n") { out }
+        //assert(out == "\n") { out }
     }
     @Test
     fun de_05_bcast() {
@@ -1177,12 +1222,32 @@ class Exec_04 {
             println(broadcast(1) in t)
         """
         )
+        //assert(out == "\n") { out }
         assert(out == "nil\n") { out }
         //assert(out == "true\n") { out }
         //assert(
         //    out == " |  anon : (lin 3, col 21) : broadcast'(t,1)\n" +
         //            " v  broadcast error : invalid target\n"
         //) { out }
+    }
+    @Test
+    fun de_06_bcast() {
+        val out = test(
+            """
+            val T = task () {
+                println(yield(nil))
+                nil
+            }
+            val t = spawn T()
+            broadcast ([])
+        """
+        )
+        //assert(out == "anon : (lin 16, col 13) : f()\n" +
+        //        "anon : (lin 14, col 17) : g()\n" +
+        //        "anon : (lin 12, col 21) : broadcast []\n" +
+        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == "[]\n") { out }
     }
 
     // BCAST / TARGETS
@@ -1490,8 +1555,8 @@ class Exec_04 {
         )
         //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
         //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic alien field\n:error\n") { out }
-        //assert(out == "2\n") { out }
-        assert(out == "3\n") { out }
+        assert(out == "2\n") { out }
+        //assert(out == "3\n") { out }
         //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
         //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -1539,8 +1604,8 @@ class Exec_04 {
             println(`:number CEU_GC.free`)
         """
         )
-        //assert(out == "1\n") { out }
-        assert(out == "0\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "0\n") { out }
         //assert(out == "anon : (lin 10, col 14) : broadcast []\n" +
         //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic alien\n:error\n") { out }
         //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
@@ -1556,7 +1621,9 @@ class Exec_04 {
             spawn task () {
                 var evt = yield(nil)
                 loop {
-                    break if evt[:type]==:x
+                    if evt[:type]==:x {
+                        break()
+                    } else {nil}
                     set evt = yield(nil)
                 }
                 println(99)
@@ -1704,13 +1771,58 @@ class Exec_04 {
         //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic alien field\n") { out }
     }
 
+    // BCAST / TARGETS
+
+    @Test
+    fun TODO_dh_01_multi() {
+        val out = test(
+            """
+            spawn (task () {
+                println(yield(nil))
+            }) ()
+            broadcast(10,20)
+        """
+        )
+        assert(out == ":ok\t10\n") { out }
+    }
+
     // THROW / CATCH
 
+    @Test
+    fun ee_00x_throw() {
+        val out = test(
+            """
+            catch (it|false) {
+                spawn (task () {
+                    error(:xxx)
+                })()
+            }
+            println(10)
+        """
+        )
+        assert(out == " |  anon : (lin 3, col 17) : (spawn (task () { error(:xxx); })())\n" +
+                " |  anon : (lin 4, col 21) : error(:xxx)\n" +
+                " v  error : :xxx\n") { out }
+    }
+    @Test
+    fun ee_00y_throw() {
+        val out = test(
+            """
+            catch (it|true) {
+                spawn (task () {
+                    error(:xxx)
+                })()
+            }
+            println(10)
+        """
+        )
+        assert(out == "10\n") { out }
+    }
     @Test
     fun ee_01_throw() {
         val out = test(
             """
-            catch (it, :xxx){
+            catch (it | :xxx){
                 spawn (task () {
                     yield(nil) ;;thus { it => nil }
                 })()
@@ -1734,7 +1846,7 @@ class Exec_04 {
         """
         )
         assert(
-            out == " |  anon : (lin 2, col 13) : (spawn (task () { error(:err) })())\n" +
+            out == " |  anon : (lin 2, col 13) : (spawn (task () { error(:err); })())\n" +
                     " |  anon : (lin 3, col 17) : error(:err)\n" +
                     " v  error : :err\n"
         ) { out }
@@ -1815,7 +1927,7 @@ class Exec_04 {
         //        " |  anon : (lin 4, col 17) : error(:err)\n" +
         //        " v  error : :err\n") { out }
         assert(
-            out == " |  anon : (lin 6, col 13) : (spawn (task () { nil })())\n" +
+            out == " |  anon : (lin 6, col 13) : (spawn (task () { nil; })())\n" +
                     " |  anon : (lin 4, col 17) : error(:err)\n" +
                     " v  error : :err\n"
         ) { out }
@@ -1905,7 +2017,7 @@ class Exec_04 {
             }
             spawn T(10)
             spawn T(11)
-            catch (it, true) {
+            catch (it| true) {
                 ;;func () {
                     broadcast ([])
                 ;;}()
@@ -1978,7 +2090,7 @@ class Exec_04 {
                 println(e)                
             }
             spawn T(10)
-            catch (it, (do { println(it) ; true }) ) {
+            catch (it| (do { println(it) ; true }) ) {
                 ;;func () {
                     broadcast ([])
                 ;;}()
@@ -2017,7 +2129,7 @@ class Exec_04 {
         val out = test(
             """
             spawn (task () {
-                catch (it, it==:e1 ){  ;; catch 1st (yes catch)
+                catch (it| it==:e1 ){  ;; catch 1st (yes catch)
                     spawn (task () {
                         yield(nil) ;;thus { it => nil }
                         println(222)
@@ -2027,7 +2139,7 @@ class Exec_04 {
                 }
                 println(333)
             }) ()
-            catch (it, true) {   ;; catch 2nd (no catch)
+            catch (it| true) {   ;; catch 2nd (no catch)
                 println(111)
                 broadcast(nil)
                 println(444)
@@ -2049,12 +2161,12 @@ class Exec_04 {
         val out = test(
             """
             spawn (task () {
-                catch (it, false) {
+                catch (it| false) {
                     yield(nil) ;;thus { it => nil }
                 }
                 println(999)
             }) ()
-            catch (it, true) {
+            catch (it| true) {
                 error(nil)
             }
             println(:ok)
@@ -2274,7 +2386,7 @@ class Exec_04 {
             println(:1)
             var co1 = spawn (tk) (10)
             var co2 = spawn (tk) (10)
-            val e = catch (it,true) {
+            val e = catch (it|true) {
                 ;;func () {
                     println(:2)
                     broadcast ([20])
@@ -2575,11 +2687,14 @@ class Exec_04 {
             """
             var ang = 0
             loop {
+                break() ;; if true
                 ang
             }
+            println(:ok)
         """
         )
-        assert(out == "anon : (lin 4, col 17) : loop error : innocuous last expression\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : loop error : innocuous last expression\n") { out }
     }
 
     @Test
@@ -2796,6 +2911,7 @@ class Exec_04 {
             """
             val t = task () {
                 set pub = []
+                pub
             }
             val a = spawn (t) ()
             val x = a.pub
@@ -2845,6 +2961,7 @@ class Exec_04 {
                 do {
                     val x = []
                     set pub = x
+                    pub
                 }
             }
             val t = spawn T()
@@ -2966,7 +3083,7 @@ class Exec_04 {
         """
         )
         assert(
-            out == " |  anon : (lin 2, col 13) : (spawn (task () { (set pub[:x] = 10) nil })()...)\n" +
+            out == " |  anon : (lin 2, col 13) : (spawn (task () { (set pub[:x] = 10); nil;...\n" +
                     " |  anon : (lin 3, col 21) : pub[:x]\n" +
                     " v  index error : expected collection\n"
         ) { out }
@@ -3065,7 +3182,7 @@ class Exec_04 {
         val out = test("""
             var t
             set t = task () {
-                set pub = 10
+                ;;;set pub =;;; 10
             }
             var a = spawn t()
             println(a.pub + a.pub)
@@ -3091,7 +3208,7 @@ class Exec_04 {
         val out = test("""
             var T
             set T = task () {
-                do pub ;; useless test
+                ;;;do;;; pub ;; useless test
                 nil
             }
             spawn T()
@@ -3495,6 +3612,7 @@ class Exec_04 {
             var t
             set t = task () {
                 set pub = []
+                pub
             }
             var a = spawn (t) ()
             var x
@@ -3514,6 +3632,7 @@ class Exec_04 {
             var t
             set t = task () {
                 set ;;;task.;;;pub = @[]
+                pub
             }
             var a = spawn (t) ()
             var x
@@ -3531,6 +3650,7 @@ class Exec_04 {
             var t
             set t = task () {
                 set ;;;task.;;;pub = #[]
+                pub
             }
             var a = spawn (t) ()
             var x
@@ -3549,6 +3669,7 @@ class Exec_04 {
                 set pub = func () {
                     10
                 }
+                pub
             }
             var T
             set T = task (u) {
@@ -3679,6 +3800,7 @@ class Exec_04 {
             println(:ok)
         """
         )
+        //assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing spawn\n") { out }
         assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing task\n") { out }
     }
     @Test
@@ -3981,7 +4103,7 @@ class Exec_04 {
     fun lm_03_throw_fake() {
         val out = test("""
             spawn (task () {
-                catch (err,err==:err) {
+                catch (err|err==:err) {
                     spawn (task :nested () {
                         error(:err)
                     }) ()
@@ -3995,7 +4117,7 @@ class Exec_04 {
     fun lm_04_throw_fake() {
         val out = test("""
             spawn task () { 
-                catch (err,{{==}}(err,:err)) {
+                catch (err|{{==}}(err,:err)) {
                     spawn (task :nested () {
                         yield(nil)
                         error(:err)
@@ -4011,6 +4133,52 @@ class Exec_04 {
 
     // ABORTION
 
+    @Test
+    fun mm_00a_abortion() {
+        val out = test(
+            """
+            spawn (task () {
+                spawn (task () {
+                    nil
+                } )()
+            } )()
+            println(:ok)
+       """
+        )
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun mm_00b_abortion() {
+        val out = test(
+            """
+            spawn (task () {
+                spawn (task () {
+                    defer {
+                        println(:defer)
+                    }
+                } )()
+            } )()
+       """
+        )
+        assert(out == ":defer\n") { out }
+    }
+    @Test
+    fun mm_00c_abortion() {
+        val out = test(
+            """
+            spawn (task () {
+                spawn (task () {
+                    defer {
+                        println(:defer)
+                    }
+                    yield(nil)
+                } )()
+                nil
+            } )()
+       """
+        )
+        assert(out == ":defer\n") { out }
+    }
     @Test
     fun mm_01_abortion() {
         val out = test(
@@ -4042,7 +4210,9 @@ class Exec_04 {
             println(:1)
             var x = 0
             loop {
-                break if x == 2
+                if x == 2 {
+                    break()
+                } else {nil}
                 set x = x + 1
                 println(:2)
                 spawn( task () {
@@ -4619,7 +4789,25 @@ class Exec_04 {
         )
         assert(out == ":1\n:2\n:3\n") { out }
     }
-
+    @Test
+    fun mp_04x_abort() {
+        val out = test(
+            """
+            spawn (task () {
+                spawn (task () {
+                    yield(nil)
+                    spawn (task () {
+                        broadcast(nil) in :global
+                    }) ()
+                }) ()
+                yield(nil)
+            }) ()
+            broadcast(nil) in :global
+            println(:ok)
+        """
+        )
+        assert(out == ":ok\n") { out }
+    }
     @Test
     fun mp_04_abort() {
         val out = test(
@@ -5091,7 +5279,7 @@ class Exec_04 {
             println(`:number CEU_GC.free`)
             """
         )
-        assert(out == "2\n") { out }
+        assert(out == "0\n") { out }
     }
 
     // DEPTH
@@ -5271,14 +5459,14 @@ class Exec_04 {
         val out = test(
             """
             spawn (task () {
-                catch (it , it==:e1) {
+                catch (it | it==:e1) {
                     error(:e1)
                 }
                 println(:e1)
                 yield(nil)
                 error(:e2)
             })()
-            catch (it, :e2) {
+            catch (it| :e2) {
                 broadcast(nil)
                 broadcast(nil)
                 println(99)
@@ -5294,7 +5482,7 @@ class Exec_04 {
             """
             var co
             set co = spawn (task () {
-                catch (it, it==:e1) {
+                catch (it| it==:e1) {
                     resume (coroutine (coro () {
                         ;;yield(nil) ;;thus { it => nil }
                         error(:e1)
@@ -5307,7 +5495,7 @@ class Exec_04 {
                 yield(nil) ;;thus { it => nil }
                 error(:e2)
             })()
-            catch (it , it==:e2 ) {
+            catch (it | it==:e2 ) {
                 broadcast(nil)
                 broadcast(nil)
                 println(99)
@@ -5318,11 +5506,27 @@ class Exec_04 {
         assert(out == ":e1\n:e2\n") { out }
     }
     @Test
+    fun pp_02x_throw() {
+        val out = test(
+            """
+            task () {
+                catch (it|nil) {
+                    loop {
+                        yield(nil)
+                    }
+                }
+            }
+            println(:ok)
+        """
+        )
+        assert(out == ":ok\n") { out }
+    }
+    @Test
     fun pp_03_throw() {
         val out = test(
             """
             val T = task () {
-                catch (it, it==:e1 ) {
+                catch (it| it==:e1 ) {
                     spawn( task () {
                         yield(nil) ;;thus { it => nil }
                         error(:e1)
@@ -5335,7 +5539,7 @@ class Exec_04 {
                 println(:no)
             }
             spawn (task () {
-                catch (it, :e2 ) {
+                catch (it| :e2 ) {
                     spawn T()
                     loop { yield(nil) } ;;thus { it => nil }
                 }
@@ -5343,7 +5547,7 @@ class Exec_04 {
                 error(:e3)
                 println(:no)
             }) ()
-            catch (it , :e3 ) {
+            catch (it | :e3 ) {
                 broadcast(nil)
                 println(:no)
             }
@@ -5370,7 +5574,7 @@ class Exec_04 {
     @Test
     fun pp_05_xceu() {
         val out = test("""
-            catch (_,true) {
+            catch (_|true) {
                 spawn task () {
                     error([tag(:x,[])])
                 }()
@@ -5384,7 +5588,7 @@ class Exec_04 {
     fun pp_06_xceu5() {
         val out = test("""
             spawn task () {
-                catch (err,err==:or) {
+                catch (err|err==:or) {
                     spawn task () {
                         yield(nil)
                         ;;println(:evt, evt)
@@ -5545,6 +5749,107 @@ class Exec_04 {
         assert(out == "1\n2\n3\n4\n") { out }
     }
 
+    // GROUP
+
+    @Test
+    fun qq_01_group() {
+        val out = test("""
+            var T
+            set T = task (v) {
+                println(v)
+            }
+            var t
+            set t = group ;;;[];;; {
+                var v
+                set v = 10
+                spawn T(v)  
+            }
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun qq_02_group_no_more_spawn_export() {
+        val out = test("""
+            group ;;;[T];;; {
+                var T
+                set T = task (v) {
+                    println(v)
+                }
+            }
+            group ;;;[t];;; {
+                var t
+                set t = spawn group ;;;[];;; {
+                    group ;;;[v];;; {
+                        var v
+                        set v = 10
+                    }
+                    T(v)
+                }
+            }
+            println(type(t))
+        """)
+        assert(out == "anon : (lin 17, col 13) : spawn error : expected call\n") { out }
+        //assert(out == "10\n:x-task\n") { out }
+        //assert(out == "anon : (lin 15, col 21) : call error : expected function\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun qq_02x_group_no_more_spawn_export() {
+        val out = test("""
+            spawn group {
+                nil
+            }
+        """)
+        assert(out == "anon : (lin 5, col 9) : spawn error : expected call\n") { out }
+        //assert(out == "10\n:x-task\n") { out }
+        //assert(out == "anon : (lin 15, col 21) : call error : expected function\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun qq_03_group() {
+        val out = test("""
+            var f
+            set f = func () {
+                nil
+            }
+            spawn task () ;;;:fake;;; {
+                group ;;;[];;; {
+                    f()
+                }
+            }()
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun qq_04_group() {
+        val out = test("""
+            group ;;;[f];;; {
+                var cur = nil
+                val f = func () {
+                    set cur = 65
+                    cur
+                }
+            }
+            val co = coroutine (coro () {
+                yield(nil)
+                loop {
+                    val v = f()
+                    yield(v)
+                }
+            })
+            resume co ()
+            loop {
+                var v = resume co()
+                println(v)
+                error(99)
+            }
+        """)
+        assert(out == "65\n" +
+                " |  anon : (lin 20, col 17) : error(99)\n" +
+                " v  error : 99\n") { out }
+    }
+
     // ORIGINAL
 
     @Test
@@ -5569,7 +5874,7 @@ class Exec_04 {
         """
         )
         assert(
-            out == " |  anon : (lin 2, col 13) : (spawn (func () { nil })())\n" +
+            out == " |  anon : (lin 2, col 13) : (spawn (func () { nil; })())\n" +
                     " v  spawn error : expected task\n"
         ) { out }
     }
@@ -5593,7 +5898,7 @@ class Exec_04 {
             }
             var co1 = spawn tk ()
             var co2 = spawn tk ()
-            catch (it, it==:1 ) {
+            catch (it| it==:1 ) {
                 ;;func () {
                     println(1)
                     broadcast(1)
@@ -6024,7 +6329,7 @@ class Exec_04 {
         val out = test(
             """
             println(1)
-            catch (it, it==:ok) {
+            catch (it| it==:ok) {
                 println(2)
                 spawn (task () {
                     println(3)
@@ -6087,7 +6392,9 @@ class Exec_04 {
             spawn (task () {
                 println(loop {
                     val t = [10]
-                    break if t[0]
+                    if t[0] {
+                        break ()
+                    } else {nil}
                     yield(nil) ;;thus { it => nil }
                 })
             }) ()
@@ -6157,19 +6464,25 @@ class Exec_04 {
                 loop {
                     var evt = yield(nil);
                     loop {
-                        break if evt==10
+                        if evt==10 {
+                            break ()
+                        } else {nil}
                         set evt = yield(nil)
                     }
                     println(:1)
                     var t = spawn task () {
                         var evt2 = yield(nil);
                         loop {
-                            break if evt2==10 
+                            if evt2==10 {
+                                break ()
+                            } else {nil}
                             set evt2 = yield(nil)
                         }
                     } ()
                     loop {
-                        break if status(t)==:terminated
+                        if status(t)==:terminated {
+                            break ()
+                        } else {nil}
                         set evt = yield(nil)
                         delay
                     }
@@ -6428,9 +6741,11 @@ class Exec_04 {
                 spawn (task () {
                     loop {
                         yield(nil)
-                        skip if (func () {
+                        if (func () {
                             true
-                        } ())
+                        } ()) {
+                            skip
+                        } else {nil}
                     }
                 }) ()
                 spawn (task () {
@@ -6468,7 +6783,7 @@ class Exec_04 {
                 }) ()
                 loop {
                     yield(nil)
-                    break if true
+                    break() ;; if true
                 }
             }) ()
             broadcast(nil)
@@ -6530,7 +6845,7 @@ class Exec_04 {
                 println(do {
                     loop {
                         yield(nil)
-                        break if true
+                        break() ;; if true
                     }
                     delay
                     nil

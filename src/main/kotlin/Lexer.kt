@@ -6,11 +6,16 @@ import java.io.Reader
 import java.io.StringReader
 import java.lang.Integer.max
 
-data class Lex(var file: String, var lin: Int, var col: Int, val reader: PushbackReader)
-data class Pos (val file: String, val lin: Int, val col: Int)
+data class Lex (
+    var file: String,
+    var lin: Int, var col: Int, var brks: Int,
+    var prv: Int, // previous col before \n to restore on unread
+    val reader: PushbackReader
+)
+data class Pos (val file: String, val lin: Int, val col: Int, val brks: Int)
 
 fun Lex.toPos (): Pos {
-    return Pos(this.file, this.lin, this.col)
+    return Pos(this.file, this.lin, this.col, this.brks)
 }
 
 fun FileX (path: String): File {
@@ -29,7 +34,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
             N = 1
         }
         for (inp in inps) {
-            stack.addFirst(Lex(inp.first.first, inp.first.second, inp.first.third, PushbackReader(inp.second,2)))
+            stack.addFirst(Lex(inp.first.first, inp.first.second, inp.first.third, 0, 0, PushbackReader(inp.second,2)))
         }
     }
 
@@ -42,10 +47,11 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
         val pos = stack.first()
         val n = pos.reader.read()
         val x = n.toChar()
-        if (x == '\n') {
-            pos.lin++; pos.col=1
-        } else if (!iseof(n)) {
-            pos.col++
+        pos.prv = pos.col
+        when {
+            (x == '\n') -> { pos.lin++; pos.col=1}
+            (x == ';')  -> { pos.col++ ; pos.brks++ }
+            !iseof(n)   -> pos.col++
         }
         return Pair(n,x)
     }
@@ -55,8 +61,9 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
         pos.reader.unread(n)
         when {
             iseof(n) -> {}
-            (x == '\n') -> { pos.lin--; pos.col=0 }
-            else -> pos.col = max(0,pos.col-1)    // TODO: should remeber col from previous line
+            (x == ';') -> pos.brks--
+            (x == '\n') -> { pos.lin--; pos.col=pos.prv }
+            else -> pos.col = pos.col-1
         }
     }
     fun read2Until (f: (x: Char)->Boolean): String? {
@@ -174,23 +181,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     }
                 }
                 (CEU>=99 && x=='\\') -> yield(Tk.Fix(x.toString(), pos))
-                (x in listOf('}','(',')','[',']',',','\$')) -> yield(Tk.Fix(x.toString(), pos))
-                (x == '.') -> {
-                    val (n1,x1) = read2()
-                    if (x1 == '.') {
-                        val (n2, x2) = read2()
-                        if (x2 == '.') {
-                            yield(Tk.Id("...", pos))
-                        } else {
-                            yield(Tk.Fix(".", pos))
-                            yield(Tk.Fix(".", pos))
-                            unread2(n2)
-                        }
-                    } else {
-                        yield(Tk.Fix(".", pos))
-                        unread2(n1)
-                    }
-                }
+                (x in listOf('}','(',')','[',']',',','\$','.')) -> yield(Tk.Fix(x.toString(), pos))
                 (x=='@' || x=='#') -> {
                     val (n1,x1) = read2()
                     when {
@@ -240,7 +231,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                 }
                 (x == ':') -> {
                     val tag = // no '_' b/c of C ids: X.Y -> X_Y
-                        x + read2While2 { a,b -> a.isLetterOrDigit() || ((a=='.' || a=='-') && b.isLetter()) }
+                        x + read2While2 { a,b -> a.isLetterOrDigit() || a in listOf('\'','?','!') || ((a=='.' || a=='-') && b.isLetter()) }
                     if (tag.length < 2) {
                         err(pos, "tag error : expected identifier")
                     }
@@ -250,7 +241,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     yield(Tk.Tag(tag, pos))
                 }
                 (x.isLetter() || x=='_') -> {
-                    val id = x + read2While2 { x,y -> x.isLetterOrDigit() || x in listOf('_','\'','?','!') || (x=='-' && y.isLetter()) }
+                    val id = x + read2While2 { a,b -> a.isLetterOrDigit() || a in listOf('_','\'','?','!') || (a=='-' && b.isLetter()) }
                     when {
                         XOPERATORS.contains(id) -> yield(Tk.Op(id, pos))
                         KEYWORDS.contains(id) -> yield(Tk.Fix(id, pos))
@@ -283,7 +274,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                                 err(stack.first().toPos(), "native error : expected \"$open\"")
                             }
                             (x2 == '`') -> {
-                                val xxx = stack.first().toPos().let { Pos(it.file,it.lin,it.col-1) }
+                                val xxx = stack.first().toPos().let { Pos(it.file,it.lin,it.col-1,it.brks) }
                                 val close = x2 + read2While('`')
                                 if (open == close) {
                                     break
@@ -298,7 +289,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     yield(Tk.Nat(nat, pos, tag))
                 }
                 (x == '^') -> {
-                    val (n2,x2) = read2()
+                    val (_,x2) = read2()
                     if (x2 != '[') {
                         err(pos, "token ^ error : expected \"^[\"")
                     }
@@ -368,7 +359,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                             if (!f.exists()) {
                                 err(pos, "token ^ error : file not found : $file")
                             }
-                            stack.addFirst(Lex(file, 1, 1, PushbackReader(StringReader(f.readText()), 2)))
+                            stack.addFirst(Lex(file, 1, 1, 0, 0, PushbackReader(StringReader(f.readText()), 2)))
                         }
 
                         (lin != null) -> stack.first().let {
@@ -398,15 +389,18 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     yield(Tk.Chr("'$c'", pos))
                 }
                 (x == '"') -> {
-                    var c = '"'
+                    var n = 0
                     val v = read2Until {
-                        val brk = (it=='"' && c!='\\')
-                        c = it
+                        val brk = (it=='"' && n%2==0)
+                        n = if (it == '\\') n+1 else 0
                         brk
+                    }
+                    if (v == null) {
+                        err(pos, "string error : unterminated \"")
                     }
                     yield(Tk.Fix("#[", pos))
                     var i = 0
-                    while (i < v!!.length) {
+                    while (i < v.length) {
                         if (i > 0) {
                             yield(Tk.Fix(",", pos))
                         }
@@ -425,7 +419,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     yield(Tk.Fix("]", pos))
                 }
                 else -> {
-                    TODO("$x - $pos")
+                    err(pos, "token error : unexpected $x")
                 }
             }
         }

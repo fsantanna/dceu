@@ -4,16 +4,16 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
+var TEST = false
 var DUMP = true
 var DEBUG = false
 var CEU = 1
 
-    // 1: dyn-lex               ;; 19 (no dots) / 7->5 "definitely lost"
-    // 2: defer, throw/catch    ;; 6 "definitely lost"
-    // 3: coro, yield, resume   ;; 0 "definitely lost"
-    // 4: task, pub, bcast, toggle, delay
-    // 5: tasks
-    // 6: export
+    // 1: dyn-lex                           ;; 17 "definitely lost"
+    // 2: defer, throw/catch, patts         ;; 6 "definitely lost"
+    // 3: coro, yield, resume               ;; 0 "definitely lost"
+    // 4: task, pub, bcast, toggle, delay   ;; 2 "definitely lost"
+    // 5: tasks                             ;; 0 "definitely lost"
     // TODO: copy, underscore, self (coro/task)
 
 // search in tests output for
@@ -28,8 +28,6 @@ val THROW = false
 
 var N = 1
 val D = "\$"
-var STACK = 256
-val MULTI = -1
 
 // VERSION
 const val MAJOR    = 0
@@ -42,32 +40,36 @@ val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 val KEYWORDS: SortedSet<String> = (
     setOf (
         "break", "data", "do", "else",
-        "enum", "false", "func", "if",
+        "enum", "false", "func", "group", "if",
         "loop", "nil", "set", "skip",
         "true", "val", "var",
     ) + (if (CEU < 2) setOf() else setOf (
-        "catch", "defer",
+        "catch", "catch'", "defer",
     )) + (if (CEU < 3) setOf() else setOf(
         "coro", "resume", "yield",
     )) + (if (CEU < 4) setOf() else setOf(
         "broadcast", "delay", "in", "pub", "spawn", "task", "toggle",
-    )) + (if (CEU < 6) setOf() else setOf(
-        "export",
+    )) + (if (CEU < 5) setOf() else setOf(
+        "tasks",
     )) + (if (CEU < 99) setOf() else setOf(
-        "await", "every", "ifs", "par", "par-and", "par-or",
-        "resume-yield-all", "thus", "until", "watching",
-        "with", "where", "while"
+        "await", "every", "ifs", "match",
+        "par", "par-and", "par-or",
+        "resume-yield-all", "test",
+        "thus", "until", "watching",
+        "with", "where", "while",
     ))
 ).toSortedSet()
 
-val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%', '#', '@')
+val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '|', '&', '~', '%')
 val XOPERATORS = if (CEU < 99) setOf() else {
     setOf("and", "in?", "in-not?", "is?", "is-not?", "not", "or")
 }
 
 val TAGS = listOf (
-    ":nil", ":error", ":tag", ":bool", ":char", ":number", ":pointer",
-    ":dynamic",
+    ":nil", ":tag", ":bool", ":char", ":number", ":pointer",
+) + (if (CEU < 2) listOf(":error") else emptyList()) + listOf(
+    ":dynamic", // error before or after dynamic
+) + (if (CEU >= 2) listOf(":error") else emptyList()) + listOf(
     ":func",
 ) + (if (CEU < 3) listOf() else listOf(
     ":coro",
@@ -86,7 +88,7 @@ val TAGS = listOf (
 )) + (if (CEU < 4) listOf() else listOf(
     ":global", ":task", ":nested"
 )) + listOf(
-    ":ceu", ":pre", ":rec"
+    ":ceu", ":pre",
 ) + (if (CEU < 99) listOf() else listOf(
     ":h", ":min", ":s", ":ms",
 ))
@@ -102,8 +104,14 @@ val GLOBALS = setOf (
 )) + (if (CEU < 4) setOf() else setOf(
     "broadcast'"
 )) + (if (CEU < 5) setOf() else setOf(
-    "next-tasks", "tasks",
+    "next-tasks",
 ))
+
+sealed class Patt (val id: Tk.Id, val tag: Tk.Tag?, val pos: Expr) {
+    data class None (val id_: Tk.Id, val tag_: Tk.Tag?, val pos_: Expr): Patt(id_,tag_,pos_)
+    data class One  (val id_: Tk.Id, val tag_: Tk.Tag?, val e: Expr, val pos_: Expr): Patt(id_,tag_,pos_)
+    data class Tup  (val id_: Tk.Id, val tag_: Tk.Tag?, val l: List<Patt>, val pos_: Expr): Patt(id_,tag_,pos_)
+}
 
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos, val n_: Int=N++): Tk("", pos_)
@@ -116,30 +124,32 @@ sealed class Tk (val str: String, val pos: Pos) {
     data class Nat (val str_: String, val pos_: Pos, val tag: String?, val n_: Int=N++): Tk(str_, pos_)
 }
 
+typealias Id_Tag  = Pair<Tk.Id,Tk.Tag?>
+
 sealed class Expr (val n: Int, val tk: Tk) {
-    data class Proto  (val tk_: Tk.Fix, val nst: Boolean, val rec: Boolean, val tag: Tk.Tag?, val args: List<Pair<Tk.Id, Tk.Tag?>>, val blk: Do): Expr(N++, tk_)
-    data class Export (val tk_: Tk.Fix, val ids: List<String>, val blk: Expr.Do) : Expr(N++, tk_)
+    data class Proto  (val tk_: Tk.Fix, val nst: Boolean, val tag: Tk.Tag?, val pars: List<Id_Tag>, val blk: Do): Expr(N++, tk_)
     data class Do     (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
-    data class Dcl    (val tk_: Tk.Fix, val idtag: Pair<Tk.Id,Tk.Tag?>, /*val poly: Boolean,*/ val src: Expr?):  Expr(N++, tk_)
+    data class Group  (val tk_: Tk.Fix, val es: List<Expr>) : Expr(N++, tk_)
+    data class Dcl    (val tk_: Tk.Fix, val idtag: Id_Tag, /*val poly: Boolean,*/ val src: Expr?):  Expr(N++, tk_)
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
     data class Loop   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
-    data class Break  (val tk_: Tk.Fix, val cnd: Expr, val e: Expr?): Expr(N++, tk_)
-    data class Skip   (val tk_: Tk.Fix, val cnd: Expr): Expr(N++, tk_)
+    data class Break  (val tk_: Tk.Fix, val e: Expr?): Expr(N++, tk_)
+    data class Skip   (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Enum   (val tk_: Tk.Fix, val tags: List<Pair<Tk.Tag,Tk.Nat?>>): Expr(N++, tk_)
-    data class Data   (val tk_: Tk.Tag, val ids: List<Pair<Tk.Id,Tk.Tag?>>): Expr(N++, tk_)
-    data class Pass   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
+    data class Data   (val tk_: Tk.Tag, val ids: List<Id_Tag>): Expr(N++, tk_)
 
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr.Do, val blk: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
 
-    data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
-    data class Resume (val tk_: Tk.Fix, val co: Expr, val arg: Expr): Expr(N++, tk_)
+    data class Yield  (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
+    data class Resume (val tk_: Tk.Fix, val co: Expr, val args: List<Expr>): Expr(N++, tk_)
 
     data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val tsk: Expr, val args: List<Expr>): Expr(N++, tk_)
     data class Delay  (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Pub    (val tk_: Tk, val tsk: Expr?): Expr(N++, tk_)
     data class Toggle (val tk_: Tk.Fix, val tsk: Expr, val on: Expr): Expr(N++, tk_)
+    data class Tasks  (val tk_: Tk.Fix, val max: Expr): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id, val ign: Boolean=false): Expr(N++, tk_)
@@ -153,26 +163,29 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Dict   (val tk_: Tk.Fix, val args: List<Pair<Expr,Expr>>): Expr(N++, tk_)
     data class Index  (val tk_: Tk, val col: Expr, val idx: Expr): Expr(N++, tk_)
     data class Call   (val tk_: Tk, val clo: Expr, val args: List<Expr>): Expr(N++, tk_)
-        // call args must be enclosed with a "fake" block, which is a normal block is not output in tostr()
-        // the block is required to create a separate environment for the call arguments such that
-        // `evt` is allowed to be passed forward
 }
 
-fun exec (cmds: List<String>): Pair<Boolean,String> {
+fun exec (hold: Boolean, cmds: List<String>): Pair<Boolean,String> {
     //System.err.println(cmds.joinToString(" "))
+    val (x,y) = if (hold) {
+        Pair(ProcessBuilder.Redirect.PIPE, true)
+    } else {
+        Pair(ProcessBuilder.Redirect.INHERIT, false)
+    }
     val p = ProcessBuilder(cmds)
-        //.redirectOutput(ProcessBuilder.Redirect.PIPE)
-        .redirectErrorStream(true)
+        .redirectOutput(x)
+        .redirectError(x)
+        .redirectErrorStream(y)
         .start()
     val ret = p.waitFor()
     val str = p.inputStream.bufferedReader().readText()
     return Pair(ret==0, str)
 }
-fun exec (cmd: String): Pair<Boolean,String> {
-    return exec(cmd.split(' '))
+fun exec (hold: Boolean, cmd: String): Pair<Boolean,String> {
+    return exec(hold, cmd.split(' '))
 }
 
-fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, out: String, args: List<String>): String {
+fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, out: String, args: List<String>): String {
     if (verbose) {
         System.err.println("... parsing ...")
     }
@@ -187,33 +200,23 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
         return e.message!! + "\n"
     }
     //println(es.tostr())
-    //println(es)
     val c = try {
         if (verbose) {
             System.err.println("... analysing ...")
         }
         //readLine()
-        val pos = Pos("anon", 0, 0)
-        val glbs = GLOBALS.map { Expr.Dcl(Tk.Fix("val",pos), Pair(Tk.Id(it,pos),null), null) }
-        val outer = Expr.Call (
-            Tk.Fix("main", pos),
-            Expr.Proto (
-                Tk.Fix("func",pos), false, false, null,
-                listOf(/*Pair(Tk.Id("...",pos),null)*/),
-                Expr.Do(Tk.Fix("",pos), glbs + es)
-            ),
-            listOf(/*Expr.Acc(Tk.Id("...",pos))*/)
-        )
+        val pos = Pos("anon", 0, 0, 0)
+        val ARGS   = Expr.Dcl(Tk.Fix("val",pos), Pair(Tk.Id("ARGS",pos),null), null)
+        val outer  = Expr.Do(Tk.Fix("", pos), listOf(ARGS)+es)
         val ups    = Ups(outer)
         val tags   = Tags(outer)
         val vars   = Vars(outer, ups)
         val sta    = Static(outer, ups, vars)
-        val rets   = Rets(outer, ups)
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
         if (verbose) {
             System.err.println("... ceu -> c ...")
         }
-        val coder = Coder(outer, ups, vars, sta, rets)
+        val coder = Coder(outer, ups, vars, sta)
         coder.main(tags)
     } catch (e: Throwable) {
         if (THROW) {
@@ -225,14 +228,14 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
         System.err.println("... c -> exe ...")
     }
     File("$out.c").writeText(c)
-    val (ok2, out2) = exec(listOf("gcc", "-Werror", "$out.c", "-l", "m", "-o", "$out.exe") + args)
+    val (ok2, out2) = exec(true, listOf("gcc", "-Werror", "$out.c", "-l", "m", "-o", "$out.exe") + args)
     if (!ok2) {
         return out2
     }
     if (verbose) {
         System.err.println("... executing ...")
     }
-    val (_, out3) = exec("$VALGRIND./$out.exe")
+    val (_, out3) = exec(tst, "$VALGRIND./$out.exe")
     //println(out3)
     return out3
 }
@@ -243,7 +246,7 @@ fun test (inp: String, pre: Boolean=false): String {
     val inps = listOf(Pair(Triple("anon",1,1), inp.reader())) + if (!pre) emptyList() else {
         listOf(Pair(Triple(prelude,1,1), File(prelude).reader()))
     }
-    return all(false, inps, "out", emptyList())
+    return all(true, false, inps, "out", emptyList())
 }
 
 fun main (args: Array<String>) {
@@ -271,6 +274,10 @@ fun main (args: Array<String>) {
             }
         })
 
+        if (ys.containsKey("--test")) {
+            TEST = true
+        }
+
         when {
             ys.containsKey("--version") -> println("dceu " + VERSION)
             (xinp == null) -> println("expected filename")
@@ -280,7 +287,7 @@ fun main (args: Array<String>) {
                     Pair(Triple(xinp,1,1), f.reader()),
                     Pair(Triple("prelude.ceu",1,1), FileX("@/prelude.ceu").reader())
                 )
-                val out = all(ys.containsKey("--verbose"), inps, f.nameWithoutExtension, xccs)
+                val out = all(false, ys.containsKey("--verbose"), inps, f.nameWithoutExtension, xccs)
                 print(out)
             }
         }

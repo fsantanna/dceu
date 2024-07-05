@@ -69,7 +69,7 @@ class Lexer_01 {
         assert(tks.next().let { it is Tk.Id  && it.str == "task" })
         //assert(tks.next().let { it is Tk.Fix && it.str == "poly" })
         assert(tks.next().let { it is Tk.Id  && it.str == "poly" })
-        assert(tks.next().let { it is Tk.Id  && it.str == "group" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "group" })
         assert(tks.next().let { it is Tk.Id  && it.str == "track" })
         assert(tks.next().let { it is Tk.Fix && it.str == "enum" })
         assert(tks.next().let { it is Tk.Id  && it.str == "XXX" })
@@ -125,15 +125,13 @@ class Lexer_01 {
 
     @Test
     fun cc_01_vararg() {
-        val l = lexer(".. ... . .. ....")
+        val l = lexer(".. ... .")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
-        assert(tks.next().let { it is Tk.Id  && it.str == "..." })
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
-        assert(tks.next().let { it is Tk.Id  && it.str == "..." })
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
@@ -284,14 +282,19 @@ class Lexer_01 {
     }
     @Test
     fun ff_03_ops() {
-        val l = lexer("=== =/= !! {{===}} {{!!}}")
+        val l = lexer("=== =/= {{===}} {{!!}}")
         val tks = l.lex().iterator()
         assert(tks.next().str == "===")
         assert(tks.next().str == "=/=")
-        assert(tks.next().str == "!!")
         assert(tks.next().str == "{{===}}")
-        assert(tks.next().str == "{{!!}}")
+        assert(tks.next().str == "!!")
         assert(tks.next() is Tk.Eof)
+    }
+    @Test
+    fun ff_03_ops_err() {
+        val l = lexer("!!")
+        val tks = l.lex().iterator()
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token error : unexpected !")
     }
     @Test
     fun ff_04_ops_err() {
@@ -343,7 +346,26 @@ class Lexer_01 {
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 4) : char error : expected '")
     }
-
+    @Test
+    fun gg_06_chr() {
+        val l = lexer("\"\\\\\"")
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it.str=="#["})
+        println(tks.next().let { it.str=="\\" })
+        assert(tks.next().let { it.str=="]"})
+    }
+    @Test
+    fun gg_07_chr() {
+        val l = lexer("\"\\\"")
+        val tks = l.lex().iterator()
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : string error : unterminated \"")
+    }
+    @Test
+    fun gg_08_chr() {
+        val l = lexer("'\\n'")
+        val tks = l.lex().iterator()
+        assert(tks.next().str == "'\\n'")
+    }
 
     // INCLUDE
 
@@ -514,5 +536,11 @@ class Lexer_01 {
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : expected identifier")
         //assert(tks.next().str == ":()")
         //assert(tks.next() is Tk.Eof)
+    }
+    @Test
+    fun jj_10_tags() {
+        val l = lexer(":x?")
+        val tks = l.lex().iterator()
+        assert(tks.next().str == ":x?")
     }
 }
