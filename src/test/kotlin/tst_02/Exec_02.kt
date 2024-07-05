@@ -564,4 +564,14 @@ class Exec_02 {
         assert(out == " |  anon : (lin 2, col 13) : error()\n" +
                 " v  error : nil\n") { out }
     }
+    @Test
+    fun zz_05_tplate_valgrind() {
+        val out = test("""
+            val u = [[]]
+            println(u[1])
+        """)
+        //assert(out == "anon : (lin 5, col 25) : index error : field \"X\" is not a data") { out }
+        assert(out == " |  anon : (lin 3, col 21) : u[1]\n" +
+                " v  index error : out of bounds\n") { out }
+    }
 }

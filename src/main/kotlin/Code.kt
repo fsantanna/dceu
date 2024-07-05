@@ -710,21 +710,26 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """ +
                 if (ups.isdst(this)) {
                     """
-                    CEU_ERROR_CHK_PTR (
-                        continue,
-                        ceu_col_set($id_col, ceu_idx_$n, $id_val),
-                        ${this.toerr()}
-                    );
-                    ceu_acc = $id_val;
+                    {
+                        char* ceu_err_$n = ceu_col_set($id_col, ceu_idx_$n, $id_val);
+                        ceu_gc_dec_val($id_col);
+                        ceu_gc_dec_val(ceu_idx_$n);
+                        CEU_ERROR_CHK_PTR (
+                            continue,
+                            ceu_err_$n,
+                            ${this.toerr()}
+                        );
+                        ceu_acc = $id_val;
+                    }
                     """
                 } else {
                     """
                     CEU_ACC(ceu_col_get($id_col, ceu_idx_$n));
+                    ceu_gc_dec_val($id_col);
+                    ceu_gc_dec_val(ceu_idx_$n);
                     CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
                     """
                 } + """
-                    ceu_gc_dec_val($id_col);
-                    ceu_gc_dec_val(ceu_idx_$n);
                 }
                 """
             }
