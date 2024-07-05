@@ -165,21 +165,27 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Call   (val tk_: Tk, val clo: Expr, val args: List<Expr>): Expr(N++, tk_)
 }
 
-fun exec (cmds: List<String>): Pair<Boolean,String> {
+fun exec (hold: Boolean, cmds: List<String>): Pair<Boolean,String> {
     //System.err.println(cmds.joinToString(" "))
+    val (x,y) = if (hold) {
+        Pair(ProcessBuilder.Redirect.PIPE, true)
+    } else {
+        Pair(ProcessBuilder.Redirect.INHERIT, false)
+    }
     val p = ProcessBuilder(cmds)
-        //.redirectOutput(ProcessBuilder.Redirect.PIPE)
-        .redirectErrorStream(true)
+        .redirectOutput(x)
+        .redirectError(x)
+        .redirectErrorStream(y)
         .start()
     val ret = p.waitFor()
     val str = p.inputStream.bufferedReader().readText()
     return Pair(ret==0, str)
 }
-fun exec (cmd: String): Pair<Boolean,String> {
-    return exec(cmd.split(' '))
+fun exec (hold: Boolean, cmd: String): Pair<Boolean,String> {
+    return exec(hold, cmd.split(' '))
 }
 
-fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, out: String, args: List<String>): String {
+fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, out: String, args: List<String>): String {
     if (verbose) {
         System.err.println("... parsing ...")
     }
@@ -222,14 +228,14 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
         System.err.println("... c -> exe ...")
     }
     File("$out.c").writeText(c)
-    val (ok2, out2) = exec(listOf("gcc", "-Werror", "$out.c", "-l", "m", "-o", "$out.exe") + args)
+    val (ok2, out2) = exec(true, listOf("gcc", "-Werror", "$out.c", "-l", "m", "-o", "$out.exe") + args)
     if (!ok2) {
         return out2
     }
     if (verbose) {
         System.err.println("... executing ...")
     }
-    val (_, out3) = exec("$VALGRIND./$out.exe")
+    val (_, out3) = exec(tst, "$VALGRIND./$out.exe")
     //println(out3)
     return out3
 }
@@ -240,7 +246,7 @@ fun test (inp: String, pre: Boolean=false): String {
     val inps = listOf(Pair(Triple("anon",1,1), inp.reader())) + if (!pre) emptyList() else {
         listOf(Pair(Triple(prelude,1,1), File(prelude).reader()))
     }
-    return all(false, inps, "out", emptyList())
+    return all(true, false, inps, "out", emptyList())
 }
 
 fun main (args: Array<String>) {
@@ -281,7 +287,7 @@ fun main (args: Array<String>) {
                     Pair(Triple(xinp,1,1), f.reader()),
                     Pair(Triple("prelude.ceu",1,1), FileX("@/prelude.ceu").reader())
                 )
-                val out = all(ys.containsKey("--verbose"), inps, f.nameWithoutExtension, xccs)
+                val out = all(false, ys.containsKey("--verbose"), inps, f.nameWithoutExtension, xccs)
                 print(out)
             }
         }
