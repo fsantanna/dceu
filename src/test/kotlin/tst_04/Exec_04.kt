@@ -1165,6 +1165,18 @@ class Exec_04 {
         assert(out == "10\n10\n20\n") { out }
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
+    @Test
+    fun dd_20_c_bcast() {
+        val out = test("""
+            spawn task () {
+                val evt = yield(nil)
+                println(evt)
+            }()
+            val evt = :ok
+            `ceu_broadcast_global(${D}evt);`
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // BCAST / ARGS
 

@@ -779,6 +779,15 @@ fun Coder.main (tags: Tags): String {
         assert(0 && "bug found");
     }
     
+    void ceu_tag_set (CEU_Value tag, CEU_Value dyn) {
+        ceu_gc_inc_val(tag);
+        if (dyn.type < CEU_VALUE_DYNAMIC) {
+            // nothing to set
+        } else {
+            dyn.Dyn->Any.tag = tag;
+        }
+    }
+    
     void ceu_pro_tag (CEUX* X) {
         assert(X->n==1 || X->n==2);
         if (X->n == 1) {
@@ -791,12 +800,7 @@ fun Coder.main (tags: Tags): String {
         } else {
             CEU_Value tag = X->args[0];
             CEU_Value dyn = X->args[1];
-            ceu_gc_inc_val(tag);
-            if (dyn.type < CEU_VALUE_DYNAMIC) {
-                // nothing to set
-            } else {
-                dyn.Dyn->Any.tag = tag;
-            }
+            ceu_tag_set(tag, dyn);
             CEU_ACC(dyn);
         }
         ceu_gc_dec_args(X->n, X->args);
@@ -1928,6 +1932,22 @@ fun Coder.main (tags: Tags): String {
             }
             ceu_gc_dec_args(X->n, X->args);
         }
+        
+        CEU_Value ceu_broadcast_global (CEU_Value evt) {
+            ceu_gc_inc_val(evt);
+            CEU_Value glb = { CEU_VALUE_TAG, {.Tag=CEU_TAG_global} };
+            CEU_Value args[] = { glb, evt };
+            CEUX X = {
+                NULL,
+                {NULL}, CEU_ACTION_INVALID,
+                NULL,
+                2,
+                args
+            };
+            ceu_pro_broadcast_plic_(&X);
+            return ceu_acc;
+        }
+
         #endif
     """
     val c_tasks = """
