@@ -6793,7 +6793,7 @@ class Exec_04 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun zz_06_99() {
+    fun BUG_zz_06_99() {
         val out = test("""
             spawn (task (v) {
                 spawn (task :nested () {
