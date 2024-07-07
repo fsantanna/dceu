@@ -1,3 +1,25 @@
+- match
+    - catch all (do)
+- break/skip sem if e sem restricao
+- clock syntax
+- val, loop, await patts
+- iter tps
+- to.*, next-dict, #, to-string, type.*
+- libs: random, math
+- lambda syntax `,`
+- loop i { ... }
+
+v0.4 (jul'24)
+-------------
+
+- Additions
+    - `group` statement
+    - `match` statement
+    - `test`  statement
+- Removals
+    - `...` variable arguments
+    - `pass` (`do`) statement
+
 v0.3 (mar'24)
 -------------
 
