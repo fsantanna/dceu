@@ -1,4 +1,4 @@
-# The Programming Language Ceu (v0.3)
+# The Programming Language Ceu (v0.4)
 
 * DESIGN
     * Structured Deterministic Concurrency
@@ -88,11 +88,10 @@ Follows an extended list of functionalities in Ceu:
 Ceu is in **experimental stage**.
 Both the compiler and runtime can become very slow.
 
-In the rest of this Section, we introduce the two key aspects of Ceu that
-justify its existence:
+In the rest of this Section, we introduce the two key aspects of Ceu:
 *Structured Deterministic Concurrency* and *Event Signaling Mechanisms*.
-Then, we also introduce two other key aspects of the Ceu, which do not appear
-in other languages:
+Then, we also introduce two other key aspects of the language, which do not
+appear in other languages:
 *Hierarchical Tags* and *Integration with C*.
 
 [1]: https://fsantanna.github.io/sc.html
@@ -104,7 +103,7 @@ in other languages:
 ## Structured Deterministic Concurrency
 
 In structured concurrency, the life cycle of processes or tasks respect the
-structure of the source code in blocks.
+structure of the source code in hierarchical blocks.
 In this sense, tasks in Ceu are treated in the same way as local variables in
 structured programming:
 When a [block](#blocks) of code terminates or goes out of scope, all of its
@@ -124,16 +123,18 @@ The example uses a `par-or` to spawn two concurrent tasks:
     another one that increments variable `n` every second, showing its value on
     termination:
 
+<!-- pico/tst/counter.ceu -->
+
 ```
 spawn {
     par-or {
-        await (:10:s)
+        await <10:s>
     } with {
         var n = 0
         defer {
             println("I counted ", n)    ;; invariably outputs 9
         }
-        every :1:s {
+        every <1:s> {
             set n = n + 1
         }
     }
@@ -188,6 +189,8 @@ The example uses an `watching` statement to observe an event condition while
 executing a nested task.
 When the condition is satisfied, the nested task is aborted:
 
+<!-- pico/tst/ticks.ceu -->
+
 ```
 spawn {
     watching :done {
@@ -234,6 +237,8 @@ enumerations representing states (e.g., `:pending`, `:done`).
 
 The next example uses tags as keys in a dictionary:
 
+<!-- dceu/src/test/02-tags.ceu -->
+
 ```
 val pos = @[]               ;; a new dictionary
 set pos[:x] = 10
@@ -246,10 +251,12 @@ tuples, to support the notion of user types in Ceu.
 For instance, the call `tag(:Pos,pos)` associates the tag `:Pos` with the
 value `pos`, such that the query `tag(pos)` returns `:Pos`.
 
-As a distinctive feature, tags can describe user type hierarchies by splitting
+As an innovative feature, tags can describe user type hierarchies by splitting
 identifiers with (`.`).
 For instance, a tag such as `:T.A.x` matches the types `:T`, `:T.A`, and
 `:T.A.x` at the same time, as verified by function `sup?`:
+
+<!-- dceu/src/test/02-tags.ceu -->
 
 ```
 sup?(:T,     :T.A.x)    ;; --> true  (:T is a supertype of :T.A.x)
@@ -261,6 +268,8 @@ sup?(:T.A,   :T.B)      ;; --> false
 
 The next example illustrates hierarchical tags combined with the functions
 `tag` and `sup?`:
+
+<!-- dceu/src/test/02-tags.ceu -->
 
 ```
 val x = []                      ;; an empty tuple
@@ -286,6 +295,8 @@ the tuple, which can then be indexed by field or by number interchangeably.
 The next example defines a template `:Pos`, which serves the same purpose as
 the dictionary of the first example, but now using tuples:
 
+<!-- dceu/src/test/03-templates.ceu -->
+
 ```
 data :Pos = [x,y]       ;; a template `:Pos` with fields `x` and `y`
 val pos :Pos = [10,20]  ;; declares that `pos` satisfies template `:Pos`
@@ -301,6 +312,8 @@ A `data` description can be suffixed with a block to nest templates, in which
 inner tags reuse fields from outer tags.
 The next example illustrates an `:Event` super-type, in which each sub-type
 appends additional data to the template:
+
+<!-- dceu/src/test/03-templates.ceu -->
 
 ```
 data :Event = [ts] {            ;; All events carry a timestamp
@@ -347,9 +360,8 @@ Keywords cannot be used as [variable identifiers](#identifiers).
 The following keywords are reserved in Ceu:
 
 <!--
-    ;;export              ;; export block
-    ;;poly                ;; TODO
-    delay               ;; delay task
+    export              ;; export block
+    poly                ;; TODO
 -->
 
 ```
@@ -362,6 +374,7 @@ The following keywords are reserved in Ceu:
     coroutine           ;; coroutine creation
     data                ;; data declaration
     defer               ;; defer block
+    delay               ;; delay task
     do                  ;; do block
     else                ;; else block                       (10)
     enum                ;; enum declaration
@@ -369,6 +382,7 @@ The following keywords are reserved in Ceu:
     every               ;; every block
     false               ;; false value
     func                ;; function prototype
+    group               ;; group block
     if                  ;; if block
     ifs                 ;; ifs block
     in                  ;; in keyword
@@ -378,6 +392,7 @@ The following keywords are reserved in Ceu:
     is-not?             ;; is-not? operator
     it                  ;; implicit parameter
     loop                ;; loop block
+    match               ;; match block
     nil                 ;; nil value
     not                 ;; not operator
     or                  ;; or operator
@@ -390,8 +405,9 @@ The following keywords are reserved in Ceu:
     set                 ;; assign expression
     skip                ;; loop skip
     spawn               ;; spawn coroutine
-    tasks               ;; task pool
     task                ;; task prototype/self identifier
+    tasks               ;; task pool
+    test                ;; test block
     thus                ;; thus pipe block
     toggle              ;; toggle coroutine/block           (40)
     true                ;; true value
@@ -409,6 +425,10 @@ The following keywords are reserved in Ceu:
 
 The following symbols are reserved in Ceu:
 
+<!--
+    ...             ;; variable function/program arguments
+-->
+
 ```
     {   }           ;; block/operators delimeters
     (   )           ;; expression delimeters
@@ -423,7 +443,6 @@ The following symbols are reserved in Ceu:
     ;               ;; sequence separator
     ,               ;; argument/constructor separator
     .               ;; index/field discriminator
-    ...             ;; variable function/program arguments
     '   "   `       ;; character/string/native delimiters
     $               ;; native interpolation
     ^               ;; lexer preprocessor
@@ -435,9 +454,8 @@ The following operator symbols can be combined to form operator names in Ceu:
 
 ```
     +    -    *    /
-    >    <    =    !
-    |    &    ~    %
-    #    @
+    %    >    <    =
+    |    &    ~
 ```
 
 Operators names cannot clash with reserved symbols (e.g., `->`).
@@ -450,7 +468,7 @@ Examples:
 +++
 ```
 
-The following identifiers are also reserved as special operators:
+The following keywords are also reserved as special operators:
 
 ```
     not     and     or
@@ -468,7 +486,7 @@ Ceu uses identifiers to refer to variables and operators:
 ```
 ID : [A-Za-z_][A-Za-z0-9_'?!-]*     ;; letter/under/digit/quote/quest/excl/dash
    | `{´ OP `}´                     ;; operator enclosed by braces as identifier
-OP : [+-*/><=!|&~%#@]+              ;; see Operators
+OP : [+-*/%><=|&~]+                 ;; see Operators
 ```
 
 A variable identifier starts with a letter or underscore (`_`) and is followed
@@ -562,13 +580,13 @@ The following tags are pre-defined in Ceu:
     :nil :tag :bool :char :number :pointer          ;; basic types
     :tuple :vector :dict                            ;; collections
     :func :coro :task                               ;; prototypes
-    :exe-coro :exe-task :tasks                      ;; active coro/task
+    :exe-coro :exe-task                             ;; active coro/task
     :tasks                                          ;; task pool
 
     :ceu :pre                                       ;; native ceu value/pre code
     :yielded :toggled :resumed :terminated          ;; coro/task status
     :h :min :s :ms                                  ;; time unit
-    :all :idx :key :val                             ;; iterator modifier
+    :idx :key :val                                  ;; iterator modifier
     :global :task                                   ;; broadcast target
 
     :dynamic :error :nested                         ;; internal use
@@ -631,7 +649,7 @@ Examples:
 
 # TYPES
 
-Ceu is a dynamic language in which values carry their own types during
+Ceu provides dynamic types such that values carry their own types during
 execution.
 
 The function `type` returns the type of a value as a [tag](#basic-types):
@@ -676,7 +694,7 @@ literals](#literals).
 
 ## Collections
 
-Ceu provides 3 collection types:
+Ceu provides 3 types of collections:
 
 ```
 tuple    vector    dict
@@ -688,6 +706,8 @@ different type.
 
 The `vector` type represents a variable collection of homogeneous values, in
 which each numeric index, starting at `0`,  holds a value of the same type.
+Once the first index is assigned, its type becomes the type of the vector,
+which further assignments must respect.
 
 The `dict` type (dictionary) represents a variable collection of heterogeneous
 values, in which each index (or key) of any type maps to a value of a
@@ -721,7 +741,7 @@ The `tasks` type represents [task pools](#active-values) holding active tasks.
 
 ## User Types
 
-Values from non-basic types (i.e., collections and execution units) can be
+Values of non-basic types (i.e., collections and execution units) can be
 associated with [tags](#basic-types) that represent user types.
 
 The function [`tag`](#types-and-tags) associates tags with values:
@@ -759,8 +779,8 @@ template](#tag-enumerations-and-tuple-templates) declarations.
 
 # VALUES
 
-As a dynamic language, each value in Ceu carries extra information, such as its
-own type.
+As a dynamically-typed language, each value in Ceu carries extra information,
+such as its own type.
 
 ## Static Values
 
@@ -772,7 +792,7 @@ Types : nil | bool | char | number | tag | pointer
 Lits  : `nil´ | `false´ | `true´ | CHR | NUM | TAG | NAT
 ```
 
-Static values are immutable and are transfered between variables and across
+Static values are immutable and are transferred between variables and across
 blocks as a whole copies without any restrictions.
 
 ## Dynamic Values
@@ -817,14 +837,14 @@ expressions.
 
 Dictionaries (`@[...]`) are built providing a list of pairs of expressions
 (`(key,val)`), in which each pair maps a key to a value.
-The first expression is the key, and the second is the value.
+The first expression is the key, and the second is the associated value.
 If the key is a tag, the alternate syntax `tag=val` may be used (omitting the
 tag colon prefix `:`).
 
 A [string literal](#literals) expands to a vector of character literals.
 
 A tuple constructor may also be prefixed with a tag, which associates the tag
-with the tuple, e.g., `:X [...]` is equivalent to `tags(:X, [...])`.
+with the tuple, e.g., `:X [...]` is equivalent to `tag(:X, [...])`.
 Tag constructors are typically used in conjunction with
 [tuple templates](#tag-enumerations-and-tuple-templates)
 
@@ -843,16 +863,14 @@ Examples:
 Ceu supports functions, coroutines, and tasks as prototype values:
 
 ```
-Func : `func´ `(´ [List(ID [TAG])] [`...´] `)´ Block
-Coro : `coro´ `(´ [List(ID [TAG])] [`...´] `)´ Block
-Task : `task´ `(´ [List(ID [TAG])] [`...´] `)´ Block
+Func : `func´ `(´ [List(ID [TAG])] `)´ Block
+Coro : `coro´ `(´ [List(ID [TAG])] `)´ Block
+Task : `task´ `(´ [List(ID [TAG])] `)´ Block
 ```
 
 Parameter declarations are equivalent to immutable `val`
 [declarations](#declarations) and can also be associated with
 [tuple template](#tag-enumerations-and-tuple-templates) tags.
-
-`TODO: varargs`
 
 <!--
 The last parameter can be the symbol
@@ -866,14 +884,13 @@ evaluates to a tuple holding the varargs.
 In other scenarios, it evaluates to a tuple holding the program arguments.
 When `...` is the last argument of a call, its tuple is expanded as the last
 arguments.
-
 -->
 
 The associated block executes when the unit is [invoked](#TODO).
 Each argument in the invocation is evaluated and copied to the parameter
 identifier, which becomes an local variable in the execution block.
 
-A *closure* is a prototoype that accesses variables from outer blocks, known as
+A *closure* is a prototype that accesses variables from outer blocks, known as
 *upvalues*.
 Ceu supports a restricted form of closures, in which *upvalues* must be
 immutable (thus declared with the modifier [`val`](#declarations)).
@@ -897,10 +914,10 @@ func (v1) {             ;; a closure
 For simple `func` prototypes, Ceu supports the lambda notation:
 
 ```
-Lambda : `\´ `{´ [ID [TAG] `=>´]  { Expr [`;´] }`}´
+Lambda : `\´ `{´ [`,´ ID [TAG] `=>´]  { Expr [`;´] }`}´
 ```
 
-The expression `\{ <id> <tag> => <es> }` expands to
+The expression `\{ ,<id> <tag> => <es> }` expands to
 
 ```
 func (<id> <tag>) {
@@ -908,13 +925,12 @@ func (<id> <tag>) {
 }
 ```
 
-If the list of identifiers is omitted, it assumes the single implicit parameter
-`it`.
+If the identifier is omitted, it assumes the single implicit parameter `it`.
 
 Examples:
 
 ```
-val f = \{ x => x+x }   ;; f doubles its argument
+val f = \{ ,x => x+x }  ;; f doubles its argument
 println(\{it}(10))      ;; prints 10
 ```
 
@@ -937,16 +953,16 @@ Coroutines and tasks have 4 possible status:
 - `yielded`: idle and ready to be resumed
 - `toggled`: ignoring resumes (only for tasks)
 - `resumed`: currently executing
-- `terminated`: terminated and unable to be resumed
+- `terminated`: terminated and unable to resume
 
 The main difference between coroutines and tasks is how they resume execution:
 
-- A coroutine resumes explicitly from a
-  [resume operation](#resume).
+- A coroutine resumes explicitly from a [resume operation](#resume).
 - A task resumes implicitly from a [broadcast operation](#broadcast).
 
-Before a coroutine or task is collected, it is implicitly aborted, and all
-active [defer statements](#defer) execute automatically in reverse order.
+Before a coroutine or task is [deallocated](#dynamic-values), it is implicitly
+aborted, and all active [defer statements](#defer) execute automatically in
+reverse order.
 
 A task is lexically attached to the block in which it is created, such that
 when the block terminates, the task is implicitly terminated (triggering active
@@ -954,7 +970,8 @@ defers).
 
 A task pool groups related active tasks as a collection.
 A task that lives in a pool is lexically attached to the block in which the
-pool is created.
+pool is created, such that when the block terminates, all tasks in the pool are
+implicitly terminated (triggering active defers).
 
 The operations on [coroutines](#coroutine-operations) and
 [tasks](#tasks-operations) are discussed further.
@@ -989,13 +1006,13 @@ Block : `{´ { Expr [`;´] } `}´
 Each expression in a sequence may be separated by an optional semicolon (`;´).
 A sequence of expressions evaluate to its last expression.
 
+<!-- TODO: ; to remove ambiguity -->
+
 <!--
 The symbol
 [`...`](#declarations) stores the program arguments
 as a tuple.
 -->
-
-`TODO: varargs`
 
 ### Blocks
 
@@ -1017,8 +1034,6 @@ Blocks also appear in compound statements, such as
 [conditionals](#conditionals-and-pattern-matching),
 [loops](#loops-and-iterators), and many others.
 
-`TODO: do Expr`
-
 Examples:
 
 ```
@@ -1036,39 +1051,33 @@ a                       ;; ERR: `a` is out of scope
 do {
     spawn T()           ;; spawns task T and attaches it to the block
     <...>
-}                       ;; terminates spawned task
+}                       ;; aborts spawned task
 ```
 
-<!--
-### Export
+### Groups
 
-An `export` hides all nested declarations, except those indicated in an
-optional list:
+A `group` is a nested sequence of expressions:
 
 ```
-Export : `export´ [`[´ List(ID | `evt´) `]´] Block
+Group : group `{´ { Expr [`;´] } `}´
 ```
 
-Nevertheless, all nested declarations remain active as if they were declared on
+Unlike [blocks](#blocks), a group does not create a new scope for variables
+and tasks.
+Therefore, all nested declarations remain active as if they were declared on
 the enclosing block.
-If the list is omitted, all declarations are hidden.
 
 Examples:
 
 ```
-export [x] {
-    val y = []      ;; y is not exported but remains active
-    val x = y       ;; exported x holds tuple that remains in memory
+group {
+    val x = 10
+    val y = x * 2
 }
-println(x)          ;; -;;-> []
-println(y)          ;; ERR: y is active but not visible
+println(x, y)       ;; --> 10 20
 ```
 
-Exports can be used to group related expressions but expose only public
-identifiers, as expected from libraries and modules.
--->
-
-### Defer
+### Defers
 
 A `defer` block executes only when its enclosing block terminates:
 
@@ -1094,27 +1103,6 @@ do {
 }                       ;; --> 1, 4, 3, 2
 ```
 
-<!--
-### Pass
-
-The `pass` statement permits that an innocuous expression is used in the
-middle of a block:
-
-```
-Pass : `do´ Expr
-```
-
-Examples:
-
-```
-do {
-    1           ;; ERR: innocuous expression
-    pass 1      ;; OK:  innocuous but explicit
-    <...>
-}
-```
--->
-
 ## Declarations and Assignments
 
 ### Declarations
@@ -1126,13 +1114,15 @@ Val : `val´ ID [TAG] [`=´ Expr]         ;; constants
 Var : `var´ ID [TAG] [`=´ Expr]         ;; variables
 ```
 
+`TODO: patterns`
+
 The optional initialization expression assigns an initial value to the
 variable, which is set to `nil` otherwise.
 
 The difference between `val` and `var` is that a `val` is immutable, while a
 `var` declaration can be modified by further `set` statements:
-The `val` modifier forbids that a name is reassigned, but it does not prevent
-that [dynamic values](#dynamic-values) are modified.
+The `val` modifier forbids that its name is reassigned, but it does not prevent
+a [dynamic value](#dynamic-values) it is holding to be modified.
 
 Optionally, a declaration can be associated with a
 [tuple template](#tag-enumerations-and-tuple-templates) tag, which allows the
@@ -1144,20 +1134,25 @@ If the declaration omits the template tag, but the initialization expression is
 a [tag constructor](#collection-values), then the variable assumes this tag
 template, i.e., `val x = :X []` expands to `val x :X = :X []`.
 
-A [prototype](#prototype-values) can be declared as an immutable variable as
-follows:
+An [execution unit](#execution-units) [prototype](#prototype-values) can be
+declared as an immutable variable as follows:
 
 ```
-Proto : `func´ ID `(´ [List(ID)] [`...´] `)´ Block
-      | `coro´ ID `(´ [List(ID)] [`...´] `)´ Block
-      | `task´ ID `(´ [List(ID)] [`...´] `)´ Block
+Proto : `func´ ID `(´ [List(ID)] `)´ Block
+      | `coro´ ID `(´ [List(ID)] `)´ Block
+      | `task´ ID `(´ [List(ID)] `)´ Block
 ```
 
 ### Assignments
 
+The `set` statement assigns the value in the right of `=` to the location in
+the left:
+
 ```
 Set : `set´ Expr `=´ Expr
 ```
+
+`TODO: valid locations - acc/idx/pub`
 
 Examples:
 
@@ -1178,35 +1173,32 @@ println(p2.y)           ;; --> 20
 
 ## Tag Enumerations and Tuple Templates
 
-Tags are global identifiers that need not to be predeclared.
+[Tags](#hierarchical-tags) are global identifiers that need not to be
+predeclared.
 However, they may be explicitly declared when used as enumerations or tuple
 templates.
 
 ### Tag Enumerations
 
-An `enum` groups related tags in sequence so that they are associated with
-incrementing numbers:
+An `enum` groups related tags: in sequence:
 
 ```
-Enum : `enum´ `{´ List(TAG [`=´ Expr]) `}´
+Enum : `enum´ TAG `{´ List(ID) `}´
 ```
-
-Optionally, a tag may receive an explicit constant numeric value, which is
-incremented for tags in sequence.
-
-`TODO: currently requires a native expression`
 
 Enumerations can be used to interface with external libraries that use
 constants to represent a group of related values (e.g., key symbols).
+Internally
+ so that they are associated with incrementing numbers:
 
 Examples:
 
 ```
 enum {
-    :Key-Left = `:number KEY_LEFT`, ;; associates with C enumeration
-    :Key-Right,                     ;; KEY_LEFT+1
-    :Key-Up,                        ;; KEY_LEFT+2
-    :Key-Down,                      ;; KEY_LEFT+3
+    :Key-Left,      ;; associates with C enumeration
+    :Key-Right,     ;; KEY_LEFT+1
+    :Key-Up,        ;; KEY_LEFT+2
+    :Key-Down,      ;; KEY_LEFT+3
 }
 if lib-key-pressed() == :Key-Up {
     ;; lib-key-pressed is an external library
@@ -2119,7 +2111,7 @@ broadcast(nil)
 println(status(t))      ;; --> :terminated
 ```
 
-### Public Field
+### Public Fields
 
 Tasks expose a public variable `pub` that is accessible externally:
 
@@ -2184,7 +2176,7 @@ await e, {                      ;; awakes on any event
 }
 ```
 
-### Broadcast
+### Broadcasts
 
 The operation `broadcast` signals an event to awake [awaiting](#await) tasks:
 
