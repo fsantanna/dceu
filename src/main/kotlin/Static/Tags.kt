@@ -34,24 +34,6 @@ class Tags (outer: Expr.Do) {
             is Expr.Loop   -> this.blk.traverse()
             is Expr.Break  -> this.e?.traverse()
             is Expr.Skip   -> {}
-            is Expr.Enum   -> this.tags.forEach {
-                if (it.first.str.contains('.')) {
-                    err(it.first, "enum error : enum tag cannot contain '.'")
-                }
-                var E = "1000"
-                var I = 0
-                this.tags.forEach { (tag,nat) ->
-                    val n = if (nat == null) {
-                        I++
-                        "($E) + $I"
-                    } else {
-                        E = nat.str
-                        I = 0
-                        nat.str
-                    }
-                    add(tag, tag.str, tag.str.idc(), n)
-                }
-            }
             is Expr.Data -> add(this.tk, this.tk.str, this.tk.str.idc(), null)
 
             is Expr.Catch  -> { this.cnd.traverse() ; this.blk.traverse() }

@@ -172,7 +172,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     //err(this.tk, "skip error : expected immediate parent loop")
                 }
             }
-            is Expr.Enum   -> {}
             is Expr.Data   -> {}
 
             is Expr.Catch  -> {

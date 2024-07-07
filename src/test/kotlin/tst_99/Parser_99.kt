@@ -1705,6 +1705,46 @@ class Parser_99 {
                 "}") { e.tostr() }
     }
 
+    // ENUM
+
+    @Test
+    fun xy_01_enum() {
+        val l = tst_01.lexer(
+            """
+            enum {
+                :x, ;; = `1000`,
+                :y, :z,
+                :a, ;; = `10`,
+                :b, :c
+            }
+        """
+        )
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "group {\n:x;\n:y;\n:z;\n:a;\n:b;\n:c;\n};\n") { e.tostr() }
+    }
+    @Test
+    fun xy_02_enum_err() {
+        val l = tst_01.lexer(
+            """
+            enum :X { a,b }
+        """
+        )
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "group {\n:X-a;\n:X-b;\n}") { e.tostr() }
+    }
+    @Test
+    fun xy_03_enum_err() {
+        val l = tst_01.lexer(
+            """
+            enum { :x, 1 }
+        """
+        )
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 24) : expected tag : have \"1\"")
+    }
+
     // PATT
 
     /*

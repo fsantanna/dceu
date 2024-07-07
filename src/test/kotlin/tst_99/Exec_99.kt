@@ -1276,33 +1276,6 @@ class Exec_99 {
     // ENUM / TAGS / TEMPLATES
 
     @Test
-    fun hh_01_enum() {
-        val out = test("""
-            ;;;do;;; :antes
-            enum {
-                :x = `1000`,
-                :y, :z,
-                :a = `10`,
-                :b, :c
-            }
-            ;;;do;;; :meio
-            enum {
-                :i = `100`,     ;; ignored b/c of itr.i in to-iter-tuple
-                :j,
-            }
-            ;;;do;;; :depois
-            val t = [:antes, :x, :y, :z, :a, :b, :c, :meio, :i, :j, :depois]
-            loop [i,v] in to.iter(t, [:idx,:val]) {
-                set t[i] = to.number(v)
-            }
-            println(t)
-        """, true)
-        assert(out == "[42,1000,1001,1002,10,11,12,43,36,101,44]\n") { out }
-    }
-
-    //
-
-    @Test
     fun hi_01_tags() {
         val out = test("""
             val x  = tag(:X,[])
@@ -1531,6 +1504,106 @@ class Exec_99 {
             println(t.a, t.b)
         """)
         assert(out == "1\t2\n") { out }
+    }
+
+    // ENUM
+
+    @Test
+    fun ii_01_enum() {
+        val out = test(
+            """
+            ;;;do;;; :antes
+            enum {
+                :x ;;;= `1000`;;;,
+                :y, :z,
+                :a;;; = `10`;;;,
+                :b, :c
+            }
+            ;;;do;;; :meio
+            enum {
+                :i;;; = `100`;;;,
+                :j,
+            }
+            ;;;do;;; :depois
+            val n = to.number(:antes)
+            println (
+                to.number(:antes) - n,
+                to.number(:x) - n,
+                to.number(:y) - n,
+                to.number(:z) - n,
+                to.number(:a) - n,
+                to.number(:b) - n,
+                to.number(:c) - n,
+                to.number(:meio) - n,
+                to.number(:i) - n,
+                to.number(:j) - n,
+                to.number(:depois) - n
+            )
+        """, true
+        )
+        assert(out == "0\t1\t2\t3\t4\t5\t6\t7\t-6\t9\t10\n") { out }
+        //assert(out == "15\t1000\t1001\t1002\t10\t11\t12\t16\t100\t101\t17\n") { out }
+    }
+    @Test
+    fun ii_02_enum() {
+        val out = test(
+            """
+            enum :X {
+                a, b
+                ;;:x = `1000`,
+                ;;:y = `1000`,
+            }
+            println(:tag, :X-a, :X-b)
+        """
+        )
+        assert(out == ":tag\t:X-a\t:X-b\n") { out }
+        //assert(out == ":tag\t:y\t:1000\t:y\n") { out }
+    }
+    @Test
+    fun ii_03_enum() {
+        val out = test(
+            """
+            enum {
+                :x.y
+            }
+            println(:tag, :x, :1000, :y)
+        """
+        )
+        assert(out == "anon : (lin 3, col 17) : enum error : enum tag cannot contain '.'\n") { out }
+    }
+    @Test
+    fun ii_04_enum() {
+        val out = test(
+            """
+            enum { :x, :y }
+            println(:ok)
+        """
+        )
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun ii_05_enum() {
+        val out = test("""
+            ;;;do;;; :antes
+            enum {
+                :x ;;;= `1000`;;;,
+                :y, :z,
+                :a ;;;= `10`;;;,
+                :b, :c
+            }
+            ;;;do;;; :meio
+            enum {
+                :i ;;;= `100`;;;,     ;; ignored b/c of itr.i in to-iter-tuple
+                :j,
+            }
+            ;;;do;;; :depois
+            val t = [:antes, :x, :y, :z, :a, :b, :c, :meio, :i, :j, :depois]
+            loop [i,v] in to.iter(t, [:idx,:val]) {
+                set t[i] = to.number(v)
+            }
+            println(t)
+        """, true)
+        assert(out == "[42,1000,1001,1002,10,11,12,43,36,101,44]\n") { out }
     }
 
     // THUS / SCOPE / :FLEET / :fleet
@@ -6549,13 +6622,13 @@ class Exec_99 {
         assert(out == "true\nfalse\nfalse\ntrue\n") { out }
     }
     @Test
-    fun zz_04_par_arg() {
+    fun BUG_zz_04_par_arg() {
         val out = test("""
             $IS
             task T (v) {
                 par {
                     every :X {
-                        ;;;do;;; v
+                        ;;;do;;; v      ;; TODO: upval is param
                     }
                 } with {
                 }

@@ -45,7 +45,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
             is Expr.Call   -> this.clo.coexists() || this.args.any { it.coexists() }
 
             is Expr.Proto, is Expr.Do  -> false
-            is Expr.Enum,  is Expr.Data,   is Expr.Defer, is Expr.Delay -> false
+            is Expr.Data,   is Expr.Defer, is Expr.Delay -> false
             is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> false
         }
     }
@@ -209,7 +209,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
                 """
 
             is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> ""
-            is Expr.Enum, is Expr.Data, is Expr.Delay -> ""
+            is Expr.Data, is Expr.Delay -> ""
         }
     }
 }

@@ -658,19 +658,35 @@ class Parser (lexer_: Lexer)
                     """)
                 }
             }
-            this.acceptFix("enum") -> {
-                val tk0 = this.tk0 as Tk.Fix
-                this.acceptFix_err("{")
-                val tags = this.list0(",", "}") {
-                    this.acceptEnu_err("Tag")
+            (CEU>=99 && this.acceptFix("enum")) -> {
+                if (this.acceptEnu("Tag")) {
                     val tag = this.tk0 as Tk.Tag
-                    val nat = if (!this.acceptFix("=")) null else {
-                        this.acceptEnu_err("Nat")
-                        this.tk0 as Tk.Nat
+                    this.acceptFix_err("{")
+                    val ids = this.list0(",", "}") {
+                        this.acceptEnu_err("Id")
+                        this.tk0 as Tk.Id
                     }
-                    Pair(tag, nat)
+                    this.nest("""
+                        group {
+                            ${ids.map { tag.str + "-" + it.str }.joinToString("\n")}
+                        }
+                    """)
+                } else {
+                    this.acceptFix_err("{")
+                    val tags = this.list0(",", "}") {
+                        this.acceptEnu_err("Tag")
+                        val tag = this.tk0 as Tk.Tag
+                        if (tag.str.contains('.')) {
+                            err(tag, "enum error : enum tag cannot contain '.'")
+                        }
+                        tag
+                    }
+                    this.nest("""
+                        group {
+                            ${tags.map { it.str }.joinToString("\n")}
+                        }
+                """)
                 }
-                Expr.Enum(tk0, tags)
             }
             this.acceptFix("data") -> {
                 val pos = this.tk0.pos.copy()

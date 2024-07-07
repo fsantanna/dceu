@@ -304,7 +304,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             is Expr.Skip -> """ // SKIP | ${this.dump()}
                 goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
             """
-            is Expr.Enum -> "// ENUM | ${this.dump()}\n"
             is Expr.Data -> "// DATA | ${this.dump()}\n"
 
             is Expr.Catch -> {

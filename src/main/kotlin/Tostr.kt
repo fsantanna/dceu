@@ -59,9 +59,6 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Loop   -> "loop " + this.blk.tostr(pre)
         is Expr.Break  -> "break(" + this.e.cond { it.tostr(pre) } + ")"
         is Expr.Skip   -> "skip"
-        is Expr.Enum   -> "enum {\n" + this.tags.map {
-            (tag,e) -> tag.str + e.cond { " = " + "`" + it.str + "`" }
-        }.joinToString(",\n") + "\n}"
         is Expr.Data   -> "(data " + this.tk.str + " = [" + this.ids.map { it.tostr() }.joinToString(",") + "])"
 
         is Expr.Catch  -> "catch' (" + this.cnd.tostr(pre) + ") " + this.blk.tostr(pre)

@@ -40,7 +40,7 @@ val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 val KEYWORDS: SortedSet<String> = (
     setOf (
         "break", "data", "do", "else",
-        "enum", "false", "func", "group", "if",
+        "false", "func", "group", "if",
         "loop", "nil", "set", "skip",
         "true", "val", "var",
     ) + (if (CEU < 2) setOf() else setOf (
@@ -52,7 +52,7 @@ val KEYWORDS: SortedSet<String> = (
     )) + (if (CEU < 5) setOf() else setOf(
         "tasks",
     )) + (if (CEU < 99) setOf() else setOf(
-        "await", "every", "ifs", "match",
+        "await", "enum", "every", "ifs", "match",
         "par", "par-and", "par-or",
         "resume-yield-all", "test",
         "thus", "until", "watching",
@@ -60,7 +60,7 @@ val KEYWORDS: SortedSet<String> = (
     ))
 ).toSortedSet()
 
-val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '|', '&', '~', '%')
+val OPERATORS = setOf('+', '-', '*', '/', '%', '>', '<', '=', '|', '&', '~')
 val XOPERATORS = if (CEU < 99) setOf() else {
     setOf("and", "in?", "in-not?", "is?", "is-not?", "not", "or")
 }
@@ -91,6 +91,7 @@ val TAGS = listOf (
     ":ceu", ":pre",
 ) + (if (CEU < 99) listOf() else listOf(
     ":h", ":min", ":s", ":ms",
+    ":idx", ":key", ":val",
 ))
 
 val GLOBALS = setOf (
@@ -136,7 +137,6 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Loop   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
     data class Break  (val tk_: Tk.Fix, val e: Expr?): Expr(N++, tk_)
     data class Skip   (val tk_: Tk.Fix): Expr(N++, tk_)
-    data class Enum   (val tk_: Tk.Fix, val tags: List<Pair<Tk.Tag,Tk.Nat?>>): Expr(N++, tk_)
     data class Data   (val tk_: Tk.Tag, val ids: List<Id_Tag>): Expr(N++, tk_)
 
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr.Do, val blk: Expr.Do): Expr(N++, tk_)
