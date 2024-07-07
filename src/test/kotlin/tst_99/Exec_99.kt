@@ -1071,7 +1071,6 @@ class Exec_99 {
         """)
         assert(out == ":ok\n") { out }
     }
-
     @Test
     fun fj_08_val() {
         val out = test("""
@@ -1089,6 +1088,16 @@ class Exec_99 {
             println(x,y)
         """)
         assert(out == "1\t2\n") { out }
+    }
+    @Test
+    fun fj_10_val() {
+        val out = test("""
+            match [10,[20]] {
+                do [x,[y]] => println(x,y)
+            }
+            println(:ok)
+        """, true)
+        assert(out == "10\t20\n:ok\n") { out }
     }
 
     // CATCH

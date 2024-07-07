@@ -23,8 +23,8 @@ class Exec_03 {
     @Test
     fun aa_02_coro() {
         val out = test("""
-            val t = coro (v) {
-                yield(v)
+            val t = coro (vvv) {
+                yield(vvv)
             }
             println(t)
         """)
@@ -1879,5 +1879,18 @@ class Exec_03 {
         """)
         assert(out == " |  anon : (lin 5, col 13) : coroutine(CO1)()\n" +
                 " v  call error : expected function\n") { out }
+    }
+    @Test
+    fun zz_06_mem() {
+        val out = test("""
+            func () {
+                coro () {
+                    val f = nil
+                    yield(nil)
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
     }
 }
