@@ -1541,7 +1541,7 @@ class Exec_99 {
             )
         """, true
         )
-        assert(out == "0\t1\t2\t3\t4\t5\t6\t7\t-6\t9\t10\n") { out }
+        assert(out == "0\t1\t2\t3\t4\t5\t6\t7\t-6\t8\t9\n") { out }
         //assert(out == "15\t1000\t1001\t1002\t10\t11\t12\t16\t100\t101\t17\n") { out }
     }
     @Test
@@ -1553,10 +1553,9 @@ class Exec_99 {
                 ;;:x = `1000`,
                 ;;:y = `1000`,
             }
-            println(:tag, :X-a, :X-b)
-        """
-        )
-        assert(out == ":tag\t:X-a\t:X-b\n") { out }
+            println(:tag, to.number(:X)<to.number(:X-a), :X-a, :X-b)
+        """, true)
+        assert(out == ":tag\ttrue\t:X-a\t:X-b\n") { out }
         //assert(out == ":tag\t:y\t:1000\t:y\n") { out }
     }
     @Test

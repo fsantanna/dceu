@@ -68,9 +68,10 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             Type.PARAM -> if (ismem) "(ceu_mem->$id)" else "ceu_par_$id"
             Type.NESTED -> {
                 val xups = ups.all_until(src) { it == blk } // all ups between src -> dcl
-                val xid = (ups.first(blk) { it is Expr.Proto } as Expr.Proto).id(outer, ups)
+                val pid = (ups.first(blk) { it is Expr.Proto } as Expr.Proto).id(outer, ups)
                 val xn = xups.count { it is Expr.Proto && it!=blk }
-                "((CEU_Pro_$xid*)ceux->exe_task->${"lnks.up.tsk->".repeat(xn)}mem)->$idx"
+                val nid = if (blk is Expr.Proto) id else idx
+                "((CEU_Pro_$pid*)ceux->exe_task->${"lnks.up.tsk->".repeat(xn)}mem)->$nid"
             }
             else -> "ceu_upv_$id"
         }

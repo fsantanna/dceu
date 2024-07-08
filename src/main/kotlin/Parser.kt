@@ -668,6 +668,7 @@ class Parser (lexer_: Lexer)
                     }
                     this.nest("""
                         group {
+                            ${tag.str}
                             ${ids.map { tag.str + "-" + it.str }.joinToString("\n")}
                         }
                     """)

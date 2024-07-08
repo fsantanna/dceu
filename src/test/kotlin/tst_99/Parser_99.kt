@@ -1732,7 +1732,7 @@ class Parser_99 {
         )
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "group {\n:X-a;\n:X-b;\n}") { e.tostr() }
+        assert(e.tostr() == "group {\n:X;\n:X-a;\n:X-b;\n}") { e.tostr() }
     }
     @Test
     fun xy_03_enum_err() {
