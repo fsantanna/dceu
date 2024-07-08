@@ -1180,29 +1180,35 @@ templates.
 
 ### Tag Enumerations
 
-An `enum` groups related tags: in sequence:
+An `enum` groups related tags together as a sequence:
 
 ```
-Enum : `enum´ TAG `{´ List(ID) `}´
+Enum : `enum´ `{´ List(TAG) `}´
+     | `enum´ TAG `{´ List(ID) `}´
 ```
+
+The first variation declares the tags in the given list.
+The second variation declares as tags the identifiers in the list with the
+given tag as a prefix, separated by a dash (`-`).
 
 Enumerations can be used to interface with external libraries that use
 constants to represent a group of related values (e.g., key symbols).
-Internally
- so that they are associated with incrementing numbers:
+When [converted to numbers](#TODO-to.number), the tags in enumerations are
+guaranteed to form a sequence.
 
 Examples:
 
 ```
-enum {
-    :Key-Left,      ;; associates with C enumeration
-    :Key-Right,     ;; KEY_LEFT+1
-    :Key-Up,        ;; KEY_LEFT+2
-    :Key-Down,      ;; KEY_LEFT+3
-}
-if lib-key-pressed() == :Key-Up {
-    ;; lib-key-pressed is an external library
-    ;; do something if key UP is pressed
+enum { :x, :y, :z } ;; declares :x, :y, :z in sequence
+to.number(:x)       ;; --> 100
+to.number(:y)       ;; --> 101
+to.number(:z)       ;; --> 102
+
+enum :Key {
+    Left,           ;; declares :Key-Left (200)
+    Up,             ;; declares :Key-Up   (201)
+    Right,          ;; ...
+    Down,           ;; ...
 }
 ```
 
@@ -2242,7 +2248,7 @@ The extensions expand to standard task operations.
 A `spawn` block starts an anonymous nested task:
 
 ```
-Spawn : `spawn´ `{´ Block `}´
+Spawn : `spawn´ Block
 ```
 
 The task cannot be assigned or referred explicitly.
@@ -2252,7 +2258,7 @@ The `spawn` extension expands as follows:
 
 ```
 spawn (task () {
-    <...>
+    <Block>
 }) ()
 ```
 
