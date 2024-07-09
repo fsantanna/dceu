@@ -1211,7 +1211,7 @@ templates.
 
 ### Tag Enumerations
 
-An `enum` groups related tags together as a sequence:
+An `enum` groups related tags together in sequence:
 
 ```
 Enum : `enum´ `{´ List(TAG) `}´
@@ -1219,27 +1219,27 @@ Enum : `enum´ `{´ List(TAG) `}´
 ```
 
 The first variation declares the tags in the given list.
-The second variation declares as tags the identifiers in the list with the
-given tag as a prefix, separated by a dash (`-`).
+The second variation declares tags by prefixing the identifiers in the list
+with the given tag, separated by a dash (`-`).
 
 Enumerations can be used to interface with external libraries that use
 constants to represent a group of related values (e.g., key symbols).
 When [converted to numbers](#TODO-to.number), the tags in enumerations are
-guaranteed to form a sequence.
+guaranteed to form am incrementing sequence.
 
 Examples:
 
 ```
-enum { :x, :y, :z } ;; declares :x, :y, :z in sequence
-to.number(:x)       ;; --> 100
-to.number(:y)       ;; --> 101
-to.number(:z)       ;; --> 102
+enum { :x, :y, :z }     ;; declares :x, :y, :z in sequence
+to.number(:x)           ;; --> 100
+to.number(:y)           ;; --> 101
+to.number(:z)           ;; --> 102
 
 enum :Key {
-    Left,           ;; declares :Key-Left (200)
-    Up,             ;; declares :Key-Up   (201)
-    Right,          ;; ...
-    Down,           ;; ...
+    Left,               ;; declares :Key-Left (200)
+    Up,                 ;; declares :Key-Up   (201)
+    Right,              ;; ...
+    Down,               ;; ...
 }
 ```
 
@@ -1372,7 +1372,6 @@ t -> f(10)      ;; equivalent to `f(t,10)`
 ```
 Expr : Expr `[´ Expr `]´        ;; Index
      | Expr `.´ ID              ;; Field
-     | Expr `.´ `pub´ | `pub´   ;; Pub
 ```
 
 An index operation expects a collection and an index enclosed by brackets (`[`
@@ -1381,18 +1380,6 @@ For tuples and vectors, the index must be an number.
 For dictionaries, the index can be of any type.
 The operation evaluates to the current value in the given collection index, or
 `nil` if non existent.
-
-A field operation expects a dictionary or a tuple template, a dot separator
-(`.`), and a field identifier.
-If the collection is a dictionary `d`, the field must be a
-[tag literal](#literals) `k` (with the colon prefix `:` omitted), which is
-equivalent to the index operation `v[:k]`.
-If the collection is a [tuple template](#tag-enumerations-and-tuple-templates)
-`t`, the field must be an identifier that maps to a template index `i`, which
-is equivalent to the index operation `t[i]`.
-
-A `pub` operation accesses the public field of an [active task](#active-values)
-and is discussed [further](#task-operations).
 
 Examples:
 
@@ -1405,15 +1392,35 @@ dict.x              ;; dict access by field
 
 val t :T            ;; tuple template
 t.x
+```
 
+A field operation expects a dictionary or a tuple template, a dot separator
+(`.`), and a field identifier.
+If the collection is a dictionary `d`, the field must be a
+[tag literal](#literals) `k` (with the colon prefix `:` omitted), which is
+equivalent to the index operation `v[:k]`.
+If the collection is a [tuple template](#tag-enumerations-and-tuple-templates)
+`t`, the field must be an identifier that maps to a template index `i`, which
+is equivalent to the index operation `t[i]`.
+
+A `pub` operation accesses the public field of an [active task](#active-values)
+and is discussed [further](#task-operations):
+
+```
+Expr : Expr `.´ `pub´ | `pub´   ;; Pub
+```
+
+Examples:
+
+```
 val t = spawn T()
 t.pub               ;; public field of task
 ```
 
 #### Template Casting
 
-An expression can be suffixed with a tag between parenthesis such that it is
-cast into a tuple template:
+An expression can be suffixed with a tag between parenthesis to cast it into a
+tuple template:
 
 ```
 Expr : Expr `.´ `(´ TAG `)´
@@ -1423,7 +1430,7 @@ Examples:
 
 ```
 data :Pos = [x,y]
-val p = <...>
+val p = [10,20]
 println(p.(:Pos).x)     ;; `p` is cast to `:Pos`
 ```
 
