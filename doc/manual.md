@@ -375,8 +375,8 @@ The following keywords are reserved in Ceu:
     data                ;; data declaration
     defer               ;; defer block
     delay               ;; delay task
-    do                  ;; do block
-    else                ;; else block                       (10)
+    do                  ;; do block                         (10)
+    else                ;; else block
     enum                ;; enum declaration
     error               ;; throw error
     every               ;; every block
@@ -385,9 +385,9 @@ The following keywords are reserved in Ceu:
     group               ;; group block
     if                  ;; if block
     ifs                 ;; ifs block
-    in                  ;; in keyword
+    in                  ;; in keyword                       (20)
     in?                 ;; in? operator
-    in-not?             ;; in-not? operator                 (20)
+    in-not?             ;; in-not? operator
     is?                 ;; is? operator
     is-not?             ;; is-not? operator
     it                  ;; implicit parameter
@@ -395,30 +395,30 @@ The following keywords are reserved in Ceu:
     match               ;; match block
     nil                 ;; nil value
     not                 ;; not operator
-    or                  ;; or operator
+    or                  ;; or operator                      (30)
     par-and             ;; par-and block
     par-or              ;; par-or block
-    par                 ;; par block                        (30)
+    par                 ;; par block
     pub                 ;; public variable
     resume              ;; resume coroutine
     resume-yield-all    ;; resume coroutine
     set                 ;; assign expression
     skip                ;; loop skip
     spawn               ;; spawn coroutine
-    task                ;; task prototype/self identifier
+    task                ;; task prototype                   (40)
     tasks               ;; task pool
     test                ;; test block
     thus                ;; thus pipe block
-    toggle              ;; toggle coroutine/block           (40)
+    toggle              ;; toggle coroutine/block
     true                ;; true value
     until               ;; until loop condition
     val                 ;; constant declaration
     var                 ;; variable declaration
     watching            ;; watching block
-    where               ;; where block
+    where               ;; where block                      (50)
     while               ;; while loop condition
     with                ;; with block
-    yield               ;; yield coroutine                  (49)
+    yield               ;; yield coroutine                  (53)
 ```
 
 ## Symbols
@@ -655,8 +655,8 @@ execution.
 The function `type` returns the type of a value as a [tag](#basic-types):
 
 ```
-type(10)  --> :number
-type('x') --> :char
+type(10)    ;; --> :number
+type('x')   ;; --> :char
 ```
 
 ## Basic Types
@@ -760,9 +760,9 @@ The function [`sup?`](#types-and-tags) checks super-type relations between
 tags:
 
 ```
-println(sup?(:T, :T.A)    ;; --> true
-println(sup?(:T.A, :T)    ;; --> false
-println(sup?(:T.A, :T.B)  ;; --> false
+println(sup?(:T, :T.A))     ;; --> true
+println(sup?(:T.A, :T))     ;; --> false
+println(sup?(:T.A, :T.B))   ;; --> false
 ```
 
 The function [`is?`](#operator-is) checks if values match types or tags:
@@ -931,7 +931,7 @@ Examples:
 
 ```
 val f = \{ ,x => x+x }  ;; f doubles its argument
-println(\{it}(10))      ;; prints 10
+println(\{it}(10))      ;; --> 10
 ```
 
 ### Active Values
@@ -1107,7 +1107,8 @@ do {
 
 ### Declarations
 
-All variables in Ceu must be declared before use:
+Variables in Ceu must be declared before, use and are only visible inside the
+[block](#blocks) in which they are declared:
 
 ```
 Val : `val´ ID [TAG] [`=´ Expr]         ;; constants
@@ -1134,6 +1135,20 @@ If the declaration omits the template tag, but the initialization expression is
 a [tag constructor](#collection-values), then the variable assumes this tag
 template, i.e., `val x = :X []` expands to `val x :X = :X []`.
 
+Examples:
+
+```
+do {
+    val x = 10
+    set x = 20      ;; ERROR: `x´ is immutable
+}
+println(x)          ;; ERROR: `x´ is out of scope
+
+var y = 10
+set y = 20          ;; OK: `y´ is mutable
+println(y)          ;; --> 20
+```
+
 An [execution unit](#execution-units) [prototype](#prototype-values) can be
 declared as an immutable variable as follows:
 
@@ -1143,16 +1158,28 @@ Proto : `func´ ID `(´ [List(ID)] `)´ Block
       | `task´ ID `(´ [List(ID)] `)´ Block
 ```
 
+Examples:
+
+```
+func f (v) {
+    v + 1
+}
+println(f(10))      ;; --> 11
+```
+
 ### Assignments
 
-The `set` statement assigns the value in the right of `=` to the location in
-the left:
+The `set` statement assigns the value in the right to the location in the left
+of the symbol `=`:
 
 ```
 Set : `set´ Expr `=´ Expr
 ```
 
-`TODO: valid locations - acc/idx/pub`
+The only valid locations are
+    [mutable variables](#declarations),
+    [indexes](#indexes-and-fields), and
+    [public fields](#public-fields).
 
 Examples:
 
@@ -1169,6 +1196,10 @@ println(p1.x)           ;; --> 10
 
 val p2 = :Pos [10,20]   ;; (assumes :Pos has fields [x,y])
 println(p2.y)           ;; --> 20
+
+task T (v) {
+    set pub = v         ;; OK
+}
 ```
 
 ## Tag Enumerations and Tuple Templates
