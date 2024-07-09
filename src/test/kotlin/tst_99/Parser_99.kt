@@ -1618,6 +1618,13 @@ class Parser_99 {
             }
         """.trimIndent()) { e.tostr() }
     }
+    @Test
+    fun uu_05_tags() {
+        val l = lexer(":X -> f")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "f(:X)") { e.tostr() }
+    }
 
     // PPP: PEEK, PUSH, POP
 

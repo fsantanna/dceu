@@ -372,6 +372,7 @@ val to :To = do {
     }
     func to-number (v) {
         match v {
+            :number     => v
             :tag        => `:number $v.Tag`
             :char       => `:number $v.Char`
             {{string?}} => `:number atoi($v.Dyn->Vector.buf)`

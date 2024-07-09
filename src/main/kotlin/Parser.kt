@@ -1409,7 +1409,7 @@ class Parser (lexer_: Lexer)
                         ${tk0.pos.pre()}tag(${tk0.str}, ${tup.tostr(true)})
                     """)
                 } else {
-                    Expr.Tag(this.tk0 as Tk.Tag)
+                    this.expr_3_met(null, Expr.Tag(this.tk0 as Tk.Tag))
                 }
             }
             this.acceptEnu("Op") -> {
