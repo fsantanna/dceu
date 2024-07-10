@@ -1496,7 +1496,7 @@ class Parser_99 {
 
     @Test
     fun pp_01_lambda() {
-        val l = lexer("\\{}")
+        val l = lexer("{}")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "(func (it) {\n" +
@@ -1505,7 +1505,7 @@ class Parser_99 {
     }
     @Test
     fun pp_02_lambda() {
-        val l = lexer("\\{it}")
+        val l = lexer("{it}")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "(func (it) {\n" +
@@ -1514,7 +1514,7 @@ class Parser_99 {
     }
     @Test
     fun pp_03_lambda() {
-        val l = lexer("\\{,:X => it}")
+        val l = lexer("{,:X => it}")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "(func (it :X) {\n" +
@@ -1523,7 +1523,7 @@ class Parser_99 {
     }
     @Test
     fun todo_LIN_COL_pp_04_lambda_err() {
-        val l = lexer("\\{,v :X}")
+        val l = lexer("{,v :X}")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "anon : (lin X, col Y) : expression error : innocuous expression\n") { e.tostr() }

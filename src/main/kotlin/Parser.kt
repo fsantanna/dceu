@@ -932,7 +932,7 @@ class Parser (lexer_: Lexer)
                     }
                 """)
             }
-            (CEU>=99 && this.acceptFix("\\")) -> {
+            (CEU>=99 && this.checkFix("{")) -> {
                 val (id_tag,es) = lambda(true)
                 id_tag!!
                 return this.nest("""

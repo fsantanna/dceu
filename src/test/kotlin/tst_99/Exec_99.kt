@@ -2567,7 +2567,7 @@ class Exec_99 {
             val F = func (x) {
                 coro () {
                     yield(x)
-                } --> \{
+                } --> {
                     to-iter(it)
                 }
             }
@@ -2588,13 +2588,13 @@ class Exec_99 {
                         val pos = []
                         yield(;;;drop;;;(pos))
                     }
-                } --> \{
+                } --> {
                     to-iter(it)
                 }
             }
             do {
                 val x :Iterator = F()
-                x.f(x) --> \{ }
+                x.f(x) --> { }
                 x.f(x)
             }
             println(:ok)
@@ -2734,7 +2734,7 @@ class Exec_99 {
                     x
                 })
                 resume co()
-                co --> \{
+                co --> {
                     it
                 }
             }
@@ -5097,7 +5097,7 @@ class Exec_99 {
     fun oo_07_method() {
         val out = test("""
             func f (v) { v() }
-            val v = f <- \{10} thus { it }
+            val v = f <- {10} thus { it }
             println(v)
         """)
         assert(out == "10\n") { out }
@@ -5106,7 +5106,7 @@ class Exec_99 {
     fun oo_08_method() {
         val out = test("""
             func f (x,y) { y(x) }
-            val v = 10 -> f <- \{it} thus { it }
+            val v = 10 -> f <- {it} thus { it }
             println(v)
         """)
         assert(out == "10\n") { out }
@@ -5149,7 +5149,7 @@ class Exec_99 {
     fun op_04_thus() {
         val out = test(
             """
-            val x = 1 --> \{
+            val x = 1 --> {
                 it
             }
             println(x)
@@ -5182,7 +5182,7 @@ class Exec_99 {
     fun op_06_thus() {
         val out = test(
             """
-            val x = \{
+            val x = {
                 it
             } <-- 1
             println(x)
@@ -5204,7 +5204,7 @@ class Exec_99 {
     fun op_08_thus() {
         val out = test(
             """
-            val x = 2 --> \{ it + 1 } --> \{ it * 2 }
+            val x = 2 --> { it + 1 } --> { it * 2 }
             println(x)
         """,true)
         assert(out == "6\n") { out }
@@ -5213,7 +5213,7 @@ class Exec_99 {
     fun op_09_thus() {
         val out = test(
             """
-            val x = \{ it + 1 } <-- \{ it * 2 } <-- 2
+            val x = { it + 1 } <-- { it * 2 } <-- 2
             println(x)
         """,true)
         assert(out == "5\n") { out }
@@ -5384,7 +5384,7 @@ class Exec_99 {
     @Test
     fun pp_01_lambda () {
         val out = test("""
-            println(\{ it })
+            println({ it })
         """)
         assert(out.contains("func: 0x")) { out }
     }
@@ -5392,14 +5392,14 @@ class Exec_99 {
     fun pp_02_lambda () {
         val out = test("""
             $PLUS
-            println(\{,x=>x+x}(2))
+            println({,x=>x+x}(2))
         """)
         assert(out.contains("4\n")) { out }
     }
     @Test
     fun pp_03_lambda () {
         val out = test("""
-            println(\{,x=>x}(1))
+            println({,x=>x}(1))
         """)
         assert(out.contains("1\n")) { out }
     }
@@ -5407,7 +5407,7 @@ class Exec_99 {
     fun pp_04_lambda () {
         val out = test(
             """
-            println(\{ it }(10))
+            println({ it }(10))
         """)
         assert(out == "10\n") { out }
     }
@@ -5418,7 +5418,7 @@ class Exec_99 {
             func f (g) {
                 g(10)
             }
-            println(f <- \{ it })
+            println(f <- { it })
         """)
         assert(out == "10\n") { out }
     }
@@ -5426,7 +5426,7 @@ class Exec_99 {
     fun pp_06_it_it () {
         val out = test(
             """
-            val x = \{ \{ it }(10) }()    ;; it1/it2
+            val x = { { it }(10) }()    ;; it1/it2
             println(x)
         """)
         assert(out == "10\n") { out }
@@ -5437,7 +5437,7 @@ class Exec_99 {
             func f (v,g) {
                 g(v)
             }
-            val v = f(5) <- \{ it }
+            val v = f(5) <- { it }
             println(v)
         """)
         assert(out == "5\n") { out }
@@ -5448,7 +5448,7 @@ class Exec_99 {
             func f (g) {
                 g()
             }
-            val v = f( \{ 10 } )
+            val v = f( { 10 } )
             println(v)
         """)
         assert(out == "10\n") { out }
@@ -5456,7 +5456,7 @@ class Exec_99 {
     @Test
     fun pp_09_lambda_call () {
         val out = test("""
-            println(\{, x => x }(10))
+            println({, x => x }(10))
         """)
         assert(out == "10\n") { out }
     }
