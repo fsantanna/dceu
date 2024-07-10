@@ -1436,7 +1436,7 @@ println(p.(:Pos).x)     ;; `p` is cast to `:Pos`
 
 #### Peek, Push, Pop
 
-The *ppp operators* (peek, push, pop) manipulate a vector as a stack:
+The *ppp operators* (peek, push, pop) manipulate vectors as stacks:
 
 ```
 Expr : Expr `[´ (`=´|`+´|`-´) `]´
@@ -1465,7 +1465,7 @@ Any expression can be suffixed by `where` and `thus` clauses:
 
 ```
 Expr : Expr `where´ Block
-     | Expr `thus´ `{´ [ID [TAG] `=>´]  { Expr [`;´] }`}´
+     | Expr `thus´ `{´ [`,´ ID [TAG] `=>´]  { Expr [`;´] }`}´
 ```
 
 A `where` clause executes its block before the prefix expression and is allowed
@@ -1476,21 +1476,23 @@ identifier, and then executes a block.
 If the identifier is omitted, it assumes the implicit identifier `it`.
 Like in [declarations](#declarations), the identifier can be associated with
 [tuple template](#tag-enumerations-and-tuple-templates) tags.
-A clause such as `e1 thus { v => e2 }` is equivalent to `e1 -> \{ v => e2 }`,
-which combines [pipes](#pipe-calls) and [lambda](#lambda-prototype)
-expressions.
 
 Examples:
 
 ```
-var x = (2 * y) where { var y=10 }  ;; x=20
-(x * x) thus { x2 => println(x2) }  ;; --> 400
+var x = (2 * y) where {     ;; x = 20
+    var y = 10
+}
+
+(x * x) thus { ,v =>
+    println(v)              ;; --> 400
+}
 ```
 
 ### Precedence and Associativity
 
-Operations in Ceu can be combined in complex expressions with the following
-precedence priority (from higher to lower):
+Operations in Ceu can be combined in expressions with the following precedence
+priority (from higher to lower):
 
 ```
 1. suffix (left associative)
@@ -1539,8 +1541,8 @@ Ceu supports conditionals as follows:
 If  : `if´ Expr (Block | `=>´ Expr)
         [`else´  (Block | `=>´ Expr)]
 Ifs : `ifs´ `{´ {Case} [Else] `}´
-        Case :  Expr  (Block | `=>´ Expr)
-        Else : `else´ (Block | `=>´ Expr)
+        Case :  Expr  (`=>´ Expr | Block)
+        Else : `else´ (`=>´ Expr | Block)
 ```
 
 An `if` tests a condition expression and executes one of the two possible
@@ -1568,19 +1570,18 @@ ifs {
 
 ### Pattern Matching
 
-An `ifs` also supports a head expression to be compared in test cases using
+The `match` statement allows to test a head expression against a series of
 patterns:
 
 ```
-Ifs : <see above>
-    | `ifs´ Expr `{´ {Case} [Else] `}´
+Match : `match´ Expr `{´ {Case} [Else] `}´
         Case :  Patt  (Block | `=>´ Expr)
         Else : `else´ (Block | `=>´ Expr)
 
-Patt : [`(´] (Cons | Oper | Full) [`)´]
+Patt : [`(´] [ID] [TAG] (Cons | Oper | Full) [`)´]
         Cons : Expr
         Oper : OP [Expr]
-        Full : [ID] [TAG] [`,´ [Expr]]
+        Full : [`,´ [Expr]]
 ```
 
 A pattern is enclosed by optional parenthesis and has three possible forms:
