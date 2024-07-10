@@ -5160,18 +5160,18 @@ class Exec_99 {
     fun op_05_thus_err() {
         val out = test(
             """
-            val x = [] --> \ { ,x =>
+            val x = [] --> { ,x =>
                 x
             }
             println(x)
         """,true)
-        assert(out == "anon : (lin 2, col 33) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == "anon : (lin 2, col 31) : declaration error : variable \"x\" is already declared\n") { out }
     }
     @Test
     fun op_05_thus() {
         val out = test(
             """
-            val y = [] --> \ {, x =>
+            val y = [] --> {, x =>
                 x
             }
             println(y)
@@ -5193,7 +5193,7 @@ class Exec_99 {
     fun op_07_thus() {
         val out = test(
             """
-            val x = \ {,y =>
+            val x = {,y =>
                 y
             } <-- []
             println(x)
