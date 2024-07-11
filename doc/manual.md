@@ -911,13 +911,13 @@ func (v1) {             ;; a closure
 
 #### Lambda Prototype
 
-For simple `func` prototypes, Ceu supports the lambda notation:
+For simple function prototypes, Ceu supports the lambda notation:
 
 ```
-Lambda : `\´ `{´ [`,´ ID [TAG] `=>´]  { Expr [`;´] }`}´
+Lambda : `{´ [`\´ { ID [TAG] `,´ } `=>´] { Expr [`;´] }`}´
 ```
 
-The expression `\{ ,<id> <tag> => <es> }` expands to
+The expression `{ \<id> <tag> => <es> }` expands to
 
 ```
 func (<id> <tag>) {
@@ -925,14 +925,24 @@ func (<id> <tag>) {
 }
 ```
 
-If the identifier is omitted, it assumes the single implicit parameter `it`.
+If the identifiers are omitted, it assumes the single implicit parameter `it`.
+Like in [declarations](#declarations), the identifiers can be associated with
+[tuple template](#tag-enumerations-and-tuple-templates) tags.
 
 Examples:
 
 ```
-val f = \{ ,x => x+x }  ;; f doubles its argument
-println(\{it}(10))      ;; --> 10
+val f = { \x,y => x+y }
+println(f(10,20))       ;; --> 30
+
+println({it}(10))       ;; --> 10
 ```
+
+Note that the lambda notation is also used in
+    [conditionals](#conditionals) and
+    [thus clauses](#where-and-thus-clauses)
+to communicate values across blocks, but no functions are created in these
+cases.
 
 ### Active Values
 
@@ -1046,7 +1056,7 @@ do {
     val a = 1           ;; `a` is only visible in the block
     <...>
 }
-a                       ;; ERR: `a` is out of scope
+a                       ;; ERROR: `a` is out of scope
 
 do {
     spawn T()           ;; spawns task T and attaches it to the block
@@ -1107,55 +1117,93 @@ do {
 
 ### Declarations
 
-Variables in Ceu must be declared before, use and are only visible inside the
+Variables in Ceu must be declared before use, and are only visible inside the
 [block](#blocks) in which they are declared:
 
 ```
-Val : `val´ ID [TAG] [`=´ Expr]         ;; constants
-Var : `var´ ID [TAG] [`=´ Expr]         ;; variables
+Val : `val´ (ID [TAG] | Patt) [`=´ Expr]    ;; mutable
+Var : `var´ (ID [TAG] | Patt) [`=´ Expr]    ;; immutable
 ```
 
-`TODO: patterns`
-
+A declaration either specifies an identifier with an optional tag, or a
+[tuple pattern](#pattern-matching) for multiple declarations.
 The optional initialization expression assigns an initial value to the
-variable, which is set to `nil` otherwise.
+declaration, which is set to `nil` otherwise.
 
 The difference between `val` and `var` is that a `val` is immutable, while a
 `var` declaration can be modified by further `set` statements:
 The `val` modifier forbids that its name is reassigned, but it does not prevent
 a [dynamic value](#dynamic-values) it is holding to be modified.
 
-Optionally, a declaration can be associated with a
-[tuple template](#tag-enumerations-and-tuple-templates) tag, which allows the
+When using an identifier, the optional tag specifies a
+[tuple template](#tag-enumerations-and-tuple-templates), which allows the
 variable to be indexed by a field name, instead of a numeric position.
 Note that the variable is not guaranteed to hold a value matching the template.
 The template association is static but with no runtime guarantees.
 
-If the declaration omits the template tag, but the initialization expression is
-a [tag constructor](#collection-values), then the variable assumes this tag
-template, i.e., `val x = :X []` expands to `val x :X = :X []`.
+If the identifier declaration omits the template tag, but the initialization
+expression is a [tag constructor](#collection-values), then the variable
+assumes this tag template, i.e., `val x = :X []` expands to `val x :X = :X []`.
 
 Examples:
 
 ```
 do {
     val x = 10
-    set x = 20      ;; ERROR: `x´ is immutable
+    set x = 20          ;; ERROR: `x´ is immutable
 }
-println(x)          ;; ERROR: `x´ is out of scope
+println(x)              ;; ERROR: `x´ is out of scope
 
 var y = 10
-set y = 20          ;; OK: `y´ is mutable
-println(y)          ;; --> 20
+set y = 20              ;; OK: `y´ is mutable
+println(y)              ;; --> 20
+
+val p1 :Pos = [10,20]   ;; (assumes :Pos has fields [x,y])
+println(p1.x)           ;; --> 10
+
+val p2 = :Pos [10,20]   ;; (assumes :Pos has fields [x,y])
+println(p2.y)           ;; --> 20
 ```
 
-An [execution unit](#execution-units) [prototype](#prototype-values) can be
-declared as an immutable variable as follows:
+When using the tuple pattern, it is possible to declare multiple variables by
+matching the initialization expression.
+The pattern is [assertive](#pattern-matching), raising an error if the match
+fails.
+
+Examples:
+
+```
+val [1,x,y] = [1,2,3]
+println(x,y)            ;; --> 2 3
+
+val [10,x] = [20,20]    ;; ERROR: match fails
+```
+
+#### Prototype Declarations
+
+[Execution unit](#execution-units) [prototypes](#prototype-values) can be
+declared as immutable variables as follows:
 
 ```
 Proto : `func´ ID `(´ [List(ID)] `)´ Block
       | `coro´ ID `(´ [List(ID)] `)´ Block
       | `task´ ID `(´ [List(ID)] `)´ Block
+```
+
+The expression
+
+```
+func <id> (...) {
+    ...
+}
+```
+
+expands to
+
+```
+val <id> = func (...) {
+    ...
+}
 ```
 
 Examples:
@@ -1188,14 +1236,8 @@ var x
 set x = 20              ;; OK
 
 val y = [10]
-set y = 0               ;; ERR: cannot reassign `y`
+set y = 0               ;; ERROR: cannot reassign `y`
 set y[0] = 20           ;; OK
-
-val p1 :Pos = [10,20]   ;; (assumes :Pos has fields [x,y])
-println(p1.x)           ;; --> 10
-
-val p2 = :Pos [10,20]   ;; (assumes :Pos has fields [x,y])
-println(p2.y)           ;; --> 20
 
 task T (v) {
     set pub = v         ;; OK
@@ -1465,17 +1507,18 @@ Any expression can be suffixed by `where` and `thus` clauses:
 
 ```
 Expr : Expr `where´ Block
-     | Expr `thus´ `{´ [`,´ ID [TAG] `=>´]  { Expr [`;´] }`}´
+     | Expr `thus´ Lambda
+
+Lambda : `{´ [`\´ { ID [TAG] `,´ } `=>´] { Expr [`;´] }`}´
 ```
 
-A `where` clause executes its block before the prefix expression and is allowed
-to declare variables that can be used by the expression.
+A `where` clause executes its suffix block before the prefix expression and is
+allowed to declare variables that can be used by the expression.
 
-A `thus` clause assigns the result of the prefix expression into the given
-identifier, and then executes a block.
-If the identifier is omitted, it assumes the implicit identifier `it`.
-Like in [declarations](#declarations), the identifier can be associated with
-[tuple template](#tag-enumerations-and-tuple-templates) tags.
+A `thus` clause uses the [lambda notation](#lambda-prototype) to pass the
+result of the prefix expression as an argument to execute the suffix block.
+Even though it uses the lambda notation, the clause does not create an extra
+function to execute.
 
 Examples:
 
@@ -1484,7 +1527,7 @@ var x = (2 * y) where {     ;; x = 20
     var y = 10
 }
 
-(x * x) thus { ,v =>
+(x * x) thus { \v =>
     println(v)              ;; --> 400
 }
 ```
@@ -1526,7 +1569,7 @@ Examples:
 
 ```
 #f(10).x        ;; # ((f(10)) .x)
-x + 10 - 1      ;; ERR: requires parenthesis
+x + 10 - 1      ;; ERROR: requires parenthesis
 - x + y         ;; (-x) + y
 x or y or z     ;; (x or y) or z
 ```
@@ -1538,11 +1581,13 @@ x or y or z     ;; (x or y) or z
 Ceu supports conditionals as follows:
 
 ```
-If  : `if´ Expr (Block | `=>´ Expr)
-        [`else´  (Block | `=>´ Expr)]
+If  : `if´ Expr (`=>´ Expr | Block | Lambda)
+        [`else´  (`=>´ Expr | Block)]
 Ifs : `ifs´ `{´ {Case} [Else] `}´
-        Case :  Expr  (`=>´ Expr | Block)
+        Case :  Expr  (`=>´ Expr | Block | Lambda)
         Else : `else´ (`=>´ Expr | Block)
+
+Lambda : `{´ [`\´ { ID [TAG] `,´ } `=>´] { Expr [`;´] }`}´
 ```
 
 An `if` tests a condition expression and executes one of the two possible
@@ -1556,6 +1601,12 @@ An `ifs` supports multiple conditions, which are tested in sequence, until one
 is satisfied, executing its associated branch.
 Otherwise, it executes the optional `else` branch, which defaults to `nil`.
 
+Except for `else` branches, note that branches can use the
+[lambda notation](#lambda-prototypes) to capture the value of the condition
+being tested.
+Even though it uses the lambda notation, the branches do not create an extra
+function to execute.
+
 Examples:
 
 ```
@@ -1566,6 +1617,12 @@ ifs {
     x < y => y
     else  => error("values are equal")
 }
+
+if f() { \v =>
+    println("f() evaluates to " ++ to.string(v))
+} else {
+    println("f() evaluates to false")
+}
 ```
 
 ### Pattern Matching
@@ -1575,54 +1632,92 @@ patterns:
 
 ```
 Match : `match´ Expr `{´ {Case} [Else] `}´
-        Case :  Patt  (Block | `=>´ Expr)
-        Else : `else´ (Block | `=>´ Expr)
+        Case :  Patt  (`=>´ Expr | Block | Lambda)
+        Else : `else´ (`=>´ Expr | Block)
 
-Patt : [`(´] [ID] [TAG] (Cons | Oper | Full) [`)´]
-        Cons : Expr
-        Oper : OP [Expr]
-        Full : [`,´ [Expr]]
+Patt : [`(´] [ID] [TAG] [Const | Oper | Tuple] [`|´ Expr] [`)´]
+        Const : Expr
+        Oper  : OP [Expr]
+        Tuple : `[´ { Patt `,´ } `]´
+
+Lambda : `{´ [`\´ { ID [TAG] `,´ } `=>´] { Expr [`;´] }`}´
 ```
 
-A pattern is enclosed by optional parenthesis and has three possible forms:
+The patterns are tested in sequence, until one is satisfied, executing its
+associated branch.
+Otherwise, it executes the optional `else` branch, which defaults to `nil`.
+A branch can be either a [block](#blocks) or a simple expression prefixed
+by the arrow symbol `=>`.
 
-- A *constructor pattern* `Cons` compares the head value against the given
-    expression using the operator [`===`](#deep-equality-operators).
-    The expression must be either a [static literal](#static-values) or a
-    [collection constructor](#collection-values).
-- An *operation pattern* `Oper` calls the given predicate passing the head
-    value and the optional expression.
-- A *full pattern* `Full` is composed of a
-    [variable declaration](#declarations] with identifier and tag, and a
-    condition expression.
-    The pattern assigns the head expression to the variable, which is visible
-    by the condition expression and case branch.
-    The pattern checks if the head expression matches the given tag using the
-    operator [`is?`](#operator-is] and if the condition expression is
-    satisfied.
-    The identifier, tag and condition are all optional, but the identifier
-    cannot appear alone, requiring a compaining tag or `,`.
-    The identifier defaults to `it`.
+A pattern is satisfied if all of its optional forms to test the head expression
+are satisfied:
 
-Note that a tag pattern, such as `:X`, satisfies both the `Cons` and `Full`
-forms.
-Nevertheless, it always assumes the `Full` form and uses the operator `is?` to
-match against the head expression.
+- An identifier `ID` that always matches and captures the value of the head
+  expression with `ID = head`.
+  If omitted, it assumes the implicit identifier `it`.
+  If the pattern succeeds, the identifier can be used in its associated branch.
+- A tag `TAG` that tests the head expression with `head is? TAG`.
+- One of the three forms:
+    - A [static literal](#static-values) `Const` that tests the head expression
+      with `head == Const`.
+    - An operation `OP` followed by an optional expression `Expr` that tests
+      the head expression with `{{OP}}(head [,Expr])`.
+    - A tuple of patterns that tests if the head expression is a tuple, and
+      then applies each nested pattern recursively.
+      The head tuple size can be greater than the tuple pattern.
+- An extra "such that" condition following the pipe symbol `|` that must be
+  satisfied, regardless of the head expression valuue.
+  If given, this condition becomes the capture value of the branch.
+
+Except for `else` branches, note that the branches can use the
+[lambda notation](#lambda-prototypes) to capture the value of the condition
+being tested.
+Even though it uses the lambda notation, the branches do not create an extra
+function to execute.
 
 Examples:
 
 ```
-ifs f() {
-    [1,2,3]    => println("f() === [1,2,3]")
-    >= g()     => println("f() >= g()")
-    :tuple     => println("f() is? :tuple")
-    :T, g(it)  => println("it=f(), (it is? :T) and g(it)")
-    x,         => println("f() = ", x)
-    else {
-        error("impossible case")
-    }
+match f() {
+    x :X     => x       ;; capture `x=f()`, return `x` if `x is? :X`
+    <= 5     => it      ;; capture `it=f()`, return `it` if `it <= 5`
+    10       => :ok     ;; return :ok if `f() == 10`
+    {{odd?}} => :ok     ;; return :ok if `odd?(f())`
+    else     => :no
+}
+
+match [10,20,30,40] {
+    | g(it) { \v => v }     ;; capture `it=[...]`, check `g(it)`
+                            ;;    capture and return `g(it)` as `v`
+    [10, i, j|j>10] => i+j  ;; capture `it=[...]`, check `#it>=3`,
+                            ;;    check `it[0]==10`
+                            ;;    capture `i=it[1]`
+                            ;;    capture `j=it[1]`, check `j>10`
+                            ;;    return i+j
 }
 ```
+
+Patterns are also used in
+    [declarations](#declarations),
+    [iterators](#iterators-tuples),
+    [catch clauses](#exceptions), and
+    [await statements](#await).
+In the case of declarations and iterators, the patterns are assertive in the
+sense that they cannot fail, raising an error if the match fails.
+
+Examples:
+
+```
+val [1,x,y] = [1,2,3]
+println(x,y)            ;; --> 2 3
+
+val [10,x] = [20,20]    ;; ERROR: match fails
+
+TODO: iterator
+TODO: catch
+TODO: await
+```
+
 
 ## Loops and Iterators
 
@@ -1674,7 +1769,7 @@ loop {
 ```
 loop {
     do {
-        break if true   ;; ERR: invalid nesting level
+        break if true   ;; ERROR: invalid nesting level
     }
 }
 ```
@@ -3088,7 +3183,7 @@ Expr  : `do´ Block                                      ;; explicit block
       | `func´ `(´ [List(ID)] `)´ Block                 ;; anon function
       | `coro´ `(´ [List(ID)] `)´ Block                 ;; anon coroutine
       | `task´ `(´ [List(ID)] `)´ Block                 ;; anon task
-      | `\´ `{´ [ID [TAG] `=>´]  { Expr [`;´] }`}´      ;; anon function
+      | `\´ `{´ [ID [TAG] `=>´] { Expr [`;´] }`}´       ;; anon function
 
       | `status´ `(´ Expr `)´                           ;; coro/task status
 

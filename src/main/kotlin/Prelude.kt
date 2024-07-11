@@ -80,4 +80,4 @@ val ASR = """
     func assert (v, msg) {
         if v => v => error(msg)
     }    
-"""
+""".replace("\n", " ")

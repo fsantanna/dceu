@@ -1099,6 +1099,36 @@ class Exec_99 {
         """, true)
         assert(out == "10\t20\n:ok\n") { out }
     }
+    @Test
+    fun fj_11_it_it() {
+        val out = test("""
+            val v = match 10 {
+                |it+1 { \it => it }
+            }
+            println(v)
+        """, true)
+        assert(out == "11\n") { out }
+    }
+    @Test
+    fun fj_12_val_err() {
+        val out = test("""
+            $COMP ; $ASR
+            val [x,1] = [1,2]
+            println(x,y)
+        """)
+        assert(out == "anon : (lin 4, col 23) : access error : variable \"y\" is not declared\n") { out }
+    }
+    @Test
+    fun fj_13_val_err() {
+        val out = test("""
+            $COMP ; $ASR
+            val [x,1] = [1,2]
+            println(x)
+        """)
+        assert(out == " |  anon : (lin 3, col 19) : assert({{==}}(ceu_patt_1208,1),:Patt)\n" +
+                " |  anon : (lin 2, col 597) : error(msg)\n" +
+                " v  error : :Patt\n") { out }
+    }
 
     // CATCH
 
