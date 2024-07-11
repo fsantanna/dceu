@@ -260,7 +260,7 @@ val [is', is-not'] = do {
 
 val [in', in-not'] = do {
     func x-in (v, xs) {
-        if (type(xs) == :dict) and xs[v] { ,it =>
+        if (type(xs) == :dict) and xs[v] { \it =>
             it
         } else {
             loop [a,b] in to-iter(xs,[:key,:val]) {

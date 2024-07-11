@@ -133,7 +133,7 @@ class Exec_99 {
     fun bb_03_or_and_ok() {
         val out = test("""
             println(
-                (1 thus { ,ceu_6 =>
+                (1 thus { \ceu_6 =>
                     (if ceu_6 {
                        ceu_6
                     } else {
@@ -141,7 +141,7 @@ class Exec_99 {
                     })
                 })
             )
-            println((nil thus { ,ceu_41 =>
+            println((nil thus { \ceu_41 =>
                 (if ceu_41 {
                     ceu_41
                 } else {
@@ -386,7 +386,7 @@ class Exec_99 {
     fun cj_02_if() {
         val out = test("""
             data :X = [x]
-            val i = if [10] { ,v:X => v.x }
+            val i = if [10] { \v:X => v.x }
             println(i)
         """)
         assert(out == "10\n") { out }
@@ -396,7 +396,7 @@ class Exec_99 {
         val out = test("""
             data :X = [x]
             val i = ifs {
-                [10] { ,v:X => v.x }
+                [10] { \v:X => v.x }
             }
             println(i)
         """)
@@ -407,7 +407,7 @@ class Exec_99 {
         val out = test("""
             data :X = [x]
             val i = match nil {
-                |[10] { ,v:X => v.x }
+                |[10] { \v:X => v.x }
             }
             println(i)
         """)
@@ -417,7 +417,7 @@ class Exec_99 {
     fun cj_05_ifs() {
         val out = test("""
             match nil {
-                |10 { ,v => println(v) }
+                |10 { \v => println(v) }
             }
         """)
         assert(out == "10\n") { out }
@@ -1614,7 +1614,7 @@ class Exec_99 {
             """
             var x
             do {
-                [1,2,3] thus { ,a =>
+                [1,2,3] thus { \a =>
                     set x = a
                 }
             }
@@ -1632,7 +1632,7 @@ class Exec_99 {
             """
             var x
             do {
-                [1,2,3] thus { ,a =>
+                [1,2,3] thus { \a =>
                     set x = ;;;drop;;;(a)
                 }
             }
@@ -1647,7 +1647,7 @@ class Exec_99 {
         val out = test(
             """
             val x = do {
-                [1,2,3] thus { ,a =>
+                [1,2,3] thus { \a =>
                     a
                 }
             }
@@ -1661,7 +1661,7 @@ class Exec_99 {
     fun mm_02_thus_err() {
         val out = test("""
             var x
-            nil thus { ,it =>
+            nil thus { \it =>
                 set x = 10  ;; err
             }
             println(x)
@@ -1673,7 +1673,7 @@ class Exec_99 {
     fun mm_03_thus_err() {
         val out = test("""
             var x
-            nil thus { ,it =>
+            nil thus { \it =>
                 set x = it  ;; err
                 println(x)
             }
@@ -1685,7 +1685,7 @@ class Exec_99 {
     fun mm_04_tmp() {
         val out = test(
             """
-            [0] thus { ,x =>
+            [0] thus { \x =>
                 set x[0] = []
                 println(x)
             }
@@ -1697,7 +1697,7 @@ class Exec_99 {
     fun mm_05_tmp() {
         val out = test("""
             val v = do {
-                [] thus { ,x =>
+                [] thus { \x =>
                     if x { x } else { [] }
                 }
             }
@@ -1710,7 +1710,7 @@ class Exec_99 {
     fun mm_05_tmp_x() {
         val out = test("""
             val v = do {
-                [] thus { ,x =>
+                [] thus { \x =>
                     if x { ;;;drop;;;(x) } else { [] }
                 }
             }
@@ -1747,7 +1747,7 @@ class Exec_99 {
     fun mm_08_fleet_tuple_func_err() {
         val out = test("""
             var f = func (v) {
-                v[0] thus { ,it =>
+                v[0] thus { \it =>
                     println(it)
                 }
             }
@@ -1763,7 +1763,7 @@ class Exec_99 {
     fun mm_09_yield_err() {
         val out = test("""
             resume (coro () {
-                yield(nil) thus { ,it => set it = nil }
+                yield(nil) thus { \it => set it = nil }
             }) ()
         """)
         assert(out == "anon : (lin 3, col 42) : set error : destination is immutable\n") { out }
@@ -1772,7 +1772,7 @@ class Exec_99 {
     fun mm_10_yield_err() {
         val out = test("""
             resume (coroutine (coro () {
-                yield(nil) thus { ,it => yield(nil) thus { ,x => nil } }
+                yield(nil) thus { \it => yield(nil) thus { \x => nil } }
             })) ()
             println(:ok)
         """)
@@ -1785,7 +1785,7 @@ class Exec_99 {
         val out = test("""
             $PLUS
             val CO = coro () {
-                yield(nil) thus {, it => 
+                yield(nil) thus {\ it => 
                     println(it)
                 }
             }
@@ -1799,7 +1799,7 @@ class Exec_99 {
     fun mm_12_resume_yield() {
         val out = test("""
             val CO = coro (v1) {
-                yield(v1) thus { , x => x }
+                yield(v1) thus { \ x => x }
             }
             val co = coroutine(CO)
             val v1 = resume co(10)
@@ -1812,7 +1812,7 @@ class Exec_99 {
     fun mm_13_tags() {
         val out = test("""
             val CO = coro () {
-                yield(nil) thus { , it =>
+                yield(nil) thus { \ it =>
                     println(sup?(:X,tag(it))) ;; drop(it)
                 }
             }
@@ -1826,7 +1826,7 @@ class Exec_99 {
     fun mm_14_yield_as() {
         val out = test("""
             val CO = coro () {
-                yield(nil) thus {, v =>
+                yield(nil) thus {\ v =>
                     println(v)
                 }
             }
@@ -1840,7 +1840,7 @@ class Exec_99 {
     fun mm_15_yield_as() {
         val out = test("""
             coro () {
-                yield(nil) thus { ,it :T =>
+                yield(nil) thus { \it :T =>
                     it[0]
                 }
             }
@@ -1853,8 +1853,8 @@ class Exec_99 {
     fun mm_16_scope() {
         val out = test("""
             val T = coro () {
-                val v = yield(nil) thus { ,x => x }
-                yield(nil) ;;thus { ,it => nil }
+                val v = yield(nil) thus { \x => x }
+                yield(nil) ;;thus { \it => nil }
                 println(v)                
             }
             val t = coroutine(T)
@@ -1887,7 +1887,7 @@ class Exec_99 {
         val out = test("""
             coro () {
                 catch (it| do {
-                    yield(nil) thus {, it => nil }
+                    yield(nil) thus {\ it => nil }
                 } )
                 {
                     error(:e1)
@@ -1903,7 +1903,7 @@ class Exec_99 {
             coro () {
                 catch (it| do {
                     ;;;do;;; it
-                    yield(nil) thus { ,it => nil }
+                    yield(nil) thus { \it => nil }
                 } )
                 {
                     error(:e1)
@@ -1917,7 +1917,7 @@ class Exec_99 {
     fun mm_18_it() {
         val out = test("""
             val CO = coro () {
-                yield(nil) thus { ,it =>
+                yield(nil) thus { \it =>
                     println(:it, it)
                 }
             }
@@ -1931,7 +1931,7 @@ class Exec_99 {
     fun mm_19_it() {
         val out = test("""
             val CO = coro () {
-                yield(nil) thus { ,x =>
+                yield(nil) thus { \x =>
                     println(:it, x)
                 }
             }
@@ -1945,7 +1945,7 @@ class Exec_99 {
     fun mm_20_it_err() {
         val out = test("""
             val CO = coro (x) {
-                yield(nil) thus {, x =>
+                yield(nil) thus {\ x =>
                     println(:it, x)
                 }
             }
@@ -1960,7 +1960,7 @@ class Exec_99 {
         val out = test("""
             data :X = [x]
             val CO = coro () {
-                yield(nil) thus { ,x :X =>
+                yield(nil) thus { \x :X =>
                     println(:it, x.x)
                 }
             }
@@ -1974,8 +1974,8 @@ class Exec_99 {
     fun mm_22_it_it_err() {
         val out = test("""
             val CO = coro () {
-                yield(nil) thus { ,x =>
-                    yield(nil) thus { ,x =>
+                yield(nil) thus { \x =>
+                    yield(nil) thus { \x =>
                         x
                     }
                 }
@@ -1988,11 +1988,11 @@ class Exec_99 {
     fun mm_23_scope() {
         val out = test("""
             val T = coro () {
-                val v = yield(nil) thus { ,it => 
+                val v = yield(nil) thus { \it => 
                     println(it)
                     10
                 }
-                yield(nil) ;;thus {, it => nil }
+                yield(nil) ;;thus {\ it => nil }
                 println(v)                
             }
             val t = coroutine(T)
@@ -2011,8 +2011,8 @@ class Exec_99 {
     fun mm_24_yield() {
         val out = test("""
             coro () {
-                yield(nil) thus {, x =>
-                    yield(nil) thus { ,y => nil }
+                yield(nil) thus {\ x =>
+                    yield(nil) thus { \y => nil }
                 }
             }
             println(:ok)
@@ -2026,7 +2026,7 @@ class Exec_99 {
         DEBUG = true
         val out = test("""
             var tk = task () {
-                yield(nil) thus {, it =>
+                yield(nil) thus {\ it =>
                     do {
                         val xxx = it
                         nil
@@ -2050,10 +2050,10 @@ class Exec_99 {
         val out = test("""
             spawn( task () {
                 val t = spawn (task () {
-                    yield(nil) ;;thus { ,it => nil }
+                    yield(nil) ;;thus { \it => nil }
                     10
                 } )()
-                yield (nil) thus {, it => println(it.pub) }
+                yield (nil) thus {\ it => println(it.pub) }
             } )()
             broadcast(nil)
             println(:ok)
@@ -2066,7 +2066,7 @@ class Exec_99 {
             """
             var T = task () {
                 var v =
-                yield(nil) thus { ,it => it}
+                yield(nil) thus { \it => it}
                 println(v)
             }
             var t = spawn T()
@@ -2100,7 +2100,7 @@ class Exec_99 {
         val out = test("""
             data :E = [x,y]
             spawn (task () {
-                yield(nil) thus {, it :E =>
+                yield(nil) thus {\ it :E =>
                     println(it.x)
                 }
             } )()
@@ -2114,10 +2114,10 @@ class Exec_99 {
             data :E = [x,y]
             data :F = [i,j]
             spawn (task () {
-                yield(nil) thus { ,it :E =>
+                yield(nil) thus { \it :E =>
                     println(it.x)
                 }
-                yield(nil) thus { ,it :F =>
+                yield(nil) thus { \it :F =>
                     println(it.j)
                 }
             } )()
@@ -3171,7 +3171,7 @@ class Exec_99 {
         val out = test("""
             val CO = coro () {
                 ;;;do;;; nil
-                yield() thus { ,it => println(it);it }
+                yield() thus { \it => println(it);it }
                 ;;;do;;; nil
                 nil
             }
@@ -5160,7 +5160,7 @@ class Exec_99 {
     fun op_05_thus_err() {
         val out = test(
             """
-            val x = [] --> { ,x =>
+            val x = [] --> { \x =>
                 x
             }
             println(x)
@@ -5171,7 +5171,7 @@ class Exec_99 {
     fun op_05_thus() {
         val out = test(
             """
-            val y = [] --> {, x =>
+            val y = [] --> {\ x =>
                 x
             }
             println(y)
@@ -5193,7 +5193,7 @@ class Exec_99 {
     fun op_07_thus() {
         val out = test(
             """
-            val x = {,y =>
+            val x = {\y =>
                 y
             } <-- []
             println(x)
@@ -5392,14 +5392,14 @@ class Exec_99 {
     fun pp_02_lambda () {
         val out = test("""
             $PLUS
-            println({,x=>x+x}(2))
+            println({\x=>x+x}(2))
         """)
         assert(out.contains("4\n")) { out }
     }
     @Test
     fun pp_03_lambda () {
         val out = test("""
-            println({,x=>x}(1))
+            println({\x=>x}(1))
         """)
         assert(out.contains("1\n")) { out }
     }
@@ -5456,9 +5456,17 @@ class Exec_99 {
     @Test
     fun pp_09_lambda_call () {
         val out = test("""
-            println({, x => x }(10))
+            println({\ x => x }(10))
         """)
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun pp_10_lambda_call () {
+        val out = test("""
+            $PLUS
+            println({\x,y => x+y }(10,30))
+        """)
+        assert(out == "40\n") { out }
     }
 
     // TEST

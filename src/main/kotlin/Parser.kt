@@ -347,27 +347,28 @@ class Parser (lexer_: Lexer)
         return Expr.Do(tk, es)
     }
 
-    fun lambda (it: Boolean): Pair<Id_Tag?,List<Expr>> {
+    fun lambda (it: Boolean): Pair<List<Id_Tag>,List<Expr>> {
         this.acceptFix_err("{")
         val tk0 = this.tk0
-        val idtag = when {
-            !this.acceptFix(",") -> if (!it) null else Pair(Tk.Id("it", tk0.pos.copy()), null)
+        val idstags = when {
+            !this.acceptFix("\\") -> if (!it) emptyList() else listOf(Pair(Tk.Id("it", tk0.pos.copy()), null))
             this.acceptEnu("Tag") -> {
                 val tag = this.tk0 as Tk.Tag
                 this.acceptFix_err("=>")
-                Pair(Tk.Id("it", tk0.pos.copy()), tag)
+                listOf(Pair(Tk.Id("it", tk0.pos.copy()), tag))
             }
             else -> {
-                this.acceptEnu_err("Id")
-                val id = this.tk0 as Tk.Id
-                val tag = if (!this.acceptEnu("Tag")) null else this.tk0 as Tk.Tag
-                this.acceptFix_err("=>")
-                Pair(id, tag)
+                list0(",", "=>") {
+                    this.acceptEnu_err("Id")
+                    val id = this.tk0 as Tk.Id
+                    val tag = if (!this.acceptEnu("Tag")) null else this.tk0 as Tk.Tag
+                    Pair(id, tag)
+                }
             }
         }
         val es = this.exprs()
         this.acceptFix_err("}")
-        return Pair(idtag, es)
+        return Pair(idstags, es)
     }
 
     fun id_tag (): Pair<Tk.Id, Tk.Tag?> {
@@ -478,7 +479,7 @@ class Parser (lexer_: Lexer)
                     arr -> Expr.Do(this.tk0, listOf(this.expr_1_bin()))
                     (CEU >= 99) -> {
                         val (x,es) = this.lambda(false)
-                        idtag = x
+                        idtag = x.firstOrNull()
                         Expr.Do(this.tk0, es)
                     }
                     else -> this.block()
@@ -933,10 +934,9 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (CEU>=99 && this.checkFix("{")) -> {
-                val (id_tag,es) = lambda(true)
-                id_tag!!
+                val (idstags,es) = lambda(true)
                 return this.nest("""
-                    (func (${id_tag.tostr(true)}) {
+                    (func (${idstags.map { it.tostr(true)}.joinToString(",")}) {
                         ${es.tostr(true)}
                     })
                 """)
@@ -951,7 +951,7 @@ class Parser (lexer_: Lexer)
                         else -> this.expr()
                     }
                     val es = if (this.acceptFix("=>")) {
-                        Pair(null, listOf(this.expr()))
+                        Pair(emptyList(), listOf(this.expr()))
                     } else {
                         this.lambda(false)
                     }
@@ -960,9 +960,9 @@ class Parser (lexer_: Lexer)
                 this.nest("""
                     do {
                         ;;`/* IFS | ${tk0.dump()} */`
-                        ${ifs.map { (cnd,idtag_es) ->
-                            val (idtag,es) = idtag_es
-                            val idtagx = if (idtag != null) idtag else Pair(Tk.Id("ceu_ifs_$N",tk0.pos.copy()),null)
+                        ${ifs.map { (cnd,idstags_es) ->
+                            val (idstags,es) = idstags_es
+                            val idtagx = if (idstags.isEmpty()) Pair(Tk.Id("ceu_ifs_$N",tk0.pos.copy()),null) else idstags.first() 
                             if (cnd == null) {
                                 es.tostr(true) // do ...
                             } else {
@@ -995,10 +995,10 @@ class Parser (lexer_: Lexer)
                                 """
                             }
                             else -> {
-                                val (idtag, es) = this.lambda(false)
+                                val (idstags, es) = this.lambda(false)
                                 """
                                 set ceu_ret_$nn = do {
-                                    ${idtag.cond { "val ${it.tostr(true)} = `:ceu ceu_acc`" }}
+                                    ${(!idstags.isEmpty()).cond { "val ${idstags.first().tostr(true)} = `:ceu ceu_acc`" }}
                                     ${es.tostr(true)}
                                 }
                                 true
@@ -1318,21 +1318,21 @@ class Parser (lexer_: Lexer)
                     } else {
                         val ret = when (this.tk0.str) {
                             "=" -> this.nest("""
-                                ${e.tostr(true)} thus { ,ceu_ppp_$N =>
+                                ${e.tostr(true)} thus { \ceu_ppp_$N =>
                                     `/* = */`
                                     ceu_ppp_$N[#ceu_ppp_$N-1]
                                 }
                             """)
                             "+" -> this.nest("""
-                                ${e.tostr(true)} thus { ,ceu_ppp_$N =>
+                                ${e.tostr(true)} thus { \ceu_ppp_$N =>
                                     `/* + */`
                                     ceu_ppp_$N[#ceu_ppp_$N]
                                 }
                             """)
                             "-" -> this.nest("""
-                                ${e.tostr(true)} thus { ,ceu_x_$N =>
+                                ${e.tostr(true)} thus { \ceu_x_$N =>
                                     `/* - */`
-                                    ceu_x_$N[#ceu_x_$N-1] thus { ,ceu_y_$N =>
+                                    ceu_x_$N[#ceu_x_$N-1] thus { \ceu_y_$N =>
                                         set ceu_x_$N[#ceu_x_$N-1] = nil
                                         ceu_y_$N
                                     }
@@ -1352,7 +1352,7 @@ class Parser (lexer_: Lexer)
                         this.acceptFix_err(")")
                         val acc = Expr.Acc(Tk.Id("ceu_cast_$nn", e.tk.pos.copy()))
                         this.nest("""
-                            ${e.tostr(true)} thus { ,ceu_cast_$nn ${tag.str} =>
+                            ${e.tostr(true)} thus { \ceu_cast_$nn ${tag.str} =>
                                 ${this.expr_4_suf(acc).tostr(true)}
                             }
                         """) //.let { println(it);it })
@@ -1492,11 +1492,10 @@ class Parser (lexer_: Lexer)
                 )
             }
             "thus" -> {
-                val (id_tag,es) = lambda(true)
-                id_tag!!
+                val (idstags,es) = lambda(true)
                 this.nest( """
                     do {
-                        ${id_tag.first.pos.pre()}val ${id_tag.tostr(true)} = ${e.tostr(true)}
+                        ${idstags.first().first.pos.pre()}val ${idstags.first().tostr(true)} = ${e.tostr(true)}
                         ${es.tostr(true)}
                     }
                 """)

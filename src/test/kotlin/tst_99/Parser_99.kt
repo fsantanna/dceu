@@ -629,7 +629,7 @@ class Parser_99 {
     fun oo_03_thus_err() {
         val l = tst_03.lexer(
             """
-            1 thus { ,x => }
+            1 thus { \x => }
         """
         )
         val parser = Parser(l)
@@ -643,7 +643,7 @@ class Parser_99 {
     @Test
     fun oo_04_thus() {
         val l = tst_04.lexer("""
-            1 thus { ,it => nil }
+            1 thus { \it => nil }
         """
         )
         val parser = Parser(l)
@@ -688,7 +688,7 @@ class Parser_99 {
             """
             yield
             (1) thus
-            { ,it => nil }
+            { \it => nil }
         """.trimIndent()
         )
         val parser = Parser(l)
@@ -706,7 +706,7 @@ class Parser_99 {
             """
             set t = coro (v) {
                 set v = yield((1)) ;;thus { it:X => it }
-                yield((2)) thus { ,it => nil }
+                yield((2)) thus { \it => nil }
             }
             coroutine(t)
             set v = resume a(1)
@@ -1514,7 +1514,7 @@ class Parser_99 {
     }
     @Test
     fun pp_03_lambda() {
-        val l = lexer("{,:X => it}")
+        val l = lexer("{\\:X => it}")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "(func (it :X) {\n" +
@@ -1523,7 +1523,7 @@ class Parser_99 {
     }
     @Test
     fun todo_LIN_COL_pp_04_lambda_err() {
-        val l = lexer("{,v :X}")
+        val l = lexer("{\\v :X}")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "anon : (lin X, col Y) : expression error : innocuous expression\n") { e.tostr() }
