@@ -534,8 +534,8 @@ NAT  : `.*`                   ;; native expression
 
 The literal `nil` is the single value of the [*nil*](#basic-types) type.
 
-The literals `true` and `false` are the only values of the [*bool*](#basic-types)
-type.
+The literals `true` and `false` are the only values of the
+[*bool*](#basic-types) type.
 
 A [*tag*](#basic-types) type literal starts with a colon (`:`) and is followed
 by letters, digits, dots (`.`), or dashes (`-`).
@@ -672,8 +672,6 @@ The `nil` type represents the absence of values with its single value
 
 The `bool` type represents boolean values with [`true`](#literals) and
 [`false`](#literals).
-In a boolean context, `nil` and `false` are interpreted as `false` and all
-other values from all other types are interpreted as `true`.
 
 The `char` type represents [character literals](#literals).
 
@@ -1276,7 +1274,9 @@ enum { :x, :y, :z }     ;; declares :x, :y, :z in sequence
 to.number(:x)           ;; --> 100
 to.number(:y)           ;; --> 101
 to.number(:z)           ;; --> 102
+```
 
+```
 enum :Key {
     Left,               ;; declares :Key-Left (200)
     Up,                 ;; declares :Key-Up   (201)
@@ -1526,7 +1526,9 @@ Examples:
 var x = (2 * y) where {     ;; x = 20
     var y = 10
 }
+```
 
+```
 (x * x) thus { \v =>
     println(v)              ;; --> 400
 }
@@ -1576,6 +1578,10 @@ x or y or z     ;; (x or y) or z
 
 ## Conditionals and Pattern Matching
 
+In a conditional context, [`nil`](#static-values) and [`false`](#static-values)
+are interpreted as "falsy", and all other values from all other types as
+"truthy".
+
 ### Conditionals
 
 Ceu supports conditionals as follows:
@@ -1592,7 +1598,8 @@ Lambda : `{´ [`\´ { ID [TAG] `,´ } `=>´] { Expr [`;´] }`}´
 
 An `if` tests a condition expression and executes one of the two possible
 branches.
-If the condition is [true](#basic-types), the `if` executes the first branch.
+
+If the condition is truthy, the `if` executes the first branch.
 Otherwise, it executes the optional `else` branch, which defaults to `nil`.
 A branch can be either a [block](#blocks) or a simple expression prefixed
 by the arrow symbol `=>`.
@@ -1611,13 +1618,17 @@ Examples:
 
 ```
 val max = if x>y => x => y
+```
 
+```
 ifs {
     x > y => x
     x < y => y
     else  => error("values are equal")
 }
+```
 
+```
 if f() { \v =>
     println("f() evaluates to " ++ to.string(v))
 } else {
@@ -1628,7 +1639,7 @@ if f() { \v =>
 ### Pattern Matching
 
 The `match` statement allows to test a head expression against a series of
-patterns:
+patterns between `{` and `}`:
 
 ```
 Match : `match´ Expr `{´ {Case} [Else] `}´
@@ -1685,7 +1696,9 @@ match f() {
     {{odd?}} => :ok     ;; return :ok if `odd?(f())`
     else     => :no
 }
+```
 
+```
 match [10,20,30,40] {
     | g(it) { \v => v }     ;; capture `it=[...]`, check `g(it)`
                             ;;    capture and return `g(it)` as `v`
@@ -1713,66 +1726,108 @@ println(x,y)            ;; --> 2 3
 
 val [10,x] = [20,20]    ;; ERROR: match fails
 
-TODO: iterator
-TODO: catch
-TODO: await
+val d = @[x=1, y=2]
+loop [k,v] in d {
+    println(k,v)        ;; --> x,1 y,2
+}
 ```
 
+```
+catch :X {              ;; ok match
+    catch :Y {          ;; no match
+        error(:X)
+    }
+    ;; never reached
+}
+```
+
+```
+spawn {
+    await(:Pos | it.x==it.y)
+}
+broadcast(:Pos [10,20])     ;; no match
+broadcast(:Pos [10,10])     ;; ok match
+```
 
 ## Loops and Iterators
 
 Ceu supports loops and iterators as follows:
 
 ```
-Loop : `loop´ [ID [TAG]] [`in´ (Range | Expr)] Block
+Loop : `loop´ Block                                 ;; (1)
+     | `loop´ (ID [TAG] | Patt) `in´ Expr Block     ;; (2)
+     | `loop´ [ID] [`in´ Range] Block               ;; (3)
+            Range : (`}´|`{´) Expr `=>` Expr (`}´|`{´) [`:step` [`+´|`-´] Expr]
 
-Skip  : `skip´ `if´ Expr
-
-Break : `break´ [`(´ Expr `)´] `if´ Expr
+Break : `break´ `(´ [Expr] `)´
       | `until´ Expr
       | `while´ Expr
+
+Skip  : `skip´
 ```
 
 A `loop` executes a block of code continuously until a termination condition is
 met.
+Ceu supports three loop variations:
 
-The optional `in` clause extends a loop with an iterator expression and an
-optional control variable.
-The iterator can be a [numeric range](#numeric-ranges) or an expression that
-evaluates to an [iterator tuple](#TODO).
-If the variable identifier is omitted, it assumes the implicit identifier `it`.
-If the `in` clause is omitted, but not the the variable identifier, then the
-loop iterates over the variable from `0` to infinity.
+1. An *infinite loop* with an empty header, which only terminates from break
+   conditions.
+2. An [*iterator loop*](#iterator-loop) with an iterator expression that
+   executes on each step until it returns `nil`.
+3. A [*numeric loop*](#numeric-loop) with a range that specifies the number of
+   steps to execute.
 
-The loop block may contain control clauses to restart or terminate the loop.
-These clauses must be placed at the exact same nesting level of the loop block,
-but not at lower levels.
-The `skip` clause jumps back to the next loop iteration if the given condition
-is true.
-The `break`, `until`, or `while` terminate the loop if the given condition is
-met.
-The loop as a whole evaluates to the terminating condition, or to the optional
-expression in the case of a `break`.
+The iterator and numeric loops are detailed next.
+
+The loop block may contain three variations of a `break` statement for
+immediate termination:
+
+1. A `break <e>` terminates the loop with the value of `<e>`.
+2. An `until <e>` terminates the loop if `<e>` is [truthy](#conditionals), with
+   that value.
+3. A `while <e>` terminates the loop if `<e>` is [falsy](#basic-types), with
+   that value.
+
+As any other statement, a loop is an expression that evaluates to a final value
+as a whole.
+
+The block may also contain a `skip` statement to jump back to the next loop
+step.
 
 Examples:
 
 ```
-var i = 0
-loop {
+var i = 1
+loop {                  ;; infinite loop
+    println(i)          ;; --> 1,2,...,10
+    while i < 10        ;; immediate termination
     set i = i + 1
-    skip if (i % 2) == 1
-    println(i)          ;; --> 2,4,6,8,10
-    while i <= 10
 }
 ```
 
 ```
-loop {
-    do {
-        break if true   ;; ERROR: invalid nesting level
+var i = 0
+loop {                  ;; infinite loop
+    set i = i + 1
+    if (i % 2) == 0 {
+        skip            ;; jump back
     }
+    println(i)          ;; --> 1,3,5,...
 }
 ```
+
+An *iterator loop* declares a variable using the rules from
+[declarations](#declarations) to capture the results of an iterator expression
+after the keyword `in`, which executes on the beginning of each loop iteration.
+The loop terminates when the iterator expression returns `nil`.
+If the declaration is omitted, it assumes the implicit identifier `it`.
+
+A *numeric loop* first declares a variable from a given identifier
+
+If the `in` clause is omitted, but not the the variable identifier, then the
+loop iterates over the variable from `0` to infinity.
+
+Examples:
 
 ```
 loop i {
@@ -1780,7 +1835,7 @@ loop i {
 }
 ```
 
-### Numeric Ranges
+### Numeric Loops
 
 In a numeric loop, the `in` clause specifies an interval `x => y` to iterate
 over.
