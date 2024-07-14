@@ -1773,7 +1773,7 @@ Ceu supports three loop variations:
 1. An *infinite loop* with an empty header, which only terminates from break
    conditions.
 2. An [*iterator loop*](#iterator-loop) with an iterator expression that
-   executes on each step until it returns `nil`.
+   executes on each step until it signals termination.
 3. A [*numeric loop*](#numeric-loop) with a range that specifies the number of
    steps to execute.
 
@@ -1816,68 +1816,77 @@ loop {                  ;; infinite loop
 }
 ```
 
-An *iterator loop* declares a variable using the rules from
-[declarations](#declarations) to capture the results of an iterator expression
-after the keyword `in`, which executes on the beginning of each loop iteration.
-The loop terminates when the iterator expression returns `nil`.
-If the declaration is omitted, it assumes the implicit identifier `it`.
+### Numeric Loops
 
-A *numeric loop* first declares a variable from a given identifier
+A numeric loop specifies a range of numbers to iterate through:
 
-If the `in` clause is omitted, but not the the variable identifier, then the
-loop iterates over the variable from `0` to infinity.
+```
+Loop  : `loop´ [ID] [`in´ Range] Block
+Range : (`}´|`{´) Expr `=>` Expr (`}´|`{´) [`:step` [`+´|`-´] Expr]
+```
+
+At each loop step, the optional identifier receives the current number.
+If omitted, it assumes the implicit identifier `it`.
+
+The optional `in` clause specifies an interval `x => y` to iterate
+over.
+If omitted, then the loop iterates from `0` to infinity.
+
+The clause chooses open or closed range delimiters, and an optional signed
+`:step` expression to apply at each iteration.
+The open delimiters `}x` and `y{` exclude the given numbers from the interval,
+while the closed delimiters `{x` and `y}` include them.
+Note that for an open delimiter, the loop initializes the given number to its
+successor or predecessor, depending on the step direction.
+
+The loop terminates when `x` reaches or surpasses `y` considering the step sign
+direction, which defaults to `+1`.
+After each step, the step is added to `x` and compared against `y`.
 
 Examples:
 
 ```
 loop i {
-    println(i)          ;; --> 0,1,2,...
+    println(i)      ;; --> 0,1,2,...
 }
 ```
 
-### Numeric Loops
-
-In a numeric loop, the `in` clause specifies an interval `x => y` to iterate
-over.
-The clause chooses open or closed range delimiters, and an optional signed
-`:step` expression to apply at each iteration:
-
 ```
-Range : (`{´ | `}´) Expr `=>` Expr (`{´ | `}´) [`:step` [`+´|`-´] Expr]
-```
-
-The open delimiters `}x` and `y{` exclude the given numbers from the interval,
-while the closed delimiters `{x` and `y}` include them.
-
-The loop terminates when `x` reaches or surpasses `y` considering the step sign
-direction, which defaults to `+1`.
-At each step, the loop control variable assumes the current iteration value.
-After each step, the step is added to `x` and compared against `y`.
-
-Note that for an open delimiter, the loop initializes the given number to its
-successor or predecessor, depending on the step direction.
-
-```
-loop in {0 => 5{ {
-    println(it)     ;; --> 0,1,2,3,4
+loop in {0 => 3{ {
+    println(it)     ;; --> 0,1,2
 }
+```
 
+```
 loop v in }3 => 0} :step -1 {
-    println(v)      ;; --> 2, 1, 0
+    println(v)      ;; --> 2,1,0
 }
 ```
 
-### Iterator Tuples
+### Iterator Loops
 
-In an iterator loop, the `in` clause specifies an expression that must evaluate
-to an iterator tuple `[f,...]` [tagged](#user-types) as `:Iterator`.
-If the given expression is not an iterator tuple, the loop tries to transform
-it calling `to-iter` implicitly.
+An iterator loop evaluates a given iterator expression on each step, until it
+signals termination:
 
+```
+Loop | `loop´ (ID [TAG] | Patt) `in´ Expr Block
+```
+
+The loop first declares a control variable using the rules from
+[declarations](#declarations) to capture the results of the iterator
+expression, which appears after the keyword `in`.
+If the declaration is omitted, it assumes the implicit identifier `it`.
+
+The iterator expression `itr` must evaluate to an [tagged](#user-types)
+iterator [tuple](#collections) `:Iterator [f,...]`.
 The iterator tuple must hold a step function `f` at index `0`, followed by any
-other state required to operate.
+other custom state required to operate.
 The function `f` expects the iterator tuple itself as argument, and returns its
-next value or `nil` to signal termination.
+next value.
+On each iteration, the loop calls `f` passing the `itr`.
+To signal termination, XXX TODO the  or `nil` to signal termination.
+If the iterator expression is not an iterator tuple, the loop tries to
+transform it calling `to-iter` implicitly.
 
 The loop calls the step function at each iteration passing the given iterator
 tuple, and assigns the result to the loop control variable.
@@ -1894,7 +1903,6 @@ Examples:
 loop v in [10,20,30] {          ;; implicit to-iter([10,20,30])
     println(v)                  ;; --> 10,20,30
 }
-
 
 func num-iter (N) {
     val f = func (t) {
