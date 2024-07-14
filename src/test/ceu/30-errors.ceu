@@ -1,0 +1,40 @@
+val x = catch :Error {
+    error(:Error)
+    println("unreachable")
+}
+println(x)              ;; --> :Error
+
+catch 1 {               ;; catches
+    defer {
+        println(1)
+    }
+    catch 2 {           ;; no catches
+        defer {
+            println(2)
+        }
+        error(1)        ;; throws
+        ;; unreachable
+    }
+    ;; unreachable
+}                       ;; --> 2, 1
+
+data :Err = [] {
+    :One = []
+    :Two = []
+}
+
+func f () {
+    catch :Err.One {                  ;; catches specific error
+        defer {
+            println(1)
+        }
+        error(:Err.Two ["err msg"])   ;; throws another error
+    }
+}
+catch :Err {                          ;; catches generic error
+    defer {
+        println(2)
+    }
+    f()
+    ;; unreachable
+}                                     ;; --> 1, 2

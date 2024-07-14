@@ -1768,7 +1768,7 @@ Skip  : `skip´
 
 A `loop` executes a block of code continuously until a termination condition is
 met.
-Ceu supports three loop variations:
+Ceu supports three loop header variations:
 
 1. An *infinite loop* with an empty header, which only terminates from break
    conditions.
@@ -1786,10 +1786,11 @@ immediate termination:
 2. An `until <e>` terminates the loop if `<e>` is [truthy](#conditionals), with
    that value.
 3. A `while <e>` terminates the loop if `<e>` is [falsy](#basic-types), with
-   that value.
+   that value (`nil` or `false`).
 
 As any other statement, a loop is an expression that evaluates to a final value
 as a whole.
+A loop that terminates from the header condition evaluates to `false`.
 
 The block may also contain a `skip` statement to jump back to the next loop
 step.
@@ -1841,6 +1842,7 @@ successor or predecessor, depending on the step direction.
 
 The loop terminates when `x` reaches or surpasses `y` considering the step sign
 direction, which defaults to `+1`.
+In this case, the loop evaluates to `false`.
 After each step, the step is added to `x` and compared against `y`.
 
 Examples:
@@ -1879,19 +1881,18 @@ If the declaration is omitted, it assumes the implicit identifier `it`.
 
 The iterator expression `itr` must evaluate to an [tagged](#user-types)
 iterator [tuple](#collections) `:Iterator [f,...]`.
+
 The iterator tuple must hold a step function `f` at index `0`, followed by any
 other custom state required to operate.
 The function `f` expects the iterator tuple itself as argument, and returns its
 next value.
-On each iteration, the loop calls `f` passing the `itr`.
-To signal termination, XXX TODO the  or `nil` to signal termination.
+On each iteration, the loop calls `f` passing the `itr`, and assigns the result
+to the loop control variable.
+To signal termination, `f` just needs to return `nil`.
+In this case, the loop evaluates to `false`.
+
 If the iterator expression is not an iterator tuple, the loop tries to
-transform it calling `to-iter` implicitly.
-
-The loop calls the step function at each iteration passing the given iterator
-tuple, and assigns the result to the loop control variable.
-When the result is `nil`, the loop terminates.
-
+transform it by calling `to-iter` implicitly.
 The function [`to-iter`](#iterator) in the
 [auxiliary library](#auxiliary-library) creates iterators from iterables, such
 as vectors, coroutines, and task pools, such that they can be traversed in

@@ -1,0 +1,43 @@
+do {
+    coro C (x) {                ;; first resume
+        println(x)              ;; --> 10
+        val w = yield(x + 1)    ;; returns 11, second resume, receives 12
+        println(w)              ;; --> 12
+        w + 1                   ;; returns 13
+    }
+    val c = coroutine(C)        ;; creates `c` from prototype `C`
+    val y = resume c(10)        ;; starts  `c`, receives `11`
+    val z = resume c(y+1)       ;; resumes `c`, receives `13`
+    println(status(c))          ;; --> :terminated
+}
+
+do {
+    coro C () {
+        defer {
+            println("aborted")
+        }
+        yield()
+    }
+    do {
+        val c = coroutine(C)
+        resume c()
+    }                           ;; --> aborted
+}
+
+do {
+    coro C () { }
+    val c = coroutine(C)
+    println(C, c)   ;; --> coro: 0x... / exe-coro: 0x...
+}
+
+do {
+    coro C = coro () {
+        yield()
+    }
+    val c = coroutine(C)
+    println(status(c))      ;; --> :yielded
+    resume c()
+    println(status(c))      ;; --> :yielded
+    resume c()
+    println(status(c))      ;; --> :terminated
+}
