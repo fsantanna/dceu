@@ -912,7 +912,7 @@ func (v1) {             ;; a closure
 For simple function prototypes, Ceu supports the lambda notation:
 
 ```
-Lambda : `{´ [`\´ { ID [TAG] `,´ } `=>´] { Expr [`;´] }`}´
+Lambda : `{´ [`\´ List(ID [TAG]) `=>´] { Expr [`;´] } `}´
 ```
 
 The expression `{ \<id> <tag> => <es> }` expands to
@@ -1509,7 +1509,7 @@ Any expression can be suffixed by `where` and `thus` clauses:
 Expr : Expr `where´ Block
      | Expr `thus´ Lambda
 
-Lambda : `{´ [`\´ { ID [TAG] `,´ } `=>´] { Expr [`;´] }`}´
+Lambda : `{´ [`\´ List(ID [TAG]) `=>´] { Expr [`;´] } `}´
 ```
 
 A `where` clause executes its suffix block before the prefix expression and is
@@ -1593,7 +1593,7 @@ Ifs : `ifs´ `{´ {Case} [Else] `}´
         Case :  Expr  (`=>´ Expr | Block | Lambda)
         Else : `else´ (`=>´ Expr | Block)
 
-Lambda : `{´ [`\´ { ID [TAG] `,´ } `=>´] { Expr [`;´] }`}´
+Lambda : `{´ [`\´ List(ID [TAG]) `=>´] { Expr [`;´] } `}´
 ```
 
 An `if` tests a condition expression and executes one of the two possible
@@ -1649,9 +1649,9 @@ Match : `match´ Expr `{´ {Case} [Else] `}´
 Patt : [`(´] [ID] [TAG] [Const | Oper | Tuple] [`|´ Expr] [`)´]
         Const : Expr
         Oper  : OP [Expr]
-        Tuple : `[´ { Patt `,´ } `]´
+        Tuple : `[´ List(Patt) } `]´
 
-Lambda : `{´ [`\´ { ID [TAG] `,´ } `=>´] { Expr [`;´] }`}´
+Lambda : `{´ [`\´ List(ID [TAG]) `=>´] { Expr [`;´] } `}´
 ```
 
 The patterns are tested in sequence, until one is satisfied, executing its
@@ -2054,10 +2054,6 @@ val c = coroutine(C)
 println(C, c)   ;; --> coro: 0x... / exe-coro: 0x...
 ```
 
-<!--
-5. [`abort`](#TODO): `TODO`
--->
-
 ### Coroutine Status
 
 The operation `status` returns the current state of the given active coroutine:
@@ -2076,7 +2072,7 @@ status:
 Examples:
 
 ```
-coro C = coro () {
+coro C () {
     yield()
 }
 val c = coroutine(C)
@@ -2089,18 +2085,23 @@ println(status(c))      ;; --> :terminated
 
 ### Resume
 
-The operation `resume` executes a coroutine starting from its last suspension
-point:
+The operation `resume` executes a coroutine from its last suspension point:
 
 ```
-Resume : `resume´ Expr `(´ [Expr] `)´
+Resume : `resume´ Expr `(´ List(Expr) `)´
 ```
 
-The operation `resume` expects an active coroutine, and resumes it, passing an
-optional argument.
-The coroutine executes until it yields or terminates.
-The `resume` evaluates to the argument of `yield` or to the coroutine return
-value.
+The operation `resume` expects an active coroutine, and resumes it, passing
+optional arguments.
+The coroutine executes until it [yields](#yield) or terminates.
+After returning, the `resume` evaluates to the argument passed to `yield` or to
+the coroutine return value.
+
+The first resume is like a function call, starting the coroutine from its
+beginning, and passing any number of arguments.
+The subsequent resumes start the coroutine from its last [`yield`](#yield)
+suspension point, passing at most one argument, which substitutes the `yield`.
+If omitted, the argument defaults to `nil`.
 
 ```
 coro C () {
@@ -2109,8 +2110,8 @@ coro C () {
     println(:2)
 }
 val co = coroutine(C)
-resume co()     ;; --> 1
-resume co()     ;; --> 2
+resume co()     ;; --> :1
+resume co()     ;; --> :2
 ```
 
 ### Yield
@@ -2121,8 +2122,9 @@ The operation `yield` suspends the execution of a running coroutine:
 Yield : `yield´ `(´ [Expr] `)´
 ```
 
-An `yield` expects an expression between parenthesis that is returned to whom
-resumed the coroutine.
+An `yield` expects an optional argument between parenthesis that is returned
+to whom resumed the coroutine.
+If omitted, the argument defaults to `nil`.
 Eventually, the suspended coroutine is resumed again with a value and the whole
 `yield` is substituted by that value.
 
@@ -2135,8 +2137,8 @@ lost.
 
 The operation `resume-yield-all´ continuously resumes the given active
 coroutine, collects its yields, and yields upwards each value, one at a time.
-It is typically use to delegate a job of an outer coroutine transparently to an
-inner coroutine:
+It is typically used to delegate a job of an outer coroutine transparently to
+an inner coroutine:
 
 ```
 All : `resume-yield-all´ Expr `(´ [Expr] `)´
@@ -2152,12 +2154,11 @@ do {
     var arg = <arg>                 ;; given initial value (or nil)
     loop {
         val v = resume co(arg)      ;; resumes with current arg
-        if (status(co) /= :terminated) or (v /= nil) {
-            set arg = yield(v)      ;; takes next arg from upwards
+        if (status(co) == :terminated) {
+            break(v)
         }
-        until (status(co) == :terminated)
+        set arg = yield(v)          ;; takes next arg from upwards
     }
-    arg
 }
 ```
 
@@ -2173,22 +2174,22 @@ coro G (b1) {                           ;; b1=1
     coro L (c1) {                       ;; c1=4
         val c2 = yield(c1+1)            ;; y(5), c2=6
         val c3 = yield(c2+1)            ;; y(7), c3=8
-        c3                              ;; 8
+        c3+1                            ;; 9
     }
     val l = coroutine(L)
     val b2 = yield(b1+1)                ;; y(2), b2=3
     val b3 = resume-yield-all l(b2+1)   ;; b3=9
     val b4 = yield(b3+1)                ;; y(10)
-    b4
+    b4+1                                ;; 12
 }
 
 val g = coroutine(G)
-val a1 = resume g(1)                    ;; g(1), a1=2
-val a2 = resume g(a1+1)                 ;; g(3), a2=5
-val a3 = resume g(a2+1)                 ;; g(6), a3=7
-val a4 = resume g(a3+1)                 ;; g(8), a4=8
-val a5 = resume g(a4+1)                 ;; g(9), a5=10
-println(a1, a2, a3, a4, a5)             ;; --> 2, 5, 7, 8, 10
+val a1 = resume g(1)                    ;; g(1),  a1=2
+val a2 = resume g(a1+1)                 ;; g(3),  a2=5
+val a3 = resume g(a2+1)                 ;; g(6),  a3=7
+val a4 = resume g(a3+1)                 ;; g(8),  a4=10
+val a5 = resume g(a4+1)                 ;; g(11), a5=10
+println(a1, a2, a3, a4, a5)             ;; --> 2, 5, 7, 10, 12
 ```
 
 ## Task Operations
@@ -2196,11 +2197,11 @@ println(a1, a2, a3, a4, a5)             ;; --> 2, 5, 7, 8, 10
 The API for tasks has the following operations:
 
 - [`spawn`](#spawn): creates and resumes a new task from a prototype
-- [`tasks`](#task-pools): creates a task pool
+- [`tasks`](#task-pools): creates a pool of tasks
 - [`status`](#task-status): consults the task status
 - [`pub`](#public-field): exposes the task public field
 - [`await`](#await): yields the resumed task until it matches an event
-- [`broadcast`](#broadcast): broadcasts an event and awake all tasks
+- [`broadcast`](#broadcast): broadcasts an event to awake all tasks
 - [`toggle`](#toggle): either ignore or accept awakes
 
 <!--
@@ -2229,7 +2230,7 @@ task T () {
 val ts = tasks()                ;; task pool
 do {
     spawn T() in ts             ;; attached to outer pool,
-    spawn T() in ts             ;; not to enclosing block
+    spawn T() in ts             ;;  not to enclosing block
 }
 broadcast(10)                   ;; --> 10, 10
 ```
@@ -2243,10 +2244,8 @@ A spawn creates and starts an [active task](#active-values) from a
 Spawn : `spawn´ Expr `(´ [List(Expr)] `)´ [`in´ Expr]
 ```
     
-The task receives an optional list of arguments.
-
-A spawn receives expects a task protoype, an optional list of arguments, and an
-optional pool to hold the task.
+A spawn expects a task protoype, an optional list of arguments, and an optional
+pool to hold the task.
 The operation returns a reference to the active task.
 
 Examples:
@@ -2270,6 +2269,7 @@ Pool : `tasks´ `(´ Expr `)´
 
 The operation receives an optional expression with the maximum number of task
 instances to hold.
+If omitted, there is no limit on the maximum number of tasks.
 If the pool is full, a further spawn fails and returns `nil`.
 
 Examples:
@@ -2302,8 +2302,8 @@ As described in [Active Values](#active-values), a task has 4 possible status:
 Examples:
 
 ```
-task T = task () {
-    await(,true)
+task T () {
+    await(|true)
 }
 val t = spawn T()
 println(status(t))      ;; --> :yielded
@@ -2333,7 +2333,7 @@ Examples:
 ```
 task T () {
     set pub = 10
-    await(,true)
+    await(|true)
     println(pub)    ;; --> 20
     30              ;; final task value
 }

@@ -1,0 +1,70 @@
+do {
+    task T (x) {
+        set pub = x                 ;; sets 1 or 2
+        val n = await(:number)      ;; awaits a number broadcast
+        println(pub + n)            ;; --> 11 or 12
+    }
+    val t1 = spawn T(1)
+    val t2 = spawn T(2)
+    println(t1.pub, t2.pub)         ;; --> 1, 2
+    broadcast(10)                   ;; awakes all tasks passing 10
+}
+
+do {
+    task T () {
+        val n = await(:number)
+        println(n)
+    }
+    val ts = tasks()                ;; task pool
+    do {
+        spawn T() in ts             ;; attached to outer pool,
+        spawn T() in ts             ;; not to enclosing block
+    }
+    broadcast(10)                   ;; --> 10, 10
+}
+
+do {
+    task T (v, vs) {                ;; task prototype accepts 2 args
+        nil
+    }
+    val t = spawn T(10, [1,2,3])    ;; starts task passing args
+    println(t)                      ;; --> exe-task 0x...
+}
+
+do {
+    task T () {
+        yield()
+    }
+    val ts = tasks(1)               ;; task pool
+    val t1 = spawn T() in ts        ;; success
+    val t2 = spawn T() in ts        ;; failure
+    println(ts, t1, t2)             ;; --> tasks: 0x... / exe-task 0x... / nil
+}
+
+do {
+    task T () {
+        await(|true)
+    }
+    val t = spawn T()
+    println(status(t))      ;; --> :yielded
+    toggle t(false)
+    broadcast(nil)
+    println(status(t))      ;; --> :toggled
+    toggle t(true)
+    broadcast(nil)
+    println(status(t))      ;; --> :terminated
+}
+
+do {
+    task T () {
+        set pub = 10
+        await(|true)
+        println(pub)    ;; --> 20
+        30              ;; final task value
+    }
+    val t = spawn T()
+    println(t.pub)      ;; --> 10
+    set t.pub = 20
+    broadcast(nil)
+    println(t.pub)      ;; --> 30
+}

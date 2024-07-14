@@ -1,0 +1,20 @@
+coro G (b1) {                           ;; b1=1
+    coro L (c1) {                       ;; c1=4
+        val c2 = yield(c1+1)            ;; y(5), c2=6
+        val c3 = yield(c2+1)            ;; y(7), c3=8
+        c3+1                            ;; 9
+    }
+    val l = coroutine(L)
+    val b2 = yield(b1+1)                ;; y(2), b2=3
+    val b3 = resume-yield-all l(b2+1)   ;; b3=9
+    val b4 = yield(b3+1)                ;; y(10)
+    b4+1                                ;; 12
+}
+
+val g = coroutine(G)
+val a1 = resume g(1)                    ;; g(1),  a1=2
+val a2 = resume g(a1+1)                 ;; g(3),  a2=5
+val a3 = resume g(a2+1)                 ;; g(6),  a3=7
+val a4 = resume g(a3+1)                 ;; g(8),  a4=10
+val a5 = resume g(a4+1)                 ;; g(11), a5=10
+println(a1, a2, a3, a4, a5)             ;; --> 2, 5, 7, 10, 12

@@ -31,7 +31,7 @@ do {
 }
 
 do {
-    coro C = coro () {
+    coro C () {
         yield()
     }
     val c = coroutine(C)
@@ -40,4 +40,15 @@ do {
     println(status(c))      ;; --> :yielded
     resume c()
     println(status(c))      ;; --> :terminated
+}
+
+do {
+    coro C () {
+        println(:1)
+        yield()
+        println(:2)
+    }
+    val co = coroutine(C)
+    resume co()     ;; --> 1
+    resume co()     ;; --> 2
 }
