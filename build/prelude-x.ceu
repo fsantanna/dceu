@@ -124,7 +124,6 @@ val to-iter = do {
     func iter-tuple (itr :Iterator) {
         val i = itr.i
         if i >= #itr.s {
-            set itr.f = nil
             nil
         } else {
             set itr.i = i + 1
@@ -135,7 +134,6 @@ val to-iter = do {
     func iter-dict (itr :Iterator) {
         val k = next-dict(itr.s,itr.i)
         if k == nil {
-            set itr.f = nil
             nil
         } else {
             set itr.i = k
@@ -147,7 +145,6 @@ val to-iter = do {
         val co = itr.s
         (resume co()) --> func (x) {
             if (status(co) == :terminated) {
-                set itr.f = nil
                 nil
             } else {
                 x
@@ -156,11 +153,7 @@ val to-iter = do {
     }
 
     func iter-func (itr :Iterator) {
-        val v = itr.s(itr)
-        if v == nil {
-            set itr.f = nil
-        }
-        v
+        itr.s(itr)
     }
 
     func iter-coro (itr :Iterator) {
@@ -172,9 +165,6 @@ val to-iter = do {
     func iter-tasks (itr :Iterator) {
         ;;error(:TODO)
         set itr.i = next-tasks(itr.s,itr.i)
-        if itr.i == nil {
-            set itr.f = nil
-        }
         itr.i
     }
 
@@ -189,8 +179,10 @@ val to-iter = do {
         match type(v) {
             | sup?(:Iterator, tag(v)) {
                 val v' :Iterator = v
-                set v'.tp = tp'(v'.tp)
-                v
+                if #v' >= 4 {
+                    set v'.tp = tp'(v'.tp)
+                }
+                v'
             }
             ==:tuple    => :Iterator [iter-tuple, v, 0, tp'([:val])]
             ==:vector   => :Iterator [iter-tuple, v, 0, tp'([:val])]
