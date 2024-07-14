@@ -1,0 +1,18 @@
+val x = 10
+val y = 100
+
+val max = if x>y => x => y
+println(max)
+
+ifs {
+    x < y => x
+    x > y => y
+    else  => error("values are equal")
+} -> println
+
+if :f { \v =>
+    println("f() evaluates to " ++ to.string(v))
+} else {
+    println("f() evaluates to false")
+}
+

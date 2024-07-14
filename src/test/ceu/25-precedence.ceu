@@ -1,0 +1,9 @@
+func f (v) { @[x=[v]] }
+val x = 10
+val y = 10
+val z = false
+
+#f(10).x    --> println   ;; # ((f(10)) .x)
+(x + 10) - 1  --> println   ;; ERR: requires parenthesis
+- x + y     --> println   ;; (-x) + y
+x or y or z --> println   ;; (x or y) or z

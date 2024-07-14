@@ -1,0 +1,3 @@
+[1, 'a', nil]       -> println     ;; a tuple with 3 values
+#[1, 2, 3]          -> println     ;; a vector of numbers
+@[(:x,10), (:y,20)] -> println     ;; a dictionary with 2 mappings

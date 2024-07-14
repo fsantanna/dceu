@@ -1,0 +1,9 @@
+coro C () { println(:1) }   ;; a coro prototype `C`
+val c = coroutine(C)        ;; is instantiated as `c`
+resume c()                  ;; and resumed explicitly
+
+val ts = tasks()            ;; a task pool `ts`
+task T () { println(:2) }   ;; a task prototype `T`
+val t = spawn T() in ts     ;; is instantiated as `t` in pool `ts`
+broadcast(:X)               ;; broadcast resumes `t`
+

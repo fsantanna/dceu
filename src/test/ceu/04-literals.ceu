@@ -1,0 +1,3 @@
+val n = `:number 10`            ;; native 10 is converted to Ceu number
+val x = `:ceu $n`               ;; `x` is set to Ceu `n` as is
+`printf("> %f\n", $n.Number);`  ;; outputs `n` as a number

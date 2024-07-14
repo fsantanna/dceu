@@ -1,0 +1,22 @@
+var x
+set x = 20              ;; OK
+println(x)
+
+val y = [10]
+;;set y = 0               ;; ERR: cannot reassign `y`
+set y[0] = 20           ;; OK
+println(y)
+
+data :Pos = [x,y]
+val p1 :Pos = [10,20]   ;; (assumes :Pos has fields [x,y])
+println(p1.x)           ;; --> 10
+
+val p2 = :Pos [10,20]   ;; (assumes :Pos has fields [x,y])
+println(p2.y)           ;; --> 20
+
+task T (v) {
+    set pub = v         ;; OK
+    await(|false)
+}
+val t = spawn T(10)
+println(t.pub)

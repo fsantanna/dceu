@@ -1,0 +1,16 @@
+do {
+    val x = []          ;; an empty tuple
+    tag(:T, x)          ;; x is now of user type :T
+    println(tag(x))     ;; --> :T
+}
+
+println(sup?(:T, :T.A))     ;; --> true
+println(sup?(:T.A, :T))     ;; --> false
+println(sup?(:T.A, :T.B))   ;; --> false
+
+do {
+    val x = []              ;; an empty tuple
+    tag(:T.A, x)            ;; x is now of user type :T.A
+    println(x is? :tuple)   ;; --> true
+    println(x is? :T)       ;; --> true
+}

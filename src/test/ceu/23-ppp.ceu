@@ -1,0 +1,8 @@
+val stk = #[1,2,3]
+println(stk[=])         ;; --> 3
+set stk[=] = 30
+println(stk)            ;; --> #[1, 2, 30]
+println(stk[-])         ;; --> 30
+println(stk)            ;; --> #[1, 2]
+set stk[+] = 3
+println(stk)            ;; --> #[1, 2, 3]

@@ -1,0 +1,3 @@
+data :Pos = [x,y]
+val p = [10,20]
+println(p.(:Pos).x)     ;; `p` is cast to `:Pos`

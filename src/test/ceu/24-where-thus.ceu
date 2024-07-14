@@ -1,0 +1,7 @@
+var x = (2 * y) where {     ;; x = 20
+    var y = 10
+}
+
+(x * x) thus { \v =>
+    println(v)              ;; --> 400
+}

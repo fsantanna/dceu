@@ -1,0 +1,13 @@
+enum { :x, :y, :z }     ;; declares :x, :y, :z in sequence
+to.number(:x) -> println ;; --> 100
+to.number(:y) -> println ;; --> 101
+to.number(:z) -> println ;; --> 102
+
+enum :Key {
+    Left,               ;; declares :Key-Left (200)
+    Up,                 ;; declares :Key-Up   (201)
+    Right,              ;; ...
+    Down,               ;; ...
+}
+:Key-Left -> to.number -> println
+:Key-Down -> to.number -> println

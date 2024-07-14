@@ -1,0 +1,6 @@
+[1,2,3]          -> println   ;; a tuple
+(:Pos [10,10])   -> println   ;; a tagged tuple
+#[1,2,3]         -> println   ;; a vector
+"abc"            -> println   ;; a character vector ['a','b','c']
+@[(:x,10), x=10] -> println   ;; a dictionary with equivalent key mappings
+

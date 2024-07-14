@@ -1,0 +1,16 @@
+do {                    ;; block prints :ok and evals to 1
+    println(:ok)
+    1
+}
+
+do {
+    val a = 1           ;; `a` is only visible in the block
+    ;;<...>
+}
+;;a                       ;; ERR: `a` is out of scope
+
+do {
+    task T () {}
+    spawn T()           ;; spawns task T and attaches it to the block
+    ;;<...>
+}                       ;; aborts spawned task

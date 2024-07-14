@@ -1,0 +1,19 @@
+val vec = [10]
+#vec        --> println     ;; unary operation
+
+val x = 100
+x - 10      --> println     ;; binary operation
+{{-}}(x,10) --> println     ;; operation as call
+
+do {
+    func f (a,b) { a - b }
+    f(10,20) --> println    ;; normal call
+}
+
+do {
+    func g (v) { 2*v }
+    func f (v1,v2) { v1 + (v2 or 0) }
+    val t = 10
+    println(f <-- 10 -> g)   ;; equivalent to `f(g(10))`
+    println(t -> f(10))      ;; equivalent to `f(t,10)`
+}

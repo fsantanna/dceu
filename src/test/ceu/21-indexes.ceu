@@ -1,0 +1,22 @@
+val tup = [1,2,3,4]
+val vec = #[1,2,3]
+val i = 2
+
+tup[3] -> println              ;; tuple access by index
+vec[i] -> println              ;; vector access by index
+
+val dict = @[x=10]
+
+dict[:x] -> println            ;; dict access by index
+dict.x -> println              ;; dict access by field
+
+data :T = [x]
+val t :T = [10]            ;; tuple template
+t.x -> println
+
+task S () {
+    set pub = 10
+    await()
+}
+val s = spawn S()
+s.pub -> println               ;; public field of task

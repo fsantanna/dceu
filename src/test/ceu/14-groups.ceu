@@ -1,0 +1,5 @@
+group {
+    val x = 10
+    val y = x * 2
+}
+println(x, y)       ;; --> 10 20

@@ -1,0 +1,2 @@
+type(10)  -> println ;; --> :number
+type('x') -> println ;; --> :char

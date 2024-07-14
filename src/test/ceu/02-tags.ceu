@@ -1,0 +1,19 @@
+val pos = @[]               ;; a new dictionary
+set pos[:x] = 10
+set pos.y   = 20            ;; equivalent to pos[:y]=20
+println(pos.x, pos[:y])     ;; --> 10, 20
+
+:T ; :T.A
+println <- sup?(:T,     :T.A.x)    ;; --> true  (:T is a supertype of :T.A.x)
+println <- sup?(:T.A,   :T.A.x)    ;; --> true
+println <- sup?(:T.A.x, :T.A.x)    ;; --> true
+println <- sup?(:T.A.x, :T)        ;; --> false (:T.A.x is *not* a supertype of :T)
+println <- sup?(:T.A,   :T.B)      ;; --> false
+
+val x = []                      ;; an empty tuple
+tag(:T.A, x)                    ;; x is of user type :T.A
+println(tag(x))                 ;; --> :T.A
+println(sup?(:T,   tag(x)))     ;; --> true
+println(sup?(:T.A, tag(x)))     ;; --> true
+println(sup?(:T.B, tag(x)))     ;; --> false
+println(x is? :T)               ;; --> true  (equivalent to sup?(:T,tag(x)))

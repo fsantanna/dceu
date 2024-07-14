@@ -1,0 +1,11 @@
+data :Pos = [x,y]                       ;; a flat template
+val pos :Pos = [10,20]                  ;; pos uses :Pos as template
+println(pos.x, pos.y)                   ;; --> 10, 20
+
+data :Dim = [w,h]
+data :Rect = [pos :Pos, dim :Dim]       ;; a nested template
+val r1 :Rect = [pos, [100,100]]         ;; r uses :Rect as template
+println(r1.dim, r1.pos.x)               ;; --> [100,100], 10
+
+val r2 = :Rect [[0,0],[10,10]]          ;; combining tag template/constructor
+println(r2 is? :Rect, r2.dim.h)         ;; --> true, 10

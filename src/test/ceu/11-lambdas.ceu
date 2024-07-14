@@ -1,0 +1,4 @@
+val f = { \x,y => x+y }
+println(f(10,20))       ;; --> 30
+
+println({it}(10))       ;; --> 10

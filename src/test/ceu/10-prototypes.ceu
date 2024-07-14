@@ -1,0 +1,9 @@
+func (v) { v }          ;; a function
+coro () { yield() }     ;; a coroutine
+task () { await(:X) }   ;; a task
+
+func (v1) {             ;; a closure
+    func () {
+        v1              ;; v1 is an upvalue
+    }
+}

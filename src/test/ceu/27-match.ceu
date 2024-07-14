@@ -1,0 +1,57 @@
+func odd? () {
+    true
+}
+func f () {
+    13
+}
+
+match f() {
+    x :X     => x       ;; capture `x=f()`, return `x` if `x is? :X`
+    <= 5     => it      ;; capture `it=f()`, return `it` if `it <= 5`
+    10       => :10     ;; return :ok if `f() == 10`
+    {{odd?}} => :odd    ;; return :ok if `odd?(f())`
+    else     => :no
+} -> println
+
+func g () {
+    false
+}
+
+match [10,20,30,40] {
+    | g(it) { \v => v }     ;; capture `it=[...]`, check `g(it)`
+                            ;;    capture and return `g(it)` as `v`
+    [10, i, j|j>10] => i+j  ;; capture `it=[...]`, check `#it>=3`,
+                            ;;    check `it[0]==10`
+                            ;;    capture `i=it[1]`
+                            ;;    capture `j=it[1]`, check `j>10`
+                            ;;    return i+j
+} -> println
+
+do {
+    val [1,x,y] = [1,2,3]
+    println(x,y)            ;; --> 2 3
+}
+
+;;val [10,x] = [20,20]    ;; ERROR: match fails
+
+val d = @[x=1, y=2]
+loop [k,v] in d {
+    println(k,v)        ;; --> x,1 y,2
+}
+
+catch :X {              ;; ok match
+    catch :Y {          ;; no match
+        error(:X)
+    }
+    ;; never reached
+}
+
+data :Pos = [x,y]
+spawn {
+    await(:Pos | it.x==it.y)
+    println(:2)
+}
+broadcast(:Pos [10,20])     ;; no match
+println(:1)
+broadcast(:Pos [10,10])     ;; ok match
+

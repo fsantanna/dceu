@@ -1,0 +1,16 @@
+data :Pos = [x,y]       ;; a template `:Pos` with fields `x` and `y`
+val pos :Pos = [10,20]  ;; declares that `pos` satisfies template `:Pos`
+println(pos.x, pos.y)   ;; --> 10, 20
+
+data :Event = [ts] {            ;; All events carry a timestamp
+    :Key = [key]                ;; :Event.Key [ts,key] is a sub-type of :Event [ts]
+    :Mouse = [pos :Pos] {       ;; :Event.Mouse [ts, pos :Pos]
+        :Motion = []            ;; :Event.Mouse.Motion [ts, pos :Pos]
+        :Button = [but]         ;; :Event.Mouse.Button [ts, pos :Pos, but]
+    }
+}
+
+val but = :Event.Mouse.Button [0, [10,20], 1]   ;; [ts,[x,y],but]
+println(but.ts, but.pos.y, but is? :Event.Mouse) ;; --> 0, 20, true
+
+

@@ -1,0 +1,16 @@
+loop v in [10,20,30] {          ;; implicit to-iter([10,20,30])
+    println(v)                  ;; --> 10,20,30
+}
+
+
+func num-iter (N) {
+    val f = func (t) {
+        val v = t[2]
+        set t[2] = v + 1
+        ((v < N) and v) or nil
+    }
+    :Iterator [f, N, 0]
+}
+loop in num-iter(5) {
+    println(it)                 ;; --> 0,1,2,3,4
+}

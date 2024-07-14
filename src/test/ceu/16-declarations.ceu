@@ -1,0 +1,24 @@
+do {
+    val x = 10
+    ;;set x = 20      ;; ERROR: `x´ is immutable
+}
+;;println(x)          ;; ERROR: `x´ is out of scope
+
+var y = 10
+set y = 20          ;; OK: `y´ is mutable
+println(y)          ;; --> 20
+
+data :Pos = [x,y]
+val p1 :Pos = [10,20]   ;; (assumes :Pos has fields [x,y])
+println(p1.x)           ;; --> 10
+val p2 = :Pos [10,20]   ;; (assumes :Pos has fields [x,y])
+println(p2.y)           ;; --> 20
+
+val [1,a,b] = [1,2,3]
+println(a,b)            ;; --> 2 3
+;;val [10,z] = [20,20]    ;; ERROR: match fails
+
+func f (v) {
+    v + 1
+}
+println(f(10))      ;; --> 11
