@@ -2539,7 +2539,7 @@ class Exec_99 {
         """, true)
         //assert(out.contains("assertion error : expected :Iterator")) { out }
         assert(out.contains(" |  anon : (lin 2, col 23) : to-iter(nil)\n" +
-                " |  build/prelude-x.ceu : (lin 202, col 28) : error(#['i','t','e','r','a','t','o','r',' ...\n" +
+                " |  build/prelude-x.ceu : (lin 194, col 28) : error(#['i','t','e','r','a','t','o','r',' ...\n" +
                 " v  iterator error : invalid collection\n")) { out }
     }
     @Test
@@ -2639,7 +2639,8 @@ class Exec_99 {
                 println(v)
             }
         """, true)
-        assert(out == "1\nnil\n3\n") { out }
+        //assert(out == "1\nnil\n3\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun fx_10_eq() {
@@ -2649,6 +2650,25 @@ class Exec_99 {
             println(t1 === t2)
         """, true)
         assert(out == "false\n") { out }
+    }
+    @Test
+    fun fx_11_iter() {
+        val out = test("""
+            func f (t) {
+                if t[1] == t[2] {
+                    nil
+                } else {
+                    set t[1] = t[1] + 1
+                    t[1]
+                }
+            }
+            val it = :Iterator [f, 0, 5]
+            loop v in it {
+                until not v
+                println(v)
+            }
+        """, true)
+        assert(out == "1\n2\n3\n4\n5\n") { out }
     }
 
     // ITER / DROP

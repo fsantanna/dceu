@@ -458,7 +458,7 @@ class Parser_99 {
                 "do {\n" +
                 "(val ceu_or_170 = do {\n" +
                 "(val it = ceu_val_8);\n" +
-                "if {{===}}(it,true) {\n" +
+                "if {{==}}(it,true) {\n" +
                 "if true {\n" +
                 "(set ceu_ret_8 = do {\n" +
                 "(val ceu_ifs_41 = {{==}}(20));\n" +
@@ -549,11 +549,11 @@ class Parser_99 {
                 "if true {\n" +
                 "do {\n" +
                 "(val it = ceu_tup_56[0]);\n" +
-                "if {{===}}(it,1) {\n" +
+                "if {{==}}(it,1) {\n" +
                 "if true {\n" +
                 "do {\n" +
                 "(val it = ceu_tup_56[1]);\n" +
-                "if {{===}}(it,2) {\n" +
+                "if {{==}}(it,2) {\n" +
                 "if true {\n" +
                 "if true {\n" +
                 "(set ceu_ret_5 = 10);\n" +
@@ -739,7 +739,7 @@ class Parser_99 {
                 "(val ceu_itr_14 :Iterator = to-iter(f));\n" +
                 "loop {\n" +
                 "(val ceu_val_14 = ceu_itr_14[:f](ceu_itr_14));\n" +
-                "if {{==}}(ceu_itr_14[:f],nil) {\n" +
+                "if {{==}}(ceu_val_14,nil) {\n" +
                 "break(nil);\n" +
                 "} else {\n" +
                 "nil;\n" +
