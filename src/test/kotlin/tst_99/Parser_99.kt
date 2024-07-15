@@ -1026,9 +1026,8 @@ class Parser_99 {
             do {
             (val ceu_co_10 = f);
             (var ceu_arg_10 = nil);
-            (var ceu_v_10);
             loop {
-            (set ceu_v_10 = (resume (ceu_co_10)(ceu_arg_10)));
+            (val ceu_v_10 = (resume (ceu_co_10)(ceu_arg_10)));
             if {{==}}(status(ceu_co_10),:terminated) {
             break(ceu_v_10);
             } else {
@@ -1271,34 +1270,34 @@ class Parser_99 {
     fun jd_02_clock_err() {
         val l = lexer("""
             spawn {
-                await <10:min, 10:z>
+                await <10:min 10:z>
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 3, col 34) : invalid clock unit : unexpected \":z\"")
+        assert(trap { parser.expr() } == "anon : (lin 3, col 33) : invalid clock unit : unexpected \":z\"")
     }
     @Test
     fun jd_03_clock() {
         val l = lexer("""
             spawn {
-                await <10:min, x:s>
+                await <10:min x:s>
             }
         """)
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "(spawn (task :nested () {\n" +
                 "do {\n" +
-                "(var ceu_clk_16 = {{+}}({{*}}(10,60000),{{*}}(x,1000)));\n" +
+                "(var ceu_clk_15 = {{+}}({{*}}(10,60000),{{*}}(x,1000)));\n" +
                 "group {\n" +
-                "(var ceu_ret_92);\n" +
+                "(var ceu_ret_91);\n" +
                 "loop {\n" +
-                "(set ceu_ret_92 = yield(nil));\n" +
+                "(set ceu_ret_91 = yield(nil));\n" +
                 "if do {\n" +
-                "(val it :Clock = ceu_ret_92);\n" +
+                "(val it :Clock = ceu_ret_91);\n" +
                 "if is'(it,:Clock) {\n" +
                 "if do {\n" +
-                "(set ceu_clk_16 = {{-}}(ceu_clk_16,it[:ms]));\n" +
-                "{{<=}}(ceu_clk_16,0);\n" +
+                "(set ceu_clk_15 = {{-}}(ceu_clk_15,it[:ms]));\n" +
+                "{{<=}}(ceu_clk_15,0);\n" +
                 "} {\n" +
                 "true;\n" +
                 "} else {\n" +
@@ -1314,7 +1313,7 @@ class Parser_99 {
                 "};\n" +
                 "};\n" +
                 "delay;\n" +
-                "ceu_ret_92;\n" +
+                "ceu_ret_91;\n" +
                 "};\n" +
                 "};\n" +
                 "})())") { e.tostr() }

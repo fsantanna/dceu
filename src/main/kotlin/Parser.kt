@@ -144,7 +144,7 @@ class Parser (lexer_: Lexer)
     fun clock (): Clock {
         this.acceptOp_err("<")
         val us = listOf(":h", ":min", ":s", ":ms")
-        val l = list0(",", {this.acceptOp(">")}) {
+        val l = list0(null, {this.acceptOp(">")}) {
             val e = this.expr()
             this.acceptEnu_err("Tag")
             val u = this.tk0 as Tk.Tag
@@ -1060,9 +1060,8 @@ class Parser (lexer_: Lexer)
                     do {
                         val ceu_co_$N = ${call.clo.tostr(true)}
                         var ceu_arg_$N = ${if (call.args.size==0) "nil" else call.args[0].tostr(true)}
-                        var ceu_v_$N
                         loop {
-                            set ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
+                            val ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
                             if (status(ceu_co_$N) == :terminated) {
                                 break(ceu_v_$N)
                             }
