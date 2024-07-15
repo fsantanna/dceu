@@ -2172,6 +2172,17 @@ class Exec_99 {
         """)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun mm_31_bcast_nil() {
+        val out = test("""
+            spawn (task () {
+                println(yield(nil))
+                println(:ok)
+            } )()
+            broadcast()
+        """)
+        assert(out == "nil\n:ok\n") { out }
+    }
 
     // LOOP / ITER / NUMERIC FOR
 

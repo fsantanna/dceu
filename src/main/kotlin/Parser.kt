@@ -818,7 +818,7 @@ class Parser (lexer_: Lexer)
             (CEU>=4 && this.acceptFix("broadcast")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("(")
-                val arg = this.expr()
+                val arg = if (CEU>=99 && this.checkFix(")")) Expr.Nil(this.tk0 as Tk.Fix) else this.expr()
                 this.acceptFix_err(")")
                 val xin = if (this.acceptFix("in")) {
                     this.expr()
