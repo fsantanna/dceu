@@ -114,7 +114,7 @@ statements](#defer).
 
 Tasks in Ceu are built on top of [coroutines](#active-values), which unlike OS
 threads, have a predictable run-to-completion semantics, in which they execute
-uninterruptedly up to an explicit [yield](#yield) or [await](#await) operation.
+uninterruptedly up to an explicit [yield](#yield) or [await](#awaits) operation.
 
 The next example illustrates structured concurrency, abortion of tasks, and
 deterministic scheduling.
@@ -164,7 +164,7 @@ example would always output `10`.
 
 Tasks can communicate through events as follows:
 
-- The [`await`](#await) statement suspends a task until it matches an event
+- The [`await`](#awaits) statement suspends a task until it matches an event
   condition.
 - The [`broadcast`](#broadcast) statement signals an event to all awaiting
   tasks.
@@ -1508,8 +1508,6 @@ Any expression can be suffixed by `where` and `thus` clauses:
 ```
 Expr : Expr `where´ Block
      | Expr `thus´ Lambda
-
-Lambda : `{´ [`\´ List(ID [TAG]) `=>´] { Expr [`;´] } `}´
 ```
 
 A `where` clause executes its suffix block before the prefix expression and is
@@ -1592,8 +1590,6 @@ If  : `if´ Expr (`=>´ Expr | Block | Lambda)
 Ifs : `ifs´ `{´ {Case} [Else] `}´
         Case :  Expr  (`=>´ Expr | Block | Lambda)
         Else : `else´ (`=>´ Expr | Block)
-
-Lambda : `{´ [`\´ List(ID [TAG]) `=>´] { Expr [`;´] } `}´
 ```
 
 An `if` tests a condition expression and executes one of the two possible
@@ -1650,8 +1646,6 @@ Patt : [`(´] [ID] [TAG] [Const | Oper | Tuple] [`|´ Expr] [`)´]
         Const : Expr
         Oper  : OP [Expr]
         Tuple : `[´ List(Patt) } `]´
-
-Lambda : `{´ [`\´ List(ID [TAG]) `=>´] { Expr [`;´] } `}´
 ```
 
 The patterns are tested in sequence, until one is satisfied, executing its
@@ -1714,7 +1708,7 @@ Patterns are also used in
     [declarations](#declarations),
     [iterators](#iterators-tuples),
     [catch clauses](#exceptions), and
-    [await statements](#await).
+    [await statements](#awaits).
 In the case of declarations and iterators, the patterns are assertive in the
 sense that they cannot fail, raising an error if the match fails.
 
@@ -2200,7 +2194,7 @@ The API for tasks has the following operations:
 - [`tasks`](#task-pools): creates a pool of tasks
 - [`status`](#task-status): consults the task status
 - [`pub`](#public-field): exposes the task public field
-- [`await`](#await): yields the resumed task until it matches an event
+- [`await`](#awaits): yields the resumed task until it matches an event
 - [`broadcast`](#broadcast): broadcasts an event to awake all tasks
 - [`toggle`](#toggle): either ignore or accept awakes
 
@@ -2344,45 +2338,46 @@ broadcast(nil)
 println(t.pub)      ;; --> 30
 ```
 
-### Await
+### Awaits
 
-The operation `await` suspends the execution of a running task until an event
-[broadcast](#broadcast) matches the condition pattern:
+The operation `await` suspends the execution of a running task with a given
+[condition pattern](#pattern-matching) or clock timeout:
 
 ```
-Await : `await´ Patt [`{´ Block `}´]
-
-Patt  : [`(´] (Cons | Oper | Full | Clock) [`)´]
-            Clock : [TAG `:h´] [TAG `:min´] [TAG `:s´] [TAG `:ms´]
+Await : `await´ [`(´] Patt [`)´] [Block]
+      | `await´ `<´ { Expr [`:h´|`:min´|`:s´|`:ms´] } `>´
 ```
 
-Whenever an event is broadcast, it is compared against an `await` pattern.
-If it matches, the task is resumed and executes statement after the `await`.
+Whenever an event is [broadcast](#broadcasts), it is compared against the
+`await` pattern or clock timeout.
+If it succeeds, the task is resumed and executes the statement after the
+`await`.
 
-An `await` accepts an optional block that can access the event value when the
-condition pattern matches.
+A clock timeout in milliseconds is the sum of the given time units multipled
+by prefix numeric expressions, e.g., `<1:s 500:ms>` corresponds to `1500ms`.
+The special broadcast event `:Clock [ms]` advances clock timeouts, in which
+`ms` corresponds to the number of milliseconds to advance.
+Therefore, a clock timeout such as `<1:s 500:ms>` expires after `:Clock` events
+accumulate `1500ms`.
+
+A condition pattern accepts an optional block that can access the event value
+when the condition pattern matches.
 If the block is omitted, the pattern requires parenthesis.
-
-In addition to standard [`ifs` patterns](#pattern-matching), an `await` also
-accepts a clock timer that matches the pattern when the given time elapses.
-A clock pattern is the sum of the given time units and tag prefixes.
-The tag prefix must be numeric (e.g., `:10`) or represent a variable identifier
-(e.g., `:x`).
 
 Examples:
 
 ```
-await(,false)                   ;; never awakes
-await(:key, it.code==:escape)   ;; awakes on :key with press=:release
-await(:1:h:10:min:30:s)         ;; awakes after the specified time
-await e, {                      ;; awakes on any event
-    println(e)                  ;; and shows it
+await(|false)                   ;; never awakes
+await(:key | it.code==:escape)  ;; awakes on :key with code=:escape
+await <1:h 10:min 30:s>         ;; awakes after the specified time
+await e {                       ;; awakes on any event
+    println(e)                  ;;  and shows it
 }
 ```
 
 ### Broadcasts
 
-The operation `broadcast` signals an event to awake [awaiting](#await) tasks:
+The operation `broadcast` signals an event to awake [awaiting](#awaits) tasks:
 
 ```
 Bcast : `broadcast´ `(´ Expr `)´ [`in´ Expr]
