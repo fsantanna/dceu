@@ -893,6 +893,8 @@ A *closure* is a prototype that accesses variables from outer blocks, known as
 Ceu supports a restricted form of closures, in which *upvalues* must be
 immutable (thus declared with the modifier [`val`](#declarations)).
 
+`TODO: :nested, :anon`
+
 Examples:
 
 ```
@@ -2344,8 +2346,9 @@ The operation `await` suspends the execution of a running task with a given
 [condition pattern](#pattern-matching) or clock timeout:
 
 ```
-Await : `await´ [`(´] Patt [`)´] [Block]
-      | `await´ `<´ { Expr [`:h´|`:min´|`:s´|`:ms´] } `>´
+Await : `await´ Patt [Block]
+      | `await´ Clock
+Clock : `<´ { Expr [`:h´|`:min´|`:s´|`:ms´] } `>´
 ```
 
 Whenever an event is [broadcast](#broadcasts), it is compared against the
@@ -2445,23 +2448,23 @@ A `spawn` block starts an anonymous nested task:
 Spawn : `spawn´ Block
 ```
 
-The task cannot be assigned or referred explicitly.
-Also, any access to `pub` refers to the enclosing task.
+An anonymous task cannot be assigned or referred explicitly.
+Also, any access to `pub` refers to the enclosing non-anonymous task.
 
-The `spawn` extension expands as follows:
-
-```
-spawn (task () {
-    <Block>
-}) ()
-```
-
-Except regarding `pub` access, the extension is equivalent to this expansion.
+`TODO: :nested, :anon, escape bug`
 
 <!--
 The `:nested` annotation is an internal mechanism to indicate that nested task
 is anonymous and unassignable.
 -->
+
+The `spawn` extension expands as follows:
+
+```
+spawn (task :nested () {
+    <Block>
+}) ()
+```
 
 Examples:
 
@@ -2472,20 +2475,30 @@ spawn {
 }
 ```
 
+```
+task T () {
+    set pub = 10
+    spawn {
+        println(pub)    ;; --> 10
+    }
+}
+spawn T()
+```
+
 #### Every Blocks
 
 An `every` block is a loop that makes an iteration whenever an await condition
 is satisfied:
 
 ```
-Every : `every´ Patt Block
+Every : `every´ (Patt | Clock) Block
 ```
 
 The `every` extension expands as follows:
 
 ```
 loop {
-    await <Patt> {
+    await <Patt|Clock> {
         <Block>
     }
 }
@@ -2494,13 +2507,13 @@ loop {
 Examples:
 
 ```
-every :1:s {
+every <1:s> {
     println("1 more second has elapsed")
 }
 ```
 
 ```
-every x :X, f(x) {
+every x :X | f(x) {
     println(":X satisfies f(x)")
 }
 ```
@@ -2570,15 +2583,15 @@ Examples:
 
 ```
 par {
-    every :1:s {
+    every <1:s> {
         println("1 second has elapsed")
     }
 } with {
-    every :1:min {
+    every <1:min> {
         println("1 minute has elapsed")
     }
 } with {
-    every :1:h {
+    every <1:h> {
         println("1 hour has elapsed")
     }
 }
@@ -2587,7 +2600,7 @@ println("never reached")
 
 ```
 par-or {
-    await(:1:s)
+    await <1:s>
 } with {
     await(:X)
     println(":X occurred before 1 second")
@@ -2605,18 +2618,18 @@ println(":X and :Y have occurred")
 
 #### Watching Blocks
 
-An `watching` block executes a given block until an await condition is
-satisfied:
+A `watching` block executes a given block until an await condition is
+satisfied, which aborts the block:
 
 ```
-Watching : `watching´ Patt Block
+Watching : `watching´ (Patt | Clock) Block
 ```
 
 A `watching` extension expands as follows:
 
 ```
 par-or {
-    await(<Patt>)
+    await(<Patt|Clock>)
 } with {
     <Block>
 }
@@ -2625,7 +2638,7 @@ par-or {
 Examples:
 
 ```
-watching :1:s {
+watching <1:s> {
     every :X {
         println("one more :X occurred before 1 second")
     }
@@ -2655,7 +2668,7 @@ do {
         <Block>
     }
     if status(t) /= :terminated {
-        watching (,it==t) {
+        watching (|it==t) {
             loop {
                 await(<TAG>, not it[0])
                 toggle t(false)
