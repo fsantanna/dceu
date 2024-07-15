@@ -2380,10 +2380,11 @@ await e {                       ;; awakes on any event
 The operation `broadcast` signals an event to awake [awaiting](#awaits) tasks:
 
 ```
-Bcast : `broadcast´ `(´ Expr `)´ [`in´ Expr]
+Bcast : `broadcast´ `(´ [Expr] `)´ [`in´ Expr]
 ```
 
-A `broadcast` expects an event expression and an optional target.
+A `broadcast` expects an optional event expression and an optional target.
+If omitter, the event defaults to `nil`.
 The event is matched against the patterns in `await` operations, which
 determines the tasks to awake.
 
@@ -2417,8 +2418,8 @@ task T () {
 
 ### Toggle
 
-The operation `toggle` configures an active task to ignore or consider further
-`broadcast` operations:
+The operation `toggle` configures an active task to either ignore or consider
+further `broadcast` operations:
 
 ```
 Toggle : `toggle´ Expr `(´ Expr `)´
@@ -2428,11 +2429,11 @@ A `toggle` expects an active task and a [boolean](#basic-types) value
 between parenthesis, which is handled as follows:
 
 - `false`: the task ignores further broadcasts;
-- `true`: the task checks further broadcasts.
+- `true`: the task considers further broadcasts.
 
 ### Syntactic Block Extensions
 
-Ceu provides some syntactic block extensions to work with tasks more
+Ceu provides many syntactic block extensions to work with tasks more
 effectively.
 The extensions expand to standard task operations.
 
