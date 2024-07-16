@@ -620,7 +620,7 @@ class Parser (lexer_: Lexer)
                                 loop {
                                     val ceu_val_$nn = ceu_itr_$nn.f(ceu_itr_$nn)
                                     if (ceu_val_$nn == nil) {
-                                        break(nil)
+                                        break(false)
                                     }
                                     $dcl_set
                                     ${blk.es.tostr(true)}

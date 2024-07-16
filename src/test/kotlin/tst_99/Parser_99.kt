@@ -740,7 +740,7 @@ class Parser_99 {
                 "loop {\n" +
                 "(val ceu_val_14 = ceu_itr_14[:f](ceu_itr_14));\n" +
                 "if {{==}}(ceu_val_14,nil) {\n" +
-                "break(nil);\n" +
+                "break(false);\n" +
                 "} else {\n" +
                 "nil;\n" +
                 "};\n" +

@@ -2569,7 +2569,8 @@ class Exec_99 {
             until x == 4 }
             println(y)
         """, true)
-        assert(out == "nil\n") { out }
+        assert(out == "false\n") { out }
+        //assert(out == "nil\n") { out }
     }
     @Test
     fun fx_05_iter_it() {
@@ -2578,7 +2579,8 @@ class Exec_99 {
             until it == 4 }
             println(y)
         """, true)
-        assert(out == "nil\n") { out }
+        assert(out == "false\n") { out }
+        //assert(out == "nil\n") { out }
     }
     @Test
     fun fx_06_iter_it() {
@@ -2865,7 +2867,8 @@ class Exec_99 {
                 ;;;do;;; nil
             })
         """, true)
-        assert(out == "nil\n") { out }
+        //assert(out == "nil\n") { out }
+        assert(out == "false\n") { out }
     }
     @Test
     fun fi_04_ret() {
