@@ -762,7 +762,7 @@ The `tasks` type represents [task pools](#active-values) holding active tasks.
 Values of non-basic types (i.e., collections and execution units) can be
 associated with [tags](#basic-types) that represent user types.
 
-The function [`tag`](#types-and-tags) associates tags with values:
+The function [`tag`](#types-and-tags) associates values with tags:
 
 ```
 val x = []          ;; an empty tuple
@@ -2987,38 +2987,76 @@ broadcast(:E [3])
 Ceu provides many libraries with predefined functions.
 
 ## Basic Library
-    - [`assert`](#TODO):                assertion test
-    - [`debug`](#TODO):                 debug value
-    - [`print`,`println`](#print):      output values to the screen
-    - [`sup?`](#types-and-tags):        checks if a tag is a supertype of another
-    - [`tag`](#types-and-tags):         gets and sets a value tag
-    - [`type`](#types-and-tags):        consults the type of a value
-    - next: traverse dictionaries and task pools
+
 ```
-func type (v)           ;; --> :type
-func sup? (tag1, tag2)  ;; --> :bool
-func tag (t, v)         ;; --> v
-func tag (v)            ;; --> :tag
+func assert (v :any, msg :any) => :any
+func debug (v :any) => :any)
+func {{++}} (v1 :vector, v2 :vector) => :vector
+func {{<++}} (v1 :vector, v2 :vector) => :vector
+func next (v :any, x :any) => :any
+func print (...) => :nil
+func println (...) => :nil
+func sup? (t1 :tag, t2 :tag) => :bool
+func tag (t :tag, v :dyn) => :dyn
+func tag (v :dyn) => :tag
+func type (v :any) => :type
 ```
 
+`TODO: ++ <++`
+`TODO: assert: assertion test`
+`TODO: debug: debug value`
+`TODO: next: traverse dictionaries and task pools`
+
+The function `sup?` receives tags `t1` and `t2`, and returns if `t1` is
+a [super-tag](#hierarchical-tags) of `t2`.
+
+The function `tag` sets or queries tags of [user types](#user-types).
+To set a tag, the function receives a tag `t` and a value `v` to associate.
+The function returns the same value `v` passed to it.
+To query a tag, the function `tag` receives a value `v`, and returns its
+associated tag.
+
+Examples:
+
+```
+type(10)                ;; --> :number
+val x = tag(:X, [])     ;; value x=[] is associated with tag :X
+tag(x)                  ;; --> :X
+```
+
+The functions `print` and `println` outputs the given values to the screen, and
+return `nil`.
+
+Examples:
+
+```
+println(1, :x, [1,2,3])     ;; --> 1   :x   [1,2,3]
+```
+
+The function `type` receives a value `v` and returns its [type](#types).
+
+Examples:
+
+`TODO`
 
 ### Type Conversions
 
+The type conversion functions `to.*` receive a value `v` of any type and try to
+convert it to a value of the specified type:
+
 ```
-func to.bool (v)    ;; --> :bool
-func to.char (v)    ;; --> :char
-func to.dict (v)    ;; --> :dict
-func to.iter (v)    ;; --> :Iterator
-func to.number (v)  ;; --> :number
-func to.pointer (v) ;; --> :pointer
-func to.string (v)  ;; --> :vector (string)
-func to.tag (v)     ;; --> :tag
-func to.tuple (v)   ;; --> :tuple
-func to.vector (v)  ;; --> : vector
+func to.bool    (v :any) => :bool
+func to.char    (v :any) => :char
+func to.dict    (v :any) => :dict
+func to.iter    (v :any) => :Iterator
+func to.number  (v :any) => :number
+func to.pointer (v :any) => :pointer
+func to.string  (v :any) => :vector (string)
+func to.tag     (v :any) => :tag
+func to.tuple   (v :any) => :tuple
+func to.vector  (v :any) => :vector
 ```
 
-The type conversion functions `to.*` receive a value of any type `v` and try to
-convert it to a value of the specified type.
 If the conversion is not possible, the functions return `nil`.
 
 `TODO: explain all possibilities`
@@ -3038,65 +3076,45 @@ to-string(10)       ;; --> "10"
 ## Math Library
 
 ```
-        - `between` `ceil` `cos` `floor` `max`
-        - `min` `PI` `round` `sin`
+val math.PI :number
+func math.between (min :number, n :number, max :number) => :number
+func math.ceil (n :number) => :number
+func math.cos (n :number) => :number
+func math.floor (n :number) => :number
+func math.max (n1 :number, n2 :number) => :number
+func math.min (n1 :number, n2 :number) => :number
+func math.round (n :number) => :number
+func math.sin (n :number) => :number
 ```
 
-    perform mathematical operations
-
-### Mathematical Operations
-
-```
-func math-cos   (v)     ;; --> :number
-func math-floor (v)     ;; --> :number
-func math-sin   (v)     ;; --> :number
-```
-
-The functions `math-sin` and `math-cos` compute the sine and cossine of the
+The functions `math.sin` and `math.cos` compute the sine and cossine of the
 given number in radians, respectively.
 
-The function `math-floor` return the integral floor of a given real number.
+The function `math.floor` return the integral floor of a given real number.
+
+`TODO: describe all functions`
 
 Examples:
 
 ```
-math-sin(3.14)          ;; --> 0
-math-cos(3.14)          ;; --> -1
-math-floor(10.14)       ;; --> 10
+math.sin(3.14)          ;; --> 0
+math.cos(3.14)          ;; --> -1
+math.floor(10.14)       ;; --> 10
 ```
 
+`TODO: examples`
 
 ## Random Numbers Library
-    generate random numbers
-
-### Types and Tags
-
-The function `type` receives a value `v` and returns its [type](#types) as one
-of the tags that follows:
-    `:nil`, `:tag`, `:bool`, `:char`, `:number`, `:pointer`,
-    `:tuple`, `:vector`, `:dict`,
-    `:func`, `:coro`, `:task`,
-    `:exe-coro`, `:exe-task`, `tasks`.
-
-The function `sup?` receives tags `tag1` and `tag2`, and returns if `tag1` is
-a [super-tag](#hierarchical-tags) of `tag2`.
-
-The function `tag` sets or queries tags associated with values of
-[user types](#user-types).
-To set or unset a tag, the function receives a value `v`, a tag `t`, and a
-boolean `set` to set or unset the tag.
-The function returns the same value passed to it.
-To query a tag, the function receives a value `v`, a tag `t` to check, and
-returns a boolean to answer if the tag (or any sub-tag) is associated with the
-value.
-
-Examples:
 
 ```
-type(10)                ;; --> :number
-val x = tag(:X, [])     ;; value x=[] is associated with tag :X
-tag(x)                  ;; --> :X
+func random.next () => :number
+func random.seed (n :number) => :nil
 ```
+
+`TODO: describe all functions`
+`TODO: examples`
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ### Next Operations
 
@@ -3134,36 +3152,6 @@ val t1 = next-tasks(ts)
 val t2 = next-tasks(ts, t1)
 println(t1, t2)     ;; --> tsk1 / tsk2
 ```
-
-### Print
-
-```
-func print (...)
-func println (...)
-```
-
-The functions `print` and `println` outputs the given values and return `nil`.
-
-Examples:
-
-```
-println(1, :x, [1,2,3])     ;; --> 1   :x   [1,2,3]
-```
-
-### Random Numbers
-
-```
-func random-seed (n)
-func random-next ()     ;; --> :number
-```
-
-`TODO`
-
-## Auxiliary Library
-
-`TODO: ++, <++, <|<`
-`TODO: min, max, between`
-`TODO: assert, copy, string?`
 
 ### Iterator Operations
 
