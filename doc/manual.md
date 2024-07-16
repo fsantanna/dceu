@@ -27,7 +27,7 @@
         - `tuple` `vector` `dict` (collections)
         - `func` `coro` `task` (prototypes)
         - `exe-coro` `exe-task` `tasks` (actives)
-* STATEMENTS
+* EXPRESSIONS
     * Program, Sequences and Blocks
         - `;` `do` `defer`
     * Declarations and Assignments
@@ -1007,15 +1007,16 @@ val t = spawn T() in ts     ;; is instantiated as `t` in pool `ts`
 broadcast(:X)               ;; broadcast resumes `t`
 ```
 
-# STATEMENTS
+# EXPRESSIONS
 
 Ceu is an expression-based language in which all statements are expressions and
 evaluate to a value.
+Therefore, we use the terms statement and expression interchangeably.
 
 ## Program, Sequences and Blocks
 
-A program in Ceu is a sequence of statements (expressions), and a block is a
-sequence of expressions enclosed by braces (`{` and `}´):
+A program in Ceu is a sequence of expressions, and a block is a sequence of
+expressions enclosed by braces (`{` and `}´):
 
 ```
 Prog  : { Expr [`;´] }
