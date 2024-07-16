@@ -491,37 +491,35 @@ data :Math = [
 ]
 
 val math :Math = do {
-    val PI = `:number M_PI`
-    func sin (v) {
+    val x-PI = `:number M_PI`
+    func x-sin (v) {
         `:number sin($v.Number)`
     }
-    func cos (v) {
+    func x-cos (v) {
         `:number cos($v.Number)`
     }
 
-    func floor (v) {
+    func x-floor (v) {
         `:number floor($v.Number)`
     }
-    func ceil (v) {
+    func x-ceil (v) {
         `:number ceil($v.Number)`
     }
-    func round (v) {
+    func x-round (v) {
         `:number round($v.Number)`
     }
 
-    func min (v1, v2) {
+    func x-min (v1, v2) {
         ((v1 < v2) and v1) or v2
     }
-    func max (v1, v2) {
+    func x-max (v1, v2) {
         ((v1 > v2) and v1) or v2
     }
-    ;; TODO
-    ;; func between (v, [min,max]) {
-    func between (v, min_max) {
-        max(min_max[0], min(v, min_max[1]))
+    func x-between (min, v, max) {
+        x-max(min, x-min(v, max))
     }
 
-    [PI,sin,cos , floor,ceil,round , min,max,between]
+    [x-PI,x-sin,x-cos , x-floor,x-ceil,x-round , x-min,x-max,x-between]
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

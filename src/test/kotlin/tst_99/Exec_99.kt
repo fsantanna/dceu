@@ -6599,9 +6599,9 @@ class Exec_99 {
     @Test
     fun zc_03_between() {
         val out = test("""
-            println(math.between(1,   [10,20]))
-            println(math.between(100, [10,20]))
-            println(math.between(15,  [10,20]))
+            println(math.between(10, 1, 20))
+            println(math.between(10, 100, 20))
+            println(math.between(10, 15, 20 ))
         """, true)
         assert(out == "10\n20\n15\n") { out }
     }
