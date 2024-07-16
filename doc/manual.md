@@ -57,9 +57,21 @@
     * Task Operations
         - `pub` `spawn` `tasks` `status` `await` `broadcast` `toggle`
         - `spawn {}` `every` `par` `par-and` `par-or` `watching` `toggle {}`
-* STANDARD LIBRARY
-    * Primary Library
-    * Auxiliary Library
+* STANDARD LIBRARIES
+    * Basic Library
+        - `++` `<++`
+        - `assert` `copy` `create-resume` `debug` `next`
+        - `print` `println` `sup?` `tag` `tuple` `type`
+        - `string?` `static?` `dynamic?`
+    * Type Conversion Library
+        - `to.bool` `to.char` `to.dict` `to.iter` `to.number`
+        - `to.pointer` `to.string` `to.tag` `to.tuple` `to.vector`
+    * Math Library
+        - `math.between` `math.ceil` `math.cos` `math.floor` `math.max`
+        - `math.min` `math.PI` `math.round` `math.sin`
+    * Random Numbers Library
+        - `random.next` `random.seed`
+    
 * SYNTAX
 
 <!-- CONTENTS -->
@@ -2155,16 +2167,13 @@ To signal termination, `f` just needs to return `nil`.
 In this case, the loop evaluates to `false`.
 
 If the iterator expression is not an iterator tuple, the loop tries to
-transform it by calling `to.iter` implicitly.
-The function [`to.iter`](#iterator) in the
-[standard library](#standard-library) creates iterators from iterables, such
-as vectors, coroutines, and task pools, such that they can be traversed in
-loops.
+transform it by calling [`to.iter`](#type-conversion-library) implicitly, which
+creates iterators from iterables, such as vectors and task pools.
 
 Examples:
 
 ```
-loop v in [10,20,30] {          ;; implicit to-iter([10,20,30])
+loop v in [10,20,30] {          ;; implicit to.iter([10,20,30])
     println(v)                  ;; --> 10,20,30
 }
 
@@ -2975,52 +2984,92 @@ broadcast(:E [3])
 
 # STANDARD LIBRARY
 
-Ceu provides many predefined operators and functions:
+Ceu provides many libraries with predefined functions.
 
-- [`:Iterator`](#iterator-operations): iterator type
-- [`coroutine`](#coroutine-create): coroutine creation
-- `status`: [coroutine](#coroutine-status) and [task](#coroutine-status) status
-- [`tasks`](#task-pools):           task pools
-- [`assert`](#TODO):                assertion test
-- [`debug`](#TODO):                 debug value
-- [`error`](#exceptions):           exception raise
-
-- [`:Iterator`,`to-iter`,`to-set`,`to-vector`](#iterator-operations):
-    perform iterator operations
-
-
-- [`math-cos`,`math-floor`,`math-sin`](#mathematical-operations):
-    perform mathematical operations
-- [`next-dict`,`next-tasks`](#next-operations):
-    traverse dictionaries and task pools
-- [`print`,`println`](#print):
-    output values to the screen
-- [`random-seed`,`random-next`](#random-numbers):
-    generate random numbers
-- [`sup?`](#types-and-tags):
-    checks if a tag is a supertype of another
-- [`tag`](#types-and-tags):
-    gets and sets a value tag
-- [`to-bool`,`to-number`,`to-string`,`to-tag`](#type-conversions):
-    <!--`to-char`-->
-    perform type conversion operations
-- [`type`](#types-and-tags):
-    consults the type of a value
-
-`TODO: tuple, tag-or`
-
-The primary library is primitive in the sense that it cannot be written in Ceu
-itself.
-
-### Types and Tags
-
+## Basic Library
+    - [`assert`](#TODO):                assertion test
+    - [`debug`](#TODO):                 debug value
+    - [`print`,`println`](#print):      output values to the screen
+    - [`sup?`](#types-and-tags):        checks if a tag is a supertype of another
+    - [`tag`](#types-and-tags):         gets and sets a value tag
+    - [`type`](#types-and-tags):        consults the type of a value
+    - next: traverse dictionaries and task pools
 ```
 func type (v)           ;; --> :type
 func sup? (tag1, tag2)  ;; --> :bool
-func string-to-tag (s)  ;; --> :tag
 func tag (t, v)         ;; --> v
 func tag (v)            ;; --> :tag
 ```
+
+
+### Type Conversions
+
+```
+func to.bool (v)    ;; --> :bool
+func to.char (v)    ;; --> :char
+func to.dict (v)    ;; --> :dict
+func to.iter (v)    ;; --> :Iterator
+func to.number (v)  ;; --> :number
+func to.pointer (v) ;; --> :pointer
+func to.string (v)  ;; --> :vector (string)
+func to.tag (v)     ;; --> :tag
+func to.tuple (v)   ;; --> :tuple
+func to.vector (v)  ;; --> : vector
+```
+
+The type conversion functions `to.*` receive a value of any type `v` and try to
+convert it to a value of the specified type.
+If the conversion is not possible, the functions return `nil`.
+
+`TODO: explain all possibilities`
+`TODO: to-iter: :Iterator :key :val :idx`
+`TODO: to-iter: tuple/vector/dict/func/coro/exe-coro/tasks`
+
+Examples:
+
+```
+to-bool(nil)        ;; --> false
+to-number("10")     ;; --> 10
+to-number([10])     ;; --> nil
+to-tag(":number")   ;; --> :number
+to-string(10)       ;; --> "10"
+```
+
+## Math Library
+
+```
+        - `between` `ceil` `cos` `floor` `max`
+        - `min` `PI` `round` `sin`
+```
+
+    perform mathematical operations
+
+### Mathematical Operations
+
+```
+func math-cos   (v)     ;; --> :number
+func math-floor (v)     ;; --> :number
+func math-sin   (v)     ;; --> :number
+```
+
+The functions `math-sin` and `math-cos` compute the sine and cossine of the
+given number in radians, respectively.
+
+The function `math-floor` return the integral floor of a given real number.
+
+Examples:
+
+```
+math-sin(3.14)          ;; --> 0
+math-cos(3.14)          ;; --> -1
+math-floor(10.14)       ;; --> 10
+```
+
+
+## Random Numbers Library
+    generate random numbers
+
+### Types and Tags
 
 The function `type` receives a value `v` and returns its [type](#types) as one
 of the tags that follows:
@@ -3047,37 +3096,6 @@ Examples:
 type(10)                ;; --> :number
 val x = tag(:X, [])     ;; value x=[] is associated with tag :X
 tag(x)                  ;; --> :X
-```
-
-### Type Conversions
-
-```
-func to-bool    (v)  ;; --> :bool
-func to-tag     (v)  ;; --> :tag
-func to-number  (v)  ;; --> :number
-func to-pointer (v)  ;; --> :pointer
-func to-string  (v)  ;; --> "string"
-```
-
-<!--
-func to-char   (v)  ;; -> :char
-to-char(65)         ;; -> 'A'
--->
-
-The conversion functions receive any value `v` and try to convert it to a value
-of the specified type.
-If the conversion is not possible, the function returns `nil`.
-
-`TODO: explain all possibilities`
-
-Examples:
-
-```
-to-bool(nil)        ;; --> false
-to-number("10")     ;; --> 10
-to-number([10])     ;; --> nil
-to-tag(":number")   ;; --> :number
-to-string(10)       ;; --> "10"
 ```
 
 ### Next Operations
@@ -3130,27 +3148,6 @@ Examples:
 
 ```
 println(1, :x, [1,2,3])     ;; --> 1   :x   [1,2,3]
-```
-
-### Mathematical Operations
-
-```
-func math-cos   (v)     ;; --> :number
-func math-floor (v)     ;; --> :number
-func math-sin   (v)     ;; --> :number
-```
-
-The functions `math-sin` and `math-cos` compute the sine and cossine of the
-given number in radians, respectively.
-
-The function `math-floor` return the integral floor of a given real number.
-
-Examples:
-
-```
-math-sin(3.14)          ;; --> 0
-math-cos(3.14)          ;; --> -1
-math-floor(10.14)       ;; --> 10
 ```
 
 ### Random Numbers
