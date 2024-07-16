@@ -1,0 +1,15 @@
+data :key = [code]
+
+spawn {
+    await(|true)                    ;; never awakes
+    await(:key | it.code==:escape)  ;; awakes on :key with code=:escape
+    await <1:min 30:s>              ;; awakes after the specified time
+    await e {                       ;; awakes on any event
+        println(e)                  ;;  and shows it
+    }
+}
+
+broadcast(nil)
+broadcast(:key [:escape])
+broadcast(:Clock [100000])
+broadcast(:X [1,2,3])

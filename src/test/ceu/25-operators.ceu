@@ -1,0 +1,73 @@
+do {
+    val tup = []
+    val vec = #[1,2,3]
+    println(#tup, #vec)     ;; --> 0 / 3
+}
+
+println("-=-=-")
+
+do {
+    1 == 1     --> println     ;; --> true
+    1 /= 1     --> println     ;; --> false
+    1 == '1'   --> println     ;; --> false
+    [1] == [1] --> println     ;; --> false
+
+    val t1 = [1]
+    val t2 = t1
+    t1 == t2   --> println     ;; --> true
+}
+
+println("-=-=-")
+
+do {
+    1 === 1          --> println       ;; --> true
+    1 =/= 1          --> println       ;; --> false
+    1 === '1'        --> println       ;; --> false
+    #[1] === #[1]    --> println       ;; --> true
+    @[(:x,1),(:y,2)] =/=
+    @[(:y,2),(:x,1)] --> println       ;; --> false
+}
+
+println("-=-=-")
+
+do {
+    1 > 2  --> println     ;; --> false
+    2 >= 1 --> println     ;; --> true
+    1 <= 1 --> println     ;; --> true
+    1 < 2  --> println     ;; --> true
+}
+
+println("-=-=-")
+
+do {
+    1 + 2 --> println      ;; --> 3
+    1 - 2 --> println      ;; --> -1
+    2 * 3 --> println      ;; --> 6
+    5 / 2 --> println      ;; --> 2.5
+    5 % 2 --> println      ;; --> 1
+    -20   --> println      ;; --> -20
+}
+
+println("-=-=-")
+
+do {
+    not not nil --> println    ;; --> false
+    nil or 10   --> println    ;; --> 10
+    10 and nil  --> println    ;; --> nil
+}
+
+println("-=-=-")
+
+do {
+    10 is? :number    --> println       ;; --> true
+    10 is? nil        --> println       ;; --> false
+    tag(:X,[]) is? :X --> println       ;; --> true
+}
+
+println("-=-=-")
+
+do {
+    10 in? [1,10]    --> println        ;; true
+    20 in? #[1,10]   --> println        ;; false
+    10 in? @[(1,10)] --> println        ;; false
+}

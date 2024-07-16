@@ -1,0 +1,25 @@
+spawn {
+    every |true {
+        println(:glb, it)
+    }
+}
+
+task T () {
+    task X () {
+        every |true {
+            println(:X, it)
+        }
+    }
+    val x = spawn X()
+    spawn {
+        every |true {
+            println(:T, it)
+        }
+    }
+    broadcast(:1) in :task       ;; restricted to enclosing task `T`
+    broadcast(:2)                ;; restricted to enclosing task `T`
+    broadcast(:3) in x           ;; restricted to spawned `x`
+    broadcast(:4) in :global     ;; no restrictions
+}
+
+spawn T()

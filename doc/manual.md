@@ -38,6 +38,14 @@
         - `-x` `x+y` `f(...)` `-->`
         - `t[...]` `t.x` `t.pub` `t.(:X)` `t[=]`
         - `where` `thus`
+    * Standard Operators
+        - length: `#`
+        - equality: `==` `/=` `===` `=/=`
+        - relational: `>` `>=` `<=` `<`
+        - arithmetic: `+` `-` `*` `/`
+        - logical: `and` `or` `not`
+        - equivalence: `is?` `is-not?`
+        - belongs-to: `in?` `in-not?`
     * Conditionals and Pattern Matching
         - `if` `ifs`
     * Loops and Iterators
@@ -1087,6 +1095,22 @@ group {
 println(x, y)       ;; --> 10 20
 ```
 
+### Tests
+
+A `test` block behaves like a normal block, but is only included in the program
+when compiled with the flag `--test`.
+
+Examples:
+
+```
+func add (x,y) {
+    x + y
+}
+test {
+    assert(add(10,20) == 30)
+}
+```
+
 ### Defers
 
 A `defer` block executes only when its enclosing block terminates:
@@ -1576,6 +1600,248 @@ x + 10 - 1      ;; ERROR: requires parenthesis
 x or y or z     ;; (x or y) or z
 ```
 
+## Standard Operators
+
+Ceu provides many standard operators:
+
+- length: `#`
+- equality: `==` `/=` `===` `=/=`
+- relational: `>` `>=` `<=` `<`
+- arithmetic: `+` `-` `*` `/`
+- logical: `and` `or` `not`
+- equivalence: `is?` `is-not?`
+- belongs-to: `in?` `in-not?`
+
+### Length Operator
+
+```
+func {{#}} (v)      ;; --> :number
+```
+
+The operator `#` returns the length of the given tuple or vector.
+
+Examples:
+
+```
+val tup = []
+val vec = #[1,2,3]
+println(#tup, #vec)     ;; --> 0 / 3
+```
+
+### Equality Operators
+
+```
+func {{==}} (v1, v2)    ;; --> :bool
+func {{/=}} (v1, v2)    ;; --> :bool
+```
+
+The operators `==` and `/=` compare two values `v1` and `v2` to check if they
+are equal or not equal, respectively.
+The operator `==` returns `true` if the values are equal and `false` otherwise.
+The operator `/=` is the negation of `==`.
+
+To be considered equal, first the values must be of the same type.
+In addition, [static values](#static-values) are compared *by value*, while
+[dynamic values](#dynamic-values) and [active values](#active-values) are
+compared *by reference*.
+
+Examples:
+
+```
+1 == 1          ;; --> true
+1 /= 1          ;; --> false
+1 == '1'        ;; --> false
+[1] == [1]      ;; --> false
+```
+
+```
+val t1 = [1]
+val t2 = t1
+t1 == t2        ;; --> true
+```
+
+#### Deep Equality Operators
+
+```
+func {===} (v1, v2)  ;; --> :bool
+func {=/=} (v1, v2)  ;; --> :bool
+```
+
+The operators `===` and `=/=` deeply compare two values `v1` and `v2` to check
+if they are equal or not equal, respectively.
+The operator `===` returns `true` if the values are deeply equal and `false`
+otherwise.
+The operator `=/=` is the negation of `===`.
+
+Except for [collections](#collections), deep equality behaves the same as
+[equality](#equality-operators).
+To be considered deeply equal, collections must be of the same type, have the
+same [user tags](#user-types), and all indexes and values must be deeply equal.
+
+Examples:
+
+```
+1 === 1                 ;; --> true
+1 =/= 1                 ;; --> false
+1 === '1'               ;; --> false
+#[1] === #[1]           ;; --> true
+@[(:x,1),(:y,2)] =/=
+@[(:y,2),(:x,1)]        ;; --> false
+```
+
+### Relational Operators
+
+```
+func {{>}}  (v1 ,v2)    ;; --> :bool
+func {{>=}} (v1 ,v2)    ;; --> :bool
+func {{<=}} (v1 ,v2)    ;; --> :bool
+func {{<}}  (v1, v2)    ;; --> :bool
+```
+
+The operators `>`, `>=`, `<=` and `<` perform the standard relational
+operations of *greater than*, *greater or equal than*, *less than*, and
+*less or equal then*, respectively.
+
+Examples:
+
+```
+1 > 2       ;; --> false
+2 >= 1      ;; --> true
+1 <= 1      ;; --> true
+1 < 2       ;; --> true
+```
+
+### Arithmetic Operators
+
+```
+func {{+}} (v1, v2)     ;; --> :number
+func {{-}} (v1 [,v2])   ;; --> :number
+func {{*}} (v1 ,v2)     ;; --> :number
+func {{/}} (v1 ,v2)     ;; --> :number
+func {{%}} (v1 ,v2)     ;; --> :number
+```
+
+The operators `+`, `-`, `*` and `/` perform the standard arithmetics operations
+of *addition*, *subtraction*, *multiplication*, and *division*, respectively.
+
+The operator `%` performs the *remainder* operation.
+
+The operator `-` is also used as the unary minus when it prefixes an
+expression.
+
+`TODO: *-*, //`
+
+Examples:
+
+```
+1 + 2       ;; --> 3
+1 - 2       ;; --> -1
+2 * 3       ;; --> 6
+5 / 2       ;; --> 2.5
+5 % 2       ;; --> 1
+-20         ;; --> -20
+```
+
+### Logical Operators
+
+```
+func not (v)
+func and (v1, v2)
+func or  (v1, v2)
+```
+
+The logical operators `not`, `and`, and `or` are functions with a special
+syntax to be used as prefix (`not`) and infix operators (`and`,`or`).
+
+A `not` receives a value `v` and is equivalent to the code as follows:
+
+```
+if v { false } else { true }
+```
+
+The operators `and` and `or` returns one of their operands `v1` or `v2`.
+
+An `and` is equivalent to the code as follows:
+
+```
+do {
+    val x = v1
+    if x { v2 } else { x }
+}
+```
+
+An `or` is equivalent to the code as follows:
+
+```
+do {
+    val x = v1
+    if x { x } else { v2 }
+}
+```
+
+Examples:
+
+```
+not not nil     ;; --> false
+nil or 10       ;; --> 10
+10 and nil      ;; --> nil
+```
+
+### Equivalence Operators
+
+```
+func is? (v1, v2)
+func is-not? (v1, v2)
+```
+
+The operators `is?` and `is-not?` are functions with a special syntax to be
+used as infix operators.
+
+The operator `is?` checks if `v1` matches `v2` as follows:
+
+```
+ifs {
+    (v1 === v2)        => true
+    (type(v1) == v2)   => true
+    (type(v2) == :tag) => sup?(v2, tag(v1))
+    else => false
+}
+```
+
+The operator `is-not?` is the negation of `is?`.
+
+Examples:
+
+```
+10 is? :number          ;; --> true
+10 is? nil              ;; --> false
+tag(:X,[]) is? :X       ;; --> true
+```
+
+### Belongs-to Operators
+
+```
+func in? (v, vs)
+func in-not? (v, vs)
+```
+
+The operators `in?` and `in-not?` are functions with a special syntax to be
+used as infix operators.
+
+The operator `in?` checks if `v` is part of [collection](#collections) `vs`.
+For tuples and vectors, the values are checked.
+For dictionaries, the indexes are checked.
+
+The operator `in-not?` is the negation of `in?`.
+
+Examples:
+
+```
+10 in? [1,10]            ;; true
+20 in? #[1,10]           ;; false
+10 in? @[(1,10)]         ;; false
+```
+
 ## Conditionals and Pattern Matching
 
 In a conditional context, [`nil`](#static-values) and [`false`](#static-values)
@@ -1888,9 +2154,9 @@ To signal termination, `f` just needs to return `nil`.
 In this case, the loop evaluates to `false`.
 
 If the iterator expression is not an iterator tuple, the loop tries to
-transform it by calling `to-iter` implicitly.
-The function [`to-iter`](#iterator) in the
-[auxiliary library](#auxiliary-library) creates iterators from iterables, such
+transform it by calling `to.iter` implicitly.
+The function [`to.iter`](#iterator) in the
+[standard library](#standard-library) creates iterators from iterables, such
 as vectors, coroutines, and task pools, such that they can be traversed in
 loops.
 
@@ -2485,39 +2751,6 @@ task T () {
 spawn T()
 ```
 
-#### Every Blocks
-
-An `every` block is a loop that makes an iteration whenever an await condition
-is satisfied:
-
-```
-Every : `every´ (Patt | Clock) Block
-```
-
-The `every` extension expands as follows:
-
-```
-loop {
-    await <Patt|Clock> {
-        <Block>
-    }
-}
-```
-
-Examples:
-
-```
-every <1:s> {
-    println("1 more second has elapsed")
-}
-```
-
-```
-every x :X | f(x) {
-    println(":X satisfies f(x)")
-}
-```
-
 #### Parallel Blocks
 
 A parallel block spawns multiple anonymous tasks:
@@ -2616,6 +2849,39 @@ par-and {
 println(":X and :Y have occurred")
 ```
 
+#### Every Blocks
+
+An `every` block is a loop that makes an iteration whenever an await condition
+is satisfied:
+
+```
+Every : `every´ (Patt | Clock) Block
+```
+
+The `every` extension expands as follows:
+
+```
+loop {
+    await <Patt|Clock> {
+        <Block>
+    }
+}
+```
+
+Examples:
+
+```
+every <1:s> {
+    println("1 more second has elapsed")
+}
+```
+
+```
+every x :X | f(x) {
+    println(":X satisfies f(x)")
+}
+```
+
 #### Watching Blocks
 
 A `watching` block executes a given block until an await condition is
@@ -2660,6 +2926,12 @@ boolean value to toggle the block, e.g.:
 - `:X [true]`  activates the block.
 - `:X [false]` deactivates the block.
 
+The given block executes normally, until a `false` is received, toggling it
+off.
+Then, when a `true` is received, it toggles the block on.
+The whole composition terminates when the task representing the given block
+terminates.
+
 The `toggle` extension expands as follows:
 
 ```
@@ -2681,34 +2953,41 @@ do {
 }
 ```
 
-The given block executes normally, until a `false` is received, toggling it
-off.
-Then, when a `true` is received, it toggles the block on.
-The whole composition terminates when the task representing the given block
-terminates.
+Examples:
+
+```
+spawn {
+    toggle :T {
+        every :E {
+            println(it[0])  ;; --> 1 3
+        }
+    }
+}
+broadcast(:E [1])
+broadcast(:T [false])
+broadcast(:E [2])
+broadcast(:T [true])
+broadcast(:E [3])
+```
 
 <!-- ---------------------------------------------------------------------- -->
 
 # STANDARD LIBRARY
 
-## Primary Library
+Ceu provides many predefined operators and functions:
 
-The primary library provides primitive functions and operations:
+- [`:Iterator`](#iterator-operations): iterator type
+- [`coroutine`](#coroutine-create): coroutine creation
+- `status`: [coroutine](#coroutine-status) and [task](#coroutine-status) status
+- [`tasks`](#task-pools):           task pools
+- [`assert`](#TODO):                assertion test
+- [`debug`](#TODO):                 debug value
+- [`error`](#exceptions):           exception raise
 
-- [`#`](#length-operator):
-    consults the length of a tuple or vector
-- [`==`,`/=`](#equality-operators):
-    compare if values are equal
-- [`>`,`>=`,`<=`,`<`](#relational-operators):
-    perform relational operations
-- [`+`,`-`,`*`,`/`](#arithmetic-operators):
-    perform arithmetic operations
-- [`and`,`not`,`or`](#logical-operatos):
-    perform logical operations
-- [`coroutine`, `status`, `tasks`](#coroutine-create):
-    [coroutine](#coroutine-status) and [task](#task-status) operations
-- [`error`](#exceptions):
-    raises an exception
+- [`:Iterator`,`to-iter`,`to-set`,`to-vector`](#iterator-operations):
+    perform iterator operations
+
+
 - [`math-cos`,`math-floor`,`math-sin`](#mathematical-operations):
     perform mathematical operations
 - [`next-dict`,`next-tasks`](#next-operations):
@@ -2731,152 +3010,6 @@ The primary library provides primitive functions and operations:
 
 The primary library is primitive in the sense that it cannot be written in Ceu
 itself.
-
-### Length Operator
-
-```
-func {{#}} (v)      ;; --> :number
-```
-
-The operator `#` returns the length of the received tuple or vector.
-
-Examples:
-
-```
-val tup = []
-val vec = #[1,2,3]
-println(#tup, #vec)     ;; --> 0 / 3
-```
-
-### Equality Operators
-
-```
-func {{==}} (v1, v2)    ;; --> :bool
-func {{/=}} (v1, v2)    ;; --> :bool
-```
-
-The operators `==` and `/=` compare two values `v1` and `v2` to check if they
-are equal or not equal.
-The operator `==` returns `true` if the values are equal and `false` otherwise.
-The operator `/=` is the negation of `==`.
-
-To be considered equal, first the values must be of the same type.
-In addition, [static values](#static-values) are compared *by value*, while
-[dynamic values](#dynamic-values) and [active values](#active-values) are
-compared *by reference*.
-
-Examples:
-
-```
-1 == 1          ;; --> true
-1 /= 1          ;; --> false
-1 == '1'        ;; --> false
-[1] == [1]      ;; --> false
-```
-
-```
-val t1 = [1]
-val t2 = t1
-t1 == t2        ;; --> true
-```
-
-### Relational Operators
-
-```
-func {{>}}  (v1 ,v2)    ;; --> :bool
-func {{>=}} (v1 ,v2)    ;; --> :bool
-func {{<=}} (v1 ,v2)    ;; --> :bool
-func {{<}}  (v1, v2)    ;; --> :bool
-```
-
-The operators `>`, `>=`, `<=` and `<` perform the standard relational
-operations of *greater than*, *greater or equal than*, *less than*, and
-*less or equal then*, respectively.
-
-Examples:
-
-```
-1 > 2       ;; --> false
-2 >= 1      ;; --> true
-1 <= 1      ;; --> true
-1 < 2       ;; --> true
-```
-
-### Arithmetic Operators
-
-```
-func {{+}} (v1, v2)     ;; --> :number
-func {{-}} (v1 [,v2])   ;; --> :number
-func {{*}} (v1 ,v2)     ;; --> :number
-func {{/}} (v1 ,v2)     ;; --> :number
-func {{%}} (v1 ,v2)     ;; --> :number
-```
-
-The operators `+`, `-`, `*` and `/` perform the standard arithmetics operations
-of *addition*, *subtraction*, *multiplication*, and *division*, respectively.
-
-The operator `%` performs the *remainder* operation.
-
-The operator `-` is also used as the unary minus when it prefixes an
-expression.
-
-`TODO: *-*, //`
-
-Examples:
-
-```
-1 + 2       ;; --> 3
-1 - 2       ;; --> -1
-2 * 3       ;; --> 6
-5 / 2       ;; --> 2.5
-5 % 2       ;; --> 1
--20         ;; --> -20
-```
-
-### Logical Operators
-
-```
-func not (v)
-func and (v1, v2)
-func or  (v1, v2)
-```
-
-The logical operators `not`, `and`, and `or` are functions with a special
-syntax to be used as prefix (`not`) and infix operators (`and`,`or`).
-
-A `not` receives a value `v` and is equivalent to the code as follows:
-
-```
-if v { false } else { true }
-```
-
-The operators `and` and `or` returns one of their operands `v1` or `v2`.
-
-An `and` is equivalent to the code as follows:
-
-```
-do {
-    val x = v1
-    if x { v2 } else { x }
-}
-```
-
-An `or` is equivalent to the code as follows:
-
-```
-do {
-    val x = v1
-    if x { x } else { v2 }
-}
-```
-
-Examples:
-
-```
-not not nil     ;; --> false
-nil or 10       ;; --> 10
-10 and nil      ;; --> nil
-```
 
 ### Types and Tags
 
@@ -3030,102 +3163,9 @@ func random-next ()     ;; --> :number
 
 ## Auxiliary Library
 
-- [`===`,`=/=`](#deep-equality-operators):
-    compare if values are deeply equal
-- [`in?`,`in-not?`](#in-operators):
-    check if value is in collection
-- [`is?`,`is-not?`](#is-operators):
-    check if values are compatible
-- [`:Iterator`,`to-iter`,`to-set`,`to-vector`](#iterator-operations):
-    perform iterator operations
-
 `TODO: ++, <++, <|<`
 `TODO: min, max, between`
 `TODO: assert, copy, string?`
-
-### Deep Equality Operators
-
-```
-func {===} (v1, v2)  ;; --> :bool
-func {=/=} (v1, v2)  ;; --> :bool
-```
-
-The operators `===` and `=/=` deeply compare two values `v1` and `v2` to check
-if they are equal or not equal.
-The operator `===` returns `true` if the values are deeply equal and `false`
-otherwise.
-The operator `=/=` is the negation of `===`.
-
-Except for [collections](#collections), deep equality behaves the same as
-[equality](#equality-operators).
-To be considered deeply equal, collections must be of the same type, have the
-same [user tags](#user-types), and all indexes and values must be deeply equal.
-
-Examples:
-
-```
-1 === 1                 ;; --> true
-1 =/= 1                 ;; --> false
-1 === '1'               ;; --> false
-#[1] === #[1]           ;; --> true
-@[(:x,1),(:y,2)] =/=
-@[(:y,2),(:x,1)]        ;; --> false
-```
-
-### In Operators
-
-```
-func in? (v, vs)
-func in-not? (v, vs)
-```
-
-The operators `in?` and `in-not?` are functions with a special syntax to be
-used as infix operators.
-
-The operator `in?` checks if `v` is part of [collection](#collections) `vs`.
-For tuples and vectors, the values are checked.
-For dictionaries, the indexes are checked.
-
-The operator `in-not?` is the negation of `in?`.
-
-Examples:
-
-```
-10 in? [1,10]            ;; true
-20 in? #[1,10]           ;; false
-10 in? @[(1,10)]         ;; false
-```
-
-### Is Operators
-
-```
-func is? (v1, v2)
-func is-not? (v1, v2)
-```
-
-The operators `is?` and `is-not?` are functions with a special syntax to be
-used as infix operators.
-
-The operator `is?` checks if `v1` matches `v2` as follows:
-
-```
-ifs {
-    (v1 === v2)        => true
-    (type(v1) == v2)   => true
-    (type(v2) == :tag) => sup?(v2, tag(v1))
-    else => false
-}
-```
-
-The operator `is-not?` is the negation of `is?`.
-
-Examples:
-
-```
-10 is? :number          ;; --> true
-10 is? nil              ;; --> false
-tag(:X,[]) is? :X       ;; --> true
-```
 
 ### Iterator Operations
 

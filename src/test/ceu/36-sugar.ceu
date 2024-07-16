@@ -1,0 +1,51 @@
+spawn {
+    await(:X)
+    println(":X occurred")
+}
+broadcast(:X)
+
+do {
+    task T () {
+        set pub = 10
+        spawn {
+            println(pub)    ;; --> 10
+        }
+    }
+    spawn T()
+}
+
+do {
+    spawn {
+        every <1:ms> {
+            println("1 more second has elapsed")
+        }
+    }
+    broadcast(:Clock [1])
+    broadcast(:Clock [1])
+}
+
+do {
+    func f (x) { x[0] > 50 }
+    spawn {
+        every x :X | f(x) {
+            println(":X satisfies f(x)")
+        }
+    }
+    broadcast(:Y)
+    broadcast(:X [100])
+    broadcast(:X [10])
+}
+
+do {
+    spawn {
+        watching <1:ms> {
+            every :X {
+                println("one more :X occurred before 1 second")
+            }
+        }
+    }
+    broadcast(:X)
+    broadcast(:X)
+    broadcast(:Clock [1])
+    broadcast(:X)
+}

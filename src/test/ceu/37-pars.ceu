@@ -1,0 +1,52 @@
+do {
+    spawn {
+        par {
+            every <100:ms> {
+                println("1 second has elapsed")
+            }
+        } with {
+            every <200:ms> {
+                println("1 minute has elapsed")
+            }
+        } with {
+            every <300:ms> {
+                println("1 hour has elapsed")
+            }
+        }
+        println("never reached")
+    }
+    loop in {1 => 10} {
+        broadcast(:Clock [100])
+    }
+}
+
+println("-=-=-")
+
+do {
+    spawn {
+        par-or {
+            await <1:s>
+        } with {
+            await(:X)
+            println(":X occurred before 1 second")
+        }
+    }
+    broadcast(:Clock [100])
+    broadcast(:Clock [100])
+    broadcast(:X)
+}
+
+println("-=-=-")
+
+do {
+    spawn {
+        par-and {
+            await(:X)
+        } with {
+            await(:Y)
+        }
+        println(":X and :Y have occurred")
+    }
+    broadcast(:X)
+    broadcast(:Y)
+}

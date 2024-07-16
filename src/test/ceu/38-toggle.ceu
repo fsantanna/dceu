@@ -1,0 +1,12 @@
+spawn {
+    toggle :T {
+        every :E {
+            println(it[0])  ;; --> 1 3
+        }
+    }
+}
+broadcast(:E [1])
+broadcast(:T [false])
+broadcast(:E [2])
+broadcast(:T [true])
+broadcast(:E [3])

@@ -1,0 +1,7 @@
+func add (x,y) {
+    x + y
+}
+test {
+    println(:testing)
+    assert(add(10,20) == 30)
+}
