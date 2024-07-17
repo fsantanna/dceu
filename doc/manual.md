@@ -2173,8 +2173,8 @@ The loop first declares a control variable using the rules from
 expression, which appears after the keyword `in`.
 If the declaration is omitted, it assumes the implicit identifier `it`.
 
-The iterator expression `itr` must evaluate to an [tagged](#user-types)
-iterator [tuple](#collections) `:Iterator [f,...]`.
+The iterator expression `itr` must evaluate to a [tagged](#user-types) iterator
+[tuple](#collections) `:Iterator [f,...]`.
 
 The iterator tuple must hold a step function `f` at index `0`, followed by any
 other custom state required to operate.
@@ -2183,7 +2183,7 @@ next value.
 On each iteration, the loop calls `f` passing the `itr`, and assigns the result
 to the loop control variable.
 To signal termination, `f` just needs to return `nil`.
-In this case, the loop evaluates to `false`.
+In this case, the loop as a whole evaluates to `false`.
 
 If the iterator expression is not an iterator tuple, the loop tries to
 transform it by calling [`to.iter`](#type-conversion-library) implicitly, which
@@ -3015,7 +3015,7 @@ for documentation purposes only.
 ```
 func assert (v :any, msg :any) => :any
 func debug (v :any) => :any)
-func next (v :any, x :any) => :any
+func next (v :any [,x :any]) => :any
 func print (...) => :nil
 func println (...) => :nil
 func sup? (t1 :tag, t2 :tag) => :bool
@@ -3028,8 +3028,42 @@ func type (v :any) => :type
 `TODO: debug: debug value`
 `TODO: next: traverse dictionaries and task pools`
 
+The function `next` allows to traverse collections step by step.
+It supports as the collection argument `v` the types with behaviors as follows:
+
+- `:dict`:
+    `next` receives a dictionary `v`, a key `x`, and returns the key `y` that
+    follows `x`. If `x` is `nil`, the function returns the initial key. If
+    there are no remaining keys, `next` returns `nil`.
+- `:tasks`:
+    `next` receives a task pool `v`, a task `x`, and returns task `y` that
+    follows `x`. If `x` is `nil`, the function returns the initial task. If
+    there are no reamining tasks to enumerate, `next` returns `nil`.
+- `:exe-coro`: `TODO: description/examples`
+- `:Iterator`: `TODO: description/examples`
+
+Examples:
+
+```
+val d = [(:k1,10), (:k2,20)]
+val k1 = next(d)
+val k2 = next(d, k1)
+println(k1, k2)     ;; --> :k1 / :k2
+```
+
+```
+val ts = tasks()
+spawn T() in ts     ;; tsk1
+spawn T() in ts     ;; tsk2
+val t1 = next(ts)
+val t2 = next(ts, t1)
+println(t1, t2)     ;; --> tsk1 / tsk2
+```
+
 The function `sup?` receives tags `t1` and `t2`, and returns if `t1` is
 a [super-tag](#hierarchical-tags) of `t2`.
+
+`TODO: examples`
 
 The function `tag` sets or queries tags of [user types](#user-types).
 To set a tag, the function receives a tag `t` and a value `v` to associate.
@@ -3069,7 +3103,6 @@ convert it to a value of the specified type:
 func to.bool    (v :any) => :bool
 func to.char    (v :any) => :char
 func to.dict    (v :any) => :dict
-func to.iter    (v :any) => :Iterator
 func to.number  (v :any) => :number
 func to.pointer (v :any) => :pointer
 func to.string  (v :any) => :vector (string)
@@ -3080,19 +3113,57 @@ func to.vector  (v :any) => :vector
 
 If the conversion is not possible, the functions return `nil`.
 
-`TODO: explain all possibilities`
-`TODO: to-iter: :Iterator :key :val :idx`
-`TODO: to-iter: tuple/vector/dict/func/coro/exe-coro/tasks`
+`TODO: describe each`
 
 Examples:
 
 ```
-to-bool(nil)        ;; --> false
-to-number("10")     ;; --> 10
-to-number([10])     ;; --> nil
-to-tag(":number")   ;; --> :number
-to-string(10)       ;; --> "10"
+to.bool(nil)        ;; --> false
+to.char(65)         ;; --> 'A'
+to.dict([[:x,1]])   ;; --> @[(:x,1)]
+to.number("10")     ;; --> 10
+to.pointer(#[x])    ;; --> (C pointer to 1st element `x`)
+to.string(42)       ;; --> "42"
+to.tag(":number")   ;; --> :number
+to.tuple(#[1,2,3])  ;; --> [1,2,3]
+to.vector([1,2,3])  ;; --> #[1,2,3]
 ```
+
+The function `to.iter` is used implicitly in [iterator loops](#iterator-loops)
+to convert iterables, such as vectors and task pools, into iterators:
+
+```
+func to.iter (v :any [,tp :any]) => :Iterator
+```
+
+`to.iter` receives an iterable `v`, an optional modifier `tp`, and returns a
+corresponding [`:Iterator`](#iterator-loops) tuple.
+The iterator provides a function that traverses the iterable step by step on
+each call.
+The modifier specifies what kind of value should the iterator return on each
+step.
+`to.iter` accepts the following iterables and modifiers:
+
+- `:tuple`, `:vector`, `:dict`:
+    - traverses the collection item by item
+    - `:val`: value of the current item
+    - `:idx`, `:key`: index or key of the current item
+    - `:tuple` and `:vector` default to modifier `:val`
+    - `:dict` defaults to modifier `[:key,:val]`
+- `:func`:
+    - simply calls the function each step, forwarding its return value
+- `:exe-coro`:
+    - resumes the coroutine on each step, and returns its yielded value
+- `:tasks`:
+    - traverses the pool item by item, returning the current task
+
+It is possible to pass multiple modifiers in a tuple (e.g., `[:key,:val]`).
+In this case, on each step, the iterator returns a tuple with the corresponding
+values.
+
+Examples:
+
+`TODO`
 
 ## Math Library
 
@@ -3134,96 +3205,6 @@ func random.seed (n :number) => :nil
 
 `TODO: describe all functions`
 `TODO: examples`
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-### Next Operations
-
-```
-func next-dict  (dic,  cur)  ;; --> nxt
-func next-tasks (tsks, cur)  ;; --> nxt
-```
-
-The `next` operations allow to traverse collections step by step.
-
-The function `next-dict` receives a dictionary `dic`, a key `cur`, and returns
-the key `nxt` that follows `cur`.
-If `cur` is `nil`, the function returns the initial key.
-The function returns `nil` if there are no reamining keys to enumerate.
-
-The function `next-tasks` receives a task pool `tsks`, a task `cur`, and
-returns task `nxt` that follows `cur`.
-If `cur` is `nil`, the function returns the initial task.
-The function returns `nil` if there are no reamining tasks to enumerate.
-
-Examples:
-
-```
-val d = [(:k1,10), (:k2,20)]
-val k1 = next-dict(d)
-val k2 = next-dict(d, k1)
-println(k1, k2)     ;; --> :k1 / :k2
-```
-
-```
-val ts = tasks()
-spawn T() in ts     ;; tsk1
-spawn T() in ts     ;; tsk2
-val t1 = next-tasks(ts)
-val t2 = next-tasks(ts, t1)
-println(t1, t2)     ;; --> tsk1 / tsk2
-```
-
-### Iterator Operations
-
-[Iterator loops](#iterators) in Ceu rely on the `:Iterator` template and
-`to-iter` constructor function as follows:
-
-```
-data :Iterator = [f]
-func to-iter (v, tp)       ;; --> :Iterator [f]
-```
-
-The function `to-iter` receives an iterable `v`, an optional modifier `tp`, and
-returns an iterator.
-The returned iterator is a tuple template in which the first field is a
-function that, when called, returns the next element of the original iterable
-`v`.
-The iterator function must return `nil` to signal that there are no more
-elements to traverse in the iterable.
-
-The function `to-iter` accepts the following iterables and modifiers:
-
-- Tuples:
-    - On each call, the iterator returns the next tuple element.
-    - Modifiers:
-        - `:all`: returns each index and value as a pair `[i,v]`
-        - `:idx`: returns each numeric index
-        - `:val`: returns the value on each index **(default)**
-- Vectors:
-    - On each call, the iterator returns the next vector element.
-    - Modifiers:
-        - `:all`: returns each index and value as a pair `[i,v]`
-        - `:idx`: returns each numeric index
-        - `:val`: returns the value on each index **(default)**
-- Dictionaries:
-    - On each call, the iterator returns the next dictionary element.
-    - Modifiers:
-        - `:all`: returns each key and value as a pair `[k,v]`
-        - `:key`: returns each key **(default)**
-        - `:val`: returns the value on each key
-- Functions:
-    - On each call, the iterator simply calls the original function.
-- Active Coroutine
-    - On each call, the iterator resumes the coroutine and returns its yielded
-      value. If the coroutine is terminated, it returns `nil`.
-
-`TODO`
-
-<!--
-- :Iterator
-data :Iterator = [f,s,tp,i]
--->
 
 # SYNTAX
 

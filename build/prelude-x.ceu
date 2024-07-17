@@ -537,7 +537,7 @@ func next (v, x) {
         :exe-coro => resume v(x)
         :tasks    => next-tasks(v, x)
         :dict     => next-dict(v, x)
-        :Iterator => it.f(v)
+        :Iterator => v.f(v, x)
         else      => error(:error)
     }
 }
