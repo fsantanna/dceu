@@ -222,7 +222,7 @@ class Exec_01 {
                 println(x)
             }
         """)
-        assert(out == "10\nnil\n") { out }
+        assert(out == "10\n10\n") { out }
     }
     @Test
     fun bb_11_err() {
@@ -5046,6 +5046,7 @@ class Exec_01 {
         val out = test(
             """
             println([])
+            nil
             println(`:number CEU_GC.free`)
         """
         )

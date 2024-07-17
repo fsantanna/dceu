@@ -1492,13 +1492,12 @@ fun Coder.main (tags: Tags): String {
             }
             ceu_print1(X->args[i]);
         }
-        CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
+        CEU_ACC((X->n > 0) ? X->args[0] : (CEU_Value) { CEU_VALUE_NIL });
         ceu_gc_dec_args(X->n, X->args);
     }
     void ceu_pro_println (CEUX* X) {
         ceu_pro_print(X);
         printf("\n");
-        CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
     }
     """
     }
