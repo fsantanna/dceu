@@ -46,6 +46,7 @@
         - logical: `and` `or` `not`
         - equivalence: `is?` `is-not?`
         - belongs-to: `in?` `in-not?`
+        - vector concatenation: `++` `<++`
     * Conditionals and Pattern Matching
         - `if` `ifs`
     * Loops and Iterators
@@ -59,10 +60,9 @@
         - `spawn {}` `every` `par` `par-and` `par-or` `watching` `toggle {}`
 * STANDARD LIBRARIES
     * Basic Library
-        - `++` `<++`
         - `assert` `copy` `create-resume` `debug` `next`
         - `print` `println` `sup?` `tag` `tuple` `type`
-        - `string?` `static?` `dynamic?`
+        - `dynamic?` `static?` `string?`
     * Type Conversion Library
         - `to.bool` `to.char` `to.dict` `to.iter` `to.number`
         - `to.pointer` `to.string` `to.tag` `to.tuple` `to.vector`
@@ -1625,10 +1625,15 @@ Ceu provides many standard operators:
 - equivalence: `is?` `is-not?`
 - belongs-to: `in?` `in-not?`
 
+The function signatures that follow describe the operators and use tag
+annotations to describe the parameters and return types.
+However, note that the annotations are not part of the language, and are used
+for documentation purposes only.
+
 ### Length Operator
 
 ```
-func {{#}} (v)      ;; --> :number
+func {{#}} (v :any) => :number
 ```
 
 The operator `#` returns the length of the given tuple or vector.
@@ -1644,8 +1649,8 @@ println(#tup, #vec)     ;; --> 0 / 3
 ### Equality Operators
 
 ```
-func {{==}} (v1, v2)    ;; --> :bool
-func {{/=}} (v1, v2)    ;; --> :bool
+func {{==}} (v1 :any, v2 :any) => :bool
+func {{/=}} (v1 :any, v2 :any) => :bool
 ```
 
 The operators `==` and `/=` compare two values `v1` and `v2` to check if they
@@ -1676,8 +1681,8 @@ t1 == t2        ;; --> true
 #### Deep Equality Operators
 
 ```
-func {===} (v1, v2)  ;; --> :bool
-func {=/=} (v1, v2)  ;; --> :bool
+func {===} (v1 :any, v2 :any) => :bool
+func {=/=} (v1 :any, v2 :any) => :bool
 ```
 
 The operators `===` and `=/=` deeply compare two values `v1` and `v2` to check
@@ -1705,10 +1710,10 @@ Examples:
 ### Relational Operators
 
 ```
-func {{>}}  (v1 ,v2)    ;; --> :bool
-func {{>=}} (v1 ,v2)    ;; --> :bool
-func {{<=}} (v1 ,v2)    ;; --> :bool
-func {{<}}  (v1, v2)    ;; --> :bool
+func {{>}}  (n1 :number, n2 :number) => :bool
+func {{>=}} (n1 :number, n2 :number) => :bool
+func {{<=}} (n1 :number, n2 :number) => :bool
+func {{<}}  (n1 :number, n2 :number) => :bool
 ```
 
 The operators `>`, `>=`, `<=` and `<` perform the standard relational
@@ -1727,11 +1732,11 @@ Examples:
 ### Arithmetic Operators
 
 ```
-func {{+}} (v1, v2)     ;; --> :number
-func {{-}} (v1 [,v2])   ;; --> :number
-func {{*}} (v1 ,v2)     ;; --> :number
-func {{/}} (v1 ,v2)     ;; --> :number
-func {{%}} (v1 ,v2)     ;; --> :number
+func {{+}} (n1 :number, n2 :number)   => :number
+func {{-}} (n1 :number [,n2 :number]) => :number
+func {{*}} (n1 :number, n2 :number)   => :number
+func {{/}} (n1 :number, n2 :number)   => :number
+func {{%}} (n1 :number, n2 :number)   => :number
 ```
 
 The operators `+`, `-`, `*` and `/` perform the standard arithmetics operations
@@ -1758,9 +1763,9 @@ Examples:
 ### Logical Operators
 
 ```
-func not (v)
-func and (v1, v2)
-func or  (v1, v2)
+func not (v :any) => :bool
+func and (v1 :any, v2 :any) => :any
+func or  (v1 :any, v2 :any) => :any
 ```
 
 The logical operators `not`, `and`, and `or` are functions with a special
@@ -1803,8 +1808,8 @@ nil or 10       ;; --> 10
 ### Equivalence Operators
 
 ```
-func is? (v1, v2)
-func is-not? (v1, v2)
+func is?     (v1 :any, v2 :any) => :bool
+func is-not? (v1 :any, v2 :any) => :bool
 ```
 
 The operators `is?` and `is-not?` are functions with a special syntax to be
@@ -1834,8 +1839,8 @@ tag(:X,[]) is? :X       ;; --> true
 ### Belongs-to Operators
 
 ```
-func in? (v, vs)
-func in-not? (v, vs)
+func in?     (v :any, vs :any)
+func in-not? (v :any, vs :any)
 ```
 
 The operators `in?` and `in-not?` are functions with a special syntax to be
@@ -1854,6 +1859,20 @@ Examples:
 20 in? #[1,10]           ;; false
 10 in? @[(1,10)]         ;; false
 ```
+
+### Vector Concatenation Operators
+
+func {{++}}  (v1 :vector, v2 :vector) => :vector
+func {{<++}} (v1 :vector, v2 :vector) => :vector
+
+The operators `++` and `<++` concatenate the given vectors.
+The operator `++` creates and returns a new vector, keeping the received
+vectors unmodified.
+The operator `<++` appends `v2` at the end of `v1`, returning `v1` modified.
+
+Examples:
+
+`TODO`
 
 ## Conditionals and Pattern Matching
 
@@ -2986,13 +3005,16 @@ broadcast(:E [3])
 
 Ceu provides many libraries with predefined functions.
 
+The function signatures that follow describe the operators and use tag
+annotations to describe the parameters and return types.
+However, note that the annotations are not part of the language, and are used
+for documentation purposes only.
+
 ## Basic Library
 
 ```
 func assert (v :any, msg :any) => :any
 func debug (v :any) => :any)
-func {{++}} (v1 :vector, v2 :vector) => :vector
-func {{<++}} (v1 :vector, v2 :vector) => :vector
 func next (v :any, x :any) => :any
 func print (...) => :nil
 func println (...) => :nil
@@ -3002,7 +3024,6 @@ func tag (v :dyn) => :tag
 func type (v :any) => :type
 ```
 
-`TODO: ++ <++`
 `TODO: assert: assertion test`
 `TODO: debug: debug value`
 `TODO: next: traverse dictionaries and task pools`
@@ -3196,11 +3217,6 @@ The function `to-iter` accepts the following iterables and modifiers:
 - Active Coroutine
     - On each call, the iterator resumes the coroutine and returns its yielded
       value. If the coroutine is terminated, it returns `nil`.
-
-```
-func to-set    (col)    ;; --> :dict
-func to-vector (col)    ;; --> :vector
-```
 
 `TODO`
 
