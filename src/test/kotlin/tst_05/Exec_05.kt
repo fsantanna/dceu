@@ -1084,7 +1084,7 @@ class Exec_05 {
         assert(out.contains(":3\texe-task: 0x")) { out }
         assert(out.contains(":4\ttrue\n")) { out }
         assert(out.contains(":5\ttrue\n")) { out }
-        assert(out.contains(":6\tnil\n")) { out }
+        assert(out.contains(":6\t:5\n")) { out }
     }
     @Test
     fun dd_02_detrack() {

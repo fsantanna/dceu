@@ -2550,7 +2550,7 @@ class Exec_99 {
         """, true)
         //assert(out.contains("assertion error : expected :Iterator")) { out }
         assert(out.contains(" |  anon : (lin 2, col 23) : to-iter(nil)\n" +
-                " |  build/prelude-x.ceu : (lin 194, col 28) : error(#['i','t','e','r','a','t','o','r',' ...\n" +
+                " |  build/prelude-x.ceu : (lin 189, col 28) : error(#['i','t','e','r','a','t','o','r',' ...\n" +
                 " v  iterator error : invalid collection\n")) { out }
     }
     @Test
