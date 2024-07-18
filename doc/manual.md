@@ -71,7 +71,6 @@
         - `math.min` `math.PI` `math.round` `math.sin`
     * Random Numbers Library
         - `random.next` `random.seed`
-    
 * SYNTAX
 
 <!-- CONTENTS -->
@@ -3296,20 +3295,22 @@ Expr  : `do´ Block                                      ;; explicit block
       | `if´ Expr (`=>´ Expr | Block | Lambda)          ;; conditional
         [`else´  (`=>´ Expr | Block)]
 
-      | `ifs´ `{´ {Case} [Else] `}´ ;; conditionals     ;; conditionals
+      | `ifs´ `{´ {Case} [Else] `}´                     ;; conditionals
             Case :  Expr  (`=>´ Expr | Block | Lambda)
             Else : `else´ (`=>´ Expr | Block)
 
-      | `ifs´ Expr `{´ {Case} [Else] `}´                ;; pattern matching
-            Case :  Patt  (Block | `=>´ Expr)
-            Else : `else´ (Block | `=>´ Expr)
+      | `match´ Expr `{´ {Case} [Else] `}´              ;; pattern matching
+            Case :  Patt  (`=>´ Expr | Block | Lambda)
+            Else : `else´ (`=>´ Expr | Block)
 
-      | `loop´ [ID [TAG]] [`in´ (Range | Expr)] Block   ;; loops
-            Range : (`{´ | `}´) Expr `=>` Expr (`{´ | `}´) [`:step` [`+´|`-´] Expr]
-      | `skip´ `if´ Expr                                ;; loop jump back
-      | `break´ [`(´ Expr `)´] `if´ Expr                ;; loop escape
+      | `loop´ Block                                    ;; infinite loop
+      | `loop´ (ID [TAG] | Patt) `in´ Expr Block        ;; iterator loop
+      | `loop´ [ID] [`in´ Range] Block                  ;; numeric loop
+            Range : (`}´|`{´) Expr `=>` Expr (`}´|`{´) [`:step` [`+´|`-´] Expr]
+      | `break´ `(´ [Expr] `)´                          ;; loop break
       | `until´ Expr
       | `while´ Expr
+      | `skip´                                          ;; loop restart
 
       | `catch´ [Patt] Block                            ;; catch exception
       | `error´ `(´ Expr `)´                            ;; throw exception
@@ -3318,18 +3319,19 @@ Expr  : `do´ Block                                      ;; explicit block
 
       | `coroutine´ `(´ Expr `)´                        ;; create coro
       | `yield´ `(´ [Expr] `)´                          ;; yield from coro
-      | `resume´ Expr `(´ [Expr] `)´                    ;; resume coro
+      | `resume´ Expr `(´ List(Expr) `)´                ;; resume coro
       | `resume-yield-all´ Expr `(´ [Expr] `)´          ;; resume-yield nested coro
 
       | `spawn´ Expr `(´ [List(Expr)] `)´ [`in´ Expr]   ;; spawn task
       | `tasks´ `(´ Expr `)´                            ;; task pool
-      | `await´ Patt [`{´ Block `}´]                    ;; await event
-      | `broadcast´ `(´ Expr `)´ [`in´ Expr]            ;; broadcast event
+      | `await´ Patt [Block]                            ;; await pattern
+      | `await´ Clock                                   ;; await clock
+      | `broadcast´ `(´ [Expr] `)´ [`in´ Expr]          ;; broadcast event
       | `toggle´ Expr `(´ Expr `)´                      ;; toggle task
 
       | `spawn´ Block                                   ;; spawn nested task
-      | `every´ Patt Block                              ;; await event in loop
-      | `watching´ Patt Block                           ;; abort on event
+      | `every´ (Patt | Clock) Block                    ;; await event in loop
+      | `watching´ (Patt | Clock) Block                 ;; abort on event
       | `par´ Block { `with´ Block }                    ;; spawn tasks
       | `par-and´ Block { `with´ Block }                ;; spawn tasks, rejoin on all
       | `par-or´ Block { `with´ Block }                 ;; spawn tasks, rejoin on any
@@ -3337,18 +3339,19 @@ Expr  : `do´ Block                                      ;; explicit block
 
 Lambda : `{´ [`\´ List(ID [TAG]) `=>´] { Expr [`;´] } `}´
 
-Patt : [`(´] (Cons | Oper | Full | Clock) [`)´]
-        Cons  : Expr
+Patt : [`(´] [ID] [TAG] [Const | Oper | Tuple] [`|´ Expr] [`)´]
+        Const : Expr
         Oper  : OP [Expr]
-        Full  : [ID] [TAG] [`,´ [Expr]]
-        Clock : [TAG `:h´] [TAG `:min´] [TAG `:s´] [TAG `:ms´]
+        Tuple : `[´ List(Patt) } `]´
+
+Clock : `<´ { Expr [`:h´|`:min´|`:s´|`:ms´] } `>´
 
 List(x) : x { `,´ x }                                   ;; comma-separated list
 
 ID    : [`^´|`^^´] [A-Za-z_][A-Za-z0-9_\'\?\!\-]*       ;; identifier variable (`^´ upval)
       | `{´ OP `}´                                      ;; identifier operation
 TAG   : :[A-Za-z0-9\.\-]+                               ;; identifier tag
-OP    : [+-*/><=!|&~%#@]+                               ;; identifier operation
+OP    : [+-*/%><=|&]+                                   ;; identifier operation
       | `not´ | `or´ | `and´ | `is?´ | `is-not?´ | `in?´ | `in-not?´
 CHR   : '.' | '\\.'                                     ;; literal character
 NUM   : [0-9][0-9A-Za-z\.]*                             ;; literal number
