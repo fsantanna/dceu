@@ -1183,6 +1183,9 @@ The difference between `val` and `var` is that a `val` is immutable, while a
 The `val` modifier forbids that its name is reassigned, but it does not prevent
 a [dynamic value](#dynamic-values) it is holding to be modified.
 
+Ceu does not support shadowing, i.e., if an identifier is visible, it cannot
+appear in a new variable declaration.
+
 When using an identifier, the optional tag specifies a
 [tuple template](#tag-enumerations-and-tuple-templates), which allows the
 variable to be indexed by a field name, instead of a numeric position.
@@ -1211,6 +1214,11 @@ println(p1.x)           ;; --> 10
 
 val p2 = :Pos [10,20]   ;; (assumes :Pos has fields [x,y])
 println(p2.y)           ;; --> 20
+
+val x
+do {
+    val x               ;; `x´ is already declared
+}
 ```
 
 When using the tuple pattern, it is possible to declare multiple variables by

@@ -22,3 +22,8 @@ func f (v) {
     v + 1
 }
 println(f(10))      ;; --> 11
+
+val x
+do {
+    val x               ;; `x´ cannot be redeclared
+}
