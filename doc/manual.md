@@ -60,7 +60,7 @@
         - `spawn {}` `every` `par` `par-and` `par-or` `watching` `toggle {}`
 * STANDARD LIBRARIES
     * Basic Library
-        - `assert` `copy` `create-resume` `debug` `next`
+        - `assert` `copy` `create-resume` `next`
         - `print` `println` `sup?` `tag` `tuple` `type`
         - `dynamic?` `static?` `string?`
     * Type Conversion Library
@@ -3013,8 +3013,7 @@ for documentation purposes only.
 ## Basic Library
 
 ```
-func assert (v :any, msg :any) => :any
-func debug (v :any) => :any)
+func assert (v :any [,msg :any]) => :any
 func next (v :any [,x :any]) => :any
 func print (...) => :nil
 func println (...) => :nil
@@ -3024,9 +3023,18 @@ func tag (v :dyn) => :tag
 func type (v :any) => :type
 ```
 
-`TODO: assert: assertion test`
-`TODO: debug: debug value`
-`TODO: next: traverse dictionaries and task pools`
+The function `assert` receives a value `v` of any type, and raises an error if
+it is [falsy](#basic-types).
+Otherwise, it returns the same `v`.
+The optional `msg` provides a string to accompany the error, or a function that
+generates the error string.
+
+Examples:
+
+```
+assert((10<20) and :ok, "bug found")    ;; --> :ok
+assert(1 == 2) <-- { "1 /= 2" }         ;; --> ERROR: "1 /= 2"
+```
 
 The function `next` allows to traverse collections step by step.
 It supports as the collection argument `v` the types with behaviors as follows:
@@ -3045,7 +3053,7 @@ It supports as the collection argument `v` the types with behaviors as follows:
 Examples:
 
 ```
-val d = [(:k1,10), (:k2,20)]
+val d = @[(:k1,10), (:k2,20)]
 val k1 = next(d)
 val k2 = next(d, k1)
 println(k1, k2)     ;; --> :k1 / :k2
@@ -3057,13 +3065,22 @@ spawn T() in ts     ;; tsk1
 spawn T() in ts     ;; tsk2
 val t1 = next(ts)
 val t2 = next(ts, t1)
-println(t1, t2)     ;; --> tsk1 / tsk2
+println(t1, t2)     ;; --> exe-task: 0x...   exe-task: 0x...
+```
+
+The functions `print` and `println` outputs the given values to the screen, and
+return the first received value.
+
+Examples:
+
+```
+val x = println(1, :x)  ;; --> 1   :x
+print(x)
+println(2)              ;; --> 12
 ```
 
 The function `sup?` receives tags `t1` and `t2`, and returns if `t1` is
 a [super-tag](#hierarchical-tags) of `t2`.
-
-`TODO: examples`
 
 The function `tag` sets or queries tags of [user types](#user-types).
 To set a tag, the function receives a tag `t` and a value `v` to associate.
@@ -3071,28 +3088,19 @@ The function returns the same value `v` passed to it.
 To query a tag, the function `tag` receives a value `v`, and returns its
 associated tag.
 
-Examples:
-
-```
-type(10)                ;; --> :number
-val x = tag(:X, [])     ;; value x=[] is associated with tag :X
-tag(x)                  ;; --> :X
-```
-
-The functions `print` and `println` outputs the given values to the screen, and
-return `nil`.
-
-Examples:
-
-```
-println(1, :x, [1,2,3])     ;; --> 1   :x   [1,2,3]
-```
-
 The function `type` receives a value `v` and returns its [type](#types).
 
 Examples:
 
-`TODO`
+```
+sup?(:T.A,   :T.A.x)    ;; --> true
+sup?(:T.A.x, :T)        ;; --> false
+
+val x = tag(:X, [])     ;; value x=[] is associated with tag :X
+tag(x)                  ;; --> :X
+
+type(10)                ;; --> :number
+```
 
 ### Type Conversions
 
