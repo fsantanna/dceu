@@ -392,7 +392,7 @@ class Exec_01 {
         assert(out == "10\n") { out }
     }
     @Test
-    fun TODO_be_04_rec() {
+    fun BUG_be_04_rec() {
         val out = test("""
             $PLUS
             do {
@@ -4190,23 +4190,21 @@ class Exec_01 {
     }
     @Test
     fun gg_07_tags() {
-        val out = test(
-            """
-            println(tag(:2,1))   ;; OK (was TODO: error message)
-        """
-        )
+        val out = test("""
+            println(tag(:2,1))   ;; error message
+        """)
         //assert(out == "false\n") { out }
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out.contains("ceu_tag_set: Assertion `dyn.type >= CEU_VALUE_DYNAMIC' failed.")) { out }
     }
     @Test
     fun gg_08_tags_err() {
-        val out = test(
-            """
+        val out = test("""
             println(tag(tag(2,[])))
-        """
-        )
-        assert(out == "2\n") { out }
+        """)
+        //assert(out == "2\n") { out }
         //assert(out.contains("Assertion `tag.type == CEU_VALUE_TAG'")) { out }
+        assert(out.contains("ceu_tag_set: Assertion `tag.type==CEU_VALUE_NIL || tag.type==CEU_VALUE_TAG' failed.")) { out }
     }
     @Test
     fun gg_09_tags_err() {
@@ -4214,8 +4212,9 @@ class Exec_01 {
             println(tag(:x,[]))
             println(tag(1,[]))
         """)
-        assert(out == ":x []\n1 []\n") { out }
+        //assert(out == ":x []\n1 []\n") { out }
         //assert(out.contains("Assertion `bool.type == CEU_VALUE_BOOL' failed")) { out }
+        assert(out.contains("ceu_tag_set: Assertion `tag.type==CEU_VALUE_NIL || tag.type==CEU_VALUE_TAG' failed.")) { out }
     }
     @Test
     fun gg_10_tags() {

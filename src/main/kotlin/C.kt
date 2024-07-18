@@ -781,11 +781,9 @@ fun Coder.main (tags: Tags): String {
     
     void ceu_tag_set (CEU_Value tag, CEU_Value dyn) {
         ceu_gc_inc_val(tag);
-        if (dyn.type < CEU_VALUE_DYNAMIC) {
-            // nothing to set
-        } else {
-            dyn.Dyn->Any.tag = tag;
-        }
+        assert(dyn.type >= CEU_VALUE_DYNAMIC);
+        assert(tag.type==CEU_VALUE_NIL || tag.type==CEU_VALUE_TAG);
+        dyn.Dyn->Any.tag = tag;
     }
     
     void ceu_pro_tag (CEUX* X) {

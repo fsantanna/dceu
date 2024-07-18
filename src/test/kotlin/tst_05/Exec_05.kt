@@ -592,7 +592,7 @@ class Exec_05 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun BUG_ab_06_tasks_prim() {    // tasks must be primitive, must always be called
+    fun ab_06_tasks_prim() {
         val out = test("""
             val T = task () {
                 defer {
@@ -608,7 +608,8 @@ class Exec_05 {
             }
             println(:ok)
        """)
-        assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 11, col 13) : expected \"(\" : have \"do\"\n") { out }
+        //assert(out == ":ok\n") { out }
     }
 
     // TRACK
