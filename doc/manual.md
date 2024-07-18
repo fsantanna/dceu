@@ -3197,12 +3197,18 @@ The function `math.floor` return the integral floor of a given real number.
 Examples:
 
 ```
-math.sin(3.14)          ;; --> 0
-math.cos(3.14)          ;; --> -1
-math.floor(10.14)       ;; --> 10
-```
+math.PI                 ;; --> 3.14
+math.sin(math.PI)       ;; --> 0
+math.cos(math.PI)       ;; --> -1
 
-`TODO: examples`
+math.ceil(10.14)        ;; --> 11
+math.floor(10.14)       ;; --> 10
+math.round(10.14)       ;; --> 10
+
+math.min(10,20)         ;; --> 10
+math.max(10,20)         ;; --> 20
+math.between(10, 8, 20) ;; --> 10
+```
 
 ## Random Numbers Library
 
@@ -3212,7 +3218,13 @@ func random.seed (n :number) => :nil
 ```
 
 `TODO: describe all functions`
-`TODO: examples`
+
+Examples:
+
+```
+random.seed(0)
+random.next()       ;; --> :number
+```
 
 # SYNTAX
 
