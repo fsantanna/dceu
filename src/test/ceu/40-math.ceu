@@ -1,0 +1,11 @@
+math.PI                 --> println ;; --> 3.14
+math.sin(math.PI)       --> println ;; --> 0
+math.cos(math.PI)       --> println ;; --> -1
+
+math.ceil(10.14)        --> println ;; --> 15
+math.floor(10.14)       --> println ;; --> 10
+math.round(10.14)       --> println ;; --> 10
+
+math.min(10,20)         --> println ;; --> 10
+math.max(10,20)         --> println ;; --> 20
+math.between(10, 8, 20) --> println ;; --> 10

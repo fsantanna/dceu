@@ -1,0 +1,52 @@
+do {
+    assert((10<20) and :ok, "bug found")  ;; --> :ok
+    ;;assert(1 == 2) <-- { "1 /= 2" }     ;; --> ERROR: "1 /= 2"
+}
+
+do {
+    val d = @[(:k1,10), (:k2,20)]
+    val k1 = next(d)
+    val k2 = next(d, k1)
+    println(k1, k2)     ;; --> :k1 / :k2
+}
+
+do {
+    task T () { yield() }
+    val ts = tasks()
+    spawn T() in ts     ;; tsk1
+    spawn T() in ts     ;; tsk2
+    val t1 = next(ts)
+    val t2 = next(ts, t1)
+    println(t1, t2)     ;; --> tsk1 / tsk2
+}
+
+do {
+    val x = println(1, :x)  ;; --> 1   :x
+    print(x)
+    println(2)              ;; --> 12
+}
+
+do {
+    :T
+    sup?(:T.A,   :T.A.x) --> println    ;; --> true
+    sup?(:T.A.x, :T)     --> println    ;; --> false
+
+    val x = tag(:X, [])  --> println    ;; value x=[] is associated with tag :X
+    tag(x)               --> println    ;; --> :X
+
+    type(10)             --> println    ;; --> :number
+}
+
+do {
+    val x = 10
+    to.bool(nil)       --> println ;; --> false
+    to.char(65)        --> println ;; --> 'A'
+    to.dict([[:x,1]])  --> println ;; --> @[(:x,1)]
+    to.number("10")    --> println ;; --> 10
+    to.pointer(#[x])   --> println ;; --> (C pointer to 1st element `x`)
+    to.string(42)      --> println ;; --> "42"
+    to.tag(":number")  --> println ;; --> :number
+    to.tuple(#[1,2,3]) --> println ;; --> [1,2,3]
+    to.vector([1,2,3]) --> println ;; --> #[1,2,3]
+}
+
