@@ -1,21 +1,17 @@
-- match
-    - catch all (do)
-- break/skip sem if e sem restricao
-- clock syntax
-- val, loop, await patts
-- iter tps
-- to.*, next-dict, #, to-string, type.*
-- libs: random, math
-- lambda syntax `,`
-- loop i { ... }
-
 v0.4 (jul'24)
 -------------
 
 - Additions
-    - `group` statement
-    - `match` statement
-    - `test`  statement
+    - pattern matching: `match`, `await`, `loop`, `val`
+    - statements
+        - `group`: to group commands without a block
+        - `test`: for tests
+        - `match`: for pattern matching
+- Changes
+    - lambda syntax: `\{...}` -> `{\...}`
+    - clock syntax: `:1:ms` -> `<1:ms>`
+    - `break` `skip`: no nesting restrictions
+    - standard library modules: `to.*`, `math.*`, `random.*`
 - Removals
     - `...` variable arguments
     - `pass` (`do`) statement
