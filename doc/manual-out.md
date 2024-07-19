@@ -1,57 +1,113 @@
-# The Programming Language Ceu (v0.3)
+# The Programming Language Ceu (v0.4)
 
+>	DESIGN	DESIGN
 - <a href="#design">1.</a> DESIGN
+>	Structured Deterministic Concurrency	Structured Deterministic Concurrency
     - <a href="#structured-deterministic-concurrency">1.1.</a> Structured Deterministic Concurrency
+>	Event Signaling Mechanisms	Event Signaling Mechanisms
     - <a href="#event-signaling-mechanisms">1.2.</a> Event Signaling Mechanisms
+>	Hierarchical Tags and Tuple Templates	Hierarchical Tags and Tuple Templates
     - <a href="#hierarchical-tags-and-tuple-templates">1.3.</a> Hierarchical Tags and Tuple Templates
+>	Integration with C	Integration with C
     - <a href="#integration-with-c">1.4.</a> Integration with C
+>	LEXICON	LEXICON
 - <a href="#lexicon">2.</a> LEXICON
+>	Keywords	Keywords
     - <a href="#keywords">2.1.</a> Keywords
+>	Symbols	Symbols
     - <a href="#symbols">2.2.</a> Symbols
+>	Operators	Operators
     - <a href="#operators">2.3.</a> Operators
+>	Identifiers	Identifiers
     - <a href="#identifiers">2.4.</a> Identifiers
+>	Literals	Literals
     - <a href="#literals">2.5.</a> Literals
+>	Comments	Comments
     - <a href="#comments">2.6.</a> Comments
+>	TYPES	TYPES
 - <a href="#types">3.</a> TYPES
+>	Basic Types	Basic Types
     - <a href="#basic-types">3.1.</a> Basic Types
         - `nil` `bool` `char` `number` `tag` `pointer`
+>	Collections	Collections
     - <a href="#collections">3.2.</a> Collections
         - `tuple` `vector` `dict`
+>	Execution Units	Execution Units
     - <a href="#execution-units">3.3.</a> Execution Units
         - `func` `coro` `task` `exe-coro` `exe-task` `tasks`
+>	User Types	User Types
     - <a href="#user-types">3.4.</a> User Types
+>	VALUES	VALUES
 - <a href="#values">4.</a> VALUES
+>	Static Values	Static Values
     - <a href="#static-values">4.1.</a> Static Values
         - `nil` `bool` `char` `number` `tag` `pointer`
+>	Dynamic Values	Dynamic Values
     - <a href="#dynamic-values">4.2.</a> Dynamic Values
         - `tuple` `vector` `dict` (collections)
         - `func` `coro` `task` (prototypes)
         - `exe-coro` `exe-task` `tasks` (actives)
-- <a href="#statements">5.</a> STATEMENTS
+>	EXPRESSIONS	EXPRESSIONS
+- <a href="#expressions">5.</a> EXPRESSIONS
+>	Program, Sequences and Blocks	Program, Sequences and Blocks
     - <a href="#program-sequences-and-blocks">5.1.</a> Program, Sequences and Blocks
         - `;` `do` `defer`
+>	Declarations and Assignments	Declarations and Assignments
     - <a href="#declarations-and-assignments">5.2.</a> Declarations and Assignments
         - `val` `var` `set`
+>	Tag Enumerations and Tuple Templates	Tag Enumerations and Tuple Templates
     - <a href="#tag-enumerations-and-tuple-templates">5.3.</a> Tag Enumerations and Tuple Templates
         - `enum` `data`
+>	Calls, Operations and Indexing	Calls, Operations and Indexing
     - <a href="#calls-operations-and-indexing">5.4.</a> Calls, Operations and Indexing
         - `-x` `x+y` `f(...)` `-->`
         - `t[...]` `t.x` `t.pub` `t.(:X)` `t[=]`
         - `where` `thus`
-    - <a href="#conditionals-and-pattern-matching">5.5.</a> Conditionals and Pattern Matching
+>	Standard Operators	Standard Operators
+    - <a href="#standard-operators">5.5.</a> Standard Operators
+        - length: `#`
+        - equality: `==` `/=` `===` `=/=`
+        - relational: `>` `>=` `<=` `<`
+        - arithmetic: `+` `-` `*` `/`
+        - logical: `and` `or` `not`
+        - equivalence: `is?` `is-not?`
+        - belongs-to: `in?` `in-not?`
+        - vector concatenation: `++` `<++`
+>	Conditionals and Pattern Matching	Conditionals and Pattern Matching
+    - <a href="#conditionals-and-pattern-matching">5.6.</a> Conditionals and Pattern Matching
         - `if` `ifs`
-    - <a href="#loops-and-iterators">5.6.</a> Loops and Iterators
+>	Loops and Iterators	Loops and Iterators
+    - <a href="#loops-and-iterators">5.7.</a> Loops and Iterators
         - `loop` `loop in`
-    - <a href="#exceptions">5.7.</a> Exceptions
+>	Exceptions	Exceptions
+    - <a href="#exceptions">5.8.</a> Exceptions
         - `error` `catch`
-    - <a href="#coroutine-operations">5.8.</a> Coroutine Operations
+>	Coroutine Operations	Coroutine Operations
+    - <a href="#coroutine-operations">5.9.</a> Coroutine Operations
         - `coroutine` `status` `resume` `yield` `resume-yield-all` <!--`abort`-->
-    - <a href="#task-operations">5.9.</a> Task Operations
+>	Task Operations	Task Operations
+    - <a href="#task-operations">5.10.</a> Task Operations
         - `pub` `spawn` `tasks` `status` `await` `broadcast` `toggle`
         - `spawn {}` `every` `par` `par-and` `par-or` `watching` `toggle {}`
-- <a href="#standard-library">6.</a> STANDARD LIBRARY
-    - <a href="#primary-library">6.1.</a> Primary Library
-    - <a href="#auxiliary-library">6.2.</a> Auxiliary Library
+>	STANDARD LIBRARIES	STANDARD LIBRARIES
+- <a href="#standard-libraries">6.</a> STANDARD LIBRARIES
+>	Basic Library	Basic Library
+    - <a href="#basic-library">6.1.</a> Basic Library
+        - `assert` `copy` `create-resume` `next`
+        - `print` `println` `sup?` `tag` `tuple` `type`
+        - `dynamic?` `static?` `string?`
+>	Type Conversions Library	Type Conversions Library
+    - <a href="#type-conversions-library">6.2.</a> Type Conversions Library
+        - `to.bool` `to.char` `to.dict` `to.iter` `to.number`
+        - `to.pointer` `to.string` `to.tag` `to.tuple` `to.vector`
+>	Math Library	Math Library
+    - <a href="#math-library">6.3.</a> Math Library
+        - `math.between` `math.ceil` `math.cos` `math.floor` `math.max`
+        - `math.min` `math.PI` `math.round` `math.sin`
+>	Random Numbers Library	Random Numbers Library
+    - <a href="#random-numbers-library">6.4.</a> Random Numbers Library
+        - `random.next` `random.seed`
+>	SYNTAX	SYNTAX
 - <a href="#syntax">7.</a> SYNTAX
 
 <!-- CONTENTS -->
@@ -90,11 +146,10 @@ Follows an extended list of functionalities in Ceu:
 Ceu is in **experimental stage**.
 Both the compiler and runtime can become very slow.
 
-In the rest of this Section, we introduce the two key aspects of Ceu that
-justify its existence:
+In the rest of this Section, we introduce the two key aspects of Ceu:
 *Structured Deterministic Concurrency* and *Event Signaling Mechanisms*.
-Then, we also introduce two other key aspects of the Ceu, which do not appear
-in other languages:
+Then, we also introduce two other key aspects of the language, which do not
+appear in other languages:
 *Hierarchical Tags* and *Integration with C*.
 
 [1]: https://fsantanna.github.io/sc.html
@@ -108,7 +163,7 @@ in other languages:
 ## 1.1. Structured Deterministic Concurrency
 
 In structured concurrency, the life cycle of processes or tasks respect the
-structure of the source code in blocks.
+structure of the source code in hierarchical blocks.
 In this sense, tasks in Ceu are treated in the same way as local variables in
 structured programming:
 When a [block](#blocks) of code terminates or goes out of scope, all of its
@@ -119,7 +174,7 @@ statements](#defer).
 
 Tasks in Ceu are built on top of [coroutines](#active-values), which unlike OS
 threads, have a predictable run-to-completion semantics, in which they execute
-uninterruptedly up to an explicit [yield](#yield) or [await](#await) operation.
+uninterruptedly up to an explicit [yield](#yield) or [await](#awaits) operation.
 
 The next example illustrates structured concurrency, abortion of tasks, and
 deterministic scheduling.
@@ -128,16 +183,18 @@ The example uses a `par-or` to spawn two concurrent tasks:
     another one that increments variable `n` every second, showing its value on
     termination:
 
+<!-- pico/tst/counter.ceu -->
+
 ```
 spawn {
     par-or {
-        await (:10:s)
+        await <10:s>
     } with {
         var n = 0
         defer {
             println("I counted ", n)    ;; invariably outputs 9
         }
-        every :1:s {
+        every <1:s> {
             set n = n + 1
         }
     }
@@ -169,7 +226,7 @@ example would always output `10`.
 
 Tasks can communicate through events as follows:
 
-- The [`await`](#await) statement suspends a task until it matches an event
+- The [`await`](#awaits) statement suspends a task until it matches an event
   condition.
 - The [`broadcast`](#broadcast) statement signals an event to all awaiting
   tasks.
@@ -193,6 +250,8 @@ The next example illustrates event broadcasts and tasks traversal.
 The example uses an `watching` statement to observe an event condition while
 executing a nested task.
 When the condition is satisfied, the nested task is aborted:
+
+<!-- pico/tst/ticks.ceu -->
 
 ```
 spawn {
@@ -244,6 +303,8 @@ enumerations representing states (e.g., `:pending`, `:done`).
 
 The next example uses tags as keys in a dictionary:
 
+<!-- dceu/src/test/02-tags.ceu -->
+
 ```
 val pos = @[]               ;; a new dictionary
 set pos[:x] = 10
@@ -253,32 +314,37 @@ println(pos.x, pos[:y])     ;; --> 10, 20
 
 Tags can also be used to "tag" dynamic objects, such as dictionaries and
 tuples, to support the notion of user types in Ceu.
-For instance, the call `tags(pos,:Pos,true)` associates the tag `:Pos` with the
-value `pos`, such that the query `tags(pos,:Pos)` returns `true`.
+For instance, the call `tag(:Pos,pos)` associates the tag `:Pos` with the
+value `pos`, such that the query `tag(pos)` returns `:Pos`.
 
-As a distinctive feature, tags can describe user type hierarchies by splitting
+As an innovative feature, tags can describe user type hierarchies by splitting
 identifiers with (`.`).
 For instance, a tag such as `:T.A.x` matches the types `:T`, `:T.A`, and
 `:T.A.x` at the same time, as verified by function `sup?`:
 
+<!-- dceu/src/test/02-tags.ceu -->
+
 ```
-sup?(:T,     :T.A.x)    ;; --> true  (:T is a supertype of :T.A>x)
+sup?(:T,     :T.A.x)    ;; --> true  (:T is a supertype of :T.A.x)
 sup?(:T.A,   :T.A.x)    ;; --> true
 sup?(:T.A.x, :T.A.x)    ;; --> true
 sup?(:T.A.x, :T)        ;; --> false (:T.A.x is *not* a supertype of :T)
 sup?(:T.A,   :T.B)      ;; --> false
 ```
 
-The next example illustrates hierarchical tags combined with the function
-`tags`:
+The next example illustrates hierarchical tags combined with the functions
+`tag` and `sup?`:
+
+<!-- dceu/src/test/02-tags.ceu -->
 
 ```
-val x = []                  ;; an empty tuple
-tags(x, :T.A, true)         ;; x is of user type :T.A
-println(tags(x,:T))         ;; --> true
-println(tags(x,:T.A))       ;; --> true
-println(tags(x,:T.B))       ;; --> false
-println(x is? :T)           ;; --> true  (equivalent to tags(x,:T))
+val x = []                      ;; an empty tuple
+tag(:T.A, x)                    ;; x is of user type :T.A
+println(tag(x))                 ;; --> :T.A
+println(sup?(:T,   tag(x)))     ;; --> true
+println(sup?(:T.A, tag(x)))     ;; --> true
+println(sup?(:T.B, tag(x)))     ;; --> false
+println(x is? :T)               ;; --> true  (equivalent to sup?(:T,tag(x)))
 ```
 
 In the example, `x` is set to user type `:T.A`, which is compatible with types
@@ -297,6 +363,8 @@ the tuple, which can then be indexed by field or by number interchangeably.
 The next example defines a template `:Pos`, which serves the same purpose as
 the dictionary of the first example, but now using tuples:
 
+<!-- dceu/src/test/03-templates.ceu -->
+
 ```
 data :Pos = [x,y]       ;; a template `:Pos` with fields `x` and `y`
 val pos :Pos = [10,20]  ;; declares that `pos` satisfies template `:Pos`
@@ -313,6 +381,8 @@ inner tags reuse fields from outer tags.
 The next example illustrates an `:Event` super-type, in which each sub-type
 appends additional data to the template:
 
+<!-- dceu/src/test/03-templates.ceu -->
+
 ```
 data :Event = [ts] {            ;; All events carry a timestamp
     :Key = [key]                ;; :Event.Key [ts,key] is a sub-type of :Event [ts]
@@ -328,7 +398,7 @@ println(but.ts, but.pos.y, but is :Event.Mouse) ;; --> 0, 20, true
 
 Considering the last two lines, a declaration such as
     `val x = :T [...]` is equivalent to
-    `val x :T = tags([...], :T, true)`,
+    `val x :T = tag(:T, [...])`,
 which not only tags the tuple with the appropriate user type, but also declares
 that the variable satisfies the template.
 
@@ -364,9 +434,8 @@ Keywords cannot be used as [variable identifiers](#identifiers).
 The following keywords are reserved in Ceu:
 
 <!--
-    ;;export              ;; export block
-    ;;poly                ;; TODO
-    delay               ;; delay task
+    export              ;; export block
+    poly                ;; TODO
 -->
 
 ```
@@ -379,47 +448,51 @@ The following keywords are reserved in Ceu:
     coroutine           ;; coroutine creation
     data                ;; data declaration
     defer               ;; defer block
-    do                  ;; do block
-    else                ;; else block                       (10)
+    delay               ;; delay task
+    do                  ;; do block                         (10)
+    else                ;; else block
     enum                ;; enum declaration
     error               ;; throw error
     every               ;; every block
     false               ;; false value
     func                ;; function prototype
+    group               ;; group block
     if                  ;; if block
     ifs                 ;; ifs block
-    in                  ;; in keyword
+    in                  ;; in keyword                       (20)
     in?                 ;; in? operator
-    in-not?             ;; in-not? operator                 (20)
+    in-not?             ;; in-not? operator
     is?                 ;; is? operator
     is-not?             ;; is-not? operator
     it                  ;; implicit parameter
     loop                ;; loop block
+    match               ;; match block
     nil                 ;; nil value
     not                 ;; not operator
-    or                  ;; or operator
+    or                  ;; or operator                      (30)
     par-and             ;; par-and block
     par-or              ;; par-or block
-    par                 ;; par block                        (30)
+    par                 ;; par block
     pub                 ;; public variable
     resume              ;; resume coroutine
     resume-yield-all    ;; resume coroutine
     set                 ;; assign expression
     skip                ;; loop skip
     spawn               ;; spawn coroutine
+    task                ;; task prototype                   (40)
     tasks               ;; task pool
-    task                ;; task prototype/self identifier
+    test                ;; test block
     thus                ;; thus pipe block
-    toggle              ;; toggle coroutine/block           (40)
+    toggle              ;; toggle coroutine/block
     true                ;; true value
     until               ;; until loop condition
     val                 ;; constant declaration
     var                 ;; variable declaration
     watching            ;; watching block
-    where               ;; where block
+    where               ;; where block                      (50)
     while               ;; while loop condition
     with                ;; with block
-    yield               ;; yield coroutine                  (49)
+    yield               ;; yield coroutine                  (53)
 ```
 
 <a name="symbols"/>
@@ -427,6 +500,10 @@ The following keywords are reserved in Ceu:
 ## 2.2. Symbols
 
 The following symbols are reserved in Ceu:
+
+<!--
+    ...             ;; variable function/program arguments
+-->
 
 ```
     {   }           ;; block/operators delimeters
@@ -442,7 +519,6 @@ The following symbols are reserved in Ceu:
     ;               ;; sequence separator
     ,               ;; argument/constructor separator
     .               ;; index/field discriminator
-    ...             ;; variable function/program arguments
     '   "   `       ;; character/string/native delimiters
     $               ;; native interpolation
     ^               ;; lexer preprocessor
@@ -456,9 +532,8 @@ The following operator symbols can be combined to form operator names in Ceu:
 
 ```
     +    -    *    /
-    >    <    =    !
-    |    &    ~    %
-    #    @
+    %    >    <    =
+    |    &    ~
 ```
 
 Operators names cannot clash with reserved symbols (e.g., `->`).
@@ -471,12 +546,12 @@ Examples:
 +++
 ```
 
-The following identifiers are also reserved as special operators:
+The following keywords are also reserved as special operators:
 
 ```
-    not     and     or
-    in?     in-not?
-    is?     is-not?
+not     and     or
+in?     in-not?
+is?     is-not?
 ```
 
 Operators can be used in prefix or infix notations in
@@ -491,7 +566,7 @@ Ceu uses identifiers to refer to variables and operators:
 ```
 ID : [A-Za-z_][A-Za-z0-9_'?!-]*     ;; letter/under/digit/quote/quest/excl/dash
    | `{´ OP `}´                     ;; operator enclosed by braces as identifier
-OP : [+-*/><=!|&~%#@]+              ;; see Operators
+OP : [+-*/%><=|&~]+                 ;; see Operators
 ```
 
 A variable identifier starts with a letter or underscore (`_`) and is followed
@@ -541,8 +616,8 @@ NAT  : `.*`                   ;; native expression
 
 The literal `nil` is the single value of the [*nil*](#basic-types) type.
 
-The literals `true` and `false` are the only values of the [*bool*](#basic-types)
-type.
+The literals `true` and `false` are the only values of the
+[*bool*](#basic-types) type.
 
 A [*tag*](#basic-types) type literal starts with a colon (`:`) and is followed
 by letters, digits, dots (`.`), or dashes (`-`).
@@ -589,14 +664,13 @@ The following tags are pre-defined in Ceu:
     :nil :tag :bool :char :number :pointer          ;; basic types
     :tuple :vector :dict                            ;; collections
     :func :coro :task                               ;; prototypes
-    :exe-coro :exe-task :tasks                      ;; active coro/task
+    :exe-coro :exe-task                             ;; active coro/task
     :tasks                                          ;; task pool
 
     :ceu :pre                                       ;; native ceu value/pre code
-    :rec                                            ;; recursive prototype
     :yielded :toggled :resumed :terminated          ;; coro/task status
     :h :min :s :ms                                  ;; time unit
-    :all :idx :key :val                             ;; iterator modifier
+    :idx :key :val                                  ;; iterator modifier
     :global :task                                   ;; broadcast target
 
     :dynamic :error :nested                         ;; internal use
@@ -665,14 +739,14 @@ Examples:
 
 # 3. TYPES
 
-Ceu is a dynamic language in which values carry their own types during
+Ceu provides dynamic types such that values carry their own types during
 execution.
 
 The function `type` returns the type of a value as a [tag](#basic-types):
 
 ```
-type(10)  --> :number
-type('x') --> :char
+type(10)    ;; --> :number
+type('x')   ;; --> :char
 ```
 
 <a name="basic-types"/>
@@ -690,8 +764,6 @@ The `nil` type represents the absence of values with its single value
 
 The `bool` type represents boolean values with [`true`](#literals) and
 [`false`](#literals).
-In a boolean context, `nil` and `false` are interpreted as `false` and all
-other values from all other types are interpreted as `true`.
 
 The `char` type represents [character literals](#literals).
 
@@ -714,7 +786,7 @@ literals](#literals).
 
 ## 3.2. Collections
 
-Ceu provides 3 collection types:
+Ceu provides 3 types of collections:
 
 ```
 tuple    vector    dict
@@ -726,6 +798,8 @@ different type.
 
 The `vector` type represents a variable collection of homogeneous values, in
 which each numeric index, starting at `0`,  holds a value of the same type.
+Once the first index is assigned, its type becomes the type of the vector,
+which further assignments must respect.
 
 The `dict` type (dictionary) represents a variable collection of heterogeneous
 values, in which each index (or key) of any type maps to a value of a
@@ -763,16 +837,15 @@ The `tasks` type represents [task pools](#active-values) holding active tasks.
 
 ## 3.4. User Types
 
-Values from non-basic types (i.e., collections and execution units) can be
+Values of non-basic types (i.e., collections and execution units) can be
 associated with [tags](#basic-types) that represent user types.
 
-The function [`tags`](#types-and-tags) associates tags with values, and also
-checks if a value is of the given tag:
+The function [`tag`](#types-and-tags) associates values with tags:
 
 ```
-val x = []              ;; an empty tuple
-tags(x, :T, true)       ;; x is now of user type :T
-println(tags(x,:T))     ;; --> true
+val x = []          ;; an empty tuple
+tag(:T, x)          ;; x is now of user type :T
+println(tag(x))     ;; --> :T
 ```
 
 Tags form [type hierarchies](hierarchical-tags) based on the dots in their
@@ -783,16 +856,16 @@ The function [`sup?`](#types-and-tags) checks super-type relations between
 tags:
 
 ```
-println(sup?(:T, :T.A)    ;; --> true
-println(sup?(:T.A, :T)    ;; --> false
-println(sup?(:T.A, :T.B)  ;; --> false
+println(sup?(:T, :T.A))     ;; --> true
+println(sup?(:T.A, :T))     ;; --> false
+println(sup?(:T.A, :T.B))   ;; --> false
 ```
 
 The function [`is?`](#operator-is) checks if values match types or tags:
 
 ```
 val x = []              ;; an empty tuple
-tags(x, :T.A, true)     ;; x is now of user type :T.A
+tag(:T.A, x)            ;; x is now of user type :T.A
 println(x is? :tuple)   ;; --> true
 println(x is? :T)       ;; --> true
 ```
@@ -804,8 +877,8 @@ template](#tag-enumerations-and-tuple-templates) declarations.
 
 # 4. VALUES
 
-As a dynamic language, each value in Ceu carries extra information, such as its
-own type.
+As a dynamically-typed language, each value in Ceu carries extra information,
+such as its own type.
 
 <a name="static-values"/>
 
@@ -819,7 +892,7 @@ Types : nil | bool | char | number | tag | pointer
 Lits  : `nil´ | `false´ | `true´ | CHR | NUM | TAG | NAT
 ```
 
-Static values are immutable and are transfered between variables and across
+Static values are immutable and are transferred between variables and across
 blocks as a whole copies without any restrictions.
 
 <a name="dynamic-values"/>
@@ -868,14 +941,14 @@ expressions.
 
 Dictionaries (`@[...]`) are built providing a list of pairs of expressions
 (`(key,val)`), in which each pair maps a key to a value.
-The first expression is the key, and the second is the value.
+The first expression is the key, and the second is the associated value.
 If the key is a tag, the alternate syntax `tag=val` may be used (omitting the
 tag colon prefix `:`).
 
 A [string literal](#literals) expands to a vector of character literals.
 
 A tuple constructor may also be prefixed with a tag, which associates the tag
-with the tuple, e.g., `:X [...]` is equivalent to `tags([...], :X, true)`.
+with the tuple, e.g., `:X [...]` is equivalent to `tag(:X, [...])`.
 Tag constructors are typically used in conjunction with
 [tuple templates](#tag-enumerations-and-tuple-templates)
 
@@ -896,18 +969,14 @@ Examples:
 Ceu supports functions, coroutines, and tasks as prototype values:
 
 ```
-Func : `func´ `(´ [List(ID [TAG])] [`...´] `)´ Block
-Coro : `coro´ `(´ [List(ID [TAG])] [`...´] `)´ Block
-Task : `task´ `(´ [List(ID [TAG])] [`...´] `)´ Block
+Func : `func´ `(´ [List(ID [TAG])] `)´ Block
+Coro : `coro´ `(´ [List(ID [TAG])] `)´ Block
+Task : `task´ `(´ [List(ID [TAG])] `)´ Block
 ```
 
-Each prototype keyword is followed by an optional `:rec` modifier and a list of
-identifiers as parameters enclosed by parenthesis.
 Parameter declarations are equivalent to immutable `val`
 [declarations](#declarations) and can also be associated with
 [tuple template](#tag-enumerations-and-tuple-templates) tags.
-
-`TODO: varargs`
 
 <!--
 The last parameter can be the symbol
@@ -921,17 +990,18 @@ evaluates to a tuple holding the varargs.
 In other scenarios, it evaluates to a tuple holding the program arguments.
 When `...` is the last argument of a call, its tuple is expanded as the last
 arguments.
-
 -->
 
 The associated block executes when the unit is [invoked](#TODO).
 Each argument in the invocation is evaluated and copied to the parameter
 identifier, which becomes an local variable in the execution block.
 
-A *closure* is a prototoype that accesses variables from outer blocks, known as
+A *closure* is a prototype that accesses variables from outer blocks, known as
 *upvalues*.
 Ceu supports a restricted form of closures, in which *upvalues* must be
 immutable (thus declared with the modifier [`val`](#declarations)).
+
+`TODO: :nested, :anon`
 
 Examples:
 
@@ -951,13 +1021,13 @@ func (v1) {             ;; a closure
 
 #### 4.2.2.1. Lambda Prototype
 
-For simple `func` prototypes, Ceu supports the lambda notation:
+For simple function prototypes, Ceu supports the lambda notation:
 
 ```
-Lambda : `\´ `{´ [ID [TAG] `=>´]  { Expr [`;´] }`}´
+Lambda : `{´ [`\´ List(ID [TAG]) `=>´] { Expr [`;´] } `}´
 ```
 
-The expression `\{ <id> <tag> => <es> }` expands to
+The expression `{ \<id> <tag> => <es> }` expands to
 
 ```
 func (<id> <tag>) {
@@ -965,15 +1035,24 @@ func (<id> <tag>) {
 }
 ```
 
-If the list of identifiers is omitted, it assumes the single implicit parameter
-`it`.
+If the identifiers are omitted, it assumes the single implicit parameter `it`.
+Like in [declarations](#declarations), the identifiers can be associated with
+[tuple template](#tag-enumerations-and-tuple-templates) tags.
 
 Examples:
 
 ```
-val f = \{ x => x+x }   ;; f doubles its argument
-println(\{it}(10))      ;; prints 10
+val f = { \x,y => x+y }
+println(f(10,20))       ;; --> 30
+
+println({it}(10))       ;; --> 10
 ```
+
+Note that the lambda notation is also used in
+    [conditionals](#conditionals) and
+    [thus clauses](#where-and-thus-clauses)
+to communicate values across blocks, but no functions are created in these
+cases.
 
 <a name="active-values"/>
 
@@ -996,16 +1075,16 @@ Coroutines and tasks have 4 possible status:
 - `yielded`: idle and ready to be resumed
 - `toggled`: ignoring resumes (only for tasks)
 - `resumed`: currently executing
-- `terminated`: terminated and unable to be resumed
+- `terminated`: terminated and unable to resume
 
 The main difference between coroutines and tasks is how they resume execution:
 
-- A coroutine resumes explicitly from a
-  [resume operation](#resume).
+- A coroutine resumes explicitly from a [resume operation](#resume).
 - A task resumes implicitly from a [broadcast operation](#broadcast).
 
-Before a coroutine or task is collected, it is implicitly aborted, and all
-active [defer statements](#defer) execute automatically in reverse order.
+Before a coroutine or task is [deallocated](#dynamic-values), it is implicitly
+aborted, and all active [defer statements](#defer) execute automatically in
+reverse order.
 
 A task is lexically attached to the block in which it is created, such that
 when the block terminates, the task is implicitly terminated (triggering active
@@ -1013,7 +1092,8 @@ defers).
 
 A task pool groups related active tasks as a collection.
 A task that lives in a pool is lexically attached to the block in which the
-pool is created.
+pool is created, such that when the block terminates, all tasks in the pool are
+implicitly terminated (triggering active defers).
 
 The operations on [coroutines](#coroutine-operations) and
 [tasks](#tasks-operations) are discussed further.
@@ -1031,19 +1111,28 @@ val t = spawn T() in ts     ;; is instantiated as `t` in pool `ts`
 broadcast(:X)               ;; broadcast resumes `t`
 ```
 
-<a name="statements"/>
+<a name="expressions"/>
 
-# 5. STATEMENTS
+# 5. EXPRESSIONS
 
 Ceu is an expression-based language in which all statements are expressions and
 evaluate to a value.
+Therefore, we use the terms statement and expression interchangeably.
+
+All
+    [literals](#literals),
+    [identifiers](#identifiers),
+    [operators](#operators),
+    [collection constructors](#collection-values], and
+    [function constructors](#protoype-values)
+are also valid expressions.
 
 <a name="program-sequences-and-blocks"/>
 
 ## 5.1. Program, Sequences and Blocks
 
-A program in Ceu is a sequence of statements (expressions), and a block is a
-sequence of expressions enclosed by braces (`{` and `}´):
+A program in Ceu is a sequence of expressions, and a block is a sequence of
+expressions enclosed by braces (`{` and `}´):
 
 ```
 Prog  : { Expr [`;´] }
@@ -1052,13 +1141,13 @@ Block : `{´ { Expr [`;´] } `}´
 Each expression in a sequence may be separated by an optional semicolon (`;´).
 A sequence of expressions evaluate to its last expression.
 
+<!-- TODO: ; to remove ambiguity -->
+
 <!--
 The symbol
 [`...`](#declarations) stores the program arguments
 as a tuple.
 -->
-
-`TODO: varargs`
 
 <a name="blocks"/>
 
@@ -1075,14 +1164,12 @@ A block is not an expression by itself, but it can be turned into one by
 prefixing it with an explicit `do`:
 
 ```
-Do : `do´ Block       ;; an explicit block statement
+Do : `do´ Block
 ```
 
 Blocks also appear in compound statements, such as
 [conditionals](#conditionals-and-pattern-matching),
 [loops](#loops-and-iterators), and many others.
-
-`TODO: do Expr`
 
 Examples:
 
@@ -1096,48 +1183,64 @@ do {
     val a = 1           ;; `a` is only visible in the block
     <...>
 }
-a                       ;; ERR: `a` is out of scope
+a                       ;; ERROR: `a` is out of scope
 
 do {
     spawn T()           ;; spawns task T and attaches it to the block
     <...>
-}                       ;; terminates spawned task
+}                       ;; aborts spawned task
 ```
 
-<!--
-<a name="export"/>
+<a name="groups"/>
 
-### 5.1.2. Export
+### 5.1.2. Groups
 
-An `export` hides all nested declarations, except those indicated in an
-optional list:
+A `group` is a nested sequence of expressions:
 
 ```
-Export : `export´ [`[´ List(ID | `evt´) `]´] Block
+Group : group Block
 ```
 
-Nevertheless, all nested declarations remain active as if they were declared on
+Unlike [blocks](#blocks), a group does not create a new scope for variables
+and tasks.
+Therefore, all nested declarations remain active as if they were declared on
 the enclosing block.
-If the list is omitted, all declarations are hidden.
 
 Examples:
 
 ```
-export [x] {
-    val y = []      ;; y is not exported but remains active
-    val x = y       ;; exported x holds tuple that remains in memory
+group {
+    val x = 10
+    val y = x * 2
 }
-println(x)          ;; -;;-> []
-println(y)          ;; ERR: y is active but not visible
+println(x, y)       ;; --> 10 20
 ```
 
-Exports can be used to group related expressions but expose only public
-identifiers, as expected from libraries and modules.
--->
+<a name="tests"/>
 
-<a name="defer"/>
+### 5.1.3. Tests
 
-### 5.1.3. Defer
+A `test` block behaves like a normal block, but is only included in the program
+when compiled with the flag `--test`:
+
+```
+Test : `test´ Block
+```
+
+Examples:
+
+```
+func add (x,y) {
+    x + y
+}
+test {
+    assert(add(10,20) == 30)
+}
+```
+
+<a name="defers"/>
+
+### 5.1.4. Defers
 
 A `defer` block executes only when its enclosing block terminates:
 
@@ -1163,29 +1266,6 @@ do {
 }                       ;; --> 1, 4, 3, 2
 ```
 
-<!--
-<a name="pass"/>
-
-### 5.1.4. Pass
-
-The `pass` statement permits that an innocuous expression is used in the
-middle of a block:
-
-```
-Pass : `do´ Expr
-```
-
-Examples:
-
-```
-do {
-    1           ;; ERR: innocuous expression
-    pass 1      ;; OK:  innocuous but explicit
-    <...>
-}
-```
--->
-
 <a name="declarations-and-assignments"/>
 
 ## 5.2. Declarations and Assignments
@@ -1194,49 +1274,129 @@ do {
 
 ### 5.2.1. Declarations
 
-All variables in Ceu must be declared before use:
+Variables in Ceu must be declared before use, and are only visible inside the
+[block](#blocks) in which they are declared:
 
 ```
-Val : `val´ ID [TAG] [`=´ Expr]         ;; constants
-Var : `var´ ID [TAG] [`=´ Expr]         ;; variables
+Val : `val´ (ID [TAG] | Patt) [`=´ Expr]    ;; immutable
+Var : `var´ (ID [TAG] | Patt) [`=´ Expr]    ;; mutable
 ```
 
+A declaration either specifies an identifier with an optional tag, or a
+[tuple pattern](#pattern-matching) for multiple declarations.
 The optional initialization expression assigns an initial value to the
-variable, which is set to `nil` otherwise.
+declaration, which is set to `nil` otherwise.
 
 The difference between `val` and `var` is that a `val` is immutable, while a
 `var` declaration can be modified by further `set` statements:
-The `val` modifier forbids that a name is reassigned, but it does not prevent
-that [dynamic values](#dynamic-values) are modified.
+The `val` modifier forbids that its name is reassigned, but it does not prevent
+a [dynamic value](#dynamic-values) it is holding to be modified.
 
-Optionally, a declaration can be associated with a
-[tuple template](#tag-enumerations-and-tuple-templates) tag, which allows the
+Ceu does not support shadowing, i.e., if an identifier is visible, it cannot
+appear in a new variable declaration.
+
+When using an identifier, the optional tag specifies a
+[tuple template](#tag-enumerations-and-tuple-templates), which allows the
 variable to be indexed by a field name, instead of a numeric position.
 Note that the variable is not guaranteed to hold a value matching the template.
 The template association is static but with no runtime guarantees.
 
-If the declaration omits the template tag, but the initialization expression is
-a [tag constructor](#collection-values), then the variable assumes this tag
-template, i.e., `val x = :X []` expands to `val x :X = :X []`.
+If the identifier declaration omits the template tag, but the initialization
+expression is a [tag constructor](#collection-values), then the variable
+assumes this tag template, i.e., `val x = :X []` expands to `val x :X = :X []`.
 
-A [prototype](#prototype-values) can be declared as an immutable variable as
-follows:
+Examples:
 
 ```
-Proto : `func´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block
-      | `coro´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block
-      | `task´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block
+do {
+    val x = 10
+    set x = 20          ;; ERROR: `x´ is immutable
+}
+println(x)              ;; ERROR: `x´ is out of scope
+
+var y = 10
+set y = 20              ;; OK: `y´ is mutable
+println(y)              ;; --> 20
+
+val p1 :Pos = [10,20]   ;; (assumes :Pos has fields [x,y])
+println(p1.x)           ;; --> 10
+
+val p2 = :Pos [10,20]   ;; (assumes :Pos has fields [x,y])
+println(p2.y)           ;; --> 20
+
+val x
+do {
+    val x               ;; `x´ is already declared
+}
 ```
 
-The optional `:rec` modifier allows the block to self refer to `ID`.
+When using the tuple pattern, it is possible to declare multiple variables by
+matching the initialization expression.
+The pattern is [assertive](#pattern-matching), raising an error if the match
+fails.
+
+Examples:
+
+```
+val [1,x,y] = [1,2,3]
+println(x,y)            ;; --> 2 3
+
+val [10,x] = [20,20]    ;; ERROR: match fails
+```
+
+<a name="prototype-declarations"/>
+
+#### 5.2.1.1. Prototype Declarations
+
+[Execution unit](#execution-units) [prototypes](#prototype-values) can be
+declared as immutable variables as follows:
+
+```
+Proto : `func´ ID `(´ [List(ID [TAG])] `)´ Block
+      | `coro´ ID `(´ [List(ID [TAG])] `)´ Block
+      | `task´ ID `(´ [List(ID [TAG])] `)´ Block
+```
+
+The expression
+
+```
+func <id> (...) {
+    ...
+}
+```
+
+expands to
+
+```
+val <id> = func (...) {
+    ...
+}
+```
+
+Examples:
+
+```
+func f (v) {
+    v + 1
+}
+println(f(10))      ;; --> 11
+```
 
 <a name="assignments"/>
 
 ### 5.2.2. Assignments
 
+The `set` statement assigns the value in the right to the location in the left
+of the symbol `=`:
+
 ```
 Set : `set´ Expr `=´ Expr
 ```
+
+The only valid locations are
+    [mutable variables](#declarations),
+    [indexes](#indexes-and-fields), and
+    [public fields](#public-fields).
 
 Examples:
 
@@ -1245,21 +1405,20 @@ var x
 set x = 20              ;; OK
 
 val y = [10]
-set y = 0               ;; ERR: cannot reassign `y`
+set y = 0               ;; ERROR: cannot reassign `y`
 set y[0] = 20           ;; OK
 
-val p1 :Pos = [10,20]   ;; (assumes :Pos has fields [x,y])
-println(p1.x)           ;; --> 10
-
-val p2 = :Pos [10,20]   ;; (assumes :Pos has fields [x,y])
-println(p2.y)           ;; --> 20
+task T (v) {
+    set pub = v         ;; OK
+}
 ```
 
 <a name="tag-enumerations-and-tuple-templates"/>
 
 ## 5.3. Tag Enumerations and Tuple Templates
 
-Tags are global identifiers that need not to be predeclared.
+[Tags](#hierarchical-tags) are global identifiers that need not to be
+predeclared.
 However, they may be explicitly declared when used as enumerations or tuple
 templates.
 
@@ -1267,33 +1426,37 @@ templates.
 
 ### 5.3.1. Tag Enumerations
 
-An `enum` groups related tags in sequence so that they are associated with
-incrementing numbers:
+An `enum` groups related tags together in sequence:
 
 ```
-Enum : `enum´ `{´ List(TAG [`=´ Expr]) `}´
+Enum : `enum´ `{´ List(TAG) `}´
+     | `enum´ TAG `{´ List(ID) `}´
 ```
 
-Optionally, a tag may receive an explicit constant numeric value, which is
-incremented for tags in sequence.
-
-`TODO: currently requires a native expression`
+The first variation declares the tags in the given list.
+The second variation declares tags by prefixing the identifiers in the list
+with the given tag, separated by a dash (`-`).
 
 Enumerations can be used to interface with external libraries that use
 constants to represent a group of related values (e.g., key symbols).
+When [converted to numbers](#TODO-to.number), the tags in enumerations are
+guaranteed to form am incrementing sequence.
 
 Examples:
 
 ```
-enum {
-    :Key-Left = `:number KEY_LEFT`, ;; associates with C enumeration
-    :Key-Right,                     ;; KEY_LEFT+1
-    :Key-Up,                        ;; KEY_LEFT+2
-    :Key-Down,                      ;; KEY_LEFT+3
-}
-if lib-key-pressed() == :Key-Up {
-    ;; lib-key-pressed is an external library
-    ;; do something if key UP is pressed
+enum { :x, :y, :z }     ;; declares :x, :y, :z in sequence
+to.number(:x)           ;; --> 100
+to.number(:y)           ;; --> 101
+to.number(:z)           ;; --> 102
+```
+
+```
+enum :Key {
+    Left,               ;; declares :Key-Left (200)
+    Up,                 ;; declares :Key-Up   (201)
+    Right,              ;; ...
+    Down,               ;; ...
 }
 ```
 
@@ -1305,9 +1468,8 @@ A `data` declaration associates a tag with a tuple template, which associates
 tuple positions with field identifiers:
 
 ```
-Template : `data´ Data
-                Data : TAG `=´ `[´ List(ID [TAG]) `]´
-                    [`{´ { Data } `}´]
+Template : `data´ Data [`{´ { Data } `}´]
+Data     : TAG `=´ `[´ List(ID [TAG]) `]´
 ```
 
 After the keyword `data`, a declaration expects a tag followed by `=` and a
@@ -1378,7 +1540,7 @@ Expr : OP Expr                      ;; unary operation
 ```
 
 Operations are interpreted as function calls, i.e., `x + y` is equivalent to
-`{+} (x, y)`.
+`{{+}} (x, y)`.
 
 A call expects an expression of type [`func`](#prototype-values) and an
 optional list of expressions as arguments enclosed by parenthesis.
@@ -1436,7 +1598,6 @@ t -> f(10)      ;; equivalent to `f(t,10)`
 ```
 Expr : Expr `[´ Expr `]´        ;; Index
      | Expr `.´ ID              ;; Field
-     | Expr `.´ `pub´ | `pub´   ;; Pub
 ```
 
 An index operation expects a collection and an index enclosed by brackets (`[`
@@ -1445,18 +1606,6 @@ For tuples and vectors, the index must be an number.
 For dictionaries, the index can be of any type.
 The operation evaluates to the current value in the given collection index, or
 `nil` if non existent.
-
-A field operation expects a dictionary or a tuple template, a dot separator
-(`.`), and a field identifier.
-If the collection is a dictionary `d`, the field must be a
-[tag literal](#literals) `k` (with the colon prefix `:` omitted), which is
-equivalent to the index operation `v[:k]`.
-If the collection is a [tuple template](#tag-enumerations-and-tuple-templates)
-`t`, the field must be an identifier that maps to a template index `i`, which
-is equivalent to the index operation `t[i]`.
-
-A `pub` operation accesses the public field of an [active task](#active-values)
-and is discussed [further](#task-operations).
 
 Examples:
 
@@ -1469,7 +1618,27 @@ dict.x              ;; dict access by field
 
 val t :T            ;; tuple template
 t.x
+```
 
+A field operation expects a dictionary or a tuple template, a dot separator
+(`.`), and a field identifier.
+If the collection is a dictionary `d`, the field must be a
+[tag literal](#literals) `k` (with the colon prefix `:` omitted), which is
+equivalent to the index operation `v[:k]`.
+If the collection is a [tuple template](#tag-enumerations-and-tuple-templates)
+`t`, the field must be an identifier that maps to a template index `i`, which
+is equivalent to the index operation `t[i]`.
+
+A `pub` operation accesses the public field of an [active task](#active-values)
+and is discussed [further](#task-operations):
+
+```
+Expr : Expr `.´ `pub´ | `pub´   ;; Pub
+```
+
+Examples:
+
+```
 val t = spawn T()
 t.pub               ;; public field of task
 ```
@@ -1478,8 +1647,8 @@ t.pub               ;; public field of task
 
 #### 5.4.2.1. Template Casting
 
-An expression can be suffixed with a tag between parenthesis such that it is
-cast into a tuple template:
+An expression can be suffixed with a tag between parenthesis to cast it into a
+tuple template:
 
 ```
 Expr : Expr `.´ `(´ TAG `)´
@@ -1489,7 +1658,7 @@ Examples:
 
 ```
 data :Pos = [x,y]
-val p = <...>
+val p = [10,20]
 println(p.(:Pos).x)     ;; `p` is cast to `:Pos`
 ```
 
@@ -1497,7 +1666,7 @@ println(p.(:Pos).x)     ;; `p` is cast to `:Pos`
 
 #### 5.4.2.2. Peek, Push, Pop
 
-The *ppp operators* (peek, push, pop) manipulate a vector as a stack:
+The *ppp operators* (peek, push, pop) manipulate vectors as stacks:
 
 ```
 Expr : Expr `[´ (`=´|`+´|`-´) `]´
@@ -1528,34 +1697,37 @@ Any expression can be suffixed by `where` and `thus` clauses:
 
 ```
 Expr : Expr `where´ Block
-     | Expr `thus´ `{´ [ID [TAG] `=>´]  { Expr [`;´] }`}´
+     | Expr `thus´ Lambda
 ```
 
-A `where` clause executes its block before the prefix expression and is allowed
-to declare variables that can be used by the expression.
+A `where` clause executes its suffix block before the prefix expression and is
+allowed to declare variables that can be used by the expression.
 
-A `thus` clause assigns the result of the prefix expression into the given
-identifier, and then executes a block.
-If the identifier is omitted, it assumes the implicit identifier `it`.
-Like in [declarations](#declarations), the identifier can be associated with
-[tuple template](#tag-enumerations-and-tuple-templates) tags.
-A clause such as `e1 thus { v => e2 }` is equivalent to `e1 -> \{ v => e2 }`,
-which combines [pipes](#pipe-calls) and [lambda](#lambda-prototype)
-expressions.
+A `thus` clause uses the [lambda notation](#lambda-prototype) to pass the
+result of the prefix expression as an argument to execute the suffix block.
+Even though it uses the lambda notation, the clause does not create an extra
+function to execute.
 
 Examples:
 
 ```
-var x = (2 * y) where { var y=10 }  ;; x=20
-(x * x) thus { x2 => println(x2) }  ;; --> 400
+var x = (2 * y) where {     ;; x = 20
+    var y = 10
+}
+```
+
+```
+(x * x) thus { \v =>
+    println(v)              ;; --> 400
+}
 ```
 
 <a name="precedence-and-associativity"/>
 
 ### 5.4.4. Precedence and Associativity
 
-Operations in Ceu can be combined in complex expressions with the following
-precedence priority (from higher to lower):
+Operations in Ceu can be combined in expressions with the following precedence
+priority (from higher to lower):
 
 ```
 1. suffix (left associative)
@@ -1589,32 +1761,318 @@ Examples:
 
 ```
 #f(10).x        ;; # ((f(10)) .x)
-x + 10 - 1      ;; ERR: requires parenthesis
+x + 10 - 1      ;; ERROR: requires parenthesis
 - x + y         ;; (-x) + y
 x or y or z     ;; (x or y) or z
 ```
 
+<a name="standard-operators"/>
+
+## 5.5. Standard Operators
+
+Ceu provides many standard operators:
+
+- length: `#`
+- equality: `==` `/=` `===` `=/=`
+- relational: `>` `>=` `<=` `<`
+- arithmetic: `+` `-` `*` `/`
+- logical: `and` `or` `not`
+- equivalence: `is?` `is-not?`
+- belongs-to: `in?` `in-not?`
+
+The function signatures that follow describe the operators and use tag
+annotations to describe the parameters and return types.
+However, note that the annotations are not part of the language, and are used
+for documentation purposes only.
+
+<a name="length-operator"/>
+
+### 5.5.1. Length Operator
+
+```
+func {{#}} (v :any) => :number
+```
+
+The operator `#` returns the length of the given tuple or vector.
+
+Examples:
+
+```
+val tup = []
+val vec = #[1,2,3]
+println(#tup, #vec)     ;; --> 0 / 3
+```
+
+<a name="equality-operators"/>
+
+### 5.5.2. Equality Operators
+
+```
+func {{==}} (v1 :any, v2 :any) => :bool
+func {{/=}} (v1 :any, v2 :any) => :bool
+```
+
+The operators `==` and `/=` compare two values `v1` and `v2` to check if they
+are equal or not equal, respectively.
+The operator `==` returns `true` if the values are equal and `false` otherwise.
+The operator `/=` is the negation of `==`.
+
+To be considered equal, first the values must be of the same type.
+In addition, [static values](#static-values) are compared *by value*, while
+[dynamic values](#dynamic-values) and [active values](#active-values) are
+compared *by reference*.
+
+Examples:
+
+```
+1 == 1          ;; --> true
+1 /= 1          ;; --> false
+1 == '1'        ;; --> false
+[1] == [1]      ;; --> false
+```
+
+```
+val t1 = [1]
+val t2 = t1
+t1 == t2        ;; --> true
+```
+
+<a name="deep-equality-operators"/>
+
+#### 5.5.2.1. Deep Equality Operators
+
+```
+func {===} (v1 :any, v2 :any) => :bool
+func {=/=} (v1 :any, v2 :any) => :bool
+```
+
+The operators `===` and `=/=` deeply compare two values `v1` and `v2` to check
+if they are equal or not equal, respectively.
+The operator `===` returns `true` if the values are deeply equal and `false`
+otherwise.
+The operator `=/=` is the negation of `===`.
+
+Except for [collections](#collections), deep equality behaves the same as
+[equality](#equality-operators).
+To be considered deeply equal, collections must be of the same type, have the
+same [user tags](#user-types), and all indexes and values must be deeply equal.
+
+Examples:
+
+```
+1 === 1                 ;; --> true
+1 =/= 1                 ;; --> false
+1 === '1'               ;; --> false
+#[1] === #[1]           ;; --> true
+@[(:x,1),(:y,2)] =/=
+@[(:y,2),(:x,1)]        ;; --> false
+```
+
+<a name="relational-operators"/>
+
+### 5.5.3. Relational Operators
+
+```
+func {{>}}  (n1 :number, n2 :number) => :bool
+func {{>=}} (n1 :number, n2 :number) => :bool
+func {{<=}} (n1 :number, n2 :number) => :bool
+func {{<}}  (n1 :number, n2 :number) => :bool
+```
+
+The operators `>`, `>=`, `<=` and `<` perform the standard relational
+operations of *greater than*, *greater or equal than*, *less than*, and
+*less or equal then*, respectively.
+
+Examples:
+
+```
+1 > 2       ;; --> false
+2 >= 1      ;; --> true
+1 <= 1      ;; --> true
+1 < 2       ;; --> true
+```
+
+<a name="arithmetic-operators"/>
+
+### 5.5.4. Arithmetic Operators
+
+```
+func {{+}} (n1 :number, n2 :number)   => :number
+func {{-}} (n1 :number [,n2 :number]) => :number
+func {{*}} (n1 :number, n2 :number)   => :number
+func {{/}} (n1 :number, n2 :number)   => :number
+func {{%}} (n1 :number, n2 :number)   => :number
+```
+
+The operators `+`, `-`, `*` and `/` perform the standard arithmetics operations
+of *addition*, *subtraction*, *multiplication*, and *division*, respectively.
+
+The operator `%` performs the *remainder* operation.
+
+The operator `-` is also used as the unary minus when it prefixes an
+expression.
+
+`TODO: *-*, //`
+
+Examples:
+
+```
+1 + 2       ;; --> 3
+1 - 2       ;; --> -1
+2 * 3       ;; --> 6
+5 / 2       ;; --> 2.5
+5 % 2       ;; --> 1
+-20         ;; --> -20
+```
+
+<a name="logical-operators"/>
+
+### 5.5.5. Logical Operators
+
+```
+func not (v :any) => :bool
+func and (v1 :any, v2 :any) => :any
+func or  (v1 :any, v2 :any) => :any
+```
+
+The logical operators `not`, `and`, and `or` are functions with a special
+syntax to be used as prefix (`not`) and infix operators (`and`,`or`).
+
+A `not` receives a value `v` and is equivalent to the code as follows:
+
+```
+if v { false } else { true }
+```
+
+The operators `and` and `or` returns one of their operands `v1` or `v2`.
+
+An `and` is equivalent to the code as follows:
+
+```
+do {
+    val x = v1
+    if x { v2 } else { x }
+}
+```
+
+An `or` is equivalent to the code as follows:
+
+```
+do {
+    val x = v1
+    if x { x } else { v2 }
+}
+```
+
+Examples:
+
+```
+not not nil     ;; --> false
+nil or 10       ;; --> 10
+10 and nil      ;; --> nil
+```
+
+<a name="equivalence-operators"/>
+
+### 5.5.6. Equivalence Operators
+
+```
+func is?     (v1 :any, v2 :any) => :bool
+func is-not? (v1 :any, v2 :any) => :bool
+```
+
+The operators `is?` and `is-not?` are functions with a special syntax to be
+used as infix operators.
+
+The operator `is?` checks if `v1` matches `v2` as follows:
+
+```
+ifs {
+    (v1 === v2)        => true
+    (type(v1) == v2)   => true
+    (type(v2) == :tag) => sup?(v2, tag(v1))
+    else => false
+}
+```
+
+The operator `is-not?` is the negation of `is?`.
+
+Examples:
+
+```
+10 is? :number          ;; --> true
+10 is? nil              ;; --> false
+tag(:X,[]) is? :X       ;; --> true
+```
+
+<a name="belongsto-operators"/>
+
+### 5.5.7. Belongs-to Operators
+
+```
+func in?     (v :any, vs :any)
+func in-not? (v :any, vs :any)
+```
+
+The operators `in?` and `in-not?` are functions with a special syntax to be
+used as infix operators.
+
+The operator `in?` checks if `v` is part of [collection](#collections) `vs`.
+For tuples and vectors, the values are checked.
+For dictionaries, the indexes are checked.
+
+The operator `in-not?` is the negation of `in?`.
+
+Examples:
+
+```
+10 in? [1,10]            ;; true
+20 in? #[1,10]           ;; false
+10 in? @[(1,10)]         ;; false
+```
+
+<a name="vector-concatenation-operators"/>
+
+### 5.5.8. Vector Concatenation Operators
+
+func {{++}}  (v1 :vector, v2 :vector) => :vector
+func {{<++}} (v1 :vector, v2 :vector) => :vector
+
+The operators `++` and `<++` concatenate the given vectors.
+The operator `++` creates and returns a new vector, keeping the received
+vectors unmodified.
+The operator `<++` appends `v2` at the end of `v1`, returning `v1` modified.
+
+Examples:
+
+`TODO`
+
 <a name="conditionals-and-pattern-matching"/>
 
-## 5.5. Conditionals and Pattern Matching
+## 5.6. Conditionals and Pattern Matching
+
+In a conditional context, [`nil`](#static-values) and [`false`](#static-values)
+are interpreted as "falsy", and all other values from all other types as
+"truthy".
 
 <a name="conditionals"/>
 
-### 5.5.1. Conditionals
+### 5.6.1. Conditionals
 
 Ceu supports conditionals as follows:
 
 ```
-If  : `if´ Expr (Block | `=>´ Expr)
-        [`else´  (Block | `=>´ Expr)]
+If  : `if´ Expr (`=>´ Expr | Block | Lambda)
+        [`else´  (`=>´ Expr | Block)]
 Ifs : `ifs´ `{´ {Case} [Else] `}´
-        Case :  Expr  (Block | `=>´ Expr)
-        Else : `else´ (Block | `=>´ Expr)
+        Case :  Expr  (`=>´ Expr | Block | Lambda)
+        Else : `else´ (`=>´ Expr | Block)
 ```
 
 An `if` tests a condition expression and executes one of the two possible
 branches.
-If the condition is [true](#basic-types), the `if` executes the first branch.
+
+If the condition is truthy, the `if` executes the first branch.
 Otherwise, it executes the optional `else` branch, which defaults to `nil`.
 A branch can be either a [block](#blocks) or a simple expression prefixed
 by the arrow symbol `=>`.
@@ -1623,11 +2081,19 @@ An `ifs` supports multiple conditions, which are tested in sequence, until one
 is satisfied, executing its associated branch.
 Otherwise, it executes the optional `else` branch, which defaults to `nil`.
 
+Except for `else` branches, note that branches can use the
+[lambda notation](#lambda-prototypes) to capture the value of the condition
+being tested.
+Even though it uses the lambda notation, the branches do not create an extra
+function to execute.
+
 Examples:
 
 ```
 val max = if x>y => x => y
+```
 
+```
 ifs {
     x > y => x
     x < y => y
@@ -1635,182 +2101,285 @@ ifs {
 }
 ```
 
+```
+if f() { \v =>
+    println("f() evaluates to " ++ to.string(v))
+} else {
+    println("f() evaluates to false")
+}
+```
+
 <a name="pattern-matching"/>
 
-### 5.5.2. Pattern Matching
+### 5.6.2. Pattern Matching
 
-An `ifs` also supports a head expression to be compared in test cases using
-patterns:
+The `match` statement allows to test a head expression against a series of
+patterns between `{` and `}`:
 
 ```
-Ifs : <see above>
-    | `ifs´ Expr `{´ {Case} [Else] `}´
-        Case :  Patt  (Block | `=>´ Expr)
-        Else : `else´ (Block | `=>´ Expr)
+Match : `match´ Expr `{´ {Case} [Else] `}´
+        Case :  Patt  (`=>´ Expr | Block | Lambda)
+        Else : `else´ (`=>´ Expr | Block)
 
-Patt : [`(´] (Cons | Oper | Full) [`)´]
-        Cons : Expr
-        Oper : OP [Expr]
-        Full : [ID] [TAG] [`,´ [Expr]]
+Patt : [`(´] [ID] [TAG] [Const | Oper | Tuple] [`|´ Expr] [`)´]
+        Const : Expr
+        Oper  : OP [Expr]
+        Tuple : `[´ List(Patt) } `]´
 ```
 
-A pattern is enclosed by optional parenthesis and has three possible forms:
+The patterns are tested in sequence, until one is satisfied, executing its
+associated branch.
+Otherwise, it executes the optional `else` branch, which defaults to `nil`.
+A branch can be either a [block](#blocks) or a simple expression prefixed
+by the arrow symbol `=>`.
 
-- A *constructor pattern* `Cons` compares the head value against the given
-    expression using the operator [`===`](#deep-equality-operators).
-    The expression must be either a [static literal](#static-values) or a
-    [collection constructor](#collection-values).
-- An *operation pattern* `Oper` calls the given predicate passing the head
-    value and the optional expression.
-- A *full pattern* `Full` is composed of a
-    [variable declaration](#declarations] with identifier and tag, and a
-    condition expression.
-    The pattern assigns the head expression to the variable, which is visible
-    by the condition expression and case branch.
-    The pattern checks if the head expression matches the given tag using the
-    operator [`is?`](#operator-is] and if the condition expression is
-    satisfied.
-    The identifier, tag and condition are all optional, but the identifier
-    cannot appear alone, requiring a compaining tag or `,`.
-    The identifier defaults to `it`.
+A pattern is satisfied if all of its optional forms to test the head expression
+are satisfied:
 
-Note that a tag pattern, such as `:X`, satisfies both the `Cons` and `Full`
-forms.
-Nevertheless, it always assumes the `Full` form and uses the operator `is?` to
-match against the head expression.
+- An identifier `ID` that always matches and captures the value of the head
+  expression with `ID = head`.
+  If omitted, it assumes the implicit identifier `it`.
+  If the pattern succeeds, the identifier can be used in its associated branch.
+- A tag `TAG` that tests the head expression with `head is? TAG`.
+- One of the three forms:
+    - A [static literal](#static-values) `Const` that tests the head expression
+      with `head == Const`.
+    - An operation `OP` followed by an optional expression `Expr` that tests
+      the head expression with `{{OP}}(head [,Expr])`.
+    - A tuple of patterns that tests if the head expression is a tuple, and
+      then applies each nested pattern recursively.
+      The head tuple size can be greater than the tuple pattern.
+- An extra "such that" condition following the pipe symbol `|` that must be
+  satisfied, regardless of the head expression valuue.
+  If given, this condition becomes the capture value of the branch.
+
+Except for `else` branches, note that the branches can use the
+[lambda notation](#lambda-prototypes) to capture the value of the condition
+being tested.
+Even though it uses the lambda notation, the branches do not create an extra
+function to execute.
 
 Examples:
 
 ```
-ifs f() {
-    [1,2,3]    => println("f() === [1,2,3]")
-    >= g()     => println("f() >= g()")
-    :tuple     => println("f() is? :tuple")
-    :T, g(it)  => println("it=f(), (it is? :T) and g(it)")
-    x,         => println("f() = ", x)
-    else {
-        error("impossible case")
-    }
+match f() {
+    x :X     => x       ;; capture `x=f()`, return `x` if `x is? :X`
+    <= 5     => it      ;; capture `it=f()`, return `it` if `it <= 5`
+    10       => :ok     ;; return :ok if `f() == 10`
+    {{odd?}} => :ok     ;; return :ok if `odd?(f())`
+    else     => :no
 }
+```
+
+```
+match [10,20,30,40] {
+    | g(it) { \v => v }     ;; capture `it=[...]`, check `g(it)`
+                            ;;    capture and return `g(it)` as `v`
+    [10, i, j|j>10] => i+j  ;; capture `it=[...]`, check `#it>=3`,
+                            ;;    check `it[0]==10`
+                            ;;    capture `i=it[1]`
+                            ;;    capture `j=it[1]`, check `j>10`
+                            ;;    return i+j
+}
+```
+
+Patterns are also used in
+    [declarations](#declarations),
+    [iterators](#iterators-tuples),
+    [catch clauses](#exceptions), and
+    [await statements](#awaits).
+In the case of declarations and iterators, the patterns are assertive in the
+sense that they cannot fail, raising an error if the match fails.
+
+Examples:
+
+```
+val [1,x,y] = [1,2,3]
+println(x,y)            ;; --> 2 3
+
+val [10,x] = [20,20]    ;; ERROR: match fails
+
+val d = @[x=1, y=2]
+loop [k,v] in d {
+    println(k,v)        ;; --> x,1 y,2
+}
+```
+
+```
+catch :X {              ;; ok match
+    catch :Y {          ;; no match
+        error(:X)
+    }
+    ;; never reached
+}
+```
+
+```
+spawn {
+    await(:Pos | it.x==it.y)
+}
+broadcast(:Pos [10,20])     ;; no match
+broadcast(:Pos [10,10])     ;; ok match
 ```
 
 <a name="loops-and-iterators"/>
 
-## 5.6. Loops and Iterators
+## 5.7. Loops and Iterators
 
 Ceu supports loops and iterators as follows:
 
 ```
-Loop : `loop´ [[ID [TAG]] `in´ (Range | Expr)] Block
+Loop : `loop´ Block                                 ;; (1)
+     | `loop´ (ID [TAG] | Patt) `in´ Expr Block     ;; (2)
+     | `loop´ [ID] [`in´ Range] Block               ;; (3)
+            Range : (`}´|`{´) Expr `=>` Expr (`}´|`{´) [`:step` [`+´|`-´] Expr]
 
-Skip  : `skip´ `if´ Expr
-
-Break : `break´ [`(´ Expr `)´] `if´ Expr
+Break : `break´ `(´ [Expr] `)´
       | `until´ Expr
       | `while´ Expr
+
+Skip  : `skip´
 ```
 
 A `loop` executes a block of code continuously until a termination condition is
 met.
+Ceu supports three loop header variations:
 
-The optional `in` clause extends a loop with an iterator expression and an
-optional control variable.
-The iterator can be a [numeric range](#numeric-ranges) or an expression that
-evaluates to an [iterator tuple](#TODO).
-If the variable identifier is omitted, it assumes the implicit identifier `it`.
+1. An *infinite loop* with an empty header, which only terminates from break
+   conditions.
+2. An [*iterator loop*](#iterator-loop) with an iterator expression that
+   executes on each step until it signals termination.
+3. A [*numeric loop*](#numeric-loop) with a range that specifies the number of
+   steps to execute.
 
-The loop block may contain control clauses to restart or terminate the loop.
-These clauses must be placed at the exact same nesting level of the loop block,
-but not at lower levels.
-The `skip` clause jumps back to the next loop iteration if the given condition
-is true.
-The `break`, `until`, or `while` terminate the loop if the given condition is
-met.
-The loop as a whole evaluates to the terminating condition, or to the optional
-expression in the case of a `break`.
+The iterator and numeric loops are detailed next.
+
+The loop block may contain three variations of a `break` statement for
+immediate termination:
+
+1. A `break <e>` terminates the loop with the value of `<e>`.
+2. An `until <e>` terminates the loop if `<e>` is [truthy](#conditionals), with
+   that value.
+3. A `while <e>` terminates the loop if `<e>` is [falsy](#basic-types), with
+   that value (`nil` or `false`).
+
+As any other statement, a loop is an expression that evaluates to a final value
+as a whole.
+A loop that terminates from the header condition evaluates to `false`.
+
+The block may also contain a `skip` statement to jump back to the next loop
+step.
 
 Examples:
+
+```
+var i = 1
+loop {                  ;; infinite loop
+    println(i)          ;; --> 1,2,...,10
+    while i < 10        ;; immediate termination
+    set i = i + 1
+}
+```
 
 ```
 var i = 0
-loop {
+loop {                  ;; infinite loop
     set i = i + 1
-    skip if (i % 2) == 1
-    println(i)          ;; --> 2,4,6,8,10
-    while i <= 10
-}
-
-loop {
-    do {
-        break if true   ;; ERR: invalid nesting level
+    if (i % 2) == 0 {
+        skip            ;; jump back
     }
+    println(i)          ;; --> 1,3,5,...
 }
 ```
 
-<a name="numeric-ranges"/>
+<a name="numeric-loops"/>
 
-### 5.6.1. Numeric Ranges
+### 5.7.1. Numeric Loops
 
-In a numeric loop, the `in` clause specifies an interval `x => y` to iterate
+A numeric loop specifies a range of numbers to iterate through:
+
+```
+Loop  : `loop´ [ID] [`in´ Range] Block
+Range : (`}´|`{´) Expr `=>` Expr (`}´|`{´) [`:step` [`+´|`-´] Expr]
+```
+
+At each loop step, the optional identifier receives the current number.
+If omitted, it assumes the implicit identifier `it`.
+
+The optional `in` clause specifies an interval `x => y` to iterate
 over.
+If omitted, then the loop iterates from `0` to infinity.
+
 The clause chooses open or closed range delimiters, and an optional signed
-`:step` expression to apply at each iteration:
-
-```
-Range : (`{´ | `}´) Expr `=>` Expr (`{´ | `}´) [`:step` [`+´|`-´] Expr]
-```
-
+`:step` expression to apply at each iteration.
 The open delimiters `}x` and `y{` exclude the given numbers from the interval,
 while the closed delimiters `{x` and `y}` include them.
-
-The loop terminates when `x` reaches or surpasses `y` considering the step sign
-direction, which defaults to `+1`.
-At each step, the loop control variable assumes the current iteration value.
-After each step, the step is added to `x` and compared against `y`.
-
 Note that for an open delimiter, the loop initializes the given number to its
 successor or predecessor, depending on the step direction.
 
-```
-loop in {0 => 5{ {
-    println(it)     ;; --> 0,1,2,3,4
-}
-
-loop v in }3 => 0} :step -1 {
-    println(v)      ;; --> 2, 1, 0
-}
-```
-
-<a name="iterator-tuples"/>
-
-### 5.6.2. Iterator Tuples
-
-In an iterator loop, the `in` clause specifies an expression that must evaluate
-to an iterator tuple `[f,...]` [tagged](#user-types) as `:Iterator`.
-If the given expression is not an iterator tuple, the loop tries to transform
-it calling `to-iter` implicitly.
-
-The iterator tuple must hold a step function `f` at index `0`, followed by any
-other state required to operate.
-The function `f` expects the iterator tuple itself as argument, and returns its
-next value or `nil` to signal termination.
-
-The loop calls the step function at each iteration passing the given iterator
-tuple, and assigns the result to the loop control variable.
-When the result is `nil`, the loop terminates.
-
-The function [`to-iter`](#iterator) in the
-[auxiliary library](#auxiliary-library) creates iterators from iterables, such
-as vectors, coroutines, and task pools, such that they can be traversed in
-loops.
+The loop terminates when `x` reaches or surpasses `y` considering the step sign
+direction, which defaults to `+1`.
+In this case, the loop evaluates to `false`.
+After each step, the step is added to `x` and compared against `y`.
 
 Examples:
 
 ```
-loop v in [10,20,30] {          ;; implicit to-iter([10,20,30])
+loop i {
+    println(i)      ;; --> 0,1,2,...
+}
+```
+
+```
+loop in {0 => 3{ {
+    println(it)     ;; --> 0,1,2
+}
+```
+
+```
+loop v in }3 => 0} :step -1 {
+    println(v)      ;; --> 2,1,0
+}
+```
+
+<a name="iterator-loops"/>
+
+### 5.7.2. Iterator Loops
+
+An iterator loop evaluates a given iterator expression on each step, until it
+signals termination:
+
+```
+Loop | `loop´ (ID [TAG] | Patt) `in´ Expr Block
+```
+
+The loop first declares a control variable using the rules from
+[declarations](#declarations) to capture the results of the iterator
+expression, which appears after the keyword `in`.
+If the declaration is omitted, it assumes the implicit identifier `it`.
+
+The iterator expression `itr` must evaluate to a [tagged](#user-types) iterator
+[tuple](#collections) `:Iterator [f,...]`.
+
+The iterator tuple must hold a step function `f` at index `0`, followed by any
+other custom state required to operate.
+The function `f` expects the iterator tuple itself as argument, and returns its
+next value.
+On each iteration, the loop calls `f` passing the `itr`, and assigns the result
+to the loop control variable.
+To signal termination, `f` just needs to return `nil`.
+In this case, the loop as a whole evaluates to `false`.
+
+If the iterator expression is not an iterator tuple, the loop tries to
+transform it by calling [`to.iter`](#type-conversion-library) implicitly, which
+creates iterators from iterables, such as vectors and task pools.
+
+Examples:
+
+```
+loop v in [10,20,30] {          ;; implicit to.iter([10,20,30])
     println(v)                  ;; --> 10,20,30
 }
-
 
 func num-iter (N) {
     val f = func (t) {
@@ -1827,7 +2396,7 @@ loop in num-iter(5) {
 
 <a name="exceptions"/>
 
-## 5.7. Exceptions
+## 5.8. Exceptions
 
 The `error` expression raises an exception that aborts the execution of all
 enclosing blocks up to a matching `catch` block.
@@ -1896,7 +2465,7 @@ catch :Err {                          ;; catches generic error
 
 <a name="coroutine-operations"/>
 
-## 5.8. Coroutine Operations
+## 5.9. Coroutine Operations
 
 The API for coroutines has the following operations:
 
@@ -1944,7 +2513,7 @@ do {
 
 <a name="coroutine-create"/>
 
-### 5.8.1. Coroutine Create
+### 5.9.1. Coroutine Create
 
 The operation `coroutine` creates a new [active coroutine](#active-values) from
 a [coroutine prototype](#prototype-values):
@@ -1967,13 +2536,9 @@ val c = coroutine(C)
 println(C, c)   ;; --> coro: 0x... / exe-coro: 0x...
 ```
 
-<!--
-5. [`abort`](#TODO): `TODO`
--->
-
 <a name="coroutine-status"/>
 
-### 5.8.2. Coroutine Status
+### 5.9.2. Coroutine Status
 
 The operation `status` returns the current state of the given active coroutine:
 
@@ -1991,7 +2556,7 @@ status:
 Examples:
 
 ```
-coro C = coro () {
+coro C () {
     yield()
 }
 val c = coroutine(C)
@@ -2004,20 +2569,25 @@ println(status(c))      ;; --> :terminated
 
 <a name="resume"/>
 
-### 5.8.3. Resume
+### 5.9.3. Resume
 
-The operation `resume` executes a coroutine starting from its last suspension
-point:
+The operation `resume` executes a coroutine from its last suspension point:
 
 ```
-Resume : `resume´ Expr `(´ [Expr] `)´
+Resume : `resume´ Expr `(´ List(Expr) `)´
 ```
 
-The operation `resume` expects an active coroutine, and resumes it, passing an
-optional argument.
-The coroutine executes until it yields or terminates.
-The `resume` evaluates to the argument of `yield` or to the coroutine return
-value.
+The operation `resume` expects an active coroutine, and resumes it, passing
+optional arguments.
+The coroutine executes until it [yields](#yield) or terminates.
+After returning, the `resume` evaluates to the argument passed to `yield` or to
+the coroutine return value.
+
+The first resume is like a function call, starting the coroutine from its
+beginning, and passing any number of arguments.
+The subsequent resumes start the coroutine from its last [`yield`](#yield)
+suspension point, passing at most one argument, which substitutes the `yield`.
+If omitted, the argument defaults to `nil`.
 
 ```
 coro C () {
@@ -2026,13 +2596,13 @@ coro C () {
     println(:2)
 }
 val co = coroutine(C)
-resume co()     ;; --> 1
-resume co()     ;; --> 2
+resume co()     ;; --> :1
+resume co()     ;; --> :2
 ```
 
 <a name="yield"/>
 
-### 5.8.4. Yield
+### 5.9.4. Yield
 
 The operation `yield` suspends the execution of a running coroutine:
 
@@ -2040,8 +2610,9 @@ The operation `yield` suspends the execution of a running coroutine:
 Yield : `yield´ `(´ [Expr] `)´
 ```
 
-An `yield` expects an expression between parenthesis that is returned to whom
-resumed the coroutine.
+An `yield` expects an optional argument between parenthesis that is returned
+to whom resumed the coroutine.
+If omitted, the argument defaults to `nil`.
 Eventually, the suspended coroutine is resumed again with a value and the whole
 `yield` is substituted by that value.
 
@@ -2052,12 +2623,12 @@ lost.
 
 <a name="resumeyield-all"/>
 
-### 5.8.5. Resume/Yield All
+### 5.9.5. Resume/Yield All
 
 The operation `resume-yield-all´ continuously resumes the given active
 coroutine, collects its yields, and yields upwards each value, one at a time.
-It is typically use to delegate a job of an outer coroutine transparently to an
-inner coroutine:
+It is typically used to delegate a job of an outer coroutine transparently to
+an inner coroutine:
 
 ```
 All : `resume-yield-all´ Expr `(´ [Expr] `)´
@@ -2073,12 +2644,11 @@ do {
     var arg = <arg>                 ;; given initial value (or nil)
     loop {
         val v = resume co(arg)      ;; resumes with current arg
-        if (status(co) /= :terminated) or (v /= nil) {
-            set arg = yield(v)      ;; takes next arg from upwards
+        if (status(co) == :terminated) {
+            break(v)
         }
-        until (status(co) == :terminated)
+        set arg = yield(v)          ;; takes next arg from upwards
     }
-    arg
 }
 ```
 
@@ -2094,36 +2664,36 @@ coro G (b1) {                           ;; b1=1
     coro L (c1) {                       ;; c1=4
         val c2 = yield(c1+1)            ;; y(5), c2=6
         val c3 = yield(c2+1)            ;; y(7), c3=8
-        c3                              ;; 8
+        c3+1                            ;; 9
     }
     val l = coroutine(L)
     val b2 = yield(b1+1)                ;; y(2), b2=3
     val b3 = resume-yield-all l(b2+1)   ;; b3=9
     val b4 = yield(b3+1)                ;; y(10)
-    b4
+    b4+1                                ;; 12
 }
 
 val g = coroutine(G)
-val a1 = resume g(1)                    ;; g(1), a1=2
-val a2 = resume g(a1+1)                 ;; g(3), a2=5
-val a3 = resume g(a2+1)                 ;; g(6), a3=7
-val a4 = resume g(a3+1)                 ;; g(8), a4=8
-val a5 = resume g(a4+1)                 ;; g(9), a5=10
-println(a1, a2, a3, a4, a5)             ;; --> 2, 5, 7, 8, 10
+val a1 = resume g(1)                    ;; g(1),  a1=2
+val a2 = resume g(a1+1)                 ;; g(3),  a2=5
+val a3 = resume g(a2+1)                 ;; g(6),  a3=7
+val a4 = resume g(a3+1)                 ;; g(8),  a4=10
+val a5 = resume g(a4+1)                 ;; g(11), a5=10
+println(a1, a2, a3, a4, a5)             ;; --> 2, 5, 7, 10, 12
 ```
 
 <a name="task-operations"/>
 
-## 5.9. Task Operations
+## 5.10. Task Operations
 
 The API for tasks has the following operations:
 
 - [`spawn`](#spawn): creates and resumes a new task from a prototype
-- [`tasks`](#task-pools): creates a task pool
+- [`tasks`](#task-pools): creates a pool of tasks
 - [`status`](#task-status): consults the task status
 - [`pub`](#public-field): exposes the task public field
-- [`await`](#await): yields the resumed task until it matches an event
-- [`broadcast`](#broadcast): broadcasts an event and awake all tasks
+- [`await`](#awaits): yields the resumed task until it matches an event
+- [`broadcast`](#broadcast): broadcasts an event to awake all tasks
 - [`toggle`](#toggle): either ignore or accept awakes
 
 <!--
@@ -2152,14 +2722,14 @@ task T () {
 val ts = tasks()                ;; task pool
 do {
     spawn T() in ts             ;; attached to outer pool,
-    spawn T() in ts             ;; not to enclosing block
+    spawn T() in ts             ;;  not to enclosing block
 }
 broadcast(10)                   ;; --> 10, 10
 ```
 
 <a name="spawn"/>
 
-### 5.9.1. Spawn
+### 5.10.1. Spawn
 
 A spawn creates and starts an [active task](#active-values) from a
 [task prototype](#prototypes):
@@ -2168,10 +2738,8 @@ A spawn creates and starts an [active task](#active-values) from a
 Spawn : `spawn´ Expr `(´ [List(Expr)] `)´ [`in´ Expr]
 ```
     
-The task receives an optional list of arguments.
-
-A spawn receives expects a task protoype, an optional list of arguments, and an
-optional pool to hold the task.
+A spawn expects a task protoype, an optional list of arguments, and an optional
+pool to hold the task.
 The operation returns a reference to the active task.
 
 Examples:
@@ -2186,7 +2754,7 @@ println(t)                      ;; --> exe-task 0x...
 
 <a name="task-pools"/>
 
-### 5.9.2. Task Pools
+### 5.10.2. Task Pools
 
 The `tasks` operation creates a [task pool](#active-values) to hold
 [active tasks](#active-values):
@@ -2197,6 +2765,7 @@ Pool : `tasks´ `(´ Expr `)´
 
 The operation receives an optional expression with the maximum number of task
 instances to hold.
+If omitted, there is no limit on the maximum number of tasks.
 If the pool is full, a further spawn fails and returns `nil`.
 
 Examples:
@@ -2213,7 +2782,7 @@ println(ts, t1, t2)             ;; --> tasks: 0x... / exe-task 0x... / nil
 
 <a name="task-status"/>
 
-### 5.9.3. Task Status
+### 5.10.3. Task Status
 
 The operation `status` returns the current state of the given active task:
 
@@ -2231,8 +2800,8 @@ As described in [Active Values](#active-values), a task has 4 possible status:
 Examples:
 
 ```
-task T = task () {
-    await(,true)
+task T () {
+    await(|true)
 }
 val t = spawn T()
 println(status(t))      ;; --> :yielded
@@ -2244,9 +2813,9 @@ broadcast(nil)
 println(status(t))      ;; --> :terminated
 ```
 
-<a name="public-field"/>
+<a name="public-fields"/>
 
-### 5.9.4. Public Field
+### 5.10.4. Public Fields
 
 Tasks expose a public variable `pub` that is accessible externally:
 
@@ -2264,7 +2833,7 @@ Examples:
 ```
 task T () {
     set pub = 10
-    await(,true)
+    await(|true)
     println(pub)    ;; --> 20
     30              ;; final task value
 }
@@ -2275,55 +2844,58 @@ broadcast(nil)
 println(t.pub)      ;; --> 30
 ```
 
-<a name="await"/>
+<a name="awaits"/>
 
-### 5.9.5. Await
+### 5.10.5. Awaits
 
-The operation `await` suspends the execution of a running task until an event
-[broadcast](#broadcast) matches the condition pattern:
+The operation `await` suspends the execution of a running task with a given
+[condition pattern](#pattern-matching) or clock timeout:
 
 ```
-Await : `await´ Patt [`{´ Block `}´]
-
-Patt  : [`(´] (Cons | Oper | Full | Clock) [`)´]
-            Clock : [TAG `:h´] [TAG `:min´] [TAG `:s´] [TAG `:ms´]
+Await : `await´ Patt [Block]
+      | `await´ Clock
+Clock : `<´ { Expr [`:h´|`:min´|`:s´|`:ms´] } `>´
 ```
 
-Whenever an event is broadcast, it is compared against an `await` pattern.
-If it matches, the task is resumed and executes statement after the `await`.
+Whenever an event is [broadcast](#broadcasts), it is compared against the
+`await` pattern or clock timeout.
+If it succeeds, the task is resumed and executes the statement after the
+`await`.
 
-An `await` accepts an optional block that can access the event value when the
-condition pattern matches.
+A clock timeout in milliseconds is the sum of the given time units multipled
+by prefix numeric expressions, e.g., `<1:s 500:ms>` corresponds to `1500ms`.
+The special broadcast event `:Clock [ms]` advances clock timeouts, in which
+`ms` corresponds to the number of milliseconds to advance.
+Therefore, a clock timeout such as `<1:s 500:ms>` expires after `:Clock` events
+accumulate `1500ms`.
+
+A condition pattern accepts an optional block that can access the event value
+when the condition pattern matches.
 If the block is omitted, the pattern requires parenthesis.
-
-In addition to standard [`ifs` patterns](#pattern-matching), an `await` also
-accepts a clock timer that matches the pattern when the given time elapses.
-A clock pattern is the sum of the given time units and tag prefixes.
-The tag prefix must be numeric (e.g., `:10`) or represent a variable identifier
-(e.g., `:x`).
 
 Examples:
 
 ```
-await(,false)                   ;; never awakes
-await(:key, it.code==:escape)   ;; awakes on :key with press=:release
-await(:1:h:10:min:30:s)         ;; awakes after the specified time
-await e, {                      ;; awakes on any event
-    println(e)                  ;; and shows it
+await(|false)                   ;; never awakes
+await(:key | it.code==:escape)  ;; awakes on :key with code=:escape
+await <1:h 10:min 30:s>         ;; awakes after the specified time
+await e {                       ;; awakes on any event
+    println(e)                  ;;  and shows it
 }
 ```
 
-<a name="broadcast"/>
+<a name="broadcasts"/>
 
-### 5.9.6. Broadcast
+### 5.10.6. Broadcasts
 
-The operation `broadcast` signals an event to awake [awaiting](#await) tasks:
+The operation `broadcast` signals an event to awake [awaiting](#awaits) tasks:
 
 ```
-Bcast : `broadcast´ `(´ Expr `)´ [`in´ Expr]
+Bcast : `broadcast´ `(´ [Expr] `)´ [`in´ Expr]
 ```
 
-A `broadcast` expects an event expression and an optional target.
+A `broadcast` expects an optional event expression and an optional target.
+If omitter, the event defaults to `nil`.
 The event is matched against the patterns in `await` operations, which
 determines the tasks to awake.
 
@@ -2357,10 +2929,10 @@ task T () {
 
 <a name="toggle"/>
 
-### 5.9.7. Toggle
+### 5.10.7. Toggle
 
-The operation `toggle` configures an active task to ignore or consider further
-`broadcast` operations:
+The operation `toggle` configures an active task to either ignore or consider
+further `broadcast` operations:
 
 ```
 Toggle : `toggle´ Expr `(´ Expr `)´
@@ -2370,43 +2942,43 @@ A `toggle` expects an active task and a [boolean](#basic-types) value
 between parenthesis, which is handled as follows:
 
 - `false`: the task ignores further broadcasts;
-- `true`: the task checks further broadcasts.
+- `true`: the task considers further broadcasts.
 
 <a name="syntactic-block-extensions"/>
 
-### 5.9.8. Syntactic Block Extensions
+### 5.10.8. Syntactic Block Extensions
 
-Ceu provides some syntactic block extensions to work with tasks more
+Ceu provides many syntactic block extensions to work with tasks more
 effectively.
 The extensions expand to standard task operations.
 
 <a name="spawn-blocks"/>
 
-#### 5.9.8.1. Spawn Blocks
+#### 5.10.8.1. Spawn Blocks
 
 A `spawn` block starts an anonymous nested task:
 
 ```
-Spawn : `spawn´ `{´ Block `}´
+Spawn : `spawn´ Block
 ```
 
-The task cannot be assigned or referred explicitly.
-Also, any access to `pub` refers to the enclosing task.
+An anonymous task cannot be assigned or referred explicitly.
+Also, any access to `pub` refers to the enclosing non-anonymous task.
 
-The `spawn` extension expands as follows:
-
-```
-spawn (task () {
-    <...>
-}) ()
-```
-
-Except regarding `pub` access, the extension is equivalent to this expansion.
+`TODO: :nested, :anon, escape bug`
 
 <!--
 The `:nested` annotation is an internal mechanism to indicate that nested task
 is anonymous and unassignable.
 -->
+
+The `spawn` extension expands as follows:
+
+```
+spawn (task :nested () {
+    <Block>
+}) ()
+```
 
 Examples:
 
@@ -2417,44 +2989,19 @@ spawn {
 }
 ```
 
-<a name="every-blocks"/>
-
-#### 5.9.8.2. Every Blocks
-
-An `every` block is a loop that makes an iteration whenever an await condition
-is satisfied:
-
 ```
-Every : `every´ Patt Block
-```
-
-The `every` extension expands as follows:
-
-```
-loop {
-    await <Patt> {
-        <Block>
+task T () {
+    set pub = 10
+    spawn {
+        println(pub)    ;; --> 10
     }
 }
-```
-
-Examples:
-
-```
-every :1:s {
-    println("1 more second has elapsed")
-}
-```
-
-```
-every x :X, f(x) {
-    println(":X satisfies f(x)")
-}
+spawn T()
 ```
 
 <a name="parallel-blocks"/>
 
-#### 5.9.8.3. Parallel Blocks
+#### 5.10.8.2. Parallel Blocks
 
 A parallel block spawns multiple anonymous tasks:
 
@@ -2519,15 +3066,15 @@ Examples:
 
 ```
 par {
-    every :1:s {
+    every <1:s> {
         println("1 second has elapsed")
     }
 } with {
-    every :1:min {
+    every <1:min> {
         println("1 minute has elapsed")
     }
 } with {
-    every :1:h {
+    every <1:h> {
         println("1 hour has elapsed")
     }
 }
@@ -2536,7 +3083,7 @@ println("never reached")
 
 ```
 par-or {
-    await(:1:s)
+    await <1:s>
 } with {
     await(:X)
     println(":X occurred before 1 second")
@@ -2552,22 +3099,57 @@ par-and {
 println(":X and :Y have occurred")
 ```
 
-<a name="watching-blocks"/>
+<a name="every-blocks"/>
 
-#### 5.9.8.4. Watching Blocks
+#### 5.10.8.3. Every Blocks
 
-An `watching` block executes a given block until an await condition is
-satisfied:
+An `every` block is a loop that makes an iteration whenever an await condition
+is satisfied:
 
 ```
-Watching : `watching´ Patt Block
+Every : `every´ (Patt | Clock) Block
+```
+
+The `every` extension expands as follows:
+
+```
+loop {
+    await <Patt|Clock> {
+        <Block>
+    }
+}
+```
+
+Examples:
+
+```
+every <1:s> {
+    println("1 more second has elapsed")
+}
+```
+
+```
+every x :X | f(x) {
+    println(":X satisfies f(x)")
+}
+```
+
+<a name="watching-blocks"/>
+
+#### 5.10.8.4. Watching Blocks
+
+A `watching` block executes a given block until an await condition is
+satisfied, which aborts the block:
+
+```
+Watching : `watching´ (Patt | Clock) Block
 ```
 
 A `watching` extension expands as follows:
 
 ```
 par-or {
-    await(<Patt>)
+    await(<Patt|Clock>)
 } with {
     <Block>
 }
@@ -2576,7 +3158,7 @@ par-or {
 Examples:
 
 ```
-watching :1:s {
+watching <1:s> {
     every :X {
         println("one more :X occurred before 1 second")
     }
@@ -2585,7 +3167,7 @@ watching :1:s {
 
 <a name="toggle-blocks"/>
 
-#### 5.9.8.5. Toggle Blocks
+#### 5.10.8.5. Toggle Blocks
 
 A `toggle` block executes a given block and [toggles](#toggle) it when a
 broadcast event matches the given tag:
@@ -2600,6 +3182,12 @@ boolean value to toggle the block, e.g.:
 - `:X [true]`  activates the block.
 - `:X [false]` deactivates the block.
 
+The given block executes normally, until a `false` is received, toggling it
+off.
+Then, when a `true` is received, it toggles the block on.
+The whole composition terminates when the task representing the given block
+terminates.
+
 The `toggle` extension expands as follows:
 
 ```
@@ -2608,7 +3196,7 @@ do {
         <Block>
     }
     if status(t) /= :terminated {
-        watching (,it==t) {
+        watching (|it==t) {
             loop {
                 await(<TAG>, not it[0])
                 toggle t(false)
@@ -2621,316 +3209,84 @@ do {
 }
 ```
 
-The given block executes normally, until a `false` is received, toggling it
-off.
-Then, when a `true` is received, it toggles the block on.
-The whole composition terminates when the task representing the given block
-terminates.
+Examples:
+
+```
+spawn {
+    toggle :T {
+        every :E {
+            println(it[0])  ;; --> 1 3
+        }
+    }
+}
+broadcast(:E [1])
+broadcast(:T [false])
+broadcast(:E [2])
+broadcast(:T [true])
+broadcast(:E [3])
+```
 
 <!-- ---------------------------------------------------------------------- -->
 
-<a name="standard-library"/>
+<a name="standard-libraries"/>
 
-# 6. STANDARD LIBRARY
+# 6. STANDARD LIBRARIES
 
-<a name="primary-library"/>
+Ceu provides many libraries with predefined functions.
 
-## 6.1. Primary Library
+The function signatures that follow describe the operators and use tag
+annotations to describe the parameters and return types.
+However, note that the annotations are not part of the language, and are used
+for documentation purposes only.
 
-The primary library provides primitive functions and operations:
+<a name="basic-library"/>
 
-- [`#`](#length-operator):
-    consults the length of a tuple or vector
-- [`==`,`/=`](#equality-operators):
-    compare if values are equal
-- [`>`,`>=`,`<=`,`<`](#relational-operators):
-    perform relational operations
-- [`+`,`-`,`*`,`/`](#arithmetic-operators):
-    perform arithmetic operations
-- [`and`,`not`,`or`](#logical-operatos):
-    perform logical operations
-- [`coroutine`, `status`, `tasks`](#coroutine-create):
-    [coroutine](#coroutine-status) and [task](#task-status) operations
-- [`error`](#exceptions):
-    raises an exception
-- [`math-cos`,`math-floor`,`math-sin`](#mathematical-operations):
-    perform mathematical operations
-- [`next-dict`,`next-tasks`](#next-operations):
-    traverse dictionaries and task pools
-- [`print`,`println`](#print):
-    output values to the screen
-- [`random-seed`,`random-next`](#random-numbers):
-    generate random numbers
-- [`sup?`](#types-and-tags):
-    checks if a tag is a supertype of another
-- [`tags`](#types-and-tags):
-    checks and sets value tags
-- [`to-bool`,`to-number`,`to-string`,`to-tag`](#type-conversions):
-    <!--`to-char`-->
-    perform type conversion operations
-- [`type`](#types-and-tags):
-    consults the type of a value
-
-`TODO: tuple, tag-or`
-
-The primary library is primitive in the sense that it cannot be written in Ceu
-itself.
-
-<a name="length-operator"/>
-
-### 6.1.1. Length Operator
+## 6.1. Basic Library
 
 ```
-func {{#}} (v)      ;; --> :number
+func assert (v :any [,msg :any]) => :any
+func next (v :any [,x :any]) => :any
+func print (...) => :nil
+func println (...) => :nil
+func sup? (t1 :tag, t2 :tag) => :bool
+func tag (t :tag, v :dyn) => :dyn
+func tag (v :dyn) => :tag
+func type (v :any) => :type
 ```
 
-The operator `#` returns the length of the received tuple or vector.
+The function `assert` receives a value `v` of any type, and raises an error if
+it is [falsy](#basic-types).
+Otherwise, it returns the same `v`.
+The optional `msg` provides a string to accompany the error, or a function that
+generates the error string.
 
 Examples:
 
 ```
-val tup = []
-val vec = #[1,2,3]
-println(#tup, #vec)     ;; --> 0 / 3
+assert((10<20) and :ok, "bug found")    ;; --> :ok
+assert(1 == 2) <-- { "1 /= 2" }         ;; --> ERROR: "1 /= 2"
 ```
 
-<a name="equality-operators"/>
+The function `next` allows to traverse collections step by step.
+It supports as the collection argument `v` the types with behaviors as follows:
 
-### 6.1.2. Equality Operators
-
-```
-func {{==}} (v1, v2)    ;; --> :bool
-func {{/=}} (v1, v2)    ;; --> :bool
-```
-
-The operators `==` and `/=` compare two values `v1` and `v2` to check if they
-are equal or not equal.
-The operator `==` returns `true` if the values are equal and `false` otherwise.
-The operator `/=` is the negation of `==`.
-
-To be considered equal, first the values must be of the same type.
-In addition, [static values](#static-values) are compared *by value*, while
-[dynamic values](#dynamic-values) and [active values](#active-values) are
-compared *by reference*.
+- `:dict`:
+    `next` receives a dictionary `v`, a key `x`, and returns the key `y` that
+    follows `x`. If `x` is `nil`, the function returns the initial key. If
+    there are no remaining keys, `next` returns `nil`.
+- `:tasks`:
+    `next` receives a task pool `v`, a task `x`, and returns task `y` that
+    follows `x`. If `x` is `nil`, the function returns the initial task. If
+    there are no reamining tasks to enumerate, `next` returns `nil`.
+- `:exe-coro`: `TODO: description/examples`
+- `:Iterator`: `TODO: description/examples`
 
 Examples:
 
 ```
-1 == 1          ;; --> true
-1 /= 1          ;; --> false
-1 == '1'        ;; --> false
-[1] == [1]      ;; --> false
-```
-
-```
-val t1 = [1]
-val t2 = t1
-t1 == t2        ;; --> true
-```
-
-<a name="relational-operators"/>
-
-### 6.1.3. Relational Operators
-
-```
-func {{>}}  (v1 ,v2)    ;; --> :bool
-func {{>=}} (v1 ,v2)    ;; --> :bool
-func {{<=}} (v1 ,v2)    ;; --> :bool
-func {{<}}  (v1, v2)    ;; --> :bool
-```
-
-The operators `>`, `>=`, `<=` and `<` perform the standard relational
-operations of *greater than*, *greater or equal than*, *less than*, and
-*less or equal then*, respectively.
-
-Examples:
-
-```
-1 > 2       ;; --> false
-2 >= 1      ;; --> true
-1 <= 1      ;; --> true
-1 < 2       ;; --> true
-```
-
-<a name="arithmetic-operators"/>
-
-### 6.1.4. Arithmetic Operators
-
-```
-func {{+}} (v1, v2)     ;; --> :number
-func {{-}} (v1 [,v2])   ;; --> :number
-func {{*}} (v1 ,v2)     ;; --> :number
-func {{/}} (v1 ,v2)     ;; --> :number
-func {{%}} (v1 ,v2)     ;; --> :number
-```
-
-The operators `+`, `-`, `*` and `/` perform the standard arithmetics operations
-of *addition*, *subtraction*, *multiplication*, and *division*, respectively.
-
-The operator `%` performs the *remainder* operation.
-
-The operator `-` is also used as the unary minus when it prefixes an
-expression.
-
-`TODO: *-*, //`
-
-Examples:
-
-```
-1 + 2       ;; --> 3
-1 - 2       ;; --> -1
-2 * 3       ;; --> 6
-5 / 2       ;; --> 2.5
-5 % 2       ;; --> 1
--20         ;; --> -20
-```
-
-<a name="logical-operators"/>
-
-### 6.1.5. Logical Operators
-
-```
-func not (v)
-func and (v1, v2)
-func or  (v1, v2)
-```
-
-The logical operators `not`, `and`, and `or` are functions with a special
-syntax to be used as prefix (`not`) and infix operators (`and`,`or`).
-
-A `not` receives a value `v` and is equivalent to the code as follows:
-
-```
-if v { false } else { true }
-```
-
-The operators `and` and `or` returns one of their operands `v1` or `v2`.
-
-An `and` is equivalent to the code as follows:
-
-```
-do {
-    val x = v1
-    if x { v2 } else { x }
-}
-```
-
-An `or` is equivalent to the code as follows:
-
-```
-do {
-    val x = v1
-    if x { x } else { v2 }
-}
-```
-
-Examples:
-
-```
-not not nil     ;; --> false
-nil or 10       ;; --> 10
-10 and nil      ;; --> nil
-```
-
-<a name="types-and-tags"/>
-
-### 6.1.6. Types and Tags
-
-```
-func type (v)           ;; --> :type
-func sup? (tag1, tag2)  ;; --> :bool
-func string-to-tag (s)  ;; --> :tag
-func tags (v, t, set)   ;; --> v
-func tags (v, t)        ;; --> :bool
-```
-
-The function `type` receives a value `v` and returns its [type](#types) as one
-of the tags that follows:
-    `:nil`, `:tag`, `:bool`, `:char`, `:number`, `:pointer`,
-    `:tuple`, `:vector`, `:dict`,
-    `:func`, `:coro`, `:task`,
-    `:exe-coro`, `:exe-task`, `tasks`.
-
-The function `sup?` receives tags `tag1` and `tag2`, and returns if `tag1` is
-a [super-tag](#hierarchical-tags) of `tag2`.
-
-The function `tags` sets or queries tags associated with values of
-[user types](#user-types).
-To set or unset a tag, the function receives a value `v`, a tag `t`, and a
-boolean `set` to set or unset the tag.
-The function returns the same value passed to it.
-To query a tag, the function receives a value `v`, a tag `t` to check, and
-returns a boolean to answer if the tag (or any sub-tag) is associated with the
-value.
-
-Examples:
-
-```
-type(10)                        ;; --> :number
-val x = tags([], :x, true)      ;; value x=[] is associated with tag :x
-tags(x, :x)                     ;; --> true
-```
-
-<a name="type-conversions"/>
-
-### 6.1.7. Type Conversions
-
-```
-func to-bool    (v)  ;; --> :bool
-func to-tag     (v)  ;; --> :tag
-func to-number  (v)  ;; --> :number
-func to-pointer (v)  ;; --> :pointer
-func to-string  (v)  ;; --> "string"
-```
-
-<!--
-func to-char   (v)  ;; -> :char
-to-char(65)         ;; -> 'A'
--->
-
-The conversion functions receive any value `v` and try to convert it to a value
-of the specified type.
-If the conversion is not possible, the function returns `nil`.
-
-`TODO: explain all possibilities`
-
-Examples:
-
-```
-to-bool(nil)        ;; --> false
-to-number("10")     ;; --> 10
-to-number([10])     ;; --> nil
-to-tag(":number")   ;; --> :number
-to-string(10)       ;; --> "10"
-```
-
-<a name="next-operations"/>
-
-### 6.1.8. Next Operations
-
-```
-func next-dict  (dic,  cur)  ;; --> nxt
-func next-tasks (tsks, cur)  ;; --> nxt
-```
-
-The `next` operations allow to traverse collections step by step.
-
-The function `next-dict` receives a dictionary `dic`, a key `cur`, and returns
-the key `nxt` that follows `cur`.
-If `cur` is `nil`, the function returns the initial key.
-The function returns `nil` if there are no reamining keys to enumerate.
-
-The function `next-tasks` receives a task pool `tsks`, a task `cur`, and
-returns task `nxt` that follows `cur`.
-If `cur` is `nil`, the function returns the initial task.
-The function returns `nil` if there are no reamining tasks to enumerate.
-
-Examples:
-
-```
-val d = [(:k1,10), (:k2,20)]
-val k1 = next-dict(d)
-val k2 = next-dict(d, k1)
+val d = @[(:k1,10), (:k2,20)]
+val k1 = next(d)
+val k2 = next(d, k1)
 println(k1, k2)     ;; --> :k1 / :k2
 ```
 
@@ -2938,226 +3294,174 @@ println(k1, k2)     ;; --> :k1 / :k2
 val ts = tasks()
 spawn T() in ts     ;; tsk1
 spawn T() in ts     ;; tsk2
-val t1 = next-tasks(ts)
-val t2 = next-tasks(ts, t1)
-println(t1, t2)     ;; --> tsk1 / tsk2
+val t1 = next(ts)
+val t2 = next(ts, t1)
+println(t1, t2)     ;; --> exe-task: 0x...   exe-task: 0x...
 ```
 
-<a name="print"/>
-
-### 6.1.9. Print
-
-```
-func print (...)
-func println (...)
-```
-
-The functions `print` and `println` outputs the given values and return `nil`.
+The functions `print` and `println` outputs the given values to the screen, and
+return the first received value.
 
 Examples:
 
 ```
-println(1, :x, [1,2,3])     ;; --> 1   :x   [1,2,3]
+val x = println(1, :x)  ;; --> 1   :x
+print(x)
+println(2)              ;; --> 12
 ```
 
-<a name="mathematical-operations"/>
+The function `sup?` receives tags `t1` and `t2`, and returns if `t1` is
+a [super-tag](#hierarchical-tags) of `t2`.
 
-### 6.1.10. Mathematical Operations
+The function `tag` sets or queries tags of [user types](#user-types).
+To set a tag, the function receives a tag `t` and a value `v` to associate.
+The function returns the same value `v` passed to it.
+To query a tag, the function `tag` receives a value `v`, and returns its
+associated tag.
+
+The function `type` receives a value `v` and returns its [type](#types).
+
+Examples:
 
 ```
-func math-cos   (v)     ;; --> :number
-func math-floor (v)     ;; --> :number
-func math-sin   (v)     ;; --> :number
+sup?(:T.A,   :T.A.x)    ;; --> true
+sup?(:T.A.x, :T)        ;; --> false
+
+val x = tag(:X, [])     ;; value x=[] is associated with tag :X
+tag(x)                  ;; --> :X
+
+type(10)                ;; --> :number
 ```
 
-The functions `math-sin` and `math-cos` compute the sine and cossine of the
+<a name="type-conversions-library"/>
+
+## 6.2. Type Conversions Library
+
+The type conversion functions `to.*` receive a value `v` of any type and try to
+convert it to a value of the specified type:
+
+```
+func to.bool    (v :any) => :bool
+func to.char    (v :any) => :char
+func to.dict    (v :any) => :dict
+func to.number  (v :any) => :number
+func to.pointer (v :any) => :pointer
+func to.string  (v :any) => :vector (string)
+func to.tag     (v :any) => :tag
+func to.tuple   (v :any) => :tuple
+func to.vector  (v :any) => :vector
+```
+
+If the conversion is not possible, the functions return `nil`.
+
+`TODO: describe each`
+
+Examples:
+
+```
+to.bool(nil)        ;; --> false
+to.char(65)         ;; --> 'A'
+to.dict([[:x,1]])   ;; --> @[(:x,1)]
+to.number("10")     ;; --> 10
+to.pointer(#[x])    ;; --> (C pointer to 1st element `x`)
+to.string(42)       ;; --> "42"
+to.tag(":number")   ;; --> :number
+to.tuple(#[1,2,3])  ;; --> [1,2,3]
+to.vector([1,2,3])  ;; --> #[1,2,3]
+```
+
+The function `to.iter` is used implicitly in [iterator loops](#iterator-loops)
+to convert iterables, such as vectors and task pools, into iterators:
+
+```
+func to.iter (v :any [,tp :any]) => :Iterator
+```
+
+`to.iter` receives an iterable `v`, an optional modifier `tp`, and returns a
+corresponding [`:Iterator`](#iterator-loops) tuple.
+The iterator provides a function that traverses the iterable step by step on
+each call.
+The modifier specifies what kind of value should the iterator return on each
+step.
+`to.iter` accepts the following iterables and modifiers:
+
+- `:tuple`, `:vector`, `:dict`:
+    - traverses the collection item by item
+    - `:val`: value of the current item
+    - `:idx`, `:key`: index or key of the current item
+    - `:tuple` and `:vector` default to modifier `:val`
+    - `:dict` defaults to modifier `[:key,:val]`
+- `:func`:
+    - simply calls the function each step, forwarding its return value
+- `:exe-coro`:
+    - resumes the coroutine on each step, and returns its yielded value
+- `:tasks`:
+    - traverses the pool item by item, returning the current task
+
+It is possible to pass multiple modifiers in a tuple (e.g., `[:key,:val]`).
+In this case, on each step, the iterator returns a tuple with the corresponding
+values.
+
+Examples:
+
+`TODO`
+
+<a name="math-library"/>
+
+## 6.3. Math Library
+
+```
+val math.PI :number
+func math.between (min :number, n :number, max :number) => :number
+func math.ceil (n :number) => :number
+func math.cos (n :number) => :number
+func math.floor (n :number) => :number
+func math.max (n1 :number, n2 :number) => :number
+func math.min (n1 :number, n2 :number) => :number
+func math.round (n :number) => :number
+func math.sin (n :number) => :number
+```
+
+The functions `math.sin` and `math.cos` compute the sine and cossine of the
 given number in radians, respectively.
 
-The function `math-floor` return the integral floor of a given real number.
+The function `math.floor` return the integral floor of a given real number.
+
+`TODO: describe all functions`
 
 Examples:
 
 ```
-math-sin(3.14)          ;; --> 0
-math-cos(3.14)          ;; --> -1
-math-floor(10.14)       ;; --> 10
+math.PI                 ;; --> 3.14
+math.sin(math.PI)       ;; --> 0
+math.cos(math.PI)       ;; --> -1
+
+math.ceil(10.14)        ;; --> 11
+math.floor(10.14)       ;; --> 10
+math.round(10.14)       ;; --> 10
+
+math.min(10,20)         ;; --> 10
+math.max(10,20)         ;; --> 20
+math.between(10, 8, 20) ;; --> 10
 ```
 
-<a name="random-numbers"/>
+<a name="random-numbers-library"/>
 
-### 6.1.11. Random Numbers
-
-```
-func random-seed (n)
-func random-next ()     ;; --> :number
-```
-
-`TODO`
-
-<a name="auxiliary-library"/>
-
-## 6.2. Auxiliary Library
-
-- [`===`,`=/=`](#deep-equality-operators):
-    compare if values are deeply equal
-- [`in?`,`in-not?`](#in-operators):
-    check if value is in collection
-- [`is?`,`is-not?`](#is-operators):
-    check if values are compatible
-- [`:Iterator`,`to-iter`,`to-set`,`to-vector`](#iterator-operations):
-    perform iterator operations
-
-`TODO: ++, <++, <|<`
-`TODO: min, max, between`
-`TODO: assert, copy, string?`
-
-<a name="deep-equality-operators"/>
-
-### 6.2.1. Deep Equality Operators
+## 6.4. Random Numbers Library
 
 ```
-func {===} (v1, v2)  ;; --> :bool
-func {=/=} (v1, v2)  ;; --> :bool
+func random.next () => :number
+func random.seed (n :number) => :nil
 ```
 
-The operators `===` and `=/=` deeply compare two values `v1` and `v2` to check
-if they are equal or not equal.
-The operator `===` returns `true` if the values are deeply equal and `false`
-otherwise.
-The operator `=/=` is the negation of `===`.
-
-Except for [collections](#collections), deep equality behaves the same as
-[equality](#equality-operators).
-To be considered deeply equal, collections must be of the same type, have the
-same [user tags](#user-types), and all indexes and values must be deeply equal.
+`TODO: describe all functions`
 
 Examples:
 
 ```
-1 === 1                 ;; --> true
-1 =/= 1                 ;; --> false
-1 === '1'               ;; --> false
-#[1] === #[1]           ;; --> true
-@[(:x,1),(:y,2)] =/=
-@[(:y,2),(:x,1)]        ;; --> false
+random.seed(0)
+random.next()       ;; --> :number
 ```
-
-<a name="in-operators"/>
-
-### 6.2.2. In Operators
-
-```
-func in? (v, vs)
-func in-not? (v, vs)
-```
-
-The operators `in?` and `in-not?` are functions with a special syntax to be
-used as infix operators.
-
-The operator `in?` checks if `v` is part of [collection](#collections) `vs`.
-For tuples and vectors, the values are checked.
-For dictionaries, the indexes are checked.
-
-The operator `in-not?` is the negation of `in?`.
-
-Examples:
-
-```
-10 in? [1,10]            ;; true
-20 in? #[1,10]           ;; false
-10 in? @[(1,10)]         ;; false
-```
-
-<a name="is-operators"/>
-
-### 6.2.3. Is Operators
-
-```
-func is? (v1, v2)
-func is-not? (v1, v2)
-```
-
-The operators `is?` and `is-not?` are functions with a special syntax to be
-used as infix operators.
-
-The operator `is?` checks if `v1` matches `v2` as follows:
-
-```
-ifs {
-    (v1 == v2)       -> true
-    (type(v1) == v2) -> true
-    tags(v1,v2)      -> true
-    else             -> false
-}
-```
-
-The operator `is-not?` is the negation of `is?`.
-
-Examples:
-
-```
-10 is? :number           -> true
-10 is? nil               -> false
-tags([],:x,true) is? :x  -> true
-```
-
-<a name="iterator-operations"/>
-
-### 6.2.4. Iterator Operations
-
-[Iterator loops](#iterators) in Ceu rely on the `:Iterator` template and
-`to-iter` constructor function as follows:
-
-```
-data :Iterator = [f]
-func to-iter (v, tp)       ;; --> :Iterator [f]
-```
-
-The function `to-iter` receives an iterable `v`, an optional modifier `tp`, and
-returns an iterator.
-The returned iterator is a tuple template in which the first field is a
-function that, when called, returns the next element of the original iterable
-`v`.
-The iterator function must return `nil` to signal that there are no more
-elements to traverse in the iterable.
-
-The function `to-iter` accepts the following iterables and modifiers:
-
-- Tuples:
-    - On each call, the iterator returns the next tuple element.
-    - Modifiers:
-        - `:all`: returns each index and value as a pair `[i,v]`
-        - `:idx`: returns each numeric index
-        - `:val`: returns the value on each index **(default)**
-- Vectors:
-    - On each call, the iterator returns the next vector element.
-    - Modifiers:
-        - `:all`: returns each index and value as a pair `[i,v]`
-        - `:idx`: returns each numeric index
-        - `:val`: returns the value on each index **(default)**
-- Dictionaries:
-    - On each call, the iterator returns the next dictionary element.
-    - Modifiers:
-        - `:all`: returns each key and value as a pair `[k,v]`
-        - `:key`: returns each key **(default)**
-        - `:val`: returns the value on each key
-- Functions:
-    - On each call, the iterator simply calls the original function.
-- Active Coroutine
-    - On each call, the iterator resumes the coroutine and returns its yielded
-      value. If the coroutine is terminated, it returns `nil`.
-
-```
-func to-set    (col)    ;; --> :dict
-func to-vector (col)    ;; --> :vector
-```
-
-`TODO`
-
-<!--
-- :Iterator
-data :Iterator = [f,s,tp,i]
--->
 
 <a name="syntax"/>
 
@@ -3167,27 +3471,28 @@ data :Iterator = [f,s,tp,i]
 Prog  : { Expr [`;´] }
 Block : `{´ { Expr [`;´] } `}´
 Expr  : `do´ Block                                      ;; explicit block
-      | `do´ Expr                                       ;; innocuous expression
+      | `group´ Block                                   ;; group statements
+      | `test´ Block                                    ;; test block
       | `defer´ Block                                   ;; defer statements
       | `(´ Expr `)´                                    ;; parenthesis
 
-      | `val´ ID [TAG] [`=´ [TAG] Expr]                 ;; decl constant
-      | `var´ ID [TAG] [`=´ [TAG] Expr]                 ;; decl variable
+      | `val´ (ID [TAG] | Patt) [`=´ Expr]              ;; decl immutable
+      | `var´ (ID [TAG] | Patt) [`=´ Expr]              ;; decl mutable
 
-      | `func´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block ;; decl func
-      | `coro´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block ;; decl coro
-      | `task´ [`:rec´] ID `(´ [List(ID)] [`...´] `)´ Block ;; decl task
+      | `func´ ID `(´ [List(ID [TAG])] `)´ Block        ;; decl func
+      | `coro´ ID `(´ [List(ID [TAG])] `)´ Block        ;; decl coro
+      | `task´ ID `(´ [List(ID [TAG])] `)´ Block        ;; decl task
 
       | `set´ Expr `=´ Expr                             ;; assignment
 
-      | `enum´ `{´ List(TAG [`=´ Expr]) `}´             ;; tags enum
-      | `data´ Data                                     ;; tags templates
+      | `enum´ `{´ List(TAG) `}´                        ;; tags enum
+      | `enum´ TAG `{´ List(ID) `}´
+      | `data´ Data [`{´ { Data } `}´]                  ;; tuple template
             Data : TAG `=´ `[´ List(ID [TAG]) `]´
-                    [`{´ { Data } `}´]
 
-      | `nil´ | `false´ | `true´                        ;; literals &
-      | NAT | TAG | CHR | NUM                           ;; identifiers
-      | ID | `pub´ | `...´
+      | `nil´ | `false´ | `true´                        ;; literals,
+      | TAG | NUM | CHR | NAT                           ;; identifiers,
+      | ID | `{{´ OP `}}´ | `pub´                       ;; operators
 
       | `[´ [List(Expr)] `]´                            ;; tuple
       | `#[´ [List(Expr)] `]´                           ;; vector
@@ -3196,6 +3501,11 @@ Expr  : `do´ Block                                      ;; explicit block
                     | `(´ Expr `,´ Expr `)´
       | STR                                             ;; string
       | TAG `[´ [List(Expr)] `]´                        ;; tagged tuple
+
+      | `func´ `(´ [List(ID [TAG])] `)´ Block           ;; anon function
+      | `coro´ `(´ [List(ID [TAG])] `)´ Block           ;; anon coroutine
+      | `task´ `(´ [List(ID [TAG])] `)´ Block           ;; anon task
+      | Lambda                                          ;; anon function
 
       | OP Expr                                         ;; pre ops
       | Expr OP Expr                                    ;; bin ops
@@ -3207,68 +3517,70 @@ Expr  : `do´ Block                                      ;; explicit block
       | Expr `.´ `(´ TAG `)´                            ;; cast
 
       | Expr `[´ (`=´|`+´|`-´) `]´                      ;; stack peek,push,pop
-      | Expr (`<--` | `<-` | `->` | `-->` ) Expr        ;; pipes
-      | Expr [`where´ Block | `thus´ [ID] Block]        ;; where/thus clauses
+      | Expr (`<--` | `<-` | `->` | `-->` ) Expr        ;; pipe calls
+      | Expr `where´ Block                              ;; where clause
+      | Expr `thus´ Lambda                              ;; thus clause
 
-      | `if´ Expr (Block | `=>´ Expr)                   ;; conditional
-        [`else´  (Block | `=>´ Expr)]
+      | `if´ Expr (`=>´ Expr | Block | Lambda)          ;; conditional
+        [`else´  (`=>´ Expr | Block)]
 
-      | `ifs´ `{´ {Case} [Else] `}´ ;; conditionals     ;; conditionals
-            Case :  Expr  (Block | `=>´ Expr)
-            Else : `else´ (Block | `=>´ Expr)
+      | `ifs´ `{´ {Case} [Else] `}´                     ;; conditionals
+            Case :  Expr  (`=>´ Expr | Block | Lambda)
+            Else : `else´ (`=>´ Expr | Block)
 
-      | `ifs´ Expr `{´ {Case} [Else] `}´                ;; pattern matching
-            Case :  Patt  (Block | `=>´ Expr)
-            Else : `else´ (Block | `=>´ Expr)
+      | `match´ Expr `{´ {Case} [Else] `}´              ;; pattern matching
+            Case :  Patt  (`=>´ Expr | Block | Lambda)
+            Else : `else´ (`=>´ Expr | Block)
 
-      | `loop´ [[ID [TAG]] `in´ (Range | Expr)] Block   ;; loops
-            Range : (`{´ | `}´) Expr `=>` Expr (`{´ | `}´) [`:step` [`+´|`-´] Expr]
-      | `skip´ `if´ Expr                                ;; loop jump back
-      | `break´ [`(´ Expr `)´] `if´ Expr                ;; loop escape
+      | `loop´ Block                                    ;; infinite loop
+      | `loop´ (ID [TAG] | Patt) `in´ Expr Block        ;; iterator loop
+      | `loop´ [ID] [`in´ Range] Block                  ;; numeric loop
+            Range : (`}´|`{´) Expr `=>` Expr (`}´|`{´) [`:step` [`+´|`-´] Expr]
+      | `break´ `(´ [Expr] `)´                          ;; loop break
       | `until´ Expr
       | `while´ Expr
+      | `skip´                                          ;; loop restart
 
       | `catch´ [Patt] Block                            ;; catch exception
       | `error´ `(´ Expr `)´                            ;; throw exception
-
-      | `func´ `(´ [List(ID)] `)´ Block                 ;; anon function
-      | `coro´ `(´ [List(ID)] `)´ Block                 ;; anon coroutine
-      | `task´ `(´ [List(ID)] `)´ Block                 ;; anon task
-      | `\´ `{´ [ID [TAG] `=>´]  { Expr [`;´] }`}´      ;; anon function
 
       | `status´ `(´ Expr `)´                           ;; coro/task status
 
       | `coroutine´ `(´ Expr `)´                        ;; create coro
       | `yield´ `(´ [Expr] `)´                          ;; yield from coro
-      | `resume´ Expr `(´ [Expr] `)´                    ;; resume coro
+      | `resume´ Expr `(´ List(Expr) `)´                ;; resume coro
       | `resume-yield-all´ Expr `(´ [Expr] `)´          ;; resume-yield nested coro
 
       | `spawn´ Expr `(´ [List(Expr)] `)´ [`in´ Expr]   ;; spawn task
       | `tasks´ `(´ Expr `)´                            ;; task pool
-      | `await´ Patt [`{´ Block `}´]                    ;; await event
-      | `broadcast´ `(´ Expr `)´ [`in´ Expr]            ;; broadcast event
+      | `await´ Patt [Block]                            ;; await pattern
+      | `await´ Clock                                   ;; await clock
+      | `broadcast´ `(´ [Expr] `)´ [`in´ Expr]          ;; broadcast event
       | `toggle´ Expr `(´ Expr `)´                      ;; toggle task
 
       | `spawn´ Block                                   ;; spawn nested task
-      | `every´ Patt Block                              ;; await event in loop
-      | `watching´ Patt Block                           ;; abort on event
+      | `every´ (Patt | Clock) Block                    ;; await event in loop
+      | `watching´ (Patt | Clock) Block                 ;; abort on event
       | `par´ Block { `with´ Block }                    ;; spawn tasks
       | `par-and´ Block { `with´ Block }                ;; spawn tasks, rejoin on all
       | `par-or´ Block { `with´ Block }                 ;; spawn tasks, rejoin on any
       | `toggle´ TAG Block                              ;; toggle task on/off on tag
 
-Patt : [`(´] (Cons | Oper | Full | Clock) [`)´]
-        Cons  : Expr
+Lambda : `{´ [`\´ List(ID [TAG]) `=>´] { Expr [`;´] } `}´
+
+Patt : [`(´] [ID] [TAG] [Const | Oper | Tuple] [`|´ Expr] [`)´]
+        Const : Expr
         Oper  : OP [Expr]
-        Full  : [ID] [TAG] [`,´ [Expr]]
-        Clock : [TAG `:h´] [TAG `:min´] [TAG `:s´] [TAG `:ms´]
+        Tuple : `[´ List(Patt) } `]´
+
+Clock : `<´ { Expr [`:h´|`:min´|`:s´|`:ms´] } `>´
 
 List(x) : x { `,´ x }                                   ;; comma-separated list
 
 ID    : [`^´|`^^´] [A-Za-z_][A-Za-z0-9_\'\?\!\-]*       ;; identifier variable (`^´ upval)
       | `{´ OP `}´                                      ;; identifier operation
 TAG   : :[A-Za-z0-9\.\-]+                               ;; identifier tag
-OP    : [+-*/><=!|&~%#@]+                               ;; identifier operation
+OP    : [+-*/%><=|&]+                                   ;; identifier operation
       | `not´ | `or´ | `and´ | `is?´ | `is-not?´ | `in?´ | `in-not?´
 CHR   : '.' | '\\.'                                     ;; literal character
 NUM   : [0-9][0-9A-Za-z\.]*                             ;; literal number

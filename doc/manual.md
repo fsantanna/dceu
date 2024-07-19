@@ -63,7 +63,7 @@
         - `assert` `copy` `create-resume` `next`
         - `print` `println` `sup?` `tag` `tuple` `type`
         - `dynamic?` `static?` `string?`
-    * Type Conversion Library
+    * Type Conversions Library
         - `to.bool` `to.char` `to.dict` `to.iter` `to.number`
         - `to.pointer` `to.string` `to.tag` `to.tuple` `to.vector`
     * Math Library
@@ -3019,7 +3019,7 @@ broadcast(:E [3])
 
 <!-- ---------------------------------------------------------------------- -->
 
-# STANDARD LIBRARY
+# STANDARD LIBRARIES
 
 Ceu provides many libraries with predefined functions.
 
@@ -3120,7 +3120,7 @@ tag(x)                  ;; --> :X
 type(10)                ;; --> :number
 ```
 
-### Type Conversions
+## Type Conversions Library
 
 The type conversion functions `to.*` receive a value `v` of any type and try to
 convert it to a value of the specified type:

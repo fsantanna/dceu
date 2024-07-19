@@ -7,7 +7,7 @@
 #   - install.sh
 #   - build.sh
 # 2. Build:
-#   - XCEU = true
+#   - CEU = 99
 #   - Build artifacts...
 #   - ./build.sh
 # 3. Upload:
@@ -16,7 +16,7 @@
 #   - title  = <version>
 #   - Attach = { .zip, install.sh }
 
-VER=v0.3.1
+VER=v0.4.0
 DIR=/tmp/ceu-build/
 
 rm -Rf $DIR

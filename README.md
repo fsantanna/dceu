@@ -1,4 +1,4 @@
-# The Programming Language Ceu (v0.3)
+# The Programming Language Ceu (v0.4)
 
 Ceu is a [synchronous programming language][1] that reconciles *[Structured
 Concurrency][2]* with *[Event-Driven Programming][3]* to extend classical
@@ -27,7 +27,7 @@ Follows an extended list of functionalities in Ceu:
 - Stackless coroutines (the basis of tasks)
 - Restricted closures (upvalues must be final)
 - Deferred statements (for finalization)
-- Exception handling (throw & catch)
+- Exception handling (error & catch)
 - Hierarchical Tags and Tuple Templates (for data description)
 - Seamless integration with C (source-level compatibility)
 
@@ -36,12 +36,12 @@ Both the compiler and runtime can become very slow.
 
 # Hello World!
 
-Displays `Hello World!` every second, until 10 seconds elapse:
+During 10 seconds, displays `Hello World!` every second:
 
 ```
 spawn {
-    watching :10:s {
-        every :1:s {
+    watching <10:s> {
+        every <1:s> {
             println("Hello World!")
         }
     }
@@ -63,8 +63,8 @@ sudo apt install gcc default-jre
 2. Install `ceu`:
 
 ```
-wget https://github.com/fsantanna/dceu/releases/download/v0.3.1/install-v0.3.1.sh
-sh install-v0.3.1.sh ./ceu/
+wget https://github.com/fsantanna/dceu/releases/download/v0.4.0/install-v0.4.0.sh
+sh install-v0.4.0.sh ./ceu/
 ```
 
 - You may want to
