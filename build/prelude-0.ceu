@@ -80,7 +80,11 @@ val {{-}} = func (v1, v2) {
                 if (type(v1) == :number) && (type(v2) == :tag) {
                     `:tag ($v1.Number - $v2.Tag)`
                 } else {
-                    error(:error)
+                    if (type(v1) == :tag) && (type(v2) == :tag) {
+                        `:number ($v1.Tag - $v2.Tag)`
+                    } else {
+                        error(:error)
+                    }
                 }
             }
         }

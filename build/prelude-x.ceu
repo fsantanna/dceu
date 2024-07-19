@@ -48,6 +48,7 @@ val [{{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}] = do {
             (type(v1) == :number) and (v2 == nil)           => `:number (- $v1.Number)`
             (type(v1) == :number) and (type(v2) == :number) => `:number ($v1.Number - $v2.Number)`
             (type(v1) == :tag)    and (type(v2) == :number) => `:tag    ($v1.Tag    - $v2.Number)`
+            (type(v1) == :tag)    and (type(v2) == :tag)    => `:number ($v1.Tag    - $v2.Tag)`
             (type(v1) == :number) and (type(v2) == :tag)    => `:tag    ($v1.Number - $v2.Tag)`
             else                                            => error(:error)
         }

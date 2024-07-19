@@ -4356,6 +4356,7 @@ class Exec_01 {
             println(1 + :x)
             println(:x <= :y)
             println(:x > :y)
+            println(:y - :x)
             println(:x + :y)
         """, true)
         assert(out == " |  build/prelude-0.ceu : (lin 61, col 17) : error(:error)\n" +
@@ -4363,7 +4364,8 @@ class Exec_01 {
                 ":x\n" +
                 ":y\n" +
                 "true\n" +
-                "false\n") { out }
+                "false\n" +
+                "1\n") { out }
     }
 
     // CLOSURE / ESCAPE / FUNC / UPVALS
