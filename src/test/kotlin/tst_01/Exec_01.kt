@@ -4346,6 +4346,26 @@ class Exec_01 {
         assert(out == ":X []\n") { out }
     }
 
+    // TAGS / OPERATIONS
+
+    @Test
+    fun gh_01_tags() {
+        val out = test("""
+            :x :y
+            println(:y - 1)
+            println(1 + :x)
+            println(:x <= :y)
+            println(:x > :y)
+            println(:x + :y)
+        """, true)
+        assert(out == " |  build/prelude-0.ceu : (lin 61, col 17) : error(:error)\n" +
+                " v  error : :error\n" +
+                ":x\n" +
+                ":y\n" +
+                "true\n" +
+                "false\n") { out }
+    }
+
     // CLOSURE / ESCAPE / FUNC / UPVALS
 
     @Test

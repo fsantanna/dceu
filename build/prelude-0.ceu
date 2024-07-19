@@ -49,10 +49,18 @@ val {{||}} = func (v1, v2) {
 ;; ARITHMETIC
 
 val {{+}} = func (v1, v2) {
-    if (type(v1) /= :number) || (type(v2) /= :number) {
-        error(:error)
-    } else {
+    if (type(v1) == :number) && (type(v2) == :number) {
         `:number ($v1.Number + $v2.Number)`
+    } else {
+        if (type(v1) == :tag) && (type(v2) == :number) {
+            `:tag ($v1.Tag + $v2.Number)`
+        } else {
+            if (type(v1) == :number) && (type(v2) == :tag) {
+                `:tag ($v1.Number + $v2.Tag)`
+            } else {
+                error(:error)
+            }
+        }
     }
 }
 
@@ -63,10 +71,18 @@ val {{-}} = func (v1, v2) {
     if (t1 == :number) && (t2 == :nil) {
         `:number (- $v1.Number)`
     } else {
-        if (t1 /= :number) || (t2 /= :number) {
-            error(:error)
-        } else {
+        if (type(v1) == :number) && (type(v2) == :number) {
             `:number ($v1.Number - $v2.Number)`
+        } else {
+            if (type(v1) == :tag) && (type(v2) == :number) {
+                `:tag ($v1.Tag - $v2.Number)`
+            } else {
+                if (type(v1) == :number) && (type(v2) == :tag) {
+                    `:tag ($v1.Number - $v2.Tag)`
+                } else {
+                    error(:error)
+                }
+            }
         }
     }
 }
@@ -115,37 +131,53 @@ val {{%}} = func (v1, v2) {
 
 val {{>=}} = func (v1,v2) {
     val t1 = type(v1)
-    if (t1 /= type(v2)) || (t1 /= :number) {
-        error(:error)
-    } else {
+    if (t1 == :number) || (t1 == :number) {
         `:bool ($v1.Number >= $v2.Number)`
+    } else {
+        if (t1 == :tag) || (t1 == :tag) {
+            `:bool ($v1.Tag >= $v2.Tag)`
+        } else {
+            error(:error)
+        }
     }
 }
 
 val {{>}} = func (v1,v2) {
     val t1 = type(v1)
-    if (t1 /= type(v2)) || (t1 /= :number) {
-        error(:error)
-    } else {
+    if (t1 == :number) || (t1 == :number) {
         `:bool ($v1.Number > $v2.Number)`
+    } else {
+        if (t1 == :tag) || (t1 == :tag) {
+            `:bool ($v1.Tag > $v2.Tag)`
+        } else {
+            error(:error)
+        }
     }
 }
 
 val {{<=}} = func (v1,v2) {
     val t1 = type(v1)
-    if (t1 /= type(v2)) || (t1 /= :number) {
-        error(:error)
-    } else {
+    if (t1 == :number) || (t1 == :number) {
         `:bool ($v1.Number <= $v2.Number)`
+    } else {
+        if (t1 == :tag) || (t1 == :tag) {
+            `:bool ($v1.Tag <= $v2.Tag)`
+        } else {
+            error(:error)
+        }
     }
 }
 
 val {{<}} = func (v1,v2) {
     val t1 = type(v1)
-    if (t1 /= type(v2)) || (t1 /= :number) {
-        error(:error)
-    } else {
+    if (t1 == :number) || (t1 == :number) {
         `:bool ($v1.Number < $v2.Number)`
+    } else {
+        if (t1 == :tag) || (t1 == :tag) {
+            `:bool ($v1.Tag < $v2.Tag)`
+        } else {
+            error(:error)
+        }
     }
 }
 

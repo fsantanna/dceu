@@ -146,7 +146,7 @@ fun Coder.main (tags: Tags): String {
     #if CEU < 2
             char* Error;
     #endif
-            unsigned int Tag;
+            unsigned long Tag;
             int Bool;
             char Char;
             double Number;

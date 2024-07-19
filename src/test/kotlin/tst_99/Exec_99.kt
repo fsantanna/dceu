@@ -1395,6 +1395,24 @@ class Exec_99 {
         """)
         assert(out == "[10]\n") { out }
     }
+    @Test
+    fun hi_08_tags_ops() {
+        val out = test("""
+            :x :y
+            println(:y - 1)
+            println(1 + :x)
+            println(:x <= :y)
+            println(:x > :y)
+            println(:x + :y)
+        """, true)
+        assert(out == ":x\n" +
+                ":y\n" +
+                "true\n" +
+                "false\n" +
+                " |  anon : (lin 7, col 24) : {{+}}(:x,:y)\n" +
+                " |  build/prelude-x.ceu : (lin 8, col 17) : error(:error)\n" +
+                " v  error : :error\n") { out }
+    }
 
     // DATA / HIER / TEMPLATE
 
