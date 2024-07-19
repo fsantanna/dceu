@@ -3,6 +3,10 @@ to.number(:x) -> println ;; --> 100
 to.number(:y) -> println ;; --> 101
 to.number(:z) -> println ;; --> 102
 
+println(:z - :x)        ;; --> 2
+println(:x + 1)         ;; --> :y
+println(:y < :z)        ;; --> true
+
 enum :Key {
     Left,               ;; declares :Key-Left (200)
     Up,                 ;; declares :Key-Up   (201)

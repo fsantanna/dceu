@@ -1322,16 +1322,17 @@ with the given tag, separated by a dash (`-`).
 
 Enumerations can be used to interface with external libraries that use
 constants to represent a group of related values (e.g., key symbols).
-When [converted to numbers](#TODO-to.number), the tags in enumerations are
-guaranteed to form am incrementing sequence.
+Tags in enumerations are guaranteed to form an incrementing sequence of
+numbers, and are supported in [arithmetic](#arithmetic-operators) and
+[relational](#relational-operators) operations.
 
 Examples:
 
 ```
 enum { :x, :y, :z }     ;; declares :x, :y, :z in sequence
-to.number(:x)           ;; --> 100
-to.number(:y)           ;; --> 101
-to.number(:z)           ;; --> 102
+println(:z - :x)        ;; --> 2
+println(:x + 1)         ;; --> :y
+println(:y < :z)        ;; --> true
 ```
 
 ```
@@ -1738,6 +1739,8 @@ The operators `>`, `>=`, `<=` and `<` perform the standard relational
 operations of *greater than*, *greater or equal than*, *less than*, and
 *less or equal then*, respectively.
 
+`TODO: tags`
+
 Examples:
 
 ```
@@ -1765,6 +1768,7 @@ The operator `%` performs the *remainder* operation.
 The operator `-` is also used as the unary minus when it prefixes an
 expression.
 
+`TODO: tags`
 `TODO: *-*, //`
 
 Examples:

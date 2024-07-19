@@ -7,6 +7,7 @@ v0.4 (jul'24)
         - `group`: to group commands without a block
         - `test`: for tests
         - `match`: for pattern matching
+    - tags: arithmetic and relational operations
 - Changes
     - lambda syntax: `\{...}` -> `{\...}`
     - clock syntax: `:1:ms` -> `<1:ms>`
