@@ -91,10 +91,10 @@ The best way to try Ceu is through `pico-ceu`, a graphical library based on
     - Run with `pico-ceu` in `ceu/pico/tst/`:
         - `ceu --lib=pico click-drag-cancel-x.ceu`
 - Comparison with JS generators:
-    - https://github.com/fsantanna/dceu/blob/main/src/test/kotlin/xceu/TXJS.kt
+    - https://github.com/fsantanna/dceu/blob/main/src/test/kotlin/tst_99/JS_99.kt
 - A simple but complete 2D game in Ceu:
     - https://github.com/fsantanna/pico-ceu-rocks
-    - Clone in `ceu/pico/`, cd to it, and run with `pico-ceu`:
+    - Clone in `ceu/pico/`, `cd` to it, and run with `pico-ceu`:
         - `ceu --lib=pico main.ceu`
 - Academic publications:
     - http://ceu-lang.org/chico/#ceu
