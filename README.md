@@ -67,14 +67,12 @@ wget https://github.com/fsantanna/dceu/releases/download/v0.4.0/install-v0.4.0.s
 sh install-v0.4.0.sh ./ceu/
 ```
 
-- You may want to
-    - add `./ceu/` to your `PATH`
-    - modify `./ceu/` to another destination
+- We assume that you add `./ceu/` (the full path) to your environment `$PATH`.
 
 3. Execute `ceu`:
 
 ```
-./ceu/ceu ./ceu/hello-world.ceu
+ceu ./ceu/hello-world.ceu
 hello
 world
 ```
@@ -91,13 +89,13 @@ The best way to try Ceu is through `pico-ceu`, a graphical library based on
 - A toy Problem: Drag, Click, or Cancel
     - https://fsantanna.github.io/toy.html
     - Run with `pico-ceu` in `ceu/pico/tst/`:
-        - `../../ceu --lib=pico click-drag-cancel-x.ceu`
+        - `ceu --lib=pico click-drag-cancel-x.ceu`
 - Comparison with JS generators:
     - https://github.com/fsantanna/dceu/blob/main/src/test/kotlin/xceu/TXJS.kt
 - A simple but complete 2D game in Ceu:
     - https://github.com/fsantanna/pico-ceu-rocks
     - Clone in `ceu/pico/`, cd to it, and run with `pico-ceu`:
-        - `../../ceu --lib=pico main.ceu`
+        - `ceu --lib=pico main.ceu`
 - Academic publications:
     - http://ceu-lang.org/chico/#ceu
 
