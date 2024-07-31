@@ -464,7 +464,7 @@ val [{{<++}}, {{++}}] = do {
 ;; RANDOM: seed, next
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-data :Random = [seed,next]
+data :Random = [seed,next,bool,int]
 
 val random :Random = do {
     func x-seed (n) {
@@ -477,7 +477,17 @@ val random :Random = do {
     func x-next () {
         `:number rand()`
     }
-    [x-seed, x-next]
+    func x-bool () {
+        (x-next() % 2) == 0
+    }
+    func x-int (x, y) {
+        ifs {
+            (x==nil) and (y==nil) => x-next()
+            (y == nil)            => x-next() % x               ;; {0,y{
+            else                  => x + (x-next() % ((y+1)-x)) ;; {x,y}
+        }
+    }
+    [x-seed, x-next, x-bool, x-int]
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
