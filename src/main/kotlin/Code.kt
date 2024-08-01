@@ -317,7 +317,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             continue;   // do not execute next statement, instead free up block
                         }
                     """ }}
-                    if (CEU_ERROR!=CEU_ERROR_NONE && !_ceu_sup_(CEU_TAG_${this.tag.str.idc()}, CEU_ERROR) {
+                    if (CEU_ERROR!=CEU_ERROR_NONE && !_ceu_sup_(CEU_TAG_${this.tag.str.idc()}, CEU_ERROR)) {
                         continue; // catch error, continue after catch block
                     }
                 }

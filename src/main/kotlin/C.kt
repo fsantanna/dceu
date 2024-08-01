@@ -331,9 +331,10 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_acc = { CEU_VALUE_NIL };
     int CEU_BREAK = 0;
     
-    #if CEU >= 2
     #define CEU_ERROR_NONE -1
     int CEU_ERROR = CEU_ERROR_NONE;
+
+    #if CEU >= 2
     CEU_Value CEU_ERROR_STACK;
     #endif
 
@@ -434,8 +435,8 @@ fun Coder.main (tags: Tags): String {
     #if CEU <= 1
     
     #define CEU_ERROR_CHK_ACC(cmd,pre) {        \
-        if (CEU_ERROR != CEU_ERROR_NONE) {  \
-            fprintf(stderr, " |  %s\n v  error : %s\n", pre, ceu_tag_to_pointer(CEU_ERROR)); \
+        if (CEU_ERROR != CEU_ERROR_NONE) {      \
+            fprintf(stderr, " |  %s\n v  error : %s\n", pre, (char*)ceu_acc.Pointer); \
             exit(0);                            \
         }                                       \
     }
@@ -451,7 +452,10 @@ fun Coder.main (tags: Tags): String {
         assert(X->n == 1);
         CEU_Value tag = X->args[0];
         assert(tag.type == CEU_VALUE_TAG);
-        CEU_ACC(((CEU_Value) { CEU_VALUE_NIL });
+        CEU_ERROR = tag.Tag;
+        CEU_ACC (
+            ((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=ceu_tag_to_pointer(tag.Tag)} })
+        );
     }
 
     #else
@@ -856,20 +860,16 @@ fun Coder.main (tags: Tags): String {
         ceu_gc_dec_val(v);
     }
     
-    int _ceu_sup_ (CEU_Value sup, CEU_Value sub) {
-        if (sup.type!=CEU_VALUE_TAG || sub.type!=CEU_VALUE_TAG) {
-            return 0;
-        }
-        
+    int _ceu_sup_ (uint32_t sup, uint32_t sub) {
         //printf("sup=0x%08X vs sub=0x%08X\n", sup->Tag, sub->Tag);
-        int sup0 = sup.Tag & 0x000000FF;
-        int sup1 = sup.Tag & 0x0000FF00;
-        int sup2 = sup.Tag & 0x00FF0000;
-        int sup3 = sup.Tag & 0xFF000000;
-        int sub0 = sub.Tag & 0x000000FF;
-        int sub1 = sub.Tag & 0x0000FF00;
-        int sub2 = sub.Tag & 0x00FF0000;
-        int sub3 = sub.Tag & 0xFF000000;
+        int sup0 = sup & 0x000000FF;
+        int sup1 = sup & 0x0000FF00;
+        int sup2 = sup & 0x00FF0000;
+        int sup3 = sup & 0xFF000000;
+        int sub0 = sub & 0x000000FF;
+        int sub1 = sub & 0x0000FF00;
+        int sub2 = sub & 0x00FF0000;
+        int sub3 = sub & 0xFF000000;
 
         return 
             (sup0 == sub0) && ((sup1 == 0) || (
@@ -882,7 +882,17 @@ fun Coder.main (tags: Tags): String {
     }
     void ceu_pro_sup_question_ (CEUX* X) {
         assert(X->n == 2);
-        CEU_ACC(((CEU_Value) { CEU_VALUE_BOOL, {.Bool=_ceu_sup_(X->args[0],X->args[1])} }));
+        CEU_Value sup = X->args[0];
+        CEU_Value sub = X->args[1];
+        if (sup.type!=CEU_VALUE_TAG || sub.type!=CEU_VALUE_TAG) {
+            CEU_ACC (
+                ((CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} })
+            );
+        } else {
+            CEU_ACC (
+                ((CEU_Value) { CEU_VALUE_BOOL, {.Bool=_ceu_sup_(X->args[0].Tag,X->args[1].Tag)} })
+            );
+        }
         ceu_gc_dec_args(X->n, X->args);
     }    
     """

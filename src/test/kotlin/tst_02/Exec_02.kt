@@ -95,7 +95,7 @@ class Exec_02 {
     @Test
     fun jj_00_0_err() {
         val out = test("""
-            catch (it :T| it[0]) {
+            catch :x ;;;(it :T| it[0]);;; {
                 nil
             }
             println(:ok)
@@ -106,7 +106,7 @@ class Exec_02 {
     @Test
     fun jj_00_catch_err() {
         val out = test("""
-            val err = catch ( it |  set it=nil ) {
+            val err = catch :x ;;;( it |  set it=nil );;; {
                 error(:x)
             }
         """)
