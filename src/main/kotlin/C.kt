@@ -86,13 +86,7 @@ fun Coder.main (tags: Tags): String {
         CEU_VALUE_CHAR,
         CEU_VALUE_NUMBER,
         CEU_VALUE_POINTER,
-    #if CEU < 2
-        CEU_VALUE_ERROR,
-    #endif
         CEU_VALUE_DYNAMIC,    // all below are dynamic
-    #if CEU >= 2
-        CEU_VALUE_ERROR,
-    #endif
         CEU_VALUE_CLO_FUNC,
         #if CEU >= 3
         CEU_VALUE_CLO_CORO,
@@ -336,6 +330,12 @@ fun Coder.main (tags: Tags): String {
         return """
     CEU_Value ceu_acc = { CEU_VALUE_NIL };
     int CEU_BREAK = 0;
+    
+    #if CEU >= 2
+    #define CEU_ERROR_NONE -1
+    int CEU_ERROR = CEU_ERROR_NONE;
+    CEU_Value CEU_ERROR_STACK;
+    #endif
 
     #if CEU >= 4
     uint32_t CEU_TIME = 0;
@@ -375,12 +375,6 @@ fun Coder.main (tags: Tags): String {
             //printf("    next  = %p\n", v.Dyn->Any.hld.next);
             printf("    ----\n");
             switch (v.type) {
-        #if CEU >= 2
-                case CEU_VALUE_ERROR:
-                    printf("    val = %p\n", v.Dyn->Error.val);
-                    printf("    vec = %p\n", v.Dyn->Error.vec);
-                    break;
-        #endif
         #if CEU >= 4
                 case CEU_VALUE_EXE_TASK:
                     printf("    status = %d\n", v.Dyn->Exe_Task.status);
@@ -432,17 +426,20 @@ fun Coder.main (tags: Tags): String {
 
     // EXIT / ERROR / ASSERT
     val c_error = """
+    #define CEU_ERROR_PTR(ptr) ({   \
+        CEU_ERROR = CEU_TAG_nil;    \
+        (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=ptr} }; \
+    })
+
     #if CEU <= 1
     
     #define CEU_ERROR_CHK_ACC(cmd,pre) {        \
-        if (ceu_acc.type == CEU_VALUE_ERROR) {  \
-            fprintf(stderr, " |  %s\n v  error : %s\n", pre, ceu_acc.Error); \
+        if (CEU_ERROR != CEU_ERROR_NONE) {  \
+            fprintf(stderr, " |  %s\n v  error : %s\n", pre, ceu_tag_to_pointer(CEU_ERROR)); \
             exit(0);                            \
         }                                       \
     }
     
-    #define CEU_ERROR_PTR(ptr) ((CEU_Value) { CEU_VALUE_ERROR, {.Error=ptr} })
-
     #define CEU_ERROR_CHK_PTR(cmd,ptr,pre) {    \
         if ((ptr) != NULL) {                    \
             fprintf(stderr, " |  %s\n v  error : %s\n", pre, ptr); \
@@ -454,10 +451,7 @@ fun Coder.main (tags: Tags): String {
         assert(X->n == 1);
         CEU_Value tag = X->args[0];
         assert(tag.type == CEU_VALUE_TAG);
-        CEU_ACC (
-            ((CEU_Value) { CEU_VALUE_ERROR, {.Error=ceu_tag_to_pointer(tag.Tag)} })
-        );
-        //ceu_gc_dec_val(tag);
+        CEU_ACC(((CEU_Value) { CEU_VALUE_NIL });
     }
 
     #else
@@ -466,7 +460,7 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_create_vector (void);
 
     #define CEU_ERROR_CHK_ACC(cmd,pre) {            \
-        if (ceu_acc.type == CEU_VALUE_ERROR) {      \
+        if (CEU_ERROR != CEU_ERROR_NONE) {          \
             if (pre != NULL) { /* opt stack msg */  \
                 ceu_vector_set (                    \
                     ceu_acc.Dyn->Error.vec,         \
@@ -478,41 +472,24 @@ fun Coder.main (tags: Tags): String {
         }                                           \
     }
     
-    #define CEU_ERROR_PTR(ptr) ceu_create_error(ceu_pointer_to_string(ptr))
-    
-    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre) {    \
-        if ((ptr) != NULL) {                    \
-            CEU_ACC (                           \
-                ceu_create_error(ceu_pointer_to_string(ptr)) \
-            );                                  \
-            ceu_vector_set (                    \
-                ceu_acc.Dyn->Error.vec,         \
-                ceu_acc.Dyn->Error.vec->its,    \
-                ceu_pointer_to_string(pre)      \
-            );                                  \
-            cmd;                                \
-        }                                       \
-    }
-    
-    CEU_Value ceu_create_error (CEU_Value err) {
-        CEU_Error* ret = malloc(sizeof(CEU_Error));
-        CEU_Value* val = malloc(sizeof(CEU_Value));
-        assert(ret!=NULL && val!=NULL);
-        *val = err;
-        CEU_Value vec = ceu_create_vector();
-        ceu_gc_inc_val(err);
-        ceu_gc_inc_val(vec);
-        *ret = (CEU_Error) {
-            CEU_VALUE_ERROR, 0, (CEU_Value) { CEU_VALUE_NIL },
-            val, &vec.Dyn->Vector
-        };
-        return (CEU_Value) { CEU_VALUE_ERROR, {.Dyn=(CEU_Dyn*)ret} };
+    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre) {            \
+        if ((ptr) != NULL) {                            \
+            CEU_ACC(CEU_ERROR_PTR(ptr));                \
+            ceu_vector_set (                            \
+                CEU_ERROR_STACK.Dyn->Error.vec,         \
+                CEU_ERROR_STACK.Dyn->Error.vec->its,    \
+                ceu_pointer_to_string(pre)              \
+            );                                          \
+            cmd;                                        \
+        }                                               \
     }
     
     void ceu_pro_error (CEUX* X) {
-        assert(X->n <= 1);
+        assert(X->n >= 1);
+        CEU_Value tag = X->args[0];
+        assert(tag.type == CEU_VALUE_TAG);
         CEU_ACC (
-            ceu_create_error((X->n == 1) ? X->args[0] : ((CEU_Value) { CEU_VALUE_NIL }));
+            (X->n >= 2) ? X->args[1] : (CEU_Value) { CEU_VALUE_NIL };
         );
         ceu_gc_dec_args(X->n, X->args);
     }
@@ -599,13 +576,6 @@ fun Coder.main (tags: Tags): String {
 
     void ceu_gc_free (CEU_Dyn* dyn) {
         switch (dyn->Any.type) {
-#if CEU >= 2
-            case CEU_VALUE_ERROR:
-                ceu_gc_dec_dyn((CEU_Dyn*)dyn->Error.vec);
-                ceu_gc_dec_val(*(dyn->Error.val));
-                free(dyn->Error.val);
-                break;
-#endif
             case CEU_VALUE_CLO_FUNC:
 #if CEU >= 3
             case CEU_VALUE_CLO_CORO:
@@ -626,7 +596,7 @@ fun Coder.main (tags: Tags): String {
             case CEU_VALUE_VECTOR:
                 for (int i=0; i<dyn->Vector.its; i++) {
                     CEU_Value ret = ceu_vector_get(&dyn->Vector, i);
-                    assert(ret.type != CEU_VALUE_ERROR);
+                    assert(CEU_ERROR == CEU_ERROR_NONE);
                     ceu_gc_dec_val(ret);
                 }
                 free(dyn->Vector.buf);
@@ -934,7 +904,6 @@ fun Coder.main (tags: Tags): String {
     int ceu_type_to_size (int type) {
         switch (type) {
             case CEU_VALUE_NIL:
-            case CEU_VALUE_ERROR:
                 return 0;
             case CEU_VALUE_TAG:
                 return ceu_sizeof(CEU_Value, Tag);
@@ -965,7 +934,7 @@ fun Coder.main (tags: Tags): String {
         if (v.type == CEU_VALUE_NIL) {           // pop
             assert(i == vec->its-1);
             CEU_Value ret = ceu_vector_get(vec, i);
-            assert(ret.type != CEU_VALUE_ERROR);
+            assert(CEU_ERROR == CEU_ERROR_NONE);
             ceu_gc_dec_val(ret);
             vec->its--;
         } else {
@@ -986,7 +955,7 @@ fun Coder.main (tags: Tags): String {
                 vec->buf[sz*vec->its] = '\0';
             } else {                            // set
                 CEU_Value ret = ceu_vector_get(vec, i);
-                assert(ret.type != CEU_VALUE_ERROR);
+                assert(CEU_ERROR == CEU_ERROR_NONE);
                 ceu_gc_inc_val(v);
                 ceu_gc_dec_val(ret);
                 assert(i < vec->its);
@@ -1002,7 +971,7 @@ fun Coder.main (tags: Tags): String {
         for (int i=0; i<col->max; i++) {
             CEU_Value cur = (*col->buf)[i][0];
             CEU_Value ret = _ceu_equals_equals_(key, cur);
-            assert(ret.type != CEU_VALUE_ERROR);
+            assert(CEU_ERROR == CEU_ERROR_NONE);
             if (ret.Bool) {
                 *idx = i;
                 return 1;
@@ -1137,7 +1106,7 @@ fun Coder.main (tags: Tags): String {
                 ret = (CEU_Value) { CEU_VALUE_NIL };
                 for (int i=0; i<dict.Dyn->Dict.max-1; i++) {     // -1: last element has no next
                     CEU_Value ok = _ceu_equals_equals_(key, (*dict.Dyn->Dict.buf)[i][0]);
-                    assert(ok.type != CEU_VALUE_ERROR);
+                    assert(CEU_ERROR == CEU_ERROR_NONE);
                     if (ok.Bool) {
                         ret = (*dict.Dyn->Dict.buf)[i+1][0];
                         break;
@@ -1372,9 +1341,6 @@ fun Coder.main (tags: Tags): String {
             case CEU_VALUE_NIL:
                 printf("nil");
                 break;
-            case CEU_VALUE_ERROR:
-                printf("error: %s", "TODO");
-                break;
             case CEU_VALUE_TAG:
                 printf("%s", ceu_tag_to_pointer(v.Tag));
                 break;
@@ -1414,7 +1380,7 @@ fun Coder.main (tags: Tags): String {
                             printf(",");
                         }
                         CEU_Value ret = ceu_vector_get(&v.Dyn->Vector, i);
-                        assert(ret.type != CEU_VALUE_ERROR);
+                        assert(CEU_ERROR == CEU_ERROR_NONE);
                         ceu_print1(ret);
                     }                    
                     printf("]");
@@ -1716,7 +1682,7 @@ fun Coder.main (tags: Tags): String {
                         args
                     };
                     exe->clo->proto(&ceux);
-                    assert(ceu_acc.type!=CEU_VALUE_ERROR && "TODO: error in abort");
+                    assert(CEU_ERROR==CEU_ERROR_NONE && "TODO: error in abort");
 
                     #if 0
                     // TODO - fake S/X - should propagate up to calling stack
@@ -1839,7 +1805,7 @@ fun Coder.main (tags: Tags): String {
                 ceu_bcast_dyn(dn, act, now, evt);
                 CEU_Dyn* nxt = ceu_task_get(CEU_LNKS(dn)->sd.nxt);
                 ceu_gc_dec_dyn(dn); // TODO: could affect nxt?
-                if (ceu_acc.type == CEU_VALUE_ERROR) {
+                if (CEU_ERROR != CEU_ERROR_NONE) {
                     break;
                 }
                 dn = nxt;
@@ -1871,7 +1837,7 @@ fun Coder.main (tags: Tags): String {
                 // do nothing
             } else if (tsk == &CEU_GLOBAL_TASK) {
                 // do nothing
-            } else if (ceu_acc.type == CEU_VALUE_ERROR) {
+            } else if (CEU_ERROR != CEU_ERROR_NONE) {
                 // even if error is caught, should not awake from past event
                 CEUX ceux = {
                     tsk->clo,
@@ -2015,6 +1981,11 @@ fun Coder.main (tags: Tags): String {
     int main (int ceu_argc, char** ceu_argv) {
         assert(CEU_TAG_nil == CEU_VALUE_NIL);
         
+    #if CEU >= 2
+        CEU_ERROR_STACK = ceu_create_vector();
+        ceu_gc_inc_val(CEU_ERROR_STACK);
+    #endif
+
     #if CEU >= 4
         CEUX _ceux_ = {
             NULL, {NULL}, CEU_ACTION_INVALID, NULL, 0, NULL
@@ -2028,7 +1999,7 @@ fun Coder.main (tags: Tags): String {
 
     #if CEU >= 2
         // uncaught throw
-        if (ceu_acc.type == CEU_VALUE_ERROR) {
+        if (CEU_ERROR != CEU_ERROR_NONE) {
             CEU_Vector* vec = ceu_acc.Dyn->Error.vec;
             CEU_Value   val = *(ceu_acc.Dyn->Error.val);
             for (int i=vec->its-1; i>=0; i--) {
@@ -2044,6 +2015,7 @@ fun Coder.main (tags: Tags): String {
             ceu_print1(val);
             puts("");
         }
+        ceu_gc_dec_val(CEU_ERROR_STACK);
     #endif
         
         CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));

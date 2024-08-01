@@ -27,8 +27,6 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
             is Expr.Skip   -> true
             is Expr.Loop   -> this.blk.coexists()
 
-            is Expr.Catch  -> this.cnd.coexists()
-
             is Expr.Yield  -> this.e.coexists()
             is Expr.Resume -> this.co.coexists() || this.args.any { it.coexists() }
 
@@ -45,7 +43,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
             is Expr.Call   -> this.clo.coexists() || this.args.any { it.coexists() }
 
             is Expr.Proto, is Expr.Do  -> false
-            is Expr.Data,   is Expr.Defer, is Expr.Delay -> false
+            is Expr.Data, is Expr.Catch, is Expr.Defer, is Expr.Delay -> false
             is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> false
         }
     }
@@ -110,12 +108,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
             is Expr.Break -> this.e.cond { it.mem() }
             is Expr.Skip -> ""
 
-            is Expr.Catch -> """
-                $union { // CATCH
-                    ${this.cnd.mem()}
-                    ${this.blk.mem()}
-                };
-            """
+            is Expr.Catch -> this.blk.mem()
             is Expr.Defer -> this.blk.mem()
 
             is Expr.Yield -> this.e.mem()

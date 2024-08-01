@@ -751,24 +751,14 @@ class Parser (lexer_: Lexer)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val pat1 = this.patt("it")
-                val pat2 = if (CEU < 99) {
-                    pat1.code1("`:ceu *(ceu_acc.Dyn->Error.val)`")
-                } else {
-                    pat1.code3("`:ceu *(ceu_acc.Dyn->Error.val)`","true")
-
+                val par = this.acceptFix("(")
+                this.acceptEnu_err("Tag")
+                val tag = this.tk0 as Tk.Tag
+                if (par) {
+                    this.acceptFix_err(")")
                 }
-                val pat3 = this.nest(pat2) as Expr.Do
                 val blk = this.block()
-                Expr.Catch(tk0, pat3, blk)
-            }
-            (CEU>=2 && this.acceptFix("catch'")) -> {
-                val tk0 = this.tk0 as Tk.Fix
-                this.acceptFix_err("(")
-                val cnd = this.expr() as Expr.Do
-                this.acceptFix_err(")")
-                val blk = this.block()
-                Expr.Catch(tk0, cnd, blk)
+                Expr.Catch(tk0, tag, blk)
             }
             (CEU>=2 && this.acceptFix("defer")) -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 

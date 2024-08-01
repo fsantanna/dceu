@@ -175,12 +175,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
             is Expr.Data   -> {}
 
-            is Expr.Catch  -> {
-                //defer_catch_spawn_tasks.add(this.blk)
-                //defer_catch_spawn_tasks.add(this.cnd)
-                this.cnd.traverse()
-                this.blk.traverse()
-            }
+            is Expr.Catch  -> this.blk.traverse()
             is Expr.Defer  -> {
                 val f = ups.first(this) { it is Expr.Proto && it.tk.str=="func" }
                 if (f != null) {
@@ -198,12 +193,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 when {
                     ups.any(this) { defer -> (defer is Expr.Defer) }
                         -> err(this.tk, "yield error : unexpected enclosing defer")
-                    ups.any(this) { cnd ->
-                        ups.pub[cnd].let { catch ->
-                            ((catch is Expr.Catch) && catch.cnd==cnd)
-                        }
-                    }
-                        -> err(this.tk, "yield error : unexpected enclosing catch")
                     ups.first(this) { it is Expr.Proto }.let { it?.tk?.str=="func" }
                         -> err(this.tk, "yield error : unexpected enclosing func")
                     (ups.exe(this) == null)

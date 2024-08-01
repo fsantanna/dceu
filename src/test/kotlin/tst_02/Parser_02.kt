@@ -19,13 +19,19 @@ class Parser_02 {
 
     @Test
     fun bb_01_throw_catch() {
-        val l = lexer("catch ( it|1) { error(1) }")
+        val l = lexer("catch :x { error(1) }")
+        //val l = lexer("catch ( it|1) { error(1) }")
         val parser = Parser(l)
         val e = parser.exprs()
+        /*
         assert(e.tostr() == "catch' (do {\n" +
                 "(val it = ```:ceu  *(ceu_acc.Dyn->Error.val)```);\n" +
                 "1;\n" +
                 "}) {\n" +
+                "error(1);\n" +
+                "};\n") { e.tostr() }
+         */
+        assert(e.tostr() == "catch :x {\n" +
                 "error(1);\n" +
                 "};\n") { e.tostr() }
     }
@@ -33,6 +39,7 @@ class Parser_02 {
     fun bb_02_throw_catch() {
         val l = lexer("catch (it :T| it[0]) { nil }")
         val parser = Parser(l)
+        /*
         val e = parser.exprs()
         assert(e.tostr() == "catch' (do {\n" +
                 "(val it :T = ```:ceu  *(ceu_acc.Dyn->Error.val)```);\n" +
@@ -40,6 +47,7 @@ class Parser_02 {
                 "}) {\n" +
                 "nil;\n" +
                 "};\n") { e.tostr() }
+         */
     }
 
     // IT / AS
@@ -56,21 +64,24 @@ class Parser_02 {
         val out = test("""
             catch ( 1 )
         """)
-        assert(out == "anon : (lin 2, col 21) : expected identifier : have \"1\"\n") { out }
+        assert(out == "anon : (lin 2, col 21) : expected tag : have \"1\"\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : expected identifier : have \"1\"\n") { out }
     }
     @Test
     fun cc_03_as() {
         val out = test("""
             catch ( x )
         """)
-        assert(out == "anon : (lin 2, col 23) : expected \"|\" : have \")\"\n") { out }
+        assert(out == "anon : (lin 2, col 21) : expected tag : have \"x\"\n") { out }
+        //assert(out == "anon : (lin 2, col 23) : expected \"|\" : have \")\"\n") { out }
     }
     @Test
     fun cc_04_as() {
         val out = test("""
-            catch ( x |  )
+            catch ( :x |  )
         """)
-        assert(out == "anon : (lin 2, col 26) : expected expression : have \")\"\n") { out }
+        assert(out == "anon : (lin 2, col 24) : expected \")\" : have \"|\"\n") { out }
+        //assert(out == "anon : (lin 2, col 26) : expected expression : have \")\"\n") { out }
         //assert(out == "anon : (lin 3, col 9) : expected \"{\" : have end of file\n") { out }
     }
     @Test
@@ -78,7 +89,8 @@ class Parser_02 {
         val out = test("""
             catch ( x | 1
         """)
-        assert(out == "anon : (lin 3, col 9) : expected \")\" : have end of file\n") { out }
+        assert(out == "anon : (lin 2, col 21) : expected tag : have \"x\"\n") { out }
+        //assert(out == "anon : (lin 3, col 9) : expected \")\" : have end of file\n") { out }
     }
     @Test
     fun cc_06_as() {
@@ -87,7 +99,8 @@ class Parser_02 {
             println(:ok)
         """)
         //assert(out == "anon : (lin 2, col 27) : expected \"in\" : have \"{\"\n") { out }
-        assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 2, col 21) : expected tag : have \"x\"\n") { out }
+        //assert(out == ":ok\n") { out }
     }
 
     // PATTS
