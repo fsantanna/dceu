@@ -28,7 +28,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
     }
     fun Expr.check_error_aborted (cmd: String, msg: String): String {
         return """
-            CEU_ERROR_CHK_ACC($cmd, $msg);
+            CEU_ERROR_CHK_ERR($cmd, $msg);
             ${this.check_aborted(cmd, msg)}
         """
     }
@@ -444,7 +444,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     CEU_Block* ceu_b_$n = ${this.tsks.cond2({"NULL"}, {"&$blkc"})};
                     CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, ceu_a_$n, ceu_b_$n);
                     CEU_ACC(ceu_exe_$n);
-                    CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
+                    CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
                     
                     ${(CEU>=5 && this.tsks!=null).cond { """
                         if (ceu_acc.type != CEU_VALUE_NIL)
@@ -460,7 +460,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             ${sta.idx(this,"args_$n")}
                         };
                         ceu_exe_$n.Dyn->Exe.clo->proto(&ceux_$n);
-                        CEU_ERROR_CHK_ACC({ceu_gc_dec_val(ceu_exe_$n);continue;}, ${this.toerr()});
+                        CEU_ERROR_CHK_ERR({ceu_gc_dec_val(ceu_exe_$n);continue;}, ${this.toerr()});
                         ceu_gc_dec_val(ceu_acc);
                         ${this.check_aborted("{ceu_gc_dec_val(ceu_exe_$n);continue;}", this.toerr())}
                         ceu_acc = ceu_exe_$n;
@@ -559,7 +559,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ${this.max.code()}
                     CEU_Value ceu_tsks_$n = ceu_create_tasks(ceux, &$blkc, ceu_acc);
                     CEU_ACC(ceu_tsks_$n);
-                    CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
+                    CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
                 }
                 """
             }
@@ -715,7 +715,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     CEU_ACC(ceu_col_get($id_col, ceu_idx_$n));
                     ceu_gc_dec_val($id_col);
                     ceu_gc_dec_val(ceu_idx_$n);
-                    CEU_ERROR_CHK_ACC(continue, ${this.toerr()});
+                    CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
                     """
                 } + """
                 }

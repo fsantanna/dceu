@@ -434,9 +434,15 @@ fun Coder.main (tags: Tags): String {
 
     #if CEU <= 1
     
-    #define CEU_ERROR_CHK_ACC(cmd,pre) {        \
+    #define CEU_ERROR_CHK_ERR(cmd,pre) {        \
         if (CEU_ERROR != CEU_ERROR_NONE) {      \
-            fprintf(stderr, " |  %s\n v  error : %s\n", pre, (char*)ceu_acc.Pointer); \
+            fprintf(stderr,                     \
+                " |  %s\n v  error : %s\n",     \
+                pre,                            \
+                (CEU_ERROR == CEU_TAG_nil) ?    \
+                    (char*)ceu_acc.Pointer :    \
+                    (char*)ceu_tag_to_pointer(CEU_ERROR) \
+            );                                  \
             exit(0);                            \
         }                                       \
     }
@@ -453,9 +459,6 @@ fun Coder.main (tags: Tags): String {
         CEU_Value tag = X->args[0];
         assert(tag.type == CEU_VALUE_TAG);
         CEU_ERROR = tag.Tag;
-        CEU_ACC (
-            ((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=ceu_tag_to_pointer(tag.Tag)} })
-        );
     }
 
     #else
@@ -463,7 +466,7 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_pointer_to_string (const char* ptr);
     CEU_Value ceu_create_vector (void);
 
-    #define CEU_ERROR_CHK_ACC(cmd,pre) {            \
+    #define CEU_ERROR_CHK_ERR(cmd,pre) {            \
         if (CEU_ERROR != CEU_ERROR_NONE) {          \
             if (pre != NULL) { /* opt stack msg */  \
                 ceu_vector_set (                    \
