@@ -856,9 +856,9 @@ fun Coder.main (tags: Tags): String {
         ceu_gc_dec_val(v);
     }
     
-    CEU_Value _ceu_sup_ (CEU_Value sup, CEU_Value sub) {
+    int _ceu_sup_ (CEU_Value sup, CEU_Value sub) {
         if (sup.type!=CEU_VALUE_TAG || sub.type!=CEU_VALUE_TAG) {
-            return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} };
+            return 0;
         }
         
         //printf("sup=0x%08X vs sub=0x%08X\n", sup->Tag, sub->Tag);
@@ -871,19 +871,18 @@ fun Coder.main (tags: Tags): String {
         int sub2 = sub.Tag & 0x00FF0000;
         int sub3 = sub.Tag & 0xFF000000;
 
-        return (CEU_Value) { CEU_VALUE_BOOL, { .Bool =
+        return 
             (sup0 == sub0) && ((sup1 == 0) || (
                 (sup1 == sub1) && ((sup2 == 0) || (
                     (sup2 == sub2) && ((sup3 == 0) || (
                         (sup3 == sub3)
                     ))
                 ))
-            ))
-        } };
+            ));
     }
     void ceu_pro_sup_question_ (CEUX* X) {
         assert(X->n == 2);
-        CEU_ACC(_ceu_sup_(X->args[0], X->args[1]));
+        CEU_ACC(((CEU_Value) { CEU_VALUE_BOOL, {.Bool=_ceu_sup_(X->args[0],X->args[1])} }));
         ceu_gc_dec_args(X->n, X->args);
     }    
     """
