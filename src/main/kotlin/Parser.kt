@@ -752,8 +752,11 @@ class Parser (lexer_: Lexer)
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val par = this.acceptFix("(")
-                this.acceptEnu_err("Tag")
-                val tag = this.tk0 as Tk.Tag
+                val tag = when {
+                    par && this.acceptEnu_err("Tag") -> this.tk0 as Tk.Tag
+                    this.acceptEnu("Tag") -> this.tk0 as Tk.Tag
+                    else -> null
+                }
                 if (par) {
                     this.acceptFix_err(")")
                 }

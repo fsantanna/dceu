@@ -37,7 +37,9 @@ class Tags (outer: Expr.Do) {
             is Expr.Data -> add(this.tk, this.tk.str, this.tk.str.idc(), null)
 
             is Expr.Catch  -> {
-                add(this.tag, this.tag.str, this.tag.str.idc(), null)
+                if (this.tag != null) {
+                    add(this.tag, this.tag.str, this.tag.str.idc(), null)
+                }
                 this.blk.traverse()
             }
             is Expr.Defer  -> this.blk.traverse()

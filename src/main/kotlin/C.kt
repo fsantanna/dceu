@@ -480,12 +480,17 @@ fun Coder.main (tags: Tags): String {
     }
     
     void ceu_pro_error (CEUX* X) {
-        assert(X->n >= 1);
-        CEU_Value tag = X->args[0];
+        CEU_Value tag; {
+            if (X->n==0 || X->args[0].type==CEU_VALUE_NIL) {
+                tag = (CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_nil} };
+            } else {
+                tag = X->args[0];
+            }
+        }
         assert(tag.type == CEU_VALUE_TAG);
         CEU_ERROR = tag.Tag;
         CEU_ACC (
-            (X->n >= 2) ? X->args[1] : X->args[0];
+            (X->n >= 2) ? X->args[1] : tag;
         );
         ceu_gc_dec_args(X->n, X->args);
     }
@@ -2003,15 +2008,23 @@ fun Coder.main (tags: Tags): String {
             CEU_Vector* vec = &CEU_ERROR_STACK.Dyn->Vector;
             for (int i=vec->its-1; i>=0; i--) {
                 CEU_Value s = ceu_vector_get(vec, i);
-                assert(ceu_is_string(s));
                 printf(" |  ");
-                puts(s.Dyn->Vector.buf);
+                if (s.type == CEU_VALUE_POINTER) {
+                    puts((char*) s.Pointer);
+                } else {
+                    assert(ceu_is_string(s));
+                    puts(s.Dyn->Vector.buf);
+                }
             }
             printf(" v  ");
-            if (!ceu_is_string(ceu_acc)) {
+            if (ceu_is_string(ceu_acc)) {
+                ceu_print1(ceu_acc);
+            } else if (ceu_acc.type == CEU_VALUE_POINTER) {
+                printf("%s", (char*) ceu_acc.Pointer);
+            } else {
                 printf("error : ");
+                ceu_print1(ceu_acc);
             }
-            ceu_print1(ceu_acc);
             puts("");
         }
         ceu_gc_dec_val(CEU_ERROR_STACK);

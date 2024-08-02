@@ -138,7 +138,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Skip   (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Data   (val tk_: Tk.Tag, val ids: List<Id_Tag>): Expr(N++, tk_)
 
-    data class Catch  (val tk_: Tk.Fix, val tag: Tk.Tag, val blk: Expr.Do): Expr(N++, tk_)
+    data class Catch  (val tk_: Tk.Fix, val tag: Tk.Tag?, val blk: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
 
     data class Yield  (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)

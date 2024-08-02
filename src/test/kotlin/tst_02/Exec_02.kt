@@ -132,7 +132,7 @@ class Exec_02 {
     @Test
     fun jj_02_catch_err() {
         val out = test("""
-            catch (it|it==:x) {
+            catch :z ;;;(it|it==:x);;; {
                 error(:y)
                 println(9)
             }
@@ -148,7 +148,7 @@ class Exec_02 {
                 error(:y)
                 println(9)
             }
-            catch (it|it==:x) {
+            catch :x ;;;(it|it==:x);;; {
                 f()
                 println(9)
             }
@@ -163,14 +163,14 @@ class Exec_02 {
         val out = test("""
             var f
             set f = func () {
-                catch (it | it==:xxx) {
+                catch :xxx ;;;(it | it==:xxx);;; {
                     error(:yyy)
                     println(91)
                 }
                 println(9)
             }
-            catch (it | it==:yyy) {
-                catch (it2 | it2==:xxx) {
+            catch :yyy ;;;(it | it==:yyy);;; {
+                catch :xxx ;;;(it2 | it2==:xxx);;; {
                     f()
                     println(92)
                 }
@@ -184,23 +184,24 @@ class Exec_02 {
     fun jj_05_catch_valgrind() {
         DEBUG = true
         val out = test("""
-            catch (it| it==:x) {
+            catch :x ;;;(it| it==:x);;; {
                 error([])
                 println(9)
             }
             println(1)
         """)
+        assert(out.contains("ceu_pro_error: Assertion `tag.type == CEU_VALUE_TAG' failed.")) { out }
         //assert(out == "anon : (lin 2, col 5) : throw error : expected tag\n") { out }
-        assert(out == " |  anon : (lin 3, col 17) : error([])\n" +
-                " v  error : []\n") { out }
+        //assert(out == " |  anon : (lin 3, col 17) : error([])\n" +
+        //        " v  error : []\n") { out }
     }
     @Test
     fun jj_06_catch() {
         val out = test("""
-            catch ( it|it==:e1) {
-                catch ( it|it==:e2) {
-                    catch ( it|it==:e3) {
-                        catch ( it | it==:e4 ) {
+            catch ( :e1 ;;;it|it==:e1;;;) {
+                catch :e2 ;;;( it|it==:e2);;; {
+                    catch :e3 ;;;( it|it==:e3);;; {
+                        catch :e4 ;;;( it | it==:e4 );;; {
                             println(1)
                             error(:e3)
                             println(99)
@@ -220,7 +221,7 @@ class Exec_02 {
     @Test
     fun jj_07_catch_err() {
         val out = test("""
-            catch ( it | true ) {
+            catch ;;;( it | true );;; {
                 error(:y)
                 println(9)
             }
@@ -233,9 +234,9 @@ class Exec_02 {
     fun jj_08_catch() {
         val out = test(
             """
-            catch ( it | it==do {
+            catch :x ;;;( it | it==do {
                 :x
-            } ) {
+            } );;; {
                 error(:x)
                 println(9)
             }
@@ -248,7 +249,7 @@ class Exec_02 {
     fun jj_09_catch() {
         val out = test(
             """
-            catch ( it | false) {
+            catch :z ;;;( it | false);;; {
                 error(:xxx)
                 println(9)
             }
@@ -261,34 +262,39 @@ class Exec_02 {
     @Test
     fun jj_10_catch() {
         val out = test("""
-            catch (it | false) {
-                error([])
+            catch :z ;;;(it | false);;; {
+                error(:x)
+                ;;error([])
                 println(9)
             }
             println(1)
         """)
-        assert(out == " |  anon : (lin 3, col 17) : error([])\n" +
-                " v  error : []\n") { out }
+        assert(out == " |  anon : (lin 3, col 17) : error(:x)\n" +
+                " v  error : :x\n") { out }
+        //assert(out == " |  anon : (lin 3, col 17) : error([])\n" +
+        //        " v  error : []\n") { out }
     }
     @Test
     fun jj_11_catch() {
         val out = test("""
-            catch ( it | it==[]) {
-                val xxx = []
+            catch :z ;;;( it | it==[]);;; {
+                val xxx = :x ;;[]
                 error(xxx)
             }
             println(1)
         """)
         //assert(out == " v  anon : (lin 2, col 35) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 4, col 17) : error(xxx)\n" +
+        //        " v  error : []\n") { out }
         assert(out == " |  anon : (lin 4, col 17) : error(xxx)\n" +
-                " v  error : []\n") { out }
+                " v  error : :x\n") { out }
     }
     @Test
     fun jj_12_catch() {
         val out = test("""
-            val t = catch ( it|true) {
+            val t = catch ;;;( it|true);;; {
                 val xxx = []
-                error(;;;drop;;;(xxx))
+                error(:x, ;;;drop;;;(xxx))
             }
             println(t)
         """)
@@ -297,16 +303,18 @@ class Exec_02 {
     @Test
     fun BUG_jj_13_throw_catch_condition() {
         val out = test("""
-            catch ( it | error(2)) {
-                error(1)
+            catch ;;;( it | error(2));;; {
+                error(:x,1)
             }
+            println(:ok)
         """)
-        assert(out.contains("main: Assertion `ceu_acc.type!=CEU_VALUE_THROW && \"TODO: throw in catch condition\"' failed.")) { out }
+        //assert(out.contains("main: Assertion `ceu_acc.type!=CEU_VALUE_THROW && \"TODO: throw in catch condition\"' failed.")) { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun jj_14_blocks() {
         val out = test("""
-            val v = catch (it | true) {
+            val v = catch ;;;(it | true);;; {
                 do {
                     error(:x)
                 }
@@ -320,18 +328,20 @@ class Exec_02 {
     fun jj_13_catch_dcl_err() {
         val out = test("""
             val x
-            catch ( x | true) {
+            catch ;;;( x | true);;; {
                 nil
             }
+            println(:ok)
         """)
-        assert(out == "anon : (lin 3, col 21) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 3, col 21) : declaration error : variable \"x\" is already declared\n") { out }
     }
     @Test
     fun jj_14_catch_data() {
         val out = test("""
             data :X = [x]
-            catch ( x:X | x.x==10 ) {
-                error([10])
+            catch :x ;;;( x:X | x.x==10 );;; {
+                error(:x, [10])
             }
             println(:ok)
         """)
@@ -341,36 +351,37 @@ class Exec_02 {
     fun jj_15_catch_set() {
         val out = test("""
             var x
-            catch ( it | do {
+            catch ;;;( it | do {
                 set x = it
                 it[0]==:x
-            }) {
-                error([:x])
+            });;; {
+                error(:x, [:x])
                 println(9)
             }
             println(x)
         """)
-        assert(out == "[:x]\n") { out }
+        //assert(out == "[:x]\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun jj_17_throw() {
         val out = test("""
             do {
                 val t = @[]
-                error(t)
+                error(:x,t)
                 nil
             }
         """)
-        assert(out == " |  anon : (lin 4, col 17) : error(t)\n" +
+        assert(out == " |  anon : (lin 4, col 17) : error(:x,t)\n" +
                 " v  error : @[]\n") { out }
         //assert(out.contains(" v  anon : (lin 2, col 13) : block escape error : cannot copy reference out\n")) { out }
     }
     @Test
     fun jj_18_throw_err() {
         val out = test("""
-            val x = catch (it | true) {
+            val x = catch ;;;(it | true);;; {
                 val t = @[]
-                error(t)
+                error(:x,t)
                 nil
             }
             println(x)
@@ -380,8 +391,8 @@ class Exec_02 {
     @Test
     fun jj_19_catch() {
         val out = test("""
-            val x = catch (_|true) {
-                error([10])
+            val x = catch ;;;(_|true);;; {
+                error(:x,[10])
             }[0]
             println(x)
         """)
@@ -511,52 +522,53 @@ class Exec_02 {
     fun zz_01() {
         val out = test("""
             do {
-                catch (it | do {
+                catch :z ;;;(it | do {
                     val x = it
                     println(it) ;; [:x]
                     false
-                }) {
-                    error([:x])
+                });;; {
+                    error(:x,[:x])
                     println(:no)
                 }
             }
             println(:ok)
         """)
-        assert(out == "[:x]\n" +
-                " |  anon : (lin 8, col 21) : error([:x])\n" +
+        assert(out == //"[:x]\n" +
+                " |  anon : (lin 8, col 21) : error(:x,[:x])\n" +
                 " v  error : [:x]\n") { out }
     }
     @Test
     fun zz_02() {
         val out = test("""
             do {
-                val y = catch (it | do {
+                val y = catch ;;;(it | do {
                     val x = it
                     println(it) ;; [:x]
                     x
-                }) {
-                    error([:x])
+                });;; {
+                    error(:x,[:x])
                     println(:no)
                 }
                 println(y)
             }
             println(:ok)
         """)
-        assert(out == ("[:x]\n[:x]\n:ok\n"))
+        //assert(out == ("[:x]\n[:x]\n:ok\n")) { out }
+        assert(out == ("[:x]\n:ok\n")) { out }
     }
     @Test
     fun zz_03_optim() {
         val out = test("""
-            catch (it| do {
+            catch :y ;;;(it| do {
                 println(it)
                 false
-            }) {
-                error([:x])
+            });;; {
+                error(:x,[:x])
             }
             println(:ok)
         """)
-        assert(out == "[:x]\n" +
-                " |  anon : (lin 6, col 17) : error([:x])\n" +
+        assert(out == //"[:x]\n" +
+                " |  anon : (lin 6, col 17) : error(:x,[:x])\n" +
                 " v  error : [:x]\n") { out }
     }
     @Test
@@ -565,7 +577,17 @@ class Exec_02 {
             error()
         """)
         assert(out == " |  anon : (lin 2, col 13) : error()\n" +
-                " v  error : nil\n") { out }
+                " v  error : :nil\n") { out }
+    }
+    @Test
+    fun zz_05_err() {
+        val out = test("""
+            val v = catch :y {
+                error(nil, :ok)
+            }
+            println(v)
+        """)
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun zz_05_tplate_valgrind() {

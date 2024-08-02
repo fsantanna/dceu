@@ -320,11 +320,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     if (CEU_ERROR == CEU_ERROR_NONE) {
                         // no error
                     } else {
-                        if (_ceu_sup_(CEU_TAG_${this.tag.str.idc()}, CEU_ERROR)) {
+                        ${this.tag.cond2({"""
+                            if (CEU_ERROR==CEU_TAG_nil || _ceu_sup_(CEU_TAG_${it.str.idc()}, CEU_ERROR)) {
+                                CEU_ERROR = CEU_ERROR_NONE; // caught error: go ahead
+                            } else {
+                                continue;                   // uncaught error: propagate up
+                            }                            
+                        """},{"""
                             CEU_ERROR = CEU_ERROR_NONE; // caught error: go ahead
-                        } else {
-                            continue;                   // uncaught error: propagate up
-                        }
+                        """})}
                     }
                 }
                 """
@@ -338,11 +342,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """
                 val endx = """
                     if ($id) {     // if true: reached, finalize
-                        do {
+                        //do {
                             ${this.blk.code()}
-                        } while (0);    // catch throw
-                        assert(CEU_ERROR==CEU_ERROR_NONE && "TODO: error in defer");
-                        CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
+                        //} while (0);    // catch throw
+                        //assert(CEU_ERROR==CEU_ERROR_NONE && "TODO: error in defer");
+                        //CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
                     }
                 """
                 ns.add(n)

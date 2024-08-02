@@ -65,6 +65,7 @@ class Parser_02 {
             catch ( 1 )
         """)
         assert(out == "anon : (lin 2, col 21) : expected tag : have \"1\"\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : expected tag : have \"1\"\n") { out }
         //assert(out == "anon : (lin 2, col 21) : expected identifier : have \"1\"\n") { out }
     }
     @Test
@@ -73,6 +74,7 @@ class Parser_02 {
             catch ( x )
         """)
         assert(out == "anon : (lin 2, col 21) : expected tag : have \"x\"\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : expected tag : have \"x\"\n") { out }
         //assert(out == "anon : (lin 2, col 23) : expected \"|\" : have \")\"\n") { out }
     }
     @Test

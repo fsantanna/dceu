@@ -61,7 +61,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Skip   -> "skip"
         is Expr.Data   -> "(data " + this.tk.str + " = [" + this.ids.map { it.tostr() }.joinToString(",") + "])"
 
-        is Expr.Catch  -> "catch " + this.tag.str + " " + this.blk.tostr(pre)
+        is Expr.Catch  -> "catch " + this.tag.cond { it.str } + " " + this.blk.tostr(pre)
         is Expr.Defer  -> "defer " + this.blk.tostr(pre)
 
         is Expr.Yield  -> "yield(" + this.e.tostr(pre) + ")"
