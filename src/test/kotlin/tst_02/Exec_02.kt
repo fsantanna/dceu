@@ -109,16 +109,19 @@ class Exec_02 {
             val err = catch :x ;;;( it |  set it=nil );;; {
                 error(:x)
             }
+            println(err)
         """)
-        assert(out == "anon : (lin 2, col 37) : set error : destination is immutable\n") { out }
+        //assert(out == "anon : (lin 2, col 37) : set error : destination is immutable\n") { out }
+        //assert(out == ":ok\n") { out }
+        assert(out == ":x\n") { out }
     }
     @Test
     fun jj_01_catch() {
         val out = test("""
-            val err = catch (v| do {
+            val err = catch :x ;;;(v| do {
                 ;;println(:v,v)
                 v == :x
-            }) {
+            });;; {
                 error(:x)
                 println(9)
             }

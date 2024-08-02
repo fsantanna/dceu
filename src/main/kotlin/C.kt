@@ -137,9 +137,6 @@ fun Coder.main (tags: Tags): String {
         CEU_VALUE type;
         union {
             //void nil;
-    #if CEU < 2
-            char* Error;
-    #endif
             unsigned long Tag;
             int Bool;
             char Char;
@@ -178,12 +175,6 @@ fun Coder.main (tags: Tags): String {
         CEU_Value (*buf)[0][2]; // resizable CEU_Value[n][2]
     } CEU_Dict;
 
-    typedef struct CEU_Error {
-        _CEU_Dyn_
-        CEU_Value*  val;
-        CEU_Vector* vec;
-    } CEU_Error;
-    
     #if CEU >= 3
         struct CEU_Exe;
     #endif
@@ -292,9 +283,6 @@ fun Coder.main (tags: Tags): String {
 
     typedef union CEU_Dyn {                                                                 
         struct CEU_Any      Any;
-    #if CEU >= 2
-        struct CEU_Error    Error;
-    #endif
         struct CEU_Tuple    Tuple;
         struct CEU_Vector   Vector;
         struct CEU_Dict     Dict;
@@ -470,8 +458,8 @@ fun Coder.main (tags: Tags): String {
         if (CEU_ERROR != CEU_ERROR_NONE) {          \
             if (pre != NULL) { /* opt stack msg */  \
                 ceu_vector_set (                    \
-                    ceu_acc.Dyn->Error.vec,         \
-                    ceu_acc.Dyn->Error.vec->its,    \
+                    &CEU_ERROR_STACK.Dyn->Vector,       \
+                    CEU_ERROR_STACK.Dyn->Vector.its,    \
                     ceu_pointer_to_string(pre)      \
                 );                                  \
             }                                       \
@@ -479,24 +467,25 @@ fun Coder.main (tags: Tags): String {
         }                                           \
     }
     
-    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre) {            \
-        if ((ptr) != NULL) {                            \
-            CEU_ACC(CEU_ERROR_PTR(ptr));                \
-            ceu_vector_set (                            \
-                CEU_ERROR_STACK.Dyn->Error.vec,         \
-                CEU_ERROR_STACK.Dyn->Error.vec->its,    \
-                ceu_pointer_to_string(pre)              \
-            );                                          \
-            cmd;                                        \
-        }                                               \
+    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre) {        \
+        if ((ptr) != NULL) {                        \
+            CEU_ACC(CEU_ERROR_PTR(ptr));            \
+            ceu_vector_set (                        \
+                &CEU_ERROR_STACK.Dyn->Vector,       \
+                CEU_ERROR_STACK.Dyn->Vector.its,    \
+                ceu_pointer_to_string(pre)          \
+            );                                      \
+            cmd;                                    \
+        }                                           \
     }
     
     void ceu_pro_error (CEUX* X) {
         assert(X->n >= 1);
         CEU_Value tag = X->args[0];
         assert(tag.type == CEU_VALUE_TAG);
+        CEU_ERROR = tag.Tag;
         CEU_ACC (
-            (X->n >= 2) ? X->args[1] : (CEU_Value) { CEU_VALUE_NIL };
+            (X->n >= 2) ? X->args[1] : X->args[0];
         );
         ceu_gc_dec_args(X->n, X->args);
     }
@@ -603,7 +592,6 @@ fun Coder.main (tags: Tags): String {
             case CEU_VALUE_VECTOR:
                 for (int i=0; i<dyn->Vector.its; i++) {
                     CEU_Value ret = ceu_vector_get(&dyn->Vector, i);
-                    assert(CEU_ERROR == CEU_ERROR_NONE);
                     ceu_gc_dec_val(ret);
                 }
                 free(dyn->Vector.buf);
@@ -2012,8 +2000,7 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 2
         // uncaught throw
         if (CEU_ERROR != CEU_ERROR_NONE) {
-            CEU_Vector* vec = ceu_acc.Dyn->Error.vec;
-            CEU_Value   val = *(ceu_acc.Dyn->Error.val);
+            CEU_Vector* vec = &CEU_ERROR_STACK.Dyn->Vector;
             for (int i=vec->its-1; i>=0; i--) {
                 CEU_Value s = ceu_vector_get(vec, i);
                 assert(ceu_is_string(s));
@@ -2021,10 +2008,10 @@ fun Coder.main (tags: Tags): String {
                 puts(s.Dyn->Vector.buf);
             }
             printf(" v  ");
-            if (!ceu_is_string(val)) {
+            if (!ceu_is_string(ceu_acc)) {
                 printf("error : ");
             }
-            ceu_print1(val);
+            ceu_print1(ceu_acc);
             puts("");
         }
         ceu_gc_dec_val(CEU_ERROR_STACK);
