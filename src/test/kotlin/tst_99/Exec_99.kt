@@ -548,7 +548,7 @@ class Exec_99 {
             }
         """)
         assert(out == " |  anon : (lin 3, col 25) : error()\n" +
-                " v  error : nil\n") { out }
+                " v  error : :nil\n") { out }
     }
 
     // MATCH

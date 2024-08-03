@@ -342,11 +342,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """
                 val endx = """
                     if ($id) {     // if true: reached, finalize
-                        //do {
+                        int ceu_error_$n = CEU_ERROR;
+                        CEU_ERROR = CEU_ERROR_NONE;
+                        do {
                             ${this.blk.code()}
-                        //} while (0);    // catch throw
-                        //assert(CEU_ERROR==CEU_ERROR_NONE && "TODO: error in defer");
-                        //CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
+                        } while (0);    // catch throw
+                        assert(CEU_ERROR==CEU_ERROR_NONE && "TODO: error in defer");
+                        CEU_ERROR = ceu_error_$n;
                     }
                 """
                 ns.add(n)

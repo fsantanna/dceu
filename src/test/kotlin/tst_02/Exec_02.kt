@@ -515,6 +515,18 @@ class Exec_02 {
         """)
         assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in defer\"' failed.")) { out }
     }
+    @Test
+    fun pp_06_throw_defer_print() {
+        val out = test("""
+            defer {
+                println(:ok)
+            }
+            error(:error)
+        """)
+        assert(out == ":ok\n" +
+                " |  anon : (lin 5, col 13) : error(:error)\n" +
+                " v  error : :error\n") { out }
+    }
 
     // ORIGINAL
 

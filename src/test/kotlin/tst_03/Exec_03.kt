@@ -1050,7 +1050,7 @@ class Exec_03 {
             set co = coroutine(coro (x) {
                 error(:e2)
             })
-            catch ( it|:e2) {
+            catch :e2 {
                 resume co(1)
                 println(99)
             }
@@ -1066,7 +1066,7 @@ class Exec_03 {
                 yield(nil) ;;thus { it => nil }
                 error(:e2)
             })
-            catch ( it|:e2) {
+            catch :e2 {
                 resume co()
                 println(1)
                 resume co()
@@ -1081,7 +1081,7 @@ class Exec_03 {
         val out = test("""
             var co
             set co = coroutine (coro () {
-                catch (it| :e1) {
+                catch :e1 {
                     yield(nil) ;;thus { it => nil }
                     error(:e1)
                 }
@@ -1089,7 +1089,7 @@ class Exec_03 {
                 yield(nil) ;;thus { it => nil }
                 error(:e2)
             })
-            catch (it| :e2) {
+            catch :e2 {
                 resume co()
                 resume co()
                 resume co()
@@ -1103,29 +1103,31 @@ class Exec_03 {
     fun hh_04_catch_yield_err() {
         val out = test("""
             coro () {
-                catch ( it | do {
+                catch ;;;( it | do {
                     func (it) { nil } (nil)
-                } )
+                } );;;
                 {
                     error(:e1)
                 }
             }
+            println(:ok)
         """)
-        assert(out == "anon : (lin 4, col 27) : declaration error : variable \"it\" is already declared\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 4, col 27) : declaration error : variable \"it\" is already declared\n") { out }
     }
     @Test
     fun hh_05_throw() {
         val out = test(
             """
             val CO = coro () {
-                catch (it| false) {
+                catch :x {
                     yield(nil) ;;thus { it => nil }
                 }
                 println(999)
             }
             val co = coroutine(CO)
             resume co()
-            catch (it|true){
+            catch {
                 error(nil)
             }
             println(:ok)
@@ -1155,12 +1157,12 @@ class Exec_03 {
                 nil
             })
             println(:1)
-            error(99)
+            error(:99)
             println(:2)
         """)
         assert(out == ":1\n" +
-                " |  anon : (lin 6, col 13) : error(99)\n" +
-                " v  error : 99\n") { out }
+                " |  anon : (lin 6, col 13) : error(:99)\n" +
+                " v  error : :99\n") { out }
     }
 
     // STATUS
@@ -1663,16 +1665,20 @@ class Exec_03 {
     @Test
     fun nn_02_catch() {
         val out = test("""
-            coro () {
-                catch ( it | do {
+            val CO = coro () {
+                catch :x ;;;( it | do {
                     yield(nil)
-                } )
+                } );;;
                 {
                     error(:e1)
                 }
             }
+            resume (coroutine(CO)) ()
         """)
-        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
+        assert(out == " |  anon : (lin 10, col 13) : (resume (coroutine(CO))())\n" +
+                " |  anon : (lin 7, col 21) : error(:e1)\n" +
+                " v  error : :e1\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
     }
 
     // TMP / VAR

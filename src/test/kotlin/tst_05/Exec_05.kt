@@ -310,7 +310,7 @@ class Exec_05 {
                 defer {
                     println(v)
                 }
-                catch (err|err==:ok) {
+                catch :ok ;;;(err|err==:ok);;; {
                     spawn task () {
                         yield(nil)
                         if v == 1 {
@@ -344,7 +344,7 @@ class Exec_05 {
                 defer {
                     println(v)
                 }
-                catch (err|err==:ok) {
+                catch :ok ;;;(err|err==:ok);;; {
                     spawn task () {
                         yield(nil)
                         if v == 2 {
@@ -1341,7 +1341,7 @@ class Exec_05 {
         val out = test(
             """
             spawn (task () {
-                catch (err| err==:ok) {
+                catch :ok ;;;(err| err==:ok);;; {
                     spawn task () {
                         yield(nil)
                         error(:ok)
@@ -1371,7 +1371,7 @@ class Exec_05 {
         )
         assert(out == " |  anon : (lin 9, col 13) : broadcast'(:task,@[])\n" +
                 " |  anon : (lin 5, col 17) : error(nil)\n" +
-                " v  error : nil\n") { out }
+                " v  error : :nil\n") { out }
     }
 
     // SCOPE
@@ -1716,11 +1716,11 @@ class Exec_05 {
                 yield(nil) ; nil
             }
             val ts = tasks()
-            val t = catch ( it|true) {
+            val t = catch ;;;( it|true);;; {
                 spawn T() in ts
                 do {
                     val u = next-tasks(ts)
-                    error(;;;drop;;;(u))
+                    error(:x,;;;drop;;;(u))
                 }
             }
             ;;detrack(t) { it => println(it.pub) }
@@ -1741,13 +1741,13 @@ class Exec_05 {
                 spawn T() in ts
                 do {
                     val t = next-tasks(ts)
-                    error(;;;drop;;;(t))
+                    error(:x,;;;drop;;;(t))
                     nil
                 }
             }
             println(status(x))
         """)
-        assert(out.contains(" |  anon : (lin 10, col 21) : error(t)\n" +
+        assert(out.contains(" |  anon : (lin 10, col 21) : error(:x,t)\n" +
                 " v  error : exe-task: 0x")) { out }
         //assert(out.contains("TODO: error inside throw")) { out }
         //assert(out == (" v  anon : (lin 5, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
@@ -1759,11 +1759,11 @@ class Exec_05 {
                 yield(nil) ; nil
             }
             val ts = tasks()
-            catch ( it|true) {
+            catch ;;;( it|true);;; {
                 spawn T() in ts
                 do {
                     val t = next-tasks(ts)
-                    error(;;;drop;;;(t))
+                    error(:x,;;;drop;;;(t))
                 }
             }
             println(:ok)
@@ -2801,7 +2801,7 @@ class Exec_05 {
             var t = spawn T()
             var x = ;;;track;;;(t)
             spawn( task () {
-                catch ( err|err==:par-or ) {
+                catch :par-or ;;;( err|err==:par-or );;; {
                     spawn( task () {
                         yield(nil) ;;thus { it => it==t }
                         error(:par-or)
@@ -2991,14 +2991,14 @@ class Exec_05 {
             set ts = tasks()
             spawn T(1) in ts
             var x
-            set x = catch (_|true) {
+            set x = catch ;;;(_|true);;; {
                 var t
                 loop ;;;in :tasks ts, t;;; {
                     set t = next-tasks(ts,t)
                     if (if t { false } else { true }) {
                         break ()
                     } else {nil}
-                    error(;;;copy;;;(t))
+                    error(:x,;;;copy;;;(t))
                 }
             }
             broadcast (nil)
@@ -3020,14 +3020,14 @@ class Exec_05 {
             spawn T(1) in ts
             spawn T(2) in ts
             var x
-            set x = catch (_|true) {
+            set x = catch ;;;(_|true);;; {
                 var t
                 loop ;;;in :tasks ts, t;;; {
                     set t = next-tasks(ts,t)
                     if (if t { false } else { true }) {
                         break ()
                     } else {nil}
-                    error(;;;copy;;;(t))
+                    error(:ok,;;;copy;;;(t))
                 }
             }
             println(;;;detrack;;;(x).pub[0])   ;; 1

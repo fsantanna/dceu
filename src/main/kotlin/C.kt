@@ -1674,6 +1674,8 @@ fun Coder.main (tags: Tags): String {
         #endif
                 case CEU_EXE_STATUS_YIELDED:
                 {
+                    int error = CEU_ERROR;
+                    CEU_ERROR = CEU_ERROR_NONE;
                     CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
                     CEU_Value args[1];
                     CEUX ceux = {
@@ -1688,6 +1690,7 @@ fun Coder.main (tags: Tags): String {
                     };
                     exe->clo->proto(&ceux);
                     assert(CEU_ERROR==CEU_ERROR_NONE && "TODO: error in abort");
+                    CEU_ERROR = error;
 
                     #if 0
                     // TODO - fake S/X - should propagate up to calling stack
