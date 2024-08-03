@@ -554,7 +554,8 @@ func next (v, x) {
 
 func create-resume (CO, x, y, z) {
     val co = coroutine(CO)
-    assert(resume co(x,y,z) == nil)
+    val v = resume co(x,y,z)
+    assert(v == nil)
     co
 }
 

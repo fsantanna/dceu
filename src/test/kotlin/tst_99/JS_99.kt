@@ -700,6 +700,7 @@ class JS_99 {
                 loop v in to-iter(co) {
                     resume nxt(;;;drop;;;(v))
                 }
+                nil
             }
             create-resume(Send, take2, create-resume(Show))
             nil

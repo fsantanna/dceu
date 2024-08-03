@@ -6551,8 +6551,10 @@ class Exec_99 {
                 loop v in to-iter(co) {
                     resume nxt(;;;drop;;;(v))
                 }
+                nil
             }
-            create-resume(Send, take, create-resume(Show))
+            val co = create-resume(Show)
+            create-resume(Send, take, co)
         }
         """, true)
         assert(out == "line\n" +
