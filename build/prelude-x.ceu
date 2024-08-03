@@ -31,10 +31,10 @@ func xx-cat-move (v1, v2) {
 func assert (v, msg) {
     ifs {
         v => v
-        type(msg)==:func  => error(msg())
-        msg->xx-string?() => error(xx-cat-move(xx-cat-move(#[], "assertion error : "), msg))
-        (msg == nil)      => error("assertion error")
-        else => error(msg)
+        type(msg)==:func  => error(:error, msg())
+        msg->xx-string?() => error(:error, xx-cat-move(xx-cat-move(#[], "assertion error : "), msg))
+        (msg == nil)      => error(:error, "assertion error")
+        else => error(:error, msg)
     }
 }
 
@@ -191,7 +191,7 @@ val to-iter = do {
             ==:coro     => :Iterator [iter-coro, v, nil, nil]
             ==:exe-coro => :Iterator [iter-xcoro, v, nil, nil]
             ==:tasks    => :Iterator [iter-tasks, v, nil, nil]
-            else        => error("iterator error : invalid collection")
+            else        => error(:error, "iterator error : invalid collection")
         }
     }
 }

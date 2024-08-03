@@ -1137,12 +1137,12 @@ class Exec_99 {
         val out = test("""
             var x
             set x = catch :x {
-                error([])
+                error(:z, [])
                 println(9)
             }[0]
             println(x)
         """, true)
-        assert(out == " |  anon : (lin 4, col 17) : error([])\n" +
+        assert(out == " |  anon : (lin 4, col 17) : error(:z,[])\n" +
                 " v  error : []\n") { out }
     }
     @Test
@@ -1151,15 +1151,15 @@ class Exec_99 {
             func f (v) {
                 false
             }
-            catch |false {
-                catch err|f(err) {
-                    error([])
+            catch :z ;;;|false;;; {
+                catch :z ;;;err|f(err);;; {
+                    error(:x, [])
                 }
             }
             println(`:number CEU_GC.free`)
             println(:ok)
         """)
-        assert(out == " |  anon : (lin 7, col 21) : error([])\n" +
+        assert(out == " |  anon : (lin 7, col 21) : error(:x,[])\n" +
                 " v  error : []\n") { out }
     }
     @Test
@@ -1168,7 +1168,7 @@ class Exec_99 {
             var x
             set x = catch :x {
                 catch :2 {
-                    error(tag(:x, [10]))
+                    error(:x, tag(:x, [10]))
                     println(9)
                 }
                 println(9)
@@ -1176,15 +1176,15 @@ class Exec_99 {
             println(:gc, `:number CEU_GC.free`) ;; TODO: not checked
             println(:x, x)
         """, true)
-        assert(out == ":gc\t8\n:x\t10\n") { out }
+        assert(out == ":gc\t1\n:x\t10\n") { out }
     }
     @Test
     fun gg_04_catch_err() {
         val out = test("""
-            catch err|err==[] {
+            catch :x ;;;err|err==[];;; {
                 var x
                 set x = []
-                error(x)
+                error(:z,x)
                 println(9)
             }
             println(1)
@@ -1194,7 +1194,7 @@ class Exec_99 {
         //        "anon : (lin 5, col 17) : error(x)\n" +
         //        "error error : uncaught exception\n" +
         //        ":error\n") { out }
-        assert(out == " |  anon : (lin 5, col 17) : error(x)\n" +
+        assert(out == " |  anon : (lin 5, col 17) : error(:z,x)\n" +
                 " v  error : []\n") { out }
     }
     @Test
@@ -1202,7 +1202,7 @@ class Exec_99 {
         val out = test("""
             do {
                 println(catch :x {
-                    error(tag(:x,[10]))
+                    error(:x, tag(:x,[10]))
                     println(9)
                 })
             }
@@ -1212,9 +1212,9 @@ class Exec_99 {
     @Test
     fun gg_06_catch() {
         val out = test("""
-            catch |false {
+            catch :y ;;;|false;;; {
                 catch {
-                    error([10])
+                    error(:x, [10])
                 }
             }
             println(:ok)
@@ -1227,8 +1227,8 @@ class Exec_99 {
             var x
             set x = catch :x {
                 var y
-                set y = catch |true {
-                    error([10])
+                set y = catch ;;;|true;;; {
+                    error(:z, [10])
                     println(9)
                 }
                 ;;println(1)
@@ -1246,21 +1246,21 @@ class Exec_99 {
     @Test
     fun gg_08_loop_() {
         val out = test("""
-            println(catch :x { loop { error(tag(:x,[1])) }}[0])
+            println(catch :x { loop { error(:x, tag(:x,[1])) }}[0])
         """, true)
         assert(out == "1\n") { out }
     }
     @Test
     fun gg_09_loop() {
         val out = test("""
-            println(catch :x { loop { error(tag(:x,[1])) }}[0])
+            println(catch :x { loop { error(:x,tag(:x,[1])) }}[0])
         """, true)
         assert(out == "1\n") { out }
     }
     @Test
     fun gg_10_loop_() {
         val out = test("""
-            println(catch :2 { loop { error(tag(:2,[1])) }})
+            println(catch :2 { loop { error(:2,tag(:2,[1])) }})
         """, true)
         assert(out == ":2 [1]\n") { out }
     }
@@ -1270,7 +1270,7 @@ class Exec_99 {
             println(catch :x { loop {
                 var x
                 set x = [1] ;; memory released
-                error(tag(:x,[1]))
+                error(:x, tag(:x,[1]))
             }}[0])
         """, true)
         assert(out == "1\n") { out }
@@ -1281,7 +1281,7 @@ class Exec_99 {
             println(catch :x { loop {
                 var x
                 set x = [1]
-                error(tag(:x,x))
+                error(:x, tag(:x,x))
             }})
         """, true)
         assert(out == ":x [1]\n") { out }
@@ -1294,8 +1294,8 @@ class Exec_99 {
     @Test
     fun gg_13_catch() {
         val out = test("""
-            catch err|err===[] {
-                error([])
+            catch :x ;;;err|err===[];;; {
+                error(:x,[])
                 println(9)
             }
             println(1)
@@ -1936,32 +1936,36 @@ class Exec_99 {
     fun mm_17_catch_yield_err() {
         val out = test("""
             coro () {
-                catch (it| do {
+                catch ;;;(it| do {
                     yield(nil) thus {\ it => nil }
-                } )
+                } );;;
                 {
                     error(:e1)
                 }
             }
+            println(:ok)
         """)
         //assert(out == "anon : (lin 4, col 39) : declaration error : variable \"it\" is already declared\n") { out }
-        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun mm_17a_catch_yield_err() {
         val out = test("""
             coro () {
-                catch (it| do {
+                catch ;;;;(it| do {
                     ;;;do;;; it
                     yield(nil) thus { \it => nil }
-                } )
+                } );;;;
                 {
                     error(:e1)
                 }
             }
+            println(:ok)
         """)
         //assert(out == "anon : (lin 5, col 39) : declaration error : variable \"it\" is already declared\n") { out }
-        assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing catch\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing catch\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun mm_18_it() {
@@ -2570,7 +2574,7 @@ class Exec_99 {
         """, true)
         //assert(out.contains("assertion error : expected :Iterator")) { out }
         assert(out.contains(" |  anon : (lin 2, col 23) : to-iter(nil)\n" +
-                " |  build/prelude-x.ceu : (lin 189, col 28) : error(#['i','t','e','r','a','t','o','r',' ...\n" +
+                " |  build/prelude-x.ceu : (lin 194, col 28) : error(:error,#['i','t','e','r','a','t','o'...\n" +
                 " v  iterator error : invalid collection\n")) { out }
     }
     @Test
@@ -6105,7 +6109,7 @@ class Exec_99 {
         """, true)
         assert(out == "10\n" +
                 " |  anon : (lin 3, col 13) : assert(nil)\n" +
-                " |  build/prelude-x.ceu : (lin 34, col 30) : error(#['a','s','s','e','r','t','i','o','n...\n" +
+                " |  build/prelude-x.ceu : (lin 36, col 30) : error(:error,#['a','s','s','e','r','t','i'...\n" +
                 " v  assertion error\n") { out }
     }
     @Test
@@ -6126,7 +6130,7 @@ class Exec_99 {
             assert(1 is-not? :number)
         """, true)
         assert(out.contains(" |  anon : (lin 3, col 17) : assert(is'([],:bool),#['o','k'])\n" +
-                " |  build/prelude-x.ceu : (lin 33, col 30) : error(xx-cat-move(xx-cat-move(#[],#['a','s...\n" +
+                " |  build/prelude-x.ceu : (lin 35, col 30) : error(:error,xx-cat-move(xx-cat-move(#[],#...\n" +
                 " v  assertion error : ok\n")) { out }
     }
     @Test
@@ -6146,7 +6150,7 @@ class Exec_99 {
             assert(false, 10)
         """, true)
         assert(out == " |  anon : (lin 2, col 13) : assert(false,10)\n" +
-                " |  build/prelude-x.ceu : (lin 35, col 17) : error(msg)\n" +
+                " |  build/prelude-x.ceu : (lin 37, col 17) : error(:error,msg)\n" +
                 " v  error : 10\n") { out }
     }
     @Test
@@ -6155,7 +6159,7 @@ class Exec_99 {
             assert(false, :type [])
         """, true)
         assert(out == " |  anon : (lin 2, col 13) : assert(false,tag(:type,[]))\n" +
-                " |  build/prelude-x.ceu : (lin 35, col 17) : error(msg)\n" +
+                " |  build/prelude-x.ceu : (lin 37, col 17) : error(:error,msg)\n" +
                 " v  error : :type []\n") { out }
     }
 
@@ -6584,9 +6588,9 @@ class Exec_99 {
                 val ts = tasks()
                 spawn T() in ts
                 await (|true)
-                catch |true {
+                catch ;;;|true;;; {
                     loop b in ts {
-                        error(;;;drop;;;(b))
+                        error(:x,;;;drop;;;(b))
                     }
                 }
                 nil
