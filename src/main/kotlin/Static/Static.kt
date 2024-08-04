@@ -90,17 +90,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
-                /*
-                if (this.tk.str == "task") {
-                    val es = this.blk.es.dropLastWhile { it is Expr.Delay }
-                    val lst = es.lastOrNull()
-                    when {
-                        (lst == null) -> {}
-                        lst.is_innocuous() -> err(lst.tk, "expression error : innocuous expression")
-                        else -> {}
-                    }
-                }
-                 */
                 if (this.nst) {
                     when {
                         ups.first(ups.pub[this]!!) { it is Expr.Proto }.let {
@@ -147,14 +136,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
-            is Expr.Loop   -> {
-                this.blk.es.last().let {
-                    if (it.is_innocuous()) {
-                        //err(it.tk, "loop error : innocuous last expression")
-                    }
-                }
-                this.blk.traverse()
-            }
+            is Expr.Loop   -> this.blk.traverse()
             is Expr.Break  -> {
                 var up = ups.pub[this]
                 while (up is Expr.Do) {

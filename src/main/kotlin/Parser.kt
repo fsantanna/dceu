@@ -1516,14 +1516,6 @@ class Parser (lexer_: Lexer)
                 ret.add(Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy())))
             }
         }
-        val es = ret.dropLastWhile { it is Expr.Delay }  // ignore delay at the end
-        es.forEachIndexed { i, e ->
-            when {
-                (i == es.size - 1) -> {}   // last can be innocuous (just return)
-                !e.is_innocuous() -> {}     // others must do something
-                //else -> err(e.tk, "expression error : innocuous expression")
-            }
-        }
         return ret
     }
 }

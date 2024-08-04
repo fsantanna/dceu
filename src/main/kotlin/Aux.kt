@@ -63,19 +63,6 @@ fun Expr.Proto.id (outer: Expr.Do, ups: Ups): String {
     }
 }
 
-fun Expr.is_innocuous (): Boolean {
-    return when (this) {
-        is Expr.Do -> this.es.lastOrNull()?.is_innocuous() ?: true
-        is Expr.If -> this.t.is_innocuous() || this.f.is_innocuous()
-        is Expr.Loop -> this.blk.es.any { it is Expr.Break && (it.e?.is_innocuous() ?: false) }
-        is Expr.Catch -> this.blk.is_innocuous()
-        is Expr.Nil -> false
-        is Expr.Acc -> true
-        is Expr.Index -> true
-        else -> this.is_constructor()
-    }
-}
-
 fun Expr.is_constructor (): Boolean {
     return when {
         this.is_static() -> true
