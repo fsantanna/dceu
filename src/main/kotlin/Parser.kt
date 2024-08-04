@@ -417,7 +417,14 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("(")
                 this.acceptEnu_err("Tag")
                 val tag = this.tk0 as Tk.Tag
-                val e = if (this.acceptFix(",")) this.expr() else null
+                val e = when {
+                    (CEU < 99) -> {
+                        this.acceptFix_err(",")
+                        this.expr()
+                    }
+                    this.acceptFix(",") -> this.expr()
+                    else -> Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))
+                }
                 this.acceptFix_err(")")
                 Expr.Escape(tk0, tag, e)
             }
@@ -615,7 +622,7 @@ class Parser (lexer_: Lexer)
                 }
             }
 
-            (CEU>=2 && this.acceptFix("loop")) -> {
+            (CEU>=2 && this.acceptFix("loop'")) -> {
                 if (CEU<99 || this.checkFix("{")) {
                     return Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, null, this.block().es))
                 }

@@ -118,9 +118,9 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Escape -> {
-                val fst = ups.first(this) { it is Expr.Do && it.tag==this.tag || (it is Expr.Proto && !it.nst)}
-                if (fst is Expr.Proto) {
-                    err(this.tk, "escape error : expected matching `do´ block")
+                val fst = ups.first(this) { (it is Expr.Do && it.tag?.str==this.tag.str) || (it is Expr.Proto && !it.nst)}
+                if (fst !is Expr.Do) {
+                    err(this.tk, "escape error : expected matching \"do\" block")
                 }
                 this.e?.traverse()
             }

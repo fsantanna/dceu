@@ -57,7 +57,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         }
         is Expr.Set    -> "(set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre) + ")"
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
-        is Expr.Loop   -> "loop " + this.blk.tostr(pre)
+        is Expr.Loop   -> "loop' " + this.blk.tostr(pre)
         is Expr.Data   -> "(data " + this.tk.str + " = [" + this.ids.map { it.tostr() }.joinToString(",") + "])"
 
         is Expr.Catch  -> "catch " + this.tag.cond { it.str+" " } + this.blk.tostr(pre)

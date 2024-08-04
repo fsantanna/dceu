@@ -239,17 +239,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
                         ceu_acc = ceu_acc_$n;
                         
-                        ${(CEU >= 2).cond { this.check_error_aborted("continue", "NULL")} }
-                        
-                        ${this.tag.cond { """
+                        ${(CEU >= 2).cond { """
+                            ${this.check_error_aborted("continue", "NULL")}
                             if (CEU_ESCAPE == CEU_ESCAPE_NONE) {
                                 // no escape
+                            ${this.tag.cond { """
                             } else if (CEU_ESCAPE == CEU_TAG_${it.str.idc()}) {
                                 CEU_ESCAPE = CEU_ESCAPE_NONE;   // caught escape: go ahead
+                            """ }}
                             } else {
                                 continue;                       // uncaught escaoe: propagate up
-                            }                            
+                            }                                                            
                         """ }}
+                        
                     }
                     """
                 }

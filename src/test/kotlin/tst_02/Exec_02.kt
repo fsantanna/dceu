@@ -16,7 +16,7 @@ class Exec_02 {
         val out = test("""
             do :x {
                 println(:1)
-                escape(:x)
+                escape(:x,nil)
                 println(:2)
             }
             println(:3)
@@ -75,10 +75,12 @@ class Exec_02 {
     @Test
     fun dd_01_loop() {
         val out = test("""
-            loop {
-                if true {
-                    break(nil)
-                } else { nil }
+            do :break {
+                loop' {
+                    if true {
+                        escape(:break,nil)
+                    } else { nil }
+                }
             }
             println(:ok)
         """)
@@ -87,46 +89,56 @@ class Exec_02 {
     @Test
     fun dd_00_loop() {
         val out = test("""
-            loop {
-                if true {
-                    break(nil)
-                } else { nil }
+            do :break {
+                loop' {
+                    if true {
+                        escape(:break, nil)
+                    } else { nil }
+                }
             }
             println(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun TODO_dd_01_loop_err() {
+    fun dd_01_loop_no_err() {
         val out = test("""
-            loop {
-                do {
-                    break if true   ;; should not be allowed
-                }   ;; currently allowed bc of late decls that nest blocks transparently
-            }
-            println(:out)
-        """)
-        assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
-    }
-    @Test
-    fun TODO_dd_01x_loop_err() {
-        val out = test("""
-            loop {
-                do { do(nil)
-                    break if true
+            do :break {
+                loop' {
+                    do {
+                        escape(:break, nil)   ;; should not be allowed
+                    }   ;; currently allowed ;;bc of late decls that nest blocks transparently
                 }
             }
             println(:out)
         """)
-        assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
+        assert(out == ":out\n") { out }
+    }
+    @Test
+    fun dd_01x_loop_err_no() {
+        val out = test("""
+            do :break {
+                loop' {
+                    do { ;;do(nil)
+                        escape(:break, nil) ;; if true
+                    }
+                }
+            }
+            println(:out)
+        """)
+        assert(out == ":out\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
     }
     @Test
     fun dd_01y_loop_err() {
         val out = test("""
-            loop {
-                break(nil)
-                do {
-                    skip
+            do :break {
+                loop' {
+                    escape(:break, nil)
+                    do :skip {
+                        escape(:skip, nil)
+                    }
                 }
             }
             println(:out)
@@ -138,13 +150,17 @@ class Exec_02 {
     fun dd_01z_loop_err() {
         val out = test("""
             var ok = false
-            loop {
-                if ok {
-                    break(nil)
-                } else { nil }
-                set ok = true
-                ;;;do;;; []
-                skip ;;if true
+            do :break {
+                loop' {
+                    do :skip {
+                        if ok {
+                            escape(:break, nil)
+                        } else { nil }
+                        set ok = true
+                        ;;;do;;; []
+                        escape(:skip, nil) ;;if true
+                    }
+                }
             }
             println(:out)
         """)
@@ -155,11 +171,13 @@ class Exec_02 {
         val out = test(
             """
             do {
-                loop {
-                    println(:in)
-                    if true {
-                        break(nil)
-                    } else {nil}
+                do :break {
+                    loop' {
+                        println(:in)
+                        if true {
+                            escape(:break, nil)
+                        } else {nil}
+                    }
                 }
             }
             println(:out)
@@ -171,15 +189,17 @@ class Exec_02 {
     fun dd_02x_loop() {
         val out = test(
             """
-            do {
-                loop {
-                    println(:in)
-                    if false {
-                        skip
-                    } else {nil}
-                    if true {
-                        break(nil)
-                    } else {nil}
+            do :break {
+                loop' {
+                    do :skip {
+                        println(:in)
+                        if false {
+                            escape(:skip, nil)
+                        } else {nil}
+                        if true {
+                            escape(:break, nil)
+                        } else {nil}
+                    }
                 }
             }
             println(:out)
@@ -193,11 +213,13 @@ class Exec_02 {
             """
             var x
             set x = false
-            loop {
-                if x {
-                    break(nil)
-                } else {nil}
-                set x = true
+            do :break {
+                loop' {
+                    if x {
+                        escape(:break, nil)
+                    } else {nil}
+                    set x = true
+                }
             }
             println(x)
         """
@@ -219,12 +241,14 @@ class Exec_02 {
             do {
                 val it = [f, 0]
                 var i = it[0](it)
-                loop {
-                    if (i == nil) {
-                        break(nil)
-                    } else {nil}
-                    println(i)
-                    set i = it[0](it)
+                do :break {
+                    loop' {
+                        if (i == nil) {
+                            escape(:break, nil)
+                        } else {nil}
+                        println(i)
+                        set i = it[0](it)
+                    }
                 }
             }
         """, true
@@ -249,10 +273,12 @@ class Exec_02 {
     fun dd_06_loop() {
         val out = test(
             """
-            val v = loop {
-                if (10) {
-                    break()
-                } else {nil}
+            val v = do :break {
+                loop' {
+                    if (10) {
+                        escape(:break, 10)
+                    } else {nil}
+                }
             }
             println(v)
         """
@@ -263,15 +289,19 @@ class Exec_02 {
     fun dd_07_loop() {
         val out = test(
             """
-            val v1 = loop {
-                if (10) {
-                    break()
-                } else {nil}
+            val v1 = do :break {
+                loop' {
+                    if (10) {
+                        escape(:break, 10)
+                    } else {nil}
+                }
             }
-            val v2 = loop {
-                if true {
-                    break(nil)
-                } else {nil}
+            val v2 = do :break {
+                loop' {
+                    if true {
+                        escape(:break, nil)
+                    } else {nil}
+                }
             }
             println(v1, v2)
         """
@@ -282,10 +312,12 @@ class Exec_02 {
     fun dd_08_loop() {
         val out = test("""
             val x = 10
-            println(loop {
-                if (x) {
-                    break()
-                } else {nil}
+            println(do :break {
+                loop' {
+                    if (x) {
+                        escape(:break,x)
+                    } else {nil}
+                }
             })
         """)
         assert(out == "10\n") { out }
@@ -293,36 +325,44 @@ class Exec_02 {
     @Test
     fun dd_09_loop_break() {
         val out = test("""
-            loop {
-                func () {
-                    break (nil)
+            do :break {
+                loop' {
+                    func () {
+                        escape(:break,nil)
+                    }
                 }
             }
         """)
         //assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
-        assert(out == "anon : (lin 4, col 21) : break error : expected parent loop\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : break error : expected parent loop\n") { out }
+        assert(out == "anon : (lin 5, col 25) : escape error : expected matching \"do\" block\n") { out }
     }
     @Test
-    fun TODO_dd_10_loop() {
+    fun dd_10_loop() {
         val out = test("""
-            loop {
-                do {
-                    val t = []
-                    break if true
+            do :break {
+                loop' {
+                    do {
+                        val t = []
+                        escape(:break, nil)
+                    }
                 }
             }
             println(:ok)
         """)
-        assert(out == "anon : (lin 5, col 21) : break error : expected immediate parent loop\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : break error : expected immediate parent loop\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun dd_11_loop() {
         val out = test("""
-            loop {
-                val t = []
-                if true {
-                    break (nil)
-                } else {nil}
+            do :break {
+                loop' {
+                    val t = []
+                    if true {
+                        escape(:break,nil)
+                    } else {nil}
+                }
             }
             println(:ok)
         """)
@@ -340,12 +380,12 @@ class Exec_02 {
                     t[1]
                 }
             }
-            do {
+            do :break {
                 val it = [f, 0]
                 var i = it[0](it)
-                loop {
+                loop' {
                     if i == nil {
-                        break (nil)
+                        escape(:break,nil)
                     } else {nil}
                     println(i)
                     set i = it[0](it)
@@ -359,14 +399,18 @@ class Exec_02 {
         val out = test("""
             $PLUS
             var i = 0
-            loop {
-                set i = i + 1
-                println(i)
-                if i /= 2 {
-                    skip
-                } else {nil}
-                println(i)
-                break()
+            do :break {
+                loop' {
+                    do :skip {
+                        set i = i + 1
+                        println(i)
+                        if i /= 2 {
+                            escape(:skip,nil)
+                        } else {nil}
+                        println(i)
+                        escape(:break,nil)
+                    }
+                }
             }
             println(i)
         """)
@@ -375,11 +419,13 @@ class Exec_02 {
     @Test
     fun dd_14_loop_break_error_bug() {
         val out = test("""
-            loop {
-                do { nil }
-                if true {
-                    break (nil)
-                } else {nil}
+            do :break {
+                loop' {
+                    do { nil }
+                    if true {
+                        escape(:break,nil)
+                    } else {nil}
+                }
             }
             println(:ok)
         """)
@@ -388,12 +434,14 @@ class Exec_02 {
     @Test
     fun dd_15_loop_break_immed() {
         val out = test("""
-            loop {
-                do { nil }
-                val e = nil
-                if true {
-                    break (nil)
-                } else {nil}
+            do :break {
+                loop' {
+                    do { nil }
+                    val e = nil
+                    if true {
+                        escape(:break,nil)
+                    } else {nil}
+                }
             }
             println(:ok)
         """)
@@ -402,10 +450,12 @@ class Exec_02 {
     @Test
     fun dd_16_until() {
         val out = test("""
-            println(loop {
-                if 10 {
-                    break ()
-                } else {nil}
+            println(do :break {
+                loop' {
+                    if 10 {
+                        escape(:break,10)
+                    } else {nil}
+                }
             })
         """)
         assert(out == "10\n") { out }
@@ -946,12 +996,14 @@ class Exec_02 {
             set t[:b] = 20
             set t[:c] = 30
             var k = next-dict(t)
-            loop {
-                if (k == nil) {
-                    break(nil)
-                } else { nil }
-                println(k, t[k])
-                set k = next-dict(t,k)
+            do :break {
+                loop' {
+                    if (k == nil) {
+                        escape(:break,nil)
+                    } else { nil }
+                    println(k, t[k])
+                    set k = next-dict(t,k)
+                }
             }
         """
         )
@@ -964,13 +1016,15 @@ class Exec_02 {
             do {
                 var t1 = []
                 var ok = false
-                loop {
-                    val t2 = t1
-                    set t1 = nil
-                    if ok {
-                        break(nil)
-                    } else { nil }
-                    set ok = true
+                do :break {
+                    loop' {
+                        val t2 = t1
+                        set t1 = nil
+                        if ok {
+                            escape(:break,nil)
+                        } else { nil }
+                        set ok = true
+                    }
                 }
                 println(`:number CEU_GC.free`)
             }
@@ -982,14 +1036,16 @@ class Exec_02 {
         val out = test("""
             var sum = func (n) {                                                            
                 var i = n                                                                   
-                var s = 0                                                                   
-                loop {                                                                      
-                    if i == 0 {
-                        break(s)
-                    } else {nil}
-                    set s = s + i                                                           
-                    set i = i - 1                                                           
-                }                                                                           
+                var s = 0
+                do :break {
+                    loop' {                                                                      
+                        if i == 0 {
+                            escape(:break,s)
+                        } else {nil}
+                        set s = s + i                                                           
+                        set i = i - 1                                                           
+                    }
+                }
             }                                                                               
             println(sum(5))                                                                
         """, true)

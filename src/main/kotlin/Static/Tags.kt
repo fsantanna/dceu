@@ -29,7 +29,10 @@ class Tags (outer: Expr.Do) {
                 }
                 this.es.forEach { it.traverse() }
             }
-            is Expr.Escape -> this.e?.traverse()
+            is Expr.Escape -> {
+                add(this.tag, this.tag.str, this.tag.str.idc(), null)
+                this.e?.traverse()
+            }
             is Expr.Group -> this.es.forEach { it.traverse() }
             is Expr.Dcl -> this.src?.traverse()
             is Expr.Set -> {
