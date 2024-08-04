@@ -527,6 +527,94 @@ class Parser (lexer_: Lexer)
                     """)
                 }
             }
+            this.acceptFix("func") || (CEU>=3 && this.acceptFix("coro")) || (CEU>=4 && this.acceptFix("task")) -> {
+                val tk0 = this.tk0 as Tk.Fix
+                val nst = (CEU >= 4) && (tk0.str=="task") && this.acceptTag(":nested")
+                val dcl = if (CEU < 99) null else {
+                    if (this.acceptEnu("Id")) this.tk0 else null
+                }
+                this.acceptFix_err("(")
+                val pars = this.list0(",", ")") {
+                    this.acceptEnu_err("Id")
+                    val xid = this.tk0 as Tk.Id
+                    val tag = if (!this.acceptEnu("Tag")) null else {
+                        this.tk0 as Tk.Tag
+                    }
+                    Pair(xid, tag)
+                }
+                val tag = when {
+                    (tk0.str != "task") -> null
+                    !this.acceptEnu("Tag") -> null
+                    else -> this.tk0 as Tk.Tag
+                }
+                val blk = this.block(this.tk1)
+                val proto = Expr.Proto(tk0, nst, tag, pars, blk)
+                if (dcl == null) {
+                    proto
+                } else {
+                    this.nest("""
+                        ${tk0.pos.pre()}val ${dcl.str} = ${proto.tostr(true)}
+                    """)
+                }
+            }
+            this.acceptFix("data") -> {
+                val pos = this.tk0.pos.copy()
+                this.acceptEnu_err("Tag")
+                val tag = this.tk0 as Tk.Tag
+
+                fun one (pre: Tk.Tag?, me: Tk.Tag): List<Expr.Data> {
+                    val xme = if (pre == null) me else {
+                        Tk.Tag(pre.str+'.'+me.str.drop(1), me.pos.copy())
+                    }
+                    this.acceptFix_err("=")
+                    this.acceptFix_err("[")
+                    val (ids,dtss) = this.list0(",", "]") {
+                        val id = if (this.acceptEnu("Fix")) {
+                            if (!KEYWORDS.contains(this.tk0.str)) {
+                                err(this.tk0, "invalid field : unexpected \"${this.tk0.str}\"")
+                            }
+                            Tk.Id(this.tk0.str, this.tk0.pos.copy())
+                        } else {
+                            this.acceptEnu_err("Id")
+                            this.tk0 as Tk.Id
+                        }
+                        val xtag = if (!this.acceptEnu("Tag")) null else {
+                            this.tk0 as Tk.Tag
+                        }
+                        if (this.checkFix("=")) {
+                            val xxtag = if (xtag!=null) xtag else Tk.Tag(":ceu_tag_$N",id.pos.copy())
+                            Pair(Pair(id, xxtag), one(null, xxtag))
+                        } else {
+                            Pair(Pair(id, xtag), emptyList())
+                        }
+                    }.unzip()
+                    return dtss.flatten() + listOf(Expr.Data(xme, ids)) + when {
+                        (CEU < 99) -> emptyList()
+                        !this.acceptFix("{") -> emptyList()
+                        else -> {
+                            val ll = mutableListOf<Expr.Data>()
+                            while (this.acceptEnu("Tag")) {
+                                val l = one(xme, this.tk0 as Tk.Tag)
+                                //if (l.isEmpty()) {
+                                //    break
+                                //}
+                                ll.addAll(l)
+                            }
+                            this.acceptFix_err("}")
+                            ll
+                        }
+                    }
+                }
+
+                val dts = one(null, tag)
+                //l.forEach { println(it.tostr()) }
+                when {
+                    (dts.size == 1) -> dts.first()
+                    (CEU < 99) -> error("bug found")
+                    else -> Expr.Do(Tk.Fix("do",pos), null, dts)
+                }
+            }
+
             (CEU>=2 && this.acceptFix("loop")) -> {
                 if (CEU<99 || this.checkFix("{")) {
                     return Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, null, this.block().es))
@@ -632,94 +720,6 @@ class Parser (lexer_: Lexer)
                     }
                 }
             }
-            this.acceptFix("func") || (CEU>=3 && this.acceptFix("coro")) || (CEU>=4 && this.acceptFix("task")) -> {
-                val tk0 = this.tk0 as Tk.Fix
-                val nst = (CEU >= 4) && (tk0.str=="task") && this.acceptTag(":nested")
-                val dcl = if (CEU < 99) null else {
-                    if (this.acceptEnu("Id")) this.tk0 else null
-                }
-                this.acceptFix_err("(")
-                val pars = this.list0(",", ")") {
-                    this.acceptEnu_err("Id")
-                    val xid = this.tk0 as Tk.Id
-                    val tag = if (!this.acceptEnu("Tag")) null else {
-                        this.tk0 as Tk.Tag
-                    }
-                    Pair(xid, tag)
-                }
-                val tag = when {
-                    (tk0.str != "task") -> null
-                    !this.acceptEnu("Tag") -> null
-                    else -> this.tk0 as Tk.Tag
-                }
-                val blk = this.block(this.tk1)
-                val proto = Expr.Proto(tk0, nst, tag, pars, blk)
-                if (dcl == null) {
-                    proto
-                } else {
-                    this.nest("""
-                        ${tk0.pos.pre()}val ${dcl.str} = ${proto.tostr(true)}
-                    """)
-                }
-            }
-            this.acceptFix("data") -> {
-                val pos = this.tk0.pos.copy()
-                this.acceptEnu_err("Tag")
-                val tag = this.tk0 as Tk.Tag
-
-                fun one (pre: Tk.Tag?, me: Tk.Tag): List<Expr.Data> {
-                    val xme = if (pre == null) me else {
-                        Tk.Tag(pre.str+'.'+me.str.drop(1), me.pos.copy())
-                    }
-                    this.acceptFix_err("=")
-                    this.acceptFix_err("[")
-                    val (ids,dtss) = this.list0(",", "]") {
-                        val id = if (this.acceptEnu("Fix")) {
-                            if (!KEYWORDS.contains(this.tk0.str)) {
-                                err(this.tk0, "invalid field : unexpected \"${this.tk0.str}\"")
-                            }
-                            Tk.Id(this.tk0.str, this.tk0.pos.copy())
-                        } else {
-                            this.acceptEnu_err("Id")
-                            this.tk0 as Tk.Id
-                        }
-                        val xtag = if (!this.acceptEnu("Tag")) null else {
-                            this.tk0 as Tk.Tag
-                        }
-                        if (this.checkFix("=")) {
-                            val xxtag = if (xtag!=null) xtag else Tk.Tag(":ceu_tag_$N",id.pos.copy())
-                            Pair(Pair(id, xxtag), one(null, xxtag))
-                        } else {
-                            Pair(Pair(id, xtag), emptyList())
-                        }
-                    }.unzip()
-                    return dtss.flatten() + listOf(Expr.Data(xme, ids)) + when {
-                        (CEU < 99) -> emptyList()
-                        !this.acceptFix("{") -> emptyList()
-                        else -> {
-                            val ll = mutableListOf<Expr.Data>()
-                            while (this.acceptEnu("Tag")) {
-                                val l = one(xme, this.tk0 as Tk.Tag)
-                                //if (l.isEmpty()) {
-                                //    break
-                                //}
-                                ll.addAll(l)
-                            }
-                            this.acceptFix_err("}")
-                            ll
-                        }
-                    }
-                }
-
-                val dts = one(null, tag)
-                //l.forEach { println(it.tostr()) }
-                when {
-                    (dts.size == 1) -> dts.first()
-                    (CEU < 99) -> error("bug found")
-                    else -> Expr.Do(Tk.Fix("do",pos), null, dts)
-                }
-            }
-
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val par = this.acceptFix("(")
