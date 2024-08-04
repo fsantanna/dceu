@@ -286,8 +286,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 // LOOP | ${this.dump()}
                 CEU_LOOP_START_${this.n}:
                     ${this.blk.code()}
-                    if (CEU_BREAK) {
-                        CEU_BREAK = 0;
+                    if (CEU_ESCAPE == CEU_TAG_break) {
+                        CEU_ESCAPE = CEU_ESCAPE_NONE;
                     } else {
                         goto CEU_LOOP_START_${this.n};
                     }
@@ -297,7 +297,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 ${this.e.cond { """
                     ${it.code()}
                 """ }}
-                CEU_BREAK = 1;
+                CEU_ESCAPE = CEU_TAG_break;
                 goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
             }
             """

@@ -317,9 +317,10 @@ fun Coder.main (tags: Tags): String {
     fun x_globals (): String {
         return """
     CEU_Value ceu_acc = { CEU_VALUE_NIL };
-    int CEU_BREAK = 0;
     
+    #define CEU_ESCAPE_NONE -1
     #define CEU_ERROR_NONE -1
+    int CEU_ESCAPE = CEU_ESCAPE_NONE;
     int CEU_ERROR = CEU_ERROR_NONE;
 
     #if CEU >= 2
