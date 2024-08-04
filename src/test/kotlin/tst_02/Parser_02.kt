@@ -105,6 +105,30 @@ class Parser_02 {
         //assert(out == ":ok\n") { out }
     }
 
+    // LOOP
+
+    @Test
+    fun qq_01_loop_err() {
+        val l = tst_01.lexer("loop { ;;;do;;; nil }")
+        val parser = Parser(l)
+        val e1 = parser.expr() as Expr.Loop
+        assert(e1.blk.tostr() == "{\nnil;\n}") { e1.blk.tostr() }
+    }
+    @Test
+    fun qq_02_loop_err() {
+        val l = tst_01.lexer("loop until {")
+        val parser = Parser(l)
+        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 6) : expected \"{\" : have \"until\"")
+        //assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 12) : expected expression : have \"{\"")
+    }
+    @Test
+    fun qq_03_loop_err() {
+        val l = tst_02.lexer("loop x { }")
+        val parser = Parser(l)
+        //assert(trap { parser.expr_prim() } == "anon : (lin 1, col 7) : invalid loop : unexpected x")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 6) : expected \"{\" : have \"x\"")
+    }
+
     // PATTS
 
     /*

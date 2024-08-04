@@ -79,7 +79,7 @@ class Lexer_01 {
         assert(tks.next().let { it is Tk.Fix && it.str == "set" })
         assert(tks.next().let { it is Tk.Id  && it.str == "coroutine" })
         assert(tks.next().let { it is Tk.Id  && it.str == "spawn" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "loop" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "loop" })
         assert(tks.next().let { it is Tk.Id  && it.str == "yield" })
         assert(tks.next().let { it is Tk.Id  && it.str == "while" })
         assert(tks.next().let { it is Tk.Id  && it.str == "vary10" })
