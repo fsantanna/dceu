@@ -19,6 +19,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
 
     fun Expr.coexists (): Boolean {
         return when (this) {
+            is Expr.Escape -> (this.e?.coexists() ?: false)
             is Expr.Group  -> this.es.any { it.coexists() }
             is Expr.Dcl    -> true
             is Expr.Set    -> this.dst.coexists() || this.src.coexists()
@@ -82,6 +83,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
                 };
                 """
             }
+            is Expr.Escape -> this.e.cond { it.mem() }
             is Expr.Group -> """
                 $union {
                     ${this.es.map { it.mem() }.joinToString("")}

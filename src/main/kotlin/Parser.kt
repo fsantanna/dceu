@@ -345,7 +345,7 @@ class Parser (lexer_: Lexer)
         this.acceptFix_err("{")
         val es = this.exprs()
         this.acceptFix_err("}")
-        return Expr.Do(tk, es)
+        return Expr.Do(tk, null, es)
     }
 
     fun lambda (it: Boolean): Pair<List<Id_Tag>,List<Expr>> {
@@ -408,7 +408,21 @@ class Parser (lexer_: Lexer)
 
     fun expr_prim (): Expr {
         return when {
-            this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
+            this.acceptFix("do") -> {
+                val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
+                Expr.Do(this.tk0, tag, this.block().es)
+            }
+            this.acceptFix("escape") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptFix_err("(")
+                this.acceptEnu_err("Tag")
+                val tag = this.tk0 as Tk.Tag
+                val e = if (this.checkFix(")")) null else {
+                    this.expr()
+                }
+                this.acceptFix_err(")")
+                Expr.Escape(tk0, tag, e)
+            }
             this.acceptFix("group") -> Expr.Group(this.tk0 as Tk.Fix, this.block().es)
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -477,11 +491,11 @@ class Parser (lexer_: Lexer)
                 val arr = (CEU>=99) && this.acceptFix("=>")
                 var idtag: Id_Tag? = null
                 val t = when {
-                    arr -> Expr.Do(this.tk0, listOf(this.expr_1_bin()))
+                    arr -> Expr.Do(this.tk0, null, listOf(this.expr_1_bin()))
                     (CEU >= 99) -> {
                         val (x,es) = this.lambda(false)
                         idtag = x.firstOrNull()
-                        Expr.Do(this.tk0, es)
+                        Expr.Do(this.tk0, null, es)
                     }
                     else -> this.block()
                 }
@@ -494,10 +508,10 @@ class Parser (lexer_: Lexer)
                         this.block()
                     }
                     arr && this.acceptFix_err("=>") -> {
-                        Expr.Do(this.tk0, listOf(this.expr_1_bin()))
+                        Expr.Do(this.tk0, null, listOf(this.expr_1_bin()))
                     }
                     else -> {
-                        Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
+                        Expr.Do(tk0, null, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
                     }
                 }
                 if (idtag == null) {
@@ -527,7 +541,7 @@ class Parser (lexer_: Lexer)
             this.acceptFix("skip") -> Expr.Skip(this.tk0 as Tk.Fix)
             this.acceptFix("loop") -> {
                 if (CEU<99 || this.checkFix("{")) {
-                    return Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, this.block().es))
+                    return Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, null, this.block().es))
                 }
 
                 val ids = when {
@@ -745,7 +759,7 @@ class Parser (lexer_: Lexer)
                 when {
                     (dts.size == 1) -> dts.first()
                     (CEU < 99) -> error("bug found")
-                    else -> Expr.Do(Tk.Fix("do",pos), dts)
+                    else -> Expr.Do(Tk.Fix("do",pos), null, dts)
                 }
             }
 

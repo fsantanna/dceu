@@ -46,10 +46,11 @@ fun Expr.tostr (pre: Boolean = false): String {
         }
         is Expr.Do     -> {
             when (this.tk.str) {
-                "do" -> "do {\n" + this.es.tostr(pre) + "}"
+                "do" -> "do " + this.tag.cond { it.str+" " } + "{\n " + this.es.tostr(pre) + "}"
                 else -> "{\n" + this.es.tostr(pre) + "}"
             }
         }
+        is Expr.Escape -> "escape(" + this.tag.str + this.e.cond { ","+it.tostr(pre) } + ")"
         is Expr.Group -> "group {\n" + this.es.tostr(pre) + "}"
         is Expr.Dcl    -> {
             "(" + this.tk_.str + " " + this.idtag.tostr(pre) + this.src.cond { " = ${it.tostr(pre)}" } + ")"
@@ -61,7 +62,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Skip   -> "skip"
         is Expr.Data   -> "(data " + this.tk.str + " = [" + this.ids.map { it.tostr() }.joinToString(",") + "])"
 
-        is Expr.Catch  -> "catch " + this.tag.cond { it.str } + " " + this.blk.tostr(pre)
+        is Expr.Catch  -> "catch " + this.tag.cond { it.str+" " } + this.blk.tostr(pre)
         is Expr.Defer  -> "defer " + this.blk.tostr(pre)
 
         is Expr.Yield  -> "yield(" + this.e.tostr(pre) + ")"

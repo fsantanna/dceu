@@ -175,6 +175,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     dcls.removeLast()
                 }
             }
+            is Expr.Escape -> this.e?.traverse()
             is Expr.Group -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> {
                 check(this.idtag.first)

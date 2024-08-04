@@ -23,7 +23,13 @@ class Tags (outer: Expr.Do) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto -> this.blk.traverse()
-            is Expr.Do -> this.es.forEach { it.traverse() }
+            is Expr.Do -> {
+                if (this.tag != null) {
+                    add(this.tag, this.tag.str, this.tag.str.idc(), null)
+                }
+                this.es.forEach { it.traverse() }
+            }
+            is Expr.Escape -> this.e?.traverse()
             is Expr.Group -> this.es.forEach { it.traverse() }
             is Expr.Dcl -> this.src?.traverse()
             is Expr.Set -> {

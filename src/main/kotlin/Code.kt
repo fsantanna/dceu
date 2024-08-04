@@ -240,10 +240,27 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ceu_acc = ceu_acc_$n;
                         
                         ${(CEU >= 2).cond { this.check_error_aborted("continue", "NULL")} }
+                        
+                        ${this.tag.cond { """
+                            if (CEU_ESCAPE == CEU_TAG_${it.str.idc()}) {
+                                CEU_ESCAPE = CEU_ESCAPE_NONE;   // caught escape: go ahead
+                            } else {
+                                continue;                       // uncaught escaoe: propagate up
+                            }                            
+                        """ }}
                     }
                     """
                 }
             }
+            is Expr.Escape -> """ // ESCAPE | ${this.dump()}
+            {
+                ${this.e.cond { """
+                    ${it.code()}
+                """ }}
+                CEU_ESCAPE = CEU_TAG_${this.tag.str.idc()};
+                continue;
+            }
+            """
             is Expr.Group -> "// GROUP | ${this.dump()}\n" + this.es.code()
             is Expr.Dcl -> {
                 val idx = sta.idx(this, this)

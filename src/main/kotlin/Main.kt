@@ -128,7 +128,8 @@ typealias Id_Tag  = Pair<Tk.Id,Tk.Tag?>
 
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val nst: Boolean, val tag: Tk.Tag?, val pars: List<Id_Tag>, val blk: Do): Expr(N++, tk_)
-    data class Do     (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
+    data class Do     (val tk_: Tk, val tag: Tk.Tag?, val es: List<Expr>) : Expr(N++, tk_)
+    data class Escape (val tk_: Tk.Fix, val tag: Tk.Tag, val e: Expr?): Expr(N++, tk_)
     data class Group  (val tk_: Tk.Fix, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Fix, val idtag: Id_Tag, /*val poly: Boolean,*/ val src: Expr?):  Expr(N++, tk_)
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
@@ -206,7 +207,7 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         //readLine()
         val pos = Pos("anon", 0, 0, 0)
         val ARGS   = Expr.Dcl(Tk.Fix("val",pos), Pair(Tk.Id("ARGS",pos),null), null)
-        val outer  = Expr.Do(Tk.Fix("", pos), listOf(ARGS)+es)
+        val outer  = Expr.Do(Tk.Fix("", pos), null, listOf(ARGS)+es)
         val ups    = Ups(outer)
         val tags   = Tags(outer)
         val vars   = Vars(outer, ups)

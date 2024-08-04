@@ -9,6 +9,72 @@ import org.junit.runners.MethodSorters
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_02 {
 
+    // DO / ESCAPE
+
+    @Test
+    fun cc_01_escape() {
+        val out = test("""
+            do :x {
+                println(:1)
+                escape(:x)
+                println(:2)
+            }
+            println(:3)
+        """)
+        assert(out == ":1\n:3\n") { out }
+    }
+    @Test
+    fun cc_02_escape() {
+        val out = test("""
+            val v = do :x {
+                escape(:x, 10)
+            }
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun cc_03_escape() {
+        val out = test("""
+            val v = do :x {
+                do :y {
+                    escape(:x, 10)
+                }
+                println(:no)
+            }
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun cc_04_escape() {
+        val out = test("""
+            val v = do :x {
+                do :y {
+                    escape(:y, 10)
+                    println(:no)
+                }
+            }
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+
+    // LOOP
+
+    @Test
+    fun dd_01_loop() {
+        val out = test("""
+            loop {
+                if true {
+                    break(nil)
+                } else { nil }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+
     // DEFER
 
     @Test
