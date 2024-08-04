@@ -9,12 +9,12 @@ var DUMP = true
 var DEBUG = false
 var CEU = 1
 
-    //  1: dyn-lex                           ;; 20 "definitely lost"
-    //  2: defer, throw/catch, patts         ;;  6 "definitely lost"
-    //  3: coro, yield, resume               ;;  0
-    //  4: task, pub, bcast, toggle, delay   ;;  0
-    //  5: tasks                             ;;  0
-    // 99: sugar                             ;;  0
+    //  1: dyn-lex                              ;; 20 "definitely lost"
+    //  2: defer, throw/catch, do/escape, loop  ;;  6 "definitely lost"
+    //  3: coro, yield, resume                  ;;  0
+    //  4: task, pub, bcast, toggle, delay      ;;  0
+    //  5: tasks                                ;;  0
+    // 99: sugar                                ;;  0
     // TODO: copy, underscore, self (coro/task)
 
 // search in tests output for
@@ -40,12 +40,12 @@ val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 
 val KEYWORDS: SortedSet<String> = (
     setOf (
-        "break", "data", "do", "else",
+        "data", "do", "else",
         "false", "func", "group", "if",
-        "loop", "nil", "set", "skip",
+        "nil", "set",
         "true", "val", "var",
     ) + (if (CEU < 2) setOf() else setOf (
-        "catch", "defer",
+        "catch", "defer", "escape", "loop",
     )) + (if (CEU < 3) setOf() else setOf(
         "coro", "resume", "yield",
     )) + (if (CEU < 4) setOf() else setOf(
@@ -53,9 +53,9 @@ val KEYWORDS: SortedSet<String> = (
     )) + (if (CEU < 5) setOf() else setOf(
         "tasks",
     )) + (if (CEU < 99) setOf() else setOf(
-        "await", "enum", "every", "ifs", "match",
+        "await", "break", "enum", "every", "ifs", "match",
         "par", "par-and", "par-or",
-        "resume-yield-all", "test",
+        "resume-yield-all", "skip", "test",
         "thus", "until", "watching",
         "with", "where", "while",
     ))
@@ -89,6 +89,7 @@ val TAGS = listOf (
 )) + listOf(
     ":ceu", ":pre",
 ) + (if (CEU < 99) listOf() else listOf(
+    ":break", ":skip", ":return",
     ":h", ":min", ":s", ":ms",
     ":idx", ":key", ":val",
 ))
@@ -135,8 +136,6 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
     data class Loop   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
-    data class Break  (val tk_: Tk.Fix, val e: Expr?): Expr(N++, tk_)
-    data class Skip   (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Data   (val tk_: Tk.Tag, val ids: List<Id_Tag>): Expr(N++, tk_)
 
     data class Catch  (val tk_: Tk.Fix, val tag: Tk.Tag?, val blk: Expr.Do): Expr(N++, tk_)

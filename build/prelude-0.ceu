@@ -189,17 +189,7 @@ val {{<}} = func (v1,v2) {
 
 val to-string = func (v) {
     if type(v) == :pointer {
-        var i = 0
-        val n = `:number strlen($v.Pointer)`
-        var str = #[]
-        loop {
-            if (i == n) {
-                break(nil)
-            } else { nil }
-            set str[#str] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
-            set i = i + 1
-        }
-        ;;;drop;;;(str)
+        to-string-pointer(v)
     } else {
         if type(v) == :number {
             ```
@@ -272,45 +262,39 @@ val type-dynamic? = func (v) {
 
 ;; COPY
 
-val copy = func (v) {
+var copy
+
+val copy-tuple = func (dst, src, i) {
+    if i == #src {
+        dst
+    } else {
+        set dst[i] = copy(src[i])
+        copy-tuple(dst, src, i+1)
+    }
+}
+
+val copy-dict = func (dst, src, key) {
+    val key' = next-dict(src, key)
+    if key' == nil {
+        dst
+    } else {
+        set dst[copy(key')] = copy(src[key'])
+        copy-dict(dst, src, key')
+    }
+}
+
+set copy = func (v) {
     if type-static?(type(v)) {
         v
     } else {
         if type(v) == :tuple {
-            val ret = tuple(#v)
-            var i=0
-            loop {
-                if i == #v {
-                    break(nil)
-                } else { nil }
-                set ret[i] = copy(v[i])
-                set i = i + 1
-            }
-            ;;;drop;;;(ret)
+            copy-tuple(tuple(#v), v, 0)
         } else {
             if type(v) == :vector {
-                val ret = #[]
-                var i=0
-                loop {
-                    if i == #v {
-                        break(nil)
-                    } else { nil }
-                    set ret[i] = copy(v[i])
-                    set i = i + 1
-                }
-                ;;;drop;;;(ret)
+                copy-tuple(#[], v, 0)
             } else {
                 if type(v) == :dict {
-                    val ret = @[]
-                    var k = nil
-                    loop {
-                        set k = next-dict(v, k)
-                        if k == nil {
-                            break(nil)
-                        } else { nil }
-                        set ret[copy(k)] = copy(v[k])
-                    }
-                    ;;;drop;;;(ret)
+                    copy-dict(@[], v, nil)
                 } else {
                     error(:TODO)
                 }
@@ -342,7 +326,8 @@ val await = func (e) {
                 is?(e, it)
             }
         } {
-            break
+            error(:TODO)
+            ;;break
         } else { nil }
     }
 }

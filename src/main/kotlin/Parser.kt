@@ -417,9 +417,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("(")
                 this.acceptEnu_err("Tag")
                 val tag = this.tk0 as Tk.Tag
-                val e = if (this.checkFix(")")) null else {
-                    this.expr()
-                }
+                val e = if (this.acceptFix(",")) this.expr() else null
                 this.acceptFix_err(")")
                 Expr.Escape(tk0, tag, e)
             }
@@ -529,17 +527,7 @@ class Parser (lexer_: Lexer)
                     """)
                 }
             }
-            this.acceptFix("break") -> {
-                val tk0 = this.tk0 as Tk.Fix
-                this.acceptFix_err("(")
-                val e = if (this.checkFix(")")) null else {
-                    this.expr()
-                }
-                this.acceptFix_err(")")
-                Expr.Break(tk0, e)
-            }
-            this.acceptFix("skip") -> Expr.Skip(this.tk0 as Tk.Fix)
-            this.acceptFix("loop") -> {
+            (CEU>=2 && this.acceptFix("loop")) -> {
                 if (CEU<99 || this.checkFix("{")) {
                     return Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, null, this.block().es))
                 }
@@ -672,37 +660,6 @@ class Parser (lexer_: Lexer)
                     this.nest("""
                         ${tk0.pos.pre()}val ${dcl.str} = ${proto.tostr(true)}
                     """)
-                }
-            }
-            (CEU>=99 && this.acceptFix("enum")) -> {
-                if (this.acceptEnu("Tag")) {
-                    val tag = this.tk0 as Tk.Tag
-                    this.acceptFix_err("{")
-                    val ids = this.list0(",", "}") {
-                        this.acceptEnu_err("Id")
-                        this.tk0 as Tk.Id
-                    }
-                    this.nest("""
-                        group {
-                            ${tag.str}
-                            ${ids.map { tag.str + "-" + it.str }.joinToString("\n")}
-                        }
-                    """)
-                } else {
-                    this.acceptFix_err("{")
-                    val tags = this.list0(",", "}") {
-                        this.acceptEnu_err("Tag")
-                        val tag = this.tk0 as Tk.Tag
-                        if (tag.str.contains('.')) {
-                            err(tag, "enum error : enum tag cannot contain '.'")
-                        }
-                        tag
-                    }
-                    this.nest("""
-                        group {
-                            ${tags.map { it.str }.joinToString("\n")}
-                        }
-                """)
                 }
             }
             this.acceptFix("data") -> {
@@ -930,6 +887,51 @@ class Parser (lexer_: Lexer)
                 e
             }
 
+            (CEU>=99 && this.acceptFix("enum")) -> {
+                if (this.acceptEnu("Tag")) {
+                    val tag = this.tk0 as Tk.Tag
+                    this.acceptFix_err("{")
+                    val ids = this.list0(",", "}") {
+                        this.acceptEnu_err("Id")
+                        this.tk0 as Tk.Id
+                    }
+                    this.nest("""
+                        group {
+                            ${tag.str}
+                            ${ids.map { tag.str + "-" + it.str }.joinToString("\n")}
+                        }
+                    """)
+                } else {
+                    this.acceptFix_err("{")
+                    val tags = this.list0(",", "}") {
+                        this.acceptEnu_err("Tag")
+                        val tag = this.tk0 as Tk.Tag
+                        if (tag.str.contains('.')) {
+                            err(tag, "enum error : enum tag cannot contain '.'")
+                        }
+                        tag
+                    }
+                    this.nest("""
+                        group {
+                            ${tags.map { it.str }.joinToString("\n")}
+                        }
+                """)
+                }
+            }
+            (CEU>=99 && this.acceptFix("break")) -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptFix_err("(")
+                val e = if (this.checkFix(")")) null else {
+                    this.expr()
+                }
+                this.acceptFix_err(")")
+                TODO()
+                //Expr.Break(tk0, e)
+            }
+            (CEU>=99 && this.acceptFix("skip")) -> {
+                TODO()
+                //Expr.Skip(this.tk0 as Tk.Fix)
+            }
             (CEU>=99 && (this.acceptFix("while") || this.acceptFix("until"))) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val cnd = this.expr().let { if (tk0.str=="until") it else {

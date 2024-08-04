@@ -144,24 +144,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.Loop   -> this.blk.traverse()
-            is Expr.Break  -> {
-                var up = ups.pub[this]
-                while (up is Expr.Do) {
-                    up = ups.pub[up]    // skip nested do's from late declarations
-                }
-                val fst = ups.first(this) { it is Expr.Loop || it is Expr.Proto }
-                if (fst is Expr.Proto) {
-                    err(this.tk, "break error : expected parent loop")
-                }
-                this.e?.traverse()
-            }
-            is Expr.Skip   -> {
-                if (ups.pub[this] is Expr.Do && ups.pub[ups.pub[this]] is Expr.Loop) {
-                    // ok
-                } else {
-                    //err(this.tk, "skip error : expected immediate parent loop")
-                }
-            }
             is Expr.Data   -> {}
 
             is Expr.Catch  -> this.blk.traverse()

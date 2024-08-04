@@ -199,8 +199,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.Loop   -> this.blk.traverse()
-            is Expr.Break  -> this.e?.traverse()
-            is Expr.Skip   -> {}
             is Expr.Data   -> {
                 val sup = this.tk.str.dropLastWhile { it != '.' }.dropLast(1)
                 if (datas.containsKey(this.tk.str)) {

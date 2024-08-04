@@ -24,8 +24,6 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
             is Expr.Dcl    -> true
             is Expr.Set    -> this.dst.coexists() || this.src.coexists()
             is Expr.If     -> this.cnd.coexists()
-            is Expr.Break  -> (this.e?.coexists() ?: false)
-            is Expr.Skip   -> true
             is Expr.Loop   -> this.blk.coexists()
 
             is Expr.Yield  -> this.e.coexists()
@@ -107,8 +105,6 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
                 };
                 """
             is Expr.Loop -> this.blk.mem()
-            is Expr.Break -> this.e.cond { it.mem() }
-            is Expr.Skip -> ""
 
             is Expr.Catch -> this.blk.mem()
             is Expr.Defer -> this.blk.mem()

@@ -38,8 +38,6 @@ class Tags (outer: Expr.Do) {
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.Loop   -> this.blk.traverse()
-            is Expr.Break  -> this.e?.traverse()
-            is Expr.Skip   -> {}
             is Expr.Data -> add(this.tk, this.tk.str, this.tk.str.idc(), null)
 
             is Expr.Catch  -> {

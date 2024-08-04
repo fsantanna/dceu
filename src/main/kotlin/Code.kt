@@ -145,7 +145,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val body = this.es.code()   // before defers[this] check
                 val up = ups.pub[this]
 
-                val void = sta.void(this)
+                val void = false //sta.void(this)
                 if (void) {
                     """
                     { // BLOCK | void | ${this.dump()}
@@ -242,7 +242,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ${(CEU >= 2).cond { this.check_error_aborted("continue", "NULL")} }
                         
                         ${this.tag.cond { """
-                            if (CEU_ESCAPE == CEU_TAG_${it.str.idc()}) {
+                            if (CEU_ESCAPE == CEU_ESCAPE_NONE) {
+                                // no escape
+                            } else if (CEU_ESCAPE == CEU_TAG_${it.str.idc()}) {
                                 CEU_ESCAPE = CEU_ESCAPE_NONE;   // caught escape: go ahead
                             } else {
                                 continue;                       // uncaught escaoe: propagate up
@@ -303,23 +305,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 // LOOP | ${this.dump()}
                 CEU_LOOP_START_${this.n}:
                     ${this.blk.code()}
-                    if (CEU_ESCAPE == CEU_TAG_break) {
-                        CEU_ESCAPE = CEU_ESCAPE_NONE;
-                    } else {
-                        goto CEU_LOOP_START_${this.n};
-                    }
-            """
-            is Expr.Break -> """ // BREAK | ${this.dump()}
-            {
-                ${this.e.cond { """
-                    ${it.code()}
-                """ }}
-                CEU_ESCAPE = CEU_TAG_break;
-                goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
-            }
-            """
-            is Expr.Skip -> """ // SKIP | ${this.dump()}
-                goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
+                    goto CEU_LOOP_START_${this.n};
             """
             is Expr.Data -> "// DATA | ${this.dump()}\n"
 

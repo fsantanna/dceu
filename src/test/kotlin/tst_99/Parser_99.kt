@@ -593,6 +593,66 @@ class Parser_99 {
         //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
     }
 
+    // BREAK
+
+    @Test
+    fun rr_01_break_err() {
+        val l = tst_01.lexer("break")
+        val parser = Parser(l)
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 6) : expected \"if\" : have end of file")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : expected \"(\" : have end of file")
+    }
+    @Test
+    fun rr_02_break_err() {
+        val l = tst_01.lexer("skip 1")
+        val parser = Parser(l)
+        TODO()
+        val e = parser.expr() //as Expr.Skip
+        assert(e.tostr() == "skip") { e.tostr() }
+        //assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 6) : expected \"if\" : have \"1\"")
+    }
+    @Test
+    fun rr_03_break_err() {
+        val l = tst_01.lexer("break (1)")
+        val parser = Parser(l)
+        TODO()
+        val e = parser.expr() //as Expr.Break
+        assert(e.tostr() == "break(1)") { e.tostr() }
+        //assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 10) : expected \"if\" : have end of file")
+    }
+    @Test
+    fun rr_04_break_err() {
+        val l = tst_01.lexer("break (1) if")
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 1, col 13) : expected expression : have end of file")
+        //assert(trap { parser.exprs() } == "anon : (lin 1, col 13) : expected expression : have end of file")
+    }
+    @Test
+    fun rr_05_break() {
+        val l = tst_01.lexer("skip if true")
+        val parser = Parser(l)
+        //val e = parser.exprs()
+        //assert(e.tostr() == "(skip if true)") { e.tostr() }
+        assert(trap { parser.exprs() } == "anon : (lin 1, col 13) : expected \"{\" : have end of file")
+    }
+    @Test
+    fun rr_06_break() {
+        val l = tst_01.lexer("break if nil")
+        val parser = Parser(l)
+        //val e = parser.expr() as Expr.Break
+        //assert(e.tostr() == "(break if nil)") { e.tostr() }
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 20) : expected \"(\" : have end of file")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected \"(\" : have \"if\"")
+    }
+    @Test
+    fun rr_07_skip() {
+        val l = tst_01.lexer("skip ;;;if nil;;;")
+        val parser = Parser(l)
+        TODO()
+        val e = parser.expr() //as Expr.Skip
+        assert(e.tostr() == "skip") { e.tostr() }
+    }
+
     // THUS AS
 
     @Test

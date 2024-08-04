@@ -59,6 +59,16 @@ class Exec_02 {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun cc_05_escape() {
+        val out = test("""
+            val v = do :x {
+                10
+            }
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // LOOP
 
@@ -73,6 +83,332 @@ class Exec_02 {
             println(:ok)
         """)
         assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun dd_00_loop() {
+        val out = test("""
+            loop {
+                if true {
+                    break(nil)
+                } else { nil }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun TODO_dd_01_loop_err() {
+        val out = test("""
+            loop {
+                do {
+                    break if true   ;; should not be allowed
+                }   ;; currently allowed bc of late decls that nest blocks transparently
+            }
+            println(:out)
+        """)
+        assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
+    }
+    @Test
+    fun TODO_dd_01x_loop_err() {
+        val out = test("""
+            loop {
+                do { do(nil)
+                    break if true
+                }
+            }
+            println(:out)
+        """)
+        assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
+    }
+    @Test
+    fun dd_01y_loop_err() {
+        val out = test("""
+            loop {
+                break(nil)
+                do {
+                    skip
+                }
+            }
+            println(:out)
+        """)
+        assert(out == ":out\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : skip error : expected immediate parent loop\n") { out }
+    }
+    @Test
+    fun dd_01z_loop_err() {
+        val out = test("""
+            var ok = false
+            loop {
+                if ok {
+                    break(nil)
+                } else { nil }
+                set ok = true
+                ;;;do;;; []
+                skip ;;if true
+            }
+            println(:out)
+        """)
+        assert(out == ":out\n") { out }
+    }
+    @Test
+    fun dd_02_loop() {
+        val out = test(
+            """
+            do {
+                loop {
+                    println(:in)
+                    if true {
+                        break(nil)
+                    } else {nil}
+                }
+            }
+            println(:out)
+        """
+        )
+        assert(out == ":in\n:out\n") { out }
+    }
+    @Test
+    fun dd_02x_loop() {
+        val out = test(
+            """
+            do {
+                loop {
+                    println(:in)
+                    if false {
+                        skip
+                    } else {nil}
+                    if true {
+                        break(nil)
+                    } else {nil}
+                }
+            }
+            println(:out)
+        """
+        )
+        assert(out == ":in\n:out\n") { out }
+    }
+    @Test
+    fun dd_03_loop() {
+        val out = test(
+            """
+            var x
+            set x = false
+            loop {
+                if x {
+                    break(nil)
+                } else {nil}
+                set x = true
+            }
+            println(x)
+        """
+        )
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun dd_04_loop() {
+        val out = test(
+            """
+            val f = func (t) {
+                if t[1] == 5 {
+                    nil
+                } else {
+                    set t[1] = t[1] + 1
+                    t[1]
+                }
+            }
+            do {
+                val it = [f, 0]
+                var i = it[0](it)
+                loop {
+                    if (i == nil) {
+                        break(nil)
+                    } else {nil}
+                    println(i)
+                    set i = it[0](it)
+                }
+            }
+        """, true
+        )
+        assert(out == "1\n2\n3\n4\n5\n") { out }
+    }
+    @Test
+    fun dd_05_loop() {
+        val out = test(
+            """
+            val f = func (t) {
+                nil
+            }
+            val v = []
+            f(v)
+            println(:ok)
+        """
+        )
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun dd_06_loop() {
+        val out = test(
+            """
+            val v = loop {
+                if (10) {
+                    break()
+                } else {nil}
+            }
+            println(v)
+        """
+        )
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun dd_07_loop() {
+        val out = test(
+            """
+            val v1 = loop {
+                if (10) {
+                    break()
+                } else {nil}
+            }
+            val v2 = loop {
+                if true {
+                    break(nil)
+                } else {nil}
+            }
+            println(v1, v2)
+        """
+        )
+        assert(out == "10\tnil\n") { out }
+    }
+    @Test
+    fun dd_08_loop() {
+        val out = test("""
+            val x = 10
+            println(loop {
+                if (x) {
+                    break()
+                } else {nil}
+            })
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun dd_09_loop_break() {
+        val out = test("""
+            loop {
+                func () {
+                    break (nil)
+                }
+            }
+        """)
+        //assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
+        assert(out == "anon : (lin 4, col 21) : break error : expected parent loop\n") { out }
+    }
+    @Test
+    fun TODO_dd_10_loop() {
+        val out = test("""
+            loop {
+                do {
+                    val t = []
+                    break if true
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == "anon : (lin 5, col 21) : break error : expected immediate parent loop\n") { out }
+    }
+    @Test
+    fun dd_11_loop() {
+        val out = test("""
+            loop {
+                val t = []
+                if true {
+                    break (nil)
+                } else {nil}
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun dd_12_iter() {
+        val out = test("""
+            $PLUS
+            val f = func (t) {
+                if t[1] == 5 {
+                    nil
+                } else {
+                    set t[1] = t[1] + 1
+                    t[1]
+                }
+            }
+            do {
+                val it = [f, 0]
+                var i = it[0](it)
+                loop {
+                    if i == nil {
+                        break (nil)
+                    } else {nil}
+                    println(i)
+                    set i = it[0](it)
+                }
+            }
+        """)
+        assert(out == "1\n2\n3\n4\n5\n") { out }
+    }
+    @Test
+    fun dd_13_iter() {
+        val out = test("""
+            $PLUS
+            var i = 0
+            loop {
+                set i = i + 1
+                println(i)
+                if i /= 2 {
+                    skip
+                } else {nil}
+                println(i)
+                break()
+            }
+            println(i)
+        """)
+        assert(out == "1\n2\n2\n2\n") { out }
+    }
+    @Test
+    fun dd_14_loop_break_error_bug() {
+        val out = test("""
+            loop {
+                do { nil }
+                if true {
+                    break (nil)
+                } else {nil}
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun dd_15_loop_break_immed() {
+        val out = test("""
+            loop {
+                do { nil }
+                val e = nil
+                if true {
+                    break (nil)
+                } else {nil}
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun dd_16_until() {
+        val out = test("""
+            println(loop {
+                if 10 {
+                    break ()
+                } else {nil}
+            })
+        """)
+        assert(out == "10\n") { out }
     }
 
     // DEFER
@@ -592,6 +928,72 @@ class Exec_02 {
         assert(out == ":ok\n" +
                 " |  anon : (lin 5, col 13) : error(:error)\n" +
                 " v  error : :error\n") { out }
+    }
+
+    // LOOPS
+
+    @Test
+    fun de_03_next() {
+        val out = test(
+            """
+            val t = @[]
+            set t[:x] = 1
+            set t[:y] = 2
+            set t[:z] = 3
+            set t[:y] = nil
+            set t[:x] = nil
+            set t[:a] = 10
+            set t[:b] = 20
+            set t[:c] = 30
+            var k = next-dict(t)
+            loop {
+                if (k == nil) {
+                    break(nil)
+                } else { nil }
+                println(k, t[k])
+                set k = next-dict(t,k)
+            }
+        """
+        )
+        assert(out == ":a\t10\n:b\t20\n:z\t3\n:c\t30\n") { out }
+    }
+    @Test
+    fun gc_19_pool() {
+        DEBUG = true
+        val out = test("""
+            do {
+                var t1 = []
+                var ok = false
+                loop {
+                    val t2 = t1
+                    set t1 = nil
+                    if ok {
+                        break(nil)
+                    } else { nil }
+                    set ok = true
+                }
+                println(`:number CEU_GC.free`)
+            }
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun zz_01_sum() {
+        val out = test("""
+            var sum = func (n) {                                                            
+                var i = n                                                                   
+                var s = 0                                                                   
+                loop {                                                                      
+                    if i == 0 {
+                        break(s)
+                    } else {nil}
+                    set s = s + i                                                           
+                    set i = i - 1                                                           
+                }                                                                           
+            }                                                                               
+            println(sum(5))                                                                
+        """, true)
+        assert(out == "15\n") { out }
     }
 
     // ORIGINAL
