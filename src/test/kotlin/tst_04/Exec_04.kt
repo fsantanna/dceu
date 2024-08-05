@@ -405,12 +405,14 @@ class Exec_04 {
             """
             $PLUS
             var i = 0
-            loop {
-                broadcast(nil)
-                if i == 254 {
-                    break()
-                } else {nil}
-                set i = i + 1
+            do :break {
+                loop' {
+                    broadcast(nil)
+                    if i == 254 {
+                        escape(:break, nil)
+                    } else {nil}
+                    set i = i + 1
+                }
             }
             val t = spawn (task () {
                 println(`:number CEU_TIME`)
@@ -458,9 +460,9 @@ class Exec_04 {
         DEBUG = true
         val out = test("""
             spawn (task () {
-                val v = do {
-                    loop {
-                        (break (100) ;;;if true;;;)
+                val v = do :break {
+                    loop' {
+                        escape(:break,100) ;;;if true;;;
                     }
                     delay
                 }
@@ -862,7 +864,7 @@ class Exec_04 {
                     println(:1, yield(nil)) ;; awakes from outer bcast
                 }) ()
                 spawn (task () {
-                    loop {
+                    loop' {
                         yield(nil)
                     }
                 }) ()
@@ -1009,7 +1011,7 @@ class Exec_04 {
         val out = test(
             """
             val T = task () {
-                loop {
+                loop' {
                     val it = yield(nil)
                 }
             }
@@ -1052,16 +1054,17 @@ class Exec_04 {
         val out = test(
             """
             val T = task () {
-                val e1 =
-                    loop {
+                val e1 = do :break {
+                    loop' {
                         val it = yield(nil)
                         do {
                             val x = it
                             println(:in, it)    ;; TODO: 10
                         }
-                        break()
-                   }     
-                val x
+                        escape(:break, nil)
+                   }
+               }
+               val x
             }
             spawn T()
             broadcast(10)
@@ -1120,7 +1123,7 @@ class Exec_04 {
                     yield(nil)
                     println(v)
                 } ()
-                loop { yield(nil) }
+                loop' { yield(nil) }
             }
             spawn T(1)
             spawn T(2)
@@ -1151,7 +1154,7 @@ class Exec_04 {
                 println(evt1)
                 spawn (task () {
                     var evt2 = evtx
-                    loop {
+                    loop' {
                         println(evt2)    ;; lost reference
                         set evt2 = yield(nil)
                     }
@@ -1312,7 +1315,7 @@ class Exec_04 {
                     yield(nil)
                     broadcast (nil) in :global
                 }) ()
-                loop {
+                loop' {
                     yield(nil)
                 }
             }) ()            
@@ -1632,11 +1635,13 @@ class Exec_04 {
             set fff = func (x) { x }
             spawn task () {
                 var evt = yield(nil)
-                loop {
-                    if evt[:type]==:x {
-                        break()
-                    } else {nil}
-                    set evt = yield(nil)
+                do :break {
+                    loop' {
+                        if evt[:type]==:x {
+                            escape(:break, nil)
+                        } else {nil}
+                        set evt = yield(nil)
+                    }
                 }
                 println(99)
             }()
@@ -1695,7 +1700,7 @@ class Exec_04 {
             """
             spawn task () {
                 var evt
-                loop {
+                loop' {
                     println(evt)
                     set evt = yield(nil)
                 }
@@ -1710,7 +1715,7 @@ class Exec_04 {
         val out = test(
             """
             spawn task () {
-                loop {
+                loop' {
                     var evt
                     do {
                         set evt = yield(nil)
@@ -2147,7 +2152,7 @@ class Exec_04 {
                         println(222)
                         error(:e1)                  ;; error
                     }) ()
-                    loop { yield(nil) } ;;thus { it => nil }
+                    loop' { yield(nil) } ;;thus { it => nil }
                 }
                 println(333)
             }) ()
@@ -2698,9 +2703,11 @@ class Exec_04 {
         val out = test(
             """
             var ang = 0
-            loop {
-                break() ;; if true
-                ang
+            do :break {
+                loop' {
+                    escape(:break, nil) ;; if true
+                    ang
+                }
             }
             println(:ok)
         """
@@ -4073,7 +4080,7 @@ class Exec_04 {
                 var evt = yield(nil)
                 println(evt)
                 spawn (task :nested () {
-                    loop {
+                    loop' {
                         println(evt)    ;; kept reference
                         set evt = yield(nil)
                     }
@@ -4221,19 +4228,21 @@ class Exec_04 {
             $PLUS
             println(:1)
             var x = 0
-            loop {
-                if x == 2 {
-                    break()
-                } else {nil}
-                set x = x + 1
-                println(:2)
-                spawn( task () {
-                    defer {
-                        println(:defer)
-                    }
-                    yield(nil) ;;thus { it => nil }
-                }) ()
-                println(:3)
+            do :break {
+                loop' {
+                    if x == 2 {
+                        escape(:break, nil)
+                    } else {nil}
+                    set x = x + 1
+                    println(:2)
+                    spawn( task () {
+                        defer {
+                            println(:defer)
+                        }
+                        yield(nil) ;;thus { it => nil }
+                    }) ()
+                    println(:3)
+                }
             }
             println(:4)
        """
@@ -4448,7 +4457,7 @@ class Exec_04 {
                     println(:ok)
                 }
                 println(:2)
-                loop {
+                loop' {
                     yield(nil)
                 }
                 println(999)
@@ -5445,7 +5454,7 @@ class Exec_04 {
                         yield(nil)
                         println(:2)
                     }) ()
-                    loop { yield(nil) } ;;thus { it => nil }
+                    loop' { yield(nil) } ;;thus { it => nil }
                 }
                 println(333)
             }) ()
@@ -5499,7 +5508,7 @@ class Exec_04 {
                         ;;yield(nil) ;;thus { it => nil }
                         error(:e1)
                     })) ()
-                    loop {
+                    loop' {
                         yield(nil)
                     }
                 }
@@ -5523,7 +5532,7 @@ class Exec_04 {
             """
             task () {
                 catch ;;;(it|nil);;; {
-                    loop {
+                    loop' {
                         yield(nil)
                     }
                 }
@@ -5544,7 +5553,7 @@ class Exec_04 {
                         error(:e1)
                         println(:no)
                     }) ()
-                    loop { yield(nil) } ;;thus { it => nil }
+                    loop' { yield(nil) } ;;thus { it => nil }
                 }
                 println(:ok1)
                 error(:e2)
@@ -5553,7 +5562,7 @@ class Exec_04 {
             spawn (task () {
                 catch :e2 ;;;(it| :e2 );;; {
                     spawn T()
-                    loop { yield(nil) } ;;thus { it => nil }
+                    loop' { yield(nil) } ;;thus { it => nil }
                 }
                 println(:ok2)
                 error(:e3)
@@ -5847,13 +5856,13 @@ class Exec_04 {
             }
             val co = coroutine (coro () {
                 yield(nil)
-                loop {
+                loop' {
                     val v = f()
                     yield(v)
                 }
             })
             resume co ()
-            loop {
+            loop' {
                 var v = resume co()
                 println(v)
                 error(:99)
@@ -6400,17 +6409,17 @@ class Exec_04 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun zz_25_break() {
+    fun zz_25_escape_break () {
         val out = test(
             """
             spawn (task () {
-                println(loop {
+                println(do :break { loop' {
                     val t = [10]
                     if t[0] {
-                        break ()
+                        escape(:break,t[0])
                     } else {nil}
                     yield(nil) ;;thus { it => nil }
-                })
+                }})
             }) ()
         """
         )
@@ -6475,30 +6484,36 @@ class Exec_04 {
     fun zz_29_xceu () {
         val out = test("""
             spawn task () {
-                loop {
+                loop' {
                     var evt = yield(nil);
-                    loop {
-                        if evt==10 {
-                            break ()
-                        } else {nil}
-                        set evt = yield(nil)
+                    do :break {
+                        loop' {
+                            if evt==10 {
+                                escape(:break,nil)
+                            } else {nil}
+                            set evt = yield(nil)
+                        }
                     }
                     println(:1)
                     var t = spawn task () {
                         var evt2 = yield(nil);
-                        loop {
-                            if evt2==10 {
-                                break ()
-                            } else {nil}
-                            set evt2 = yield(nil)
+                        do :break {
+                            loop' {
+                                if evt2==10 {
+                                    escape(:break,nil)
+                                } else {nil}
+                                set evt2 = yield(nil)
+                            }
                         }
                     } ()
-                    loop {
-                        if status(t)==:terminated {
-                            break ()
-                        } else {nil}
-                        set evt = yield(nil)
-                        delay
+                    do :break {
+                        loop' {
+                            if status(t)==:terminated {
+                                escape(:break,nil)
+                            } else {nil}
+                            set evt = yield(nil)
+                            delay
+                        }
                     }
                     println(:2)
                 }
@@ -6753,13 +6768,15 @@ class Exec_04 {
             """
             spawn (task () {
                 spawn (task () {
-                    loop {
-                        yield(nil)
-                        if (func () {
-                            true
-                        } ()) {
-                            skip
-                        } else {nil}
+                    loop' {
+                        do :skip {
+                            yield(nil)
+                            if (func () {
+                                true
+                            } ()) {
+                                escape(:skip,nil)
+                            } else {nil}
+                        }
                     }
                 }) ()
                 spawn (task () {
@@ -6795,9 +6812,11 @@ class Exec_04 {
                 spawn (task () {
                     yield(nil)
                 }) ()
-                loop {
-                    yield(nil)
-                    break() ;; if true
+                do :break {
+                    loop' {
+                        yield(nil)
+                        escape(:break, nil) ;; if true
+                    }
                 }
             }) ()
             broadcast(nil)
@@ -6835,7 +6854,7 @@ class Exec_04 {
     fun zz_09_99_double_awake() {
         val out = test("""
             spawn (task () {
-                loop {
+                loop' {
                     yield(nil) ; delay
                     println(false)
                     val t = spawn (task () {
@@ -6856,10 +6875,10 @@ class Exec_04 {
     fun zz_10_optim() {
         val out = test("""
             spawn (task () {
-                println(do {
-                    loop {
+                println(do :break {
+                    loop' {
                         yield(nil)
-                        break() ;; if true
+                        escape(:break, nil) ;; if true
                     }
                     delay
                     nil
@@ -6874,7 +6893,7 @@ class Exec_04 {
         val out = test("""
             spawn (task () {
                 spawn (task () {
-                    loop {
+                    loop' {
                         do {
                             (var it)
                             (set it = yield(nil))

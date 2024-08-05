@@ -672,7 +672,7 @@ class Exec_03 {
                 defer {
                     println(:ok)
                 }
-                loop {
+                loop' {
                     println(:2)
                     yield(nil)
                 }

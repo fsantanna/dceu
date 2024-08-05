@@ -56,11 +56,14 @@ fun AND (v1:String, v2:String): String {
 
 fun AWAIT (v:String="(type(it) /= :exe-task)"): String {
     return """
-        loop {
-            val it = yield(nil)
-            if ${AND(v, OR("it","true"))} {
-                break()
-            } else {nil}
+        do :break {
+            loop' {
+                val it = yield(nil)
+                val xxx = ${AND(v, OR("it","true"))}
+                if xxx {
+                    escape(:break,xxx)
+                } else {nil}
+            }
         }
     """.replace("\n", " ")
 }
