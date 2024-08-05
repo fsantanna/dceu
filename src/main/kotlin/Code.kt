@@ -249,7 +249,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                                 CEU_ESCAPE = CEU_ESCAPE_NONE;   // caught escape: go ahead
                             """ }}
                             } else {
-                                continue;                       // uncaught escaoe: propagate up
+                                continue;                       // uncaught escape: propagate up
                             }                                                            
                         """ }}
                         
@@ -479,6 +479,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         };
                         ceu_exe_$n.Dyn->Exe.clo->proto(&ceux_$n);
                         CEU_ERROR_CHK_ERR({ceu_gc_dec_val(ceu_exe_$n);continue;}, ${this.toerr()});
+                        if (CEU_ESCAPE != CEU_ESCAPE_NONE) {
+                            continue;
+                        }                                                            
                         ceu_gc_dec_val(ceu_acc);
                         ${this.check_aborted("{ceu_gc_dec_val(ceu_exe_$n);continue;}", this.toerr())}
                         ceu_acc = ceu_exe_$n;

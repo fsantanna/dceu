@@ -12,15 +12,15 @@ set cpo&vim
 
 let s:ft = matchstr(&ft, '^\([^.]\)\+')
 
-syn keyword Statement   break data do else
+syn keyword Statement   data do else
 syn keyword Statement   enum false func group if
-syn keyword Statement   loop nil set skip
+syn keyword Statement   nil set
 syn keyword Statement   true val var
-syn keyword Statement   catch defer
+syn keyword Statement   catch defer escape loop
 syn keyword Statement   coro resume yield
-syn keyword Statement   broadcast delay in pub spawn task toggle
+syn keyword Statement   break broadcast delay in pub spawn task toggle
 syn keyword Statement   await every ifs match par par-and par-or
-syn keyword Statement   resume-yield-all test thus until watching
+syn keyword Statement   resume-yield-all skip test thus until watching
 syn keyword Statement   with where while
 
 syn keyword Statement   dump error next-dict print println

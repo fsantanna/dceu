@@ -1814,7 +1814,7 @@ fun Coder.main (tags: Tags): String {
                 ceu_bcast_dyn(dn, act, now, evt);
                 CEU_Dyn* nxt = ceu_task_get(CEU_LNKS(dn)->sd.nxt);
                 ceu_gc_dec_dyn(dn); // TODO: could affect nxt?
-                if (CEU_ERROR != CEU_ERROR_NONE) {
+                if (CEU_ESCAPE!=CEU_ESCAPE_NONE || CEU_ERROR!=CEU_ERROR_NONE) {
                     break;
                 }
                 dn = nxt;
@@ -1846,7 +1846,7 @@ fun Coder.main (tags: Tags): String {
                 // do nothing
             } else if (tsk == &CEU_GLOBAL_TASK) {
                 // do nothing
-            } else if (CEU_ERROR != CEU_ERROR_NONE) {
+            } else if (CEU_ESCAPE!=CEU_ESCAPE_NONE || CEU_ERROR!=CEU_ERROR_NONE) {
                 // even if error is caught, should not awake from past event
                 CEUX ceux = {
                     tsk->clo,

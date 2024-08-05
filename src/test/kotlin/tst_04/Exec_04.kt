@@ -2623,7 +2623,6 @@ class Exec_04 {
         )
         assert(out == "[2]\n") { out }
     }
-
     @Test
     fun dh_02_set() {
         val out = test(
@@ -2642,7 +2641,6 @@ class Exec_04 {
         )
         assert(out == "[2]\n") { out }
     }
-
     @Test
     fun gh_03_set() {
         val out = test(
@@ -2658,7 +2656,6 @@ class Exec_04 {
         )
         assert(out == "[2]\n") { out }
     }
-
     @Test
     fun TODO_dh_04_set() {
         val out = test(
@@ -2679,7 +2676,6 @@ class Exec_04 {
         //assert(out == "[1]\n") { out }
         assert(out == "anon : (lin 6, col 29) : access error : outer variable \"t\" must be immutable\n") { out }
     }
-
     @Test
     fun dh_05_set() {
         val out = test(
@@ -2697,7 +2693,6 @@ class Exec_04 {
         )
         assert(out == "[1]\n") { out }
     }
-
     @Test
     fun dh_06_set() {
         val out = test(
@@ -2715,7 +2710,6 @@ class Exec_04 {
         assert(out == ":ok\n") { out }
         //assert(out == "anon : (lin 4, col 17) : loop error : innocuous last expression\n") { out }
     }
-
     @Test
     fun dh_07_nst() {
         val out = test(
@@ -2731,6 +2725,55 @@ class Exec_04 {
         """
         )
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun dh_08_escape() {
+        val out = test("""
+            spawn (task () {
+                val v = do :X {
+                    spawn (task :nested () {
+                        escape(:X,:ok)
+                    })()
+                    loop' {
+                        yield(nil)
+                    }
+                    nil
+                }
+                println(v)
+            }) ()
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun dh_09_escape() {
+        val out = test("""
+            spawn (task () {
+                val v = do :X {
+                    spawn (task :nested () {
+                        escape(:X,:ok)
+                    })()
+                }
+                println(v)
+            }) ()
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun dh_10_escape() {
+        val out = test("""
+            spawn (task () {
+                val v = do :X {
+                    spawn (task :nested () {
+                        yield(nil)
+                        escape(:X,:ok)
+                    })()
+                    yield(nil)
+                }
+                println(v)
+            }) ()
+            broadcast(nil)
+        """)
+        assert(out == ":ok\n") { out }
     }
 
     // STATUS

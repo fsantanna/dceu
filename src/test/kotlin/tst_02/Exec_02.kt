@@ -69,6 +69,17 @@ class Exec_02 {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun cc_06_escape_err() {
+        val out = test("""
+            do :X {
+                func () {
+                    escape(:X,nil)
+                }
+            }
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // LOOP
 
