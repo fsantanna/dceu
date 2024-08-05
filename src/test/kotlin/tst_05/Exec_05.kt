@@ -160,12 +160,14 @@ class Exec_05 {
             val T = task (v) { nil }
             val ts = tasks()
             var x = 0
-            loop {
-                spawn T() in ts
-                set x = x + 1
-                if x==500 {
-                    break ()
-                } else {nil}
+            do :break {
+                loop' {
+                    spawn T() in ts
+                    set x = x + 1
+                    if x==500 {
+                        escape(:break,nil)
+                    } else {nil}
+                }
             }
             println(:ok)
         """)
@@ -273,15 +275,17 @@ class Exec_05 {
                 do {
                     var ok1
                     set ok1=false
-                    loop {
-                        if ok1 {
-                            break ()
-                        } else {nil}
-                        val evt = yield(nil) if type(evt)/=:exe-task { set ok1=true } else { nil } }
+                    do :break {
+                        loop' {
+                            if ok1 {
+                                escape(:break,nil)
+                            } else {nil}
+                            val evt = yield(nil) if type(evt)/=:exe-task { set ok1=true } else { nil } }
+                        }
                     }
                 ;;yield(nil)
                 if v {
-                    do { var ok; set ok=false; loop { if ok {break()} else {nil}  ; val evt=yield(nil;) if type(evt)/=:exe-task { set ok=true } else { nil } } }
+                    do { var ok; set ok=false; do :break { loop' { if ok {escape(:break,nil)} else {nil}  ; val evt=yield(nil;) if type(evt)/=:exe-task { set ok=true } else { nil } } } }
                     ;;yield(nil)
                 } else {
                     nil
@@ -318,9 +322,9 @@ class Exec_05 {
                         } else {
                             nil
                         }
-                        loop { yield(nil) }
+                        loop' { yield(nil) }
                     } ()
-                    loop { yield(nil) }
+                    loop' { yield(nil) }
                 }
                 println(v)
             }
@@ -352,9 +356,9 @@ class Exec_05 {
                         } else {
                             nil
                         }
-                        loop { yield(nil) }
+                        loop' { yield(nil) }
                     } ()
-                    loop { yield(nil) }
+                    loop' { yield(nil) }
                 }
                 println(v)
             }
@@ -392,14 +396,16 @@ class Exec_05 {
             var ts = tasks()
             spawn T() in ts
             var t
-            loop {
-                set t = next-tasks(ts, t)
-                if (if t { false } else { true }) {
-                    break ()
-                } else { nil }
-                var x = ;;;detrack;;;(t).pub
-                broadcast (nil) in ;;;detrack;;;(t)
-                println(x)
+            do :break {
+                loop' {
+                    set t = next-tasks(ts, t)
+                    if (if t { false } else { true }) {
+                        escape(:break,nil)
+                    } else { nil }
+                    var x = ;;;detrack;;;(t).pub
+                    broadcast (nil) in ;;;detrack;;;(t)
+                    println(x)
+                }
             }
             println(999)
         """)
@@ -472,7 +478,7 @@ class Exec_05 {
                 set pub = n
                 var evt = yield(nil)
                 ;;println(:awake, evt, n)
-                loop {
+                loop' {
                     break if evt == n
                     set evt = yield(nil)
                 }
@@ -482,7 +488,7 @@ class Exec_05 {
             spawn T(1) in ts
             spawn T(2) in ts
             var t = nil
-            loop {
+            loop' {
                 set t = next-tasks(ts, t)
                 break if (if t { false } else { true })
                 println(:t, ;;;detrack;;;(t).pub)
@@ -598,7 +604,7 @@ class Exec_05 {
                 defer {
                     println(:task)
                 }
-                loop {
+                loop' {
                     yield(nil)
                 }
             }
@@ -1304,7 +1310,7 @@ class Exec_05 {
                 yield(nil)
             }) () in ts
             var xxx :T = nil
-            loop {
+            loop' {
                 set xxx = next-tasks(ts, xxx)
                 break if (if xxx { false } else { true })
                 println(;;;detrack;;;(xxx).pub.y)   // TODO: detrack needs to return to grammar
@@ -1346,7 +1352,7 @@ class Exec_05 {
                         yield(nil)
                         error(:ok)
                     } ()
-                    loop { yield(nil) }
+                    loop' { yield(nil) }
                 }
             })()
             broadcast(nil)
@@ -1909,12 +1915,14 @@ class Exec_05 {
                     println(v)
                 }
                 spawn T(1) in ts
-                loop {
-                    val t = next-tasks(ts)
-                    if (if t { false } else { true }) {
-                        break ()
-                    } else {nil}
-                    error(1)    ;; never reached
+                do :break {
+                    loop' {
+                        val t = next-tasks(ts)
+                        if (if t { false } else { true }) {
+                            escape(:break,nil)
+                        } else {nil}
+                        error(1)    ;; never reached
+                    }
                 }
             }
             broadcast(2)
@@ -1938,13 +1946,15 @@ class Exec_05 {
             var ts = tasks()
             spawn T() in ts
             var xxx = nil
-            loop {
-                set xxx = next-tasks(ts, xxx)
-                if (if xxx { false } else { true }) {
-                    break ()
-                } else {nil}
-                println(1)
-                broadcast (1)
+            do :break {
+                loop' {
+                    set xxx = next-tasks(ts, xxx)
+                    if (if xxx { false } else { true }) {
+                        escape(:break,nil)
+                    } else {nil}
+                    println(1)
+                    broadcast (1)
+                }
             }
             println(2)
         """)
@@ -1961,20 +1971,24 @@ class Exec_05 {
             var ts = tasks()
             spawn T() in ts
             var xxx = nil
-            loop {
-                set xxx = next-tasks(ts, xxx)
-                if (if xxx { false } else { true }) {
-                    break ()
-                } else {nil}
-                println(1)
-                broadcast(1)
-                var yyy = nil
-                loop  {
-                    set yyy = next-tasks(ts, yyy)
-                    if (if yyy { false } else { true }) {
-                        break ()
+            do :break {
+                loop' {
+                    set xxx = next-tasks(ts, xxx)
+                    if (if xxx { false } else { true }) {
+                        escape(:break,nil)
                     } else {nil}
-                    println(2)
+                    println(1)
+                    broadcast(1)
+                    var yyy = nil
+                    do :break {
+                        loop' {
+                            set yyy = next-tasks(ts, yyy)
+                            if (if yyy { false } else { true }) {
+                                escape(:break,nil)
+                            } else {nil}
+                            println(2)
+                        }
+                    }
                 }
             }
             println(3)
@@ -1989,12 +2003,14 @@ class Exec_05 {
             spawn T() in ts
             var yyy
             var xxx = nil
-            loop {
-                set xxx = next-tasks(ts, xxx)
-                if (if xxx { false } else { true }) {
-                    break ()
-                } else {nil}
-                set yyy = xxx
+            do :break {
+                loop' {
+                    set xxx = next-tasks(ts, xxx)
+                    if (if xxx { false } else { true }) {
+                        escape(:break,nil)
+                    } else {nil}
+                    set yyy = xxx
+                }
             }
             println(status(;;;detrack;;;(yyy)))
         """)
@@ -2010,12 +2026,14 @@ class Exec_05 {
             spawn T() in ts
             var yyy
             var xxx = nil
-            loop {
-                set xxx = next-tasks(ts, xxx)
-                if (if xxx { false } else { true }) {
-                    break ()
-                } else {nil}
-                set yyy = ;;;move;;;(xxx)
+            do :break {
+                loop' {
+                    set xxx = next-tasks(ts, xxx)
+                    if (if xxx { false } else { true }) {
+                        escape(:break,nil)
+                    } else {nil}
+                    set yyy = ;;;move;;;(xxx)
+                }
             }
             println(status(;;;detrack;;;(yyy)))
         """)
@@ -2067,12 +2085,14 @@ class Exec_05 {
             var ts = tasks()
             spawn T() in ts
             var xxx = nil
-            loop ;;;in :tasks ts, xxx;;; {
-                set xxx = next-tasks(ts, xxx)
-                if (if xxx { false } else { true }) {
-                    break ()
-                } else {nil}
-                broadcast(nil) in ;;;detrack;;;(xxx)
+            do :break {
+                loop' ;;;in :tasks ts, xxx;;; {
+                    set xxx = next-tasks(ts, xxx)
+                    if (if xxx { false } else { true }) {
+                        escape(:break,nil)
+                    } else {nil}
+                    broadcast(nil) in ;;;detrack;;;(xxx)
+                }
             }
         """)
         assert(out == ":ok\n") { out }
@@ -2087,23 +2107,27 @@ class Exec_05 {
             set ts = tasks()
             spawn T() in ts
             var xxx = nil
-            loop ;;;in :tasks ts, xxx;;; {
-                set xxx = next-tasks(ts, xxx)
-                if (if xxx { false } else { true }) {
-                    break ()
-                } else {nil}
-                var yyy
-                var zzz = nil
-                loop ;;;in :tasks ts, zzz;;; {
-                    set zzz = next-tasks(ts, zzz)
-                    if (if zzz { false } else { true }) {
-                        break ()
+            do :break {
+                loop' ;;;in :tasks ts, xxx;;; {
+                    set xxx = next-tasks(ts, xxx)
+                    if (if xxx { false } else { true }) {
+                        escape(:break,nil)
                     } else {nil}
-                    set yyy = ;;;copy;;;(zzz)
+                    var yyy
+                    var zzz = nil
+                    do :break {
+                        loop' ;;;in :tasks ts, zzz;;; {
+                            set zzz = next-tasks(ts, zzz)
+                            if (if zzz { false } else { true }) {
+                                escape(:break,nil)
+                            } else {nil}
+                            set yyy = ;;;copy;;;(zzz)
+                            println(status(;;;detrack;;;(yyy)))
+                        }
+                    }
                     println(status(;;;detrack;;;(yyy)))
+                    set yyy = xxx
                 }
-                println(status(;;;detrack;;;(yyy)))
-                set yyy = xxx
             }
         """
         )
@@ -2121,22 +2145,26 @@ class Exec_05 {
             set ts = tasks()
             spawn T() in ts
             var xxx = nil
-            loop ;;;in :tasks ts, xxx;;; {
-                set xxx = next-tasks(ts, xxx)
-                if (if xxx { false } else { true }) {
-                    break ()
-                } else {nil}
-                var yyy
-                var zzz = nil
-                loop ;;;in :tasks ts, zzz;;; {
-                    set zzz = next-tasks(ts, zzz)
-                    if (if zzz { false } else { true }) {
-                        break ()
+            do :break {
+                loop' ;;;in :tasks ts, xxx;;; {
+                    set xxx = next-tasks(ts, xxx)
+                    if (if xxx { false } else { true }) {
+                        escape(:break,nil)
                     } else {nil}
-                    ;;;do;;; nil
+                    var yyy
+                    var zzz = nil
+                    do :break {
+                        loop' ;;;in :tasks ts, zzz;;; {
+                            set zzz = next-tasks(ts, zzz)
+                            if (if zzz { false } else { true }) {
+                                escape(:break,nil)
+                            } else {nil}
+                            ;;;do;;; nil
+                        }
+                    }
+                    set yyy = xxx
+                    ;;pass nil ;; otherwise scope err for yyy/xxx
                 }
-                set yyy = xxx
-                ;;pass nil ;; otherwise scope err for yyy/xxx
             }
             println(1)
         """
@@ -2153,12 +2181,14 @@ class Exec_05 {
             set ts = tasks()
             spawn T() in ts
             var xxx = nil
-            loop ;;;in :tasks ts, xxx;;; {
-                set xxx = next-tasks(ts, xxx)
-                if (if xxx { false } else { true }) {
-                    break ()
-                } else {nil}
-                ;;;do;;; xxx
+            do :break {
+                loop' ;;;in :tasks ts, xxx;;; {
+                    set xxx = next-tasks(ts, xxx)
+                    if (if xxx { false } else { true }) {
+                        escape(:break,nil)
+                    } else {nil}
+                    ;;;do;;; xxx
+                }
             }
             println(1)
         """
@@ -2181,21 +2211,25 @@ class Exec_05 {
             spawn T(2) in ts
             
             var t1 = nil
-            loop ;;;in :tasks ts, t1;;; {
-                set t1 = next-tasks(ts, t1)
-                if (if t1 { false } else { true }) {
-                    break ()
-                } else {nil}
-                var t2 = nil
-                loop ;;;in :tasks ts, t2;;; {
-                    set t2 = next-tasks(ts, t2)
-                    if (if t2 { false } else { true }) {
-                        break ()
+            do :break {
+                loop' ;;;in :tasks ts, t1;;; {
+                    set t1 = next-tasks(ts, t1)
+                    if (if t1 { false } else { true }) {
+                        escape(:break,nil)
                     } else {nil}
-                    println(;;;detrack;;;(t1).pub, ;;;detrack;;;(t2).pub)
+                    var t2 = nil
+                    do :break {
+                        loop' ;;;in :tasks ts, t2;;; {
+                            set t2 = next-tasks(ts, t2)
+                            if (if t2 { false } else { true }) {
+                                escape(:break,nil)
+                            } else {nil}
+                            println(;;;detrack;;;(t1).pub, ;;;detrack;;;(t2).pub)
+                        }
+                    }
                 }
             }
-             broadcast( 2 )
+            broadcast( 2 )
         """)
         assert(out == ":tasks\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
     }
@@ -2211,12 +2245,14 @@ class Exec_05 {
             set ts = tasks()
             spawn T() in ts
             var t
-            loop ;;;in :tasks ts, t;;; {
-                set t = next-tasks(ts,t)
-                if (if t { false } else { true }) {
-                    break ()
-                } else {nil}
-                println(;;;detrack;;;(t).pub[0])
+            do :break {
+                loop' ;;;in :tasks ts, t;;; {
+                    set t = next-tasks(ts,t)
+                    if (if t { false } else { true }) {
+                        escape(:break,nil)
+                    } else {nil}
+                    println(;;;detrack;;;(t).pub[0])
+                }
             }
         """)
         assert(out == "10\n") { out }
@@ -2235,13 +2271,15 @@ class Exec_05 {
             spawn T() in ts
             spawn task () {
                 var xxx = nil
-                loop ;;;in :tasks ts, xxx;;; {
-                    set xxx = next-tasks(ts, xxx)
-                    if (if xxx { false } else { true }) {
-                        break ()
-                    } else {nil}
-                    println(1)
-                    broadcast (1)
+                do :break {
+                    loop' ;;;in :tasks ts, xxx;;; {
+                        set xxx = next-tasks(ts, xxx)
+                        if (if xxx { false } else { true }) {
+                            escape(:break,nil)
+                        } else {nil}
+                        println(1)
+                        broadcast (1)
+                    }
                 }
             } ()
             println(2)
@@ -2258,13 +2296,15 @@ class Exec_05 {
             var ts = tasks()
             spawn T() in ts
             var xxx = nil
-            loop ;;;in :tasks ts, xxx;;; {
-                set xxx = next-tasks(ts, xxx)
-                if (if xxx { false } else { true }) {
-                    break ()
-                } else {nil}
-                val tsk = ;;;detrack;;;(xxx)
-                broadcast (nil)
+            do :break {
+                loop' ;;;in :tasks ts, xxx;;; {
+                    set xxx = next-tasks(ts, xxx)
+                    if (if xxx { false } else { true }) {
+                        escape(:break,nil)
+                    } else {nil}
+                    val tsk = ;;;detrack;;;(xxx)
+                    broadcast (nil)
+                }
             }
             println(:ok)
         """)
@@ -2281,13 +2321,15 @@ class Exec_05 {
             var ts = tasks()
             spawn T() in ts
             var trk = nil
-            loop ;;;in :tasks ts, trk;;; {
-                set trk = next-tasks(ts, trk)
-                if (if trk { false } else { true }) {
-                    break ()
-                } else {nil}
-                val      tsk1 = ;;;detrack;;;(trk)
-                val ;;;:tmp;;; tsk2 = ;;;detrack;;;(trk)
+            do :break {
+                loop' ;;;in :tasks ts, trk;;; {
+                    set trk = next-tasks(ts, trk)
+                    if (if trk { false } else { true }) {
+                        escape(:break,nil)
+                    } else {nil}
+                    val      tsk1 = ;;;detrack;;;(trk)
+                    val ;;;:tmp;;; tsk2 = ;;;detrack;;;(trk)
+                }
             }
             println(:ok)
         """)
@@ -2302,14 +2344,16 @@ class Exec_05 {
             var ts = tasks()
             spawn T() in ts
             var xxx = nil
-            loop ;;;in :tasks ts, xxx;;; {
-                set xxx = next-tasks(ts, xxx)
-                if (if xxx { false } else { true }) {
-                    break ()
-                } else {nil}
-                do {
-                    val zzz = ;;;detrack;;;(xxx)
-                    nil
+            do :break {
+                loop' ;;;in :tasks ts, xxx;;; {
+                    set xxx = next-tasks(ts, xxx)
+                    if (if xxx { false } else { true }) {
+                        escape(:break,nil)
+                    } else {nil}
+                    do {
+                        val zzz = ;;;detrack;;;(xxx)
+                        nil
+                    }
                 }
             }
             println(:ok)
@@ -2329,12 +2373,14 @@ class Exec_05 {
             spawn T() in ts
             var x
             var t
-            loop ;;;in :tasks ts, t;;; {
-                set t = next-tasks(ts,t)
-                if (if t { false } else { true }) {
-                    break ()
-                } else {nil}
-                set x = ;;;detrack;;;(t).pub   ;; TODO: incompatible scope
+            do :break {
+                loop' ;;;in :tasks ts, t;;; {
+                    set t = next-tasks(ts,t)
+                    if (if t { false } else { true }) {
+                        escape(:break,nil)
+                    } else {nil}
+                    set x = ;;;detrack;;;(t).pub   ;; TODO: incompatible scope
+                }
             }
             println(999)
         """)
@@ -2352,14 +2398,16 @@ class Exec_05 {
             var ts = tasks()
             spawn T() in ts
             var xxx = nil
-            loop {
-                set xxx = next-tasks(ts, xxx)
-                if (if xxx { false } else { true }) {
-                    break ()
-                } else {nil}
-                var x = ;;;detrack;;;(xxx).pub
-                broadcast( nil )in ;;;detrack;;;(xxx)
-                println(x)
+            do :break {
+                loop' {
+                    set xxx = next-tasks(ts, xxx)
+                    if (if xxx { false } else { true }) {
+                        escape(:break,nil)
+                    } else {nil}
+                    var x = ;;;detrack;;;(xxx).pub
+                    broadcast( nil )in ;;;detrack;;;(xxx)
+                    println(x)
+                }
             }
             println(999)
         """)
@@ -2377,17 +2425,19 @@ class Exec_05 {
             var ts = tasks()
             spawn T() in ts
             var xxx = nil
-            loop {
-                set xxx = next-tasks(ts, xxx)
-                if (if xxx { false } else { true }) {
-                    break ()
-                } else {nil}
-                var f = func (tt) {
-                    var x = ;;;detrack;;;(tt).pub
-                    broadcast(nil) in ;;;detrack;;;(tt)
-                    println(x)
+            do :break {
+                loop' {
+                    set xxx = next-tasks(ts, xxx)
+                    if (if xxx { false } else { true }) {
+                        escape(:break,nil)
+                    } else {nil}
+                    var f = func (tt) {
+                        var x = ;;;detrack;;;(tt).pub
+                        broadcast(nil) in ;;;detrack;;;(tt)
+                        println(x)
+                    }
+                    f(xxx)
                 }
-                f(xxx)
             }
             println(999)
         """)
@@ -2526,12 +2576,14 @@ class Exec_05 {
                 do {
                     val vec = #[]
                     var t = nil
-                    loop {
-                        set t = next-tasks(ts,t)
-                        if t==nil {
-                            break ()
-                        } else {nil}
-                        set vec[#vec] = t
+                    do :break {
+                        loop' {
+                            set t = next-tasks(ts,t)
+                            if t==nil {
+                                escape(:break,nil)
+                            } else {nil}
+                            set vec[#vec] = t
+                        }
                     }
                     println(vec)
                 }
@@ -2556,15 +2608,17 @@ class Exec_05 {
             }
             val ts = tasks(1)
             var ok = false
-            loop {
-                spawn T() in ts
-                val t = next-tasks(ts)
-                ;;println(t)
-                broadcast(nil)
-                if ok {
-                    break ()
-                } else {nil}
-                set ok = true
+            do :break {
+                loop' {
+                    spawn T() in ts
+                    val t = next-tasks(ts)
+                    ;;println(t)
+                    broadcast(nil)
+                    if ok {
+                        escape(:break,nil)
+                    } else {nil}
+                    set ok = true
+                }
             }
         """)
         assert(out.contains(":1\n:2\n:1\n:2\n")) { out }
@@ -2574,22 +2628,24 @@ class Exec_05 {
         val out = test("""
             val T = task (v) {
                 println(:ok)
-                loop {
-                    val it = yield(nil)
-                    if {{==}}(it,:FIN) {
-                        break ()
-                    } else {nil}
+                do :break {
+                    loop' {
+                        val it = yield(nil)
+                        if {{==}}(it,:FIN) {
+                            escape(:break,nil)
+                        } else {nil}
+                    }
                 }
             }
             val ts = tasks(1)
             spawn T() in ts
             spawn (task () {
-                loop {
-                    do {
-                        loop {
+                loop' {
+                    do :break {
+                        loop' {
                             val it = yield(nil)
                             if it==:CHK {
-                                break ()
+                                escape(:break,nil)
                             } else {nil}
                         }
                         val xxx = #[next-tasks(ts)]
@@ -2936,12 +2992,14 @@ class Exec_05 {
             spawn T(1) in ts
             spawn T(2) in ts
             var t
-            loop ;;;in :tasks ts, t;;; {
-                set t = next-tasks(ts,t)
-                if (if t { false } else { true }) {
-                    break ()
-                } else {nil}
-                set x = ;;;copy;;;(t)
+            do :break {
+                loop' ;;;in :tasks ts, t;;; {
+                    set t = next-tasks(ts,t)
+                    if (if t { false } else { true }) {
+                        escape(:break,nil)
+                    } else {nil}
+                    set x = ;;;copy;;;(t)
+                }
             }
             println(;;;detrack;;;(x).pub[0])   ;; 2
             broadcast (nil)
@@ -2965,12 +3023,14 @@ class Exec_05 {
                 spawn T(1) in ts
                 spawn T(2) in ts
                 var t
-                loop ;;;in :tasks ts, t;;; {
-                    set t = next-tasks(ts,t)
-                    if (if t { false } else { true }) {
-                        break ()
-                    } else {nil}
-                    set x = ;;;copy;;;(t)    ;; track(t) up_hold in
+                do :break {
+                    loop' ;;;in :tasks ts, t;;; {
+                        set t = next-tasks(ts,t)
+                        if (if t { false } else { true }) {
+                            escape(:break,nil)
+                        } else {nil}
+                        set x = ;;;copy;;;(t)    ;; track(t) up_hold in
+                    }
                 }
                 println(;;;detrack;;;(x).pub[0])   ;; 2
                 broadcast (nil)
@@ -2993,12 +3053,14 @@ class Exec_05 {
             var x
             set x = catch ;;;(_|true);;; {
                 var t
-                loop ;;;in :tasks ts, t;;; {
-                    set t = next-tasks(ts,t)
-                    if (if t { false } else { true }) {
-                        break ()
-                    } else {nil}
-                    error(:x,;;;copy;;;(t))
+                do :break {
+                    loop' ;;;in :tasks ts, t;;; {
+                        set t = next-tasks(ts,t)
+                        if (if t { false } else { true }) {
+                            escape(:break,nil)
+                        } else {nil}
+                        error(:x,;;;copy;;;(t))
+                    }
                 }
             }
             broadcast (nil)
@@ -3022,12 +3084,14 @@ class Exec_05 {
             var x
             set x = catch ;;;(_|true);;; {
                 var t
-                loop ;;;in :tasks ts, t;;; {
-                    set t = next-tasks(ts,t)
-                    if (if t { false } else { true }) {
-                        break ()
-                    } else {nil}
-                    error(:ok,;;;copy;;;(t))
+                do :break {
+                    loop' ;;;in :tasks ts, t;;; {
+                        set t = next-tasks(ts,t)
+                        if (if t { false } else { true }) {
+                            escape(:break,nil)
+                        } else {nil}
+                        error(:ok,;;;copy;;;(t))
+                    }
                 }
             }
             println(;;;detrack;;;(x).pub[0])   ;; 1
@@ -3049,12 +3113,14 @@ class Exec_05 {
             spawn T(2) in ts
             var x
             var t
-            loop ;;;in :tasks ts, t;;; {
-                set t = next-tasks(ts,t)
-                if (if t { false } else { true }) {
-                    break ()
-                } else {nil}
-                set x = ;;;copy;;;(t)
+            do :break {
+                loop' ;;;in :tasks ts, t;;; {
+                    set t = next-tasks(ts,t)
+                    if (if t { false } else { true }) {
+                        escape(:break,nil)
+                    } else {nil}
+                    set x = ;;;copy;;;(t)
+                }
             }
             broadcast( nil )
             println(;;;detrack;;;status(x))   ;; nil
@@ -3098,13 +3164,15 @@ class Exec_05 {
             spawn T(nil) in ts
             val x = do {
                 val tt = [nil]
-                loop {
-                    set tt[0] = next-tasks(ts,tt[0])
-                    val t = tt[0]
-                    if {{==}}(t,nil) {
-                        break(false)
-                    } else {nil}
-                    break((t)) ;;if true
+                do :break {
+                    loop' {
+                        set tt[0] = next-tasks(ts,tt[0])
+                        val t = tt[0]
+                        if {{==}}(t,nil) {
+                            escape(:break,false)
+                        } else {nil}
+                        escape(:break,(t)) ;;if true
+                    }
                 }
             }
             println(x)
@@ -3115,15 +3183,15 @@ class Exec_05 {
     @Test
     fun zz_03_all() {
         val out = test("""
-            val x = do {
+            val x = do :break {
                 val tt = [nil]
-                loop {
+                loop' {
                     set tt[0] = @[]
                     val t = tt[0]
                     if {{==}}(t,nil) {
-                        break(false)
+                        escape(:break,false)
                     } else {nil}
-                    break((t)) ;;if true
+                    escape(:break,(t)) ;;if true
                 }
             }
             println(x)
@@ -3145,7 +3213,7 @@ class Exec_05 {
                     yield(nil)
                     broadcast (nil) in :global
                 }) ()
-                loop {
+                loop' {
                     yield(nil)
                 }
             }) ()            
@@ -3165,7 +3233,7 @@ class Exec_05 {
                     spawn (task () {
                         yield(nil)
                     }) ()
-                    loop {
+                    loop' {
                         yield(nil)
                     }
                 }
