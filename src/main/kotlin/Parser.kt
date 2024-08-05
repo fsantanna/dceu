@@ -409,8 +409,9 @@ class Parser (lexer_: Lexer)
     fun expr_prim (): Expr {
         return when {
             this.acceptFix("do") -> {
+                val tk0 = this.tk0
                 val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
-                Expr.Do(this.tk0, tag, this.block().es)
+                Expr.Do(tk0, tag, this.block().es)
             }
             this.acceptFix("escape") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -622,111 +623,7 @@ class Parser (lexer_: Lexer)
                 }
             }
 
-            (CEU>=2 && this.acceptFix("loop'")) -> {
-                if (CEU<99 || this.checkFix("{")) {
-                    return Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, null, this.block().es))
-                }
-
-                val ids = when {
-                    this.checkFix("[")  -> this.patt(null)
-                    this.checkFix("{")  -> Tk.Id("it",this.tk0.pos.copy())
-                    this.checkFix("in") -> Tk.Id("it",this.tk0.pos.copy())
-                    else -> this.id_tag()
-                }
-
-                when {
-                    this.checkFix("{") -> {
-                        val blk = this.block()
-                        val id = when (ids) {
-                            is Tk.Id -> ids.str
-                            else -> (ids as Id_Tag).first.str
-                        }
-                        this.nest("""
-                            do {
-                                var $id = 0
-                                loop {
-                                    ${blk.es.tostr(true)}
-                                    set $id = $id + 1
-                                }
-                            }
-                        """)
-                    }
-                    !this.acceptFix_err("in") -> error("impossible case")
-                    (this.acceptFix("{") || this.acceptFix("}")) -> {
-                        val id = when (ids) {
-                            is Tk.Id -> ids.str
-                            else -> (ids as Id_Tag).first.str
-                        }
-
-                        // [x -> y]
-                        val tkA = this.tk0 as Tk.Fix
-                        val eA = this.expr()
-                        this.acceptFix_err("=>")
-                        val eB = this.expr()
-                        (this.acceptFix("{") || this.acceptFix_err("}"))
-                        val tkB = this.tk0 as Tk.Fix
-
-                        // :step +z
-                        val (op, step) = if (this.acceptTag(":step")) {
-                            (this.acceptOp("-") || acceptOp_err("+"))
-                            Pair(this.tk0.str, this.expr())
-                        } else {
-                            Pair("+", null)
-                        }
-
-                        val blk = this.block()
-
-                        val cmp = when {
-                            (tkB.str == "}" && op == "+") -> ">"
-                            (tkB.str == "{" && op == "+") -> ">="
-                            (tkB.str == "}" && op == "-") -> "<"
-                            (tkB.str == "{" && op == "-") -> "<="
-                            else -> error("impossible case")
-                        }
-
-                        this.nest("""
-                            do {
-                                val ceu_ste_$N = ${if (step == null) 1 else step.tostr(true)}
-                                var $id = ${eA.tostr(true)} $op (
-                                    ${if (tkA.str == "{") 0 else "ceu_ste_$N"}
-                                )
-                                val ceu_lim_$N = ${eB.tostr(true)}
-                                loop {
-                                    if ($id $cmp ceu_lim_$N) {
-                                        break(false)
-                                    }
-                                    ${blk.es.tostr(true)}
-                                    set $id = $id $op ceu_ste_$N
-                                }                                
-                            }
-                        """)
-                    }
-                    else -> {
-                        val iter = this.expr()
-                        val blk = this.block()
-                        val nn = N++
-                        val dcl_set = when (ids) {
-                            is Tk.Id -> "val ${ids.str} = ceu_val_$nn"
-                            is Patt  -> ids.code2("ceu_val_$nn")
-                            else     -> "val ${(ids as Id_Tag).tostr(true)} = ceu_val_$nn"
-                        }
-                        //println(blk.es.tostr())
-                        this.nest("""
-                            do {
-                                val ceu_itr_$nn :Iterator = ${iter.tk.pos.pre()}to-iter(${iter.tostr(true)})
-                                loop {
-                                    val ceu_val_$nn = ceu_itr_$nn.f(ceu_itr_$nn)
-                                    if (ceu_val_$nn == nil) {
-                                        break(false)
-                                    }
-                                    $dcl_set
-                                    ${blk.es.tostr(true)}
-                                }
-                            }
-                        """) //.let { println(it);it })
-                    }
-                }
-            }
+            (CEU>=2 && this.acceptFix("loop'")) -> Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, null, this.block().es))
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val par = this.acceptFix("(")
@@ -925,6 +822,117 @@ class Parser (lexer_: Lexer)
                 """)
                 }
             }
+            (CEU>=99 && this.acceptFix("loop")) -> {
+                val ids = when {
+                    this.checkFix("[")  -> this.patt(null)
+                    this.checkFix("{")  -> null
+                    this.checkFix("in") -> Tk.Id("it",this.tk0.pos.copy())
+                    else -> this.id_tag()
+                }
+
+                when {
+                    (ids == null) -> {
+                        val blk = this.block()
+                        this.nest("""
+                            do :break {
+                                loop' {
+                                    ${blk.es.tostr(true)}
+                                }
+                            }
+                        """)
+                    }
+                    this.checkFix("{") -> {
+                        val blk = this.block()
+                        val id = when (ids) {
+                            is Tk.Id -> ids.str
+                            else -> (ids as Id_Tag).first.str
+                        }
+                        this.nest("""
+                            do :break {
+                                var $id = 0
+                                loop' {
+                                    ${blk.es.tostr(true)}
+                                    set $id = $id + 1
+                                }
+                            }
+                        """)
+                    }
+                    !this.acceptFix_err("in") -> error("impossible case")
+                    (this.acceptFix("{") || this.acceptFix("}")) -> {
+                        val id = when (ids) {
+                            is Tk.Id -> ids.str
+                            else -> (ids as Id_Tag).first.str
+                        }
+
+                        // [x -> y]
+                        val tkA = this.tk0 as Tk.Fix
+                        val eA = this.expr()
+                        this.acceptFix_err("=>")
+                        val eB = this.expr()
+                        (this.acceptFix("{") || this.acceptFix_err("}"))
+                        val tkB = this.tk0 as Tk.Fix
+
+                        // :step +z
+                        val (op, step) = if (this.acceptTag(":step")) {
+                            (this.acceptOp("-") || acceptOp_err("+"))
+                            Pair(this.tk0.str, this.expr())
+                        } else {
+                            Pair("+", null)
+                        }
+
+                        val blk = this.block()
+
+                        val cmp = when {
+                            (tkB.str == "}" && op == "+") -> ">"
+                            (tkB.str == "{" && op == "+") -> ">="
+                            (tkB.str == "}" && op == "-") -> "<"
+                            (tkB.str == "{" && op == "-") -> "<="
+                            else -> error("impossible case")
+                        }
+
+                        this.nest("""
+                            do :break {
+                                val ceu_ste_$N = ${if (step == null) 1 else step.tostr(true)}
+                                var $id = ${eA.tostr(true)} $op (
+                                    ${if (tkA.str == "{") 0 else "ceu_ste_$N"}
+                                )
+                                val ceu_lim_$N = ${eB.tostr(true)}
+                                loop' {
+                                    if ($id $cmp ceu_lim_$N) {
+                                        break(false)
+                                    }
+                                    ${blk.es.tostr(true)}
+                                    set $id = $id $op ceu_ste_$N
+                                }                                
+                            }
+                        """)
+                    }
+                    else -> {
+                        val iter = this.expr()
+                        val blk = this.block()
+                        val nn = N++
+                        val dcl_set = when (ids) {
+                            is Tk.Id -> "val ${ids.str} = ceu_val_$nn"
+                            is Patt  -> ids.code2("ceu_val_$nn")
+                            else     -> "val ${(ids as Id_Tag).tostr(true)} = ceu_val_$nn"
+                        }
+                        //println(blk.es.tostr())
+                        this.nest("""
+                            do :break {
+                                val ceu_itr_$nn :Iterator = ${iter.tk.pos.pre()}to-iter(${iter.tostr(true)})
+                                loop' {
+                                    val ceu_val_$nn = ceu_itr_$nn.f(ceu_itr_$nn)
+                                    if (ceu_val_$nn == nil) {
+                                        break(false)
+                                    }
+                                    $dcl_set
+                                    ${blk.es.tostr(true)}
+                                }
+                            }
+                        """) //.let { println(it);it })
+                    }
+                }
+            }
             (CEU>=99 && this.acceptFix("break")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("(")
@@ -932,8 +940,7 @@ class Parser (lexer_: Lexer)
                     this.expr()
                 }
                 this.acceptFix_err(")")
-                TODO()
-                //Expr.Break(tk0, e)
+                Expr.Escape(tk0, Tk.Tag(":break",tk0.pos.copy()), e)
             }
             (CEU>=99 && this.acceptFix("skip")) -> {
                 TODO()
@@ -945,8 +952,10 @@ class Parser (lexer_: Lexer)
                     this.nest("not ${it.tostr(true)}")
                 } }
                 this.nest("""
-                    if ${cnd.tostr(true)} {
-                        break()
+                    ${cnd.tostr(true)} thus {
+                        if it {
+                            break(it)
+                        }
                     }
                 """)
             }

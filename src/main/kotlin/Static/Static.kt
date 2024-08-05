@@ -18,7 +18,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     val mems: MutableSet<Expr>  = mutableSetOf()
 
     // void: block is innocuous -> should be a proxy to up block
-    fun void (blk: Expr): Boolean {
+    fun void (blk: Expr.Do): Boolean {
         // no declarations, no spawns, no tasks
         val dcls = vars.blk_to_dcls[blk]!!
         //println(listOf("-=-=-", blk.tk, ups.pub[blk]?.javaClass?.name))
@@ -26,7 +26,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         return when {
             //true -> false
             ismem(blk,true) -> false
-            (ups.pub[blk] is Expr.Loop) -> false
+            (blk.tag != null) -> false
             !dcls.isEmpty() -> false
             (ups.pub[blk] is Expr.Proto) -> false
             this.defer_catch_spawn_tasks.contains(blk) -> false

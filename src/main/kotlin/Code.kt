@@ -145,7 +145,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val body = this.es.code()   // before defers[this] check
                 val up = ups.pub[this]
 
-                val void = false //sta.void(this)
+                val void = sta.void(this)
                 if (void) {
                     """
                     { // BLOCK | void | ${this.dump()}
