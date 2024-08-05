@@ -237,6 +237,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             }
                         }                        
 
+                        CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
                         ceu_acc = ceu_acc_$n;
                         
                         ${(CEU >= 2).cond { """

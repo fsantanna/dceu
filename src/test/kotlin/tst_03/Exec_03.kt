@@ -1447,6 +1447,7 @@ class Exec_03 {
             val co = coroutine(coro () {
                 defer {
                     println(t)
+                    ;;nil
                 }
                 yield(nil) ;;thus { it => nil }
                 println(:no)
