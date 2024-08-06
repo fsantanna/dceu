@@ -5840,6 +5840,24 @@ class Exec_99 {
         """, true)
         assert(out == ":A\t:A.B\t:A.B.C\n") { out }
     }
+    @Test
+    fun xx_01_data_nested () {
+        val out = test("""
+            data :T = [t=[a,b]]
+            val t :T = [[1,10]]
+            println(t.t, t.t.b)
+        """)
+        assert(out == "[1,10]\t10\n") { out }
+    }
+    @Test
+    fun xx_02_data_nested () {
+        val out = test("""
+            data :Lim = [p1=[l,c], p2=[l,c]]
+            val v :Lim = [[1,1],[2,2]]
+            println(v, v.p2.l)
+        """)
+        assert(out == "[[1,1],[2,2]]\t2\n") { out }
+    }
 
     // ==, ===, /=, =/=
 

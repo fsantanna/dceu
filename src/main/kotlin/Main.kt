@@ -227,7 +227,11 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         System.err.println("... c -> exe ...")
     }
     File("$out.c").writeText(c)
-    val (ok2, out2) = exec(true, listOf("gcc", "-Werror", "$out.c", "-l", "m", "-o", "$out.exe") + args)
+    val cmd = listOf("gcc", "-Werror", "$out.c", "-l", "m", "-o", "$out.exe") + args
+    if (verbose) {
+        System.err.println("\t" + cmd.joinToString(" "))
+    }
+    val (ok2, out2) = exec(true, cmd)
     if (!ok2) {
         return out2
     }
