@@ -3424,7 +3424,7 @@ class Exec_01 {
         val out = test("""
             `CEU_ERROR_CHK_PTR(continue, "C error");`
         """)
-        assert(out == " |  anon : (lin 2, col 13) : ```ceu_error_s(X->S, .C error.);```\n" +
+        assert(out == " |  anon : (lin 2, col 13) : ```ceu_error_s(ceux->S, .C error.);```\n" +
                 " v  error : C error\n") { out }
     }
 
@@ -3822,7 +3822,7 @@ class Exec_01 {
             println(tag())
         """
         )
-        assert(out.contains("ceu_tag_f: Assertion `X->args==1 || X->args==2' failed")) { out }
+        assert(out.contains("ceu_tag_f: Assertion `ceux->args==1 || ceux->args==2' failed")) { out }
     }
     @Test
     fun gg_06_tags() {
