@@ -20,6 +20,7 @@ fun Coder.main (tags: Tags): String {
         return """
     ${DEBUG.cond { "#define CEU_DEBUG" }}
     #define CEU $CEU
+    #define CEU_LEX
     
     #undef MAX
     #undef MIN
@@ -47,6 +48,12 @@ fun Coder.main (tags: Tags): String {
     #else
     #define CEU5(x)
     #endif
+    
+    #ifdef CEU_LEX
+    #define CEU_LEX_V(x) x
+    #else
+    #define CEU_LEX_V(x)
+    #endif
 
     #define CEU_ACC(v) ({               \
         CEU_Value ceu_old = ceu_acc;    \
@@ -66,6 +73,16 @@ fun Coder.main (tags: Tags): String {
     }
     fun h_enums (): String {
         return """
+    #ifdef CEU_LEX
+    typedef enum CEU_LEX_TYPE {
+        CEU_LEX_NONE = 0,      // ignore on ceu_hold_set_rec
+        CEU_LEX_FLEET,         // not assigned, dst assigns, can move upwards
+        CEU_LEX_MUTAB,         // set and assignable downwards
+        CEU_LEX_IMMUT,         // set but not re-assignable (nested fun)
+        CEU_LEX_MAX
+    } CEU_LEX_TYPE;
+    #endif
+
     #if CEU >= 3
     typedef enum CEU_ACTION {
         CEU_ACTION_INVALID = -1,    // default to force set
@@ -146,10 +163,18 @@ fun Coder.main (tags: Tags): String {
         };
     } CEU_Value;
 
+    #ifdef CEU_LEX
+    typedef struct {
+        CEU_LEX_TYPE type;
+        uint8_t depth;
+    } CEU_Lex;
+    #endif
+    
     #define _CEU_Dyn_                   \
         CEU_VALUE type;                 \
         uint8_t refs;                   \
-        CEU_Value tag;
+        CEU_Value tag;                  \
+        CEU_LEX_V(CEU_Lex lex;)
         
     typedef struct CEU_Any {
         _CEU_Dyn_
@@ -362,7 +387,9 @@ fun Coder.main (tags: Tags): String {
             printf("    dyn   = %p\n", v.Dyn);
             printf("    type  = %d\n", v.type);
             printf("    refs  = %d\n", v.Dyn->Any.refs);
-            //printf("    next  = %p\n", v.Dyn->Any.hld.next);
+    #ifdef CEU_LEX
+            printf("    lex   = {type=%d, depth=%d}\n", v.Dyn->Any.lex.type, v.Dyn->Any.lex.depth);
+    #endif
             printf("    ----\n");
             switch (v.type) {
         #if CEU >= 4
@@ -1133,6 +1160,9 @@ fun Coder.main (tags: Tags): String {
         assert(ret != NULL);
         *ret = (CEU_Tuple) {
             CEU_VALUE_TUPLE, 0, (CEU_Value) { CEU_VALUE_NIL },
+    #ifdef CEU_LEX
+            { CEU_LEX_FLEET, -1 },     // depth=-1 ("dont care")
+    #endif
             n, {}
         };
         if (cpy) {
@@ -1161,6 +1191,9 @@ fun Coder.main (tags: Tags): String {
         buf[0] = '\0';
         *ret = (CEU_Vector) {
             CEU_VALUE_VECTOR, 0, (CEU_Value) { CEU_VALUE_NIL },
+    #ifdef CEU_LEX
+            { CEU_LEX_FLEET, -1 },     // depth=-1 ("dont care")
+    #endif
             0, 0, CEU_VALUE_NIL, buf
         };
         return (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ret} };
@@ -1172,12 +1205,15 @@ fun Coder.main (tags: Tags): String {
         assert(ret != NULL);
         *ret = (CEU_Dict) {
             CEU_VALUE_DICT, 0, (CEU_Value) { CEU_VALUE_NIL },
+    #ifdef CEU_LEX
+            { CEU_LEX_FLEET, -1 },     // depth=-1 ("dont care")
+    #endif
             0, NULL
         };
         return (CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)ret} };
     }
     
-    CEU_Value _ceu_create_clo_ (CEU_VALUE type, int size, CEU_Proto proto, int pars, int upvs) {
+    CEU_Value _ceu_create_clo_ (CEU_VALUE type, int size, CEU_Proto proto, int pars, int upvs CEU_LEX_V(COMMA CEU_LEX_TYPE lex_type)) {
         ceu_debug_add(type);
         CEU_Clo* ret = malloc(size);
         assert(ret != NULL);
@@ -1188,19 +1224,22 @@ fun Coder.main (tags: Tags): String {
         }
         *ret = (CEU_Clo) {
             type, 0, (CEU_Value) { CEU_VALUE_NIL },
+    #ifdef CEU_LEX
+            { lex_type, -1 },     // depth=-1 ("dont care")
+    #endif
             proto,
             { upvs, buf }
         };
         return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
     }
 
-    CEU_Value ceu_create_clo_func (CEU_Proto proto, int pars, int upvs) {
-        return _ceu_create_clo_(CEU_VALUE_CLO_FUNC, sizeof(CEU_Clo), proto, pars, upvs);
+    CEU_Value ceu_create_clo_func (CEU_Proto proto, int pars, int upvs CEU_LEX_V(COMMA CEU_LEX_TYPE lex_type)) {
+        return _ceu_create_clo_(CEU_VALUE_CLO_FUNC, sizeof(CEU_Clo), proto, pars, upvs CEU_LEX_V(COMMA lex_type));
     }
 
     #if CEU >= 3
-    CEU_Value ceu_create_clo_coro (CEU_Proto proto, int pars, int upvs, int mem_n) {
-        CEU_Value clo = _ceu_create_clo_(CEU_VALUE_CLO_CORO, sizeof(CEU_Clo_Exe), proto, pars, upvs);
+    CEU_Value ceu_create_clo_coro (CEU_Proto proto, int pars, int upvs, int mem_n CEU_LEX_V(COMMA CEU_LEX_TYPE lex_type)) {
+        CEU_Value clo = _ceu_create_clo_(CEU_VALUE_CLO_CORO, sizeof(CEU_Clo_Exe), proto, pars, upvs CEU_LEX_V(COMMA lex_type));
         clo.Dyn->Clo_Exe.mem_n = mem_n;
         return clo;
     }
@@ -1224,8 +1263,8 @@ fun Coder.main (tags: Tags): String {
     #endif
     
     #if CEU >= 4
-    CEU_Value ceu_create_clo_task (CEU_Proto proto, int pars, int upvs, int mem_n) {
-        CEU_Value clo = _ceu_create_clo_(CEU_VALUE_CLO_TASK, sizeof(CEU_Clo_Exe), proto, pars, upvs);
+    CEU_Value ceu_create_clo_task (CEU_Proto proto, int pars, int upvs, int mem_n CEU_LEX_V(COMMA CEU_LEX_TYPE lex_type)) {
+        CEU_Value clo = _ceu_create_clo_(CEU_VALUE_CLO_TASK, sizeof(CEU_Clo_Exe), proto, pars, upvs CEU_LEX_V(COMMA lex_type));
         clo.Dyn->Clo_Exe.mem_n = mem_n;
         return clo;
     }
