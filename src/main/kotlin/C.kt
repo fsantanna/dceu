@@ -219,6 +219,9 @@ fun Coder.main (tags: Tags): String {
         struct CEUX* up;
     #endif
     #endif
+    #ifdef CEU_LEX
+        uint8_t depth;
+    #endif
         int n;
         CEU_Value* args;
     } CEUX;
@@ -1732,6 +1735,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 4
                         NULL,   // TODO: no access to up(ceux)
         #endif
+                        CEU_LEX_V(-1 COMMA)
                         0,
                         args
                     };
@@ -1899,6 +1903,7 @@ fun Coder.main (tags: Tags): String {
                     {.exe_task = tsk},
                     CEU_ACTION_ERROR,
                     NULL,   // TODO: no access to up(ceux)
+                    CEU_LEX_V(-1 COMMA)
                     1,
                     NULL
                 };
@@ -1910,6 +1915,7 @@ fun Coder.main (tags: Tags): String {
                     {.exe_task = tsk},
                     CEU_ACTION_RESUME,
                     NULL,   // TODO: no access to up(ceux)
+                    CEU_LEX_V(-1 COMMA)
                     1,
                     evt
                 };
@@ -1959,6 +1965,7 @@ fun Coder.main (tags: Tags): String {
                 NULL,
                 {NULL}, CEU_ACTION_INVALID,
                 NULL,
+                CEU_LEX_V(0 COMMA)
                 2,
                 args
             };
@@ -2044,12 +2051,10 @@ fun Coder.main (tags: Tags): String {
         ceu_gc_inc_val(CEU_ERROR_STACK);
     #endif
 
-    #if CEU >= 4
         CEUX _ceux_ = {
-            NULL, {NULL}, CEU_ACTION_INVALID, NULL, 0, NULL
+            NULL, CEU3({NULL} COMMA CEU_ACTION_INVALID COMMA) CEU4(NULL COMMA) CEU_LEX_V(0 COMMA) 0, NULL
         };
         CEUX* ceux = &_ceux_;
-    #endif
         
         do {
             ${this.code}

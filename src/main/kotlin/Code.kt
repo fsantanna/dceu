@@ -388,9 +388,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ceu_coro_$n.Dyn->Exe.clo,
                         {.exe = (CEU_Exe*) ceu_coro_$n.Dyn},
                         CEU_ACTION_RESUME,
-                    #if CEU >= 4
-                        ceux,
-                    #endif
+                        CEU4(ceux COMMA)
+                        CEU_LEX_V(ceux->depth+1 COMMA)
                         ${this.args.size},
                         ${sta.idx(this,"args_$n")}
                     };
@@ -471,6 +470,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             {.exe = (CEU_Exe*) ceu_exe_$n.Dyn},
                             CEU_ACTION_RESUME,
                             ceux,
+                            CEU_LEX_V(ceux->depth+1 COMMA)
                             ${this.args.size},
                             ${sta.idx(this,"args_$n")}
                         };
@@ -767,6 +767,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     #if CEU >= 4
                         ceux,
                     #endif
+                        CEU_LEX_V(ceux->depth+1 COMMA)
                         ${this.args.size},
                         ${sta.idx(this, "args_$n")}
                     };
