@@ -119,12 +119,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             ${this.pars.size},
                             ${vars.proto_to_upvs[this]!!.size}
                             ${isexe.cond {", sizeof(CEU_Pro_$id)"}}
+                            CEU_LEX_V(COMMA ((CEU_Lex) { ${if (isnst) "CEU_LEX_IMMUT" else "CEU_LEX_FLEET"}, -1 }))
                         )
                     );
-                    ${isexe.cond { """
-                        // TODO: use args+locs+upvs+tmps?
-                        //clo.Dyn->Clo_Exe.mem_n = sizeof(CEU_Clo_Mem_$id);                    
-                    """ }}
                     
                     // UPVALS = ${vars.proto_to_upvs[this]!!.size}
                     {                        
@@ -460,7 +457,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         else -> sta.idx(this,"tsks_$n") + ".Dyn"
                     }};
                     CEU_Block* ceu_b_$n = ${this.tsks.cond2({"NULL"}, {"&$blkc"})};
-                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, ceu_a_$n, ceu_b_$n);
+                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, ceu_a_$n, ceu_b_$n  CEU_LEX_V(COMMA -1));
                     CEU_ACC(ceu_exe_$n);
                     CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
                     
@@ -578,7 +575,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """
                 {  // TASKS | ${this.dump()}
                     ${this.max.code()}
-                    CEU_Value ceu_tsks_$n = ceu_create_tasks(ceux, &$blkc, ceu_acc);
+                    CEU_Value ceu_tsks_$n = ceu_create_tasks(ceux, &$blkc, ceu_acc CEU_LEX_V(COMMA -1));
                     CEU_ACC(ceu_tsks_$n);
                     CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
                 }

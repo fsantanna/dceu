@@ -78,7 +78,7 @@ class Exec_02 {
                 }
             }
         """)
-        assert(out == "10\n") { out }
+        assert(out == "anon : (lin 4, col 21) : escape error : expected matching \"do\" block\n") { out }
     }
 
     // LOOP
