@@ -17,7 +17,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
         return "\"${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : $src\""
     }
 
-    fun Expr.check_aborted (cmd: String, msg: String): String {
+    fun Expr.check_aborted (cmd: String): String {
         val exe = ups.exe(this)
         val defer = ups.first_without(this, { it is Expr.Defer }, { it is Expr.Proto })
         return (CEU>=3 && exe!=null && defer==null).cond { """
@@ -26,10 +26,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             }
         """ }
     }
-    fun Expr.check_error_aborted (cmd: String, msg: String): String {
+    fun Expr.check_error_aborted (cmd: String, pre: String?, msg: String): String {
         return """
-            CEU_ERROR_CHK_ERR($cmd, $msg);
-            ${this.check_aborted(cmd, msg)}
+            ${if (pre == null) "CEU_ERROR_CHK_ERR_1($cmd, $msg)" else "CEU_ERROR_CHK_ERR_2($cmd, $pre, $msg)"};
+            ${this.check_aborted(cmd)}
         """
     }
 
@@ -238,7 +238,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ceu_acc = ceu_acc_$n;
                         
                         ${(CEU >= 2).cond { """
-                            ${this.check_error_aborted("continue", "NULL")}
+                            if (CEU_ERROR != CEU_ERROR_NONE) {
+                                continue;
+                            }
+                            ${this.check_aborted("continue")}
                             if (CEU_ESCAPE == CEU_ESCAPE_NONE) {
                                 // no escape
                             ${this.tag.cond { """
@@ -274,6 +277,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """
                     (this.src != null) -> """
                         ${this.src.code()}
+                        CEU_ERROR_CHK_PTR (
+                            continue,
+                            ceu_lex_chk_set(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, ceux->depth }),
+                            "declaration error",
+                            ${this.toerr()}
+                        );
                         ceu_gc_inc_val(ceu_acc);
                         $idx = ceu_acc;
                     """
@@ -379,7 +388,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ceu_gc_dec_val(ceu_coro_$n);
                         CEU_ERROR_CHK_PTR (
                             continue,
-                            "resume error : expected yielded coro",
+                            "expected yielded coro",
+                            "resume error",
                             ${this.toerr()}
                         );
                     }
@@ -395,7 +405,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     };
                     ceu_coro_$n.Dyn->Exe.clo->proto(&ceux_$n);
                     ceu_gc_dec_val(ceu_coro_$n);
-                    ${this.check_error_aborted("continue", this.toerr())}
+                    ${this.check_error_aborted("continue", "\"resume error\"", this.toerr())}
                 } // CALL | ${this.dump()}
             """
             is Expr.Yield -> {
@@ -437,7 +447,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         if (ceu_acc.type != CEU_VALUE_TASKS) {
                             CEU_ERROR_CHK_PTR (
                                 continue,
-                                "spawn error : invalid pool",
+                                "invalid pool",
+                                "spawn error",
                                 ${this.toerr()}
                             );
                         }
@@ -458,7 +469,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     CEU_Block* ceu_b_$n = ${this.tsks.cond2({"NULL"}, {"&$blkc"})};
                     CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, ceu_a_$n, ceu_b_$n  CEU_LEX_V(COMMA -1));
                     CEU_ACC(ceu_exe_$n);
-                    CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
+                    CEU_ERROR_CHK_ERR_2(continue, "spawn error", ${this.toerr()});
                     
                     ${(CEU>=5 && this.tsks!=null).cond { """
                         if (ceu_acc.type != CEU_VALUE_NIL)
@@ -475,12 +486,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             ${sta.idx(this,"args_$n")}
                         };
                         ceu_exe_$n.Dyn->Exe.clo->proto(&ceux_$n);
-                        CEU_ERROR_CHK_ERR({ceu_gc_dec_val(ceu_exe_$n);continue;}, ${this.toerr()});
+                        CEU_ERROR_CHK_ERR_2({ceu_gc_dec_val(ceu_exe_$n);continue;}, "spawn error", ${this.toerr()});
                         if (CEU_ESCAPE != CEU_ESCAPE_NONE) {
                             continue;
                         }                                                            
                         ceu_gc_dec_val(ceu_acc);
-                        ${this.check_aborted("{ceu_gc_dec_val(ceu_exe_$n);continue;}", this.toerr())}
+                        ${this.check_aborted("{ceu_gc_dec_val(ceu_exe_$n);continue;}")}
                         ceu_acc = ceu_exe_$n;
                     }
                 } // SPAWN | ${this.dump()}
@@ -513,7 +524,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     if (!ceu_istask_val(tsk)) {
                         CEU_ERROR_CHK_PTR (
                             continue,
-                            "pub error : expected task",
+                            "expected task",
+                            "pub error",
                             ${this.toerr()}
                         );
                     }
@@ -542,21 +554,24 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         if (!ceu_istask_val($id)) {
                             CEU_ERROR_CHK_PTR (
                                 continue,
-                                "toggle error : expected yielded task",
+                                "expected yielded task",
+                                "toggle error",
                                 ${this.toerr()}
                             );
                         }
                         if (!ceu_err_$n && on && $id.Dyn->Exe_Task.status!=CEU_EXE_STATUS_TOGGLED) {                
                             CEU_ERROR_CHK_PTR (
                                 {ceu_err_$n = 1;},
-                                "toggle error : expected toggled task",
+                                "expected toggled task",
+                                "toggle error",
                                 ${this.toerr()}
                             );
                         }
                         if (!ceu_err_$n && !on && $id.Dyn->Exe_Task.status!=CEU_EXE_STATUS_YIELDED) {                
                             CEU_ERROR_CHK_PTR (
                                 {ceu_err_$n = 1;},
-                                "toggle error : expected yielded task",
+                                "expected yielded task",
+                                "toggle error",
                                 ${this.toerr()}
                             );
                         }
@@ -577,7 +592,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ${this.max.code()}
                     CEU_Value ceu_tsks_$n = ceu_create_tasks(ceux, &$blkc, ceu_acc CEU_LEX_V(COMMA -1));
                     CEU_ACC(ceu_tsks_$n);
-                    CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
+                    CEU_ERROR_CHK_ERR_2(continue, "tasks error", ${this.toerr()});
                 }
                 """
             }
@@ -596,7 +611,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     null   -> """
                         CEU_ACC(((CEU_Value) { CEU_VALUE_NIL }));
                         $body 
-                        ${this.check_error_aborted("continue", this.toerr())}
+                        ${this.check_error_aborted("continue", "\"native error\"", this.toerr())}
                     """
                     ":pre" -> {
                         pres.add(Pair("",body))
@@ -616,6 +631,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 when {
                     ups.isdst(this) -> """
                         // ACC - SET | ${this.dump()}
+                        CEU_ERROR_CHK_PTR (
+                            continue,
+                            ceu_lex_chk_set(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, ceux->depth }),
+                            "set error",
+                            ${this.toerr()}
+                        );
                         ceu_gc_dec_val($idx);
                         ceu_gc_inc_val(ceu_acc);
                         $idx = ceu_acc;
@@ -679,6 +700,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             CEU_ERROR_CHK_PTR (
                                 continue,
                                 ceu_dict_set(&${id_dic}.Dyn->Dict, $id_key, ceu_val_$n),
+                                "dict error",
                                 ${this.toerr()}
                             );
                             ceu_gc_dec_val($id_key);
@@ -723,6 +745,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         CEU_ERROR_CHK_PTR (
                             continue,
                             ceu_err_$n,
+                            "index error",
                             ${this.toerr()}
                         );
                         ceu_acc = $id_val;
@@ -733,7 +756,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     CEU_ACC(ceu_col_get($id_col, ceu_idx_$n));
                     ceu_gc_dec_val($id_col);
                     ceu_gc_dec_val(ceu_idx_$n);
-                    CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
+                    CEU_ERROR_CHK_ERR_2(continue, "index error", ${this.toerr()});
                     """
                 } + """
                 }
@@ -755,7 +778,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ceu_gc_dec_val(ceu_clo_$n);
                         CEU_ERROR_CHK_PTR (
                             continue,
-                            "call error : expected function",
+                            "expected function",
+                            "call error",
                             ${this.toerr()}
                         );
                     }
@@ -773,7 +797,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     };
                     ceu_clo_$n.Dyn->Clo.proto(&ceux_$n);
                     ceu_gc_dec_val(ceu_clo_$n);
-                    ${this.check_error_aborted("continue", this.toerr())}
+                    ${this.check_error_aborted("continue", null, this.toerr())}
                 } // CALL | ${this.dump()}
             """
         }

@@ -449,6 +449,7 @@ fun Coder.main (tags: Tags): String {
 
     // EXIT / ERROR / ASSERT
     val c_error = """
+    // allows to return error messages from internal functions
     #define CEU_ERROR_PTR(ptr) ({   \
         CEU_ERROR = CEU_TAG_nil;    \
         (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=ptr} }; \
@@ -456,7 +457,7 @@ fun Coder.main (tags: Tags): String {
 
     #if CEU <= 1
     
-    #define CEU_ERROR_CHK_ERR(cmd,pre) {        \
+    #define CEU_ERROR_CHK_ERR_1(cmd,pre) {      \
         if (CEU_ERROR != CEU_ERROR_NONE) {      \
             fprintf(stderr,                     \
                 " |  %s\n v  error : %s\n",     \
@@ -468,12 +469,25 @@ fun Coder.main (tags: Tags): String {
             exit(0);                            \
         }                                       \
     }
-    
-    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre) {    \
-        if ((ptr) != NULL) {                    \
-            fprintf(stderr, " |  %s\n v  error : %s\n", pre, ptr); \
+
+    #define CEU_ERROR_CHK_ERR_2(cmd,pre1,pre2) {  \
+        if (CEU_ERROR != CEU_ERROR_NONE) {      \
+            fprintf(stderr,                     \
+                " |  %s\n v  %s : %s\n",        \
+                pre2, pre1,                     \
+                (CEU_ERROR == CEU_TAG_nil) ?    \
+                    (char*)ceu_acc.Pointer :    \
+                    (char*)ceu_tag_to_pointer(CEU_ERROR) \
+            );                                  \
             exit(0);                            \
         }                                       \
+    }
+    
+    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre1,pre2) {  \
+        if ((ptr) != NULL) {                        \
+            fprintf(stderr, " |  %s\n v  %s : %s\n", pre2, pre1, ptr); \
+            exit(0);                                \
+        }                                           \
     }
     
     void ceu_pro_error (CEUX* ceux) {
@@ -488,26 +502,46 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_pointer_to_string (const char* ptr);
     CEU_Value ceu_create_vector (void);
 
-    #define CEU_ERROR_CHK_ERR(cmd,pre) {            \
+    #define CEU_ERROR_CHK_ERR_1(cmd,pre) {          \
         if (CEU_ERROR != CEU_ERROR_NONE) {          \
-            if (pre != NULL) { /* opt stack msg */  \
-                ceu_vector_set (                    \
-                    &CEU_ERROR_STACK.Dyn->Vector,       \
-                    CEU_ERROR_STACK.Dyn->Vector.its,    \
-                    ceu_pointer_to_string(pre)      \
-                );                                  \
-            }                                       \
-            cmd;                                    \
-        }                                           \
-    }
-    
-    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre) {        \
-        if ((ptr) != NULL) {                        \
-            CEU_ACC(CEU_ERROR_PTR(ptr));            \
             ceu_vector_set (                        \
                 &CEU_ERROR_STACK.Dyn->Vector,       \
                 CEU_ERROR_STACK.Dyn->Vector.its,    \
                 ceu_pointer_to_string(pre)          \
+            );                                      \
+            cmd;                                    \
+        }                                           \
+    }
+    
+    #define CEU_ERROR_CHK_ERR_2(cmd,pre1,pre2) {                                  \
+        if (CEU_ERROR != CEU_ERROR_NONE) {                                  \
+            CEU_Value ceu_str = ceu_pointer_to_string(pre2);                \
+            ceu_vector_concat(&ceu_str.Dyn->Vector, 3, " : ");              \
+            ceu_vector_concat(&ceu_str.Dyn->Vector, strlen(pre1), pre1);    \
+            ceu_vector_set (                                                \
+                &CEU_ERROR_STACK.Dyn->Vector,                               \
+                CEU_ERROR_STACK.Dyn->Vector.its,                            \
+                ceu_str                                                     \
+            );                                                              \
+            cmd;                                                            \
+        }                                                                   \
+    }
+    
+    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre1,pre2) {  \
+        if ((ptr) != NULL) {                        \
+            CEU_ERROR = CEU_TAG_nil;                \
+            CEU_Value ceu_str = ceu_pointer_to_string(pre1);            \
+            ceu_vector_concat(&ceu_str.Dyn->Vector, 3, " : ");          \
+            ceu_vector_concat(&ceu_str.Dyn->Vector, strlen(ptr), ptr);  \
+            ceu_vector_set (                        \
+                &CEU_ERROR_STACK.Dyn->Vector,       \
+                CEU_ERROR_STACK.Dyn->Vector.its,    \
+                ceu_str                             \
+            );                                      \
+            ceu_vector_set (                        \
+                &CEU_ERROR_STACK.Dyn->Vector,       \
+                CEU_ERROR_STACK.Dyn->Vector.its,    \
+                ceu_pointer_to_string(pre2)         \
             );                                      \
             cmd;                                    \
         }                                           \
@@ -835,11 +869,8 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_pointer_to_string (const char* ptr) {
         assert(ptr != NULL);
         CEU_Value str = ceu_create_vector();
-        int len = strlen(ptr);
-        for (int i=0; i<len; i++) {
-            CEU_Value chr = { CEU_VALUE_CHAR, {.Char=ptr[i]} };
-            ceu_vector_set(&str.Dyn->Vector, i, chr);
-        }
+        str.Dyn->Vector.unit = CEU_VALUE_CHAR;
+        ceu_vector_concat(&str.Dyn->Vector, strlen(ptr), (void*)ptr);
         return str;
     }
     
@@ -924,7 +955,7 @@ fun Coder.main (tags: Tags): String {
             );
         }
         ceu_gc_dec_args(ceux->n, ceux->args);
-    }    
+    }
     """
     }
     fun tuple_vector_dict (): String {
@@ -958,10 +989,24 @@ fun Coder.main (tags: Tags): String {
                 return ceu_sizeof(CEU_Value, Dyn);
         }
     }
-    
+        
+    void ceu_vector_concat (CEU_Vector* vec, int n, void* buf) {
+        int sz = ceu_type_to_size(vec->unit);
+        int dif = (vec->its + n) - vec->max;
+        if (dif > 0) {
+            vec->max += dif;
+            vec->max = vec->max*2 + 1;
+            vec->buf = realloc(vec->buf, vec->max*sz + 1);
+            assert(vec->buf != NULL);
+        }
+        memcpy(vec->buf + vec->its*sz, buf, n*sz);
+        vec->its = vec->its + n;
+        vec->buf[sz*vec->its] = '\0';
+    }
+
     CEU_Value ceu_vector_get (CEU_Vector* vec, int i) {
         if (i<0 || i>=vec->its) {
-            return CEU_ERROR_PTR("index error : out of bounds");
+            return CEU_ERROR_PTR("out of bounds");
         }        
         int sz = ceu_type_to_size(vec->unit);
         CEU_Value ret = (CEU_Value) { vec->unit };
@@ -1035,7 +1080,7 @@ fun Coder.main (tags: Tags): String {
     
     char* ceu_dict_set (CEU_Dict* dic, CEU_Value key, CEU_Value val) {
         if (key.type == CEU_VALUE_NIL) {
-            return "dict error : index cannot be nil";
+            return "index cannot be nil";
         }
         int old;
         ceu_dict_key_to_index(dic, key, &old);
@@ -1071,17 +1116,17 @@ fun Coder.main (tags: Tags): String {
 
     char* ceu_col_check (CEU_Value col, CEU_Value idx) {
         if (col.type<CEU_VALUE_TUPLE || col.type>CEU_VALUE_DICT) {                
-            return "index error : expected collection";
+            return "expected collection";
         }
         if (col.type != CEU_VALUE_DICT) {
             if (idx.type != CEU_VALUE_NUMBER) {
-                return "index error : expected number";
+                return "expected number";
             }
             if (col.type==CEU_VALUE_TUPLE && (idx.Number<0 || idx.Number>=col.Dyn->Tuple.its)) {                
-                return "index error : out of bounds";
+                return "out of bounds";
             }
             if (col.type==CEU_VALUE_VECTOR && (idx.Number<0 || idx.Number>col.Dyn->Vector.its)) {                
-                return "index error : out of bounds";
+                return "out of bounds";
             }
         }
         return NULL;
@@ -1132,7 +1177,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value dict = ceux->args[0];
         CEU_Value ret;
         if (dict.type != CEU_VALUE_DICT) {
-            ret = CEU_ERROR_PTR("next-dict error : expected dict");
+            ret = CEU_ERROR_PTR("expected dict");
         } else {
             CEU_Value key = (ceux->n == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : ceux->args[1];
             if (key.type == CEU_VALUE_NIL) {
@@ -1300,7 +1345,7 @@ fun Coder.main (tags: Tags): String {
     #endif
         
         if (clo.type != CEU_VALUE_CLO_TASK) {
-            return CEU_ERROR_PTR("spawn error : expected task");
+            return CEU_ERROR_PTR("expected task");
         }
 
         CEU_Value ret = ceu_create_exe(CEU_VALUE_EXE_TASK, sizeof(CEU_Exe_Task), clo CEU_LEX_V(COMMA lex_depth));
@@ -1346,7 +1391,7 @@ fun Coder.main (tags: Tags): String {
         } else if (max.type==CEU_VALUE_NUMBER && max.Number>0) {
             xmax = max.Number;
         } else {
-            return CEU_ERROR_PTR("tasks error : expected positive number");
+            return CEU_ERROR_PTR("expected positive number");
         }
 
         CEU_Tasks* ret = malloc(sizeof(CEU_Tasks));
@@ -1591,7 +1636,7 @@ fun Coder.main (tags: Tags): String {
         } else if (col.type == CEU_VALUE_TUPLE) {
             ret = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=col.Dyn->Tuple.its} };
         } else {
-            ret = CEU_ERROR_PTR("length error : not a vector");
+            ret = CEU_ERROR_PTR("not a vector");
         }
         CEU_ACC(ret);
         ceu_gc_dec_val(col);
@@ -1612,7 +1657,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Value clo = ceux->args[0];
             CEU_Value ret;
             if (clo.type != CEU_VALUE_CLO_CORO) {
-                ret = CEU_ERROR_PTR("coroutine error : expected coro");
+                ret = CEU_ERROR_PTR("expected coro");
             } else {
                 ret = ceu_create_exe(CEU_VALUE_EXE_CORO, sizeof(CEU_Exe), clo CEU_LEX_V(COMMA -1));
             }
@@ -1626,9 +1671,9 @@ fun Coder.main (tags: Tags): String {
             CEU_Value ret;
             if (exe.type!=CEU_VALUE_EXE_CORO CEU4(&& exe.type!=CEU_VALUE_EXE_TASK)) {
         #if CEU < 4
-                ret = CEU_ERROR_PTR("status error : expected running coroutine");
+                ret = CEU_ERROR_PTR("expected running coroutine");
         #else
-                ret = CEU_ERROR_PTR("status error : expected running coroutine or task");
+                ret = CEU_ERROR_PTR("expected running coroutine or task");
         #endif
             } else {
                 ret = (CEU_Value) { CEU_VALUE_TAG, {.Tag=exe.Dyn->Exe.status + CEU_TAG_yielded - 1} };
@@ -1941,7 +1986,7 @@ fun Coder.main (tags: Tags): String {
                 } else if (xin.Tag == CEU_TAG_task) {
                     ceu_bcast_tasks((CEU_Dyn*) ceu_task_up(ceux), CEU_ACTION_RESUME, CEU_TIME, &evt);
                 } else {
-                    CEU_ACC(CEU_ERROR_PTR("broadcast error : invalid target"));
+                    CEU_ACC(CEU_ERROR_PTR("invalid target"));
                 }
             } else {
                 if (ceu_istask_val(xin)) {
@@ -1951,7 +1996,7 @@ fun Coder.main (tags: Tags): String {
                         ceu_bcast_task(&xin.Dyn->Exe_Task, CEU_TIME, &evt);
                     }
                 } else {
-                    CEU_ACC(CEU_ERROR_PTR("broadcast error : invalid target"));
+                    CEU_ACC(CEU_ERROR_PTR("invalid target"));
                 }
             }
             ceu_gc_dec_args(ceux->n, ceux->args);
@@ -1981,7 +2026,7 @@ fun Coder.main (tags: Tags): String {
             assert(ceux->n==1 || ceux->n==2);
             CEU_Value tsks = ceux->args[0];
             if (tsks.type != CEU_VALUE_TASKS) {
-                CEU_ACC(CEU_ERROR_PTR("next-tasks error : expected tasks"));
+                CEU_ACC(CEU_ERROR_PTR("expected tasks"));
                 goto _END_;
             }
 
@@ -1995,7 +2040,7 @@ fun Coder.main (tags: Tags): String {
                     nxt = key.Dyn->Exe_Task.lnks.sd.nxt;
                     break;
                 default:
-                    CEU_ACC(CEU_ERROR_PTR("next-tasks error : expected task"));
+                    CEU_ACC(CEU_ERROR_PTR("expected task"));
                     goto _END_;
             }
             if (nxt == NULL) {
