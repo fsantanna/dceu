@@ -44,7 +44,7 @@ class Exec_03 {
             resume f()
         """)
         assert(out == " |  anon : (lin 3, col 13) : (resume (f)())\n" +
-                " v  resume error : expected yielded coro\n") { out }
+                " v  error : expected yielded coro\n") { out }
     }
     @Test
     fun aa_05_yield_err() {
@@ -111,7 +111,7 @@ class Exec_03 {
             println(x)
         """)
         assert(out == " |  anon : (lin 5, col 21) : coroutine(t)\n" +
-                " v  coroutine error : expected coro\n") { out }
+                " v  error : expected coro\n") { out }
     }
     @Test
     fun bb_02_coroutine_err() {
@@ -130,7 +130,7 @@ class Exec_03 {
             coroutine(func () {nil})
         """)
         assert(out == " |  anon : (lin 2, col 13) : coroutine((func () { nil; }))\n" +
-                " v  coroutine error : expected coro\n") { out }
+                " v  error : expected coro\n") { out }
     }
 
     // RESUME / YIELD
@@ -208,7 +208,7 @@ class Exec_03 {
             resume co()
         """)
         assert(out == " |  anon : (lin 4, col 13) : (resume (co)())\n" +
-                " v  resume error : expected yielded coro\n") { out }
+                " v  error : expected yielded coro\n") { out }
     }
     @Test
     fun cc_03_resume_dead_err() {
@@ -221,7 +221,7 @@ class Exec_03 {
             resume co()
         """)
         assert(out == " |  anon : (lin 7, col 13) : (resume (co)())\n" +
-                " v  resume error : expected yielded coro\n") { out }
+                " v  error : expected yielded coro\n") { out }
     }
     @Test
     fun cc_04_resume_yield() {
@@ -1174,7 +1174,7 @@ class Exec_03 {
             status(CO)
         """)
         assert(out == " |  anon : (lin 3, col 13) : status(CO)\n" +
-                " v  status error : expected running coroutine\n") { out }
+                " v  error : expected running coroutine\n") { out }
     }
     @Test
     fun ii_02_status_err() {
@@ -1183,7 +1183,7 @@ class Exec_03 {
             status(CO)
         """)
         assert(out == " |  anon : (lin 3, col 13) : status(CO)\n" +
-                " v  status error : expected running coroutine\n") { out }
+                " v  error : expected running coroutine\n") { out }
     }
     @Test
     fun ii_02_status() {
@@ -1873,7 +1873,7 @@ class Exec_03 {
         """)
         assert(out == " |  anon : (lin 8, col 13) : (resume (coroutine(CO2))())\n" +
                 " |  anon : (lin 6, col 17) : coroutine(CO1)()\n" +
-                " v  call error : expected function\n") { out }
+                " v  error : expected function\n") { out }
     }
     @Test
     fun zz_05_valgrind() {
@@ -1885,7 +1885,7 @@ class Exec_03 {
             println(:ok)
         """)
         assert(out == " |  anon : (lin 5, col 13) : coroutine(CO1)()\n" +
-                " v  call error : expected function\n") { out }
+                " v  error : expected function\n") { out }
     }
     @Test
     fun zz_06_mem() {

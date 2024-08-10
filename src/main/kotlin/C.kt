@@ -457,7 +457,7 @@ fun Coder.main (tags: Tags): String {
 
     #if CEU <= 1
     
-    #define CEU_ERROR_CHK_ERR_1(cmd,pre) {      \
+    #define CEU_ERROR_CHK_ERR(cmd,pre) {        \
         if (CEU_ERROR != CEU_ERROR_NONE) {      \
             fprintf(stderr,                     \
                 " |  %s\n v  error : %s\n",     \
@@ -470,22 +470,9 @@ fun Coder.main (tags: Tags): String {
         }                                       \
     }
 
-    #define CEU_ERROR_CHK_ERR_2(cmd,pre1,pre2) {  \
-        if (CEU_ERROR != CEU_ERROR_NONE) {      \
-            fprintf(stderr,                     \
-                " |  %s\n v  %s : %s\n",        \
-                pre2, pre1,                     \
-                (CEU_ERROR == CEU_TAG_error) ?  \
-                    (char*)ceu_acc.Pointer :    \
-                    (char*)ceu_tag_to_pointer(CEU_ERROR) \
-            );                                  \
-            exit(0);                            \
-        }                                       \
-    }
-    
-    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre1,pre2) {  \
+    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre) {  \
         if ((ptr) != NULL) {                        \
-            fprintf(stderr, " |  %s\n v  %s : %s\n", pre2, pre1, ptr); \
+            fprintf(stderr, " |  %s\n v  error : %s\n", pre, ptr); \
             exit(0);                                \
         }                                           \
     }
@@ -505,52 +492,25 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_pointer_to_string (const char* ptr);
     CEU_Value ceu_create_vector (void);
 
-    #define CEU_ERROR_CHK_ERR_1(cmd,pre) {          \
+    #define CEU_ERROR_CHK_ERR(cmd,pre) {          \
         if (CEU_ERROR != CEU_ERROR_NONE) {          \
             ceu_vector_set (                        \
                 &CEU_ERROR_STACK.Dyn->Vector,       \
                 CEU_ERROR_STACK.Dyn->Vector.its,    \
-                ceu_pointer_to_string(pre)          \
+                ((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} }) \
             );                                      \
             cmd;                                    \
         }                                           \
     }
     
-    #define CEU_ERROR_CHK_ERR_2(cmd,pre1,pre2) {                                  \
-        if (CEU_ERROR != CEU_ERROR_NONE) {                                  \
-            assert(CEU_ERROR == CEU_TAG_error);   \
-            CEU_Value ceu_str = ceu_pointer_to_string(pre1);                \
-            ceu_vector_concat(&ceu_str.Dyn->Vector, 3, " : ");              \
-            ceu_vector_concat(&ceu_str.Dyn->Vector, strlen((char*)ceu_acc.Pointer), ceu_acc.Pointer);    \
-            ceu_vector_set (                                                \
-                &CEU_ERROR_STACK.Dyn->Vector,                               \
-                CEU_ERROR_STACK.Dyn->Vector.its,                            \
-                ceu_str \
-            );                                                              \
-            ceu_vector_set (                                                \
-                &CEU_ERROR_STACK.Dyn->Vector,                               \
-                CEU_ERROR_STACK.Dyn->Vector.its,                            \
-                ceu_pointer_to_string(pre2)                                                     \
-            );                                                              \
-            cmd;                                                            \
-        }                                                                   \
-    }
-    
-    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre1,pre2) {  \
+    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre) {  \
         if ((ptr) != NULL) {                        \
-            CEU_ERROR = CEU_TAG_nil;                \
-            CEU_Value ceu_str = ceu_pointer_to_string(pre1);            \
-            ceu_vector_concat(&ceu_str.Dyn->Vector, 3, " : ");          \
-            ceu_vector_concat(&ceu_str.Dyn->Vector, strlen(ptr), ptr);  \
+            CEU_ERROR = CEU_TAG_error;              \
+            CEU_ACC(((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=ptr} })); \
             ceu_vector_set (                        \
                 &CEU_ERROR_STACK.Dyn->Vector,       \
                 CEU_ERROR_STACK.Dyn->Vector.its,    \
-                ceu_str                             \
-            );                                      \
-            ceu_vector_set (                        \
-                &CEU_ERROR_STACK.Dyn->Vector,       \
-                CEU_ERROR_STACK.Dyn->Vector.its,    \
-                ceu_pointer_to_string(pre2)         \
+                ((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} }) \
             );                                      \
             cmd;                                    \
         }                                           \
@@ -2120,24 +2080,17 @@ fun Coder.main (tags: Tags): String {
             CEU_Vector* vec = &CEU_ERROR_STACK.Dyn->Vector;
             for (int i=vec->its-1; i>=0; i--) {
                 CEU_Value s = ceu_vector_get(vec, i);
-                printf((i==0 && CEU_ERROR==CEU_TAG_error) ? " v  " : " |  ");
-                if (s.type == CEU_VALUE_POINTER) {
-                    puts((char*) s.Pointer);
-                } else {
-                    assert(ceu_is_string(s));
-                    puts(s.Dyn->Vector.buf);
-                }
+                printf(" |  ");
+                assert(s.type == CEU_VALUE_POINTER);
+                puts((char*) s.Pointer);
             }
-            printf(" v  ");
-            if (ceu_is_string(ceu_acc)) {
-                ceu_print1(ceu_acc);
-            } else if (ceu_acc.type == CEU_VALUE_POINTER) {
-                printf("%s", (char*) ceu_acc.Pointer);
+            printf(" v  error : ");
+            if (ceu_acc.type == CEU_VALUE_POINTER) {
+                puts((char*) ceu_acc.Pointer);
             } else {
-                printf("error : ");
                 ceu_print1(ceu_acc);
+                puts("");
             }
-            puts("");
         }
         ceu_gc_dec_val(CEU_ERROR_STACK);
     #endif

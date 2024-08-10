@@ -868,8 +868,7 @@ class Exec_02 {
     fun kk_01_func_err() {
         val out = test("1(1)")
         assert(out == " |  anon : (lin 1, col 1) : 1(1)\n" +
-                " |  call error : expected function\n" +
-                " v  error : nil\n") { out }
+                " v  error : expected function\n") { out }
     }
     @Test
     fun kk_02_func_err() {
@@ -881,8 +880,7 @@ class Exec_02 {
         """)
         assert(out == " |  anon : (lin 5, col 13) : f()\n" +
                 " |  anon : (lin 3, col 17) : 1(1)\n" +
-                " |  call error : expected function\n" +
-                " v  error : nil\n") { out }
+                " v  error : expected function\n") { out }
     }
     @Test
     fun kk_03_func_args() {
@@ -995,9 +993,10 @@ class Exec_02 {
     @Test
     fun pp_07_error_error() {
         val out = test("""
-            error(:error)   ;; ignores CEU_ACC error message
+            error(:error)
         """)
-        assert(out == " v  anon : (lin 2, col 13) : error(:error)\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : error(:error)\n" +
+                " v  error : :error\n") { out }
     }
 
     // LOOPS
@@ -1153,6 +1152,6 @@ class Exec_02 {
         """)
         //assert(out == "anon : (lin 5, col 25) : index error : field \"X\" is not a data") { out }
         assert(out == " |  anon : (lin 3, col 21) : u[1]\n" +
-                " v  index error : out of bounds\n") { out }
+                " v  error : out of bounds\n") { out }
     }
 }
