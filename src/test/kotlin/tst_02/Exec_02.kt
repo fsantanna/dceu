@@ -953,10 +953,10 @@ class Exec_02 {
             defer {
                 nil
             }
-            error(:error)
+            error(:x)
         """)
-        assert(out == " |  anon : (lin 5, col 13) : error(:error)\n" +
-                " v  error : :error\n") { out }
+        assert(out == " |  anon : (lin 5, col 13) : error(:x)\n" +
+                " v  error : :x\n") { out }
     }
     @Test
     fun BUG_pp_04_throw_defer() {
@@ -986,11 +986,18 @@ class Exec_02 {
             defer {
                 println(:ok)
             }
-            error(:error)
+            error(:x)
         """)
         assert(out == ":ok\n" +
-                " |  anon : (lin 5, col 13) : error(:error)\n" +
-                " v  error : :error\n") { out }
+                " |  anon : (lin 5, col 13) : error(:x)\n" +
+                " v  error : :x\n") { out }
+    }
+    @Test
+    fun pp_07_error_error() {
+        val out = test("""
+            error(:error)   ;; ignores CEU_ACC error message
+        """)
+        assert(out == " v  anon : (lin 2, col 13) : error(:error)\n") { out }
     }
 
     // LOOPS

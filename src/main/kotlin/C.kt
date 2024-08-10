@@ -518,13 +518,19 @@ fun Coder.main (tags: Tags): String {
     
     #define CEU_ERROR_CHK_ERR_2(cmd,pre1,pre2) {                                  \
         if (CEU_ERROR != CEU_ERROR_NONE) {                                  \
-            CEU_Value ceu_str = ceu_pointer_to_string(pre2);                \
+            assert(CEU_ERROR == CEU_TAG_error);   \
+            CEU_Value ceu_str = ceu_pointer_to_string(pre1);                \
             ceu_vector_concat(&ceu_str.Dyn->Vector, 3, " : ");              \
-            ceu_vector_concat(&ceu_str.Dyn->Vector, strlen(pre1), pre1);    \
+            ceu_vector_concat(&ceu_str.Dyn->Vector, strlen((char*)ceu_acc.Pointer), ceu_acc.Pointer);    \
             ceu_vector_set (                                                \
                 &CEU_ERROR_STACK.Dyn->Vector,                               \
                 CEU_ERROR_STACK.Dyn->Vector.its,                            \
-                ceu_str                                                     \
+                ceu_str \
+            );                                                              \
+            ceu_vector_set (                                                \
+                &CEU_ERROR_STACK.Dyn->Vector,                               \
+                CEU_ERROR_STACK.Dyn->Vector.its,                            \
+                ceu_pointer_to_string(pre2)                                                     \
             );                                                              \
             cmd;                                                            \
         }                                                                   \
@@ -2114,7 +2120,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Vector* vec = &CEU_ERROR_STACK.Dyn->Vector;
             for (int i=vec->its-1; i>=0; i--) {
                 CEU_Value s = ceu_vector_get(vec, i);
-                printf(" |  ");
+                printf((i==0 && CEU_ERROR==CEU_TAG_error) ? " v  " : " |  ");
                 if (s.type == CEU_VALUE_POINTER) {
                     puts((char*) s.Pointer);
                 } else {
@@ -2148,6 +2154,7 @@ fun Coder.main (tags: Tags): String {
         gc() + c_tags() + c_error + c_impls() +
         eq_neq_len() + creates() + tuple_vector_dict() +
         c_to() + print() + dumps() +
+        lex() +
         (CEU>=3).cond { c_exes } +
         (CEU>=4).cond { c_task } +
         (CEU>=4).cond { c_bcast } +
