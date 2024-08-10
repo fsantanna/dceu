@@ -191,7 +191,7 @@ val to-iter = do {
             ==:coro     => :Iterator [iter-coro, v, nil, nil]
             ==:exe-coro => :Iterator [iter-xcoro, v, nil, nil]
             ==:tasks    => :Iterator [iter-tasks, v, nil, nil]
-            else        => error(:error, "iterator error : invalid collection")
+            else        => error(:error, "invalid collection")
         }
     }
 }

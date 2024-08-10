@@ -424,7 +424,7 @@ class Exec_05 {
         """
         )
         assert(out == " |  anon : (lin 2, col 13) : tasks(0)\n" +
-                " v  tasks error : expected positive number\n") { out }
+                " v  error : expected positive number\n") { out }
     }
     @Test
     fun ab_02_pool_max_err() {
@@ -434,7 +434,7 @@ class Exec_05 {
         """
         )
         assert(out == " |  anon : (lin 2, col 13) : tasks(false)\n" +
-                " v  tasks error : expected positive number\n") { out }
+                " v  error : expected positive number\n") { out }
     }
     @Test
     fun BUG_ab_03_pool_max() {  // remove from ts when terminates?
@@ -1824,7 +1824,7 @@ class Exec_05 {
         assert(out == "nil\n" +
                 "nil\n" +
                 " |  anon : (lin 8, col 21) : next-tasks(ts,:err)\n" +
-                " v  next-tasks error : expected task\n") { out }
+                " v  error : expected task\n") { out }
     }
     @Test
     fun hh_02_next() {
@@ -1935,7 +1935,7 @@ class Exec_05 {
             println(next-tasks(nil))
         """)
         assert(out == " |  anon : (lin 2, col 21) : next-tasks(nil)\n" +
-                " v  next-tasks error : expected tasks\n") { out }
+                " v  error : expected tasks\n") { out }
     }
     @Test
     fun hh_08_pool_term() {

@@ -1489,7 +1489,7 @@ class Exec_99 {
         """, true)
         //assert(out == "anon : (lin 5, col 25) : index error : field \"X\" is not a data") { out }
         assert(out == " |  anon : (lin 5, col 21) : u[:X]\n" +
-                " v  index error : out of bounds\n") { out }
+                " v  error : out of bounds\n") { out }
     }
     @Test
     fun hj_06_tplate_tup() {
@@ -2575,7 +2575,7 @@ class Exec_99 {
         //assert(out.contains("assertion error : expected :Iterator")) { out }
         assert(out.contains(" |  anon : (lin 2, col 23) : to-iter(nil)\n" +
                 " |  build/prelude-x.ceu : (lin 194, col 28) : error(:error,#['i','t','e','r','a','t','o'...\n" +
-                " v  iterator error : invalid collection\n")) { out }
+                " v  error : invalid collection\n")) { out }
     }
     @Test
     fun fx_03_iter() {
@@ -3203,7 +3203,7 @@ class Exec_99 {
                 "2\n" +
                 "3\n" +
                 " |  anon : (lin 11, col 21) : (resume (co)())\n" +
-                " v  resume error : expected yielded coro\n") { out }
+                " v  error : expected yielded coro\n") { out }
     }
 
     // AS / YIELD / CATCH / DETRACK / THUS
@@ -4795,7 +4795,7 @@ class Exec_99 {
         //assert(out == "anon : (lin 2, col 27) : expected non-pool spawn : have \"spawn\"") { out }
         assert(out == " |  anon : (lin 5, col 14) : (spawn (task :nested () { (val ts = tasks(...\n" +
                 " |  anon : (lin 4, col 31) : (spawn nil() in ts)\n" +
-                " v  spawn error : expected task\n") { out }
+                " v  error : expected task\n") { out }
     }
     @Test
     fun kn_05_await_task_rets() {
@@ -5955,7 +5955,7 @@ class Exec_99 {
         assert(out == "nil\n" +
                 " |  anon : (lin 17, col 17) : f(@[(:y,false)])\n" +
                 " |  anon : (lin 11, col 37) : x[0]\n" +
-                " v  index error : expected collection\n") { out }
+                " v  error : expected collection\n") { out }
     }
     @Test
     fun xb_09_xxx() {
@@ -6128,7 +6128,7 @@ class Exec_99 {
         assert(out == "10\n" +
                 " |  anon : (lin 3, col 13) : assert(nil)\n" +
                 " |  build/prelude-x.ceu : (lin 36, col 30) : error(:error,#['a','s','s','e','r','t','i'...\n" +
-                " v  assertion error\n") { out }
+                " v  error : assertion error\n") { out }
     }
     @Test
     fun za_06_copy() {
@@ -6149,7 +6149,7 @@ class Exec_99 {
         """, true)
         assert(out.contains(" |  anon : (lin 3, col 17) : assert(is'([],:bool),#['o','k'])\n" +
                 " |  build/prelude-x.ceu : (lin 35, col 30) : error(:error,xx-cat-move(xx-cat-move(#[],#...\n" +
-                " v  assertion error : ok\n")) { out }
+                " v  error : assertion error : ok\n")) { out }
     }
     @Test
     fun TODO_za_08_comp() {     // fp.*
