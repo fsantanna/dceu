@@ -450,8 +450,8 @@ fun Coder.main (tags: Tags): String {
     // EXIT / ERROR / ASSERT
     val c_error = """
     // allows to return error messages from internal functions
-    #define CEU_ERROR_PTR(ptr) ({   \
-        CEU_ERROR = CEU_TAG_nil;    \
+    #define CEU_ERROR_PTR(ptr) ({       \
+        CEU_ERROR = CEU_TAG_error;      \
         (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=ptr} }; \
     })
 
@@ -462,7 +462,7 @@ fun Coder.main (tags: Tags): String {
             fprintf(stderr,                     \
                 " |  %s\n v  error : %s\n",     \
                 pre,                            \
-                (CEU_ERROR == CEU_TAG_nil) ?    \
+                (CEU_ERROR == CEU_TAG_error) ?  \
                     (char*)ceu_acc.Pointer :    \
                     (char*)ceu_tag_to_pointer(CEU_ERROR) \
             );                                  \
@@ -475,7 +475,7 @@ fun Coder.main (tags: Tags): String {
             fprintf(stderr,                     \
                 " |  %s\n v  %s : %s\n",        \
                 pre2, pre1,                     \
-                (CEU_ERROR == CEU_TAG_nil) ?    \
+                (CEU_ERROR == CEU_TAG_error) ?  \
                     (char*)ceu_acc.Pointer :    \
                     (char*)ceu_tag_to_pointer(CEU_ERROR) \
             );                                  \
@@ -495,6 +495,9 @@ fun Coder.main (tags: Tags): String {
         CEU_Value tag = ceux->args[0];
         assert(tag.type == CEU_VALUE_TAG);
         CEU_ERROR = tag.Tag;
+        if (CEU_ERROR == CEU_TAG_error) {
+            CEU_ACC(((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=ceu_tag_to_pointer(CEU_TAG_error)} }));
+        }
     }
 
     #else

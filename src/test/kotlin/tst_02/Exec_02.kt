@@ -868,7 +868,8 @@ class Exec_02 {
     fun kk_01_func_err() {
         val out = test("1(1)")
         assert(out == " |  anon : (lin 1, col 1) : 1(1)\n" +
-                " v  call error : expected function\n") { out }
+                " |  call error : expected function\n" +
+                " v  error : nil\n") { out }
     }
     @Test
     fun kk_02_func_err() {
@@ -880,7 +881,8 @@ class Exec_02 {
         """)
         assert(out == " |  anon : (lin 5, col 13) : f()\n" +
                 " |  anon : (lin 3, col 17) : 1(1)\n" +
-                " v  call error : expected function\n") { out }
+                " |  call error : expected function\n" +
+                " v  error : nil\n") { out }
     }
     @Test
     fun kk_03_func_args() {
