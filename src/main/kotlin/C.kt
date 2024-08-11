@@ -532,9 +532,9 @@ fun Coder.main (tags: Tags): String {
 
     #define CEU_ERROR_CHK_ERR(cmd,pre) {          \
         if (CEU_ERROR != CEU_ERROR_NONE) {          \
-            ceu_vector_set (                        \
-                &CEU_ERROR_STACK.Dyn->Vector,       \
-                CEU_ERROR_STACK.Dyn->Vector.its,    \
+            ceu_col_set (                        \
+                CEU_ERROR_STACK,       \
+                ((CEU_Value) { CEU_VALUE_NUMBER, {.Number=CEU_ERROR_STACK.Dyn->Vector.its} }),    \
                 ((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} }) \
             );                                      \
             cmd;                                    \
@@ -545,9 +545,9 @@ fun Coder.main (tags: Tags): String {
         if ((ptr) != NULL) {                        \
             CEU_ERROR = CEU_TAG_error;              \
             CEU_ACC(((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=ptr} })); \
-            ceu_vector_set (                        \
-                &CEU_ERROR_STACK.Dyn->Vector,       \
-                CEU_ERROR_STACK.Dyn->Vector.its,    \
+            ceu_col_set (                        \
+                CEU_ERROR_STACK,       \
+                ((CEU_Value) { CEU_VALUE_NUMBER, {.Number=CEU_ERROR_STACK.Dyn->Vector.its} }),    \
                 ((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} }) \
             );                                      \
             cmd;                                    \
@@ -1162,6 +1162,10 @@ fun Coder.main (tags: Tags): String {
         if (err != NULL) {
             return err;
         }
+        err = ceu_lex_chk_set(val, col.Dyn->Any.lex);
+        if (err != NULL) {
+            return err;
+        }
         switch (col.type) {
             case CEU_VALUE_TUPLE:
                 ceu_tuple_set(&col.Dyn->Tuple, idx.Number, val);
@@ -1214,21 +1218,26 @@ fun Coder.main (tags: Tags): String {
         return """
     CEU_Value ceu_create_tuple (int cpy, int n, CEU_Value args[]) {
         ceu_debug_add(CEU_VALUE_TUPLE);
-        CEU_Tuple* ret = malloc(sizeof(CEU_Tuple) + n*sizeof(CEU_Value));
-        assert(ret != NULL);
-        *ret = (CEU_Tuple) {
+        CEU_Tuple* tup = malloc(sizeof(CEU_Tuple) + n*sizeof(CEU_Value));
+        assert(tup != NULL);
+        *tup = (CEU_Tuple) {
             CEU_VALUE_TUPLE, 0, (CEU_Value) { CEU_VALUE_NIL },
     #ifdef CEU_LEX
             { CEU_LEX_FLEET, -1 },
     #endif
             n, {}
         };
+        CEU_Value ret = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)tup} };
         if (cpy) {
-            memcpy(ret->buf, args, n*sizeof(CEU_Value));
+            memcpy(tup->buf, args, n*sizeof(CEU_Value));
+            for (int i=0; i<n; i++) {
+                char* err = ceu_col_set(ret, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=i} }, args[0]);
+                assert(err == NULL);
+            }
         } else {
-            memset(ret->buf, 0, n*sizeof(CEU_Value));
+            memset(tup->buf, 0, n*sizeof(CEU_Value));
         }
-        return (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)ret} };
+        return ret;
     }
     
     void ceu_pro_tuple (CEUX* ceux) {
@@ -2143,9 +2152,9 @@ fun Coder.main (tags: Tags): String {
         h_includes() + h_defines() + h_enums() +
         h_value_dyn() + h_tags() + x_globals() +
         gc() + c_tags() + c_error + c_impls() +
-        eq_neq_len() + creates() + tuple_vector_dict() +
-        c_to() + print() + dumps() +
         lex() +
+        eq_neq_len() + tuple_vector_dict() + creates() +
+        c_to() + print() + dumps() +
         (CEU>=3).cond { c_exes } +
         (CEU>=4).cond { c_task } +
         (CEU>=4).cond { c_bcast } +

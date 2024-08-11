@@ -695,10 +695,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 { // VECTOR | ${this.dump()}
                     ${sta.dcl(this)} $id_vec = ceu_create_vector();
                     ${this.args.mapIndexed { i, it ->
-                    it.code() + """
-                         ceu_vector_set(&$id_vec.Dyn->Vector, $i, ceu_acc);
+                        it.code() + """
+                            ceu_col_set($id_vec, $i, ceu_acc);
                         """
-                }.joinToString("")}
+                    }.joinToString("")}
                     CEU_ACC($id_vec);
                 }
             """
@@ -717,7 +717,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             CEU_Value ceu_val_$n = CEU_ACC_KEEP();
                             CEU_ERROR_CHK_PTR (
                                 continue,
-                                ceu_dict_set(&${id_dic}.Dyn->Dict, $id_key, ceu_val_$n),
+                                ceu_col_set(${id_dic}, $id_key, ceu_val_$n),
                                 ${this.toerr()}
                             );
                             ceu_gc_dec_val($id_key);
@@ -755,7 +755,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """ +
                 if (ups.isdst(this)) {
                     """
-                    {
+                    { // INDEX | DST | ${this.dump()}
                         char* ceu_err_$n = ceu_col_set($id_col, ceu_idx_$n, $id_val);
                         ceu_gc_dec_val($id_col);
                         ceu_gc_dec_val(ceu_idx_$n);
