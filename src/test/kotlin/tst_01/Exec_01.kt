@@ -788,7 +788,7 @@ class Exec_01 {
         assert(out == "[nil,nil,nil]\n10\n") { out }
     }
 
-    // DROP
+    // DROP / HOLD / LEX
 
     @Test
     fun cm_00_drop () {

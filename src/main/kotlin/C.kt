@@ -1312,7 +1312,7 @@ fun Coder.main (tags: Tags): String {
         *ret = (CEU_Exe) {
             type, 0, (CEU_Value) { CEU_VALUE_NIL },
     #ifdef CEU_LEX
-            { clo.Dyn->Clo.lex.type, lex_depth },
+            clo.Dyn->Clo.lex,
     #endif
             &clo.Dyn->Clo, CEU_EXE_STATUS_YIELDED, 0, mem
         };

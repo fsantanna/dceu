@@ -713,7 +713,7 @@ class Exec_03 {
         }
         val C = coro () {
             var t = []
-            yield(;;;drop;;;(t)) ;;thus { it => nil }
+            yield(drop(t)) ;;thus { it => nil }
             println(:in, t)
         }
         do {
@@ -767,7 +767,7 @@ class Exec_03 {
                     println(:2)
                 })
                 resume x()
-                ;;;drop;;;(x)
+                drop(x)
             }
             resume y()
         """)
@@ -785,7 +785,7 @@ class Exec_03 {
                     println(:ok)
                 })
                 resume x()
-                ;;;move;;;(x)
+                drop(x)
             }
             resume co()
         """)
@@ -800,7 +800,7 @@ class Exec_03 {
                     x
                 }))
                 resume y()
-                ;;;move;;;(y)
+                drop(y)
             }
             do {
                 val x = []
@@ -978,7 +978,7 @@ class Exec_03 {
         val out = test("""
             val T = coro () {
                 val x = []
-                yield(;;;drop;;;(x)) ;;thus { it => nil }    ;; err
+                yield(drop(x)) ;;thus { it => nil }    ;; err
                 println(:in, x)
             }
             val t = coroutine(T)
