@@ -59,6 +59,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
         is Expr.Loop   -> "loop' " + this.blk.tostr(pre)
         is Expr.Data   -> "(data " + this.tk.str + " = [" + this.ids.map { it.tostr() }.joinToString(",") + "])"
+        is Expr.Drop   -> "drop(" + this.e.tostr(pre) + ")"
 
         is Expr.Catch  -> "catch " + this.tag.cond { it.str+" " } + this.blk.tostr(pre)
         is Expr.Defer  -> "defer " + this.blk.tostr(pre)

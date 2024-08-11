@@ -676,7 +676,7 @@ class Exec_01 {
             """
             val out = do {
                 val ins = [1,2,3]
-                ;;;drop;;;(ins)
+                drop(ins)
             }
             println(out)
         """
@@ -825,9 +825,9 @@ class Exec_01 {
             val g = do {
                 val v = do {
                     val x = [0,'a']
-                    ;;;drop;;;(x)
+                    drop(x)
                 }
-                ;;;drop;;;(v)
+                drop(v)
             }
             println(g)
         """
@@ -923,7 +923,7 @@ class Exec_01 {
             ;;dump(e)
             val g = func () {
                 val co = [e]
-                ;;;drop;;;(co)
+                drop(co)
             }
             val x = g()
             println(x)
@@ -946,15 +946,16 @@ class Exec_01 {
     fun cc_07x_global() {
         val out = test("""
             val e = func () {nil}
-            ;;dump(e)
             val g = func () {
                 val co = [e]
                 println(:e,e)
-                (co)
+                ;;dump(co)
+                drop(co)
             }
             val x = g()
             println(x)
         """)
+        println(out)
         assert(out.contains("[func: 0x")) { out }
     }
     @Test
@@ -1044,11 +1045,11 @@ class Exec_01 {
             val x = do {
                 val t1 = [1,2,3]
                 val t2 = t1
-                ;;;drop;;;(t1)        ;; ~ERR~: `t1` has multiple references
+                drop(t1)        ;; ~ERR~: `t1` has multiple references
             }                   ;; not a problem b/c gc_dec does not chk current block
             println(x)
         """)
-        //assert(out == "anon : (lin 5, col 22) : drop error : value contains multiple references\n") { out }
+        //assert(out == " |  anon : (lin 5, col 17) : drop(t1)\n v  error : value has multiple references\n") { out }
         assert(out == "[1,2,3]\n") { out }
     }
     @Test
@@ -1058,17 +1059,36 @@ class Exec_01 {
             do {
                 val y = do {
                     val x = t[1]
-                    ;;;drop;;;(x)
+                    drop(x)
                 }
                 println(y)
             }
             ;;`ceu_gc_collect();`
             println(t)
         """)
-        //assert(out == "anon : (lin 6, col 26) : drop error : value contains multiple references\n") { out }
+        assert(out == " |  anon : (lin 6, col 21) : drop(x)\n v  error : value has multiple references\n") { out }
         //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
-        assert(out == "[99]\n" +
-                "[1,[99],3]\n") { out }
+        //assert(out == "[99]\n" +
+        //        "[1,[99],3]\n") { out }
+    }
+    @Test
+    fun cc_10x_drop_multi_err_why() {
+        val out = test("""
+            val t = [99]
+            do {
+                val y = do {
+                    val x = t
+                    drop(x)
+                }
+                println(y)
+            }
+            ;;`ceu_gc_collect();`
+            println(t)
+        """)
+        assert(out == " |  anon : (lin 6, col 21) : drop(x)\n v  error : value has multiple references\n") { out }
+        //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
+        //assert(out == "[99]\n" +
+        //        "[1,[99],3]\n") { out }
     }
     @Test
     fun cc_11_drop_deep() {
@@ -1111,13 +1131,13 @@ class Exec_01 {
                 var x = [nil]
                 var y = [x]
                 set x[0] = y
-                ;;;drop;;;(x)
+                drop(x)
             }
             println(z[0][0] == z)
         """
         )
-        //assert(out == "anon : (lin 6, col 22) : drop error : value contains multiple references\n") { out }
-        assert(out == "true\n") { out }
+        assert(out == " |  anon : (lin 6, col 17) : drop(x)\n v  error : value has multiple references\n") { out }
+        //assert(out == "true\n") { out }
     }
     @Test
     fun cc_13_drop_cycle_x() {
@@ -1127,7 +1147,7 @@ class Exec_01 {
                 var x = [nil]
                 var y = [x]
                 set x[0] = y
-                ;;;;;;drop;;;;;;(x)
+                drop(x)
             }
             println(z[0][0] == z)
         """
@@ -1152,7 +1172,7 @@ class Exec_01 {
                 var x = [nil]
                 var y = [x]
                 set x[0] = y
-                ;;;do drop;;;(x)
+                drop(x)
                 y
             }
             println(z[0][0] == z)
@@ -2317,8 +2337,8 @@ class Exec_01 {
             println(y)
         """
         )
-        //assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "[[1],[2]]\n") { out }
+        assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "[[1],[2]]\n") { out }
     }
     @Test
     fun scope27_glb_vs_tup_err() {
@@ -2389,13 +2409,13 @@ class Exec_01 {
             var d = do {
                 var b = [2]
                 var c = cycle([a,b,[3],nil])
-                ;;;drop;;;(c)
+                drop(c)
             }
             ;;println(d)  ;; OK: [[1],[2],[3],*]
             println(:ok)
         """)
-        assert(out == ":ok\n") { out }
-        //assert(out == "anon : (lin 10, col 22) : drop error : value contains multiple references\n") { out }
+        //assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 10, col 22) : drop error : value contains multiple references\n") { out }
     }
     @Test
     fun scope30x_cyc() {
@@ -2408,7 +2428,7 @@ class Exec_01 {
             var d = do {
                 var b = [2]
                 var c = cycle([a,b,[3],nil])
-                ;;;drop;;;(c)
+                drop(c)
             }
             ;;println(d)  ;; OK: [[1],[2],[3],*]
             println(:ok)
@@ -2684,8 +2704,8 @@ class Exec_01 {
             }
             println(v)
         """)
-        //assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "[]\n") { out }
+        assert(out == " |  anon : (lin 2, col 21) : \n v  error : cannot copy reference out\n") { out }
+        //assert(out == "[]\n") { out }
     }
     @Test
     fun mm_07_and_or() {
@@ -4648,7 +4668,7 @@ class Exec_01 {
             do {
                 val out = do {
                     val ins = [1,2,3]
-                    ;;;drop;;;(ins)
+                    drop(ins)
                 }   ;; gc'd by block
                 println(`:number CEU_GC.free`, `:number CEU_GC.free`)
             }
@@ -4671,8 +4691,8 @@ class Exec_01 {
             println(out)
         """
         )
-        //assert(out == "anon : (lin 3, col 23) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "[1,2,3]\n") { out }
+        assert(out == "anon : (lin 3, col 23) : error : cannot copy reference out\n") { out }
+        //assert(out == "[1,2,3]\n") { out }
     }
     @Test
     fun gc_10() {

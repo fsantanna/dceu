@@ -447,6 +447,44 @@ fun Coder.main (tags: Tags): String {
     """
     }
 
+    fun lex (): String {
+        return """
+    #ifdef CEU_LEX
+    char* ceu_drop (CEU_Value v) {
+        if (v.type < CEU_VALUE_DYNAMIC) {
+            return NULL;
+        } else if (v.Dyn->Any.lex.type == CEU_LEX_IMMUT) {
+            return "value is not movable";
+        //} else if (v.Dyn->Any.refs > 1) {
+        //    return "value has multiple references";
+        } else {
+            v.Dyn->Any.lex.type = CEU_LEX_FLEET;
+            //ceu_hold_set_rec(v, CEU_HOLD_FLEET, NULL, 0);
+            return NULL;
+        }
+    }        
+    char* ceu_lex_chk_set (CEU_Value src, CEU_Lex lex) {
+        if (src.type < CEU_VALUE_DYNAMIC) {
+            return NULL;
+        }
+        if (src.Dyn->Any.lex.type == CEU_LEX_FLEET) {
+            //ceu_dump_val(src);
+            //printf(">>> %d\n", lex.depth);
+            if (lex.depth>src.Dyn->Any.lex.depth && src.Dyn->Any.refs>1) {
+                return "dropped value has pending outer reference";
+            }
+            src.Dyn->Any.lex = lex;
+        } else if (src.Dyn->Any.lex.depth <= lex.depth) {
+            // ok
+        } else {
+            return "cannot copy reference out";
+        }
+        return NULL;
+    }
+    #endif
+        """
+    }
+
     // EXIT / ERROR / ASSERT
     val c_error = """
     // allows to return error messages from internal functions

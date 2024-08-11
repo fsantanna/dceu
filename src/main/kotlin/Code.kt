@@ -153,6 +153,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     val blkc = sta.idx(this, "block_$n")
                     """
                     { // BLOCK | ${this.dump()}
+                #ifdef CEU_LEX
+                        ceux->depth++;
+                #endif
                         ${(CEU >= 4).cond { """
                              ${(!sta.ismem(this)).cond { "CEU_Block" }} $blkc = NULL;
                         """}}
@@ -253,6 +256,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             }                                                            
                         """ }}
                         
+                #ifdef CEU_LEX
+                        ceux->depth--;
+                #endif
                     }
                     """
                 }
@@ -316,6 +322,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     goto CEU_LOOP_START_${this.n};
             """
             is Expr.Data -> "// DATA | ${this.dump()}\n"
+            is Expr.Drop -> "// DROP | ${this.dump()}\n" + this.e.code()
 
             is Expr.Catch -> {
                 """
@@ -510,6 +517,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         "(ceux->exe_task${"->lnks.up.tsk".repeat(n)})"
                     }
                 }
+                if (ups.isdrop(this)) {
+                    error("TODO: drop pub")
+                }
             """
             { // PUB | ${this.dump()}
                 ${ups.isdst(this).cond{ """
@@ -633,6 +643,22 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ceu_gc_inc_val(ceu_acc);
                         $idx = ceu_acc;
                     """
+                    ups.isdrop(this) -> {
+                        """
+                        { // ACC - DROP | ${this.dump()}
+                            CEU_Value ceu_$n = $idx;
+                            CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
+                            $idx = (CEU_Value) { CEU_VALUE_NIL };
+                            CEU_ERROR_CHK_PTR (
+                                continue,
+                                ceu_drop(ceu_$n),
+                                ${ups.pub[this]!!.toerr()}
+                            );
+                            CEU_ACC(ceu_$n);
+                            ceu_gc_dec_val(ceu_$n);
+                        }
+                        """
+                    }
                     else -> """
                         // ACC - GET | ${this.dump()}
                         CEU_ACC($idx);

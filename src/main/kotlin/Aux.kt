@@ -29,30 +29,6 @@ fun Expr.Call.main (): Expr.Proto {
     return this.clo as Expr.Proto
 }
 
-fun Expr.has_block (): Boolean {
-    return when (this) {
-        is Expr.Proto, is Expr.Data, is Expr.Delay -> false
-        is Expr.Nat, is Expr.Acc, is Expr.Nil -> false
-        is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> false
-        is Expr.Do, is Expr.If, is Expr.Loop, is Expr.Catch, is Expr.Defer -> true
-        is Expr.Escape -> this.e?.has_block() ?: false
-        is Expr.Group -> this.es.any { it.has_block() }
-        is Expr.Dcl -> this.src?.has_block() ?: false
-        is Expr.Set -> this.src.has_block()
-        is Expr.Yield -> this.e.has_block()
-        is Expr.Resume -> this.args.any { it.has_block() }
-        is Expr.Spawn -> this.args.any { it.has_block() }
-        is Expr.Pub -> this.tsk?.has_block() ?: false
-        is Expr.Toggle -> this.tsk.has_block() || this.on.has_block()
-        is Expr.Tasks -> this.max.has_block()
-        is Expr.Tuple -> this.args.any { it.has_block() }
-        is Expr.Vector -> this.args.any { it.has_block() }
-        is Expr.Dict -> this.args.any { it.first.has_block() || it.second.has_block()}
-        is Expr.Index -> this.col.has_block() || this.idx.has_block()
-        is Expr.Call -> this.clo.has_block() || this.args.any { it.has_block() }
-    }
-}
-
 fun Expr.Proto.id (outer: Expr.Do, ups: Ups): String {
     return ups.pub[this].let {
         when {

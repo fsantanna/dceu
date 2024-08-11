@@ -622,6 +622,13 @@ class Parser (lexer_: Lexer)
                     else -> Expr.Do(Tk.Fix("do",pos), null, dts)
                 }
             }
+            this.acceptFix("drop") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptFix_err("(")
+                val e = this.expr()
+                this.acceptFix_err(")")
+                Expr.Drop(tk0, e)
+            }
 
             (CEU>=2 && this.acceptFix("loop'")) -> Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, null, this.block().es))
             (CEU>=2 && this.acceptFix("catch")) -> {

@@ -145,6 +145,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.Loop   -> this.blk.traverse()
             is Expr.Data   -> {}
+            is Expr.Drop   -> this.e.traverse()
 
             is Expr.Catch  -> this.blk.traverse()
             is Expr.Defer  -> {

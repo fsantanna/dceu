@@ -59,7 +59,9 @@ class Ups (val outer: Expr.Do) {
     fun isdst (e: Expr): Boolean {
         return this.pub[e].let { it is Expr.Set && it.dst==e }
     }
-
+    fun isdrop (e: Expr): Boolean {
+        return this.pub[e].let { it is Expr.Drop && it.e==e }
+    }
 
     fun Expr.traverse (): Map<Expr,Expr> {
         fun Expr.map (l: List<Expr>): Map<Expr,Expr> {
@@ -75,6 +77,7 @@ class Ups (val outer: Expr.Do) {
             is Expr.If     -> this.map(listOf(this.cnd, this.t, this.f))
             is Expr.Loop   -> this.map(listOf(this.blk))
             is Expr.Data   -> emptyMap()
+            is Expr.Drop   -> this.map(listOf(this.e))
 
             is Expr.Catch  -> this.map(listOf(this.blk))
             is Expr.Defer  -> this.map(listOf(this.blk))

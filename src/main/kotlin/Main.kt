@@ -40,7 +40,7 @@ val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 
 val KEYWORDS: SortedSet<String> = (
     setOf (
-        "data", "do", "else",
+        "data", "do", "drop", "else",
         "false", "func", "group", "if",
         "nil", "set",
         "true", "val", "var",
@@ -137,6 +137,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
     data class Loop   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
     data class Data   (val tk_: Tk.Tag, val ids: List<Id_Tag>): Expr(N++, tk_)
+    data class Drop   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
 
     data class Catch  (val tk_: Tk.Fix, val tag: Tk.Tag?, val blk: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)

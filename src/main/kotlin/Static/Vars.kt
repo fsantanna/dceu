@@ -216,6 +216,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
                 datas[this.tk.str] = ids
             }
+            is Expr.Drop   -> this.e.traverse()
 
             is Expr.Catch  -> this.blk.traverse()
             is Expr.Defer  -> this.blk.traverse()
