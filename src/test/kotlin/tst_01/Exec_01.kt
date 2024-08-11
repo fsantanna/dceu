@@ -1066,10 +1066,29 @@ class Exec_01 {
             ;;`ceu_gc_collect();`
             println(t)
         """)
-        assert(out == " |  anon : (lin 6, col 21) : drop(x)\n v  error : value has multiple references\n") { out }
+        //assert(out == " |  anon : (lin 6, col 21) : drop(x)\n v  error : value has multiple references\n") { out }
         //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
-        //assert(out == "[99]\n" +
-        //        "[1,[99],3]\n") { out }
+        assert(out == "[99]\n" +
+                "[1,[99],3]\n") { out }
+    }
+    @Test
+    fun cc_10y_drop_multi_err_why() {
+        val out = test("""
+            val x = [[99]]          ;; 3. 
+            do {
+                val y = do {        ;; 2. [99] is captured and will be released in this block
+                    val z = x[0]
+                    drop(z)         ;; 1. [99] is dropped
+                }
+                println(y)
+            }
+            ;;`ceu_gc_collect();`
+            println(x)
+        """)
+        //assert(out == " |  anon : (lin 6, col 21) : drop(x)\n v  error : value has multiple references\n") { out }
+        //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
+        assert(out == "[99]\n" +
+                "[1,[99],3]\n") { out }
     }
     @Test
     fun cc_10x_drop_multi_err_why() {
@@ -1085,7 +1104,9 @@ class Exec_01 {
             ;;`ceu_gc_collect();`
             println(t)
         """)
-        assert(out == " |  anon : (lin 6, col 21) : drop(x)\n v  error : value has multiple references\n") { out }
+        assert(out == " |  anon : (lin 4, col 17) : (val y = do { (val x = t); drop(x); })\n" +
+                " v  error : dropped value has pending outer reference\n") { out }
+        //assert(out == " |  anon : (lin 6, col 21) : drop(x)\n v  error : value has multiple references\n") { out }
         //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
         //assert(out == "[99]\n" +
         //        "[1,[99],3]\n") { out }
@@ -2337,7 +2358,9 @@ class Exec_01 {
             println(y)
         """
         )
-        assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == " |  anon : (lin 5, col 13) : (val y = do { (val v = [1]); (val x = f(v)...\n" +
+                " v  error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "[[1],[2]]\n") { out }
     }
     @Test
@@ -2704,7 +2727,8 @@ class Exec_01 {
             }
             println(v)
         """)
-        assert(out == " |  anon : (lin 2, col 21) : \n v  error : cannot copy reference out\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : (val v = do { (val x = []); if x { x; } el...\n" +
+                " v  error : cannot copy reference out\n") { out }
         //assert(out == "[]\n") { out }
     }
     @Test
@@ -4691,7 +4715,9 @@ class Exec_01 {
             println(out)
         """
         )
-        assert(out == "anon : (lin 3, col 23) : error : cannot copy reference out\n") { out }
+        assert(out == " |  anon : (lin 3, col 17) : out\n" +
+                " v  error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 3, col 23) : error : cannot copy reference out\n") { out }
         //assert(out == "[1,2,3]\n") { out }
     }
     @Test
