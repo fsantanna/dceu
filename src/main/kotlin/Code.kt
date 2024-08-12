@@ -696,7 +696,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ${sta.dcl(this)} $id_vec = ceu_create_vector();
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
-                            ceu_col_set($id_vec, $i, ceu_acc);
+                            assert(NULL == ceu_col_set($id_vec, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=$i} }, ceu_acc));
                         """
                     }.joinToString("")}
                     CEU_ACC($id_vec);

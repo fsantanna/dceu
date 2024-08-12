@@ -385,6 +385,7 @@ fun Coder.main (tags: Tags): String {
     #endif
     }
     #endif
+    void ceu_print1 (CEU_Value v);
     void ceu_dump_val (CEU_Value v) {
         puts(">>>>>>>>>>>");
         ceu_print1(v);
@@ -1229,9 +1230,9 @@ fun Coder.main (tags: Tags): String {
         };
         CEU_Value ret = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)tup} };
         if (cpy) {
-            memcpy(tup->buf, args, n*sizeof(CEU_Value));
+            //memcpy(tup->buf, args, n*sizeof(CEU_Value));
             for (int i=0; i<n; i++) {
-                char* err = ceu_col_set(ret, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=i} }, args[0]);
+                char* err = ceu_col_set(ret, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=i} }, args[i]);
                 assert(err == NULL);
             }
         } else {
@@ -2151,10 +2152,10 @@ fun Coder.main (tags: Tags): String {
     return (
         h_includes() + h_defines() + h_enums() +
         h_value_dyn() + h_tags() + x_globals() +
-        gc() + c_tags() + c_error + c_impls() +
+        gc() + c_tags() + c_error + c_impls() + dumps() +
         lex() +
         eq_neq_len() + tuple_vector_dict() + creates() +
-        c_to() + print() + dumps() +
+        c_to() + print() +
         (CEU>=3).cond { c_exes } +
         (CEU>=4).cond { c_task } +
         (CEU>=4).cond { c_bcast } +
