@@ -322,10 +322,21 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     goto CEU_LOOP_START_${this.n};
             """
             is Expr.Data -> "// DATA | ${this.dump()}\n"
-            is Expr.Drop -> "// DROP | ${this.dump()}\n" + this.e.code()
+            is Expr.Drop -> """
+                // DROP | ${this.dump()}
+                ${this.e.code()}
+                ${(!this.e.is_lval()).cond { """
+                    CEU_ERROR_CHK_PTR (
+                        continue,
+                        ceu_drop(ceu_acc),
+                        ${ups.pub[this]!!.toerr()}
+                    );
+                """ }}
+            """
 
             is Expr.Catch -> {
                 """
+            }
                 { // CATCH ${this.dump()}
                     do { // catch
                         ${this.blk.code()}

@@ -451,35 +451,186 @@ fun Coder.main (tags: Tags): String {
     fun lex (): String {
         return """
     #ifdef CEU_LEX
-    char* ceu_drop (CEU_Value v) {
-        if (v.type < CEU_VALUE_DYNAMIC) {
-            return NULL;
-        } else if (v.Dyn->Any.lex.type == CEU_LEX_IMMUT) {
-            return "value is not movable";
-        //} else if (v.Dyn->Any.refs > 1) {
-        //    return "value has multiple references";
-        } else {
-            v.Dyn->Any.lex.type = CEU_LEX_FLEET;
-            //ceu_hold_set_rec(v, CEU_HOLD_FLEET, NULL, 0);
-            return NULL;
-        }
-    }        
-    char* ceu_lex_chk_set (CEU_Value src, CEU_Lex lex) {
+    char* ceu_drop (CEU_Value src) {
         if (src.type < CEU_VALUE_DYNAMIC) {
             return NULL;
-        }
-        if (src.Dyn->Any.lex.type == CEU_LEX_FLEET) {
-            //ceu_dump_val(src);
-            //printf(">>> %d\n", lex.depth);
-            if (lex.depth>src.Dyn->Any.lex.depth && src.Dyn->Any.refs>1) {
-                return "dropped value has pending outer reference";
-            }
-            src.Dyn->Any.lex = lex;
-        } else if (src.Dyn->Any.lex.depth <= lex.depth) {
-            // ok
+        } else if (src.Dyn->Any.lex.type == CEU_LEX_FLEET) {
+            return NULL;
+        } else if (src.Dyn->Any.lex.type == CEU_LEX_IMMUT) {
+            return "value is not movable";
+        //} else if (src.Dyn->Any.refs > 1) {
+        //    return "value has multiple references";
         } else {
+            src.Dyn->Any.lex.type = CEU_LEX_FLEET;
+            //ceu_hold_set_rec(src, CEU_HOLD_FLEET, NULL, 0);
+            //return NULL;
+        }
+
+        switch (src.type) {
+            case CEU_VALUE_CLO_FUNC:
+    #if CEU >= 3
+            case CEU_VALUE_CLO_CORO:
+    #endif
+    #if CEU >= 4
+            case CEU_VALUE_CLO_TASK:
+    #endif
+                for (int i=0; i<src.Dyn->Clo.upvs.its; i++) {
+                    //ceu_dump_val(src.Dyn->Clo.upvs.buf[i]);
+                    char* err = ceu_drop(src.Dyn->Clo.upvs.buf[i]);
+                    if (err != NULL) {
+                        return err;
+                    }
+                }
+                break;
+            case CEU_VALUE_TUPLE: {
+                for (int i=0; i<src.Dyn->Tuple.its; i++) {
+                    char* err = ceu_drop(src.Dyn->Tuple.buf[i]);
+                    if (err != NULL) {
+                        return err;
+                    }
+                }
+                break;
+            }
+            case CEU_VALUE_VECTOR: {
+                for (int i=0; i<src.Dyn->Vector.its; i++) {
+                    CEU_Value v = ceu_vector_get(&src.Dyn->Vector, i);
+                    assert(CEU_ERROR == CEU_ERROR_NONE);
+                    char* err = ceu_drop(v);
+                    if (err != NULL) {
+                        return err;
+                    }
+                }
+                break;
+            }
+            case CEU_VALUE_DICT: {
+                for (int i=0; i<src.Dyn->Dict.max; i++) {
+                    char* err;
+                    err = ceu_drop((*src.Dyn->Dict.buf)[i][0]);
+                    if (err != NULL) {
+                        return err;
+                    }
+                    err = ceu_drop((*src.Dyn->Dict.buf)[i][1]);
+                    if (err != NULL) {
+                        return err;
+                    }
+                }
+                break;
+            }
+    #if CEU >= 3
+            case CEU_VALUE_EXE_CORO:
+    #if CEU >= 4
+            case CEU_VALUE_EXE_TASK:
+    #endif
+    #if CEU >= 5
+            case CEU_VALUE_EXE_TASK_IN:
+    #endif
+            {
+                CEU_Value clo = ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.clo);
+                char* err = ceu_drop(clo);
+                if (err != NULL) {
+                    return err;
+                }
+            }
+    #endif
+            default:
+                //printf(">>> %d\n", src.type);
+                assert(0 && "TODO: drop");
+                break;
+        }
+
+        return NULL;
+    }
+    
+    char* ceu_lex_chk_set (CEU_Value src, CEU_Lex dst) {
+        if (src.type < CEU_VALUE_DYNAMIC) {
+            return NULL;
+        } else if (src.Dyn->Any.lex.depth <= dst.depth) {
+            if (
+                src.Dyn->Any.lex.type == CEU_LEX_FLEET &&
+                src.Dyn->Any.lex.depth < dst.depth     &&
+                src.Dyn->Any.refs > 1
+            ) {
+                return "dropped value has pending outer reference";
+            } else {
+                return NULL;
+            }
+        } else if (src.Dyn->Any.lex.type != CEU_LEX_FLEET) {
             return "cannot copy reference out";
         }
+        
+        src.Dyn->Any.lex = dst;
+
+        switch (src.type) {
+            case CEU_VALUE_CLO_FUNC:
+    #if CEU >= 3
+            case CEU_VALUE_CLO_CORO:
+    #endif
+    #if CEU >= 4
+            case CEU_VALUE_CLO_TASK:
+    #endif
+                for (int i=0; i<src.Dyn->Clo.upvs.its; i++) {
+                    char* err = ceu_lex_chk_set(src.Dyn->Clo.upvs.buf[i], dst);
+                    if (err != NULL) {
+                        return err;
+                    }
+                }
+                break;
+            case CEU_VALUE_TUPLE: {
+                for (int i=0; i<src.Dyn->Tuple.its; i++) {
+                    char* err = ceu_lex_chk_set(src.Dyn->Tuple.buf[i], dst);
+                    if (err != NULL) {
+                        return err;
+                    }
+                }
+                break;
+            }
+            case CEU_VALUE_VECTOR: {
+                for (int i=0; i<src.Dyn->Vector.its; i++) {
+                    CEU_Value v = ceu_vector_get(&src.Dyn->Vector, i);
+                    assert(CEU_ERROR == CEU_ERROR_NONE);
+                    char* err = ceu_lex_chk_set(v, dst);
+                    if (err != NULL) {
+                        return err;
+                    }
+                }
+                break;
+            }
+            case CEU_VALUE_DICT: {
+                for (int i=0; i<src.Dyn->Dict.max; i++) {
+                    char* err;
+                    err = ceu_lex_chk_set((*src.Dyn->Dict.buf)[i][0], dst);
+                    if (err != NULL) {
+                        return err;
+                    }
+                    err = ceu_lex_chk_set((*src.Dyn->Dict.buf)[i][1], dst);
+                    if (err != NULL) {
+                        return err;
+                    }
+                }
+                break;
+            }
+    #if CEU >= 3
+            case CEU_VALUE_EXE_CORO:
+    #if CEU >= 4
+            case CEU_VALUE_EXE_TASK:
+    #endif
+    #if CEU >= 5
+            case CEU_VALUE_EXE_TASK_IN:
+    #endif
+            {
+                CEU_Value clo = ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.clo);
+                char* err = ceu_lex_chk_set(clo, dst);
+                if (err != NULL) {
+                    return err;
+                }
+            }
+    #endif
+            default:
+                //printf(">>> %d\n", src.type);
+                assert(0 && "TODO: drop");
+                break;
+        }
+
         return NULL;
     }
     #endif
@@ -489,9 +640,9 @@ fun Coder.main (tags: Tags): String {
     // EXIT / ERROR / ASSERT
     val c_error = """
     // allows to return error messages from internal functions
-    #define CEU_ERROR_PTR(ptr) ({       \
-        CEU_ERROR = CEU_TAG_error;      \
-        (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=ptr} }; \
+    #define CEU_ERROR_PTR(ptr) ({                           \
+        CEU_ERROR = CEU_TAG_error;                          \
+        (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=(ptr)} };  \
     })
 
     #if CEU <= 1
@@ -509,11 +660,12 @@ fun Coder.main (tags: Tags): String {
         }                                       \
     }
 
-    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre) {  \
-        if ((ptr) != NULL) {                        \
-            fprintf(stderr, " |  %s\n v  error : %s\n", pre, ptr); \
-            exit(0);                                \
-        }                                           \
+    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre) {    \
+        char* ceu_ptr = ptr;                    \
+        if (ceu_ptr != NULL) {                  \
+            fprintf(stderr, " |  %s\n v  error : %s\n", (pre), ceu_ptr); \
+            exit(0);                            \
+        }                                       \
     }
     
     void ceu_pro_error (CEUX* ceux) {
@@ -531,25 +683,26 @@ fun Coder.main (tags: Tags): String {
     CEU_Value ceu_pointer_to_string (const char* ptr);
     CEU_Value ceu_create_vector (void);
 
-    #define CEU_ERROR_CHK_ERR(cmd,pre) {          \
+    #define CEU_ERROR_CHK_ERR(cmd,pre) {            \
         if (CEU_ERROR != CEU_ERROR_NONE) {          \
-            ceu_col_set (                        \
-                CEU_ERROR_STACK,       \
-                ((CEU_Value) { CEU_VALUE_NUMBER, {.Number=CEU_ERROR_STACK.Dyn->Vector.its} }),    \
-                ((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} }) \
+            ceu_col_set (                           \
+                CEU_ERROR_STACK,                    \
+                ((CEU_Value) { CEU_VALUE_NUMBER, {.Number=CEU_ERROR_STACK.Dyn->Vector.its} }), \
+                ((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=(pre)} }) \
             );                                      \
             cmd;                                    \
         }                                           \
     }
     
-    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre) {  \
-        if ((ptr) != NULL) {                        \
+    #define CEU_ERROR_CHK_PTR(cmd,ptr,pre) {        \
+        char* ceu_ptr = ptr;                        \
+        if (ceu_ptr != NULL) {                      \
             CEU_ERROR = CEU_TAG_error;              \
-            CEU_ACC(((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=ptr} })); \
-            ceu_col_set (                        \
-                CEU_ERROR_STACK,       \
-                ((CEU_Value) { CEU_VALUE_NUMBER, {.Number=CEU_ERROR_STACK.Dyn->Vector.its} }),    \
-                ((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=pre} }) \
+            CEU_ACC(((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=ceu_ptr} })); \
+            ceu_col_set (                           \
+                CEU_ERROR_STACK,                    \
+                ((CEU_Value) { CEU_VALUE_NUMBER, {.Number=CEU_ERROR_STACK.Dyn->Vector.its} }), \
+                ((CEU_Value) { CEU_VALUE_POINTER, {.Pointer=(pre)} }) \
             );                                      \
             cmd;                                    \
         }                                           \
@@ -1163,6 +1316,10 @@ fun Coder.main (tags: Tags): String {
         if (err != NULL) {
             return err;
         }
+        err = ceu_lex_chk_set(idx, col.Dyn->Any.lex);
+        if (err != NULL) {
+            return err;
+        }
         err = ceu_lex_chk_set(val, col.Dyn->Any.lex);
         if (err != NULL) {
             return err;
@@ -1219,26 +1376,21 @@ fun Coder.main (tags: Tags): String {
         return """
     CEU_Value ceu_create_tuple (int cpy, int n, CEU_Value args[]) {
         ceu_debug_add(CEU_VALUE_TUPLE);
-        CEU_Tuple* tup = malloc(sizeof(CEU_Tuple) + n*sizeof(CEU_Value));
-        assert(tup != NULL);
-        *tup = (CEU_Tuple) {
+        CEU_Tuple* ret = malloc(sizeof(CEU_Tuple) + n*sizeof(CEU_Value));
+        assert(ret != NULL);
+        *ret = (CEU_Tuple) {
             CEU_VALUE_TUPLE, 0, (CEU_Value) { CEU_VALUE_NIL },
     #ifdef CEU_LEX
             { CEU_LEX_FLEET, -1 },
     #endif
             n, {}
         };
-        CEU_Value ret = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)tup} };
         if (cpy) {
-            //memcpy(tup->buf, args, n*sizeof(CEU_Value));
-            for (int i=0; i<n; i++) {
-                char* err = ceu_col_set(ret, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=i} }, args[i]);
-                assert(err == NULL);
-            }
+            memcpy(ret->buf, args, n*sizeof(CEU_Value));
         } else {
-            memset(tup->buf, 0, n*sizeof(CEU_Value));
+            memset(ret->buf, 0, n*sizeof(CEU_Value));
         }
-        return ret;
+        return (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)ret} };
     }
     
     void ceu_pro_tuple (CEUX* ceux) {

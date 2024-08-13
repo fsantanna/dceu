@@ -1066,29 +1066,35 @@ class Exec_01 {
             ;;`ceu_gc_collect();`
             println(t)
         """)
-        //assert(out == " |  anon : (lin 6, col 21) : drop(x)\n v  error : value has multiple references\n") { out }
+        assert(out == " |  anon : (lin 4, col 17) : (val y = do { (val x = t[1]); drop(x); })\n" +
+                " v  error : dropped value has pending outer reference\n") { out }
         //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
-        assert(out == "[99]\n" +
-                "[1,[99],3]\n") { out }
+        //assert(out == "[99]\n" +
+        //        "[1,[99],3]\n") { out }
     }
     @Test
     fun cc_10y_drop_multi_err_why() {
         val out = test("""
-            val x = [[99]]          ;; 3. 
+            val x = [[99]]          ;; 3. [99] would be pending here
+            ;;dump(x)
+            ;;dump(x[0])
             do {
                 val y = do {        ;; 2. [99] is captured and will be released in this block
                     val z = x[0]
                     drop(z)         ;; 1. [99] is dropped
                 }
+                ;;dump(y)
                 println(y)
             }
             ;;`ceu_gc_collect();`
             println(x)
         """)
+        assert(out == " |  anon : (lin 6, col 17) : (val y = do { (val z = x[0]); drop(z); })\n" +
+                " v  error : dropped value has pending outer reference\n") { out }
         //assert(out == " |  anon : (lin 6, col 21) : drop(x)\n v  error : value has multiple references\n") { out }
         //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
-        assert(out == "[99]\n" +
-                "[1,[99],3]\n") { out }
+        //assert(out == "[99]\n" +
+        //        "[1,[99],3]\n") { out }
     }
     @Test
     fun cc_10x_drop_multi_err_why() {
@@ -1157,8 +1163,8 @@ class Exec_01 {
             println(z[0][0] == z)
         """
         )
-        assert(out == " |  anon : (lin 6, col 17) : drop(x)\n v  error : value has multiple references\n") { out }
-        //assert(out == "true\n") { out }
+        //assert(out == " |  anon : (lin 6, col 17) : drop(x)\n v  error : value has multiple references\n") { out }
+        assert(out == "true\n") { out }
     }
     @Test
     fun cc_13_drop_cycle_x() {
@@ -1314,7 +1320,9 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
-        assert(out == "@[([],true)]\n") { out }
+        //assert(out == "@[([],true)]\n") { out }
+        assert(out == " |  anon : (lin 5, col 21) : v[k]\n" +
+                " v  error : cannot copy reference out\n") { out }
     }
     @Test
     fun dd_dict13_key_nil() {
@@ -2186,7 +2194,9 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == " |  anon : (lin 5, col 21) : d[0]\n" +
+                " v  error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22b_vec() {
@@ -2202,7 +2212,9 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == " |  anon : (lin 5, col 21) : d[0]\n" +
+                " v  error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22c_dic() {
@@ -2218,7 +2230,9 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == " |  anon : (lin 5, col 21) : d[t2]\n" +
+                " v  error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22d_dic() {
@@ -2233,7 +2247,9 @@ class Exec_01 {
             println(1)
         """
         )
-        assert(out == "1\n") { out }
+        assert(out == " |  anon : (lin 5, col 21) : d[10]\n" +
+                " v  error : cannot copy reference out\n") { out }
+        //assert(out == "1\n") { out }
         //assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
     }
     @Test
@@ -2253,7 +2269,9 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 7, col 25) : store error : cannot assign reference to outer scope\n") { out }
-        assert(out == ":ok\n") { out }
+        //assert(out == ":ok\n") { out }
+        assert(out == " |  anon : (lin 7, col 25) : d[t2]\n" +
+                " v  error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22y_dict() {
@@ -2269,7 +2287,9 @@ class Exec_01 {
             println(:ok)
         """
         )
-        assert(out == ":ok\n") { out }
+        assert(out == " |  anon : (lin 6, col 21) : d[:x]\n" +
+                " v  error : cannot copy reference out\n") { out }
+        //assert(out == ":ok\n") { out }
         //assert(out == "anon : (lin 6, col 21) : store error : cannot assign reference to outer scope\n") { out }
     }
     @Test
@@ -2437,8 +2457,8 @@ class Exec_01 {
             ;;println(d)  ;; OK: [[1],[2],[3],*]
             println(:ok)
         """)
-        //assert(out == ":ok\n") { out }
-        assert(out == "anon : (lin 10, col 22) : drop error : value contains multiple references\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 10, col 22) : drop error : value contains multiple references\n") { out }
     }
     @Test
     fun scope30x_cyc() {
@@ -4141,7 +4161,9 @@ class Exec_01 {
         )
         //assert(out == "anon : (lin 3, col 21) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "anon : (lin 3, col 21) : block escape error : reference has immutable scope\n") { out }
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : (val f = do { (val x = []); (func () { x; ...\n" +
+                " v  error : cannot copy reference out\n") { out }
     }
     @Test
     fun clo11a_err() {
@@ -4353,7 +4375,9 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "[1]\n") { out }
+        assert(out == " |  anon : (lin 7, col 13) : (var g = do { (val t = [1]); f(t); })\n" +
+                " v  error : cannot copy reference out\n") { out }
+        //assert(out == "[1]\n") { out }
     }
     @Test
     fun tup22_err() {
@@ -4380,7 +4404,7 @@ class Exec_01 {
             }
             var g = do {
                 var t = [1]
-                ;;;drop;;;(f(t))
+                drop(f(t))
             }
             println(g())
         """
