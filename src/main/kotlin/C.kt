@@ -249,6 +249,7 @@ fun Coder.main (tags: Tags): String {
         _CEU_Dyn_                       \
         CEU_Clo* clo;                   \
         CEU_EXE_STATUS status;          \
+        CEU_LEX_V(uint8_t depth;)       \
         int pc;                         \
         char* mem;
         
@@ -2155,7 +2156,10 @@ fun Coder.main (tags: Tags): String {
             CEU_Value xin = ceux->args[0];
             CEU_Value evt = ceux->args[1];
             
-            if (xin.type == CEU_VALUE_TAG) {
+            char* err = ceu_lex_chk_set(evt, (CEU_Lex) { CEU_LEX_MUTAB, 1 }));
+            if (err != NULL) {
+                CEU_ACC(CEU_ERROR_PTR(err));
+            } else if (xin.type == CEU_VALUE_TAG) {
                 if (xin.Tag == CEU_TAG_global) {
                     ceu_bcast_tasks((CEU_Dyn*) &CEU_GLOBAL_TASK, CEU_ACTION_RESUME, CEU_TIME, &evt);
                 } else if (xin.Tag == CEU_TAG_task) {

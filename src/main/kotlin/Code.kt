@@ -394,6 +394,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """ }}
                     ${this.args.mapIndexed { i,e ->
                         e.code() + """
+                            #ifdef CEU_LEX
+                                CEU_ERROR_CHK_PTR (
+                                    continue,
+                                    ceu_lex_chk_set(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, 1 }),
+                                    ${this.toerr()}
+                                );
+                            #endif
                             ${sta.idx(this,"args_$n")}[$i] = CEU_ACC_KEEP();
                         """
                     }.joinToString("")}
@@ -431,6 +438,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ceux->exe->pc = $n;
                 #ifdef CEU_LEX
                     ceux->exe->depth = ceux->depth;
+                    CEU_ERROR_CHK_PTR (
+                        continue,
+                        ceu_lex_chk_set(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, 1 }),
+                        ${this.toerr()}
+                    );
                 #endif
                     return;
                 case $n: // YIELD ${this.dump()}
@@ -477,6 +489,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     
                     ${this.args.mapIndexed { i,e ->
                         e.code() + """
+                            #ifdef CEU_LEX
+                                CEU_ERROR_CHK_PTR (
+                                    continue,
+                                    ceu_lex_chk_set(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, 1 }),
+                                    ${this.toerr()}
+                                );
+                            #endif
                             ${sta.idx(this,"args_$n")}[$i] = CEU_ACC_KEEP();
                         """
                     }.joinToString("")}

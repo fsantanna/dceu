@@ -822,8 +822,8 @@ class Exec_03 {
                         yield(nil)
                         val c = [:c]
                         val xa = `:number ${D}a.Dyn->Any.lex.depth`
-                        val xb = `:number ${D}a.Dyn->Any.lex.depth`
-                        val xc = `:number ${D}a.Dyn->Any.lex.depth`
+                        val xb = `:number ${D}b.Dyn->Any.lex.depth`
+                        val xc = `:number ${D}c.Dyn->Any.lex.depth`
                         println(a,b,c)
                         println(xa,xb,xc)
                     }
@@ -834,7 +834,7 @@ class Exec_03 {
             resume co()
             resume co()
         """)
-        assert(out == "[:a]\t[:b]\t[:c]\n1\t2\t3\n") { out }
+        assert(out == "[:a]\t[:b]\t[:c]\n2\t3\t4\n") { out }
     }
 
     // SCOPE
@@ -869,7 +869,7 @@ class Exec_03 {
                     val b
                     do {
                         val v = []
-                        resume t(v)
+                        resume t(drop(v))
                     }
                     ;;`ceu_gc_collect();`
                 }
@@ -896,7 +896,7 @@ class Exec_03 {
                 do {
                     do {
                         val v = []
-                        resume t(v)
+                        resume t(drop(v))
                     }
                 }
             }
@@ -931,7 +931,9 @@ class Exec_03 {
             }
             resume t()
         """)
-        assert(out == "[]\n") { out }
+        assert(out == " |  anon : (lin 11, col 17) : (resume (t)(v))\n" +
+                " v  error : cannot copy reference out\n") { out }
+        //assert(out == "[]\n") { out }
         //assert(out == " |  anon : (lin 11, col 17) : (resume (t)(v))\n" +
         //        " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
     }
@@ -945,7 +947,7 @@ class Exec_03 {
             val t = coroutine(T)
             do {
                 val v = []
-                resume t(v)
+                resume t(drop(v))
             }
             resume t()
         """)
@@ -995,7 +997,10 @@ class Exec_03 {
             }
             resume t()
         """)
-        assert(out == " |  anon : (lin 16, col 25) : (val x = (resume (t)()))\n" +
+        //assert(out == " |  anon : (lin 16, col 25) : (val x = (resume (t)()))\n" +
+        //        " v  error : cannot copy reference out\n") { out }
+        assert(out == " |  anon : (lin 16, col 33) : (resume (t)())\n" +
+                " |  anon : (lin 5, col 21) : yield(x)\n" +
                 " v  error : cannot copy reference out\n") { out }
         //assert(out == ":in\t[]\n:out\t[]\n") { out }
         //assert(out == " |  anon : (lin 16, col 33) : (resume (t)(nil))\n" +
@@ -1062,11 +1067,11 @@ class Exec_03 {
                 resume co (e)
             }
         """)
-        //assert(out == " |  anon : (lin 10, col 17) : (resume (co)(e))\n" +
-        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
+        assert(out == " |  anon : (lin 10, col 17) : (resume (co)(e))\n" +
+                " v  error : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 10, col 17) : (resume (co)(e))\n" +
         //        " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
-        assert(out == "nil\t[]\n") { out }
+        //assert(out == "nil\t[]\n") { out }
     }
 
     // CATCH / THROW
@@ -1433,7 +1438,9 @@ class Exec_03 {
             }
             resume t()
         """)
-        assert(out == "[]\n10\n") { out }
+        assert(out == " |  anon : (lin 14, col 17) : (resume (t)(v))\n" +
+                " v  error : cannot copy reference out\n") { out }
+        //assert(out == "[]\n10\n") { out }
         //assert(out == " |  anon : (lin 14, col 17) : (resume (t)(v))\n" +
         //        " v  anon : (lin 6, col 20) : resume error : cannot receive alien reference\n") { out }
     }
@@ -1451,7 +1458,10 @@ class Exec_03 {
             }
             resume t()
         """)
-        assert(out == "[]\n") { out }
+        assert(out == " |  anon : (lin 9, col 17) : (resume (t)())\n" +
+                " |  anon : (lin 4, col 17) : yield(t)\n" +
+                " v  error : cannot copy reference out\n") { out }
+        //assert(out == "[]\n") { out }
         //assert(out == " |  anon : (lin 9, col 17) : (resume (t)(nil))\n" +
         //        " v  anon : (lin 4, col 17) : yield error : cannot return pending reference\n") { out }
     }
