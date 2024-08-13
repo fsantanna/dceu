@@ -414,7 +414,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         {.exe = (CEU_Exe*) ceu_coro_$n.Dyn},
                         CEU_ACTION_RESUME,
                         CEU4(ceux COMMA)
-                        CEU_LEX_V(ceux->depth+1 COMMA)
+                        CEU_LEX_V(ceux->depth COMMA)
                         ${this.args.size},
                         ${sta.idx(this,"args_$n")}
                     };
@@ -429,6 +429,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ${this.e.code()}
                     ceux->exe->status = CEU_EXE_STATUS_YIELDED;
                     ceux->exe->pc = $n;
+                #ifdef CEU_LEX
+                    ceux->exe->depth = ceux->depth;
+                #endif
                     return;
                 case $n: // YIELD ${this.dump()}
                     if (ceux->act == CEU_ACTION_ABORT) {
@@ -439,6 +442,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     if (ceux->act == CEU_ACTION_ERROR) {
                         continue;
                     }
+                #endif
+                #ifdef CEU_LEX
+                    ceux->depth = ceux->exe->depth;
                 #endif
                     ceu_gc_dec_val(ceu_acc);
                     ceu_acc = (ceux->n > 0) ? ceux->args[0] : (CEU_Value) { CEU_VALUE_NIL };
@@ -481,7 +487,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         else -> sta.idx(this,"tsks_$n") + ".Dyn"
                     }};
                     CEU_Block* ceu_b_$n = ${this.tsks.cond2({"NULL"}, {"&$blkc"})};
-                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, ceu_a_$n, ceu_b_$n  CEU_LEX_V(COMMA -1));
+                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, ceu_a_$n, ceu_b_$n);
                     CEU_ACC(ceu_exe_$n);
                     CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
                     
@@ -495,7 +501,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             {.exe = (CEU_Exe*) ceu_exe_$n.Dyn},
                             CEU_ACTION_RESUME,
                             ceux,
-                            CEU_LEX_V(ceux->depth+1 COMMA)
+                            CEU_LEX_V(ceux->depth COMMA)
                             ${this.args.size},
                             ${sta.idx(this,"args_$n")}
                         };

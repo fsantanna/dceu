@@ -1468,7 +1468,7 @@ fun Coder.main (tags: Tags): String {
         return clo;
     }
 
-    CEU_Value ceu_create_exe (int type, int sz, CEU_Value clo CEU_LEX_V(COMMA uint8_t lex_depth)) {
+    CEU_Value ceu_create_exe (int type, int sz, CEU_Value clo) {
         ceu_debug_add(type);
         assert(clo.type==CEU_VALUE_CLO_CORO CEU4(|| clo.type==CEU_VALUE_CLO_TASK));
         ceu_gc_inc_val(clo);
@@ -1482,7 +1482,7 @@ fun Coder.main (tags: Tags): String {
     #ifdef CEU_LEX
             clo.Dyn->Clo.lex,
     #endif
-            &clo.Dyn->Clo, CEU_EXE_STATUS_YIELDED, 0, mem
+            &clo.Dyn->Clo, CEU_EXE_STATUS_YIELDED, CEU_LEX_V(-1 COMMA) 0, mem
         };
         
         return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
@@ -1500,7 +1500,7 @@ fun Coder.main (tags: Tags): String {
     int ceu_isexe_dyn (CEU_Dyn* dyn);
     #endif
     
-    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Dyn* up_dyn, CEU_Block* up_blk CEU_LEX_V(COMMA uint8_t lex_depth)) {
+    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Dyn* up_dyn, CEU_Block* up_blk) {
     #if CEU >= 5
         int ceu_tasks_n (CEU_Tasks* tsks) {
             int n = 0;
@@ -1523,7 +1523,7 @@ fun Coder.main (tags: Tags): String {
             return CEU_ERROR_PTR("expected task");
         }
 
-        CEU_Value ret = ceu_create_exe(CEU_VALUE_EXE_TASK, sizeof(CEU_Exe_Task), clo CEU_LEX_V(COMMA lex_depth));
+        CEU_Value ret = ceu_create_exe(CEU_VALUE_EXE_TASK, sizeof(CEU_Exe_Task), clo);
         CEU_Exe_Task* dyn = &ret.Dyn->Exe_Task;
         
         ceu_gc_inc_dyn((CEU_Dyn*) dyn);
@@ -1834,7 +1834,7 @@ fun Coder.main (tags: Tags): String {
             if (clo.type != CEU_VALUE_CLO_CORO) {
                 ret = CEU_ERROR_PTR("expected coro");
             } else {
-                ret = ceu_create_exe(CEU_VALUE_EXE_CORO, sizeof(CEU_Exe), clo CEU_LEX_V(COMMA -1));
+                ret = ceu_create_exe(CEU_VALUE_EXE_CORO, sizeof(CEU_Exe), clo);
             }
             ceu_gc_dec_val(clo);
             CEU_ACC(ret);

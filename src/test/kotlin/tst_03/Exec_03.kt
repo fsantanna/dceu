@@ -810,6 +810,32 @@ class Exec_03 {
         """)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun ff_07_move() {
+        val out = test("""
+            val CO = coro () {
+                val a = [:a]
+                do {
+                    yield(nil)
+                    val b = [:b]
+                    do {
+                        yield(nil)
+                        val c = [:c]
+                        val xa = `:number ${D}a.Dyn->Any.lex.depth`
+                        val xb = `:number ${D}a.Dyn->Any.lex.depth`
+                        val xc = `:number ${D}a.Dyn->Any.lex.depth`
+                        println(a,b,c)
+                        println(xa,xb,xc)
+                    }
+                }
+            }
+            val co = coroutine(CO)
+            resume co()
+            resume co()
+            resume co()
+        """)
+        assert(out == "[:a]\t[:b]\t[:c]\n1\t2\t3\n") { out }
+    }
 
     // SCOPE
 
