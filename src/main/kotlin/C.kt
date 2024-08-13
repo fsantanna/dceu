@@ -530,6 +530,7 @@ fun Coder.main (tags: Tags): String {
                 if (err != NULL) {
                     return err;
                 }
+                break;
             }
     #endif
             default:
@@ -544,20 +545,24 @@ fun Coder.main (tags: Tags): String {
     char* ceu_lex_chk_set (CEU_Value src, CEU_Lex dst) {
         if (src.type < CEU_VALUE_DYNAMIC) {
             return NULL;
-        } else if (src.Dyn->Any.lex.depth <= dst.depth) {
-            if (
-                src.Dyn->Any.lex.type == CEU_LEX_FLEET &&
-                src.Dyn->Any.lex.depth < dst.depth     &&
-                src.Dyn->Any.refs > 1
-            ) {
-                return "dropped value has pending outer reference";
-            } else {
-                return NULL;
-            }
-        } else if (src.Dyn->Any.lex.type != CEU_LEX_FLEET) {
+        } else if (
+            src.Dyn->Any.lex.type == CEU_LEX_FLEET &&
+            src.Dyn->Any.lex.depth < dst.depth     &&
+            src.Dyn->Any.refs > 1
+        ) {
+            return "dropped value has pending outer reference";
+        } else if (
+            src.Dyn->Any.lex.type != CEU_LEX_FLEET &&
+            src.Dyn->Any.lex.depth > dst.depth
+        ) {
             return "cannot copy reference out";
+        } else if (
+            src.Dyn->Any.lex.type >= dst.type &&
+            src.Dyn->Any.lex.depth <= dst.depth
+        ) {
+            return NULL;
         }
-        
+         
         src.Dyn->Any.lex = dst;
 
         switch (src.type) {
@@ -623,11 +628,12 @@ fun Coder.main (tags: Tags): String {
                 if (err != NULL) {
                     return err;
                 }
+                break;
             }
     #endif
             default:
                 //printf(">>> %d\n", src.type);
-                assert(0 && "TODO: drop");
+                assert(0 && "TODO: lex");
                 break;
         }
 

@@ -725,8 +725,8 @@ class Exec_03 {
             f(co)
         }
         """)
-        //assert(out == ":out\t[]\n:in\tnil\n") { out }
-        assert(out == ":out\t[]\n:in\t[]\n") { out }
+        assert(out == ":out\t[]\n:in\tnil\n") { out }
+        //assert(out == ":out\t[]\n:in\t[]\n") { out }
     }
     @Test
     fun ff_02() {
@@ -969,7 +969,9 @@ class Exec_03 {
             }
             resume t()
         """)
-        assert(out == ":in\t[]\n:out\t[]\n") { out }
+        assert(out == " |  anon : (lin 16, col 25) : (val x = (resume (t)()))\n" +
+                " v  error : cannot copy reference out\n") { out }
+        //assert(out == ":in\t[]\n:out\t[]\n") { out }
         //assert(out == " |  anon : (lin 16, col 33) : (resume (t)(nil))\n" +
         //        " v  anon : (lin 5, col 21) : yield error : cannot return pending reference\n") { out }
     }
@@ -988,8 +990,8 @@ class Exec_03 {
             }
             resume t()
         """)
-        //assert(out == ":out\t[]\n:in\tnil\n") { out }
-        assert(out == ":out\t[]\n:in\t[]\n") { out }
+        assert(out == ":out\t[]\n:in\tnil\n") { out }
+        //assert(out == ":out\t[]\n:in\t[]\n") { out }
     }
     @Test
     fun gg_07_scope() {
@@ -1734,7 +1736,7 @@ class Exec_03 {
             val CO = coro () {
                 val t = [yield(nil),yield(nil),yield(nil)]
                 yield(nil)
-                t
+                drop(t)
             }
             val co = coroutine(CO)
             resume co()
@@ -1752,7 +1754,7 @@ class Exec_03 {
             val CO = coro () {
                 val t = #[yield(nil),yield(nil),yield(nil)]
                 yield(nil)
-                t
+                drop(t)
             }
             val co = coroutine(CO)
             resume co()
@@ -1770,7 +1772,7 @@ class Exec_03 {
             val CO = coro () {
                 val t = @[(1,yield(nil)),(yield(nil),20)]
                 yield(nil)
-                t
+                drop(t)
             }
             val co = coroutine(CO)
             resume co()

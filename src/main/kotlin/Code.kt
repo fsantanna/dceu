@@ -336,7 +336,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
             is Expr.Catch -> {
                 """
-            }
                 { // CATCH ${this.dump()}
                     do { // catch
                         ${this.blk.code()}
