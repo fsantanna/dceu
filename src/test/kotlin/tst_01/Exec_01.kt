@@ -617,8 +617,10 @@ class Exec_01 {
             }
             println(f(3))
         """, true)
+        assert(out == " |  anon : (lin 5, col 25) : x\n" +
+                " v  error : cannot copy reference out\n") { out }
         //assert(out == "anon : (lin 3, col 30) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "[[[0]]]\n") { out }
+        //assert(out == "[[[0]]]\n") { out }
     }
     @Test
     fun cc_tuple8_hold_err() {
@@ -636,7 +638,9 @@ class Exec_01 {
         """, true
         )
         //assert(out == "anon : (lin 4, col 26) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "[[[0]]]\n") { out }
+        assert(out == " |  anon : (lin 4, col 21) : (val x = f({{-}}(v,1)))\n" +
+                " v  error : cannot copy reference out\n") { out }
+        //assert(out == "[[[0]]]\n") { out }
     }
     @Test
     fun cc_tuple9_hold_err() {
@@ -2013,8 +2017,10 @@ class Exec_01 {
             println(v)
         """
         )
+        assert(out == " |  anon : (lin 2, col 13) : (val v = do { (val x = []); [x]; })\n" +
+                " v  error : cannot copy reference out\n") { out }
         //assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "[[]]\n") { out }
+        //assert(out == "[[]]\n") { out }
     }
     @Test
     fun scope15_global_func() {
@@ -2413,7 +2419,9 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "[[1]]\n") { out }
+        assert(out == " |  anon : (lin 5, col 13) : (var g = do { (val t = [1]); f(t); })\n" +
+                " v  error : cannot copy reference out\n") { out }
+        //assert(out == "[[1]]\n") { out }
     }
     @Test
     fun scope29() {
@@ -4398,19 +4406,22 @@ class Exec_01 {
         val out = test(
             """
             var f = func (a) {
-                func () {
-                    a
+                func () {       ;; fleet
+                    a           ;; non-fleet [1]
                 }
             }
             var g = do {
                 var t = [1]
-                drop(f(t))
+                val x = drop(f(t))  ;; drop stops at fleet func (not at non-fleet a=[1])
+                x
             }
             println(g())
         """
         )
         //assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "[1]\n") { out }
+        assert(out == " |  anon : (lin 7, col 13) : (var g = do { (var t = [1]); (val x = drop...\n" +
+                " v  error : cannot copy reference out\n") { out }
+        //assert(out == "[1]\n") { out }
     }
     @Test
     fun clo23x_err() {
@@ -4421,13 +4432,15 @@ class Exec_01 {
             }
             var g = do {
                 var t = [1]
-                ;;;drop;;;(f(t))
+                drop(f(t))
             }
             println(g)
         """
         )
         //assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "[[1]]\n") { out }
+        //assert(out == "[[1]]\n") { out }
+        assert(out == " |  anon : (lin 5, col 13) : (var g = do { (var t = [1]); drop(f(t)); })\n" +
+                " v  error : cannot copy reference out\n") { out }
     }
     @Test
     fun clo23x() {
@@ -4440,7 +4453,7 @@ class Exec_01 {
             }
             var g = do {
                 var t = [1]
-                ;;;drop;;;(f(;;;drop;;;(t)))
+                drop(f(drop(t)))
             }
             println(g())
         """
