@@ -40,7 +40,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
         return when (this) {
             is Expr.Proto -> {
                 val isexe = (this.tk.str != "func")
-                val istsk = (this.tk.str == "task")
                 val isnst = ups.isnst(this)
                 val code = this.blk.code()
                 val id = this.id(outer,ups)
@@ -527,6 +526,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ceu_exe_$n.Dyn->Exe.clo->proto(&ceux_$n);
                         CEU_ERROR_CHK_ERR({ceu_gc_dec_val(ceu_exe_$n);continue;}, ${this.toerr()});
                         if (CEU_ESCAPE != CEU_ESCAPE_NONE) {
+                            ceu_gc_dec_val(ceu_exe_$n);
                             continue;
                         }                                                            
                         ceu_gc_dec_val(ceu_acc);

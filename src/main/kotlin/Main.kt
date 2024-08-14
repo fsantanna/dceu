@@ -9,7 +9,7 @@ var DUMP = true
 var DEBUG = false
 var CEU = 1
 
-    //  1: dyn-lex                              ;; 25 "definitely lost" (errors or cycles)
+    //  1: dyn-lex                              ;; 46 "definitely lost" (errors or cycles)
     //  2: defer, throw/catch, do/escape, loop  ;;  4 "definitely lost" (C errors)
     //  3: coro, yield, resume                  ;;  0
     //  4: task, pub, bcast, toggle, delay      ;;  0

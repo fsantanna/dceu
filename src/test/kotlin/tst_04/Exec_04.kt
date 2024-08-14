@@ -2750,13 +2750,33 @@ class Exec_04 {
             spawn (task () {
                 val v = do :X {
                     spawn (task :nested () {
+                        defer {
+                            println(:def)
+                        }
                         escape(:X,:ok)
                     })()
                 }
                 println(v)
             }) ()
         """)
-        assert(out == ":ok\n") { out }
+        assert(out == ":def\n:ok\n") { out }
+    }
+    @Test
+    fun dh_09x_escape() {
+        val out = test("""
+            spawn (task () {
+                val v = catch :X {
+                    spawn (task :nested () {
+                        defer {
+                            println(:def)
+                        }
+                        error(:X,:ok)
+                    })()
+                }
+                println(v)
+            }) ()
+        """)
+        assert(out == ":def\n:ok\n") { out }
     }
     @Test
     fun dh_10_escape() {
