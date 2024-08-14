@@ -42,7 +42,7 @@ func assert (v, msg) {
 ;; ARITHMETIC: +  -  *  **  /  //  %
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-val [{{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}] = do {
+val [{{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}] = group {
     func sub (v1, v2) {
         ifs {
             (type(v1) == :number) and (v2 == nil)           => `:number (- $v1.Number)`
@@ -90,7 +90,7 @@ val [{{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}] = do {
 ;; RELATIONAL:  >=  >  <=  <
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-val [{{<}}, {{<=}}, {{>}}] = do {
+val [{{<}}, {{<=}}, {{>}}] = group {
     func lt (v1,v2) {
         not (v1 >= v2)
     }
@@ -108,7 +108,7 @@ val [{{<}}, {{<=}}, {{>}}] = do {
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 data :Iterator = [f,s,i,tp]
-val to-iter = do {
+val to-iter = group {
     func iter-ret (itr :Iterator, idx) {
         val ret = tuple(#itr.tp)
         loop j in {0 => #itr.tp{ {
@@ -171,7 +171,7 @@ val to-iter = do {
     func (v, tp) {
         func tp' (def) {
             match type(tp) {
-                == :nil    => def
+                == :nil   => def
                 == :tuple => tp
                 else      => [tp]
             }
@@ -235,7 +235,7 @@ val [{{===}}, {{=/=}}] = group {
     [eq, neq]
 }
 
-val [is', is-not'] = do {
+val [is', is-not'] = group {
     func x-is (v1,v2) {
         ifs {
             (v1 === v2)        => true
@@ -250,7 +250,7 @@ val [is', is-not'] = do {
     [x-is, x-is-not]
 }
 
-val [in', in-not'] = do {
+val [in', in-not'] = group {
     func x-in (v, xs) {
         if (type(xs) == :dict) and xs[v] { \it =>
             it
@@ -286,7 +286,7 @@ data :Type = [
 ]
 ;;;
 
-val [static?, dynamic?, string?] = do {
+val [static?, dynamic?, string?] = group {
     func x-static? (tp) {
         `:bool ($tp.Tag < CEU_VALUE_DYNAMIC)`
     }
@@ -317,7 +317,7 @@ val [static?, dynamic?, string?] = do {
 
 data :To = [string, bool, char, number, tag, pointer, tuple, vector, dict, iter]
 
-val to :To = do {
+val to :To = group {
     func to-string (v) {
         match v {
             {{string?}} => v
@@ -448,7 +448,7 @@ val to :To = do {
 ;; CONCAT:  <++  ++
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-val [{{<++}}, {{++}}] = do {
+val [{{<++}}, {{++}}] = group {
     func x-cat-move (v1, v2) {
         assert(type(v1) == :vector)
         assert(type(v2) == :vector)
@@ -466,7 +466,7 @@ val [{{<++}}, {{++}}] = do {
 
 data :Random = [seed,next,bool,int]
 
-val random :Random = do {
+val random :Random = group {
     func x-seed (n) {
         if n {
             `srand($n.Number);`
@@ -500,7 +500,7 @@ data :Math = [
     min, max, between,
 ]
 
-val math :Math = do {
+val math :Math = group {
     val x-PI = `:number M_PI`
     func x-sin (v) {
         `:number sin($v.Number)`

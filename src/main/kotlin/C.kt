@@ -363,7 +363,7 @@ fun Coder.main (tags: Tags): String {
     #ifdef CEU_LEX
         { CEU_LEX_FLEET, -1 },
     #endif
-        NULL, CEU_EXE_STATUS_YIELDED, 0, NULL,
+        NULL, CEU_EXE_STATUS_YIELDED, CEU_LEX_V(-1 COMMA) 0, NULL,
         0, {}, { {{NULL},NULL}, {NULL,NULL}, {NULL,NULL} }
     };
     #endif
@@ -522,14 +522,27 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 4
             case CEU_VALUE_EXE_TASK:
     #endif
-    #if CEU >= 5
-            case CEU_VALUE_EXE_TASK_IN:
-    #endif
             {
                 CEU_Value clo = ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.clo);
                 char* err = ceu_drop(clo);
                 if (err != NULL) {
                     return err;
+                }
+                break;
+            }
+    #endif
+    #if CEU >= 5
+            case CEU_VALUE_TASKS:
+            {
+                for (
+                    CEU_Exe_Task* tsk = (CEU_Exe_Task*) src.Dyn->Tasks.lnks.dn.fst;
+                    tsk != NULL;
+                    tsk = (CEU_Exe_Task*) tsk->lnks.sd.nxt
+                ) {
+                    char* err = ceu_drop(ceu_dyn_to_val((CEU_Dyn*)tsk));
+                    if (err != NULL) {
+                        return err;
+                    }
                 }
                 break;
             }
@@ -620,14 +633,27 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 4
             case CEU_VALUE_EXE_TASK:
     #endif
-    #if CEU >= 5
-            case CEU_VALUE_EXE_TASK_IN:
-    #endif
             {
                 CEU_Value clo = ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.clo);
                 char* err = ceu_lex_chk_set(clo, dst);
                 if (err != NULL) {
                     return err;
+                }
+                break;
+            }
+    #endif
+    #if CEU >= 5
+            case CEU_VALUE_TASKS:
+            {
+                for (
+                    CEU_Exe_Task* tsk = (CEU_Exe_Task*) src.Dyn->Tasks.lnks.dn.fst;
+                    tsk != NULL;
+                    tsk = (CEU_Exe_Task*) tsk->lnks.sd.nxt
+                ) {
+                    char* err = ceu_lex_chk_set(ceu_dyn_to_val((CEU_Dyn*)tsk), dst);
+                    if (err != NULL) {
+                        return err;
+                    }
                 }
                 break;
             }
@@ -2156,7 +2182,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Value xin = ceux->args[0];
             CEU_Value evt = ceux->args[1];
             
-            char* err = ceu_lex_chk_set(evt, (CEU_Lex) { CEU_LEX_MUTAB, 1 }));
+            char* err = ceu_lex_chk_set(evt, (CEU_Lex) { CEU_LEX_MUTAB, 1 });
             if (err != NULL) {
                 CEU_ACC(CEU_ERROR_PTR(err));
             } else if (xin.type == CEU_VALUE_TAG) {

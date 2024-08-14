@@ -613,9 +613,9 @@ class Exec_04 {
         """
         )
         //assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing thus\n") { out }
-        //assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 4, col 21) : argument error : cannot copy reference out\n") { out }
-        assert(out == "[]\n:ok\n") { out }
+        assert(out == " |  anon : (lin 9, col 17) : broadcast'(:task,e)\n" +
+                " v  error : cannot copy reference out\n") { out }
+        //assert(out == "[]\n:ok\n") { out }
         //assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
@@ -629,7 +629,7 @@ class Exec_04 {
             spawn T() 
             do {
                 val e = []
-                broadcast(e)
+                broadcast(drop(e))
             }
             println(:ok)
         """
@@ -653,7 +653,7 @@ class Exec_04 {
             val t = spawn T() 
             do {
                 val e = []
-                broadcast(e)
+                broadcast(drop(e))
             }
             println(:out, t.pub)
         """
@@ -1485,7 +1485,7 @@ class Exec_04 {
             }) ()
             do {
                 val e = [10]
-                broadcast(e)
+                broadcast(drop(e))
             }
             broadcast(nil)
         """)
@@ -1519,7 +1519,7 @@ class Exec_04 {
             }) ()
             do {
                 val e = [[10]]
-                broadcast(e)
+                broadcast(drop(e))
             }
         """)
         assert(out == "[10]\n") { out }
@@ -2087,7 +2087,7 @@ class Exec_04 {
             spawn T(10)
             do {
                 val e = []
-                broadcast (e)
+                broadcast (drop(e))
             }
         """
         )
@@ -6142,7 +6142,7 @@ class Exec_04 {
                     val b
                     do {
                         var e = []
-                        broadcast (e)
+                        broadcast (drop(e))
                     }
                 }
             }
@@ -6172,7 +6172,7 @@ class Exec_04 {
             var t = spawn T()
             do {
                 var e = []
-                broadcast (e)
+                broadcast (drop(e))
             }
             """
         )
@@ -6194,7 +6194,7 @@ class Exec_04 {
                 do {
                     val b
                     var e = []
-                    broadcast (e)
+                    broadcast (drop(e))
                 }
             }
             ;;println(:2222)

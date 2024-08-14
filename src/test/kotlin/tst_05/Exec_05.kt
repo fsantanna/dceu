@@ -1629,7 +1629,9 @@ class Exec_05 {
             }
             println(status(x))
         """)
-        assert(out == ":terminated\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : (val x = do { (val ts = tasks(nil)); (var ...\n" +
+                " v  error : cannot copy reference out\n") { out }
+        //assert(out == ":terminated\n") { out }
         //assert(out == ":pub\t[]\n" +
         //        " v  anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
         //assert(out == " v  anon : (lin 11, col 17) : declaration error : cannot expose task-in-pool reference\n") { out }
@@ -2560,7 +2562,10 @@ class Exec_05 {
             }
             f(x'[0])
         """)
-        assert(out==(":yielded\n:terminated\n")) { out }
+        assert(out==(":yielded\n" +
+                " |  anon : (lin 7, col 13) : (val x' = do { (val ts = tasks(nil)); (spa...\n" +
+                " v  error : cannot copy reference out\n")) { out }
+        //assert(out==(":yielded\n:terminated\n")) { out }
         //assert(out.contains(":yielded\n" +
         //        " v  anon : (lin 7, col 22) : block escape error : reference has immutable scope\n")) { out }
         //assert(out.contains(":yielded\n" +
