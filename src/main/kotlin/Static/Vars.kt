@@ -13,6 +13,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     private val dcls: MutableList<Expr.Dcl> = GLOBALS.map {
         Expr.Dcl (
             Tk.Fix("val", outer.tk.pos),
+            true,
             Pair(Tk.Id(it,outer.tk.pos,0), null),
             null
         )
@@ -149,9 +150,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
                 this.pars.forEach { (id, tag) ->
                     check(id)
-                    val dcl = Expr.Dcl(
-                        Tk.Fix("val", this.tk.pos),
-                        Pair(id,tag), null
+                    val dcl = Expr.Dcl (
+                        Tk.Fix("val", this.tk.pos), false, Pair(id,tag), null
                     )
                     dcls.add(dcl)
                     dcl_to_blk[dcl] = this

@@ -430,7 +430,7 @@ class Parser (lexer_: Lexer)
                 Expr.Escape(tk0, tag, e)
             }
             this.acceptFix("group") -> Expr.Group(this.tk0 as Tk.Fix, this.block().es)
-            this.acceptFix("val") || this.acceptFix("var") -> {
+            this.acceptFix("val") || this.acceptFix("val'") || this.acceptFix("var") || this.acceptFix("var'") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 if (CEU<99 || !this.checkFix("[")) {
                     val (id,tag1) = this.id_tag()
@@ -448,7 +448,8 @@ class Parser (lexer_: Lexer)
                         (src.args[1] !is Expr.Tuple) -> null
                         else -> src.args[0].tk as Tk.Tag
                     }
-                    Expr.Dcl(tk0, Pair(id,tag2), src)
+                    val lex = (tk0.str=="val" || tk0.str=="var")
+                    Expr.Dcl(tk0, lex, Pair(id,tag2), src)
                 } else {
                     val pat = this.patt(null)
                     val src = if (this.acceptFix("=")) {

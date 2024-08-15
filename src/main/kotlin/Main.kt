@@ -42,8 +42,8 @@ val KEYWORDS: SortedSet<String> = (
     setOf (
         "data", "do", "drop", "else",
         "false", "func", "group", "if",
-        "nil", "set",
-        "true", "val", "var",
+        "nil", "set", "true",
+        "val", "val'", "var", "var'",
     ) + (if (CEU < 2) setOf() else setOf (
         "catch", "defer", "escape", "loop'",
     )) + (if (CEU < 3) setOf() else setOf(
@@ -132,7 +132,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Do     (val tk_: Tk, val tag: Tk.Tag?, val es: List<Expr>) : Expr(N++, tk_)
     data class Escape (val tk_: Tk.Fix, val tag: Tk.Tag, val e: Expr?): Expr(N++, tk_)
     data class Group  (val tk_: Tk.Fix, val es: List<Expr>) : Expr(N++, tk_)
-    data class Dcl    (val tk_: Tk.Fix, val idtag: Id_Tag, /*val poly: Boolean,*/ val src: Expr?):  Expr(N++, tk_)
+    data class Dcl    (val tk_: Tk.Fix, val lex: Boolean, /*val poly: Boolean,*/ val idtag: Id_Tag, val src: Expr?):  Expr(N++, tk_)
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
     data class Loop   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
@@ -206,7 +206,7 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         }
         //readLine()
         val pos = Pos("anon", 0, 0, 0)
-        val ARGS   = Expr.Dcl(Tk.Fix("val",pos), Pair(Tk.Id("ARGS",pos),null), null)
+        val ARGS   = Expr.Dcl(Tk.Fix("val",pos), true, Pair(Tk.Id("ARGS",pos),null), null)
         val outer  = Expr.Do(Tk.Fix("", pos), null, listOf(ARGS)+es)
         val ups    = Ups(outer)
         val tags   = Tags(outer)
