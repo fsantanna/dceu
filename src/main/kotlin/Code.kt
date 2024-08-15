@@ -669,17 +669,22 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             is Expr.Acc -> {
                 val idx = sta.idx(this)
                 when {
-                    ups.isdst(this) -> """
+                    ups.isdst(this) -> {
+                        val depth = vars.dcl_to_blk[vars.acc_to_dcl[this]!!]!!.let { blk ->
+                            ups.all_until(this) { it == blk }.filter { it is Expr.Do }.count() - 1
+                        }
+                        """
                         // ACC - SET | ${this.dump()}
                         CEU_ERROR_CHK_PTR (
                             continue,
-                            ceu_lex_chk_set(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, ceux->depth }),
+                            ceu_lex_chk_set(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, ceux->depth-$depth }),
                             ${this.toerr()}
                         );
                         ceu_gc_dec_val($idx);
                         ceu_gc_inc_val(ceu_acc);
                         $idx = ceu_acc;
-                    """
+                        """
+                    }
                     ups.isdrop(this) -> {
                         """
                         { // ACC - DROP | ${this.dump()}
