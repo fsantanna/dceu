@@ -1509,7 +1509,8 @@ fun Coder.main (tags: Tags): String {
         *ret = (CEU_Exe) {
             type, 0, (CEU_Value) { CEU_VALUE_NIL },
     #ifdef CEU_LEX
-            clo.Dyn->Clo.lex,
+            //clo.Dyn->Clo.lex,
+            { CEU_LEX_FLEET, -1 },
     #endif
             &clo.Dyn->Clo, CEU_EXE_STATUS_YIELDED, CEU_LEX_V(-1 COMMA) 0, mem
         };

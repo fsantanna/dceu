@@ -202,6 +202,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             """ }}
                         } while (0);
     
+                        // keep ceu_acc and restore after defers/gc_dec/kills
+                        // b/c they may change ceu_acc
+                        
                         CEU_Value ceu_acc_$n = CEU_ACC_KEEP();
 
                         ${defers[this].cond { """
@@ -478,13 +481,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ${(CEU>=5 && this.tsks!=null).cond {
                         this.tsks!!.code() + """
                             ${sta.idx(this,"tsks_$n")} = ceu_acc;                            
-                        if (ceu_acc.type != CEU_VALUE_TASKS) {
-                            CEU_ERROR_CHK_PTR (
-                                continue,
-                                "invalid pool",
-                                ${this.toerr()}
-                            );
-                        }
+                            if (ceu_acc.type != CEU_VALUE_TASKS) {
+                                CEU_ERROR_CHK_PTR (
+                                    continue,
+                                    "invalid pool",
+                                    ${this.toerr()}
+                                );
+                            }
                         """
                     }}
                     
@@ -511,6 +514,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     CEU_ACC(ceu_exe_$n);
                     CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
                     
+                    ${(CEU>=5 && this.tsks!=null).cond { """
+                        CEU_ERROR_CHK_PTR (
+                            continue,
+                            ceu_lex_chk_set(ceu_acc, ceu_a_$n->Any.lex),
+                            ${this.toerr()}
+                        );                            
+                    """ }}
+        
                     ${(CEU>=5 && this.tsks!=null).cond { """
                         if (ceu_acc.type != CEU_VALUE_NIL)
                     """ }}

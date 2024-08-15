@@ -24,7 +24,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         //println(listOf("-=-=-", blk.tk, ups.pub[blk]?.javaClass?.name))
         //println(blk.tostr())
         return when {
-            //true -> false
+            true -> false
             ismem(blk,true) -> false
             (blk.tag != null) -> false
             !dcls.isEmpty() -> false
