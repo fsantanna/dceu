@@ -2527,6 +2527,45 @@ class Exec_01 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun scope31_xxx() {
+        val out = test("""
+            (val x = do {
+                (var' ceu_ret_8);
+                (val' ceu_val_8 = []);
+                do {
+                    (val' ceu_or_66 = do {
+                        (val' it = ceu_val_8);
+                        if true {
+                            (set ceu_ret_8 = it);
+                            true;
+                        } else {
+                            nil;
+                        };
+                    });
+                    if ceu_or_66 {
+                        ceu_or_66;
+                    } else {
+                        nil;
+                    };
+                };
+                ceu_ret_8;
+            });
+            println(x);
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun scope_32() {
+        val out = test("""
+            val' x = do {
+                val y = []
+                y
+            }
+            println(x)
+        """)
+        assert(out == "TODO - error\n") { out }
+    }
 
     // SCOPE / INNER
 

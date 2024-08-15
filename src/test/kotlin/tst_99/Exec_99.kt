@@ -193,6 +193,39 @@ class Exec_99 {
         assert(out == "anon : (lin 2, col 21) : operation error : invalid number of arguments\n") { out }
     }
 
+    // LEX / PARSER / EXPANSION
+
+    @Test
+    fun bc_01_or_lex() {
+        val out = test("""
+            val x = do {
+                [] or false
+            }
+            println(x)
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun bc_02_thus_lex() {
+        val out = test("""
+            val x = do {
+                [] thus { it }
+            }
+            println(x)
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun bc_03_op_thus_tuple_lex() {
+        val out = test("""
+            val x = do {
+                [] thus { it }
+            }
+            println(x)
+        """)
+        assert(out == "[]\n") { out }
+    }
+
     // is, is-not?, in?, in-not?
 
     @Test
@@ -699,7 +732,7 @@ class Exec_99 {
                 it|true => it
             }
             println(x)
-        """, true)
+        """)
         //assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n" +
         //        ":error\n") { out }
         assert(out == "[]\n") { out }

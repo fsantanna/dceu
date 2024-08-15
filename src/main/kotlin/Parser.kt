@@ -226,22 +226,12 @@ class Parser (lexer_: Lexer)
         return f(pos)
     }
 
-    fun Patt.code1 (v: String): String {
-        val idtag = Pair(this.id, this.tag)
-        return """
-            do {
-                val ${idtag.tostr(true)} = $v
-                ${this.pos.tostr(true)}
-            }
-        """
-    }
-
     fun Patt.code2 (v: String?): String {
         val idtag = Pair(this.id, this.tag)
         val pre = idtag.first.pos.pre()
         return """
             group {
-                val ${idtag.tostr(true)} = ${v.cond2({it},{"nil"})}
+                val' ${idtag.tostr(true)} = ${v.cond2({it},{"nil"})}
                 ${when (this) {
                     is Patt.None -> """
                         ${pre}assert(${this.pos.tostr(true)}, :Patt)
@@ -255,7 +245,7 @@ class Parser (lexer_: Lexer)
                         """
                         ${v.cond { """
                             ${pre}assert((type(${id.str})==:tuple) and (#${id.str}==${l.size}), :Patt)
-                            val ceu_tup_$nn = ${id.str}
+                            val' ceu_tup_$nn = ${id.str}
                         """ }}
                         ${pre}assert(${this.pos.tostr(true)}, :Patt)
                         ${this.l.mapIndexed { i,x ->
@@ -920,16 +910,16 @@ class Parser (lexer_: Lexer)
                         val blk = this.block()
                         val nn = N++
                         val dcl_set = when (ids) {
-                            is Tk.Id -> "val ${ids.str} = ceu_val_$nn"
+                            is Tk.Id -> "val' ${ids.str} = ceu_val_$nn"
                             is Patt  -> ids.code2("ceu_val_$nn")
-                            else     -> "val ${(ids as Id_Tag).tostr(true)} = ceu_val_$nn"
+                            else     -> "val' ${(ids as Id_Tag).tostr(true)} = ceu_val_$nn"
                         }
                         //println(blk.es.tostr())
                         this.nest("""
                             do :break {
-                                val ceu_itr_$nn :Iterator = ${iter.tk.pos.pre()}to-iter(${iter.tostr(true)})
+                                val' ceu_itr_$nn :Iterator = ${iter.tk.pos.pre()}to-iter(${iter.tostr(true)})
                                 loop' {
-                                    val ceu_val_$nn = ceu_itr_$nn.f(ceu_itr_$nn)
+                                    val' ceu_val_$nn = ceu_itr_$nn.f(ceu_itr_$nn)
                                     if (ceu_val_$nn == nil) {
                                         break(false)
                                     }
@@ -1001,7 +991,7 @@ class Parser (lexer_: Lexer)
                                 es.tostr(true) // do ...
                             } else {
                                 """
-                                val ${idtagx.tostr(true)} = ${cnd.tostr(true)}
+                                val' ${idtagx.tostr(true)} = ${cnd.tostr(true)}
                                 if ${idtagx.first.str} {
                                     ${es.tostr(true)}
                                 } else {
@@ -1032,7 +1022,7 @@ class Parser (lexer_: Lexer)
                                 val (idstags, es) = this.lambda(false)
                                 """
                                 set ceu_ret_$nn = group {
-                                    ${(!idstags.isEmpty()).cond { "val ${idstags.first().tostr(true)} = `:ceu ceu_acc`" }}
+                                    ${(!idstags.isEmpty()).cond { "val' ${idstags.first().tostr(true)} = `:ceu ceu_acc`" }}
                                     ${es.tostr(true)}
                                 }
                                 true
@@ -1074,8 +1064,8 @@ class Parser (lexer_: Lexer)
                 }
                 this.nest("""
                     do {
-                        var ceu_ret_$nn
-                        val ceu_val_$nn = ${xv.tostr(true)}
+                        var' ceu_ret_$nn
+                        val' ceu_val_$nn = ${xv.tostr(true)}
                         ${case()}
                         ceu_ret_$nn
                     }
@@ -1091,10 +1081,10 @@ class Parser (lexer_: Lexer)
                 call as Expr.Call
                 this.nest("""
                     do {
-                        val ceu_co_$N = ${call.clo.tostr(true)}
-                        var ceu_arg_$N = ${if (call.args.size==0) "nil" else call.args[0].tostr(true)}
+                        val' ceu_co_$N = ${call.clo.tostr(true)}
+                        var' ceu_arg_$N = ${if (call.args.size==0) "nil" else call.args[0].tostr(true)}
                         loop {
-                            val ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
+                            val' ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
                             if (status(ceu_co_$N) == :terminated) {
                                 break(ceu_v_$N)
                             }
@@ -1138,7 +1128,7 @@ class Parser (lexer_: Lexer)
                         spw as Expr.Spawn
                         val ret = this.nest("""
                             do {
-                                val ceu_spw_$N = ${spw.tostr(true)}
+                                val' ceu_spw_$N = ${spw.tostr(true)}
                                 if (status(ceu_spw_$N) /= :terminated) {
                                     await(|it==ceu_spw_$N)
                                 }
@@ -1167,7 +1157,7 @@ class Parser (lexer_: Lexer)
                         val pat2 = pat1.code3("ceu_ret_$nn", cnt)
                         this.nest("""
                             group {
-                                var ceu_ret_$nn
+                                var' ceu_ret_$nn
                                 loop {
                                     set ceu_ret_$nn = ${pre}yield()
                                     until $pat2                                
@@ -1196,7 +1186,7 @@ class Parser (lexer_: Lexer)
                     val blk = this.block()
                     this.nest("""
                         do {
-                            var ceu_ret_$nn
+                            var' ceu_ret_$nn
                             loop {
                                 until await ${pat.tostr(true)} {
                                     var ceu_brk_$nn = true
@@ -1248,7 +1238,7 @@ class Parser (lexer_: Lexer)
                 this.nest("""
                     ${pre0}do {
                         ${pars.mapIndexed { i,body -> """
-                            val ceu_par_${i}_$n = spawn {
+                            val' ceu_par_${i}_$n = spawn {
                                 ${body.es.tostr(true)}
                             }
                         """}.joinToString("")}
@@ -1277,7 +1267,7 @@ class Parser (lexer_: Lexer)
                 this.nest("""
                     ${pre0}do {
                         ${pars.mapIndexed { i,body -> """
-                            val ceu_par_${i}_$n = spawn {
+                            val' ceu_par_${i}_$n = spawn {
                                 ${body.es.tostr(true)}
                             }
                         """}.joinToString("")}
@@ -1473,7 +1463,7 @@ class Parser (lexer_: Lexer)
             when (op.str) {
                 "and" -> this.nest("""
                     do {
-                        val ceu_and_${e1.n} = ${e1.tostr(true)}
+                        val' ceu_and_${e1.n} = ${e1.tostr(true)}
                         if ceu_and_${e1.n} {
                             ${e2.tostr(true)}
                         } else {
@@ -1483,7 +1473,7 @@ class Parser (lexer_: Lexer)
                 """)
                 "or" -> this.nest("""
                     do {
-                        val ceu_or_${e1.n} = ${e1.tostr(true)}
+                        val' ceu_or_${e1.n} = ${e1.tostr(true)}
                         if ceu_or_${e1.n} {
                             ceu_or_${e1.n}
                         } else {
@@ -1528,7 +1518,7 @@ class Parser (lexer_: Lexer)
                 val (idstags,es) = lambda(true)
                 this.nest( """
                     do {
-                        ${idstags.first().first.pos.pre()}val ${idstags.first().tostr(true)} = ${e.tostr(true)}
+                        ${idstags.first().first.pos.pre()}val' ${idstags.first().tostr(true)} = ${e.tostr(true)}
                         ${es.tostr(true)}
                     }
                 """)
