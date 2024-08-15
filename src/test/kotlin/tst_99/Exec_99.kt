@@ -2332,12 +2332,12 @@ class Exec_99 {
     @Test
     fun fg_09_dict_iter() {
         val out = test("""
-            val t = @[]
-            loop v in to-iter(t) {
-                println(v)
-            }
+            val v =
+                match 0 {
+                    |true => []
+                }
             println(:ok)
-        """, true)
+        """)
         assert(out == ":ok\n") { out }
     }
     @Test

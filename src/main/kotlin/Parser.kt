@@ -1031,7 +1031,7 @@ class Parser (lexer_: Lexer)
                             else -> {
                                 val (idstags, es) = this.lambda(false)
                                 """
-                                set ceu_ret_$nn = do {
+                                set ceu_ret_$nn = group {
                                     ${(!idstags.isEmpty()).cond { "val ${idstags.first().tostr(true)} = `:ceu ceu_acc`" }}
                                     ${es.tostr(true)}
                                 }

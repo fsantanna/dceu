@@ -6,7 +6,7 @@ import java.util.*
 
 var TEST = false
 var DUMP = true
-var DEBUG = false
+var DEBUG = true
 var CEU = 1
 
     //  1: dyn-lex                              ;; 46 "definitely lost" (errors or cycles)

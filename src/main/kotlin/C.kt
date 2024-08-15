@@ -569,10 +569,12 @@ fun Coder.main (tags: Tags): String {
             src.Dyn->Any.lex.type != CEU_LEX_FLEET &&
             src.Dyn->Any.lex.depth > dst.depth
         ) {
+            //ceu_dump_val(src);
             return "cannot copy reference out";
         } else if (
-            src.Dyn->Any.lex.type >= dst.type &&
-            src.Dyn->Any.lex.depth <= dst.depth
+            src.Dyn->Any.lex.type != CEU_LEX_FLEET
+            //src.Dyn->Any.lex.type >= dst.type &&
+            //src.Dyn->Any.lex.depth <= dst.depth
         ) {
             return NULL;
         }
