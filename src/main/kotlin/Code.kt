@@ -286,11 +286,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     (this.src != null) -> """
                         ${this.src.code()}
                         ${this.lex.cond { """
+                            #ifdef CEU_LEX
                             CEU_ERROR_CHK_PTR (
                                 continue,
                                 ceu_lex_chk_set(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, ceux->depth }),
                                 ${this.toerr()}
-                            );                            
+                            );
+                            #endif
                         """ }}
                         ceu_gc_inc_val(ceu_acc);
                         $idx = ceu_acc;
@@ -688,11 +690,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         """
                         // ACC - SET | ${this.dump()}
                         ${dcl.lex.cond { """
+                            #ifdef CEU_LEX
                             CEU_ERROR_CHK_PTR (
                                 continue,
                                 ceu_lex_chk_set(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, ceux->depth-$depth }),
                                 ${this.toerr()}
                             );
+                            #endif
                         """ }}
                         ceu_gc_dec_val($idx);
                         ceu_gc_inc_val(ceu_acc);

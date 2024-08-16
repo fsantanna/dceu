@@ -1351,6 +1351,7 @@ fun Coder.main (tags: Tags): String {
         if (err != NULL) {
             return err;
         }
+    #ifdef CEU_LEX
         err = ceu_lex_chk_set(idx, col.Dyn->Any.lex);
         if (err != NULL) {
             return err;
@@ -1359,6 +1360,7 @@ fun Coder.main (tags: Tags): String {
         if (err != NULL) {
             return err;
         }
+    #endif
         switch (col.type) {
             case CEU_VALUE_TUPLE:
                 ceu_tuple_set(&col.Dyn->Tuple, idx.Number, val);
@@ -2185,10 +2187,13 @@ fun Coder.main (tags: Tags): String {
             CEU_Value xin = ceux->args[0];
             CEU_Value evt = ceux->args[1];
             
+        #ifdef CEU_LEX
             char* err = ceu_lex_chk_set(evt, (CEU_Lex) { CEU_LEX_MUTAB, 1 });
             if (err != NULL) {
                 CEU_ACC(CEU_ERROR_PTR(err));
-            } else if (xin.type == CEU_VALUE_TAG) {
+            } else
+        #endif
+            if (xin.type == CEU_VALUE_TAG) {
                 if (xin.Tag == CEU_TAG_global) {
                     ceu_bcast_tasks((CEU_Dyn*) &CEU_GLOBAL_TASK, CEU_ACTION_RESUME, CEU_TIME, &evt);
                 } else if (xin.Tag == CEU_TAG_task) {

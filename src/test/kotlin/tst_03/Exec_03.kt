@@ -713,7 +713,7 @@ class Exec_03 {
         }
         val C = coro () {
             var t = []
-            yield(drop(t)) ;;thus { it => nil }
+            yield(;;;drop;;;(t)) ;;thus { it => nil }
             println(:in, t)
         }
         do {
@@ -725,8 +725,8 @@ class Exec_03 {
             f(co)
         }
         """)
-        assert(out == ":out\t[]\n:in\tnil\n") { out }
-        //assert(out == ":out\t[]\n:in\t[]\n") { out }
+        //assert(out == ":out\t[]\n:in\tnil\n") { out }
+        assert(out == ":out\t[]\n:in\t[]\n") { out }
     }
     @Test
     fun ff_02() {
@@ -767,7 +767,7 @@ class Exec_03 {
                     println(:2)
                 })
                 resume x()
-                drop(x)
+                ;;;drop;;;(x)
             }
             resume y()
         """)
@@ -785,7 +785,7 @@ class Exec_03 {
                     println(:ok)
                 })
                 resume x()
-                drop(x)
+                ;;;move;;;(x)
             }
             resume co()
         """)
@@ -800,7 +800,7 @@ class Exec_03 {
                     x
                 }))
                 resume y()
-                drop(y)
+                ;;;move;;;(y)
             }
             do {
                 val x = []
@@ -809,32 +809,6 @@ class Exec_03 {
             }
         """)
         assert(out == "[]\n") { out }
-    }
-    @Test
-    fun ff_07_move() {
-        val out = test("""
-            val CO = coro () {
-                val a = [:a]
-                do {
-                    yield(nil)
-                    val b = [:b]
-                    do {
-                        yield(nil)
-                        val c = [:c]
-                        val xa = `:number ${D}a.Dyn->Any.lex.depth`
-                        val xb = `:number ${D}b.Dyn->Any.lex.depth`
-                        val xc = `:number ${D}c.Dyn->Any.lex.depth`
-                        println(a,b,c)
-                        println(xa,xb,xc)
-                    }
-                }
-            }
-            val co = coroutine(CO)
-            resume co()
-            resume co()
-            resume co()
-        """)
-        assert(out == "[:a]\t[:b]\t[:c]\n2\t3\t4\n") { out }
     }
 
     // SCOPE
@@ -869,7 +843,7 @@ class Exec_03 {
                     val b
                     do {
                         val v = []
-                        resume t(drop(v))
+                        resume t(v)
                     }
                     ;;`ceu_gc_collect();`
                 }
@@ -896,7 +870,7 @@ class Exec_03 {
                 do {
                     do {
                         val v = []
-                        resume t(drop(v))
+                        resume t(v)
                     }
                 }
             }
@@ -931,9 +905,7 @@ class Exec_03 {
             }
             resume t()
         """)
-        assert(out == " |  anon : (lin 11, col 17) : (resume (t)(v))\n" +
-                " v  error : cannot copy reference out\n") { out }
-        //assert(out == "[]\n") { out }
+        assert(out == "[]\n") { out }
         //assert(out == " |  anon : (lin 11, col 17) : (resume (t)(v))\n" +
         //        " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
     }
@@ -947,7 +919,7 @@ class Exec_03 {
             val t = coroutine(T)
             do {
                 val v = []
-                resume t(drop(v))
+                resume t(v)
             }
             resume t()
         """)
@@ -997,12 +969,7 @@ class Exec_03 {
             }
             resume t()
         """)
-        //assert(out == " |  anon : (lin 16, col 25) : (val x = (resume (t)()))\n" +
-        //        " v  error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 16, col 33) : (resume (t)())\n" +
-                " |  anon : (lin 5, col 21) : yield(x)\n" +
-                " v  error : cannot copy reference out\n") { out }
-        //assert(out == ":in\t[]\n:out\t[]\n") { out }
+        assert(out == ":in\t[]\n:out\t[]\n") { out }
         //assert(out == " |  anon : (lin 16, col 33) : (resume (t)(nil))\n" +
         //        " v  anon : (lin 5, col 21) : yield error : cannot return pending reference\n") { out }
     }
@@ -1011,7 +978,7 @@ class Exec_03 {
         val out = test("""
             val T = coro () {
                 val x = []
-                yield(drop(x)) ;;thus { it => nil }    ;; err
+                yield(;;;drop;;;(x)) ;;thus { it => nil }    ;; err
                 println(:in, x)
             }
             val t = coroutine(T)
@@ -1021,8 +988,8 @@ class Exec_03 {
             }
             resume t()
         """)
-        assert(out == ":out\t[]\n:in\tnil\n") { out }
-        //assert(out == ":out\t[]\n:in\t[]\n") { out }
+        //assert(out == ":out\t[]\n:in\tnil\n") { out }
+        assert(out == ":out\t[]\n:in\t[]\n") { out }
     }
     @Test
     fun gg_07_scope() {
@@ -1067,11 +1034,11 @@ class Exec_03 {
                 resume co (e)
             }
         """)
-        assert(out == " |  anon : (lin 10, col 17) : (resume (co)(e))\n" +
-                " v  error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 10, col 17) : (resume (co)(e))\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 10, col 17) : (resume (co)(e))\n" +
         //        " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
-        //assert(out == "nil\t[]\n") { out }
+        assert(out == "nil\t[]\n") { out }
     }
 
     // CATCH / THROW
@@ -1438,9 +1405,7 @@ class Exec_03 {
             }
             resume t()
         """)
-        assert(out == " |  anon : (lin 14, col 17) : (resume (t)(v))\n" +
-                " v  error : cannot copy reference out\n") { out }
-        //assert(out == "[]\n10\n") { out }
+        assert(out == "[]\n10\n") { out }
         //assert(out == " |  anon : (lin 14, col 17) : (resume (t)(v))\n" +
         //        " v  anon : (lin 6, col 20) : resume error : cannot receive alien reference\n") { out }
     }
@@ -1458,10 +1423,7 @@ class Exec_03 {
             }
             resume t()
         """)
-        assert(out == " |  anon : (lin 9, col 17) : (resume (t)())\n" +
-                " |  anon : (lin 4, col 17) : yield(t)\n" +
-                " v  error : cannot copy reference out\n") { out }
-        //assert(out == "[]\n") { out }
+        assert(out == "[]\n") { out }
         //assert(out == " |  anon : (lin 9, col 17) : (resume (t)(nil))\n" +
         //        " v  anon : (lin 4, col 17) : yield error : cannot return pending reference\n") { out }
     }
@@ -1704,20 +1666,16 @@ class Exec_03 {
     @Test
     fun nn_02_catch() {
         val out = test("""
-            val CO = coro () {
-                catch :x ;;;( it | do {
+            coro () {
+                catch ( it | do {
                     yield(nil)
-                } );;;
+                } )
                 {
                     error(:e1)
                 }
             }
-            resume (coroutine(CO)) ()
         """)
-        assert(out == " |  anon : (lin 10, col 13) : (resume (coroutine(CO))())\n" +
-                " |  anon : (lin 7, col 21) : error(:e1)\n" +
-                " v  error : :e1\n") { out }
-        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
+        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
     }
 
     // TMP / VAR
@@ -1772,7 +1730,7 @@ class Exec_03 {
             val CO = coro () {
                 val t = [yield(nil),yield(nil),yield(nil)]
                 yield(nil)
-                drop(t)
+                t
             }
             val co = coroutine(CO)
             resume co()
@@ -1790,7 +1748,7 @@ class Exec_03 {
             val CO = coro () {
                 val t = #[yield(nil),yield(nil),yield(nil)]
                 yield(nil)
-                drop(t)
+                t
             }
             val co = coroutine(CO)
             resume co()
@@ -1808,7 +1766,7 @@ class Exec_03 {
             val CO = coro () {
                 val t = @[(1,yield(nil)),(yield(nil),20)]
                 yield(nil)
-                drop(t)
+                t
             }
             val co = coroutine(CO)
             resume co()
