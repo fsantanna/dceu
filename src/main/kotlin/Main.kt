@@ -41,10 +41,10 @@ val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 
 val KEYWORDS: SortedSet<String> = (
     setOf (
-        "data", "do", "drop", "else",
+        "data", "do", "else",
         "false", "func", "group", "if",
         "nil", "set", "true",
-        "val", "val'", "var", "var'",
+        "val", "var",
     ) + (if (CEU < 2) setOf() else setOf (
         "catch", "defer", "escape", "loop'",
     )) + (if (CEU < 3) setOf() else setOf(
@@ -53,6 +53,8 @@ val KEYWORDS: SortedSet<String> = (
         "broadcast", "delay", "in", "pub", "spawn", "task", "toggle",
     )) + (if (CEU < 5) setOf() else setOf(
         "tasks",
+    )) + (if (CEU < 50) setOf() else setOf(
+        "drop", "val'", "var'",
     )) + (if (CEU < 99) setOf() else setOf(
         "await", "break", "enum", "every", "ifs", "loop", "match",
         "par", "par-and", "par-or",
