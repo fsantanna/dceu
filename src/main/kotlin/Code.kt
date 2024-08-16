@@ -517,11 +517,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
                     
                     ${(CEU>=5 && this.tsks!=null).cond { """
+                    #ifdef CEU_LEX
                         CEU_ERROR_CHK_PTR (
                             continue,
                             ceu_lex_chk_set(ceu_acc, ceu_a_$n->Any.lex),
                             ${this.toerr()}
-                        );                            
+                        );
+                    #endif
                     """ }}
         
                     ${(CEU>=5 && this.tsks!=null).cond { """

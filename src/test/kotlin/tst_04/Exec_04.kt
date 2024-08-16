@@ -1485,7 +1485,7 @@ class Exec_04 {
             }) ()
             do {
                 val e = [10]
-                broadcast(drop(e))
+                broadcast(e)
             }
             broadcast(nil)
         """)
@@ -1519,7 +1519,7 @@ class Exec_04 {
             }) ()
             do {
                 val e = [[10]]
-                broadcast(drop(e))
+                broadcast(e)
             }
         """)
         assert(out == "[10]\n") { out }
@@ -2087,7 +2087,7 @@ class Exec_04 {
             spawn T(10)
             do {
                 val e = []
-                broadcast (drop(e))
+                broadcast (e)
             }
         """
         )
@@ -6162,7 +6162,7 @@ class Exec_04 {
                     val b
                     do {
                         var e = []
-                        broadcast (drop(e))
+                        broadcast (e)
                     }
                 }
             }
@@ -6192,7 +6192,7 @@ class Exec_04 {
             var t = spawn T()
             do {
                 var e = []
-                broadcast (drop(e))
+                broadcast (e)
             }
             """
         )
@@ -6214,7 +6214,7 @@ class Exec_04 {
                 do {
                     val b
                     var e = []
-                    broadcast (drop(e))
+                    broadcast (e)
                 }
             }
             ;;println(:2222)

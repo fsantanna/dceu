@@ -14,6 +14,7 @@ var CEU = 1
     //  3: coro, yield, resume                  ;;  0
     //  4: task, pub, bcast, toggle, delay      ;;  0
     //  5: tasks                                ;;  0
+    // 50: lex, drop, val', var'
     // 99: sugar                                ;;  0
     // TODO: copy, underscore, self (coro/task)
 

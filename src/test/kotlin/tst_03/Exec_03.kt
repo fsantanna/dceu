@@ -1666,16 +1666,20 @@ class Exec_03 {
     @Test
     fun nn_02_catch() {
         val out = test("""
-            coro () {
-                catch ( it | do {
+            val CO = coro () {
+                catch :x ;;;( it | do {
                     yield(nil)
-                } )
+                } );;;
                 {
                     error(:e1)
                 }
             }
+            resume (coroutine(CO)) ()
         """)
-        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
+        assert(out == " |  anon : (lin 10, col 13) : (resume (coroutine(CO))())\n" +
+                " |  anon : (lin 7, col 21) : error(:e1)\n" +
+                " v  error : :e1\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
     }
 
     // TMP / VAR
