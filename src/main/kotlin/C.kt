@@ -527,6 +527,7 @@ fun Coder.main (tags: Tags): String {
             case CEU_VALUE_EXE_TASK:
     #endif
             {
+                CEU4(assert(src.type==CEU_VALUE_EXE_CORO && "TODO: drop task");)
                 CEU_Value clo = ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.clo);
                 char* err = ceu_drop(clo);
                 if (err != NULL) {
@@ -538,6 +539,7 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 5
             case CEU_VALUE_TASKS:
             {
+                assert(0 && "TODO: drop tasks");
                 for (
                     CEU_Exe_Task* tsk = (CEU_Exe_Task*) src.Dyn->Tasks.lnks.dn.fst;
                     tsk != NULL;
