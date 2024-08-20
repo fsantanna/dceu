@@ -148,11 +148,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
                 val size = dcls.size
 
-                this.pars.forEach { (id, tag) ->
-                    check(id)
-                    val dcl = Expr.Dcl (
-                        Tk.Fix("val", this.tk.pos), false, Pair(id,tag), null
-                    )
+                this.pars.forEach { dcl ->
+                    check(dcl.idtag.first)
                     dcls.add(dcl)
                     dcl_to_blk[dcl] = this
                     blk_to_dcls[this]!!.add(dcl)

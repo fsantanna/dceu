@@ -72,11 +72,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         """}}
                         
                         //{ // pars
-                            ${this.pars.mapIndexed { i,(id,_) -> """
+                            ${this.pars.mapIndexed { i,dcl -> """
                                 ${sta.ismem(this.blk).cond2({ """
-                                    ceu_mem->${id.str.idc()}
+                                    ceu_mem->${dcl.idtag.first.str.idc()}
                                 """ },{ """
-                                    CEU_Value ceu_par_${id.str.idc()}
+                                    CEU_Value ceu_par_${dcl.idtag.first.str.idc()}
                                 """ })}
                                     = ($i < ceux->n) ? ceux->args[$i] : (CEU_Value) { CEU_VALUE_NIL };
                             """ }.joinToString("")}
@@ -90,12 +90,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         } while (0);
 
                         //{ // pars
-                            ${this.pars.mapIndexed { i,(id,_) -> """
+                            ${this.pars.mapIndexed { i,dcl -> """
                                 ceu_gc_dec_val (
                                     ${sta.ismem(this.blk).cond2({ """
-                                        ceu_mem->${id.str.idc()}
+                                        ceu_mem->${dcl.idtag.first.str.idc()}
                                     """ },{ """
-                                        ceu_par_${id.str.idc()}
+                                        ceu_par_${dcl.idtag.first.str.idc()}
                                     """ })}
                                 );
                             """ }.joinToString("")}

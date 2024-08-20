@@ -131,7 +131,7 @@ sealed class Tk (val str: String, val pos: Pos) {
 typealias Id_Tag  = Pair<Tk.Id,Tk.Tag?>
 
 sealed class Expr (val n: Int, val tk: Tk) {
-    data class Proto  (val tk_: Tk.Fix, val nst: Boolean, val tag: Tk.Tag?, val pars: List<Id_Tag>, val blk: Do): Expr(N++, tk_)
+    data class Proto  (val tk_: Tk.Fix, val nst: Boolean, val tag: Tk.Tag?, val pars: List<Expr.Dcl>, val blk: Do): Expr(N++, tk_)
     data class Do     (val tk_: Tk, val tag: Tk.Tag?, val es: List<Expr>) : Expr(N++, tk_)
     data class Escape (val tk_: Tk.Fix, val tag: Tk.Tag, val e: Expr?): Expr(N++, tk_)
     data class Group  (val tk_: Tk.Fix, val es: List<Expr>) : Expr(N++, tk_)

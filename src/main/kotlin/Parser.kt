@@ -539,7 +539,7 @@ class Parser (lexer_: Lexer)
                     val tag = if (!this.acceptEnu("Tag")) null else {
                         this.tk0 as Tk.Tag
                     }
-                    Pair(xid, tag)
+                    Expr.Dcl(Tk.Fix("val",xid.pos.copy()), true, Pair(xid, tag), null)
                 }
                 val tag = when {
                     (tk0.str != "task") -> null

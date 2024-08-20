@@ -10,7 +10,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
         return """
             struct { // PROTO | ${e.dump()}
                 ${e.pars.map { """
-                    CEU_Value ${it.first.str.idc()};
+                    CEU_Value ${it.idtag.first.str.idc()};
                 """ }.joinToString("") }
                 ${e.blk.mem()}
             };
