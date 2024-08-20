@@ -686,7 +686,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val dcl = vars.acc_to_dcl[this]!!
                 when {
                     ups.isdst(this) -> {
-                        val depth = vars.dcl_to_blk[vars.acc_to_dcl[this]!!]!!.let { blk ->
+                        val depth = ups.dcl_to_blk(vars.acc_to_dcl[this]!!).let { blk ->
                             ups.all_until(this) { it == blk }.filter { it is Expr.Do }.count() - 1
                         }
                         """

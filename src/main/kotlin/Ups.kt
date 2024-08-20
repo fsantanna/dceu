@@ -63,12 +63,16 @@ class Ups (val outer: Expr.Do) {
         return this.pub[e].let { it is Expr.Drop && it.e==e }
     }
 
+    fun dcl_to_blk (dcl: Expr.Dcl): Expr {
+        return this.first(dcl) { it is Expr.Do || it is Expr.Proto } ?: outer
+    }
+
     fun Expr.traverse (): Map<Expr,Expr> {
         fun Expr.map (l: List<Expr>): Map<Expr,Expr> {
             return l.map { it.traverse() }.fold(l.map { Pair(it,this) }.toMap(), { a, b->a+b})
         }
         return when (this) {
-            is Expr.Proto  -> this.map(listOf(this.blk))
+            is Expr.Proto  -> this.map(listOf(this.blk) + this.pars)
             is Expr.Do     -> this.map(this.es)
             is Expr.Escape -> this.map(listOfNotNull(this.e))
             is Expr.Group  -> this.map(this.es)
@@ -83,7 +87,7 @@ class Ups (val outer: Expr.Do) {
             is Expr.Defer  -> this.map(listOf(this.blk))
 
             is Expr.Yield  -> this.map(listOf(this.e))
-            is Expr.Resume -> this.map(listOf(this.co)+this.args)
+            is Expr.Resume -> this.map(listOf(this.co) + this.args)
 
             is Expr.Spawn  -> this.map(listOfNotNull(this.tsks,this.tsk) + this.args)
             is Expr.Delay  -> emptyMap()

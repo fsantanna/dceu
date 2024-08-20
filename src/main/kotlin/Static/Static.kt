@@ -58,7 +58,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     }
     fun idx (dcl: Expr.Dcl, src: Expr): String {
         val id = dcl.idtag.first.str.idc()
-        val blk = vars.dcl_to_blk[dcl]!!
+        val blk = ups.dcl_to_blk(dcl)
         val idx = id + "_" + dcl.n
         val ismem = this.ismem(blk)
         //println(listOf(src.tk.pos.lin, id, type(dcl,src)))

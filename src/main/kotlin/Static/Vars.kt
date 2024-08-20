@@ -18,9 +18,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             null
         )
     }.toMutableList()
-    public  val dcl_to_blk: MutableMap<Expr.Dcl,Expr> = dcls.map {
-        Pair(it, outer)
-    }.toMap().toMutableMap()
     public val acc_to_dcl: MutableMap<Expr.Acc,Expr.Dcl> = mutableMapOf()
     public val blk_to_dcls: MutableMap<Expr,MutableList<Expr.Dcl>> = mutableMapOf(
         Pair(outer, dcls.toList().toMutableList())
@@ -80,8 +77,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         }
     }
 
-    fun type (dcl: Expr, src: Expr): Type {
-        val blk = dcl_to_blk[dcl]!!
+    fun type (dcl: Expr.Dcl, src: Expr): Type {
+        val blk = ups.dcl_to_blk(dcl)
         val up  = ups.first(src) { it is Expr.Proto || it==blk }
         val xups = ups.all_until(src) { it == blk } // all ups between src -> dcl
         return when {
@@ -117,7 +114,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             if (dcl.tk.str != "val") {
                 err(e.tk, "access error : outer variable \"${dcl.idtag.first.str}\" must be immutable")
             }
-            val orig = ups.first(dcl_to_blk[dcl]!!) { it is Expr.Proto }
+            val orig = ups.first(ups.dcl_to_blk(dcl)) { it is Expr.Proto }
             //println(listOf(dcl.id.str, orig?.tk))
             val proto = ups.first(e) { it is Expr.Proto }!!
             ups.all_until(proto) { it == orig }
@@ -151,7 +148,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.pars.forEach { dcl ->
                     check(dcl.idtag.first)
                     dcls.add(dcl)
-                    dcl_to_blk[dcl] = this
                     blk_to_dcls[this]!!.add(dcl)
                 }
 
@@ -179,7 +175,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
                 val blk = ups.first(this) { it is Expr.Do }!! as Expr.Do
                 dcls.add(this)
-                dcl_to_blk[this] = blk
                 blk_to_dcls[blk]!!.add(this)
 
                 this.idtag.second.let {
