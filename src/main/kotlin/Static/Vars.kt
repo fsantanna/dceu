@@ -10,15 +10,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     val datas = mutableMapOf<String,LData>()
 
     // enc (enclosure) = Dcl or Proto
-    private val dcls: MutableList<Expr.Dcl> = GLOBALS.map {
-        Expr.Dcl (
-            Tk.Fix("val", outer.tk.pos),
-            true,
-            Pair(Tk.Id(it,outer.tk.pos,0), null),
-            null
-        )
-    }.toMutableList()
-    public val acc_to_dcl: MutableMap<Expr.Acc,Expr.Dcl> = mutableMapOf()
+    private val dcls: MutableList<Expr.Dcl> = mutableListOf()
     public val blk_to_dcls: MutableMap<Expr,MutableList<Expr.Dcl>> = mutableMapOf(
         Pair(outer, dcls.toList().toMutableList())
     )
@@ -32,7 +24,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     fun data (e: Expr): Pair<Int?,LData?>? {
         return when (e) {
             is Expr.Acc -> {
-                val dcl = acc_to_dcl[e]!!
+                val dcl = ups.acc_to_dcl(e,e)
                 dcl.idtag.second.let {
                     if (it == null) {
                         null
@@ -128,9 +120,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
         }
 
-        if (e is Expr.Acc) {        // TODO: what about Expr.Nat?
-            acc_to_dcl[e] = dcl
-        }
         return dcl
     }
 

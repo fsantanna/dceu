@@ -53,7 +53,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     }
 
     fun idx (acc: Expr.Acc): String {
-        val dcl = vars.acc_to_dcl[acc]!!
+        val dcl = ups.acc_to_dcl(acc,acc)
         return this.idx(dcl, acc)
     }
     fun idx (dcl: Expr.Dcl, src: Expr): String {
@@ -136,7 +136,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.dst.traverse()
                 this.src.traverse()
                 if (this.dst is Expr.Acc) {
-                    val dcl = vars.acc_to_dcl[this.dst]!!
+                    val dcl = ups.acc_to_dcl(this.dst,this.dst)
                     if (dcl.tk.str == "val") {
                         err(this.tk, "set error : destination is immutable")
                     }
@@ -227,7 +227,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
-                val dcl = vars.acc_to_dcl[this]!!
+                val dcl = ups.acc_to_dcl(this,this)
                 if (dcl.src is Expr.Proto && dcl.tk.str=="val") {
                     // f is accessed
                     //  - from an enclosing const g

@@ -2292,10 +2292,10 @@ fun Coder.main (tags: Tags): String {
             """
         }.joinToString("")
         val poss = vars.blk_to_dcls[outer]!!.map {
-            val id = it.idtag.first.str.idc()
-            """
-            CEU_Value ceu_glb_$id = { CEU_VALUE_NIL };    
-            """
+            val id = it.idtag.first.str
+            (!GLOBALS.contains(id)).cond { """
+                CEU_Value ceu_glb_${id.idc()} = { CEU_VALUE_NIL };    
+            """ }
         }.joinToString("")
         return pres + poss
     }

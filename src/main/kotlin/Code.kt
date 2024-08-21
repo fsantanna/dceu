@@ -231,7 +231,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         { // dcls gc-dec
                             ${vars.blk_to_dcls[this]!!
                                 .asReversed()
-                                //.filter { !GLOBALS.contains(it.idtag.first.str) }
+                                .filter { !GLOBALS.contains(it.idtag.first.str) }
                                 .map { """
                                     ceu_gc_dec_val(${sta.idx(it, it)});
                                 """ }
@@ -683,10 +683,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             }
             is Expr.Acc -> {
                 val idx = sta.idx(this)
-                val dcl = vars.acc_to_dcl[this]!!
+                val dcl = ups.acc_to_dcl(this, this)
                 when {
                     ups.isdst(this) -> {
-                        val depth = ups.dcl_to_blk(vars.acc_to_dcl[this]!!).let { blk ->
+                        val depth = ups.dcl_to_blk(ups.acc_to_dcl(this,this)).let { blk ->
                             ups.all_until(this) { it == blk }.filter { it is Expr.Do }.count() - 1
                         }
                         """

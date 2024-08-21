@@ -209,8 +209,24 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         }
         //readLine()
         val pos = Pos("anon", 0, 0, 0)
-        val ARGS   = Expr.Dcl(Tk.Fix("val",pos), true, Pair(Tk.Id("ARGS",pos),null), null)
-        val outer  = Expr.Do(Tk.Fix("", pos), null, listOf(ARGS)+es)
+        val tk0 = Tk.Fix("", pos.copy())
+
+        val glbs = GLOBALS.map {
+            Expr.Dcl (
+                Tk.Fix("val", pos.copy()),
+                true,
+                Pair(Tk.Id(it,pos.copy(),0), null),
+                null
+            )
+        }
+        val xargs   = Expr.Dcl (
+            Tk.Fix("val",pos.copy()),
+            true,
+            Pair(Tk.Id("ARGS",pos.copy()),null),
+            null
+        )
+
+        val outer  = Expr.Do(tk0, null, listOf(xargs)+glbs+es)
         val ups    = Ups(outer)
         val tags   = Tags(outer)
         val vars   = Vars(outer, ups)

@@ -64,7 +64,28 @@ class Ups (val outer: Expr.Do) {
     }
 
     fun dcl_to_blk (dcl: Expr.Dcl): Expr {
-        return this.first(dcl) { it is Expr.Do || it is Expr.Proto } ?: outer
+        return this.first(dcl) { it is Expr.Do || it is Expr.Proto }!! // ?: outer /*TODO: remove outer*/
+    }
+
+    fun acc_to_dcl (acc: Expr.Acc, from: Expr): Expr.Dcl {
+        val up = this.first(this.pub[from]!!) { it is Expr.Do || it is Expr.Proto }
+        fun aux (es: List<Expr>): Expr.Dcl? {
+            return es.firstNotNullOfOrNull {
+                when {
+                    (it is Expr.Group) -> aux(it.es)
+                    (it !is Expr.Dcl) -> null
+                    (it.idtag.first.str == acc.tk.str) -> it
+                    else -> null
+                }
+            }
+
+        }
+        val dcl: Expr.Dcl? = when {
+            (up is Expr.Proto) -> up.pars.firstOrNull { it.idtag.first.str == acc.tk.str }
+            (up is Expr.Do) -> aux(up.es)
+            else -> TODO()
+        }
+        return dcl ?: this.acc_to_dcl(acc, up)
     }
 
     fun Expr.traverse (): Map<Expr,Expr> {
