@@ -6,14 +6,25 @@ enum class Type {
     GLOBAL, LOCAL, PARAM, NESTED, UPVAL
 }
 
+fun Expr.Do.to_dcls (): List<Expr.Dcl> {
+    fun aux (es: List<Expr>): List<Expr.Dcl> {
+        return es.flatMap {
+            when {
+                (it is Expr.Group) -> aux(it.es)
+                (it is Expr.Dcl) -> listOf(it)
+                else -> emptyList()
+            }
+        }
+    }
+    return aux(this.es)
+}
+
 class Vars (val outer: Expr.Do, val ups: Ups) {
     val datas = mutableMapOf<String,LData>()
 
     // enc (enclosure) = Dcl or Proto
     private val dcls: MutableList<Expr.Dcl> = mutableListOf()
-    public val blk_to_dcls: MutableMap<Expr,MutableList<Expr.Dcl>> = mutableMapOf(
-        Pair(outer, dcls.toList().toMutableList())
-    )
+
     public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
     public val proto_to_upvs: MutableMap<Expr.Proto,MutableSet<Expr.Dcl>> = mutableMapOf()
 
@@ -126,7 +137,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
-                blk_to_dcls[this] = mutableListOf()
                 proto_to_upvs[this] = mutableSetOf()
                 if (this.tag !=null && !datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
@@ -137,7 +147,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.pars.forEach { dcl ->
                     check(dcl.idtag.first)
                     dcls.add(dcl)
-                    blk_to_dcls[this]!!.add(dcl)
                 }
 
                 this.blk.traverse()
@@ -148,7 +157,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.Do     -> {
                 //val proto = ups.first(this) { it is Expr.Proto } as Expr.Proto
-                blk_to_dcls[this] = mutableListOf()
                 //println(listOf(this.tk,dcls.size,enc_to_base[proto]))
 
                 val size = dcls.size
@@ -162,9 +170,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Dcl    -> {
                 check(this.idtag.first)
 
-                val blk = ups.first(this) { it is Expr.Do }!! as Expr.Do
                 dcls.add(this)
-                blk_to_dcls[blk]!!.add(this)
 
                 this.idtag.second.let {
                     if (it !=null && !datas.containsKey(it.str)) {

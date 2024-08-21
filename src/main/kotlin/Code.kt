@@ -171,7 +171,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         """}}
                         
                         ${(this != outer).cond { 
-                            vars.blk_to_dcls[this]!!.let { dcls ->
+                            this.to_dcls().let { dcls ->
                                 """
                                 ${(!sta.ismem(this)).cond { """
                                     //{ // inline vars dcls
@@ -229,7 +229,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         """ }}
 
                         { // dcls gc-dec
-                            ${vars.blk_to_dcls[this]!!
+                            ${this.to_dcls()
                                 .asReversed()
                                 .filter { !GLOBALS.contains(it.idtag.first.str) }
                                 .map { """
