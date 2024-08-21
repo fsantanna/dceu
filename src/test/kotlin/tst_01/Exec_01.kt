@@ -230,9 +230,11 @@ class Exec_01 {
             var f = func () {
                 t
             }
-            var t
+            var t = 10
+            println(f())
         """)
-        assert(out == "anon : (lin 3, col 17) : access error : variable \"t\" is not declared\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : access error : variable \"t\" is not declared\n") { out }
+        assert(out == "10\n") { out }
     }
     @Test
     fun bb_12_hold() {

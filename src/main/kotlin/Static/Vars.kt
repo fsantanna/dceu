@@ -22,9 +22,6 @@ fun Expr.Do.to_dcls (): List<Expr.Dcl> {
 class Vars (val outer: Expr.Do, val ups: Ups) {
     val datas = mutableMapOf<String,LData>()
 
-    // enc (enclosure) = Dcl or Proto
-    private val dcls: MutableList<Expr.Dcl> = mutableListOf()
-
     public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
     public val proto_to_upvs: MutableMap<Expr.Proto,MutableSet<Expr.Dcl>> = mutableMapOf()
 
@@ -35,7 +32,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     fun data (e: Expr): Pair<Int?,LData?>? {
         return when (e) {
             is Expr.Acc -> {
-                val dcl = ups.acc_to_dcl(e,e)
+                val dcl = ups.id_to_dcl(e.tk.str,e)!!
                 dcl.idtag.second.let {
                     if (it == null) {
                         null
@@ -93,19 +90,18 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         }
     }
 
-    fun check (id: Tk.Id) {
-        val prv = dcls.firstOrNull { it.idtag.first.str == id.str }
+    fun check (dcl: Expr.Dcl) {
         when {
-            (prv == null) -> {}
-            (CEU>=99 && id.str=="it") -> {}
+            (CEU>=99 && dcl.tk.str=="it") -> {}
+            (ups.id_to_dcl(dcl.tk.str, dcl, { it==dcl }) == null) -> {}
             else -> {
-                err(id, "declaration error : variable \"${id.str}\" is already declared")
+                err(dcl.tk, "declaration error : variable \"${dcl.tk.str}\" is already declared")
             }
         }
     }
 
     fun acc (e: Expr, id: String): Expr.Dcl {
-        val dcl: Expr.Dcl? = dcls.findLast { it.idtag.first.str==id }
+        val dcl: Expr.Dcl? = ups.id_to_dcl(e.tk.str, e)
         if (dcl == null) {
             err(e.tk, "access error : variable \"${id}\" is not declared")
         }
@@ -142,42 +138,17 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
 
-                val size = dcls.size
-
                 this.pars.forEach { dcl ->
-                    check(dcl.idtag.first)
-                    dcls.add(dcl)
+                    check(dcl)
                 }
 
                 this.blk.traverse()
-
-                repeat(dcls.size - size) {
-                    dcls.removeLast()
-                }
             }
-            is Expr.Do     -> {
-                //val proto = ups.first(this) { it is Expr.Proto } as Expr.Proto
-                //println(listOf(this.tk,dcls.size,enc_to_base[proto]))
-
-                val size = dcls.size
-                this.es.forEach { it.traverse() }
-                repeat(dcls.size - size) {
-                    dcls.removeLast()
-                }
-            }
+            is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Escape -> this.e?.traverse()
             is Expr.Group -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> {
-                check(this.idtag.first)
-
-                dcls.add(this)
-
-                this.idtag.second.let {
-                    if (it !=null && !datas.containsKey(it.str)) {
-                        //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
-                    }
-                }
-
+                check(this)
                 this.src?.traverse()
             }
             is Expr.Set    -> {
