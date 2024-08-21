@@ -1064,7 +1064,7 @@ class Exec_04 {
                         escape(:break, nil)
                    }
                }
-               val x
+               ;;val x
             }
             spawn T()
             broadcast(10)

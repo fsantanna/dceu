@@ -126,7 +126,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
             is Expr.Group  -> {
                 val up = ups.pub[this]!!
-                val ok = (up is Expr.Do) || (up is Expr.Dcl) || (up is Expr.Set && up.src==this)
+                val ok = (up is Expr.Do) || (up is Expr.Group) || (up is Expr.Dcl) || (up is Expr.Set && up.src==this)
                 if (!ok) {
                     err(this.tk, "group error : unexpected context")
                 }

@@ -375,7 +375,7 @@ class Exec_01 {
     fun be_03_rec_rec() {
         val out = test("""
             $PLUS
-            var g
+            ;;var g
             val f = func (v) {
                 if v == 0 {
                     0
@@ -383,7 +383,7 @@ class Exec_01 {
                     v + g(v - 1)
                 }
             }
-            set g = func (v) {
+            val g = func (v) {
                 if v == 0 {
                     0
                 } else {
@@ -5449,6 +5449,31 @@ class Exec_01 {
             })
         """)
         assert(out == "anon : (lin 3, col 15) : group error : unexpected context\n") { out }
+    }
+    @Test
+    fun tt_08_group() {
+        val out = test("""
+            group {
+                group {
+                    nil;
+                };
+            };
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun tt_09_group() {
+        val out = test("""
+            group {
+                group {
+                    val a = :a
+                };
+                val b = :b
+            };
+            println(a, b)
+        """)
+        assert(out == ":a\t:b\n") { out }
     }
 
     // ALL
