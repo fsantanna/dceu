@@ -67,14 +67,14 @@ class Ups (val outer: Expr.Do) {
         return this.first(dcl) { it is Expr.Do || it is Expr.Proto }!! // ?: outer /*TODO: remove outer*/
     }
 
-    fun id_to_dcl (id: String, from: Expr, but: ((Expr.Dcl)->Boolean)?=null): Expr.Dcl? {
+    fun id_to_dcl (id: String, from: Expr, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?=null): Expr.Dcl? {
         val up = this.first(this.pub[from]!!) { it is Expr.Do || it is Expr.Proto }
         fun aux (es: List<Expr>): Expr.Dcl? {
             return es.firstNotNullOfOrNull {
                 when {
                     (it is Expr.Group) -> aux(it.es)
                     (it !is Expr.Dcl) -> null
-                    (but != null && but(it)) -> null
+                    (but!=null && but(it)) -> null
                     (it.idtag.first.str == id) -> it
                     else -> null
                 }
@@ -82,14 +82,15 @@ class Ups (val outer: Expr.Do) {
 
         }
         val dcl: Expr.Dcl? = when {
-            (up is Expr.Proto) -> up.pars.firstOrNull { it.idtag.first.str == id }
+            (up is Expr.Proto) -> up.pars.firstOrNull { (but==null||!but(it)) && it.idtag.first.str==id }
             (up is Expr.Do) -> aux(up.es)
             else -> null
         }
         return when {
             (dcl != null) -> dcl
             (up == outer) -> null
-            else -> this.id_to_dcl(id, up!!)
+            (up is Expr.Proto && !cross) -> null
+            else -> this.id_to_dcl(id, up!!, cross, but)
         }
     }
 

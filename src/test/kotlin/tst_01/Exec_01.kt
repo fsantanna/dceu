@@ -212,7 +212,7 @@ class Exec_01 {
         """
         )
         //assert(out == "10\n") { out }
-        assert(out == "anon : (lin 3, col 21) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == "anon : (lin 3, col 17) : declaration error : variable \"x\" is already declared\n") { out }
     }
     @Test
     fun bb_10_var() {
@@ -255,7 +255,8 @@ class Exec_01 {
             val x
             println(x)
         """)
-        assert(out == "2\nnil\n") { out }
+        assert(out == "anon : (lin 3, col 17) : declaration error : variable \"x\" is already declared\n") { out }
+        //assert(out == "2\nnil\n") { out }
         //assert(out == "anon : (lin 6, col 13) : declaration error : cannot cross block (anon : (lin 2, col 13))\n") { out }
     }
 
@@ -293,7 +294,7 @@ class Exec_01 {
             val x
         """
         )
-        assert(out == "anon : (lin 3, col 17) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == "anon : (lin 2, col 13) : declaration error : variable \"x\" is already declared\n") { out }
     }
     @Test
     fun bc_04_dcl_blk() {
@@ -5138,6 +5139,17 @@ class Exec_01 {
             println(t3)
         """, true)
         assert(out == "[1,2,999]\n[10,2,3]\n[1,2,999]\n") { out }
+    }
+    @Test
+    fun qq_03x_copy() {
+        val out = test("""
+            func () {
+                val t1
+            }
+            val t1 = [1,2,3]
+            println(t1)
+        """)
+        assert(out == "[1,2,3]\n") { out }
     }
     @Test
     fun qq_04_copy() {

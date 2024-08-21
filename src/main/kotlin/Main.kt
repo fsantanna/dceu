@@ -219,18 +219,18 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
                 null
             )
         }
-        val xargs   = Expr.Dcl (
+        val xargs = Expr.Dcl (
             Tk.Fix("val",pos.copy()),
             true,
             Pair(Tk.Id("ARGS",pos.copy()),null),
             null
         )
 
-        val outer  = Expr.Do(tk0, null, listOf(xargs)+glbs+es)
-        val ups    = Ups(outer)
-        val tags   = Tags(outer)
-        val vars   = Vars(outer, ups)
-        val sta    = Static(outer, ups, vars)
+        val outer = Expr.Do(tk0, null, listOf(xargs)+glbs+es)
+        val ups   = Ups(outer)
+        val tags  = Tags(outer)
+        val vars  = Vars(outer, ups)
+        val sta   = Static(outer, ups, vars)
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
         if (verbose) {
             System.err.println("... ceu -> c ...")

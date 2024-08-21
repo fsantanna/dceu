@@ -91,17 +91,20 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     }
 
     fun check (dcl: Expr.Dcl) {
-        when {
-            (CEU>=99 && dcl.tk.str=="it") -> {}
-            (ups.id_to_dcl(dcl.tk.str, dcl, { it==dcl }) == null) -> {}
-            else -> {
-                err(dcl.tk, "declaration error : variable \"${dcl.tk.str}\" is already declared")
+        if (CEU>=99 && dcl.idtag.first.str=="it") {
+            // ok
+        } else {
+            val xdcl = ups.id_to_dcl(dcl.idtag.first.str, dcl, false, { it==dcl })
+            if (xdcl == null) {
+                // ok
+            } else {
+                err(dcl.tk, "declaration error : variable \"${dcl.idtag.first.str}\" is already declared")
             }
         }
     }
 
     fun acc (e: Expr, id: String): Expr.Dcl {
-        val dcl: Expr.Dcl? = ups.id_to_dcl(e.tk.str, e)
+        val dcl: Expr.Dcl? = ups.id_to_dcl(id, e)
         if (dcl == null) {
             err(e.tk, "access error : variable \"${id}\" is not declared")
         }
@@ -137,19 +140,15 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 if (this.tag !=null && !datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
-
-                this.pars.forEach { dcl ->
-                    check(dcl)
-                }
-
+                this.pars.forEach { check(it) }
                 this.blk.traverse()
             }
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Escape -> this.e?.traverse()
             is Expr.Group -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> {
-                check(this)
                 this.src?.traverse()
+                check(this)
             }
             is Expr.Set    -> {
                 this.dst.traverse()
