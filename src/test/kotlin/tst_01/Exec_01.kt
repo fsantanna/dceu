@@ -2819,7 +2819,8 @@ class Exec_01 {
             println(:no)
         """
         )
-        assert(out == "anon : (lin 3, col 27) : declaration error : variable \"x\" is already declared\n") { out }
+        //assert(out == "anon : (lin 3, col 27) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == ":no\n") { out }
     }
     @Test
     fun func1() {
@@ -5439,6 +5440,16 @@ class Exec_01 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun tt_07_export() {
+        val out = test("""
+            val f
+            f(group {
+                nil
+            })
+        """)
+        assert(out == "anon : (lin 3, col 15) : group error : unexpected context\n") { out }
+    }
 
     // ALL
 
@@ -5453,7 +5464,8 @@ class Exec_01 {
             set v = 10
             f()
         """)
-        assert(out == "anon : (lin 4, col 25) : access error : variable \"v\" is not declared\n") { out }
+        //assert(out == "anon : (lin 4, col 25) : access error : variable \"v\" is not declared\n") { out }
+        assert(out == "10\n") { out }
     }
     @Test
     fun zz_03_func_scope() {

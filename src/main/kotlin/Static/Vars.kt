@@ -11,7 +11,8 @@ fun Expr.Do.to_dcls (): List<Expr.Dcl> {
         return es.flatMap {
             when {
                 (it is Expr.Group) -> aux(it.es)
-                (it is Expr.Dcl) -> listOf(it)
+                (it is Expr.Dcl) -> listOf(it) + aux(listOfNotNull(it.src))
+                (it is Expr.Set) -> aux(listOf(it.src))
                 else -> emptyList()
             }
         }

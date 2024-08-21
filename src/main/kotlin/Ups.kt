@@ -72,11 +72,12 @@ class Ups (val outer: Expr.Do) {
         fun aux (es: List<Expr>): Expr.Dcl? {
             return es.firstNotNullOfOrNull {
                 when {
+                    (it is Expr.Set) -> aux(listOfNotNull(it.src))
                     (it is Expr.Group) -> aux(it.es)
                     (it !is Expr.Dcl) -> null
-                    (but!=null && but(it)) -> null
+                    (but!=null && but(it)) -> aux(listOfNotNull(it.src))
                     (it.idtag.first.str == id) -> it
-                    else -> null
+                    else -> aux(listOfNotNull(it.src))
                 }
             }
 

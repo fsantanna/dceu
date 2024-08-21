@@ -124,7 +124,14 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
                 this.e?.traverse()
             }
-            is Expr.Group  -> this.es.forEach { it.traverse() }
+            is Expr.Group  -> {
+                val up = ups.pub[this]!!
+                val ok = (up is Expr.Do) || (up is Expr.Dcl) || (up is Expr.Set && up.src==this)
+                if (!ok) {
+                    err(this.tk, "group error : unexpected context")
+                }
+                this.es.forEach { it.traverse() }
+            }
             is Expr.Dcl    -> {
                 if (this.src is Expr.Proto && this.tk.str=="val") {
                     protos_use_unused.add(this.src)
