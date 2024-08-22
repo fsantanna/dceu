@@ -13,7 +13,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
     }
 
     fun Expr.toerr (): String {
-        val src = this.tostr(false).quote(45)
+        val src = this.tostr(false).replace("_\\d+".toRegex(), "").quote(45)
         return "\"${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : $src\""
     }
 

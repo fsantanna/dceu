@@ -118,7 +118,7 @@ val to-iter = group {
                 == :val => itr.s[idx]
             }
         }
-        if #itr.tp==1 => ret[0] => ret
+        drop(if #itr.tp==1 => ret[0] => ret)
     }
 
     func iter-tuple (itr :Iterator) {
@@ -142,7 +142,7 @@ val to-iter = group {
     }
 
     func iter-xcoro (itr :Iterator) {
-        val co = itr.s
+        val' co = itr.s
         (resume co()) --> func (x) {
             if (status(co) == :terminated) {
                 nil
@@ -407,7 +407,7 @@ val to :To = group {
         loop v in to-iter(col,tp) {
             set ret[+] = v
         }
-        ret
+        drop(ret)
     }
     func to-dict (col) {
         val ret = @[]
@@ -420,7 +420,7 @@ val to :To = group {
                 }
             set ret[k'] = v'
         }
-        ret
+        drop(ret)
     }
     ;;;
     func to-tasks (...) {
@@ -556,7 +556,7 @@ func create-resume (CO, x, y, z) {
     val co = coroutine(CO)
     val v = resume co(x,y,z)
     assert(v == nil)
-    co
+    drop(co)
 }
 
 func copy (v) {
@@ -569,14 +569,14 @@ func copy (v) {
             loop i in {0 => #v{ {
                 set ret[i] = copy(v[i])
             }
-            ret
+            drop(ret)
         }
         :vector {
             val ret = #[]
             loop i in {0 => #v{ {
                 set ret[i] = copy(v[i])
             }
-            ret
+            drop(ret)
         }
         :dict {
             val ret = @[]
@@ -586,7 +586,7 @@ func copy (v) {
                 until (k == nil)
                 set ret[copy(k)] = copy(v[k])
             }
-            ret
+            drop(ret)
         }
         else {
             error(:TODO)

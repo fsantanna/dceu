@@ -741,7 +741,7 @@ class Exec_99 {
     fun fg_03_ifs() {
         val out = test("""
             val x = match [] {
-                it|true => ;;;drop;;;(it)
+                it|true => drop(it)
             }
             println(x)
         """, true)
@@ -1158,7 +1158,7 @@ class Exec_99 {
             val [x,1] = [1,2]
             println(x)
         """)
-        assert(out == " |  anon : (lin 3, col 19) : assert({{==}}(ceu_patt_1208,1),:Patt)\n" +
+        assert(out == " |  anon : (lin 3, col 19) : assert({{==}}(ceu_patt,1),:Patt)\n" +
                 " |  anon : (lin 2, col 597) : error(msg)\n" +
                 " v  error : :Patt\n") { out }
     }
@@ -1270,11 +1270,10 @@ class Exec_99 {
             println(x)
         """.trimIndent(), true)
         //assert(out == "anon : (lin 9, col 5) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 2, col 18) : block escape error : incompatible scopes\n" +
-        //        "anon : (lin 5, col 9) : error([10])\n" +
-        //        "error error : uncaught exception\n" +
-        //        ":error\n") { out }
-        assert(out == "[10]\n") { out }
+        assert(out == " |  anon : (lin 2, col 5) : x\n" +
+                " |  anon : (lin 5, col 9) : error(:z,[10])\n" +
+                " v  error : cannot copy reference out\n") { out }
+        //assert(out == "[10]\n") { out }
     }
     @Test
     fun gg_08_loop_() {
@@ -1812,7 +1811,9 @@ class Exec_99 {
             println(v)
         """)
         //assert(out == " v  anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : (val v = do { (val x = []); if x { x; } el...\n" +
+                " v  error : cannot copy reference out\n") { out }
     }
     @Test
     fun mm_07_and_or() {
@@ -1952,11 +1953,9 @@ class Exec_99 {
             }
             resume t()
         """)
-        assert(out == "[]\n") { out }
-        //assert(out == " |  anon : (lin 11, col 24) : t(v)\n" +
-        //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
-        //assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
-        //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "[]\n") { out }
+        assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
+                " v  error : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
         //        " v  anon : (lin 3, col 41) : block escape error : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
@@ -2086,7 +2085,7 @@ class Exec_99 {
             resume t()
             do {
                 val v = []
-                resume t(v)
+                resume t(drop(v))
             }
             resume t()
         """)
@@ -2163,7 +2162,7 @@ class Exec_99 {
                 do {
                     val b
                     var e = []
-                    broadcast (e)
+                    broadcast (drop(e))
                 }
             }
             ;;println(:2222)
@@ -2607,7 +2606,7 @@ class Exec_99 {
         """, true)
         //assert(out.contains("assertion error : expected :Iterator")) { out }
         assert(out.contains(" |  anon : (lin 2, col 23) : to-iter(nil)\n" +
-                " |  build/prelude-x.ceu : (lin 194, col 28) : error(:error,#['i','t','e','r','a','t','o'...\n" +
+                " |  build/prelude-x.ceu : (lin 194, col 28) : error(:error,#['i','n','v','a','l','i','d'...\n" +
                 " v  error : invalid collection\n")) { out }
     }
     @Test
@@ -2666,7 +2665,7 @@ class Exec_99 {
         val out = test("""
             val F = func (x) {
                 coro () {
-                    yield(x)
+                    yield(drop(x))
                 } --> {
                     to-iter(it)
                 }
@@ -2686,7 +2685,7 @@ class Exec_99 {
                 coro () {
                     loop {
                         val pos = []
-                        yield(;;;drop;;;(pos))
+                        yield(drop(pos))
                     }
                 } --> {
                     to-iter(it)
@@ -2817,9 +2816,9 @@ class Exec_99 {
         val out = test("""
             coro genFunc () {
                 var v1 = [0,'a']
-                yield(;;;drop;;;(v1))
+                yield(drop(v1))
                 var v2 = [1,'b']
-                yield(;;;drop;;;(v2))
+                yield(drop(v2))
             }
             loop v in genFunc {
                 println(v)
@@ -2838,7 +2837,7 @@ class Exec_99 {
         }
         val g = func () {
             val co = []
-            f(;;;drop;;;(co))
+            f(drop(co))
         }
         val x = g()
         println(x)
@@ -2855,7 +2854,7 @@ class Exec_99 {
                 })
                 resume co()
                 co --> {
-                    it
+                    drop(it)
                 }
             }
             do {
@@ -4349,7 +4348,7 @@ class Exec_99 {
             }
             do {
                 val e = []
-                broadcast(e)
+                broadcast(drop(e))
             }
         """)
         assert(out == "[]\n") { out }
@@ -4366,7 +4365,7 @@ class Exec_99 {
             }
             do {
                 val e = :X []
-                broadcast(e)
+                broadcast(drop(e))
             }
             println(:ok)
         """)
@@ -4587,7 +4586,7 @@ class Exec_99 {
             }
             do {
                 val e = :X []
-                broadcast(e)
+                broadcast(drop(e))
             }
             println(:ok)
         """)
@@ -4841,10 +4840,11 @@ class Exec_99 {
                 println(x)
             }
         """, true)
-        assert(out.contains("[]\n")) { out }
+        //assert(out.contains("[]\n")) { out }
         //assert(out.contains("anon : (lin 3, col 53) : block escape error : incompatible scopes")) { out }
-        //assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
-        //        "anon : (lin 3, col 25) : set error : incompatible scopes\n") { out }
+        assert(out == " |  anon : (lin 8, col 14) : (spawn (task :nested () { (var x = do { (v...\n" +
+                " |  anon : (lin 3, col 17) : (var x = do { (val' ceu_spw = (spawn (task...\n" +
+                " v  error : cannot copy reference out\n") { out }
     }
     @Test
     fun kn_06_await_task_rets_valgrind () {
@@ -6042,7 +6042,7 @@ class Exec_99 {
         val out = test("""
             val v = do {
                 val t = [[1],[2],[3]]
-                to.vector(t)
+                drop(to.vector(t))
             }
             println(v)
         """, true)
@@ -6565,7 +6565,7 @@ class Exec_99 {
         coro C () {
             yield()
             var t = []
-            yield(;;;drop;;;(t))
+            yield(drop(t))
         }
         do {
             val co = coroutine (C)
@@ -6600,7 +6600,7 @@ class Exec_99 {
             }
             coro Send (co, nxt) {
                 loop v in to-iter(co) {
-                    resume nxt(;;;drop;;;(v))
+                    resume nxt(drop(v))
                 }
                 nil
             }

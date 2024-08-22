@@ -157,8 +157,8 @@ class JS_99 {
         """, true)
         assert(out.contains("json :good\n" +
                 " |  anon : (lin 31, col 14) : (spawn (task :nested () { (val co1 = corou...\n" +
-                " |  anon : (lin 31, col 47) : (resume (ceu_co_53817)(ceu_arg_53817))\n" +
-                " |  anon : (lin 22, col 47) : (resume (ceu_co_53082)(ceu_arg_53082))\n" +
+                " |  anon : (lin 31, col 47) : (resume (ceu_co)(ceu_arg))\n" +
+                " |  anon : (lin 22, col 47) : (resume (ceu_co)(ceu_arg))\n" +
                 " |  anon : (lin 5, col 25) : error(:error)\n" +
                 " v  error : :error\n")) { out }
     }
@@ -466,7 +466,7 @@ class JS_99 {
                     val tmp = yield()
                     loop c in to.iter(tmp) {
                         if c == '\n' {
-                            resume target(cur)
+                            resume target(drop(cur))
                             set cur = ""
                         } else {
                             set cur[+] = c
@@ -548,12 +548,12 @@ class JS_99 {
                 loop chars in to.iter(co_read) {
                     loop {
                         val line = if chars {
-                            resume co_split(chars)
+                            resume co_split(drop(chars))
                         }
                         if line {
                             loop {
                                 val nums = if line {
-                                    resume co_nums(line)
+                                    resume co_nums(drop(line))
                                 }
                                 until (nums == nil)
                                 resume co_print(nums)

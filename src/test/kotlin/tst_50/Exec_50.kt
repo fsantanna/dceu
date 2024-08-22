@@ -8,6 +8,21 @@ import org.junit.runners.MethodSorters
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_50 {
+    // NESTED
+    @Test
+    fun nn_01_nested() {
+        val out = test("""
+            spawn (task () {
+                val t1 = spawn (task :nested () {
+                    println(:ok)
+                }) ()
+            }) ()
+        """)
+        assert(out == ":ok\n") { out }
+    }
+
+    // ORIGINAL
+
     @Test
     fun cc_tuple7_hold_err() {
         val out = test("""
@@ -27,7 +42,6 @@ class Exec_50 {
         //assert(out == "anon : (lin 3, col 30) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "[[[0]]]\n") { out }
     }
-
     @Test
     fun cc_tuple8_hold_err() {
         val out = test(
@@ -48,7 +62,6 @@ class Exec_50 {
                 " v  error : cannot copy reference out\n") { out }
         //assert(out == "[[[0]]]\n") { out }
     }
-
     @Test
     fun cc_tuple14_drop_out() {
         val out = test(
@@ -62,7 +75,6 @@ class Exec_50 {
         )
         assert(out == "[1,2,3]\n") { out }
     }
-
     @Test
     fun cm_01x_drop () {
         val out = test(
@@ -79,7 +91,6 @@ class Exec_50 {
         )
         assert(out == "[0,a]\n") { out }
     }
-
     @Test
     fun cc_07_global() {
         //DEBUG = true
@@ -95,7 +106,6 @@ class Exec_50 {
         """)
         assert(out.contains("[func: 0x")) { out }
     }
-
     @Test
     fun cc_07x_global() {
         val out = test("""
@@ -111,7 +121,6 @@ class Exec_50 {
         """)
         assert(out.contains("[func: 0x")) { out }
     }
-
     @Test
     fun cc_10_drop_multi_err() {
         val out = test("""
@@ -125,7 +134,6 @@ class Exec_50 {
         //assert(out == " |  anon : (lin 5, col 17) : drop(t1)\n v  error : value has multiple references\n") { out }
         assert(out == "[1,2,3]\n") { out }
     }
-
     @Test
     fun cc_10_drop_multi_err_why() {
         val out = test("""
@@ -146,7 +154,6 @@ class Exec_50 {
         //assert(out == "[99]\n" +
         //        "[1,[99],3]\n") { out }
     }
-
     @Test
     fun cc_10y_drop_multi_err_why() {
         val out = test("""
@@ -192,7 +199,6 @@ class Exec_50 {
         //assert(out == "[99]\n" +
         //        "[1,[99],3]\n") { out }
     }
-
     @Test
     fun cc_13_drop_cycle() {
         val out = test(
@@ -209,7 +215,6 @@ class Exec_50 {
         //assert(out == " |  anon : (lin 6, col 17) : drop(x)\n v  error : value has multiple references\n") { out }
         assert(out == "true\n") { out }
     }
-
     @Test
     fun cc_13_drop_cycle_x() {
         val out = test(
@@ -225,7 +230,6 @@ class Exec_50 {
         )
         assert(out == "true\n") { out }
     }
-
     @Test
     fun cc_14_drop_cycle() {
         val out = test(
@@ -309,7 +313,6 @@ class Exec_50 {
         assert(out == " |  anon : (lin 6, col 21) : x\n" +
                 " v  error : cannot copy reference out\n") { out }
     }
-
     @Test
     fun scope5_err() {
         val out = test("""
@@ -328,7 +331,6 @@ class Exec_50 {
         //assert(out == "anon : (lin 7, col 21) : store error : cannot assign reference to outer scope\n") { out }
         //assert(out == "[1,2,[10,20,30]]\n") { out }
     }
-
     @Test
     fun scope9_err() {
         val out = test(
@@ -347,7 +349,6 @@ class Exec_50 {
         //assert(out == "@[(1,[])]\n") { out }
         //assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
-
     @Test
     fun scope10x() {
         DEBUG = true
@@ -368,7 +369,6 @@ class Exec_50 {
         //assert(out == "1\n") { out }
         //assert(out == "anon : (lin 7, col 21) : set error : cannot assign reference to outer scope\n") { out }
     }
-
     @Test
     fun scope10_err() {
         val out = test("""
@@ -402,7 +402,6 @@ class Exec_50 {
         //assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
         //assert(out == "1\n") { out }
     }
-
     @Test
     fun scope12_err() {
         val out = test(
@@ -437,7 +436,6 @@ class Exec_50 {
         //assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "[[]]\n") { out }
     }
-
     @Test
     fun scope22a_tup() {
         val out = test(
@@ -474,7 +472,6 @@ class Exec_50 {
         assert(out == " |  anon : (lin 5, col 21) : d[0]\n" +
                 " v  error : cannot copy reference out\n") { out }
     }
-
     @Test
     fun scope22c_dic() {
         val out = test(
@@ -511,7 +508,6 @@ class Exec_50 {
         //assert(out == "1\n") { out }
         //assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
     }
-
     @Test
     fun scope22x_dict() {
         val out = test(
@@ -552,7 +548,6 @@ class Exec_50 {
         //assert(out == ":ok\n") { out }
         //assert(out == "anon : (lin 6, col 21) : store error : cannot assign reference to outer scope\n") { out }
     }
-
     @Test
     fun scope26x_args_err() {
         val out = test(
@@ -573,7 +568,6 @@ class Exec_50 {
         //assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "[[1],[2]]\n") { out }
     }
-
     @Test
     fun scope28_err() {
         val out = test(
@@ -593,7 +587,6 @@ class Exec_50 {
                 " v  error : cannot copy reference out\n") { out }
         //assert(out == "[[1]]\n") { out }
     }
-
     @Test
     fun scope30_cyc() {
         val out = test("""
@@ -613,7 +606,6 @@ class Exec_50 {
         assert(out == ":ok\n") { out }
         //assert(out == "anon : (lin 10, col 22) : drop error : value contains multiple references\n") { out }
     }
-
     @Test
     fun scope30x_cyc() {
         val out = test("""
@@ -705,7 +697,6 @@ class Exec_50 {
         assert(out == " |  anon : (lin 2, col 13) : (val f = do { (val x = []); (func () { x; ...\n" +
                 " v  error : cannot copy reference out\n") { out }
     }
-
     @Test
     fun clo21_err() {
         val out = test(
@@ -727,7 +718,6 @@ class Exec_50 {
                 " v  error : cannot copy reference out\n") { out }
         //assert(out == "[1]\n") { out }
     }
-
     @Test
     fun clo23_err() {
         val out = test(
@@ -750,7 +740,6 @@ class Exec_50 {
                 " v  error : cannot copy reference out\n") { out }
         //assert(out == "[1]\n") { out }
     }
-
     @Test
     fun clo23x_err() {
         val out = test(
@@ -770,7 +759,6 @@ class Exec_50 {
         assert(out == " |  anon : (lin 5, col 13) : (var g = do { (var t = [1]); drop(f(t)); })\n" +
                 " v  error : cannot copy reference out\n") { out }
     }
-
     @Test
     fun clo23x() {
         val out = test(
@@ -826,7 +814,6 @@ class Exec_50 {
         //assert(out == "anon : (lin 3, col 23) : error : cannot copy reference out\n") { out }
         //assert(out == "[1,2,3]\n") { out }
     }
-
     @Test
     fun qq_06_copy() {
         val out = test("""
@@ -869,7 +856,6 @@ class Exec_50 {
         assert(out == ":out\t[]\n:in\tnil\n") { out }
         //assert(out == ":out\t[]\n:in\t[]\n") { out }
     }
-
     @Test
     fun ff_04_move_err () {
         val out = test("""
@@ -904,7 +890,6 @@ class Exec_50 {
         """)
         assert(out == ":ok\n") { out }
     }
-
     @Test
     fun ff_06_move() {
         val out = test("""
@@ -978,7 +963,6 @@ class Exec_50 {
         //        " v  anon : (lin 2, col 27) : argument error : cannot hold alien reference\n") { out }
         assert(out == "[]\n") { out }
     }
-
     @Test
     fun gg_03_scope() {
         val out = test("""
@@ -1012,7 +996,6 @@ class Exec_50 {
         //        " v  anon : (lin 3, col 41) : resume error : cannot receive alien reference\n") { out }
         assert(out == "[]\n") { out }
     }
-
     @Test
     fun gg_03x_scope() {
         val out = test("""
@@ -1053,7 +1036,6 @@ class Exec_50 {
         //assert(out == " |  anon : (lin 9, col 17) : (resume (t)(v))\n" +
         //        " v  anon : (lin 2, col 27) : argument error : cannot hold alien reference\n") { out }
     }
-
     @Test
     fun gg_05_scope() {
         val out = test("""
@@ -1088,7 +1070,6 @@ class Exec_50 {
         //assert(out == " |  anon : (lin 16, col 33) : (resume (t)(nil))\n" +
         //        " v  anon : (lin 5, col 21) : yield error : cannot return pending reference\n") { out }
     }
-
     @Test
     fun gg_06_scope() {
         val out = test("""
@@ -1226,7 +1207,6 @@ class Exec_50 {
         //assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
-
     @Test
     fun cd_02_bcast_spawn_arg() {
         val out = test(
@@ -1248,7 +1228,6 @@ class Exec_50 {
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
         assert(out == ":ok\n") { out }
     }
-
     @Test
     fun cd_03_bcast_pub_arg() {
         val out = test(
@@ -1313,7 +1292,6 @@ class Exec_50 {
         assert(out == (" |  anon : (lin 7, col 21) : x\n" +
                 " v  error : cannot copy reference out\n")) { out }
     }
-
     @Test
     fun bd_02_track_err() {
         val out = test("""
@@ -1334,7 +1312,6 @@ class Exec_50 {
         assert(out == (" |  anon : (lin 4, col 13) : (val x = do { (val t = (spawn T())); t; })\n" +
                 " v  error : cannot copy reference out\n")) { out }
     }
-
     @Test
     fun bd_04_track_err() {
         val out = test("""
@@ -1356,7 +1333,6 @@ class Exec_50 {
         assert(out == (" |  anon : (lin 4, col 13) : (var x = do { (val t = (spawn T())); (val ...\n" +
                 " v  error : cannot copy reference out\n")) { out }
     }
-
     @Test
     fun bc_02_track_drop_err() {
         val out = test("""
@@ -1386,7 +1362,6 @@ class Exec_50 {
         //assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
         assert(out.contains("exe-task: 0x")) { out }
     }
-
     @Test
     fun bc_04_track_drop() {
         val out = test("""
@@ -1418,7 +1393,6 @@ class Exec_50 {
         assert(out == " |  anon : (lin 6, col 21) : x\n" +
                 " v  error : cannot copy reference out\n") { out }
     }
-
     @Test
     fun ff_05_track_err() {
         val out = test("""
@@ -1453,7 +1427,6 @@ class Exec_50 {
         assert(out == " |  anon : (lin 5, col 13) : (val x = do { (val ts = tasks(nil)); (spaw...\n" +
                 " v  error : cannot copy reference out\n") { out }
     }
-
     @Test
     fun fg_04_expose_err() {
         val out = test("""
@@ -1536,7 +1509,6 @@ class Exec_50 {
         assert(out == " |  anon : (lin 14, col 25) : x\n" +
                 " v  error : cannot copy reference out\n") { out }
     }
-
     @Test
     fun op_03_track_err() {
         val out = test("""
@@ -1563,7 +1535,6 @@ class Exec_50 {
         assert(out == (" |  anon : (lin 10, col 21) : x\n" +
                 " v  error : cannot copy reference out\n")) { out }
     }
-
     @Test
     fun op_08_track_scope() {
         val out = test("""
@@ -1604,7 +1575,6 @@ class Exec_50 {
         //assert(out == " |  anon : (lin 11, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 4, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
-
     @Test
     fun de_07_evt_err() {
         val out = test("""
@@ -1680,7 +1650,6 @@ class Exec_50 {
         //assert(out == " |  anon : (lin 13, col 25) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
-
     @Test
     fun zz_15_bcast_okr() {
         val out = test(
