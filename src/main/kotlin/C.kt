@@ -78,11 +78,12 @@ fun Coder.main (tags: Tags): String {
     fun h_enums (): String {
         return """
     #if CEU >= 50
+    #define CEU_LEX_UNDEF 255   // undefined depth
     typedef enum CEU_LEX_TYPE {
-        CEU_LEX_NONE = 0,      // ignore on ceu_hold_set_rec
-        CEU_LEX_FLEET,         // not assigned, dst assigns, can move upwards
-        CEU_LEX_MUTAB,         // set and assignable downwards
-        CEU_LEX_IMMUT,         // set but not re-assignable (nested fun)
+        CEU_LEX_NONE = 0,       // ignore on ceu_hold_set_rec
+        CEU_LEX_FLEET,          // not assigned, dst assigns, can move upwards
+        CEU_LEX_MUTAB,          // set and assignable downwards
+        CEU_LEX_IMMUT,          // set but not re-assignable (nested fun)
         CEU_LEX_MAX
     } CEU_LEX_TYPE;
     #endif
@@ -365,9 +366,9 @@ fun Coder.main (tags: Tags): String {
     CEU_Exe_Task CEU_GLOBAL_TASK = {
         CEU_VALUE_EXE_TASK, 1, (CEU_Value) { CEU_VALUE_NIL },
     #if CEU >= 50
-        { CEU_LEX_FLEET, -1 },
+        { CEU_LEX_FLEET, CEU_LEX_UNDEF },
     #endif
-        NULL, CEU_EXE_STATUS_YIELDED, CEU50(-1 COMMA) 0, NULL,
+        NULL, CEU_EXE_STATUS_YIELDED, CEU50(CEU_LEX_UNDEF COMMA) 0, NULL,
         0, {}, { {{NULL},NULL}, {NULL,NULL}, {NULL,NULL} }
     };
     #endif
@@ -573,6 +574,7 @@ fun Coder.main (tags: Tags): String {
             return "dropped value has pending outer reference";
         } else if (
             src.Dyn->Any.lex.type != CEU_LEX_FLEET &&
+            src.Dyn->Any.lex.depth != CEU_LEX_UNDEF &&
             src.Dyn->Any.lex.depth > dst.depth
         ) {
             //ceu_dump_val(src);
@@ -1424,7 +1426,7 @@ fun Coder.main (tags: Tags): String {
         *ret = (CEU_Tuple) {
             CEU_VALUE_TUPLE, 0, (CEU_Value) { CEU_VALUE_NIL },
     #if CEU >= 50
-            { CEU_LEX_FLEET, -1 },
+            { CEU_LEX_FLEET, CEU_LEX_UNDEF },
     #endif
             n, {}
         };
@@ -1455,7 +1457,7 @@ fun Coder.main (tags: Tags): String {
         *ret = (CEU_Vector) {
             CEU_VALUE_VECTOR, 0, (CEU_Value) { CEU_VALUE_NIL },
     #if CEU >= 50
-            { CEU_LEX_FLEET, -1 },
+            { CEU_LEX_FLEET, CEU_LEX_UNDEF },
     #endif
             0, 0, CEU_VALUE_NIL, buf
         };
@@ -1469,7 +1471,7 @@ fun Coder.main (tags: Tags): String {
         *ret = (CEU_Dict) {
             CEU_VALUE_DICT, 0, (CEU_Value) { CEU_VALUE_NIL },
     #if CEU >= 50
-            { CEU_LEX_FLEET, -1 },
+            { CEU_LEX_FLEET, CEU_LEX_UNDEF },
     #endif
             0, NULL
         };
@@ -1518,9 +1520,9 @@ fun Coder.main (tags: Tags): String {
             type, 0, (CEU_Value) { CEU_VALUE_NIL },
     #if CEU >= 50
             //clo.Dyn->Clo.lex,
-            { CEU_LEX_FLEET, -1 },
+            { CEU_LEX_FLEET, CEU_LEX_UNDEF },
     #endif
-            &clo.Dyn->Clo, CEU_EXE_STATUS_YIELDED, CEU50(-1 COMMA) 0, mem
+            &clo.Dyn->Clo, CEU_EXE_STATUS_YIELDED, CEU50(CEU_LEX_UNDEF COMMA) 0, mem
         };
         
         return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
@@ -1993,7 +1995,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 4
                         NULL,   // TODO: no access to up(ceux)
         #endif
-                        CEU50(-1 COMMA)
+                        CEU50(CEU_LEX_UNDEF COMMA)
                         0,
                         args
                     };
@@ -2161,7 +2163,7 @@ fun Coder.main (tags: Tags): String {
                     {.exe_task = tsk},
                     CEU_ACTION_ERROR,
                     NULL,   // TODO: no access to up(ceux)
-                    CEU50(-1 COMMA)
+                    CEU50(CEU_LEX_UNDEF COMMA)
                     1,
                     NULL
                 };
@@ -2173,7 +2175,7 @@ fun Coder.main (tags: Tags): String {
                     {.exe_task = tsk},
                     CEU_ACTION_RESUME,
                     NULL,   // TODO: no access to up(ceux)
-                    CEU50(-1 COMMA)
+                    CEU50(CEU_LEX_UNDEF COMMA)
                     1,
                     evt
                 };
@@ -2282,7 +2284,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Clo ceu_clo_$id = {
                 CEU_VALUE_CLO_FUNC, 1, (CEU_Value) { CEU_VALUE_NIL },
             #if CEU >= 50
-                { CEU_LEX_FLEET, -1 },
+                { CEU_LEX_FLEET, CEU_LEX_UNDEF },
             #endif
                 ceu_pro_$id, { 0, NULL }
             };

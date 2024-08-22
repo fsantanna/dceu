@@ -118,7 +118,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             ${this.pars.size},
                             ${vars.proto_to_upvs[this]!!.size}
                             ${isexe.cond {", sizeof(CEU_Pro_$id)"}}
-                            CEU50(COMMA ((CEU_Lex) { ${if (isnst) "CEU_LEX_IMMUT" else "CEU_LEX_FLEET"}, -1 }))
+                            CEU50(COMMA ((CEU_Lex) { ${if (isnst) "CEU_LEX_IMMUT" else "CEU_LEX_FLEET"}, CEU_LEX_UNDEF }))
                         )
                     );
                     
@@ -645,7 +645,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """
                 {  // TASKS | ${this.dump()}
                     ${this.max.code()}
-                    CEU_Value ceu_tsks_$n = ceu_create_tasks(ceux, &$blkc, ceu_acc CEU50(COMMA -1));
+                    CEU_Value ceu_tsks_$n = ceu_create_tasks(ceux, &$blkc, ceu_acc CEU50(COMMA CEU_LEX_UNDEF));
                     CEU_ACC(ceu_tsks_$n);
                     CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
                 }
