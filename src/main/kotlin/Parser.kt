@@ -263,7 +263,7 @@ class Parser (lexer_: Lexer)
         val idtag = Pair(this.id, this.tag)
         return """
             do {
-                val ${idtag.tostr(true)} = $v
+                val' ${idtag.tostr(true)} = $v
                 ${this.tag.cond{ "if ${this.id.str} is? ${it.str} {" }}
                 ${when (this) {
             is Patt.None -> """
@@ -1156,7 +1156,7 @@ class Parser (lexer_: Lexer)
                         """
                         val pat2 = pat1.code3("ceu_ret_$nn", cnt)
                         this.nest("""
-                            group {
+                            do {
                                 var' ceu_ret_$nn
                                 loop {
                                     set ceu_ret_$nn = ${pre}yield()
