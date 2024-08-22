@@ -133,7 +133,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.es.forEach { it.traverse() }
             }
             is Expr.Dcl    -> {
-                if (this.src is Expr.Proto && this.tk.str=="val") {
+                if (this.src is Expr.Proto && (this.tk.str=="val" || this.tk.str=="val'")) {
                     protos_use_unused.add(this.src)
                     protos_use_map[this.src] = mutableSetOf()
                 }
@@ -144,7 +144,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.src.traverse()
                 if (this.dst is Expr.Acc) {
                     val dcl = ups.id_to_dcl(this.dst.tk.str,this.dst)!!
-                    if (dcl.tk.str == "val") {
+                    if (dcl.tk.str=="val" || dcl.tk.str=="val'") {
                         err(this.tk, "set error : destination is immutable")
                     }
                 }
@@ -235,14 +235,14 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
                 val dcl = ups.id_to_dcl(this.tk.str,this)!!
-                if (dcl.src is Expr.Proto && dcl.tk.str=="val") {
+                if (dcl.src is Expr.Proto && (dcl.tk.str=="val" || dcl.tk.str=="val'")) {
                     // f is accessed
                     //  - from an enclosing const g
                     //      - g calls f
                     //      - add f to g such that f is ok if g is ok
                     //  - elsewhere
                     //      - f is ok and all fs' accessed from f
-                    val up_proto = ups.first(this) { it is Expr.Proto && ups.pub[it].let { it is Expr.Dcl && it.tk.str=="val" } }
+                    val up_proto = ups.first(this) { it is Expr.Proto && ups.pub[it].let { it is Expr.Dcl && (it.tk.str=="val" || it.tk.str=="val'") } }
                     when {
                         (up_proto == null) -> protos_use_f(dcl.src)
                         //!protos_use_unused.contains(up_proto) -> protos_use_f(dcl.src)

@@ -114,7 +114,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         // stop at declaration (orig)
         // use blk bc of args
         if (type(dcl,e) == Type.UPVAL) {
-            if (dcl.tk.str != "val") {
+            if (dcl.tk.str!="val" && dcl.tk.str!="val'") {
                 err(e.tk, "access error : outer variable \"${dcl.idtag.first.str}\" must be immutable")
             }
             val orig = ups.first(ups.dcl_to_blk(dcl)) { it is Expr.Proto }
