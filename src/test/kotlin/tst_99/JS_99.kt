@@ -549,19 +549,13 @@ class JS_99 {
             spawn {
                 loop chars in to.iter(co_read) {
                     loop {
-                        val line = if chars {
-                            resume co_split(drop(chars))
+                        val line = resume co_split(drop(chars))
+                        while line
+                        loop {
+                            val nums = resume co_nums(drop(line))
+                            while nums
+                            resume co_print(nums)
                         }
-                        if line {
-                            loop {
-                                val nums = if line {
-                                    resume co_nums(drop(line))
-                                }
-                                until (nums == nil)
-                                resume co_print(nums)
-                            }
-                        }
-                        until (line == nil)
                     }
                 }
             }
