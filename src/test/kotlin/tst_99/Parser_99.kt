@@ -365,7 +365,7 @@ class Parser_99 {
                 "(val' ceu_or_83 = do {\n" +
                 "(val' it = ceu_val_5);\n" +
                 "if a {\n" +
-                "(set ceu_ret_5 = do {\n" +
+                "(set ceu_ret_5 = group {\n" +
                 "1;\n" +
                 "});\n" +
                 "true;\n" +
@@ -390,7 +390,7 @@ class Parser_99 {
                 "ceu_or_115;\n" +
                 "} else {\n" +
                 "do {\n" +
-                "(set ceu_ret_5 = do {\n" +
+                "(set ceu_ret_5 = group {\n" +
                 "0;\n" +
                 "});\n" +
                 "true;\n" +
@@ -716,9 +716,9 @@ class Parser_99 {
         val l = lexer("loop x in f { x }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\n" +
+        assert(e.tostr() == "do :break {\n" +
                 "(val' ceu_itr_14 :Iterator = to-iter(f));\n" +
-                "loop {\n" +
+                "loop' {\n" +
                 "(val' ceu_val_14 = ceu_itr_14[:f](ceu_itr_14));\n" +
                 "if {{==}}(ceu_val_14,nil) {\n" +
                 "escape(:break,false);\n" +
@@ -778,7 +778,7 @@ class Parser_99 {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\n" +
+        assert(e.tostr() == "do :break {\n" +
                 "(val ceu_ste_23 = x);\n" +
                 "(var i = {{+}}(0,0));\n" +
                 "(val ceu_lim_23 = n);\n" +
