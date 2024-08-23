@@ -110,7 +110,7 @@ val [{{<}}, {{<=}}, {{>}}] = group {
 data :Iterator = [f,s,i,tp]
 val to-iter = group {
     func iter-ret (itr :Iterator, idx) {
-        val ret = tuple(#itr.tp)
+        val' ret = tuple(#itr.tp)
         loop j in {0 => #itr.tp{ {
             set ret[j] = match itr.tp[j] {
                 == :idx => idx
@@ -118,7 +118,7 @@ val to-iter = group {
                 == :val => itr.s[idx]
             }
         }
-        drop(if #itr.tp==1 => ret[0] => ret)
+        if #itr.tp==1 => ret[0] => ret
     }
 
     func iter-tuple (itr :Iterator) {
@@ -178,7 +178,7 @@ val to-iter = group {
         }
         match type(v) {
             | sup?(:Iterator, tag(v)) {
-                val v' :Iterator = v
+                val' v' :Iterator = v       ;; TODO: where
                 if #v' >= 4 {
                     set v'.tp = tp'(v'.tp)
                 }
@@ -553,10 +553,10 @@ func next (v, x) {
 }
 
 func create-resume (CO, x, y, z) {
-    val co = coroutine(CO)
+    val' co = coroutine(CO)         ;; TODO: where
     val v = resume co(x,y,z)
     assert(v == nil)
-    drop(co)
+    co
 }
 
 func copy (v) {

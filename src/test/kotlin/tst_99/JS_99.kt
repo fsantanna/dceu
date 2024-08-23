@@ -142,23 +142,25 @@ class JS_99 {
                 val co_fetch = coroutine(fetch)
                 val co_text  = coroutine(text)
                 val co_json  = coroutine(json)
-                val req = resume-yield-all co_fetch(url)
-                val txt = resume-yield-all co_text(req)
+                val' req = resume-yield-all co_fetch(url)
+                val' txt = resume-yield-all co_text(req)
                 resume-yield-all co_json(txt)
             }
             spawn {
                 val co1 = coroutine(fetchJson)
                 val co2 = coroutine(fetchJson)
-                val obj1 = resume-yield-all co1(:good)
-                println(obj1)   ;; json :good
-                val obj2 = resume-yield-all co2(:error)
-                println(obj2)   ;; never printed
+                resume-yield-all co1(:good) thus {
+                    println(it)   ;; json :good
+                }
+                resume-yield-all co2(:error) thus {
+                    println(it)   ;; never printed
+                }
             }
         """, true)
         assert(out.contains("json :good\n" +
-                " |  anon : (lin 31, col 14) : (spawn (task :nested () { (val co1 = corou...\n" +
-                " |  anon : (lin 31, col 47) : (resume (ceu_co)(ceu_arg))\n" +
-                " |  anon : (lin 22, col 47) : (resume (ceu_co)(ceu_arg))\n" +
+                " |  anon : (lin 33, col 14) : (spawn (task :nested () { (val co1 = corou...\n" +
+                " |  anon : (lin 32, col 48) : (resume (ceu_co)(ceu_arg))\n" +
+                " |  anon : (lin 22, col 48) : (resume (ceu_co)(ceu_arg))\n" +
                 " |  anon : (lin 5, col 25) : error(:error)\n" +
                 " v  error : :error\n")) { out }
     }
@@ -515,7 +517,7 @@ class JS_99 {
                     val tmp = yield(nil)
                     loop c in to.iter(tmp) {
                         if c == '\n' {
-                            yield(;;;drop;;;(cur))
+                            yield(drop(cur))
                             set cur = ""
                         } else {
                             set cur[+] = c
@@ -637,7 +639,7 @@ class JS_99 {
             var line = ""
             loop c in to.iter(chars) {
                 if c == '\n' {
-                    yield(;;;drop;;;(line))
+                    yield(drop(line))
                     set line = ""
                 } else {
                     set line[+] = c
@@ -675,19 +677,19 @@ class JS_99 {
             }
         }
         do { ;; PULL
-            val read1   = create-resume(FS-Read, "build/prelude-0.ceu")
-            val split1  = create-resume(Split, read1)
-            val number1 = create-resume(Number, split1)
-            val take1   = create-resume(Take, 3, number1)
+            val' read1   = create-resume(FS-Read, "build/prelude-0.ceu")
+            val' split1  = create-resume(Split, read1)
+            val' number1 = create-resume(Number, split1)
+            val' take1   = create-resume(Take, 3, number1)
             loop l in to.iter(take1) {
                 println(l)
             }
         }
         do { ;; PUSH
-            val read2   = create-resume(FS-Read, "build/prelude-x.ceu")
-            val split2  = create-resume(Split, read2)
-            val number2 = create-resume(Number, split2)
-            val take2   = create-resume(Take, 3, number2)
+            val' read2   = create-resume(FS-Read, "build/prelude-x.ceu")
+            val' split2  = create-resume(Split, read2)
+            val' number2 = create-resume(Number, split2)
+            val' take2   = create-resume(Take, 3, number2)
             coro Show () {
                 var line = yield()
                 loop {
@@ -698,7 +700,7 @@ class JS_99 {
             }
             coro Send (co, nxt) {
                 loop v in to-iter(co) {
-                    resume nxt(;;;drop;;;(v))
+                    resume nxt(drop(v))
                 }
                 nil
             }
