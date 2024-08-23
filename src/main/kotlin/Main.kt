@@ -7,7 +7,7 @@ import java.util.*
 var TEST = false
 var DUMP = true
 var DEBUG = true
-var CEU = 1
+var CEU = 50
 
     //  1: dyn-lex                              ;; 46 "definitely lost" (errors or cycles)
     //  2: defer, throw/catch, do/escape, loop  ;;  4 "definitely lost" (C errors)

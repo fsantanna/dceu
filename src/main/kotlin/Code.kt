@@ -111,7 +111,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 //assert(!this.isva) { "TODO" }
                 """ // CREATE | ${this.dump()}
                 {
-                    ${isnst.cond { "assert(ceux->exe!=NULL && ceux->exe->type==CEU_VALUE_EXE_TASK);" }}
+                    ${isnst.cond { "//assert(ceux->exe!=NULL && ceux->exe->type==CEU_VALUE_EXE_TASK);" }}
                     CEU_ACC (
                         ceu_create_clo_${this.tk.str} (
                             ceu_pro_$id,

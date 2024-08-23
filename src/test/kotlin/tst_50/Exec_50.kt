@@ -79,19 +79,20 @@ class Exec_50 {
             }
             println(:no)
         """)
-        assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 3, col 17) : :nested error : expected enclosing prototype\n") { out }
+        //assert(out == ":ok\n") { out }
     }
     @Test
     fun nn_03_nested() {
         val out = test("""
-            do {
+            ;;do {
                 var x = 10
                 val g = func :nested () {
                     set x = 100
                 }
                 g()
                 println(x)
-            }
+            ;;}
         """
         )
         assert(out == "100\n") { out }
@@ -379,9 +380,11 @@ class Exec_50 {
             spawn (task :nested () {
                 nil
             } )()
+            println(:ok)
         """
         )
-        assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
+        //assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun znc_06_bcast_in() {  // bcast in outer of :nested
