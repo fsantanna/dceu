@@ -57,6 +57,7 @@ class Exec_50 {
     }
 
     // NESTED
+
     @Test
     fun nn_01_nested() {
         val out = test("""
@@ -65,6 +66,600 @@ class Exec_50 {
                     println(:ok)
                 }) ()
             }) ()
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun nn_02_nested() {
+        val out = test("""
+            val f = do {
+                func :nested () {
+                    nil
+                }
+            }
+            println(:no)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun nn_03_nested() {
+        val out = test("""
+            do {
+                var x = 10
+                val g = func :nested () {
+                    set x = 100
+                }
+                g()
+                println(x)
+            }
+        """
+        )
+        assert(out == "100\n") { out }
+        //assert(out == "anon : (lin 4, col 30) : expected \"(\" : have \":nested\"\n") { out }
+    }
+
+    // ORIGINAL / NESTED
+
+    @Test
+    fun zna_01_set() {
+        val out = test(
+            """
+            spawn( task () {
+                var t = [1]
+                spawn( task :nested () {
+                    set t = [2]
+                }) ()
+                println(t)
+            } )()
+        """
+        )
+        assert(out == "[2]\n") { out }
+    }
+    @Test
+    fun zna_02_set() {
+        val out = test(
+            """
+            spawn( task () {
+                var t = [1]
+                spawn (task :nested () {
+                    yield(nil) ;;thus { it => nil }
+                    set t = [2]
+                } )()
+                yield(nil) ;;thus { it => nil }
+                println(t)
+            }) ()
+            broadcast(nil)
+        """
+        )
+        assert(out == "[2]\n") { out }
+    }
+    @Test
+    fun zna_03_set() {
+        val out = test(
+            """
+            spawn( task () {
+                val t = [1]
+                ;;func () {
+                    set t[0] = 2
+                ;;} ()
+                println(t)
+            }) ()
+        """
+        )
+        assert(out == "[2]\n") { out }
+    }
+    @Test
+    fun TODO_zna_04_set() {
+        val out = test(
+            """
+            spawn (task () {
+                var t = [1]
+                spawn( task :nested () {
+                    func (it) {
+                        set t = copy(it)    ;; TODO: func -> nested -> task
+                    } (yield(nil))
+                }) ()
+                yield(nil) ;;thus { it => nil }
+                println(t)
+            }) ()
+            broadcast ([1])
+        """, true
+        )
+        //assert(out == "[1]\n") { out }
+        assert(out == "anon : (lin 6, col 29) : access error : outer variable \"t\" must be immutable\n") { out }
+    }
+    @Test
+    fun zna_05_set() {
+        val out = test(
+            """
+            spawn (task () {
+                var t = [1]
+                spawn( task :nested () {
+                    set t = copy(yield(nil))
+                }) ()
+                yield(nil) ;;thus { it => nil }
+                println(t)
+            } )()
+            broadcast ([1])
+        """, true
+        )
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun zna_06_set() {
+        val out = test(
+            """
+            var ang = 0
+            do :break {
+                loop' {
+                    escape(:break, nil) ;; if true
+                    ang
+                }
+            }
+            println(:ok)
+        """
+        )
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : loop error : innocuous last expression\n") { out }
+    }
+    @Test
+    fun zna_07_nst() {
+        val out = test(
+            """
+            val T = task (t) {
+                var ang = 0
+                spawn (task :nested () {
+                    set ang = 10
+                })()
+                println(ang)
+            }
+            spawn T()
+        """
+        )
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun zna_08_escape() {
+        val out = test("""
+            spawn (task () {
+                val v = do :X {
+                    spawn (task :nested () {
+                        escape(:X,:ok)
+                    })()
+                    loop' {
+                        yield(nil)
+                    }
+                    nil
+                }
+                println(v)
+            }) ()
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun zna_09_escape() {
+        val out = test("""
+            spawn (task () {
+                val v = do :X {
+                    spawn (task :nested () {
+                        defer {
+                            println(:def)
+                        }
+                        escape(:X,:ok)
+                    })()
+                }
+                println(v)
+            }) ()
+        """)
+        assert(out == ":def\n:ok\n") { out }
+    }
+    @Test
+    fun zna_10_escape() {
+        val out = test("""
+            spawn (task () {
+                val v = catch :X {
+                    spawn (task :nested () {
+                        defer {
+                            println(:def)
+                        }
+                        error(:X,:ok)
+                    })()
+                }
+                println(v)
+            }) ()
+        """)
+        assert(out == ":def\n:ok\n") { out }
+    }
+    @Test
+    fun zna_11_escape() {
+        val out = test("""
+            spawn (task () {
+                val v = do :X {
+                    spawn (task :nested () {
+                        yield(nil)
+                        escape(:X,:ok)
+                    })()
+                    yield(nil)
+                }
+                println(v)
+            }) ()
+            broadcast(nil)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+
+    @Test
+    fun znb_01_pub_err() {
+        val out = test(
+            """
+            task :nested () {
+                pub
+            }
+        """
+        )
+        //assert(out == " v  anon : (lin 2, col 13) : pub() : pub error : expected task\n") { out }
+        assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing task\n") { out }
+    }
+
+    @Test
+    fun znc_01_nested() {
+        val out = test(
+            """
+            task :nested () {
+                nil
+            }
+            println(:ok)
+        """
+        )
+        //assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing spawn\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing task\n") { out }
+        assert(out == "ok\n") { out }
+    }
+    @Test
+    fun znc_02_nested() {
+        val out = test(
+            """
+            spawn (task () {
+                var xxx = 1
+                yield(nil)
+                spawn(task :nested () {
+                    set xxx = 10
+                }) ()
+                println(xxx)
+            } )()
+            broadcast(nil)
+        """
+        )
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun znc_03_nested() {
+        val out = test(
+            """
+            spawn (task () {
+                var xxx = 1
+                yield(nil)
+                spawn( task :nested () {
+                    set xxx = 10
+                }) ()
+                println(xxx)
+            } )()
+            do {
+                broadcast(nil)
+            }
+        """
+        )
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun znc_04_nested_err() {
+        val out = test(
+            """
+            spawn (task () {
+                var xxx = 1
+                yield(nil)
+                spawn(task () {     ;; ERROR: crosses non :nested
+                    spawn(task :nested () {
+                        set xxx = 10
+                    }) ()
+                }) ()
+                println(xxx)
+            } )()
+            broadcast(nil)
+        """
+        )
+        //assert(out == "ERROR\n") { out }
+        assert(out == "anon : (lin 7, col 29) : access error : outer variable \"xxx\" must be immutable\n") { out }
+    }
+    @Test
+    fun znc_05_nested_err() {
+        val out = test(
+            """
+            spawn (task :nested () {
+                nil
+            } )()
+        """
+        )
+        assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
+    }
+    @Test
+    fun znc_06_bcast_in() {  // bcast in outer of :nested
+        val out = test(
+            """
+            var T
+            set T = task (v) {
+                spawn (task :nested () {
+                    val evt = yield(nil)
+                    println(v, evt)
+                }) ()
+                spawn (task :nested () {
+                    do {
+                        broadcast(:ok) in :task
+                    }
+                }) ()
+                yield(nil)
+                println(:err)
+            }
+            spawn (task () {
+                yield(nil)
+                println(:err)
+            }) ()
+            spawn T (1)
+            spawn T (2)
+        """
+        )
+        assert(out == "1\t:ok\n2\t:ok\n") { out }
+    }
+    @Test
+    fun znc_07_pub_fake_task() {
+        val out = test("""
+            spawn (task () {
+                set pub = 1
+                spawn (task :nested () {
+                    println(pub)
+                }) ()
+                nil
+            }) ()
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun znc_08_pub_fake_task_err() {
+        val out = test("""
+            spawn (task () {
+                set pub = []
+                var x
+                spawn (task :nested () {
+                    set x = pub
+                }) ()
+                println(x)
+            }) ()
+        """)
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 2, col 20) : task () { set task.pub = [] var x spa...)\n" +
+        //        "anon : (lin 5, col 24) : task () :fake { set x = task.pub }()\n" +
+        //        "anon : (lin 6, col 34) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        //assert(out == "anon : (lin 2, col 20) : task () { set task.pub = [] var x spawn task ...)\n" +
+        //        "anon : (lin 5, col 24) : task () :fake { set x = task.pub }()\n" +
+        //        "anon : (lin 6, col 25) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun znc_09_pub_fake_task() {
+        val out = test("""
+            spawn (task () {
+                set pub = [10]
+                var x
+                spawn (task :nested () {
+                    set x = pub[0]
+                }) ()
+                println(x)
+            }) ()
+        """, true)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun znc_10_pub_fake_err() {
+        val out = test("""
+            spawn (task :nested () {
+                pub
+            }) ()
+        """, true)
+        //assert(out == "anon : (lin 3, col 22) : pub error : expected enclosing task") { out }
+        //assert(out == "anon : (lin 3, col 17) : task error : missing enclosing task") { out }
+        assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
+    }
+    @Test
+    fun znc_11_xceu3() {
+        val out = test("""
+            spawn task () {
+                var evt = yield(nil)
+                println(evt)
+                spawn (task :nested () {
+                    loop' {
+                        println(evt)    ;; kept reference
+                        set evt = yield(nil)
+                    }
+                }) ()
+                set evt = yield(nil)
+            }()
+            broadcast (10)
+            broadcast (20)
+        """)
+        assert(out == "10\n10\n20\n") { out }
+        //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
+    }
+
+    @Test
+    fun znd_01_bcast_err() {
+        val out = test("""
+            spawn (task :nested () {
+                broadcast(nil) in :task
+            }) ()
+            println(:ok)
+        """)
+        //assert(out == "anon : (lin 2, col 20) : (task () :fake { broadcast in :task, nil })()\n" +
+        //        "anon : (lin 3, col 30) : broadcast error : invalid target\n:error\n") { out }
+        //assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
+    }
+    @Test
+    fun znd_02_throw_fake() {
+        val out = test("""
+            spawn (task () {
+                catch :err ;;;(err|err==:err);;; {
+                    spawn (task :nested () {
+                        error(:err)
+                    }) ()
+                }
+                println(10)
+            }) ()
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun znd_03_throw_fake() {
+        val out = test("""
+            spawn task () { 
+                catch :err ;;;(err|{{==}}(err,:err));;; {
+                    spawn (task :nested () {
+                        yield(nil)
+                        error(:err)
+                    })()
+                    yield(nil)
+                }
+            }() 
+            broadcast(nil)
+            println(10)
+        """)
+        assert(out == "10\n") { out }
+    }
+
+    @Test
+    fun zne_01_anon() {
+        val out = test(
+            """
+            spawn (task () {
+                do {
+                    println(:xxx, pub)
+                    spawn (task :nested () {
+                        println(:yyy, pub)
+                        yield(nil) ;;thus { it => nil }
+                    }) ()
+                    yield(nil) ;;thus { it => nil }
+                }
+                yield(nil) ;;thus { it => nil }
+            }) ()
+       """
+        )
+        assert(out == ":xxx\tnil\n:yyy\tnil\n") { out }
+    }
+    @Test
+    fun zne_02_anon() {
+        val out = test(
+            """
+            var T
+            set T = task () {
+                spawn (task :nested () {
+                    println(1)
+                    nil
+                }) ()
+                nil
+            }
+            spawn T()
+        """
+        )
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 8, col 19) : T()\n" +
+        //        "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 9, col 19) : T()\n" +
+        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n" +
+        //        "1\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun zne_03_anon() {
+        val out = test(
+            """
+            var T
+            set T = task () {
+                spawn (task :nested () {
+                    (999)
+                })()
+                nil
+            }
+            spawn T()
+            println(1)
+        """
+        )
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 8, col 19) : T()\n" +
+        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
+    }
+
+    @Test
+    fun znf_01_99() {
+        val out = test("""
+            spawn (task (v) {
+                spawn (task :nested () {
+                    println(v)
+                }) ()
+            }) (100)
+            println(:ok)
+        """)
+        assert(out == "100\n:ok\n") { out }
+    }
+    @Test
+    fun znf_02_hh_pub_task() {
+        val out = test("""
+        spawn task () { 
+            var y
+            set y = do {     
+                var ceu_spw_54     
+                set ceu_spw_54 = spawn task :nested () {         
+                    yield(nil)         
+                    [2]             
+                }()        
+                yield(nil)     
+                ;;println(ceu_spw_54.pub)     
+                ceu_spw_54.pub        
+            }     
+            println(y) 
+        }()
+        broadcast( nil )
+        """)
+        assert(out == "[2]\n") { out }
+        //assert(out == "anon : (lin 16, col 9) : broadcast nil\n" +
+        //        "anon : (lin 12, col 28) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+    }
+    @Test
+    fun znf_03_anon() {
+        val out = test(
+            """
+            data :X = [x]
+            val T = task () :X {
+                set pub = [10]
+                spawn (task :nested () {
+                    println(pub.x)
+                }) ()
+                nil
+            }
+            spawn T()
+       """
+        )
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun znf_04_xceu () {
+        val out = test("""
+            data :X = [x]
+            task () :X {
+                task :nested () {
+                    ;;;task.;;;pub.x
+                }
+            }
+            println(:ok)
         """)
         assert(out == ":ok\n") { out }
     }

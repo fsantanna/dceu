@@ -260,25 +260,6 @@ class Parser_04 {
         assert(e.tostr() == "(set pub = {{+}}(x.pub,pub))") { e.tostr() }
     }
 
-    // :NESTED
-
-    @Test
-    fun ee_02_task_err() {
-        val l = lexer("""
-            task :xxx () {}
-        """.trimIndent())
-        val parser = Parser(l)
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid task : unexpected \":xxx\"")
-        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : expected \"(\" : have \":xxx\"")
-    }
-    @Test
-    fun ee_04_task() {
-        val l = lexer("task (a,b) :nested { 10 }")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr() == "(task (a,b) :nested {\n10;\n})") { e.tostr() }
-    }
-
     // TOGGLE
 
     @Test

@@ -4469,7 +4469,7 @@ class Exec_01 {
     @Test
     fun pq_01_nested() {
         val out = test("""
-            val f = do {
+            do {
                 var x = 10
                 val g = func :nested () {
                     set x = 100
@@ -4477,7 +4477,6 @@ class Exec_01 {
                 g()
                 println(x)
             }
-            f()
         """
         )
         //assert(out == "100\n") { out }

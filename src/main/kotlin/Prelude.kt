@@ -58,8 +58,8 @@ fun AWAIT (v:String="(type(it) /= :exe-task)"): String {
     return """
         do :break {
             loop' {
-                val' it = yield(nil)
-                val' xxx = ${AND(v, OR("it","true"))}
+                val${(CEU>=50).cond{"'"}} it = yield(nil)
+                val${(CEU>=50).cond{"'"}} xxx = ${AND(v, OR("it","true"))}
                 if xxx {
                     escape(:break,xxx)
                 } else {nil}
