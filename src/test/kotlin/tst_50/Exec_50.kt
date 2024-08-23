@@ -8,6 +8,54 @@ import org.junit.runners.MethodSorters
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_50 {
+    // DEPTH
+    @Test
+    fun aa_01_depth() {
+        val out = test("""
+            val t1 = []
+            do {
+                nil
+            }
+            val t2 = []
+            println(`:number ${D}t1.Dyn->Any.lex.depth`, `:number ${D}t2.Dyn->Any.lex.depth`)
+        """)
+        assert(out == "1\t1\n") { out }
+    }
+    @Test
+    fun aa_02_depth() {
+        val out = test("""
+            val t1 = []
+            (func () { nil })()
+            val t2 = []
+            println(`:number ${D}t1.Dyn->Any.lex.depth`, `:number ${D}t2.Dyn->Any.lex.depth`)
+        """)
+        assert(out == "1\t1\n") { out }
+    }
+    @Test
+    fun aa_03_depth() {
+        val out = test("""
+            val t1 = []
+            resume (coroutine(coro () { nil })) ()
+            val t2 = []
+            println(`:number ${D}t1.Dyn->Any.lex.depth`, `:number ${D}t2.Dyn->Any.lex.depth`)
+        """)
+        assert(out == "1\t1\n") { out }
+    }
+    @Test
+    fun aa_04_depth() {
+        val out = test("""
+            val t1 = []
+            do :X {
+                loop' {
+                    escape(:X, nil)
+                }
+            }
+            val t2 = []
+            println(`:number ${D}t1.Dyn->Any.lex.depth`, `:number ${D}t2.Dyn->Any.lex.depth`)
+        """)
+        assert(out == "1\t1\n") { out }
+    }
+
     // NESTED
     @Test
     fun nn_01_nested() {

@@ -6588,24 +6588,26 @@ class Exec_99 {
                 yield("line")
             }
         }
+        coro Show () {
+            var line = yield()
+            loop {
+                while line
+                set line = yield()
+                println(line)
+            }
+        }
+        coro Send (co, nxt) {
+            loop v in to-iter(co) {
+                resume nxt(drop(v))
+            }
+            nil
+        }
         do {
-            val take = create-resume(Take)
-            coro Show () {
-                var line = yield()
-                loop {
-                    while line
-                    set line = yield()
-                    println(line)
+            create-resume(Take) thus { \take =>
+                create-resume(Show) thus { \show =>
+                    create-resume(Send, take, show)
                 }
             }
-            coro Send (co, nxt) {
-                loop v in to-iter(co) {
-                    resume nxt(drop(v))
-                }
-                nil
-            }
-            val co = create-resume(Show)
-            create-resume(Send, take, co)
         }
         """, true)
         assert(out == "line\n" +

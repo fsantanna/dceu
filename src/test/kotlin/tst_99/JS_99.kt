@@ -685,25 +685,25 @@ class JS_99 {
                 println(l)
             }
         }
+        coro Show () {
+            var line = yield()
+            loop {
+                until not line
+                println(line)
+                set line = yield()
+            }
+        }
+        coro Send (co, nxt) {
+            loop v in to-iter(co) {
+                resume nxt(drop(v))
+            }
+            nil
+        }
         do { ;; PUSH
             val' read2   = create-resume(FS-Read, "build/prelude-x.ceu")
             val' split2  = create-resume(Split, read2)
             val' number2 = create-resume(Number, split2)
             val' take2   = create-resume(Take, 3, number2)
-            coro Show () {
-                var line = yield()
-                loop {
-                    until not line
-                    println(line)
-                    set line = yield()
-                }
-            }
-            coro Send (co, nxt) {
-                loop v in to-iter(co) {
-                    resume nxt(drop(v))
-                }
-                nil
-            }
             create-resume(Send, take2, create-resume(Show))
             nil
         }
