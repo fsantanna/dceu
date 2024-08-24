@@ -242,18 +242,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
                         ceu_acc = ceu_acc_$n;
                         
-                        #if CEU >= 50
-                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                            if (ceu_acc.Dyn->Any.lex.depth == ceux->depth) {
-                                CEU_ERROR_CHK_PTR (
-                                    continue,
-                                    "cannot copy reference out",
-                                    ${this.toerr()}
-                                );
-                            }
-                        }
-                        #endif
-
                 #if CEU >= 50
                         ceux->depth--;
                 #endif
@@ -297,15 +285,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """
                     (this.src != null) -> """
                         ${this.src.code()}
-                        ${this.lex.cond { """
-                            #if CEU >= 50
-                            CEU_ERROR_CHK_PTR (
-                                continue,
-                                ceu_lex_chk_set(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, ceux->depth }),
-                                ${this.toerr()}
-                            );
-                            #endif
-                        """ }}
+                        #if CEU >= 50
+                        CEU_ERROR_CHK_PTR (
+                            continue,
+                            ceu_lex_chk_set(ceu_acc, (CEU_Lex) { ${if (this.lex) "CEU_LEX_MUTAB" else "CEU_LEX_FLEET"}, ceux->depth }),
+                            ${this.toerr()}
+                        );
+                        #endif
                         ceu_gc_inc_val(ceu_acc);
                         $idx = ceu_acc;
                     """
@@ -703,15 +689,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         }
                         """
                         // ACC - SET | ${this.dump()}
-                        ${dcl.lex.cond { """
-                            #if CEU >= 50
-                            CEU_ERROR_CHK_PTR (
-                                continue,
-                                ceu_lex_chk_set(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, ceux->depth-$depth }),
-                                ${this.toerr()}
-                            );
-                            #endif
-                        """ }}
+                        #if CEU >= 50
+                        CEU_ERROR_CHK_PTR (
+                            continue,
+                            ceu_lex_chk_set(ceu_acc, (CEU_Lex) { ${if (dcl.lex) "CEU_LEX_MUTAB" else "CEU_LEX_FLEET"}, ceux->depth-$depth }),
+                            ${this.toerr()}
+                        );
+                        #endif
                         ceu_gc_dec_val($idx);
                         ceu_gc_inc_val(ceu_acc);
                         $idx = ceu_acc;

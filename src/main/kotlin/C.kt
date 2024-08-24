@@ -586,8 +586,12 @@ fun Coder.main (tags: Tags): String {
         ) {
             return NULL;
         }
-         
-        src.Dyn->Any.lex = dst;
+
+        if (dst.type == CEU_LEX_FLEET) {
+            // val' x = ...
+        } else {
+            src.Dyn->Any.lex = dst;
+        }
 
         switch (src.type) {
             case CEU_VALUE_CLO_FUNC:

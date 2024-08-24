@@ -469,7 +469,7 @@ class Exec_50 {
                 pub
             }) ()
         """, true)
-        assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task") { out }
+        assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task\n") { out }
         //assert(out == "anon : (lin 3, col 17) : task error : missing enclosing task") { out }
         //assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
     }
@@ -1307,7 +1307,7 @@ class Exec_50 {
             }
             println(x)
         """)
-        assert(out == " |  anon : (lin 2, col 22) : do { (val y = []); y; }\n" +
+        assert(out == " |  anon : (lin 2, col 13) : (val' x = do { (val y = []); y; })\n" +
                 " v  error : cannot copy reference out\n") { out }
     }
 
