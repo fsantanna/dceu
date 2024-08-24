@@ -12,9 +12,9 @@ class Parser_50 {
         """
         )
         val parser = Parser(l)
-        //val e = parser.expr()
-        //assert(e.tostr() == "(func :nested () {\nnil\n})") { e.tostr() }
-        assert(trap { parser.expr() } == "anon : (lin 2, col 18) : expected \"(\" : have \":nested\"")
+        val e = parser.expr()
+        assert(e.tostr() == "(func :nested () {\nnil;\n})") { e.tostr() }
+        //assert(trap { parser.expr() } == "anon : (lin 2, col 18) : expected \"(\" : have \":nested\"")
     }
     @Test
     fun aa_02_coro_nested() {
@@ -24,9 +24,9 @@ class Parser_50 {
         """
         )
         val parser = Parser(l)
-        //val e = parser.expr()
-        //assert(e.tostr() == "(coro :nested () {\nnil\n})") { e.tostr() }
-        assert(trap { parser.expr() } == "anon : (lin 2, col 18) : expected \"(\" : have \":nested\"")
+        val e = parser.expr()
+        assert(e.tostr() == "(coro :nested () {\nnil;\n})") { e.tostr() }
+        //assert(trap { parser.expr() } == "anon : (lin 2, col 18) : expected \"(\" : have \":nested\"")
     }
     @Test
     fun aa_03_task_err() {

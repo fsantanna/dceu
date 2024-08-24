@@ -242,6 +242,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
                         ceu_acc = ceu_acc_$n;
                         
+                        #if CEU >= 50
+                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                            if (ceu_acc.Dyn->Any.lex.depth == ceux->depth) {
+                                CEU_ERROR_CHK_PTR (
+                                    continue,
+                                    "cannot copy reference out",
+                                    ${this.toerr()}
+                                );
+                            }
+                        }
+                        #endif
+
                 #if CEU >= 50
                         ceux->depth--;
                 #endif

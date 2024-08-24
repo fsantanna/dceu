@@ -315,7 +315,7 @@ class Exec_50 {
         )
         //assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing spawn\n") { out }
         //assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing task\n") { out }
-        assert(out == "ok\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun znc_02_nested() {
@@ -387,7 +387,7 @@ class Exec_50 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun znc_06_bcast_in() {  // bcast in outer of :nested
+    fun BUG_znc_06_bcast_in() {  // bcast in outer of :nested
         val out = test(
             """
             var T
@@ -469,9 +469,9 @@ class Exec_50 {
                 pub
             }) ()
         """, true)
-        //assert(out == "anon : (lin 3, col 22) : pub error : expected enclosing task") { out }
+        assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task") { out }
         //assert(out == "anon : (lin 3, col 17) : task error : missing enclosing task") { out }
-        assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
+        //assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
     }
     @Test
     fun znc_11_xceu3() {
@@ -504,8 +504,8 @@ class Exec_50 {
         """)
         //assert(out == "anon : (lin 2, col 20) : (task () :fake { broadcast in :task, nil })()\n" +
         //        "anon : (lin 3, col 30) : broadcast error : invalid target\n:error\n") { out }
-        //assert(out == ":ok\n") { out }
-        assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
     }
     @Test
     fun znd_02_throw_fake() {
@@ -1296,7 +1296,7 @@ class Exec_50 {
             });
             println(x);
         """)
-        assert(out == ":ok\n") { out }
+        assert(out == "[]\n") { out }
     }
     @Test
     fun scope_32() {
@@ -1307,7 +1307,8 @@ class Exec_50 {
             }
             println(x)
         """)
-        assert(out == "TODO - error\n") { out }
+        assert(out == " |  anon : (lin 2, col 22) : do { (val y = []); y; }\n" +
+                " v  error : cannot copy reference out\n") { out }
     }
 
     @Test
