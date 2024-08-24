@@ -1212,9 +1212,9 @@ class Parser (lexer_: Lexer)
                     pars.add(this.block())
                 }
                 val spws = pars.map { """
-                    ${it.tk.pos.pre()}spawn {
+                    ${it.tk.pos.pre()}spawn (task () {
                         ${it.es.tostr(true)}
-                    }
+                    }) ()
                 """}.joinToString("")
                 //println(spws)
                 this.nest("""
@@ -1238,9 +1238,9 @@ class Parser (lexer_: Lexer)
                 this.nest("""
                     ${pre0}do {
                         ${pars.mapIndexed { i,body -> """
-                            val' ceu_par_${i}_$n = spawn {
+                            val' ceu_par_${i}_$n = spawn (task () {
                                 ${body.es.tostr(true)}
-                            }
+                            }) ()
                         """}.joinToString("")}
                         loop {
                             until (
@@ -1267,9 +1267,9 @@ class Parser (lexer_: Lexer)
                 this.nest("""
                     ${pre0}do {
                         ${pars.mapIndexed { i,body -> """
-                            val' ceu_par_${i}_$n = spawn {
+                            val' ceu_par_${i}_$n = spawn (task () {
                                 ${body.es.tostr(true)}
-                            }
+                            }) ()
                         """}.joinToString("")}
                         loop {
                             until (

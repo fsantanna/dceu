@@ -1054,10 +1054,10 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(spawn (task :nested () {\n" +
+                "(spawn (task () {\n" +
                 "nil;\n" +
                 "})());\n" +
-                "(spawn (task :nested () {\n" +
+                "(spawn (task () {\n" +
                 "nil;\n" +
                 "})());\n" +
                 "do :break {\n" +

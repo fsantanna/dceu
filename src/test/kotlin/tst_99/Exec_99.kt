@@ -3610,12 +3610,12 @@ class Exec_99 {
     @Test
     fun ij_04_nested() {
         val out = test("""
-            do {
+            ;;do {
                 spawn (task :nested () {
                     println(:ok)
                 })()
                 nil
-            }
+            ;;}
         """)
         assert(out == ":ok\n") { out }
     }
@@ -6802,8 +6802,9 @@ class Exec_99 {
             spawn {
                 loop {
                     await |it==:CHK {
-                        var xxx = #[next-tasks(ts)]
+                        var xxx = #[;;;next-tasks(ts);;;]
                         ;;set xxx = nil
+                        drop(xxx)
                     }
                 }
             }
