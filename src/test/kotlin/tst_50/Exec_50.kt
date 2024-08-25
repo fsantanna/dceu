@@ -64,12 +64,13 @@ class Exec_50 {
             val f = func (t, v) {
                 val' t' = t
                 set t[0] = v
+                set t'[0] = v
                 t
             }
             val v = f([nil], [])
             println(v)
         """)
-        assert(out == "1\t1\n") { out }
+        assert(out == "[[]]\n") { out }
     }
 
     // NESTED
@@ -81,6 +82,7 @@ class Exec_50 {
                 val t1 = spawn (task :nested () {
                     println(:ok)
                 }) ()
+                nil
             }) ()
         """)
         assert(out == ":ok\n") { out }
@@ -344,10 +346,12 @@ class Exec_50 {
             task :nested () {
                 pub
             }
+            println(:ok)
         """
         )
+        assert(out == ":ok\n") { out }
         //assert(out == " v  anon : (lin 2, col 13) : pub() : pub error : expected task\n") { out }
-        assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task\n") { out }
         //assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing task\n") { out }
     }
 
@@ -514,10 +518,11 @@ class Exec_50 {
     fun znc_10_pub_fake_err() {
         val out = test("""
             spawn (task :nested () {
-                pub
+                println(pub)
             }) ()
-        """, true)
-        assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task\n") { out }
+        """)
+        assert(out == "nil\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task\n") { out }
         //assert(out == "anon : (lin 3, col 17) : task error : missing enclosing task") { out }
         //assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
     }
@@ -692,6 +697,7 @@ class Exec_50 {
             val T = task () :X {
                 set pub = [10]
                 spawn (task :nested () {
+                    ;;println(pub)
                     println(pub.x)
                 }) ()
                 nil

@@ -567,15 +567,17 @@ fun Coder.main (tags: Tags): String {
         if (src.type < CEU_VALUE_DYNAMIC) {
             return NULL;
         } else if (
+            dst.type != CEU_LEX_FLEET &&
             src.Dyn->Any.lex.type == CEU_LEX_FLEET &&
             src.Dyn->Any.lex.depth < dst.depth     &&
             src.Dyn->Any.refs > 1
         ) {
             return "dropped value has pending outer reference";
         } else if (
-            src.Dyn->Any.lex.type != CEU_LEX_FLEET &&
-            (src.Dyn->Any.lex.depth!=CEU_LEX_UNDEF /*|| src.Dyn->Any.lex.type==CEU_LEX_IMMUT*/) &&
-            src.Dyn->Any.lex.depth > dst.depth
+            src.Dyn->Any.lex.depth > dst.depth && (
+                src.Dyn->Any.lex.type == CEU_LEX_MUTAB ||
+                (src.Dyn->Any.lex.type==CEU_LEX_IMMUT && src.Dyn->Any.lex.depth!=CEU_LEX_UNDEF)
+            )
         ) {
             //ceu_dump_val(src);
             return "cannot copy reference out";

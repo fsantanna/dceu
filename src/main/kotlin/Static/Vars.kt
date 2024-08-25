@@ -84,9 +84,18 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         return when {
             (blk == outer) -> Type.GLOBAL
             (blk == up)    -> Type.LOCAL
-            (up as Expr.Proto != null && false) -> error("")
-            up.nst         -> if (up.tk.str == "func") Type.LOCAL else Type.NESTED
-            else           -> Type.UPVAL
+            else -> {
+                up as Expr.Proto
+                val nst = ups.all_until(up) { it == blk }
+                    .filter { it is Expr.Proto }
+                    .let { it as List<Expr.Proto> }
+                    .all { it.nst }
+                when {
+                    !nst -> Type.UPVAL
+                    (up.tk.str == "func") -> Type.LOCAL
+                    else -> Type.NESTED
+                }
+            }
         }
     }
 

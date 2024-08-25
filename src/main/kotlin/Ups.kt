@@ -42,7 +42,15 @@ class Ups (val outer: Expr.Do) {
         return this.first(e,cnd) == null
     }
     fun first_task_outer (e: Expr): Expr.Proto? {
-        return this.first(e) { it is Expr.Proto && it.tk.str=="task" && !it.nst } as Expr.Proto?
+        return this.first(e) {
+            when {
+                (it !is Expr.Proto) -> false
+                (it.tk.str != "task") -> false
+                !it.nst -> true
+                (this.first(it) { it is Expr.Do } == outer) -> true
+                else -> false
+            }
+        } as Expr.Proto?
     }
     fun exe (e: Expr, tp: String?=null): Expr.Proto? {
         return this.first(e) { it is Expr.Proto }.let {
