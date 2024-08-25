@@ -40,23 +40,23 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
         return when (this) {
             is Expr.Proto -> {
                 val isexe = (this.tk.str != "func")
-                val isnst = ups.isnst(this)
                 val code = this.blk.code()
                 val id = this.id(outer,ups)
 
-                pres.add(Pair("""
+                val mem = """
                     // PROTO | ${this.dump()}
                     ${isexe.cond { """
                         typedef struct CEU_Pro_$id {
                             ${Mem(ups, vars, sta, defers).pub(this)}
                         } CEU_Pro_$id;                        
                     """ }}
-                ""","""
+                """
+                val src = """
                     // PROTO | ${this.dump()}
                     void ceu_pro_$id (CEUX* ceux) {
                         //{ // upvs
                             ${vars.proto_to_upvs[this]!!.mapIndexed { i, dcl -> """
-                                CEU_Value ceu_upv_${dcl.idtag.first.str.idc()} = ceux->clo->upvs.buf[$i];                            
+                                CEU_Value ceu_upv_${dcl.idtag.first.str.idc()}_${dcl.n} = ceux->clo->upvs.buf[$i];                            
                             """ }.joinToString("")}
                         //}
 
@@ -74,9 +74,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         //{ // pars
                             ${this.pars.mapIndexed { i,dcl -> """
                                 ${sta.ismem(this.blk).cond2({ """
-                                    ceu_mem->${dcl.idtag.first.str.idc()}
+                                    ceu_mem->${dcl.idtag.first.str.idc()}_${dcl.n}
                                 """ },{ """
-                                    CEU_Value ceu_par_${dcl.idtag.first.str.idc()}
+                                    CEU_Value ceu_loc_${dcl.idtag.first.str.idc()}_${dcl.n}
                                 """ })}
                                     = ($i < ceux->n) ? ceux->args[$i] : (CEU_Value) { CEU_VALUE_NIL };
                             """ }.joinToString("")}
@@ -93,9 +93,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             ${this.pars.mapIndexed { i,dcl -> """
                                 ceu_gc_dec_val (
                                     ${sta.ismem(this.blk).cond2({ """
-                                        ceu_mem->${dcl.idtag.first.str.idc()}
+                                        ceu_mem->${dcl.idtag.first.str.idc()}_${dcl.n}
                                     """ },{ """
-                                        ceu_par_${dcl.idtag.first.str.idc()}
+                                        ceu_loc_${dcl.idtag.first.str.idc()}_${dcl.n}
                                     """ })}
                                 );
                             """ }.joinToString("")}
@@ -106,36 +106,48 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             } // close switch
                         """}}
                     }
-                """))
-
-                //assert(!this.isva) { "TODO" }
-                """ // CREATE | ${this.dump()}
+                """
+                val cre = """ // CREATE | ${this.dump()}
                 {
-                    ${isnst.cond { "//assert(ceux->exe!=NULL && ceux->exe->type==CEU_VALUE_EXE_TASK);" }}
+                    ${this.nst.cond { "//assert(ceux->exe!=NULL && ceux->exe->type==CEU_VALUE_EXE_TASK);" }}
                     CEU_ACC (
                         ceu_create_clo_${this.tk.str} (
                             ceu_pro_$id,
                             ${this.pars.size},
                             ${vars.proto_to_upvs[this]!!.size}
                             ${isexe.cond {", sizeof(CEU_Pro_$id)"}}
-                            CEU50(COMMA ((CEU_Lex) { ${if (isnst) "CEU_LEX_IMMUT" else "CEU_LEX_FLEET"}, CEU_LEX_UNDEF }))
+                            CEU50(COMMA ((CEU_Lex) { ${if (this.nst) "CEU_LEX_IMMUT" else "CEU_LEX_FLEET"}, CEU_LEX_UNDEF }))
                         )
                     );
                     
                     // UPVALS = ${vars.proto_to_upvs[this]!!.size}
                     {                        
                         ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
-                        """
+                    """
                         {
                             CEU_Value upv = ${sta.idx(dcl, ups.pub[this]!!)};
                             ceu_gc_inc_val(upv);
                             ceu_acc.Dyn->Clo.upvs.buf[$i] = upv;
                         }
                         """
-                        }.joinToString("\n")}
+                }.joinToString("\n")}
                     }
                 }
                 """
+
+                when {
+                    isexe -> {
+                        pres.add(Pair(mem, src))
+                        cre
+                    }
+                    this.nst -> {
+                        src + cre
+                    }
+                    else -> {
+                        pres.add(Pair("", src))
+                        cre
+                    }
+                }
             }
             is Expr.Do -> {
                 val body = this.es.code()   // before defers[this] check
@@ -560,7 +572,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val exe = if (this.tsk != null) "" else {
                     ups.first_task_outer(this).let { outer ->
                         val n = ups.all_until(this) {
-                            it is Expr.Proto && it.tk.str=="task" && !ups.isnst(it)
+                            it is Expr.Proto && it.tk.str=="task" && !it.nst
                         }
                             .filter { it is Expr.Proto } // but count all protos in between
                             .count() - 1

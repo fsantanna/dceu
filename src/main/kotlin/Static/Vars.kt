@@ -3,7 +3,7 @@ package dceu
 typealias LData = List<Id_Tag>
 
 enum class Type {
-    GLOBAL, LOCAL, PARAM, NESTED, UPVAL
+    GLOBAL, LOCAL, NESTED, UPVAL
 }
 
 fun Expr.Do.to_dcls (): List<Expr.Dcl> {
@@ -81,13 +81,12 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     fun type (dcl: Expr.Dcl, src: Expr): Type {
         val blk = ups.dcl_to_blk(dcl)
         val up  = ups.first(src) { it is Expr.Proto || it==blk }
-        val xups = ups.all_until(src) { it == blk } // all ups between src -> dcl
         return when {
             (blk == outer) -> Type.GLOBAL
-            (up is Expr.Do) -> Type.LOCAL
-            (up == blk) -> Type.PARAM
-            xups.all { it !is Expr.Proto || ups.isnst(it) || it==blk } -> Type.NESTED
-            else -> Type.UPVAL
+            (blk == up)    -> Type.LOCAL
+            (up as Expr.Proto != null && false) -> error("")
+            up.nst         -> if (up.tk.str == "func") Type.LOCAL else Type.NESTED
+            else           -> Type.UPVAL
         }
     }
 

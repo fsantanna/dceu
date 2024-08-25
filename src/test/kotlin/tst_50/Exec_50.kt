@@ -56,6 +56,22 @@ class Exec_50 {
         assert(out == "1\t1\n") { out }
     }
 
+    // COLLECTIONS
+
+    @Test
+    fun cc_10_col() {   // TODO: criacao de closure faz upval virar MUTAB
+        val out = test("""
+            val f = func (t, v) {
+                val' t' = t
+                set t[0] = v
+                t
+            }
+            val v = f([nil], [])
+            println(v)
+        """)
+        assert(out == "1\t1\n") { out }
+    }
+
     // NESTED
 
     @Test
@@ -96,6 +112,38 @@ class Exec_50 {
         """
         )
         assert(out == "100\n") { out }
+        //assert(out == "anon : (lin 4, col 30) : expected \"(\" : have \":nested\"\n") { out }
+    }
+    @Test
+    fun nn_04_nested() {
+        val out = test("""
+            val f = func () { 
+                var x = 10
+                val g = func :nested () {
+                    set x = 100
+                }
+                g()
+                println(x)
+            }
+            f()
+        """
+        )
+        assert(out == "100\n") { out }
+        //assert(out == "anon : (lin 4, col 30) : expected \"(\" : have \":nested\"\n") { out }
+    }
+    @Test
+    fun nn_05_nested() {
+        val out = test("""
+            val f = func (x) { 
+                val g = func :nested () {
+                    println(x)
+                }
+                g()
+            }
+            f(10)
+        """
+        )
+        assert(out == "10\n") { out }
         //assert(out == "anon : (lin 4, col 30) : expected \"(\" : have \":nested\"\n") { out }
     }
 

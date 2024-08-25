@@ -59,21 +59,18 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     fun idx (dcl: Expr.Dcl, src: Expr): String {
         val id = dcl.idtag.first.str.idc()
         val blk = ups.dcl_to_blk(dcl)
-        val idx = id + "_" + dcl.n
         val ismem = this.ismem(blk)
         //println(listOf(src.tk.pos.lin, id, type(dcl,src)))
         return when (vars.type(dcl,src)) {
             Type.GLOBAL -> "ceu_glb_$id"
-            Type.LOCAL -> if (ismem) "(ceu_mem->$idx)" else "ceu_loc_$idx"  // idx b/c of "it"
-            Type.PARAM -> if (ismem) "(ceu_mem->$id)" else "ceu_par_$id"
+            Type.LOCAL -> if (ismem) "(ceu_mem->${id}_${dcl.n})" else "ceu_loc_${id}_${dcl.n}"  // idx b/c of "it"
             Type.NESTED -> {
                 val xups = ups.all_until(src) { it == blk } // all ups between src -> dcl
                 val pid = (ups.first(blk) { it is Expr.Proto } as Expr.Proto).id(outer, ups)
                 val xn = xups.count { it is Expr.Proto && it!=blk }
-                val nid = if (blk is Expr.Proto) id else idx
-                "((CEU_Pro_$pid*)ceux->exe_task->${"lnks.up.tsk->".repeat(xn)}mem)->$nid"
+                "((CEU_Pro_$pid*)ceux->exe_task->${"lnks.up.tsk->".repeat(xn)}mem)->${id}_${dcl.n}"
             }
-            else -> "ceu_upv_$id"
+            else -> "ceu_upv_${id}_${dcl.n}"
         }
     }
     fun idx (e: Expr, idc: String): String {

@@ -42,7 +42,7 @@ class Ups (val outer: Expr.Do) {
         return this.first(e,cnd) == null
     }
     fun first_task_outer (e: Expr): Expr.Proto? {
-        return this.first(e) { it is Expr.Proto && it.tk.str=="task" && !this.isnst(it) } as Expr.Proto?
+        return this.first(e) { it is Expr.Proto && it.tk.str=="task" && !it.nst } as Expr.Proto?
     }
     fun exe (e: Expr, tp: String?=null): Expr.Proto? {
         return this.first(e) { it is Expr.Proto }.let {
@@ -52,9 +52,6 @@ class Ups (val outer: Expr.Do) {
                 it as Expr.Proto
             }
         }
-    }
-    fun isnst (proto: Expr.Proto): Boolean {
-        return (proto.nst && (CEU<99 || this.any(this.pub[proto]!!) { it is Expr.Proto }))
     }
     fun isdst (e: Expr): Boolean {
         return this.pub[e].let { it is Expr.Set && it.dst==e }

@@ -528,9 +528,14 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("func") || (CEU>=3 && this.acceptFix("coro")) || (CEU>=4 && this.acceptFix("task")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val nst = (CEU >= 50) && this.acceptTag(":nested")
+                var nst = (CEU >= 50) && this.acceptTag(":nested")
                 val dcl = if (CEU < 99) null else {
-                    if (this.acceptEnu("Id")) this.tk0 else null
+                    if (this.acceptEnu("Id")) {
+                        nst = true
+                        this.tk0
+                    } else {
+                        null
+                    }
                 }
                 this.acceptFix_err("(")
                 val pars = this.list0(",", ")") {

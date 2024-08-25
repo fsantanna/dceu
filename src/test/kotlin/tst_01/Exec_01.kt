@@ -413,6 +413,34 @@ class Exec_01 {
         """)
         assert(out == "3\n2\n1\n") { out }
     }
+    @Test
+    fun be_05_rec() {
+        val out = test("""
+            val f = group {
+                func () {
+                    println(g)
+                }
+            }
+            val g = 10
+            f()
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun be_06_rec() {
+        val out = test("""
+            val f = group {
+                func () {
+                    println(:g, g)
+                }
+            }
+            val g = func (v) {
+                nil
+            }
+            f()
+        """)
+        assert(out.contains(":g\tfunc: 0x")) { out }
+    }
 
     // INDEX / TUPLE
 
