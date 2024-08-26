@@ -366,7 +366,7 @@ fun Coder.main (tags: Tags): String {
     CEU_Exe_Task CEU_GLOBAL_TASK = {
         CEU_VALUE_EXE_TASK, 1, (CEU_Value) { CEU_VALUE_NIL },
     #if CEU >= 50
-        { CEU_LEX_FLEET, CEU_LEX_UNDEF },
+        { CEU_LEX_IMMUT, 0 },
     #endif
         NULL, CEU_EXE_STATUS_YIELDED, CEU50(CEU_LEX_UNDEF COMMA) 0, NULL,
         0, {}, { {{NULL},NULL}, {NULL,NULL}, {NULL,NULL} }
@@ -2202,7 +2202,17 @@ fun Coder.main (tags: Tags): String {
             CEU_Value evt = ceux->args[1];
             
         #if CEU >= 50
-            char* err = ceu_lex_chk_set(evt, (CEU_Lex) { CEU_LEX_MUTAB, 1 });
+            uint8_t depth; {
+                if (xin.Tag == CEU_TAG_global) {
+                    depth = 1;
+                } else if (xin.Tag == CEU_TAG_task) {
+                    depth = ceu_task_up(ceux)->lex.depth;
+                    //printf(">>> %d\n", depth);
+                } else {
+                    depth = ceux->depth;
+                }
+            }
+            char* err = ceu_lex_chk_set(evt, (CEU_Lex) { CEU_LEX_MUTAB, depth });
             if (err != NULL) {
                 CEU_ACC(CEU_ERROR_PTR(err));
             } else

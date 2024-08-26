@@ -114,6 +114,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
             is Expr.Yield -> this.e.mem()
             is Expr.Resume -> """
                 struct {
+                    CEU_Value coro_$n;  // b/c of CEU=50 to chk_set depth
                     CEU_Value args_$n[${this.args.size}];
                     $union {
                         ${this.co.mem()}

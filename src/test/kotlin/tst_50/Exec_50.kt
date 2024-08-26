@@ -1668,7 +1668,11 @@ class Exec_50 {
     fun gg_03_scope() {
         val out = test("""
             val T = coro () {
-                val v = func (x) { x } (yield(nil))
+                val v = func (x) {
+                    x
+                } (
+                    yield(nil)
+                )
                 yield(nil) ;;thus { it => nil }
                 println(v)                
             }
@@ -2061,7 +2065,9 @@ class Exec_50 {
             println(y)
         """)
         //assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
-        assert(out.contains("exe-task: 0x")) { out }
+        //assert(out.contains("exe-task: 0x")) { out }
+        assert(out.contains(" |  anon : (lin 6, col 17) : drop(x)\n" +
+                " v  error : value is not movable\n")) { out }
     }
     @Test
     fun bc_04_track_drop() {
