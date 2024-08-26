@@ -829,12 +829,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         char* ceu_err_$n = ceu_col_set($id_col, ceu_idx_$n, $id_val);
                         ceu_gc_dec_val($id_col);
                         ceu_gc_dec_val(ceu_idx_$n);
+                        ceu_acc = $id_val;
                         CEU_ERROR_CHK_PTR (
                             continue,
                             ceu_err_$n,
                             ${this.toerr()}
                         );
-                        ceu_acc = $id_val;
                     }
                     """
                 } else {

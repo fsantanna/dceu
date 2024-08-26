@@ -1,0 +1,11 @@
+spawn {
+    watching <1:s> {
+        every <100:ms> {
+            println("Hello World!")
+        }
+    }
+}
+
+loop in {1=>10} {
+    broadcast(:Clock [100])
+}
