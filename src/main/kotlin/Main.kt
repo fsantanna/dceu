@@ -9,12 +9,12 @@ var DUMP = true
 var DEBUG = true
 var CEU = 50
 
-    //  1: dyn-lex                              ;; 46 "definitely lost" (errors or cycles)
+    //  1: dyn-lex                              ;; 25 "definitely lost" (errors or cycles)
     //  2: defer, throw/catch, do/escape, loop  ;;  4 "definitely lost" (C errors)
     //  3: coro, yield, resume                  ;;  0
     //  4: task, pub, bcast, toggle, delay      ;;  0
     //  5: tasks                                ;;  0
-    // 50: lex, drop, val', var'
+    // 50: lex, drop, val', var'                ;;  7 "definitely lost" (C errors or cycles)
     // 99: sugar                                ;;  0
     // TODO: copy, underscore, self (coro/task)
 

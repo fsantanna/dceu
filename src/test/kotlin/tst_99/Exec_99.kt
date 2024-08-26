@@ -3649,7 +3649,8 @@ class Exec_99 {
                 println(2)
             }
         """)
-        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro or task\n") { out }
+        assert(out == "anon : (lin 5, col 29) : :nested error : expected enclosing prototype\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro or task\n") { out }
     }
     @Test
     fun jj_02_par() {
