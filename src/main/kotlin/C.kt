@@ -571,7 +571,7 @@ fun Coder.main (tags: Tags): String {
         return NULL;
     }
     
-    char* ceu_lex_chk_set (CEU_Value src, CEU_Lex dst) {
+    char* ceu_lex_chk_own (CEU_Value src, CEU_Lex dst) {
         if (src.type < CEU_VALUE_DYNAMIC) {
             return NULL;
         } else if (
@@ -612,7 +612,7 @@ fun Coder.main (tags: Tags): String {
             case CEU_VALUE_CLO_TASK:
     #endif
                 for (int i=0; i<src.Dyn->Clo.upvs.its; i++) {
-                    char* err = ceu_lex_chk_set(src.Dyn->Clo.upvs.buf[i], dst);
+                    char* err = ceu_lex_chk_own(src.Dyn->Clo.upvs.buf[i], dst);
                     if (err != NULL) {
                         return err;
                     }
@@ -620,7 +620,7 @@ fun Coder.main (tags: Tags): String {
                 break;
             case CEU_VALUE_TUPLE: {
                 for (int i=0; i<src.Dyn->Tuple.its; i++) {
-                    char* err = ceu_lex_chk_set(src.Dyn->Tuple.buf[i], dst);
+                    char* err = ceu_lex_chk_own(src.Dyn->Tuple.buf[i], dst);
                     if (err != NULL) {
                         return err;
                     }
@@ -631,7 +631,7 @@ fun Coder.main (tags: Tags): String {
                 for (int i=0; i<src.Dyn->Vector.its; i++) {
                     CEU_Value v = ceu_vector_get(&src.Dyn->Vector, i);
                     assert(CEU_ERROR == CEU_ERROR_NONE);
-                    char* err = ceu_lex_chk_set(v, dst);
+                    char* err = ceu_lex_chk_own(v, dst);
                     if (err != NULL) {
                         return err;
                     }
@@ -641,11 +641,11 @@ fun Coder.main (tags: Tags): String {
             case CEU_VALUE_DICT: {
                 for (int i=0; i<src.Dyn->Dict.max; i++) {
                     char* err;
-                    err = ceu_lex_chk_set((*src.Dyn->Dict.buf)[i][0], dst);
+                    err = ceu_lex_chk_own((*src.Dyn->Dict.buf)[i][0], dst);
                     if (err != NULL) {
                         return err;
                     }
-                    err = ceu_lex_chk_set((*src.Dyn->Dict.buf)[i][1], dst);
+                    err = ceu_lex_chk_own((*src.Dyn->Dict.buf)[i][1], dst);
                     if (err != NULL) {
                         return err;
                     }
@@ -659,7 +659,7 @@ fun Coder.main (tags: Tags): String {
     #endif
             {
                 CEU_Value clo = ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.clo);
-                char* err = ceu_lex_chk_set(clo, dst);
+                char* err = ceu_lex_chk_own(clo, dst);
                 if (err != NULL) {
                     return err;
                 }
@@ -674,7 +674,7 @@ fun Coder.main (tags: Tags): String {
                     tsk != NULL;
                     tsk = (CEU_Exe_Task*) tsk->lnks.sd.nxt
                 ) {
-                    char* err = ceu_lex_chk_set(ceu_dyn_to_val((CEU_Dyn*)tsk), dst);
+                    char* err = ceu_lex_chk_own(ceu_dyn_to_val((CEU_Dyn*)tsk), dst);
                     if (err != NULL) {
                         return err;
                     }
@@ -1374,11 +1374,11 @@ fun Coder.main (tags: Tags): String {
             return err;
         }
     #if CEU >= 50
-        err = ceu_lex_chk_set(idx, col.Dyn->Any.lex);
+        err = ceu_lex_chk_own(idx, col.Dyn->Any.lex);
         if (err != NULL) {
             return err;
         }
-        err = ceu_lex_chk_set(val, col.Dyn->Any.lex);
+        err = ceu_lex_chk_own(val, col.Dyn->Any.lex);
         if (err != NULL) {
             return err;
         }
@@ -2220,7 +2220,7 @@ fun Coder.main (tags: Tags): String {
                     depth = ceux->depth;
                 }
             }
-            char* err = ceu_lex_chk_set(evt, (CEU_Lex) { CEU_LEX_MUTAB, depth });
+            char* err = ceu_lex_chk_own(evt, (CEU_Lex) { CEU_LEX_MUTAB, depth });
             if (err != NULL) {
                 CEU_ACC(CEU_ERROR_PTR(err));
             } else

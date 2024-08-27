@@ -300,7 +300,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         #if CEU >= 50
                         CEU_ERROR_CHK_PTR (
                             continue,
-                            ceu_lex_chk_set(ceu_acc, (CEU_Lex) { ${if (this.lex) "CEU_LEX_MUTAB" else "CEU_LEX_FLEET"}, ceux->depth }),
+                            ceu_lex_chk_own(ceu_acc, (CEU_Lex) { ${if (this.lex) "CEU_LEX_MUTAB" else "CEU_LEX_FLEET"}, ceux->depth }),
                             ${this.toerr()}
                         );
                         #endif
@@ -428,7 +428,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             #if CEU >= 50
                                 CEU_ERROR_CHK_PTR (
                                     continue,
-                                    ceu_lex_chk_set(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, $coro.Dyn->Any.lex.depth }),
+                                    ceu_lex_chk_own(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, $coro.Dyn->Any.lex.depth }),
                                     ${this.toerr()}
                                 );
                             #endif
@@ -461,7 +461,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ceux->exe->depth = ceux->depth;
                     CEU_ERROR_CHK_PTR (
                         continue,
-                        ceu_lex_chk_set(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, 1 }),
+                        ceu_lex_chk_own(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, 1 }),
                         ${this.toerr()}
                     );
                 #endif
@@ -513,7 +513,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             #if CEU >= 50
                                 CEU_ERROR_CHK_PTR (
                                     continue,
-                                    ceu_lex_chk_set(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, ceux->depth }),
+                                    ceu_lex_chk_own(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, ceux->depth }),
                                     ${this.toerr()}
                                 );
                             #endif
@@ -534,7 +534,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 #if CEU >= 50
                     CEU_ERROR_CHK_PTR (
                         continue,
-                        ceu_lex_chk_set(ceu_acc,
+                        ceu_lex_chk_own(ceu_acc,
                             ${if (CEU>=5 && this.tsks!=null) {
                                 "ceu_a_$n->Any.lex"
                             } else {
@@ -713,7 +713,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         #if CEU >= 50
                         CEU_ERROR_CHK_PTR (
                             continue,
-                            ceu_lex_chk_set(ceu_acc, (CEU_Lex) { ${if (dcl.lex) "CEU_LEX_MUTAB" else "CEU_LEX_FLEET"}, ceux->depth-$depth }),
+                            ceu_lex_chk_own(ceu_acc, (CEU_Lex) { ${if (dcl.lex) "CEU_LEX_MUTAB" else "CEU_LEX_FLEET"}, ceux->depth-$depth }),
                             ${this.toerr()}
                         );
                         #endif
