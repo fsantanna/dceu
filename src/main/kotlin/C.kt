@@ -457,19 +457,27 @@ fun Coder.main (tags: Tags): String {
     fun lex (): String {
         return """
     #if CEU >= 50
-    char* ceu_drop (CEU_Value src) {
+    char* ceu_drop (CEU_Value src, uint8_t depth) {
         if (src.type < CEU_VALUE_DYNAMIC) {
             return NULL;
         } else if (src.Dyn->Any.lex.type == CEU_LEX_FLEET) {
-            return NULL;
-        } else if (src.Dyn->Any.lex.type == CEU_LEX_IMMUT) {
-            return "value is not movable";
-        //} else if (src.Dyn->Any.refs > 1) {
-        //    return "value has multiple references";
+            return NULL;    // already fleeting
+        } else if (src.Dyn->Any.lex.depth < depth) {
+            return NULL;    // does not belong to this block
         } else {
+            assert(src.Dyn->Any.lex.depth == depth);
+        }
+        if (src.Dyn->Any.lex.type == CEU_LEX_IMMUT) {
+            // immutable in this depth
+            return "value is not droppable";
+        } else if (src.Dyn->Any.refs > 1) {
+            // safe to drop to outer, but not to inner:
+            // keep depth to encode this restriction
             src.Dyn->Any.lex.type = CEU_LEX_FLEET;
-            //ceu_hold_set_rec(src, CEU_HOLD_FLEET, NULL, 0);
-            //return NULL;
+            //src.Dyn->Any.lex.depth = <keep>;
+        } else {
+            src.Dyn->Any.lex.type  = CEU_LEX_FLEET;
+            src.Dyn->Any.lex.depth = CEU_LEX_UNDEF;
         }
 
         switch (src.type) {
@@ -482,7 +490,7 @@ fun Coder.main (tags: Tags): String {
     #endif
                 for (int i=0; i<src.Dyn->Clo.upvs.its; i++) {
                     //ceu_dump_val(src.Dyn->Clo.upvs.buf[i]);
-                    char* err = ceu_drop(src.Dyn->Clo.upvs.buf[i]);
+                    char* err = ceu_drop(src.Dyn->Clo.upvs.buf[i], depth);
                     if (err != NULL) {
                         return err;
                     }
@@ -490,7 +498,7 @@ fun Coder.main (tags: Tags): String {
                 break;
             case CEU_VALUE_TUPLE: {
                 for (int i=0; i<src.Dyn->Tuple.its; i++) {
-                    char* err = ceu_drop(src.Dyn->Tuple.buf[i]);
+                    char* err = ceu_drop(src.Dyn->Tuple.buf[i], depth);
                     if (err != NULL) {
                         return err;
                     }
@@ -501,7 +509,7 @@ fun Coder.main (tags: Tags): String {
                 for (int i=0; i<src.Dyn->Vector.its; i++) {
                     CEU_Value v = ceu_vector_get(&src.Dyn->Vector, i);
                     assert(CEU_ERROR == CEU_ERROR_NONE);
-                    char* err = ceu_drop(v);
+                    char* err = ceu_drop(v, depth);
                     if (err != NULL) {
                         return err;
                     }
@@ -511,11 +519,11 @@ fun Coder.main (tags: Tags): String {
             case CEU_VALUE_DICT: {
                 for (int i=0; i<src.Dyn->Dict.max; i++) {
                     char* err;
-                    err = ceu_drop((*src.Dyn->Dict.buf)[i][0]);
+                    err = ceu_drop((*src.Dyn->Dict.buf)[i][0], depth);
                     if (err != NULL) {
                         return err;
                     }
-                    err = ceu_drop((*src.Dyn->Dict.buf)[i][1]);
+                    err = ceu_drop((*src.Dyn->Dict.buf)[i][1], depth);
                     if (err != NULL) {
                         return err;
                     }
@@ -530,7 +538,7 @@ fun Coder.main (tags: Tags): String {
             {
                 CEU4(assert(src.type==CEU_VALUE_EXE_CORO && "TODO: drop task");)
                 CEU_Value clo = ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.clo);
-                char* err = ceu_drop(clo);
+                char* err = ceu_drop(clo, depth);
                 if (err != NULL) {
                     return err;
                 }
@@ -546,7 +554,7 @@ fun Coder.main (tags: Tags): String {
                     tsk != NULL;
                     tsk = (CEU_Exe_Task*) tsk->lnks.sd.nxt
                 ) {
-                    char* err = ceu_drop(ceu_dyn_to_val((CEU_Dyn*)tsk));
+                    char* err = ceu_drop(ceu_dyn_to_val((CEU_Dyn*)tsk), depth);
                     if (err != NULL) {
                         return err;
                     }

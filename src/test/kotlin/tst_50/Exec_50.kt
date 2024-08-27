@@ -56,8 +56,45 @@ class Exec_50 {
         assert(out == "1\t1\n") { out }
     }
 
+    // BASIC
+
+    @Test
+    fun bb_multi() {
+        val out = test("""
+            val t1 = []
+            val t2 = t1
+            val f = func (v) {
+                println(`:number ${D}v.Dyn->Any.lex.type`, `:number ${D}v.Dyn->Any.lex.depth`)
+            }
+            println(`:number ${D}t1.Dyn->Any.lex.type`, `:number ${D}t1.Dyn->Any.lex.depth`)
+            f(drop(t1))
+            println(t1, t2)
+        """)
+        assert(out == "2\t1\n" +
+                "1\t1\n" +
+                "nil\t[]\n") { out }
+    }
+
     // COLLECTIONS
 
+    @Test
+    fun cc_05_col() {
+        val out = test("""
+            val copy = func (vec) {
+                val ret = #[]
+                set ret[0] = vec[0]
+                drop(ret)
+            }
+            func () {
+                val f = func :nested () {
+                    nil
+                }
+                val t = copy([f])
+                println(f == t[0])
+            } ()
+        """)
+        assert(out == "true\n") { out }
+    }
     @Test
     fun cc_10_col() {   // TODO: criacao de closure faz upval virar MUTAB
         val out = test("""
@@ -71,6 +108,32 @@ class Exec_50 {
             println(v)
         """)
         assert(out == "[[]]\n") { out }
+    }
+
+    // COROS
+
+    @Test
+    fun hh_01_coro() {
+        val out = test("""
+            val CO = coro () {
+                yield([1,2])
+                yield([3,4])
+            }
+            val co = coroutine(CO)
+            do :break {
+                loop' {
+                    val v = resume co()
+                    if status(co) == :terminated {
+                        escape(:break,nil)
+                    } else {
+                        nil
+                    }
+                    print(v)
+                }
+            }
+            println()
+        """)
+        assert(out == "[1,2][3,4]\n") { out }
     }
 
     // NESTED
@@ -848,11 +911,11 @@ class Exec_50 {
             ;;`ceu_gc_collect();`
             println(t)
         """)
-        assert(out == " |  anon : (lin 4, col 17) : (val y = do { (val x = t[1]); drop(x); })\n" +
-                " v  error : dropped value has pending outer reference\n") { out }
+        //assert(out == " |  anon : (lin 4, col 17) : (val y = do { (val x = t[1]); drop(x); })\n" +
+        //        " v  error : dropped value has pending outer reference\n") { out }
         //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
-        //assert(out == "[99]\n" +
-        //        "[1,[99],3]\n") { out }
+        assert(out == "[99]\n" +
+                "[1,[99],3]\n") { out }
     }
     @Test
     fun cc_10y_drop_multi_err_why() {
@@ -871,12 +934,12 @@ class Exec_50 {
             ;;`ceu_gc_collect();`
             println(x)
         """)
-        assert(out == " |  anon : (lin 6, col 17) : (val y = do { (val z = x[0]); drop(z); })\n" +
-                " v  error : dropped value has pending outer reference\n") { out }
+        //assert(out == " |  anon : (lin 6, col 17) : (val y = do { (val z = x[0]); drop(z); })\n" +
+        //        " v  error : dropped value has pending outer reference\n") { out }
         //assert(out == " |  anon : (lin 6, col 21) : drop(x)\n v  error : value has multiple references\n") { out }
         //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
-        //assert(out == "[99]\n" +
-        //        "[1,[99],3]\n") { out }
+        assert(out == "[99]\n" +
+                "[[99]]\n") { out }
     }
     @Test
     fun cc_10x_drop_multi_err_why() {
@@ -892,12 +955,12 @@ class Exec_50 {
             ;;`ceu_gc_collect();`
             println(t)
         """)
-        assert(out == " |  anon : (lin 4, col 17) : (val y = do { (val x = t); drop(x); })\n" +
-                " v  error : dropped value has pending outer reference\n") { out }
+        //assert(out == " |  anon : (lin 4, col 17) : (val y = do { (val x = t); drop(x); })\n" +
+        //        " v  error : dropped value has pending outer reference\n") { out }
         //assert(out == " |  anon : (lin 6, col 21) : drop(x)\n v  error : value has multiple references\n") { out }
         //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
-        //assert(out == "[99]\n" +
-        //        "[1,[99],3]\n") { out }
+        assert(out == "[99]\n" +
+                "[99]\n") { out }
     }
     @Test
     fun cc_13_drop_cycle() {
@@ -929,6 +992,8 @@ class Exec_50 {
         """
         )
         assert(out == "true\n") { out }
+        //assert(out == " |  anon : (lin 6, col 17) : drop(x)\n" +
+        //        " v  error : value has multiple references\n") { out }
     }
     @Test
     fun cc_14_drop_cycle() {
@@ -944,6 +1009,8 @@ class Exec_50 {
             println(z[0][0] == z)
         """
         )
+        //assert(out == " |  anon : (lin 6, col 17) : drop(x)\n" +
+        //        " v  error : value has multiple references\n") { out }
         assert(out == "true\n") { out }
     }
 
@@ -1304,7 +1371,8 @@ class Exec_50 {
             println(:ok)
         """)
         assert(out == ":ok\n") { out }
-        //assert(out == "anon : (lin 10, col 22) : drop error : value contains multiple references\n") { out }
+        //assert(out == " |  anon : (lin 10, col 17) : drop(c)\n" +
+        //        " v  error : value has multiple references\n") { out }
     }
     @Test
     fun scope30x_cyc() {
@@ -1323,6 +1391,8 @@ class Exec_50 {
             println(:ok)
         """)
         assert(out == ":ok\n") { out }
+        //assert(out == " |  anon : (lin 10, col 17) : drop(c)\n" +
+        //        " v  error : value has multiple references\n") { out }
     }
     @Test
     fun scope31_xxx() {
@@ -2060,14 +2130,30 @@ class Exec_50 {
             val y = do {
                 val t = spawn T ()
                 val x = ;;;track;;;(t)
-                drop(x)
+                drop(t)
             }
             println(y)
         """)
         //assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
         //assert(out.contains("exe-task: 0x")) { out }
-        assert(out.contains(" |  anon : (lin 6, col 17) : drop(x)\n" +
-                " v  error : value is not movable\n")) { out }
+        assert(out.contains(" |  anon : (lin 6, col 17) : drop(t)\n" +
+                " v  error : value is not droppable\n")) { out }
+    }
+    @Test
+    fun bc_02y_track_drop_err() {
+        val out = test("""
+            val T = task () { yield(nil) }
+            val y = do {
+                val t = spawn T ()
+                ;;val x = ;;;track;;;(t)
+                drop(t)
+            }
+            println(y)
+        """)
+        //assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+        //assert(out.contains("exe-task: 0x")) { out }
+        assert(out.contains(" |  anon : (lin 6, col 17) : drop(t)\n" +
+                " v  error : value is not droppable\n")) { out }
     }
     @Test
     fun bc_04_track_drop() {
@@ -2080,8 +2166,11 @@ class Exec_50 {
             }
             println(y)
         """)
+        assert(out == ("TODO - o drop tem que ser em lval")) { out }
         //assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
-        assert(out.contains("exe-task: 0x")) { out }
+        //assert(out.contains("exe-task: 0x")) { out }
+        //assert(out.contains(" |  anon : (lin 3, col 21) : do { (val ts = tasks(nil)); (spawn T() in ...\n" +
+        //        " v  error : value has multiple references")) { out }
     }
 
     @Test

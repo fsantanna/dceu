@@ -397,7 +397,7 @@ val to :To = group {
                 loop [i,v] in to-iter(col, [:idx,:val]) {
                     set tup[i] = v
                 }
-                tup
+                drop(tup)
             }
             else => error(:TODO)
         }

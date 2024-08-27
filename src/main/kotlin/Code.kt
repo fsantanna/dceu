@@ -116,7 +116,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             ${this.pars.size},
                             ${vars.proto_to_upvs[this]!!.size}
                             ${isexe.cond {", sizeof(CEU_Pro_$id)"}}
-                            CEU50(COMMA ((CEU_Lex) { ${if (this.nst) "CEU_LEX_IMMUT" else "CEU_LEX_FLEET"}, CEU_LEX_UNDEF }))
+                            CEU50(COMMA ((CEU_Lex) { ${if (this.nst) "CEU_LEX_IMMUT, ceux->depth" else "CEU_LEX_FLEET, CEU_LEX_UNDEF"} }))
                         )
                     );
                     
@@ -344,7 +344,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 ${(!this.e.is_lval()).cond { """
                     CEU_ERROR_CHK_PTR (
                         continue,
-                        ceu_drop(ceu_acc),
+                        ceu_drop(ceu_acc, ceux->depth),
                         ${ups.pub[this]!!.toerr()}
                     );
                 """ }}
@@ -461,7 +461,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ceux->exe->depth = ceux->depth;
                     CEU_ERROR_CHK_PTR (
                         continue,
-                        ceu_lex_chk_set(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, ceux->exe->lex.depth }),
+                        ceu_lex_chk_set(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, 1 }),
                         ${this.toerr()}
                     );
                 #endif
@@ -730,7 +730,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             $idx = (CEU_Value) { CEU_VALUE_NIL };
                             CEU_ERROR_CHK_PTR (
                                 continue,
-                                ceu_drop(ceu_$n),
+                                ceu_drop(ceu_$n, ceux->depth),
                                 ${ups.pub[this]!!.toerr()}
                             );
                             CEU_ACC(ceu_$n);
