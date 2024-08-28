@@ -116,7 +116,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             ${this.pars.size},
                             ${vars.proto_to_upvs[this]!!.size}
                             ${isexe.cond {", sizeof(CEU_Pro_$id)"}}
-                            CEU50(COMMA ((CEU_Lex) { ${if (this.nst) "CEU_LEX_IMMUT, ceux->depth" else "CEU_LEX_FLEET, CEU_LEX_UNDEF"} }))
+                            CEU_LEX_X(COMMA ((CEU_Lex) { ${if (this.nst) "CEU_LEX_IMMUT, ceux->depth" else "CEU_LEX_FLEET, CEU_LEX_UNDEF"} }))
                         )
                     );
                     
@@ -164,7 +164,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     val blkc = sta.idx(this, "block_$n")
                     """
                     { // BLOCK | ${this.dump()}
-                #if CEU >= 50
+                #ifdef CEU_LEX
                         ceux->depth++;
                 #endif
                         ${(CEU >= 4).cond { """
@@ -254,7 +254,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
                         ceu_acc = ceu_acc_$n;
                         
-                #if CEU >= 50
+                #ifdef CEU_LEX
                         ceux->depth--;
                 #endif
 
@@ -297,7 +297,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """
                     (this.src != null) -> """
                         ${this.src.code()}
-                        #if CEU >= 50
+                        #ifdef CEU_LEX
                         CEU_ERROR_CHK_PTR (
                             continue,
                             ceu_lex_chk_own(ceu_acc, (CEU_Lex) { ${if (this.lex) "CEU_LEX_MUTAB" else "CEU_LEX_FLEET"}, ceux->depth }),
@@ -341,7 +341,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             is Expr.Drop -> """
                 // DROP | ${this.dump()}
                 ${this.e.code()}
-                ${(!this.e.is_lval()).cond { """
+                ${(LEX && !this.e.is_lval()).cond { """
                     CEU_ERROR_CHK_PTR (
                         continue,
                         ceu_drop(ceu_acc, ceux->depth),
@@ -425,7 +425,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
                     ${this.args.mapIndexed { i,e ->
                     e.code() + """
-                            #if CEU >= 50
+                            #ifdef CEU_LEX
                                 CEU_ERROR_CHK_PTR (
                                     continue,
                                     ceu_lex_chk_own(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, $coro.Dyn->Any.lex.depth }),
@@ -441,7 +441,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         {.exe = (CEU_Exe*) $coro.Dyn},
                         CEU_ACTION_RESUME,
                         CEU4(ceux COMMA)
-                        CEU50(ceux->depth COMMA)
+                        CEU_LEX_X(ceux->depth COMMA)
                         ${this.args.size},
                         ${sta.idx(this,"args_$n")}
                     };
@@ -457,7 +457,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     ${this.e.code()}
                     ceux->exe->status = CEU_EXE_STATUS_YIELDED;
                     ceux->exe->pc = $n;
-                #if CEU >= 50
+                #ifdef CEU_LEX
                     ceux->exe->depth = ceux->depth;
                     CEU_ERROR_CHK_PTR (
                         continue,
@@ -476,7 +476,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         continue;
                     }
                 #endif
-                #if CEU >= 50
+                #ifdef CEU_LEX
                     ceux->depth = ceux->exe->depth;
                 #endif
                     ceu_gc_dec_val(ceu_acc);
@@ -510,7 +510,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     
                     ${this.args.mapIndexed { i,e ->
                         e.code() + """
-                            #if CEU >= 50
+                            #ifdef CEU_LEX
                                 CEU_ERROR_CHK_PTR (
                                     continue,
                                     ceu_lex_chk_own(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, ceux->depth }),
@@ -531,7 +531,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     CEU_ACC(ceu_exe_$n);
                     CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
                     
-                #if CEU >= 50
+                #ifdef CEU_LEX
                     CEU_ERROR_CHK_PTR (
                         continue,
                         ceu_lex_chk_own(ceu_acc,
@@ -555,7 +555,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             {.exe = (CEU_Exe*) ceu_exe_$n.Dyn},
                             CEU_ACTION_RESUME,
                             ceux,
-                            CEU50(ceux->depth COMMA)
+                            CEU_LEX_X(ceux->depth COMMA)
                             ${this.args.size},
                             ${sta.idx(this,"args_$n")}
                         };
@@ -664,7 +664,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """
                 {  // TASKS | ${this.dump()}
                     ${this.max.code()}
-                    CEU_Value ceu_tsks_$n = ceu_create_tasks(ceux, &$blkc, ceu_acc CEU50(COMMA CEU_LEX_UNDEF));
+                    CEU_Value ceu_tsks_$n = ceu_create_tasks(ceux, &$blkc, ceu_acc CEU_LEX_X(COMMA CEU_LEX_UNDEF));
                     CEU_ACC(ceu_tsks_$n);
                     CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
                 }
@@ -710,7 +710,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         }
                         """
                         // ACC - SET | ${this.dump()}
-                        #if CEU >= 50
+                        #ifdef CEU_LEX
                         CEU_ERROR_CHK_PTR (
                             continue,
                             ceu_lex_chk_own(ceu_acc, (CEU_Lex) { ${if (dcl.lex) "CEU_LEX_MUTAB" else "CEU_LEX_FLEET"}, ceux->depth-$depth }),
@@ -885,7 +885,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     #if CEU >= 4
                         ceux,
                     #endif
-                        CEU50(ceux->depth+1 COMMA)
+                        CEU_LEX_X(ceux->depth+1 COMMA)
                         ${this.args.size},
                         ${sta.idx(this, "args_$n")}
                     };

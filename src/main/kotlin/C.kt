@@ -18,8 +18,13 @@ fun Coder.main (tags: Tags): String {
     }
     fun h_defines (): String {
         return """
-    ${DEBUG.cond { "#define CEU_DEBUG" }}
     #define CEU $CEU
+    ${DEBUG.cond { "#define CEU_DEBUG" }}
+    ${LEX.cond   { """
+    #if CEU >= 50
+    #define CEU_LEX
+    #endif
+    """ }}
     
     #undef MAX
     #undef MIN
@@ -27,38 +32,39 @@ fun Coder.main (tags: Tags): String {
     #define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
 
     #define COMMA ,
+    
     #if CEU >= 2
-    #define CEU2(x) x
+        #define CEU2(x) x
     #else
-    #define CEU2(x)
+        #define CEU2(x)
     #endif
     #if CEU >= 3
-    #define CEU3(x) x
+        #define CEU3(x) x
     #else
-    #define CEU3(x)
+        #define CEU3(x)
     #endif
     #if CEU >= 4
-    #define CEU4(x) x
+        #define CEU4(x) x
     #else
-    #define CEU4(x)
+        #define CEU4(x)
     #endif
     #if CEU >= 5
-    #define CEU5(x) x
+        #define CEU5(x) x
     #else
-    #define CEU5(x)
+        #define CEU5(x)
     #endif
     #if CEU >= 50
-    #define CEU50(x) x
+        #define CEU50(x) x
+        #ifdef CEU_LEX
+            #define CEU_LEX_X(x) x
+        #else
+            #define CEU_LEX_X(x)
+        #endif
     #else
-    #define CEU50(x)
+        #define CEU50(x)
+        #define CEU_LEX_X(x)
     #endif
     
-    #if CEU >= 50
-    #define CEU50(x) x
-    #else
-    #define CEU50(x)
-    #endif
-
     #define CEU_ACC(v) ({               \
         CEU_Value ceu_old = ceu_acc;    \
         CEU_Value ceu_new = v;          \
@@ -77,7 +83,7 @@ fun Coder.main (tags: Tags): String {
     }
     fun h_enums (): String {
         return """
-    #if CEU >= 50
+    #ifdef CEU_LEX
     #define CEU_LEX_UNDEF 255   // undefined depth
     typedef enum CEU_LEX_TYPE {
         CEU_LEX_NONE = 0,       // ignore on ceu_hold_set_rec
@@ -168,7 +174,7 @@ fun Coder.main (tags: Tags): String {
         };
     } CEU_Value;
 
-    #if CEU >= 50
+    #ifdef CEU_LEX
     typedef struct {
         CEU_LEX_TYPE type;
         uint8_t depth;
@@ -179,7 +185,7 @@ fun Coder.main (tags: Tags): String {
         CEU_VALUE type;                 \
         uint8_t refs;                   \
         CEU_Value tag;                  \
-        CEU50(CEU_Lex lex;)
+        CEU_LEX_X(CEU_Lex lex;)
         
     typedef struct CEU_Any {
         _CEU_Dyn_
@@ -224,7 +230,7 @@ fun Coder.main (tags: Tags): String {
         struct CEUX* up;
     #endif
     #endif
-    #if CEU >= 50
+    #ifdef CEU_LEX
         uint8_t depth;
     #endif
         int n;
@@ -254,7 +260,7 @@ fun Coder.main (tags: Tags): String {
         _CEU_Dyn_                       \
         CEU_Clo* clo;                   \
         CEU_EXE_STATUS status;          \
-        CEU50(uint8_t depth;)       \
+        CEU_LEX_X(uint8_t depth;)       \
         int pc;                         \
         char* mem;
         
@@ -365,10 +371,10 @@ fun Coder.main (tags: Tags): String {
     uint32_t CEU_TIME = 0;
     CEU_Exe_Task CEU_GLOBAL_TASK = {
         CEU_VALUE_EXE_TASK, 1, (CEU_Value) { CEU_VALUE_NIL },
-    #if CEU >= 50
+    #ifdef CEU_LEX
         { CEU_LEX_IMMUT, 0 },
     #endif
-        NULL, CEU_EXE_STATUS_YIELDED, CEU50(CEU_LEX_UNDEF COMMA) 0, NULL,
+        NULL, CEU_EXE_STATUS_YIELDED, CEU_LEX_X(CEU_LEX_UNDEF COMMA) 0, NULL,
         0, {}, { {{NULL},NULL}, {NULL,NULL}, {NULL,NULL} }
     };
     #endif
@@ -400,7 +406,7 @@ fun Coder.main (tags: Tags): String {
             printf("    dyn   = %p\n", v.Dyn);
             printf("    type  = %d\n", v.type);
             printf("    refs  = %d\n", v.Dyn->Any.refs);
-    #if CEU >= 50
+    #ifdef CEU_LEX
             printf("    lex   = {type=%d, depth=%d}\n", v.Dyn->Any.lex.type, v.Dyn->Any.lex.depth);
     #endif
             printf("    ----\n");
@@ -456,14 +462,18 @@ fun Coder.main (tags: Tags): String {
 
     fun lex (): String {
         return """
-    #if CEU >= 50
+    #ifdef CEU_LEX
     char* ceu_drop (CEU_Value src, uint8_t depth) {
         if (src.type < CEU_VALUE_DYNAMIC) {
             return NULL;
         } else if (src.Dyn->Any.lex.type == CEU_LEX_FLEET) {
-            return NULL;    // already fleeting
+            if (src.Dyn->Any.lex.depth == CEU_LEX_UNDEF) {
+                return NULL;    // already fleeting
+            } else if (src.Dyn->Any.refs > 1) {
+                return NULL;    // must keep depth (see below)
+            }
         } else if (src.Dyn->Any.lex.depth < depth) {
-            return NULL;    // does not belong to this block
+            return NULL;        // belongs to outer block
         } else {
             assert(src.Dyn->Any.lex.depth == depth);
         }
@@ -580,6 +590,7 @@ fun Coder.main (tags: Tags): String {
             src.Dyn->Any.lex.depth < dst.depth     &&
             src.Dyn->Any.refs > 1
         ) {
+            assert(0 && "impossible case");
             return "dropped value has pending outer reference";
         } else if (
             src.Dyn->Any.lex.depth > dst.depth && (
@@ -1373,7 +1384,7 @@ fun Coder.main (tags: Tags): String {
         if (err != NULL) {
             return err;
         }
-    #if CEU >= 50
+    #ifdef CEU_LEX
         err = ceu_lex_chk_own(idx, col.Dyn->Any.lex);
         if (err != NULL) {
             return err;
@@ -1439,7 +1450,7 @@ fun Coder.main (tags: Tags): String {
         assert(ret != NULL);
         *ret = (CEU_Tuple) {
             CEU_VALUE_TUPLE, 0, (CEU_Value) { CEU_VALUE_NIL },
-    #if CEU >= 50
+    #ifdef CEU_LEX
             { CEU_LEX_FLEET, CEU_LEX_UNDEF },
     #endif
             n, {}
@@ -1470,7 +1481,7 @@ fun Coder.main (tags: Tags): String {
         buf[0] = '\0';
         *ret = (CEU_Vector) {
             CEU_VALUE_VECTOR, 0, (CEU_Value) { CEU_VALUE_NIL },
-    #if CEU >= 50
+    #ifdef CEU_LEX
             { CEU_LEX_FLEET, CEU_LEX_UNDEF },
     #endif
             0, 0, CEU_VALUE_NIL, buf
@@ -1484,7 +1495,7 @@ fun Coder.main (tags: Tags): String {
         assert(ret != NULL);
         *ret = (CEU_Dict) {
             CEU_VALUE_DICT, 0, (CEU_Value) { CEU_VALUE_NIL },
-    #if CEU >= 50
+    #ifdef CEU_LEX
             { CEU_LEX_FLEET, CEU_LEX_UNDEF },
     #endif
             0, NULL
@@ -1492,7 +1503,7 @@ fun Coder.main (tags: Tags): String {
         return (CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)ret} };
     }
     
-    CEU_Value _ceu_create_clo_ (CEU_VALUE type, int size, CEU_Proto proto, int pars, int upvs CEU50(COMMA CEU_Lex lex)) {
+    CEU_Value _ceu_create_clo_ (CEU_VALUE type, int size, CEU_Proto proto, int pars, int upvs CEU_LEX_X(COMMA CEU_Lex lex)) {
         ceu_debug_add(type);
         CEU_Clo* ret = malloc(size);
         assert(ret != NULL);
@@ -1503,20 +1514,20 @@ fun Coder.main (tags: Tags): String {
         }
         *ret = (CEU_Clo) {
             type, 0, (CEU_Value) { CEU_VALUE_NIL },
-            CEU50(lex COMMA)
+            CEU_LEX_X(lex COMMA)
             proto,
             { upvs, buf }
         };
         return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
     }
 
-    CEU_Value ceu_create_clo_func (CEU_Proto proto, int pars, int upvs CEU50(COMMA CEU_Lex lex)) {
-        return _ceu_create_clo_(CEU_VALUE_CLO_FUNC, sizeof(CEU_Clo), proto, pars, upvs CEU50(COMMA lex));
+    CEU_Value ceu_create_clo_func (CEU_Proto proto, int pars, int upvs CEU_LEX_X(COMMA CEU_Lex lex)) {
+        return _ceu_create_clo_(CEU_VALUE_CLO_FUNC, sizeof(CEU_Clo), proto, pars, upvs CEU_LEX_X(COMMA lex));
     }
 
     #if CEU >= 3
-    CEU_Value ceu_create_clo_coro (CEU_Proto proto, int pars, int upvs, int mem_n CEU50(COMMA CEU_Lex lex)) {
-        CEU_Value clo = _ceu_create_clo_(CEU_VALUE_CLO_CORO, sizeof(CEU_Clo_Exe), proto, pars, upvs CEU50(COMMA lex));
+    CEU_Value ceu_create_clo_coro (CEU_Proto proto, int pars, int upvs, int mem_n CEU_LEX_X(COMMA CEU_Lex lex)) {
+        CEU_Value clo = _ceu_create_clo_(CEU_VALUE_CLO_CORO, sizeof(CEU_Clo_Exe), proto, pars, upvs CEU_LEX_X(COMMA lex));
         clo.Dyn->Clo_Exe.mem_n = mem_n;
         return clo;
     }
@@ -1532,11 +1543,11 @@ fun Coder.main (tags: Tags): String {
 
         *ret = (CEU_Exe) {
             type, 0, (CEU_Value) { CEU_VALUE_NIL },
-    #if CEU >= 50
+    #ifdef CEU_LEX
             //clo.Dyn->Clo.lex,
             { CEU_LEX_FLEET, CEU_LEX_UNDEF },
     #endif
-            &clo.Dyn->Clo, CEU_EXE_STATUS_YIELDED, CEU50(CEU_LEX_UNDEF COMMA) 0, mem
+            &clo.Dyn->Clo, CEU_EXE_STATUS_YIELDED, CEU_LEX_X(CEU_LEX_UNDEF COMMA) 0, mem
         };
         
         return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
@@ -1544,8 +1555,8 @@ fun Coder.main (tags: Tags): String {
     #endif
     
     #if CEU >= 4
-    CEU_Value ceu_create_clo_task (CEU_Proto proto, int pars, int upvs, int mem_n CEU50(COMMA CEU_Lex lex)) {
-        CEU_Value clo = _ceu_create_clo_(CEU_VALUE_CLO_TASK, sizeof(CEU_Clo_Exe), proto, pars, upvs CEU50(COMMA lex));
+    CEU_Value ceu_create_clo_task (CEU_Proto proto, int pars, int upvs, int mem_n CEU_LEX_X(COMMA CEU_Lex lex)) {
+        CEU_Value clo = _ceu_create_clo_(CEU_VALUE_CLO_TASK, sizeof(CEU_Clo_Exe), proto, pars, upvs CEU_LEX_X(COMMA lex));
         clo.Dyn->Clo_Exe.mem_n = mem_n;
         return clo;
     }
@@ -1611,7 +1622,7 @@ fun Coder.main (tags: Tags): String {
     
     #if CEU >= 5        
     CEU_Exe_Task* ceu_task_up (CEUX* ceux);
-    CEU_Value ceu_create_tasks (CEUX* ceux, CEU_Block* up_blk, CEU_Value max CEU50(COMMA uint8_t lex_depth)) {
+    CEU_Value ceu_create_tasks (CEUX* ceux, CEU_Block* up_blk, CEU_Value max CEU_LEX_X(COMMA uint8_t lex_depth)) {
         CEU_Exe_Task* up_tsk = ceu_task_up(ceux);
 
         int xmax = 0;
@@ -1628,7 +1639,7 @@ fun Coder.main (tags: Tags): String {
 
         *ret = (CEU_Tasks) {
             CEU_VALUE_TASKS, 0, (CEU_Value) { CEU_VALUE_NIL },
-        #if CEU >= 50
+        #ifdef CEU_LEX
             { CEU_LEX_FLEET, lex_depth },
         #endif
             xmax, { {{(CEU_Dyn*)up_tsk},NULL}, {NULL,NULL}, {NULL,NULL} }
@@ -2009,7 +2020,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 4
                         NULL,   // TODO: no access to up(ceux)
         #endif
-                        CEU50(CEU_LEX_UNDEF COMMA)
+                        CEU_LEX_X(CEU_LEX_UNDEF COMMA)
                         0,
                         args
                     };
@@ -2177,7 +2188,7 @@ fun Coder.main (tags: Tags): String {
                     {.exe_task = tsk},
                     CEU_ACTION_ERROR,
                     NULL,   // TODO: no access to up(ceux)
-                    CEU50(CEU_LEX_UNDEF COMMA)
+                    CEU_LEX_X(CEU_LEX_UNDEF COMMA)
                     1,
                     NULL
                 };
@@ -2189,7 +2200,7 @@ fun Coder.main (tags: Tags): String {
                     {.exe_task = tsk},
                     CEU_ACTION_RESUME,
                     NULL,   // TODO: no access to up(ceux)
-                    CEU50(CEU_LEX_UNDEF COMMA)
+                    CEU_LEX_X(CEU_LEX_UNDEF COMMA)
                     1,
                     evt
                 };
@@ -2209,7 +2220,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Value xin = ceux->args[0];
             CEU_Value evt = ceux->args[1];
             
-        #if CEU >= 50
+        #ifdef CEU_LEX
             uint8_t depth; {
                 if (xin.Tag == CEU_TAG_global) {
                     depth = 1;
@@ -2255,7 +2266,7 @@ fun Coder.main (tags: Tags): String {
                 NULL,
                 {NULL}, CEU_ACTION_INVALID,
                 NULL,
-                CEU50(0 COMMA)
+                CEU_LEX_X(0 COMMA)
                 2,
                 args
             };
@@ -2307,7 +2318,7 @@ fun Coder.main (tags: Tags): String {
             """
             CEU_Clo ceu_clo_$id = {
                 CEU_VALUE_CLO_FUNC, 1, (CEU_Value) { CEU_VALUE_NIL },
-            #if CEU >= 50
+            #ifdef CEU_LEX
                 { CEU_LEX_FLEET, CEU_LEX_UNDEF },
             #endif
                 ceu_pro_$id, { 0, NULL }
@@ -2342,7 +2353,7 @@ fun Coder.main (tags: Tags): String {
     #endif
 
         CEUX _ceux_ = {
-            NULL, CEU3({NULL} COMMA CEU_ACTION_INVALID COMMA) CEU4(NULL COMMA) CEU50(0 COMMA) 0, NULL
+            NULL, CEU3({NULL} COMMA CEU_ACTION_INVALID COMMA) CEU4(NULL COMMA) CEU_LEX_X(0 COMMA) 0, NULL
         };
         CEUX* ceux = &_ceux_;
         

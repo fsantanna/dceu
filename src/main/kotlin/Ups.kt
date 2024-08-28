@@ -65,7 +65,7 @@ class Ups (val outer: Expr.Do) {
         return this.pub[e].let { it is Expr.Set && it.dst==e }
     }
     fun isdrop (e: Expr): Boolean {
-        return this.pub[e].let { it is Expr.Drop && it.e==e }
+        return LEX && this.pub[e].let { it is Expr.Drop && it.e==e }
     }
 
     fun dcl_to_blk (dcl: Expr.Dcl): Expr {

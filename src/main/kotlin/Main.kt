@@ -4,6 +4,7 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
+var LEX = false
 var TEST = false
 var DUMP = true
 var DEBUG = true
@@ -299,9 +300,8 @@ fun main (args: Array<String>) {
             }
         })
 
-        if (ys.containsKey("--test")) {
-            TEST = true
-        }
+        LEX  = ys.containsKey("--lex")
+        TEST = ys.containsKey("--test")
 
         when {
             ys.containsKey("--version") -> println("dceu " + VERSION)
