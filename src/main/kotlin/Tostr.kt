@@ -41,8 +41,13 @@ fun Patt.tostr (pre: Boolean = false): String {
 fun Expr.tostr (pre: Boolean = false): String {
     return when (this) {
         is Expr.Proto  -> {
+            val mod = when {
+                this.fake -> " :fake"
+                this.nst  -> " :nested"
+                else      -> ""
+            }
             val pars = this.pars.map { it.idtag.tostr(pre) }.joinToString(",")
-            "(" + this.tk.str + this.nst.cond { " :nested" } + " (" + pars + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
+            "(" + this.tk.str + mod + " (" + pars + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
         }
         is Expr.Do     -> {
             when (this.tk.str) {

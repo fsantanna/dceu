@@ -3633,10 +3633,25 @@ class Exec_99 {
             }
             spawn T()
             broadcast (nil) in :global
-        """, true)
+        """)
         assert(out == "10\n10\n") { out }
     }
-
+    @Test
+    fun ij_06_task_pub_fake() {
+        val out = test("""
+            data :T = [x]
+            spawn {
+                task T () :T {
+                    set pub = [10]
+                    spawn {
+                        println(pub.x)
+                    }
+                }
+                spawn T()
+            }
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // PAR / PAR-AND / PAR-OR
 
@@ -6848,6 +6863,21 @@ class Exec_99 {
                 }
             }
             spawn T()
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun zz_08_fake() {
+        val out = test("""
+            spawn {
+                task T () {
+                    set pub = [10]
+                    spawn {
+                        println(pub[0])
+                    }
+                }
+                spawn T()
+            }
         """)
         assert(out == "10\n") { out }
     }

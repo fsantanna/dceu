@@ -297,8 +297,87 @@ class Exec_50 {
             }
             spawn T()
         """)
+        assert(out == "10\n10\n") { out }
+    }
+    @Test
+    fun nn_11_nested() {
+        val out = test("""
+            spawn (task () {
+                val T = task () {
+                    set pub = [10]
+                    spawn (task :fake () {
+                        println(pub[0])
+                    }) ()
+                }
+                spawn T()
+            }) ()
+        """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun nn_12_nested() {
+        val out = test("""
+            spawn (task :fake () {
+                val T = task :nested () {
+                    set pub = [10]
+                    spawn (task :fake () {
+                        println(pub[0])
+                    }) ()
+                }
+                spawn T()
+            }) ()
+        """)
+        assert(out == "10\n") { out }
+    }
+
+    // FAKE
+
+    @Test
+    fun lm_02_fake() {
+        val out = test("""
+            spawn (task () {
+                set pub = 10
+                val x = [99]
+                spawn (task :fake () {
+                    set x[0] = pub
+                }) ()
+                println(x)
+            }) ()
+        """)
+        assert(out == "[10]\n") { out }
+    }
+    @Test
+    fun lm_03_fake() {
+        val out = test("""
+            val T = task () {
+                val t = 10
+                val S = task :fake () {
+                    println(t)
+                }
+                spawn (task :fake () {
+                    spawn S()
+                }) ()
+            }
+            spawn T()
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun lm_04_fake() {
+        val out = test("""
+            spawn (task () {
+                val T = task () {
+                    set pub = [10]
+                    spawn (task :fake () {
+                        println(pub[0])
+                    }) ()
+                }
+                spawn T()
+            }) ()
+        """)
+        assert(out == "10\n") { out }
+    }
+
 
     // ORIGINAL / NESTED
 
@@ -622,7 +701,7 @@ class Exec_50 {
         val out = test("""
             spawn (task () {
                 set pub = 1
-                spawn (task :nested () {
+                spawn (task :fake () {
                     println(pub)
                 }) ()
                 nil
@@ -636,7 +715,7 @@ class Exec_50 {
             spawn (task () {
                 set pub = []
                 var x
-                spawn (task :nested () {
+                spawn (task :fake () {
                     set x = pub
                 }) ()
                 println(x)
@@ -657,7 +736,7 @@ class Exec_50 {
             spawn (task () {
                 set pub = [10]
                 var x
-                spawn (task :nested () {
+                spawn (task :fake () {
                     set x = pub[0]
                 }) ()
                 println(x)
@@ -847,7 +926,7 @@ class Exec_50 {
             data :X = [x]
             val T = task () :X {
                 set pub = [10]
-                spawn (task :nested () {
+                spawn (task :fake () {
                     ;;println(pub)
                     println(pub.x)
                 }) ()

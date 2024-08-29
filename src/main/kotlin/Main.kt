@@ -4,7 +4,7 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-var LEX = false
+var LEX = true
 var TEST = false
 var DUMP = true
 var DEBUG = true
@@ -89,9 +89,9 @@ val TAGS = listOf (
 )) + (if (CEU < 3) listOf() else listOfNotNull(
     ":yielded", (if (CEU<4) null else ":toggled"), ":resumed", ":terminated"
 )) + (if (CEU < 4) listOf() else listOf(
-    ":fake", ":global", ":task",
+    ":global", ":task",
 )) + (if (CEU < 50) listOf() else listOfNotNull(
-    ":nested",
+    ":fake", ":nested",
 )) + listOf(
     ":ceu", ":error", ":pre",
 ) + (if (CEU < 99) listOf() else listOf(

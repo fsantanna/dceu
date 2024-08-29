@@ -46,7 +46,7 @@ class Ups (val outer: Expr.Do) {
             when {
                 (it !is Expr.Proto) -> false
                 (it.tk.str != "task") -> false
-                !it.nst -> true
+                !it.fake -> true
                 (this.first(it) { it is Expr.Do } == outer) -> true
                 else -> false
             }
