@@ -276,7 +276,6 @@ fun test (inp: String, pre: Boolean=false): String {
 }
 
 fun main (args: Array<String>) {
-    DUMP = false
     val (xs, ys) = args.cmds_opts()
     try {
         val xinp = if (xs.size > 0) xs[0] else null
@@ -302,6 +301,8 @@ fun main (args: Array<String>) {
 
         LEX  = ys.containsKey("--lex")
         TEST = ys.containsKey("--test")
+        DEBUG = ys.containsKey("--debug")
+        DUMP = DEBUG
 
         when {
             ys.containsKey("--version") -> println("dceu " + VERSION)
