@@ -329,6 +329,51 @@ class Exec_50 {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun TODO_lm_13_nest_yield_func() {
+        val out = test("""
+            spawn (task () {
+                val f = func :nested () {
+                    nil
+                }
+                yield(nil)
+                f()
+            }) ()
+            broadcast(nil)
+            println(:ok)
+        """)
+        assert(out == "anon : (lin 3, col 25) : TODO - nested function with enclosing coro/task\n") { out }
+    }
+    @Test
+    fun TODO_lm_14_nest_task_func() {
+        val out = test("""
+            spawn (task () {
+                val f = func :nested () {
+                    set pub = :pub
+                }
+                yield(nil)
+                f()
+                println(pub)
+            }) ()
+            broadcast(nil)
+        """)
+        assert(out == "anon : (lin 3, col 25) : TODO - nested function with enclosing coro/task\n") { out }
+    }
+    @Test
+    fun TODO_lm_15_nest_task_func() {
+        val out = test("""
+            spawn (task () {
+                val x = :x
+                val f = func :nested () {
+                    println(x)
+                }
+                yield(nil)
+                f()
+            }) ()
+            broadcast(nil)
+        """)
+        assert(out == "anon : (lin 4, col 25) : TODO - nested function with enclosing coro/task\n") { out }
+    }
 
     // FAKE
 
@@ -377,7 +422,6 @@ class Exec_50 {
         """)
         assert(out == "10\n") { out }
     }
-
 
     // ORIGINAL / NESTED
 

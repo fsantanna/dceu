@@ -93,6 +93,12 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                         (ups.first(ups.pub[this]!!) { it is Expr.Proto } == null) -> err(this.tk, ":nested error : expected enclosing prototype")
                         else -> {}
                     }
+                    when {
+                        (this.tk.str != "func") -> {}
+                        ups.none(this) { it is Expr.Proto && it.tk.str != "func" } -> {}
+                        else -> err(this.tk, "TODO - nested function with enclosing coro/task")
+                    }
+
                     ups.all_until(ups.pub[this]!!) { it is Expr.Proto }
                         .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
                         .forEach { mems.add(it) }
