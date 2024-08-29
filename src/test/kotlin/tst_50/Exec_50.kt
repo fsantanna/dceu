@@ -211,6 +211,94 @@ class Exec_50 {
         assert(out == "10\n") { out }
         //assert(out == "anon : (lin 4, col 30) : expected \"(\" : have \":nested\"\n") { out }
     }
+    @Test
+    fun nn_06_nested() {
+        val out = test("""
+            spawn (task () {
+                val T = task :nested () {
+                    set pub = [99]
+                    println(:A, pub)
+                    spawn (task :fake () {
+                        println(:B, pub)
+                    }) ()
+                    yield(nil)
+                }
+                val t = spawn T()
+                println(:C, t.pub)
+            }) ()
+        """
+        )
+        assert(out == ":A\t[99]\n" +
+                ":B\t[99]\n" +
+                ":C\t[99]\n") { out }
+    }
+    @Test
+    fun nn_07_nested() {
+        val out = test("""
+            val T = task () {
+                val t = 10
+                val S = task :nested () {
+                    println(t)
+                }
+                spawn (task :nested () {
+                    spawn S()
+                }) ()
+            }
+            spawn T()
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun nn_08_nested() {
+        val out = test("""
+            val T = func () {
+                val t = 10
+                val S = func :nested () {
+                    println(t)
+                }
+                (func :nested () {
+                    S()
+                }) ()
+            }
+            T()
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun nn_09_nested() {
+        val out = test("""
+            val T = coro () {
+                val t = 10
+                val S = coro :nested () {
+                    println(t)
+                }
+                resume coroutine(coro :nested () {
+                    resume coroutine(S)()
+                }) ()
+            }
+            resume coroutine(T)()
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun nn_10_nested() {
+        val out = test("""
+            val T = task () {
+                set pub = 10
+                val S = task :fake () {
+                    println(pub)
+                }
+                spawn (task :fake () {
+                    spawn S()
+                }) ()
+                spawn (task () {
+                    spawn S()
+                }) ()
+            }
+            spawn T()
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // ORIGINAL / NESTED
 

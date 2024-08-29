@@ -6816,4 +6816,39 @@ class Exec_99 {
         """)
         assert(out == ":ok\n:ok\n") { out }
     }
+    @Test
+    fun zz_06_fake() {
+        val out = test("""
+            task T () {
+                val t = 10
+                task S () {
+                    println(t)
+                }
+                spawn {
+                    println(:1)
+                    await spawn S ()
+                    println(:2)
+                }
+                await(|false)
+            }
+            spawn T()
+        """)
+        assert(out == ":1\n10\n:2\n") { out }
+    }
+    @Test
+    fun zz_07_fake() {
+        val out = test("""
+            task T () {
+                val t = 10
+                task S () {
+                    println(t)
+                }
+                spawn {
+                    spawn S()
+                }
+            }
+            spawn T()
+        """)
+        assert(out == "10\n") { out }
+    }
 }

@@ -3744,7 +3744,7 @@ class Exec_04 {
         assert(out == "anon : (lin 2, col 28) : declaration error : data :X is not declared\n") { out }
     }
 
-    // NESTED / BCAST / THROW
+    // NESTED / FAKE / BCAST / THROW
 
     @Test
     fun lm_01_bcast_err() {
@@ -3754,6 +3754,36 @@ class Exec_04 {
         """)
         //assert(out == "anon : (lin 2, col 26) : broadcast error : invalid target\n:error\n") { out }
         assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun lm_02_fake() {
+        val out = test("""
+            spawn (task () {
+                set pub = 10
+                val x = [99]
+                spawn (task :fake () {
+                    set x[0] = pub
+                }) ()
+                println(x)
+            }) ()
+        """)
+        assert(out == "[10]\n") { out }
+    }
+    @Test
+    fun lm_03_fake() {
+        val out = test("""
+            val T = task () {
+                val t = 10
+                val S = task :fake () {
+                    println(t)
+                }
+                spawn (task :fake () {
+                    spawn S()
+                }) ()
+            }
+            spawn T()
+        """)
+        assert(out == "10\n") { out }
     }
 
     // ABORTION

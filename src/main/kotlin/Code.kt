@@ -581,7 +581,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val exe = if (this.tsk != null) "" else {
                     ups.first_task_outer(this).let { outer ->
                         val n = ups.all_until(this) {
-                            it is Expr.Proto && it.tk.str=="task" && !it.nst
+                            it is Expr.Proto && it.tk.str=="task" && !it.fake
                         }
                             .filter { it is Expr.Proto } // but count all protos in between
                             .count() - 1
