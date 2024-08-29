@@ -116,6 +116,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             ${this.pars.size},
                             ${vars.proto_to_upvs[this]!!.size}
                             ${isexe.cond {", sizeof(CEU_Pro_$id)"}}
+                            CEU50(COMMA ceux->exe)
                             CEU_LEX_X(COMMA ((CEU_Lex) { ${if (this.nst) "CEU_LEX_IMMUT, ceux->depth" else "CEU_LEX_FLEET, CEU_LEX_UNDEF"} }))
                         )
                     );
@@ -585,7 +586,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         }
                             .filter { it is Expr.Proto } // but count all protos in between
                             .count() - 1
-                        "(ceux->exe_task${"->lnks.up.tsk".repeat(n)})"
+                        "(ceux->exe_task${"->clo->up_nst".repeat(n)})"
                     }
                 }
                 if (ups.isdrop(this)) {

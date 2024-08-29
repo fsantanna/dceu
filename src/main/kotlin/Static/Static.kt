@@ -68,7 +68,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 val xups = ups.all_until(src) { it == blk } // all ups between src -> dcl
                 val pid = (ups.first(blk) { it is Expr.Proto } as Expr.Proto).id(outer, ups)
                 val xn = xups.count { it is Expr.Proto && it!=blk }
-                "((CEU_Pro_$pid*)ceux->exe_task->${"lnks.up.tsk->".repeat(xn)}mem)->${id}_${dcl.n}"
+                "((CEU_Pro_$pid*)ceux->exe_task->${"clo->up_nst->".repeat(xn)}mem)->${id}_${dcl.n}"
             }
             else -> "ceu_upv_${id}_${dcl.n}"
         }
