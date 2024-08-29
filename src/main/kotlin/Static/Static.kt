@@ -94,7 +94,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                         else -> {}
                     }
                     when {
-                        (this.tk.str != "func") -> {}
+                        (this.tk.str != "func" || !vars.proto_has_outer.contains(this)) -> {}
                         ups.none(this) { it is Expr.Proto && it.tk.str != "func" } -> {}
                         else -> err(this.tk, "TODO - nested function with enclosing coro/task")
                     }

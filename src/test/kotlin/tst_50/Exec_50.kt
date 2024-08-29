@@ -374,6 +374,21 @@ class Exec_50 {
         """)
         assert(out == "anon : (lin 4, col 25) : TODO - nested function with enclosing coro/task\n") { out }
     }
+    @Test
+    fun lm_16_nest_task_func() {
+        val out = test("""
+            spawn (task () {
+                val x = :x
+                val f = func :nested () {
+                    println(:ok)
+                }
+                yield(nil)
+                f()
+            }) ()
+            broadcast(nil)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // FAKE
 

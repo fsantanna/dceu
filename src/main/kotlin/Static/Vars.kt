@@ -25,6 +25,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
     public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
     public val proto_to_upvs: MutableMap<Expr.Proto,MutableSet<Expr.Dcl>> = mutableMapOf()
+    public val proto_has_outer: MutableSet<Expr.Proto> = mutableSetOf()
 
     init {
         this.outer.traverse()
@@ -86,6 +87,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             (blk == up)    -> Type.LOCAL
             else -> {
                 up as Expr.Proto
+                this.proto_has_outer.add(up)
                 val nst = ups.all_until(up) { it == blk }
                     .filter { it is Expr.Proto }
                     .let { it as List<Expr.Proto> }
