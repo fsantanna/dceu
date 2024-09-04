@@ -468,7 +468,7 @@ fun Coder.main (tags: Tags): String {
     fun lex (): String {
         return """
     #ifdef CEU_LEX
-    char* ceu_drop (CEU_Value src, uint8_t depth) {
+    char* ceu_drop (int prime, CEU_Value src, uint8_t depth) {
         if (src.type < CEU_VALUE_DYNAMIC) {
             return NULL;
         } else if (src.Dyn->Any.lex.type == CEU_LEX_FLEET) {
@@ -477,10 +477,14 @@ fun Coder.main (tags: Tags): String {
             } else if (src.Dyn->Any.refs > 1) {
                 return NULL;    // must keep depth (see below)
             }
-        } else if (src.Dyn->Any.lex.depth < depth) {
+        } else if (!prime && src.Dyn->Any.lex.depth<depth) {
+            //printf(">>> %d\n", depth);
+            //ceu_dump_val(src);
+            //assert(0);
+            //return "value belongs to outer scope";
             return NULL;        // belongs to outer block
         } else {
-            assert(src.Dyn->Any.lex.depth == depth);
+            //assert(src.Dyn->Any.lex.depth == depth);
         }
         if (src.Dyn->Any.lex.type == CEU_LEX_IMMUT) {
             // immutable in this depth
@@ -488,6 +492,9 @@ fun Coder.main (tags: Tags): String {
         } else if (src.Dyn->Any.refs > 1) {
             // safe to drop to outer, but not to inner:
             // keep depth to encode this restriction
+            if (prime) {
+                return "value has multiple references";
+            }
             src.Dyn->Any.lex.type = CEU_LEX_FLEET;
             //src.Dyn->Any.lex.depth = <keep>;
         } else {
@@ -505,7 +512,7 @@ fun Coder.main (tags: Tags): String {
     #endif
                 for (int i=0; i<src.Dyn->Clo.upvs.its; i++) {
                     //ceu_dump_val(src.Dyn->Clo.upvs.buf[i]);
-                    char* err = ceu_drop(src.Dyn->Clo.upvs.buf[i], depth);
+                    char* err = ceu_drop(prime, src.Dyn->Clo.upvs.buf[i], depth);
                     if (err != NULL) {
                         return err;
                     }
@@ -513,7 +520,7 @@ fun Coder.main (tags: Tags): String {
                 break;
             case CEU_VALUE_TUPLE: {
                 for (int i=0; i<src.Dyn->Tuple.its; i++) {
-                    char* err = ceu_drop(src.Dyn->Tuple.buf[i], depth);
+                    char* err = ceu_drop(prime, src.Dyn->Tuple.buf[i], depth);
                     if (err != NULL) {
                         return err;
                     }
@@ -524,7 +531,7 @@ fun Coder.main (tags: Tags): String {
                 for (int i=0; i<src.Dyn->Vector.its; i++) {
                     CEU_Value v = ceu_vector_get(&src.Dyn->Vector, i);
                     assert(CEU_ERROR == CEU_ERROR_NONE);
-                    char* err = ceu_drop(v, depth);
+                    char* err = ceu_drop(prime, v, depth);
                     if (err != NULL) {
                         return err;
                     }
@@ -534,11 +541,11 @@ fun Coder.main (tags: Tags): String {
             case CEU_VALUE_DICT: {
                 for (int i=0; i<src.Dyn->Dict.max; i++) {
                     char* err;
-                    err = ceu_drop((*src.Dyn->Dict.buf)[i][0], depth);
+                    err = ceu_drop(prime, (*src.Dyn->Dict.buf)[i][0], depth);
                     if (err != NULL) {
                         return err;
                     }
-                    err = ceu_drop((*src.Dyn->Dict.buf)[i][1], depth);
+                    err = ceu_drop(prime, (*src.Dyn->Dict.buf)[i][1], depth);
                     if (err != NULL) {
                         return err;
                     }
@@ -553,7 +560,7 @@ fun Coder.main (tags: Tags): String {
             {
                 CEU4(assert(src.type==CEU_VALUE_EXE_CORO && "TODO: drop task");)
                 CEU_Value clo = ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.clo);
-                char* err = ceu_drop(clo, depth);
+                char* err = ceu_drop(prime, clo, depth);
                 if (err != NULL) {
                     return err;
                 }
@@ -569,7 +576,7 @@ fun Coder.main (tags: Tags): String {
                     tsk != NULL;
                     tsk = (CEU_Exe_Task*) tsk->lnks.sd.nxt
                 ) {
-                    char* err = ceu_drop(ceu_dyn_to_val((CEU_Dyn*)tsk), depth);
+                    char* err = ceu_drop(prime, ceu_dyn_to_val((CEU_Dyn*)tsk), depth);
                     if (err != NULL) {
                         return err;
                     }
@@ -1539,7 +1546,7 @@ fun Coder.main (tags: Tags): String {
         return clo;
     }
 
-    CEU_Value ceu_create_exe (int type, int sz, CEU_Value clo) {
+    CEU_Value ceu_create_exe (int type, int sz, CEU_Value clo CEU_LEX_X(COMMA uint8_t depth)) {
         ceu_debug_add(type);
         assert(clo.type==CEU_VALUE_CLO_CORO CEU4(|| clo.type==CEU_VALUE_CLO_TASK));
         ceu_gc_inc_val(clo);
@@ -1554,7 +1561,7 @@ fun Coder.main (tags: Tags): String {
             //clo.Dyn->Clo.lex,
             { CEU_LEX_FLEET, CEU_LEX_UNDEF },
     #endif
-            &clo.Dyn->Clo, CEU_EXE_STATUS_YIELDED, CEU_LEX_X(CEU_LEX_UNDEF COMMA) 0, mem
+            &clo.Dyn->Clo, CEU_EXE_STATUS_YIELDED, CEU_LEX_X(depth COMMA) 0, mem
         };
         
         return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
@@ -1572,7 +1579,7 @@ fun Coder.main (tags: Tags): String {
     int ceu_isexe_dyn (CEU_Dyn* dyn);
     #endif
     
-    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Dyn* up_dyn, CEU_Block* up_blk) {
+    CEU_Value ceu_create_exe_task (CEU_Value clo, CEU_Dyn* up_dyn, CEU_Block* up_blk CEU_LEX_X(COMMA uint8_t depth)) {
     #if CEU >= 5
         int ceu_tasks_n (CEU_Tasks* tsks) {
             int n = 0;
@@ -1595,7 +1602,7 @@ fun Coder.main (tags: Tags): String {
             return CEU_ERROR_PTR("expected task");
         }
 
-        CEU_Value ret = ceu_create_exe(CEU_VALUE_EXE_TASK, sizeof(CEU_Exe_Task), clo);
+        CEU_Value ret = ceu_create_exe(CEU_VALUE_EXE_TASK, sizeof(CEU_Exe_Task), clo CEU_LEX_X(COMMA depth));
         CEU_Exe_Task* dyn = &ret.Dyn->Exe_Task;
         
         ceu_gc_inc_dyn((CEU_Dyn*) dyn);
@@ -1906,7 +1913,7 @@ fun Coder.main (tags: Tags): String {
             if (clo.type != CEU_VALUE_CLO_CORO) {
                 ret = CEU_ERROR_PTR("expected coro");
             } else {
-                ret = ceu_create_exe(CEU_VALUE_EXE_CORO, sizeof(CEU_Exe), clo);
+                ret = ceu_create_exe(CEU_VALUE_EXE_CORO, sizeof(CEU_Exe), clo CEU_LEX_X(COMMA ceux->depth-1));
             }
             ceu_gc_dec_val(clo);
             CEU_ACC(ret);

@@ -59,7 +59,7 @@ class Exec_50 {
     // BASIC
 
     @Test
-    fun bb_multi() {
+    fun bb_01_multi() {
         val out = test("""
             val t1 = []
             val t2 = t1
@@ -74,11 +74,95 @@ class Exec_50 {
                 "1\t1\n" +
                 "nil\t[]\n") { out }
     }
+    @Test
+    fun bb_02_acc() {
+        val out = test("""
+            val x = do {
+                val y = []
+                y
+                drop(y)
+            }
+            println(x)
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun bb_03_acc() {
+        val out = test("""
+            val f = func (x) {
+                x
+            }
+            val x = do {
+                val y = []
+                y
+                f(drop(y))
+            }
+            println(x)
+        """)
+        assert(out == "[]\n") { out }
+    }
 
     // COLLECTIONS
 
     @Test
+    fun cc_01_col() {
+        val out = test("""
+            val t = [[10]]
+            val x = drop(t[0])
+            println(t, x)
+        """)
+        assert(out == "[nil]\t[10]\n") { out }
+    }
+    @Test
+    fun cc_02_col() {
+        val out = test("""
+            val y = do {
+                val t = [[10]]
+                val' x = drop(t[0])
+                x
+            }
+            println(y)
+        """)
+        assert(out == "[10]\n") { out }
+    }
+    @Test
+    fun cc_03_col() {
+        val out = test("""
+            val x = do {
+                val t = [[10]]
+                drop(t[0])
+            }
+            println(x)
+        """)
+        assert(out == "[10]\n") { out }
+    }
+    @Test
+    fun cc_04_col_err() {
+        val out = test("""
+            val y = do {
+                val t = [[10]]
+                t[0]
+            }
+            println(y)
+        """)
+        assert(out == " |  anon : (lin 2, col 13) : (val y = do { (val t = [[10]]); t[0]; })\n" +
+                " v  error : cannot copy reference out\n") { out }
+    }
+    @Test
     fun cc_05_col() {
+        val out = test("""
+            val f = func (inp) {
+                val out = [inp[0]]
+                drop(out)
+            }
+            val v = []
+            val t = f([v])
+            println(v == t[0])
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun cc_06_col() {
         val out = test("""
             val copy = func (vec) {
                 val ret = #[]
@@ -110,7 +194,7 @@ class Exec_50 {
         assert(out == "[[]]\n") { out }
     }
 
-    // COROS
+    // PROTOS / COROS
 
     @Test
     fun hh_01_coro() {
@@ -134,6 +218,74 @@ class Exec_50 {
             println()
         """)
         assert(out == "[1,2][3,4]\n") { out }
+    }
+    @Test
+    fun hh_02_coro_upval() {
+        val out = test("""
+            val F = func (x) {
+                coro () {
+                    yield(drop(x))  ;; x is an upval
+                }
+            }
+            ;;do {
+                val x = []
+                val CO = F(drop(x))
+                val co = coroutine(CO)
+                val t = resume co()
+                println(t)
+            ;;}
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun hh_03_coro_upval() {
+        val out = test("""
+            val F = func (x) {
+                coro () {
+                    yield(drop(x))  ;; x is an upval
+                }
+            }
+            do {
+                val x = []
+                val CO = F(drop(x))
+                val co = coroutine(CO)
+                resume co()
+            }
+        """)
+        assert(out == " |  anon : (lin 11, col 17) : (resume (co)())\n" +
+                " |  anon : (lin 4, col 21) : yield(drop(x))\n" +
+                " v  error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun hh_04_func_upval() {
+        val out = test("""
+            val F = func (x) {
+                func () {
+                    (drop(x))  ;; x is an upval
+                }
+            }
+            do {
+                val x = []
+                val f = F(drop(x))
+                println(f())
+            }
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun hh_05_coro() {
+        val out = test("""
+            val CO = coro () {
+                val x = [99]
+                do {
+                    yield(drop'(x))
+                }
+            }
+            val co = coroutine(CO)
+            val x = resume co()
+            println(x)
+        """)
+        assert(out == "[99]\n") { out }
     }
 
     // NESTED

@@ -1684,7 +1684,7 @@ class Exec_99 {
             }
             println(t)
         """, true)
-        assert(out == "[45,46,47,48,49,50,51,52,39,53,54]\n") { out }
+        assert(out == "[46,47,48,49,50,51,52,53,40,54,55]\n") { out }
         //assert(out == "[42,1000,1001,1002,10,11,12,43,36,101,44]\n") { out }
     }
 
@@ -2665,14 +2665,14 @@ class Exec_99 {
         val out = test("""
             val F = func (x) {
                 coro () {
-                    yield(drop(x))
+                    yield(drop(x))  ;; x is an upval
                 } --> {
                     to-iter(it)
                 }
             }
             do {
                 val x = []
-                val itr :Iterator = F(x)
+                val itr :Iterator = F(drop(x))
                 println(itr.f(itr))
             }
         """, true)
@@ -2853,9 +2853,7 @@ class Exec_99 {
                     x
                 })
                 resume co()
-                co --> {
-                    drop(it)
-                }
+                drop(co)
             }
             do {
                 val x = []
@@ -4841,7 +4839,7 @@ class Exec_99 {
             }
         """)
         //assert(out == "anon : (lin 2, col 27) : expected non-pool spawn : have \"spawn\"") { out }
-        assert(out == " |  anon : (lin 5, col 14) : (spawn (task :nested () { (val ts = tasks(...\n" +
+        assert(out == " |  anon : (lin 5, col 14) : (spawn (task :fake () { (val ts = tasks(ni...\n" +
                 " |  anon : (lin 4, col 31) : (spawn nil() in ts)\n" +
                 " v  error : expected task\n") { out }
     }
@@ -4858,7 +4856,7 @@ class Exec_99 {
         """, true)
         //assert(out.contains("[]\n")) { out }
         //assert(out.contains("anon : (lin 3, col 53) : block escape error : incompatible scopes")) { out }
-        assert(out == " |  anon : (lin 8, col 14) : (spawn (task :nested () { (var x = do { (v...\n" +
+        assert(out == " |  anon : (lin 8, col 14) : (spawn (task :fake () { (var x = do { (val...\n" +
                 " |  anon : (lin 3, col 17) : (var x = do { (val' ceu_spw = (spawn (task...\n" +
                 " v  error : cannot copy reference out\n") { out }
     }
@@ -5431,7 +5429,7 @@ class Exec_99 {
             task T (v) {
                 println(v)
             }
-            val t = (spawn T(v)) where { val v = 10 }
+            val t = (spawn T(v where { val v = 10 }))
         """)
         assert(out == "10\n") { out }
         //assert(out == "anon : (lin 5, col 34) : set error : incompatible scopes\n") { out }
@@ -5479,7 +5477,7 @@ class Exec_99 {
             task T (v) {
                 println(v)
             }
-            val t = (spawn T(v)) where { val v = 10 }
+            val t = (spawn T(v where { val v = 10 }))
         """)
         assert(out == "10\n") { out }
     }
@@ -5493,6 +5491,22 @@ class Exec_99 {
             val t = (spawn T(v)) where {
                 val v = 10
             }
+            println(type(t))
+        """)
+        assert(out == "10\n" +
+                " |  anon : (lin 5, col 13) : (val t = do { (val v = 10); (spawn T(v)); })\n" +
+                " v  error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun op_07x_where() {
+        val out = test(
+            """
+            task T (v) {
+                println(v)
+            }
+            val t = spawn T(v where {
+                val v = 10
+            })
             println(type(t))
         """)
         assert(out == "10\n:exe-task\n") { out }

@@ -345,7 +345,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 ${(LEX && !this.e.is_lval()).cond { """
                     CEU_ERROR_CHK_PTR (
                         continue,
-                        ceu_drop(ceu_acc, ceux->depth),
+                        ceu_drop(${if (this.prime) "1" else "0"}, ceu_acc, ceux->depth),
                         ${ups.pub[this]!!.toerr()}
                     );
                 """ }}
@@ -442,7 +442,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         {.exe = (CEU_Exe*) $coro.Dyn},
                         CEU_ACTION_RESUME,
                         CEU4(ceux COMMA)
-                        CEU_LEX_X(ceux->depth COMMA)
+                        CEU_LEX_X($coro.Dyn->Exe.depth COMMA)
                         ${this.args.size},
                         ${sta.idx(this,"args_$n")}
                     };
@@ -528,7 +528,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         else -> sta.idx(this,"tsks_$n") + ".Dyn"
                     }};
                     CEU_Block* ceu_b_$n = ${this.tsks.cond2({"NULL"}, {"&$blkc"})};
-                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, ceu_a_$n, ceu_b_$n);
+                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, ceu_a_$n, ceu_b_$n CEU_LEX_X(COMMA ceux->depth));
                     CEU_ACC(ceu_exe_$n);
                     CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
                     
@@ -556,7 +556,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             {.exe = (CEU_Exe*) ceu_exe_$n.Dyn},
                             CEU_ACTION_RESUME,
                             ceux,
-                            CEU_LEX_X(ceux->depth COMMA)
+                            CEU_LEX_X(ceu_exe_$n.Dyn->Exe.depth COMMA)
                             ${this.args.size},
                             ${sta.idx(this,"args_$n")}
                         };
@@ -724,14 +724,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         """
                     }
                     ups.isdrop(this) -> {
+                        val prime = (ups.first(this) { it is Expr.Drop } as Expr.Drop).prime
                         """
                         { // ACC - DROP | ${this.dump()}
+                            CEU_ACC((CEU_Value) { CEU_VALUE_NIL });     // ceu_acc may be equal to $idx (hh_05_coro)
                             CEU_Value ceu_$n = $idx;
-                            CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
                             $idx = (CEU_Value) { CEU_VALUE_NIL };
                             CEU_ERROR_CHK_PTR (
                                 continue,
-                                ceu_drop(ceu_$n, ceux->depth),
+                                ceu_drop(${if (prime) "1" else "0"}, ceu_$n, ceux->depth),
                                 ${ups.pub[this]!!.toerr()}
                             );
                             CEU_ACC(ceu_$n);
@@ -833,26 +834,43 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     }}
                     CEU_Value ceu_idx_$n = CEU_ACC_KEEP();
                 """ +
-                if (ups.isdst(this)) {
+                when {
+                    ups.isdst(this) -> """
+                        { // INDEX | DST | ${this.dump()}
+                            char* ceu_err_$n = ceu_col_set($id_col, ceu_idx_$n, $id_val);
+                            ceu_gc_dec_val($id_col);
+                            ceu_gc_dec_val(ceu_idx_$n);
+                            ceu_acc = $id_val;
+                            CEU_ERROR_CHK_PTR (
+                                continue,
+                                ceu_err_$n,
+                                ${this.toerr()}
+                            );
+                        }
+                        """
+                    ups.isdrop(this) -> {
+                        val prime = (ups.first(this) { it is Expr.Drop } as Expr.Drop).prime
+                        """
+                        { // INDEX | DROP | ${this.dump()}
+                            CEU_ACC((CEU_Value) { CEU_VALUE_NIL });     // ceu_acc may be equal to $idx (hh_05_coro)
+                            CEU_Value ceu_$n = ceu_col_get($id_col, ceu_idx_$n);
+                            ceu_gc_inc_val(ceu_$n);
+                            char* ceu_err_$n = ceu_col_set($id_col, ceu_idx_$n, (CEU_Value) { CEU_VALUE_NIL });
+                            CEU_ERROR_CHK_PTR (
+                                continue,
+                                ceu_drop(${if (prime) "1" else "0"}, ceu_$n, ceux->depth),
+                                ${ups.pub[this]!!.toerr()}
+                            );
+                            CEU_ACC(ceu_$n);
+                            ceu_gc_dec_val(ceu_$n);
+                        }
                     """
-                    { // INDEX | DST | ${this.dump()}
-                        char* ceu_err_$n = ceu_col_set($id_col, ceu_idx_$n, $id_val);
+                    }
+                    else -> """
+                        CEU_ACC(ceu_col_get($id_col, ceu_idx_$n));
                         ceu_gc_dec_val($id_col);
                         ceu_gc_dec_val(ceu_idx_$n);
-                        ceu_acc = $id_val;
-                        CEU_ERROR_CHK_PTR (
-                            continue,
-                            ceu_err_$n,
-                            ${this.toerr()}
-                        );
-                    }
-                    """
-                } else {
-                    """
-                    CEU_ACC(ceu_col_get($id_col, ceu_idx_$n));
-                    ceu_gc_dec_val($id_col);
-                    ceu_gc_dec_val(ceu_idx_$n);
-                    CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
+                        CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
                     """
                 } + """
                 }
