@@ -429,7 +429,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             #ifdef CEU_LEX
                                 CEU_ERROR_CHK_PTR (
                                     continue,
-                                    ceu_lex_chk_own(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, $coro.Dyn->Any.lex.depth }),
+                                    ceu_lex_chk_own(ceu_acc, $coro.Dyn->Any.lex),
                                     ${this.toerr()}
                                 );
                             #endif

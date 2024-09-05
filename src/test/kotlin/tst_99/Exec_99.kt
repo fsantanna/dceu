@@ -2665,7 +2665,7 @@ class Exec_99 {
         val out = test("""
             val F = func (x) {
                 coro () {
-                    yield(drop(x))  ;; x is an upval
+                    yield(drop'(x))  ;; x is an upval
                 } --> {
                     to-iter(it)
                 }
@@ -6072,11 +6072,23 @@ class Exec_99 {
         val out = test("""
             val v = do {
                 val t = [[1],[2],[3]]
-                drop(to.vector(t))
+                to.vector(drop(t))
             }
             println(v)
         """, true)
         assert(out == "#[[1],[2],[3]]\n") { out }
+    }
+    @Test
+    fun xc_05x_tovector() {
+        val out = test("""
+            val v = do {
+                val t = [[1],[2],[3]]
+                drop(to.vector(t))
+            }
+            println(v)
+        """, true)
+        assert(out == " |  anon : (lin 2, col 13) : (val v = do { (val t = [[1],[2],[3]]); dro...\n" +
+                " v  error : cannot copy reference out\n") { out }
     }
     @Test
     fun xc_06_string_to_tag() {
@@ -6894,5 +6906,26 @@ class Exec_99 {
             }
         """)
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun zz_10_coro_err() {
+        val out = test("""
+            func f (co1, xco2) {
+                val' xco1 = coroutine(CO1)
+                resume xco1()
+            }
+            coro CO2 () {
+                nil
+            }
+            coro CO1 () {
+                var x
+                do {
+                    val y = []
+                    set x = y
+                }
+            }
+            println(resume (f(CO1, coroutine(CO2))) ())
+        """)
+        assert(out == "abc\n") { out }
     }
 }

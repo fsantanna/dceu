@@ -287,6 +287,43 @@ class Exec_50 {
         """)
         assert(out == "[99]\n") { out }
     }
+    @Test
+    fun hh_06_coro_err() {
+        val out = test("""
+            val f = func (co1, xco2) {
+                val' xco1 = coroutine(CO1)
+                resume xco1()
+            }
+            val CO2 = coro () {
+                nil
+            }
+            val CO1 = coro () {
+                var x
+                do {
+                    val y = []
+                    set x = y
+                }
+            }
+            println(resume (f(CO1, coroutine(CO2))) ())
+        """)
+        assert(out == "abc\n") { out }
+    }
+    @Test
+    fun hh_07_coro_depth() {
+        val out = test("""
+            val CO = coro (x) {
+                println(x)
+            }
+            val co = coroutine(CO)
+            do {
+                val t = []
+                do {
+                    resume co(drop(t))
+                }
+            }
+        """)
+        assert(out == "[]\n") { out }
+    }
 
     // NESTED
 

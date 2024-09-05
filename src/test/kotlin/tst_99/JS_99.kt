@@ -158,7 +158,7 @@ class JS_99 {
             }
         """, true)
         assert(out.contains("json :good\n" +
-                " |  anon : (lin 33, col 14) : (spawn (task :nested () { (val co1 = corou...\n" +
+                " |  anon : (lin 33, col 14) : (spawn (task :fake () { (val co1 = corouti...\n" +
                 " |  anon : (lin 32, col 48) : (resume (ceu_co)(ceu_arg))\n" +
                 " |  anon : (lin 22, col 48) : (resume (ceu_co)(ceu_arg))\n" +
                 " |  anon : (lin 5, col 25) : error(:error)\n" +
@@ -310,6 +310,24 @@ class JS_99 {
                 resume-yield-all genObj ()
             }
             println(to.vector(create-resume(logReturned, coroutine(genFuncWithReturn))))
+        """, true)
+        assert(out == "abc\n") { out }
+    }
+    @Test
+    fun x_12x() {
+        val out = test("""
+            coro genFuncWithReturn () {
+                yield('a')
+                yield('b')
+                yield('c')
+                nil
+            }
+            coro logReturned (genObj) {
+                yield()
+                resume-yield-all genObj ()
+            }
+            val co1 = coroutine(genFuncWithReturn)
+            println(to.vector(create-resume(logReturned, co1)))
         """, true)
         assert(out == "abc\n") { out }
     }
@@ -468,7 +486,9 @@ class JS_99 {
                     val tmp = yield()
                     loop c in to.iter(tmp) {
                         if c == '\n' {
-                            resume target(drop(cur))
+                            ;;dump(cur)
+                            ;;dump(target)
+                            resume target(drop'(cur))
                             set cur = ""
                         } else {
                             set cur[+] = c
@@ -517,7 +537,7 @@ class JS_99 {
                     val tmp = yield(nil)
                     loop c in to.iter(tmp) {
                         if c == '\n' {
-                            yield(drop(cur))
+                            yield(drop'(cur))
                             set cur = ""
                         } else {
                             set cur[+] = c
@@ -633,7 +653,7 @@ class JS_99 {
             var line = ""
             loop c in to.iter(chars) {
                 if c == '\n' {
-                    yield(drop(line))
+                    yield(drop'(line))
                     set line = ""
                 } else {
                     set line[+] = c
