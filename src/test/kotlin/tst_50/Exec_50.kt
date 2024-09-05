@@ -306,7 +306,10 @@ class Exec_50 {
             }
             println(resume (f(CO1, coroutine(CO2))) ())
         """)
-        assert(out == "abc\n") { out }
+        assert(out == " |  anon : (lin 16, col 29) : f(CO1,coroutine(CO2))\n" +
+                " |  anon : (lin 4, col 17) : (resume (xco1)())\n" +
+                " |  anon : (lin 13, col 25) : x\n" +
+                " v  error : cannot copy reference out\n") { out }
     }
     @Test
     fun hh_07_coro_depth() {
@@ -319,6 +322,23 @@ class Exec_50 {
                 val t = []
                 do {
                     resume co(drop(t))
+                }
+            }
+        """)
+        assert(out == " |  anon : (lin 9, col 21) : (resume (co)(drop(t)))\n" +
+                " v  error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun hh_08_coro_depth() {
+        val out = test("""
+            val CO = coro (x) {
+                println(x)
+            }
+            val co = coroutine(CO)
+            do {
+                val t = []
+                do {
+                    resume co(drop'(t))
                 }
             }
         """)

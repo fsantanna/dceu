@@ -89,7 +89,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             $code
                         } while (0);
 
-                        //{ // pars
+                        { // pars
+                            CEU_Value ceu_acc_$n = CEU_ACC_KEEP();
                             ${this.pars.mapIndexed { i,dcl -> """
                                 ceu_gc_dec_val (
                                     ${sta.ismem(this.blk).cond2({ """
@@ -99,7 +100,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                                     """ })}
                                 );
                             """ }.joinToString("")}
-                        //}
+                            CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
+                            ceu_acc = ceu_acc_$n;
+                        }
 
                         ${isexe.cond{"""
                                 ceu_exe_term(ceux);
