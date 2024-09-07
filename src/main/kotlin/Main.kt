@@ -8,14 +8,14 @@ var LEX = true
 var TEST = false
 var DUMP = true
 var DEBUG = true
-var CEU = 1
+var CEU = 99
 
     //  1: dyn-lex                              ;; 25 "definitely lost" (errors or cycles)
     //  2: defer, throw/catch, do/escape, loop  ;;  4 "definitely lost" (C errors)
     //  3: coro, yield, resume                  ;;  0
     //  4: task, pub, bcast, toggle, delay      ;;  0
     //  5: tasks                                ;;  0
-    // 50: lex, drop, val', var'                ;;  7 "definitely lost" (C errors or cycles)
+    // 50: lex, drop, val', var'                ;;  6 "definitely lost" (C errors or cycles)
     // 99: sugar                                ;;  0
     // TODO: copy, underscore, self (coro/task)
 
@@ -24,8 +24,8 @@ var CEU = 1
 //  - definitely lost
 //  - Invalid read of size
 //  - uninitialised value
-val VALGRIND = ""
-//val VALGRIND = "valgrind "
+//val VALGRIND = ""
+val VALGRIND = "valgrind "
 val THROW = false
 //val THROW = true
 

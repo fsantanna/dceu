@@ -61,6 +61,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         val blk = ups.dcl_to_blk(dcl)
         val ismem = this.ismem(blk)
         //println(listOf(src.tk.pos.lin, id, type(dcl,src)))
+
         return when (vars.type(dcl,src)) {
             Type.GLOBAL -> "ceu_glb_$id"
             Type.LOCAL -> if (ismem) "(ceu_mem->${id}_${dcl.n})" else "ceu_loc_${id}_${dcl.n}"  // idx b/c of "it"
@@ -70,7 +71,12 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 val xn = xups.count { it is Expr.Proto && it!=blk }
                 "((CEU_Pro_$pid*)ceux->exe_task->${"clo->up_nst->".repeat(xn)}mem)->${id}_${dcl.n}"
             }
-            else -> "ceu_upv_${id}_${dcl.n}"
+            else -> {
+                val proto = ups.first(src) { it is Expr.Proto } as Expr.Proto
+                val i = vars.proto_to_upvs[proto]!!.indexOfFirst { it == dcl }
+                assert(i != -1)
+                "ceux->clo->upvs.buf[$i]"
+            }
         }
     }
     fun idx (e: Expr, idc: String): String {

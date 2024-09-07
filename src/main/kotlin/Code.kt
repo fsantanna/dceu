@@ -54,12 +54,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val src = """
                     // PROTO | ${this.dump()}
                     void ceu_pro_$id (CEUX* ceux) {
-                        //{ // upvs
-                            ${vars.proto_to_upvs[this]!!.mapIndexed { i, dcl -> """
-                                CEU_Value ceu_upv_${dcl.idtag.first.str.idc()}_${dcl.n} = ceux->clo->upvs.buf[$i];                            
-                            """ }.joinToString("")}
-                        //}
-
                         ${isexe.cond{"""
                             CEU_Pro_$id* ceu_mem = (CEU_Pro_$id*) ceux->exe->mem;                    
                             ceux->exe->status = (ceux->act == CEU_ACTION_ABORT) ? CEU_EXE_STATUS_TERMINATED : CEU_EXE_STATUS_RESUMED;
@@ -127,14 +121,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     // UPVALS = ${vars.proto_to_upvs[this]!!.size}
                     {                        
                         ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
-                    """
-                        {
-                            CEU_Value upv = ${sta.idx(dcl, ups.pub[this]!!)};
-                            ceu_gc_inc_val(upv);
-                            ceu_acc.Dyn->Clo.upvs.buf[$i] = upv;
-                        }
-                        """
-                }.joinToString("\n")}
+                            """
+                            {
+                                CEU_Value upv = ${sta.idx(dcl, ups.pub[this]!!)};
+                                ceu_gc_inc_val(upv);
+                                ceu_acc.Dyn->Clo.upvs.buf[$i] = upv;
+                            }
+                            """
+                        }.joinToString("\n")}
                     }
                 }
                 """

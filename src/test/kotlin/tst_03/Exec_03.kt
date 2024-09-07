@@ -1230,10 +1230,10 @@ class Exec_03 {
         assert(out == ":it\t[]\n") { out }
     }
     @Test
-    fun jj_03_it_err() {
+    fun TODO_jj_03_it_err() {
         val out = test("""
-            val CO = coro (x) {
-                func (x) {
+            val CO = coro (x) {     ;; TODO: x
+                func (x) {          ;; x redeclared
                     println(:it, x)
                 } (yield(nil))
             }
@@ -1259,11 +1259,11 @@ class Exec_03 {
         assert(out == ":it\t10\n") { out }
     }
     @Test
-    fun jj_04_it_it_err() {
+    fun TODO_jj_04_it_it_err() {
         val out = test("""
             val CO = coro () {
-                func (x) {
-                    func (x) {
+                func (x) {          ;; TODO: x
+                    func (x) {      ;; x redeclared
                         x
                     } (yield(nil))
                 } (yield(nil))

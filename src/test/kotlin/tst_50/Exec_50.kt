@@ -273,6 +273,20 @@ class Exec_50 {
         assert(out == "[]\n") { out }
     }
     @Test
+    fun hh_04x_func_upval() {
+        val out = test("""
+            val F = func (x) {
+                func () {
+                    drop(x)  ;; x is an upval
+                }
+            }
+            val f = F([])
+            val t = f()
+            println(t)
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
     fun hh_05_coro() {
         val out = test("""
             val CO = coro () {
@@ -597,6 +611,25 @@ class Exec_50 {
             broadcast(nil)
         """)
         assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun lm_17_nest_rec() {
+        val out = test("""
+            $PLUS
+            do {
+                val f = func :nested (v) {
+                    ;;println(:F, f)      ;; f is upval which is assigned nil
+                    if v /= 0 {
+                        println(v)
+                        f(v - 1)
+                    } else {
+                        nil
+                    }
+                }
+                f(3)
+            }
+        """)
+        assert(out == "3\n2\n1\n") { out }
     }
 
     // FAKE

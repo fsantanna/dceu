@@ -395,7 +395,7 @@ class Exec_01 {
         assert(out == "10\n") { out }
     }
     @Test
-    fun BUG_be_04_rec() {
+    fun be_04_rec() {
         val out = test("""
             $PLUS
             do {
@@ -411,7 +411,11 @@ class Exec_01 {
                 f(3)
             }
         """)
-        assert(out == "3\n2\n1\n") { out }
+        assert(out == " |  anon : (lin 8, col 25) : f({{-}}(v,1))\n" +
+                " v  error : expected function\n" +
+                ":F\tnil\n" +
+                "3\n") { out }
+        //assert(out == "3\n2\n1\n") { out }
     }
     @Test
     fun be_05_rec() {
