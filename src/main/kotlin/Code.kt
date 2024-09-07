@@ -422,17 +422,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     }
 
                     ${this.args.mapIndexed { i,e ->
-                    e.code() + """
+                        e.code() + """
                             #ifdef CEU_LEX
                                 CEU_ERROR_CHK_PTR (
-                                    continue,
+                                    { ceu_gc_dec_val($coro); continue; },
                                     ceu_lex_chk_own(ceu_acc, $coro.Dyn->Any.lex),
                                     ${this.toerr()}
                                 );
                             #endif
                             ${sta.idx(this,"args_$n")}[$i] = CEU_ACC_KEEP();
                         """
-                }.joinToString("")}
+                    }.joinToString("")}
                     
                     CEUX ceux_$n = {
                         $coro.Dyn->Exe.clo,
@@ -853,6 +853,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             CEU_Value ceu_$n = ceu_col_get($id_col, ceu_idx_$n);
                             ceu_gc_inc_val(ceu_$n);
                             char* ceu_err_$n = ceu_col_set($id_col, ceu_idx_$n, (CEU_Value) { CEU_VALUE_NIL });
+                            ceu_gc_dec_val($id_col);
                             CEU_ERROR_CHK_PTR (
                                 continue,
                                 ceu_drop(${if (prime) "1" else "0"}, ceu_$n, ceux->depth),
