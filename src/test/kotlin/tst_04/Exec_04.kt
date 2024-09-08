@@ -3743,6 +3743,24 @@ class Exec_04 {
         )
         assert(out == "anon : (lin 2, col 28) : declaration error : data :X is not declared\n") { out }
     }
+    @Test
+    fun ll_11_nested() {
+        val out = test("""
+            spawn (task () {
+                val fff = func () {
+                    println(:ok)
+                }
+                val T = task () {
+                    fff()
+                }
+                yield(nil)
+                spawn T()
+                yield(nil)
+            }) ()
+            broadcast(nil)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // NESTED / FAKE / BCAST / THROW
 

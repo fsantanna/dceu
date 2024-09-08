@@ -3662,8 +3662,8 @@ class Exec_99 {
                 println(2)
             }
         """)
-        assert(out == "anon : (lin 5, col 29) : :nested error : expected enclosing prototype\n") { out }
-        //assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro or task\n") { out }
+        //assert(out == "anon : (lin 5, col 29) : :nested error : expected enclosing prototype\n") { out }
+        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro or task\n") { out }
     }
     @Test
     fun jj_02_par() {
@@ -6376,7 +6376,7 @@ class Exec_99 {
         //        "anon : (lin 2, col 23) : block escape error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun zb_08_all_valgrind() {
+    fun BUG_zb_08_all_valgrind() {
         val out = test("""
             task U () {
                 set pub = func () {

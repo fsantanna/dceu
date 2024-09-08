@@ -137,7 +137,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         pres.add(Pair(mem, src))
                         cre
                     }
-                    (this.nst || !vars.proto_has_outer.contains(this)) -> {
+                    (this.nst && vars.proto_has_outer.contains(this)) -> {
                         src + cre
                     }
                     else -> {

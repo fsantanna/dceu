@@ -650,6 +650,24 @@ class Exec_50 {
         //assert(out == "anon : (lin 3, col 25) : func :nested error : unexpected enclosing task\n") { out }
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun nn_19_nested() {
+        val out = test("""
+            spawn (task () {
+                val fff = func :nested () {
+                    println(:ok)
+                }
+                val T = task () {
+                    fff()
+                }
+                yield(nil)
+                spawn T()
+                yield(nil)
+            }) ()
+            broadcast(nil)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // FAKE
 
