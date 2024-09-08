@@ -106,7 +106,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """
                 val cre = """ // CREATE | ${this.dump()}
                 {
-                    ${this.nst.cond { "//assert(ceux->exe!=NULL && ceux->exe->type==CEU_VALUE_EXE_TASK);" }}
                     CEU_ACC (
                         ceu_create_clo_${this.tk.str} (
                             ceu_pro_$id,
@@ -138,7 +137,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         pres.add(Pair(mem, src))
                         cre
                     }
-                    this.nst -> {
+                    (this.nst || !vars.proto_has_outer.contains(this)) -> {
                         src + cre
                     }
                     else -> {

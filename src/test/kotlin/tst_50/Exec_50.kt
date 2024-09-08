@@ -383,8 +383,10 @@ class Exec_50 {
             }
             println(:no)
         """)
-        assert(out == "anon : (lin 3, col 17) : :nested error : expected enclosing prototype\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : :nested error : expected enclosing prototype\n") { out }
         //assert(out == ":ok\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : (val f = do { (func :nested () { nil; }); })\n" +
+                " v  error : cannot copy reference out\n") { out }
     }
     @Test
     fun nn_03_nested() {
@@ -553,7 +555,7 @@ class Exec_50 {
         assert(out == "10\n") { out }
     }
     @Test
-    fun TODO_lm_13_nest_yield_func() {
+    fun TODO_nn_13_nest_yield_func() {
         val out = test("""
             spawn (task () {
                 val f = func :nested () {
@@ -568,7 +570,7 @@ class Exec_50 {
         assert(out == "anon : (lin 3, col 25) : TODO - nested function with enclosing coro/task\n") { out }
     }
     @Test
-    fun TODO_lm_14_nest_task_func() {
+    fun TODO_nn_14_nest_task_func() {
         val out = test("""
             spawn (task () {
                 val f = func :nested () {
@@ -583,7 +585,7 @@ class Exec_50 {
         assert(out == "anon : (lin 3, col 25) : TODO - nested function with enclosing coro/task\n") { out }
     }
     @Test
-    fun TODO_lm_15_nest_task_func() {
+    fun TODO_nn_15_nest_task_func() {
         val out = test("""
             spawn (task () {
                 val x = :x
@@ -598,7 +600,7 @@ class Exec_50 {
         assert(out == "anon : (lin 4, col 25) : TODO - nested function with enclosing coro/task\n") { out }
     }
     @Test
-    fun lm_16_nest_task_func() {
+    fun nn_16_nest_task_func() {
         val out = test("""
             spawn (task () {
                 val x = :x
@@ -610,10 +612,11 @@ class Exec_50 {
             }) ()
             broadcast(nil)
         """)
+        //assert(out == "anon : (lin 4, col 25) : func :nested error : unexpected enclosing task\n") { out }
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun lm_17_nest_rec() {
+    fun nn_17_nest_rec() {
         val out = test("""
             $PLUS
             do {
@@ -630,6 +633,22 @@ class Exec_50 {
             }
         """)
         assert(out == "3\n2\n1\n") { out }
+    }
+    @Test
+    fun nn_18_nest_rec() {
+        val out = test("""
+            spawn (task () {
+                val f = func :nested () {
+                    nil
+                }
+                yield(nil)
+                f()
+            }) ()
+            broadcast(nil)
+            println(:ok)
+        """)
+        //assert(out == "anon : (lin 3, col 25) : func :nested error : unexpected enclosing task\n") { out }
+        assert(out == ":ok\n") { out }
     }
 
     // FAKE

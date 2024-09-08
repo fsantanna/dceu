@@ -95,14 +95,16 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Proto  -> {
                 if (this.nst) {
                     when {
-                        (ups.first(ups.pub[this]!!) { it is Expr.Do } == outer) -> {}
-                        (ups.first(ups.pub[this]!!) { it is Expr.Proto } == null) -> err(this.tk, ":nested error : expected enclosing prototype")
-                        else -> {}
-                    }
-                    when {
-                        (this.tk.str != "func" || !vars.proto_has_outer.contains(this)) -> {}
-                        ups.none(this) { it is Expr.Proto && it.tk.str != "func" } -> {}
-                        else -> err(this.tk, "TODO - nested function with enclosing coro/task")
+                        (this.tk.str != "func") -> {
+                            // OK: nested coro/task always ok b/c of ceux/MEM
+                        }
+                        (!vars.proto_has_outer.contains(this)) -> {
+                            // OK: no access to outer - unset :nested
+                        }
+                        ups.any(this) { it is Expr.Proto && it.tk.str!="func" } -> {
+                            val proto = ups.first(this) { it is Expr.Proto && it.tk.str!="func" }!!
+                            err(this.tk, "func :nested error : unexpected enclosing ${proto.tk.str}")
+                        }
                     }
 
                     ups.all_until(ups.pub[this]!!) { it is Expr.Proto }
