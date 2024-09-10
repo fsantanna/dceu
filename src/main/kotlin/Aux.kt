@@ -34,7 +34,7 @@ fun Expr.Proto.id (outer: Expr.Do, ups: Ups): String {
         when {
             (it !is Expr.Dcl) -> this.n.toString()
             (it.src != this) -> error("bug found")
-            else -> it.idtag.first.str.idc() + (this.first { it is Expr.Do } != outer).cond { "_${this.n}" }
+            else -> it.idtag.first.str.idc() + (this.up_first { it is Expr.Do } != outer).cond { "_${this.n}" }
         }
     }
 }

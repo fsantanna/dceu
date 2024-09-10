@@ -47,7 +47,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 if (e.tsk != null) {
                     this.data(e.tsk)
                 } else {
-                    val task = e.first_task_outer()
+                    val task = e.up_first_task_outer()
                     if (task?.tag == null) null else {
                         Pair(null, this.datas[task.tag.str]!!)
                     }
@@ -81,14 +81,14 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
     fun type (dcl: Expr.Dcl, src: Expr): Type {
         val blk = ups.dcl_to_blk(dcl)
-        val up  = src.first { it is Expr.Proto || it==blk }
+        val up  = src.up_first { it is Expr.Proto || it==blk }
         return when {
             (blk == outer) -> Type.GLOBAL
             (blk == up)    -> Type.LOCAL
             else -> {
                 up as Expr.Proto
                 this.proto_has_outer.add(up)
-                val nst = up.all_until { it == blk }
+                val nst = up.up_all_until { it == blk }
                     .filter { it is Expr.Proto }
                     .let { it as List<Expr.Proto> }
                     .all { it.nst }
@@ -127,10 +127,10 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             if (dcl.tk.str!="val" && dcl.tk.str!="val'") {
                 err(e.tk, "access error : outer variable \"${dcl.idtag.first.str}\" must be immutable")
             }
-            val orig = ups.dcl_to_blk(dcl).first { it is Expr.Proto }
+            val orig = ups.dcl_to_blk(dcl).up_first { it is Expr.Proto }
             //println(listOf(dcl.id.str, orig?.tk))
-            val proto = e.first { it is Expr.Proto }!!
-            proto.all_until { it == orig }
+            val proto = e.up_first { it is Expr.Proto }!!
+            proto.up_all_until { it == orig }
                 .let {  // remove orig
                     if (orig==null) it else it.dropLast(1)
                 }

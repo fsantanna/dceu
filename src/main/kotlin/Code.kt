@@ -18,8 +18,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
     }
 
     fun Expr.check_aborted (cmd: String): String {
-        val exe = ups.exe(this)
-        val defer = this.first_without({ it is Expr.Defer }, { it is Expr.Proto })
+        val exe = this.up_exe()
+        val defer = this.up_first_without({ it is Expr.Defer }, { it is Expr.Proto })
         return (CEU>=3 && exe!=null && defer==null).cond { """
             if (ceux->exe->status == CEU_EXE_STATUS_TERMINATED) {
                 $cmd;
@@ -34,7 +34,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
     }
 
     fun Expr.code(): String {
-        if (ups.isdst(this)) {
+        if (this.isdst()) {
             assert(this is Expr.Acc || this is Expr.Index || this is Expr.Pub)
         }
         return when (this) {
@@ -353,7 +353,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     do { // catch
                         ${this.blk.code()}
                     } while (0); // catch
-                    ${(CEU>=3 && this.any { it is Expr.Proto && it.tk.str!="func" }).cond { """
+                    ${(CEU>=3 && this.up_any { it is Expr.Proto && it.tk.str!="func" }).cond { """
                         if (ceux->act == CEU_ACTION_ABORT) {
                             continue;   // do not execute next statement, instead free up block
                         }
@@ -375,7 +375,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """
             }
             is Expr.Defer -> {
-                val bup = this.first { it is Expr.Do } as Expr.Do
+                val bup = this.up_first { it is Expr.Do } as Expr.Do
                 val (ns,ini,end) = defers.getOrDefault(bup, Triple(mutableListOf(),"",""))
                 val id = sta.idx(this, "defer_$n")
                 val inix = """
@@ -483,7 +483,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             }
 
             is Expr.Spawn -> {
-                val blk = this.first { it is Expr.Do } as Expr.Do
+                val blk = this.up_first { it is Expr.Do } as Expr.Do
                 val blkc = sta.idx(blk, "block_${blk.n}")
                 """
                 { // SPAWN | ${this.dump()}
@@ -576,8 +576,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             is Expr.Pub -> {
                 val id = sta.idx(this, "val_$n")
                 val exe = if (this.tsk != null) "" else {
-                    this.first_task_outer().let { outer ->
-                        val n = this.all_until {
+                    this.up_first_task_outer().let { outer ->
+                        val n = this.up_all_until {
                             it is Expr.Proto && it.tk.str=="task" && !it.fake
                         }
                             .filter { it is Expr.Proto } // but count all protos in between
@@ -585,12 +585,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         "(ceux->exe_task${"->clo->up_nst".repeat(n)})"
                     }
                 }
-                if (ups.isdrop(this)) {
+                if (this.isdrop()) {
                     error("TODO: drop pub")
                 }
             """
             { // PUB | ${this.dump()}
-                ${ups.isdst(this).cond{ """
+                ${this.isdst().cond{ """
                     ${sta.dcl(this,"CEU_Value")} $id = CEU_ACC_KEEP();
                 """ }}
                 ${this.tsk.cond2({"""
@@ -606,7 +606,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """},{"""
                     CEU_Value tsk = ceu_dyn_to_val((CEU_Dyn*)$exe);
                 """})}
-                ${ups.isdst(this).cond2({ """
+                ${this.isdst().cond2({ """
                     ceu_gc_dec_val(tsk.Dyn->Exe_Task.pub);
                     tsk.Dyn->Exe_Task.pub = $id;
                 """ },{ """
@@ -656,7 +656,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             """
             }
             is Expr.Tasks -> {
-                val blk = this.first { it is Expr.Do } as Expr.Do
+                val blk = this.up_first { it is Expr.Do } as Expr.Do
                 val blkc = sta.idx(blk, "block_${blk.n}")
                 """
                 {  // TASKS | ${this.dump()}
@@ -701,9 +701,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val idx = sta.idx(this)
                 val dcl = ups.id_to_dcl(this.tk.str, this)!!
                 when {
-                    ups.isdst(this) -> {
+                    this.isdst() -> {
                         val depth = ups.dcl_to_blk(ups.id_to_dcl(this.tk.str,this)!!).let { blk ->
-                            this.all_until { it == blk }.filter { it is Expr.Do }.count() - 1
+                            this.up_all_until { it == blk }.filter { it is Expr.Do }.count() - 1
                         }
                         """
                         // ACC - SET | ${this.dump()}
@@ -719,8 +719,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         $idx = ceu_acc;
                         """
                     }
-                    ups.isdrop(this) -> {
-                        val prime = (this.first { it is Expr.Drop } as Expr.Drop).prime
+                    this.isdrop() -> {
+                        val prime = (this.up_first { it is Expr.Drop } as Expr.Drop).prime
                         """
                         { // ACC - DROP | ${this.dump()}
                             CEU_ACC((CEU_Value) { CEU_VALUE_NIL });     // ceu_acc may be equal to $idx (hh_05_coro)
@@ -812,7 +812,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """
                 { // INDEX | ${this.dump()}
                     // VAL
-                    ${ups.isdst(this).cond { """
+                    ${this.isdst().cond { """
                         ${sta.dcl(this)} $id_val = CEU_ACC_KEEP();
                     """ }}
                     
@@ -831,7 +831,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     CEU_Value ceu_idx_$n = CEU_ACC_KEEP();
                 """ +
                 when {
-                    ups.isdst(this) -> """
+                    this.isdst() -> """
                         { // INDEX | DST | ${this.dump()}
                             char* ceu_err_$n = ceu_col_set($id_col, ceu_idx_$n, $id_val);
                             ceu_gc_dec_val($id_col);
@@ -844,8 +844,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             );
                         }
                         """
-                    ups.isdrop(this) -> {
-                        val prime = (this.first { it is Expr.Drop } as Expr.Drop).prime
+                    this.isdrop() -> {
+                        val prime = (this.up_first { it is Expr.Drop } as Expr.Drop).prime
                         """
                         { // INDEX | DROP | ${this.dump()}
                             CEU_ACC((CEU_Value) { CEU_VALUE_NIL });     // ceu_acc may be equal to $idx (hh_05_coro)
