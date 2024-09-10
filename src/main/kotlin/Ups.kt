@@ -1,5 +1,13 @@
 package dceu
 
+fun Expr.first (cnd: (Expr)->Boolean): Expr? {
+    return when {
+        cnd(this) -> this
+        (this.up == null) -> null
+        else -> this.up!!.first(cnd)
+    }
+}
+
 class Ups (val outer: Expr.Do) {
     val pub = outer.traverse()
 

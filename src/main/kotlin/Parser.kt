@@ -335,7 +335,10 @@ class Parser (lexer_: Lexer)
         this.acceptFix_err("{")
         val es = this.exprs()
         this.acceptFix_err("}")
-        return Expr.Do(tk, null, es)
+        return Expr.Do(tk, null, es).let { me ->
+            me.es.forEach { it.up = me }
+            me
+        }
     }
 
     fun lambda (it: Boolean): Pair<List<Id_Tag>,List<Expr>> {
@@ -401,7 +404,10 @@ class Parser (lexer_: Lexer)
             this.acceptFix("do") -> {
                 val tk0 = this.tk0
                 val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
-                Expr.Do(tk0, tag, this.block().es)
+                Expr.Do(tk0, tag, this.block().es).let { me ->
+                    me.es.forEach { it.up = me }
+                    me
+                }
             }
             this.acceptFix("escape") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -417,9 +423,17 @@ class Parser (lexer_: Lexer)
                     else -> Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))
                 }
                 this.acceptFix_err(")")
-                Expr.Escape(tk0, tag, e)
+                Expr.Escape(tk0, tag, e).let { me ->
+                    me.e?.up = me
+                    me
+                }
             }
-            this.acceptFix("group") -> Expr.Group(this.tk0 as Tk.Fix, this.block().es)
+            this.acceptFix("group") -> {
+                Expr.Group(this.tk0 as Tk.Fix, this.block().es).let { me ->
+                    me.es.forEach { it.up = me }
+                    me
+                }
+            }
             this.acceptFix("val") || this.acceptFix("var") || (CEU>=50 && (this.acceptFix("val'") || this.acceptFix("var'"))) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 if (CEU<99 || !this.checkFix("[")) {
@@ -439,7 +453,10 @@ class Parser (lexer_: Lexer)
                         else -> src.args[0].tk as Tk.Tag
                     }
                     val lex = (tk0.str=="val" || tk0.str=="var")
-                    Expr.Dcl(tk0, lex, Pair(id,tag2), src)
+                    Expr.Dcl(tk0, lex, Pair(id,tag2), src).let { me ->
+                        me.src?.up = me
+                        me
+                    }
                 } else {
                     val pat = this.patt(null)
                     val src = if (this.acceptFix("=")) {
@@ -479,7 +496,11 @@ class Parser (lexer_: Lexer)
                     if (!dst.is_lval()) {
                         err(tk0, "set error : expected assignable destination")
                     }
-                    Expr.Set(tk0, dst, src)
+                    Expr.Set(tk0, dst, src).let { me ->
+                        me.dst.up = me
+                        me.src.up = me
+                        me
+                    }
                 }
             }
             this.acceptFix("if") -> {
@@ -488,11 +509,17 @@ class Parser (lexer_: Lexer)
                 val arr = (CEU>=99) && this.acceptFix("=>")
                 var idtag: Id_Tag? = null
                 val t = when {
-                    arr -> Expr.Do(this.tk0, null, listOf(this.expr_1_bin()))
+                    arr -> Expr.Do(this.tk0, null, listOf(this.expr_1_bin())).let { me ->
+                        me.es.forEach { it.up = me }
+                        me
+                    }
                     (CEU >= 99) -> {
                         val (x,es) = this.lambda(false)
                         idtag = x.firstOrNull()
-                        Expr.Do(this.tk0, null, es)
+                        Expr.Do(this.tk0, null, es).let { me ->
+                            me.es.forEach { it.up = me }
+                            me
+                        }
                     }
                     else -> this.block()
                 }
@@ -505,14 +532,23 @@ class Parser (lexer_: Lexer)
                         this.block()
                     }
                     arr && this.acceptFix_err("=>") -> {
-                        Expr.Do(this.tk0, null, listOf(this.expr_1_bin()))
+                        Expr.Do(this.tk0, null, listOf(this.expr_1_bin())).let { me ->
+                            me.es.forEach { it.up = me }
+                            me
+                        }
                     }
                     else -> {
-                        Expr.Do(tk0, null, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
+                        Expr.Do(tk0, null, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy())))).let { me ->
+                            me.es.forEach { it.up = me }
+                            me
+                        }
                     }
                 }
                 if (idtag == null) {
-                    Expr.If(tk0, cnd, t, f)
+                    Expr.If(tk0, cnd, t, f).let { me ->
+                        me.t.up = me
+                        me
+                    }
                 } else {
                     this.nest("""
                         do {
@@ -545,7 +581,10 @@ class Parser (lexer_: Lexer)
                     val tag = if (!this.acceptEnu("Tag")) null else {
                         this.tk0 as Tk.Tag
                     }
-                    Expr.Dcl(Tk.Fix("val",xid.pos.copy()), true, Pair(xid, tag), null)
+                    Expr.Dcl(Tk.Fix("val",xid.pos.copy()), true, Pair(xid, tag), null).let { me ->
+                        me.src?.up = me
+                        me
+                    }
                 }
                 val tag = when {
                     (tk0.str != "task") -> null
@@ -553,7 +592,11 @@ class Parser (lexer_: Lexer)
                     else -> this.tk0 as Tk.Tag
                 }
                 val blk = this.block(this.tk1)
-                val proto = Expr.Proto(tk0, nst, fak, tag, pars, blk)
+                val proto = Expr.Proto(tk0, nst, fak, tag, pars, blk).let { me ->
+                    me.blk.up = me
+                    me.pars.forEach { it.up = me }
+                    me
+                }
                 if (dcl == null) {
                     proto
                 } else {
@@ -616,7 +659,10 @@ class Parser (lexer_: Lexer)
                 when {
                     (dts.size == 1) -> dts.first()
                     (CEU < 99) -> error("bug found")
-                    else -> Expr.Do(Tk.Fix("do",pos), null, dts)
+                    else -> Expr.Group(Tk.Fix("group",pos), dts).let { me ->
+                        me.es.forEach { it.up = me }
+                        me
+                    }
                 }
             }
             (CEU>=50 && (this.acceptFix("drop") || this.acceptFix("drop'"))) -> {
@@ -627,10 +673,23 @@ class Parser (lexer_: Lexer)
                     //err(tk0, "drop error : expected assignable destination")
                 }
                 this.acceptFix_err(")")
-                Expr.Drop(tk0, e, tk0.str=="drop'")
+                Expr.Drop(tk0, e, tk0.str=="drop'").let { me ->
+                    me.e.up = me
+                    me
+                }
             }
 
-            (CEU>=2 && this.acceptFix("loop'")) -> Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, null, this.block().es))
+            (CEU>=2 && this.acceptFix("loop'")) -> {
+                Expr.Loop(this.tk0 as Tk.Fix,
+                    Expr.Do(this.tk0, null, this.block().es).let { me ->
+                        me.es.forEach { it.up = me }
+                        me
+                    }
+                ).let { me ->
+                    me.blk.up = me
+                    me
+                }
+            }
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val par = this.acceptFix("(")
@@ -643,9 +702,15 @@ class Parser (lexer_: Lexer)
                     this.acceptFix_err(")")
                 }
                 val blk = this.block()
-                Expr.Catch(tk0, tag, blk)
+                Expr.Catch(tk0, tag, blk).let { me ->
+                    me.blk.up = me
+                    me
+                }
             }
-            (CEU>=2 && this.acceptFix("defer")) -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
+            (CEU>=2 && this.acceptFix("defer")) -> Expr.Defer(this.tk0 as Tk.Fix, this.block()).let { me ->
+                me.blk.up = me
+                me
+            }
 
             (CEU>=3 && this.acceptFix("yield")) -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -656,7 +721,10 @@ class Parser (lexer_: Lexer)
                     this.expr()
                 }
                 this.acceptFix_err(")")
-                Expr.Yield(tk0, arg)
+                Expr.Yield(tk0, arg).let { me ->
+                    me.e.up = me
+                    me
+                }
             }
             (CEU>=3 && this.acceptFix("resume")) -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -665,7 +733,11 @@ class Parser (lexer_: Lexer)
                 if (call !is Expr.Call) {
                     err(tkx, "resume error : expected call")
                 }
-                Expr.Resume(tk0, call.clo, call.args)
+                Expr.Resume(tk0, call.clo, call.args).let { me ->
+                    me.co.up = me
+                    me.args.forEach { it.up = me }
+                    me
+                }
             }
 
             (CEU>=4 && this.acceptFix("spawn")) -> {
@@ -686,7 +758,12 @@ class Parser (lexer_: Lexer)
                 val tsks = if (CEU<5 || !this.acceptFix("in")) null else {
                     this.expr()
                 }
-                Expr.Spawn(tk0, tsks, call.clo, call.args)
+                Expr.Spawn(tk0, tsks, call.clo, call.args).let { me ->
+                    me.tsks?.up = me
+                    me.tsk.up = me
+                    me.args.forEach { it.up = me }
+                    me
+                }
             }
             (CEU>=4 && this.acceptFix("delay")) -> Expr.Delay(this.tk0 as Tk.Fix)
             (CEU>=4 && this.acceptFix("pub")) -> Expr.Pub(this.tk0 as Tk.Fix, null)
@@ -703,7 +780,11 @@ class Parser (lexer_: Lexer)
                 Expr.Call(tk0,
                     Expr.Acc(Tk.Id("broadcast'", tk0.pos.copy())),
                     listOf(xin, arg)
-                )
+                ).let { me ->
+                    me.clo.up = me
+                    me.args.forEach { it.up = me }
+                    me
+                }
             }
             (CEU>=4 && this.acceptFix("toggle")) -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -733,7 +814,11 @@ class Parser (lexer_: Lexer)
                     this.acceptFix_err("(")
                     val on = this.expr()
                     this.acceptFix_err(")")
-                    Expr.Toggle(tk0, tsk, on)
+                    Expr.Toggle(tk0, tsk, on).let { me ->
+                        me.tsk.up = me
+                        me.on.up  = me
+                        me
+                    }
                 }
             }
             (CEU>=5 && this.acceptFix("tasks")) -> {
@@ -766,13 +851,22 @@ class Parser (lexer_: Lexer)
             this.acceptFix("[")     -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val args = this.list0(",","]") { this.expr() }
-                Expr.Tuple(tk0, args)
+                Expr.Tuple(tk0, args).let { me ->
+                    me.args.forEach { it.up = me }
+                    me
+                }
             }
-            this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0(",","]") { this.expr() })
+            this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0(",","]") { this.expr() }).let { me ->
+                me.args.forEach { it.up = me }
+                me
+            }
             this.acceptFix("#[")    -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val args = this.list0(",","]") { this.expr() }
-                Expr.Vector(tk0, args)
+                Expr.Vector(tk0, args).let { me ->
+                    me.args.forEach { it.up = me }
+                    me
+                }
             }
             this.acceptFix("@[")    -> Expr.Dict(this.tk0 as Tk.Fix, list0(",", "]") {
                 val tk1 = this.tk1
@@ -791,7 +885,13 @@ class Parser (lexer_: Lexer)
                     this.acceptFix_err(")")
                 }
                 Pair(k,v)
-            })
+            }).let { me ->
+                me.args.forEach {
+                    it.first.up = me
+                    it.second.up = me
+                }
+                me
+            }
             this.acceptFix("(")      -> {
                 val e = this.expr()
                 this.acceptFix_err(")")
@@ -947,7 +1047,10 @@ class Parser (lexer_: Lexer)
                     this.expr()
                 }
                 this.acceptFix_err(")")
-                Expr.Escape(tk0, Tk.Tag(":break",tk0.pos.copy()), e)
+                Expr.Escape(tk0, Tk.Tag(":break",tk0.pos.copy()), e).let { me ->
+                    me.e?.up = me
+                    me
+                }
             }
             (CEU>=99 && this.acceptFix("skip")) -> {
                 TODO()
@@ -1346,7 +1449,10 @@ class Parser (lexer_: Lexer)
                     if (!xop) {
                         val idx = this.expr()
                         this.acceptFix_err("]")
-                        Expr.Index(e.tk, e, idx)
+                        Expr.Index(e.tk, e, idx).let { me ->
+                            me.idx.up = me
+                            me
+                        }
                     } else {
                         val ret = when (this.tk0.str) {
                             "=" -> this.nest("""
@@ -1389,14 +1495,23 @@ class Parser (lexer_: Lexer)
                             }
                         """) //.let { println(it);it })
                     }
-                    (CEU>=4 && this.acceptFix("pub")) -> Expr.Pub(e.tk, e)
+                    (CEU>=4 && this.acceptFix("pub")) -> Expr.Pub(e.tk, e).let { me ->
+                        me.tsk!!.up = me
+                        me
+                    }
                     this.acceptEnu("Fix") -> {
                         if (!KEYWORDS.contains(this.tk0.str)) {
                             err(this.tk0, "invalid field : unexpected \"${this.tk0.str}\"")
                         }
-                        Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':' + this.tk0.str, this.tk0.pos.copy())))
+                        Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':' + this.tk0.str, this.tk0.pos.copy()))).let { me ->
+                            me.idx.up = me
+                            me
+                        }
                     }
-                    this.acceptEnu_err("Id") -> Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':' + this.tk0.str, this.tk0.pos.copy())))
+                    this.acceptEnu_err("Id") -> Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':' + this.tk0.str, this.tk0.pos.copy()))).let { me ->
+                        me.idx.up = me
+                        me
+                    }
                     else -> error("impossible case")
                 }
                 "(" -> {
@@ -1409,7 +1524,11 @@ class Parser (lexer_: Lexer)
                                 else -> err(e.tk, "operation error : invalid number of arguments")
                             }
                         }
-                        else -> Expr.Call(e.tk, e, args)
+                        else -> Expr.Call(e.tk, e, args).let { me ->
+                            me.clo.up = me
+                            me.args.forEach { it.up = me }
+                            me
+                        }
                     }
                 }
                 else -> error("impossible case")
@@ -1450,7 +1569,11 @@ class Parser (lexer_: Lexer)
                 //println(listOf(op,e))
                 when {
                     (op.str == "not") -> this.nest("${op.pos.pre()}(if ${e.tostr(true)} { false } else { true })\n")
-                    else -> Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}", op.pos.copy())), listOf(e))
+                    else -> Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}", op.pos.copy())), listOf(e)).let { me ->
+                        me.clo.up = me
+                        me.args.forEach { it.up = me }
+                        me
+                    }
                 }
             }
             else -> this.expr_3_met()
@@ -1496,7 +1619,11 @@ class Parser (lexer_: Lexer)
                 "in-not?" -> this.nest("in-not'(${e1.tostr(true)}, ${e2.tostr(true)})")
                 else -> {
                     val id = if (op.str[0] in OPERATORS) "{{${op.str}}}" else op.str
-                    Expr.Call(op, Expr.Acc(Tk.Id(id, op.pos.copy())), listOf(e1,e2))
+                    Expr.Call(op, Expr.Acc(Tk.Id(id, op.pos.copy())), listOf(e1,e2)).let { me ->
+                        me.clo.up = me
+                        me.args.forEach { it.up = me }
+                        me
+                    }
                 }
             }
         )
