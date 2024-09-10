@@ -1,6 +1,6 @@
 package dceu
 
-class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
+class Static(val outer: Expr.Do, val vars: Vars) {
     // protos_unused: const proto is not used: do not generate code
     val protos_use_unused: MutableSet<Expr.Proto> = mutableSetOf()
     val protos_use_map: MutableMap<Expr.Proto, MutableSet<Expr.Proto>> = mutableMapOf()
@@ -28,7 +28,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             ismem(blk,true) -> false
             (blk.tag != null) -> false
             !dcls.isEmpty() -> false
-            (ups.pub[blk] is Expr.Proto) -> false
+            (blk.up is Expr.Proto) -> false
             this.defer_catch_spawn_tasks.contains(blk) -> false
             else -> true
         }
@@ -67,7 +67,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             Type.LOCAL -> if (ismem) "(ceu_mem->${id}_${dcl.n})" else "ceu_loc_${id}_${dcl.n}"  // idx b/c of "it"
             Type.NESTED -> {
                 val xups = src.up_all_until { it == blk } // all ups between src -> dcl
-                val pid = (blk.up_first { it is Expr.Proto } as Expr.Proto).id(outer, ups)
+                val pid = (blk.up_first { it is Expr.Proto } as Expr.Proto).id(outer)
                 val xn = xups.count { it is Expr.Proto && it!=blk }
                 "((CEU_Pro_$pid*)ceux->exe_task->${"clo->up_nst->".repeat(xn)}mem)->${id}_${dcl.n}"
             }
@@ -107,7 +107,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                         }
                     }
 
-                    ups.pub[this]!!.up_all_until { it is Expr.Proto }
+                    this.up!!.up_all_until { it is Expr.Proto }
                         .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
                         .forEach { mems.add(it) }
 
@@ -133,7 +133,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.e?.traverse()
             }
             is Expr.Group  -> {
-                val up = ups.pub[this]!!
+                val up = this.up!!
                 val ok = (up is Expr.Do) || (up is Expr.Group) || (up is Expr.Dcl) || (up is Expr.Set && up.src==this)
                 if (!ok) {
                     err(this.tk, "group error : unexpected context")
@@ -250,7 +250,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     //      - add f to g such that f is ok if g is ok
                     //  - elsewhere
                     //      - f is ok and all fs' accessed from f
-                    val up_proto = this.up_first { it is Expr.Proto && ups.pub[it].let { it is Expr.Dcl && (it.tk.str=="val" || it.tk.str=="val'") } }
+                    val up_proto = this.up_first { it is Expr.Proto && it.up.let { it is Expr.Dcl && (it.tk.str=="val" || it.tk.str=="val'") } }
                     when {
                         (up_proto == null) -> protos_use_f(dcl.src)
                         //!protos_use_unused.contains(up_proto) -> protos_use_f(dcl.src)

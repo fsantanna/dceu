@@ -20,7 +20,7 @@ fun Expr.Do.to_dcls (): List<Expr.Dcl> {
     return aux(this.es)
 }
 
-class Vars (val outer: Expr.Do, val ups: Ups) {
+class Vars (val outer: Expr.Do) {
     val datas = mutableMapOf<String,LData>()
 
     public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()

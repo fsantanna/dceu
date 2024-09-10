@@ -1,6 +1,6 @@
 package dceu
 
-class Optim (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
+class Optim (val outer: Expr.Do, val vars: Vars) {
     val outer1: Expr.Do
     init {
         val (_,out) = outer.blocks()
@@ -17,7 +17,7 @@ class Optim (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
             is Expr.Do     -> {
                 val (reqs, subs) = this.es.map { it.blocks() }.unzip()
-                val up = ups.pub[this].let {
+                val up = this.up.let {
                     it is Expr.Proto || it is Expr.If || it is Expr.Loop || it is Expr.Catch || it is Expr.Defer
                 }
                 val ret = if (this==outer || this.tag!=null || up || reqs.any()) {

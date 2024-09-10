@@ -2,7 +2,7 @@ package dceu
 
 import kotlin.math.max
 
-class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) {
+class Coder(val outer: Expr.Do, val vars: Vars, val sta: Static) {
     // Pair<mems,protos>: need to separate b/c protos must be inner->outer, while mems outer->inner
     val pres: MutableList<Pair<String,String>> = mutableListOf()
     val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
@@ -41,13 +41,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             is Expr.Proto -> {
                 val isexe = (this.tk.str != "func")
                 val code = this.blk.code()
-                val id = this.id(outer,ups)
+                val id = this.id(outer)
 
                 val mem = """
                     // PROTO | ${this.dump()}
                     ${isexe.cond { """
                         typedef struct CEU_Pro_$id {
-                            ${Mem(ups, vars, sta, defers).pub(this)}
+                            ${Mem(vars, sta, defers).pub(this)}
                         } CEU_Pro_$id;                        
                     """ }}
                 """
@@ -122,7 +122,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
                             """
                             {
-                                CEU_Value upv = ${sta.idx(dcl, ups.pub[this]!!)};
+                                CEU_Value upv = ${sta.idx(dcl, this.up!!)};
                                 ceu_gc_inc_val(upv);
                                 ceu_acc.Dyn->Clo.upvs.buf[$i] = upv;
                             }
@@ -148,7 +148,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             }
             is Expr.Do -> {
                 val body = this.es.code()   // before defers[this] check
-                val up = ups.pub[this]
 
                 val void = sta.void(this)
                 if (void) {
@@ -206,8 +205,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         
                         do { // BLOCK | ${this.dump()}
                             $body
-                            ${(up is Expr.Loop).cond { """
-                                CEU_LOOP_STOP_${up!!.n}:
+                            ${(this.up is Expr.Loop).cond { """
+                                CEU_LOOP_STOP_${this.up!!.n}:
                             """ }}
                         } while (0);
     
@@ -342,7 +341,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     CEU_ERROR_CHK_PTR (
                         continue,
                         ceu_drop(${if (this.prime) "1" else "0"}, ceu_acc, ceux->depth),
-                        ${ups.pub[this]!!.toerr()}
+                        ${this.up!!.toerr()}
                     );
                 """ }}
             """
@@ -729,7 +728,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             CEU_ERROR_CHK_PTR (
                                 continue,
                                 ceu_drop(${if (prime) "1" else "0"}, ceu_$n, ceux->depth),
-                                ${ups.pub[this]!!.toerr()}
+                                ${this.up!!.toerr()}
                             );
                             CEU_ACC(ceu_$n);
                             ceu_gc_dec_val(ceu_$n);
@@ -856,7 +855,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             CEU_ERROR_CHK_PTR (
                                 continue,
                                 ceu_drop(${if (prime) "1" else "0"}, ceu_$n, ceux->depth),
-                                ${ups.pub[this]!!.toerr()}
+                                ${this.up!!.toerr()}
                             );
                             CEU_ACC(ceu_$n);
                             ceu_gc_dec_val(ceu_$n);
