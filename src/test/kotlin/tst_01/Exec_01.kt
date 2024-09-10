@@ -67,6 +67,17 @@ class Exec_01 {
         assert(out.contains("func: 0x")) { out }
     }
     @Test
+    fun aa_05x_print() {
+        val out = test("""
+            do {
+                var g
+                set g = :ok
+                println(g)
+            }
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
     fun aa_06_print_err() {
         val out = test(
             """
