@@ -546,7 +546,9 @@ class Parser (lexer_: Lexer)
                 }
                 if (idtag == null) {
                     Expr.If(tk0, cnd, t, f).let { me ->
+                        me.cnd.up = me
                         me.t.up = me
+                        me.f.up = me
                         me
                     }
                 } else {
@@ -1450,6 +1452,7 @@ class Parser (lexer_: Lexer)
                         val idx = this.expr()
                         this.acceptFix_err("]")
                         Expr.Index(e.tk, e, idx).let { me ->
+                            me.col.up = me
                             me.idx.up = me
                             me
                         }
@@ -1504,11 +1507,13 @@ class Parser (lexer_: Lexer)
                             err(this.tk0, "invalid field : unexpected \"${this.tk0.str}\"")
                         }
                         Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':' + this.tk0.str, this.tk0.pos.copy()))).let { me ->
+                            me.col.up = me
                             me.idx.up = me
                             me
                         }
                     }
                     this.acceptEnu_err("Id") -> Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':' + this.tk0.str, this.tk0.pos.copy()))).let { me ->
+                        me.col.up = me
                         me.idx.up = me
                         me
                     }

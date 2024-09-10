@@ -229,7 +229,10 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
             null
         )
 
-        val outer = Expr.Do(tk0, null, listOf(xargs)+glbs+es)
+        val outer = Expr.Do(tk0, null, listOf(xargs)+glbs+es).let { me ->
+            me.es.forEach { it.up = me }
+            me
+        }
         val ups   = Ups(outer)
         val tags  = Tags(outer)
         val vars  = Vars(outer, ups)

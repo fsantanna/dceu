@@ -81,7 +81,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
     fun type (dcl: Expr.Dcl, src: Expr): Type {
         val blk = ups.dcl_to_blk(dcl)
-        val up  = ups.first(src) { it is Expr.Proto || it==blk }
+        val up  = src.first { it is Expr.Proto || it==blk }
         return when {
             (blk == outer) -> Type.GLOBAL
             (blk == up)    -> Type.LOCAL
@@ -127,9 +127,9 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             if (dcl.tk.str!="val" && dcl.tk.str!="val'") {
                 err(e.tk, "access error : outer variable \"${dcl.idtag.first.str}\" must be immutable")
             }
-            val orig = ups.first(ups.dcl_to_blk(dcl)) { it is Expr.Proto }
+            val orig = ups.dcl_to_blk(dcl).first { it is Expr.Proto }
             //println(listOf(dcl.id.str, orig?.tk))
-            val proto = ups.first(e) { it is Expr.Proto }!!
+            val proto = e.first { it is Expr.Proto }!!
             ups.all_until(proto) { it == orig }
                 .let {  // remove orig
                     if (orig==null) it else it.dropLast(1)

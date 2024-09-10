@@ -36,14 +36,14 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     val defer_catch_spawn_tasks: MutableSet<Expr.Do> = mutableSetOf()
 
     fun ismem (e: Expr, out: Boolean=false): Boolean {
-        val proto = ups.first(e) { it is Expr.Proto }.let {
+        val proto = e.first { it is Expr.Proto }.let {
             when {
                 (it == null) -> null
                 (it.tk.str == "func") -> null
                 else -> it
             }
         }
-        val up = ups.first(e) { it is Expr.Do || it is Expr.Proto }!!
+        val up = e.first { it is Expr.Do || it is Expr.Proto }!!
         return when {
             (!out && proto==null) -> false
             //true -> true
@@ -67,12 +67,12 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             Type.LOCAL -> if (ismem) "(ceu_mem->${id}_${dcl.n})" else "ceu_loc_${id}_${dcl.n}"  // idx b/c of "it"
             Type.NESTED -> {
                 val xups = ups.all_until(src) { it == blk } // all ups between src -> dcl
-                val pid = (ups.first(blk) { it is Expr.Proto } as Expr.Proto).id(outer, ups)
+                val pid = (blk.first { it is Expr.Proto } as Expr.Proto).id(outer, ups)
                 val xn = xups.count { it is Expr.Proto && it!=blk }
                 "((CEU_Pro_$pid*)ceux->exe_task->${"clo->up_nst->".repeat(xn)}mem)->${id}_${dcl.n}"
             }
             else -> {
-                val proto = ups.first(src) { it is Expr.Proto } as Expr.Proto
+                val proto = src.first { it is Expr.Proto } as Expr.Proto
                 val i = vars.proto_to_upvs[proto]!!.indexOfFirst { it == dcl }
                 assert(i != -1)
                 "ceux->clo->upvs.buf[$i]"
@@ -102,7 +102,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                             // OK: no access to outer - unset :nested
                         }
                         ups.any(this) { it is Expr.Proto && it.tk.str!="func" } -> {
-                            val proto = ups.first(this) { it is Expr.Proto && it.tk.str!="func" }!!
+                            val proto = this.first { it is Expr.Proto && it.tk.str!="func" }!!
                             err(this.tk, "func :nested error : unexpected enclosing ${proto.tk.str}")
                         }
                     }
@@ -126,7 +126,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Escape -> {
-                val fst = ups.first(this) { (it is Expr.Do && it.tag?.str==this.tag.str) || (it is Expr.Proto && !it.nst)}
+                val fst = this.first { (it is Expr.Do && it.tag?.str==this.tag.str) || (it is Expr.Proto && !it.nst)}
                 if (fst !is Expr.Do) {
                     err(this.tk, "escape error : expected matching \"do\" block")
                 }
@@ -164,14 +164,14 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
             is Expr.Catch  -> this.blk.traverse()
             is Expr.Defer  -> {
-                val f = ups.first(this) { it is Expr.Proto && it.tk.str=="func" }
+                val f = this.first { it is Expr.Proto && it.tk.str=="func" }
                 if (f != null) {
                     val co = ups.any(f) { it is Expr.Proto && it.tk.str!="func" }
                     if (co) {
                         err(this.tk, "defer error : unexpected func with enclosing coro or task")
                     }
                 }
-                defer_catch_spawn_tasks.add(ups.first(this) { it is Expr.Do } as Expr.Do)
+                defer_catch_spawn_tasks.add(this.first { it is Expr.Do } as Expr.Do)
                 this.blk.traverse()
             }
 
@@ -180,7 +180,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 when {
                     ups.any(this) { defer -> (defer is Expr.Defer) }
                         -> err(this.tk, "yield error : unexpected enclosing defer")
-                    ups.first(this) { it is Expr.Proto }.let { it?.tk?.str=="func" }
+                    this.first { it is Expr.Proto }.let { it?.tk?.str=="func" }
                         -> err(this.tk, "yield error : unexpected enclosing func")
                     (ups.exe(this) == null)
                         -> err(this.tk, "yield error : expected enclosing coro" + (if (CEU <= 3) "" else " or task"))
@@ -201,7 +201,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.tsk.traverse()
                 this.args.forEach { it.traverse() }
                 if (this.tsks == null) {
-                    defer_catch_spawn_tasks.add(ups.first(this) { it is Expr.Do } as Expr.Do)
+                    defer_catch_spawn_tasks.add(this.first { it is Expr.Do } as Expr.Do)
 
                     // tasks is the one relevant, not the spawn itself
                     ups.all_until(this) { it is Expr.Proto }
@@ -216,7 +216,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                  */
             }
             is Expr.Delay  -> {
-                if (!ups.first(this) { it is Expr.Proto }.let { it?.tk?.str=="task" }) {
+                if (!this.first { it is Expr.Proto }.let { it?.tk?.str=="task" }) {
                     err(this.tk, "delay error : expected enclosing task")
                 }
             }
@@ -250,7 +250,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     //      - add f to g such that f is ok if g is ok
                     //  - elsewhere
                     //      - f is ok and all fs' accessed from f
-                    val up_proto = ups.first(this) { it is Expr.Proto && ups.pub[it].let { it is Expr.Dcl && (it.tk.str=="val" || it.tk.str=="val'") } }
+                    val up_proto = this.first { it is Expr.Proto && ups.pub[it].let { it is Expr.Dcl && (it.tk.str=="val" || it.tk.str=="val'") } }
                     when {
                         (up_proto == null) -> protos_use_f(dcl.src)
                         //!protos_use_unused.contains(up_proto) -> protos_use_f(dcl.src)
@@ -274,7 +274,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.clo.traverse()
                 this.args.forEach { it.traverse() }
                 if (this.clo is Expr.Acc && this.clo.tk.str=="tasks") {
-                    defer_catch_spawn_tasks.add(ups.first(this) { it is Expr.Do } as Expr.Do)
+                    defer_catch_spawn_tasks.add(this.first { it is Expr.Do } as Expr.Do)
                 }
 
             }

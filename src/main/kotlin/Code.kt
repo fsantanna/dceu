@@ -375,7 +375,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """
             }
             is Expr.Defer -> {
-                val bup = ups.first(this) { it is Expr.Do } as Expr.Do
+                val bup = this.first { it is Expr.Do } as Expr.Do
                 val (ns,ini,end) = defers.getOrDefault(bup, Triple(mutableListOf(),"",""))
                 val id = sta.idx(this, "defer_$n")
                 val inix = """
@@ -483,7 +483,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             }
 
             is Expr.Spawn -> {
-                val blk = ups.first(this) { it is Expr.Do } as Expr.Do
+                val blk = this.first { it is Expr.Do } as Expr.Do
                 val blkc = sta.idx(blk, "block_${blk.n}")
                 """
                 { // SPAWN | ${this.dump()}
@@ -656,7 +656,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             """
             }
             is Expr.Tasks -> {
-                val blk = ups.first(this) { it is Expr.Do } as Expr.Do
+                val blk = this.first { it is Expr.Do } as Expr.Do
                 val blkc = sta.idx(blk, "block_${blk.n}")
                 """
                 {  // TASKS | ${this.dump()}
@@ -720,7 +720,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         """
                     }
                     ups.isdrop(this) -> {
-                        val prime = (ups.first(this) { it is Expr.Drop } as Expr.Drop).prime
+                        val prime = (this.first { it is Expr.Drop } as Expr.Drop).prime
                         """
                         { // ACC - DROP | ${this.dump()}
                             CEU_ACC((CEU_Value) { CEU_VALUE_NIL });     // ceu_acc may be equal to $idx (hh_05_coro)
@@ -845,7 +845,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         }
                         """
                     ups.isdrop(this) -> {
-                        val prime = (ups.first(this) { it is Expr.Drop } as Expr.Drop).prime
+                        val prime = (this.first { it is Expr.Drop } as Expr.Drop).prime
                         """
                         { // INDEX | DROP | ${this.dump()}
                             CEU_ACC((CEU_Value) { CEU_VALUE_NIL });     // ceu_acc may be equal to $idx (hh_05_coro)
