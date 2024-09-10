@@ -699,10 +699,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             }
             is Expr.Acc -> {
                 val idx = sta.idx(this)
-                val dcl = ups.id_to_dcl(this.tk.str, this)!!
+                val dcl = this.id_to_dcl(this.tk.str)!!
                 when {
                     this.isdst() -> {
-                        val depth = ups.dcl_to_blk(ups.id_to_dcl(this.tk.str,this)!!).let { blk ->
+                        val depth = this.id_to_dcl(this.tk.str)!!.toblk().let { blk ->
                             this.up_all_until { it == blk }.filter { it is Expr.Do }.count() - 1
                         }
                         """

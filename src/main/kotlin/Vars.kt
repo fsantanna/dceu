@@ -34,7 +34,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     fun data (e: Expr): Pair<Int?,LData?>? {
         return when (e) {
             is Expr.Acc -> {
-                val dcl = ups.id_to_dcl(e.tk.str,e)!!
+                val dcl = e.id_to_dcl(e.tk.str)!!
                 dcl.idtag.second.let {
                     if (it == null) {
                         null
@@ -80,7 +80,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     }
 
     fun type (dcl: Expr.Dcl, src: Expr): Type {
-        val blk = ups.dcl_to_blk(dcl)
+        val blk = dcl.toblk()
         val up  = src.up_first { it is Expr.Proto || it==blk }
         return when {
             (blk == outer) -> Type.GLOBAL
@@ -105,7 +105,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         if (CEU>=99 && dcl.idtag.first.str=="it") {
             // ok
         } else {
-            val xdcl = ups.id_to_dcl(dcl.idtag.first.str, dcl, false, { it==dcl })
+            val xdcl = dcl.id_to_dcl(dcl.idtag.first.str, false, { it==dcl })
             if (xdcl == null) {
                 // ok
             } else {
@@ -115,7 +115,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     }
 
     fun acc (e: Expr, id: String): Expr.Dcl {
-        val dcl: Expr.Dcl? = ups.id_to_dcl(id, e)
+        val dcl: Expr.Dcl? = e.id_to_dcl(id)
         if (dcl == null) {
             err(e.tk, "access error : variable \"${id}\" is not declared")
         }
@@ -127,7 +127,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             if (dcl.tk.str!="val" && dcl.tk.str!="val'") {
                 err(e.tk, "access error : outer variable \"${dcl.idtag.first.str}\" must be immutable")
             }
-            val orig = ups.dcl_to_blk(dcl).up_first { it is Expr.Proto }
+            val orig = dcl.toblk().up_first { it is Expr.Proto }
             //println(listOf(dcl.id.str, orig?.tk))
             val proto = e.up_first { it is Expr.Proto }!!
             proto.up_all_until { it == orig }

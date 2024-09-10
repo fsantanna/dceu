@@ -62,12 +62,40 @@ fun Expr.isdrop (): Boolean {
     return LEX && this.up.let { it is Expr.Drop && it.e==this }
 }
 
+fun Expr.Dcl.toblk (): Expr {
+    return this.up_first { it is Expr.Do || it is Expr.Proto }!! // ?: outer /*TODO: remove outer*/
+}
+
+fun Expr.id_to_dcl (id: String, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?=null): Expr.Dcl? {
+    val up = this.up!!.up_first { it is Expr.Do || it is Expr.Proto }
+    fun aux (es: List<Expr>): Expr.Dcl? {
+        return es.firstNotNullOfOrNull {
+            when {
+                (it is Expr.Set) -> aux(listOfNotNull(it.src))
+                (it is Expr.Group) -> aux(it.es)
+                (it !is Expr.Dcl) -> null
+                (but!=null && but(it)) -> aux(listOfNotNull(it.src))
+                (it.idtag.first.str == id) -> it
+                else -> aux(listOfNotNull(it.src))
+            }
+        }
+
+    }
+    val dcl: Expr.Dcl? = when {
+        (up is Expr.Proto) -> up.pars.firstOrNull { (but==null||!but(it)) && it.idtag.first.str==id }
+        (up is Expr.Do) -> aux(up.es)
+        else -> null
+    }
+    return when {
+        (dcl != null) -> dcl
+        (up!!.up == null) -> null
+        (up is Expr.Proto && !cross) -> null
+        else -> up!!.id_to_dcl(id, cross, but)
+    }
+}
+
 class Ups (val outer: Expr.Do) {
     val pub = outer.traverse()
-
-    fun dcl_to_blk (dcl: Expr.Dcl): Expr {
-        return dcl.up_first { it is Expr.Do || it is Expr.Proto }!! // ?: outer /*TODO: remove outer*/
-    }
 
     fun id_to_dcl (id: String, from: Expr, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?=null): Expr.Dcl? {
         val up = this.pub[from]!!.up_first { it is Expr.Do || it is Expr.Proto }
@@ -93,7 +121,7 @@ class Ups (val outer: Expr.Do) {
             (dcl != null) -> dcl
             (up == outer) -> null
             (up is Expr.Proto && !cross) -> null
-            else -> this.id_to_dcl(id, up!!, cross, but)
+            else -> up!!.id_to_dcl(id, cross, but)
         }
     }
 

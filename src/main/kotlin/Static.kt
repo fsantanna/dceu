@@ -53,12 +53,12 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     }
 
     fun idx (acc: Expr.Acc): String {
-        val dcl = ups.id_to_dcl(acc.tk.str,acc)!!
+        val dcl = acc.id_to_dcl(acc.tk.str)!!
         return this.idx(dcl, acc)
     }
     fun idx (dcl: Expr.Dcl, src: Expr): String {
         val id = dcl.idtag.first.str.idc()
-        val blk = ups.dcl_to_blk(dcl)
+        val blk = dcl.toblk()
         val ismem = this.ismem(blk)
         //println(listOf(src.tk.pos.lin, id, type(dcl,src)))
 
@@ -151,7 +151,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.dst.traverse()
                 this.src.traverse()
                 if (this.dst is Expr.Acc) {
-                    val dcl = ups.id_to_dcl(this.dst.tk.str,this.dst)!!
+                    val dcl = this.dst.id_to_dcl(this.dst.tk.str)!!
                     if (dcl.tk.str=="val" || dcl.tk.str=="val'") {
                         err(this.tk, "set error : destination is immutable")
                     }
@@ -242,7 +242,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
-                val dcl = ups.id_to_dcl(this.tk.str,this)!!
+                val dcl = this.id_to_dcl(this.tk.str)!!
                 if (dcl.src is Expr.Proto && (dcl.tk.str=="val" || dcl.tk.str=="val'")) {
                     // f is accessed
                     //  - from an enclosing const g
