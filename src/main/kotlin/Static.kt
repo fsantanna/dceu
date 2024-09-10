@@ -66,7 +66,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             Type.GLOBAL -> "ceu_glb_$id"
             Type.LOCAL -> if (ismem) "(ceu_mem->${id}_${dcl.n})" else "ceu_loc_${id}_${dcl.n}"  // idx b/c of "it"
             Type.NESTED -> {
-                val xups = ups.all_until(src) { it == blk } // all ups between src -> dcl
+                val xups = src.all_until { it == blk } // all ups between src -> dcl
                 val pid = (blk.first { it is Expr.Proto } as Expr.Proto).id(outer, ups)
                 val xn = xups.count { it is Expr.Proto && it!=blk }
                 "((CEU_Pro_$pid*)ceux->exe_task->${"clo->up_nst->".repeat(xn)}mem)->${id}_${dcl.n}"
@@ -101,13 +101,13 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                         (!vars.proto_has_outer.contains(this)) -> {
                             // OK: no access to outer - unset :nested
                         }
-                        ups.any(this) { it is Expr.Proto && it.tk.str!="func" } -> {
+                        this.any { it is Expr.Proto && it.tk.str!="func" } -> {
                             val proto = this.first { it is Expr.Proto && it.tk.str!="func" }!!
                             err(this.tk, "func :nested error : unexpected enclosing ${proto.tk.str}")
                         }
                     }
 
-                    ups.all_until(ups.pub[this]!!) { it is Expr.Proto }
+                    ups.pub[this]!!.all_until { it is Expr.Proto }
                         .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
                         .forEach { mems.add(it) }
 
@@ -166,7 +166,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Defer  -> {
                 val f = this.first { it is Expr.Proto && it.tk.str=="func" }
                 if (f != null) {
-                    val co = ups.any(f) { it is Expr.Proto && it.tk.str!="func" }
+                    val co = f.any { it is Expr.Proto && it.tk.str!="func" }
                     if (co) {
                         err(this.tk, "defer error : unexpected func with enclosing coro or task")
                     }
@@ -178,7 +178,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Yield  -> {
                 this.e.traverse()
                 when {
-                    ups.any(this) { defer -> (defer is Expr.Defer) }
+                    this.any { defer -> (defer is Expr.Defer) }
                         -> err(this.tk, "yield error : unexpected enclosing defer")
                     this.first { it is Expr.Proto }.let { it?.tk?.str=="func" }
                         -> err(this.tk, "yield error : unexpected enclosing func")
@@ -187,7 +187,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     //ups.any(this) { it is Expr.Do && it.arg!=null }
                     //    -> err(this.tk, "yield error : unexpected enclosing thus")
                 }
-                ups.all_until(this) { it is Expr.Proto }
+                this.all_until { it is Expr.Proto }
                     .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
                     .forEach { mems.add(it) }
             }
@@ -204,7 +204,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     defer_catch_spawn_tasks.add(this.first { it is Expr.Do } as Expr.Do)
 
                     // tasks is the one relevant, not the spawn itself
-                    ups.all_until(this) { it is Expr.Proto }
+                    this.all_until { it is Expr.Proto }
                         .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
                         .forEach { mems.add(it) }
                 }
@@ -222,8 +222,8 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
             is Expr.Pub    -> {
                 if (this.tsk == null) {
-                    val outer = ups.first_task_outer(this)
-                    val ok = (outer != null) && ups.all_until(this) { it == outer }.none { it is Expr.Proto && it.tk.str!="task" }
+                    val outer = this.first_task_outer()
+                    val ok = (outer != null) && this.all_until { it == outer }.none { it is Expr.Proto && it.tk.str!="task" }
                     if (!ok) {
                         err(this.tk, "pub error : expected enclosing task")
                     }
@@ -235,7 +235,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
             is Expr.Tasks  -> {
                 this.max.traverse()
-                ups.all_until(this) { it is Expr.Proto }
+                this.all_until { it is Expr.Proto }
                     .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
                     .forEach { mems.add(it) }
             }

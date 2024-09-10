@@ -19,7 +19,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
 
     fun Expr.check_aborted (cmd: String): String {
         val exe = ups.exe(this)
-        val defer = ups.first_without(this, { it is Expr.Defer }, { it is Expr.Proto })
+        val defer = this.first_without({ it is Expr.Defer }, { it is Expr.Proto })
         return (CEU>=3 && exe!=null && defer==null).cond { """
             if (ceux->exe->status == CEU_EXE_STATUS_TERMINATED) {
                 $cmd;
@@ -353,7 +353,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     do { // catch
                         ${this.blk.code()}
                     } while (0); // catch
-                    ${(CEU>=3 && ups.any(this) { it is Expr.Proto && it.tk.str!="func" }).cond { """
+                    ${(CEU>=3 && this.any { it is Expr.Proto && it.tk.str!="func" }).cond { """
                         if (ceux->act == CEU_ACTION_ABORT) {
                             continue;   // do not execute next statement, instead free up block
                         }
@@ -576,8 +576,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             is Expr.Pub -> {
                 val id = sta.idx(this, "val_$n")
                 val exe = if (this.tsk != null) "" else {
-                    ups.first_task_outer(this).let { outer ->
-                        val n = ups.all_until(this) {
+                    this.first_task_outer().let { outer ->
+                        val n = this.all_until {
                             it is Expr.Proto && it.tk.str=="task" && !it.fake
                         }
                             .filter { it is Expr.Proto } // but count all protos in between
@@ -703,7 +703,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 when {
                     ups.isdst(this) -> {
                         val depth = ups.dcl_to_blk(ups.id_to_dcl(this.tk.str,this)!!).let { blk ->
-                            ups.all_until(this) { it == blk }.filter { it is Expr.Do }.count() - 1
+                            this.all_until { it == blk }.filter { it is Expr.Do }.count() - 1
                         }
                         """
                         // ACC - SET | ${this.dump()}

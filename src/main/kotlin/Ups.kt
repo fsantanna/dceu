@@ -8,60 +8,47 @@ fun Expr.first (cnd: (Expr)->Boolean): Expr? {
     }
 }
 
+fun Expr.all_until (cnd: (Expr)->Boolean): List<Expr> {
+    return listOf(this) + when {
+        cnd(this) -> emptyList()
+        (this.up == null) -> emptyList()
+        else -> this.up!!.all_until(cnd)
+    }
+}
+
+fun Expr.first_without (cnd1: (Expr)->Boolean, cnd2: (Expr)->Boolean): Expr? {
+    return when {
+        cnd2(this) -> null
+        cnd1(this) -> this
+        (up == null) -> null
+        else -> this.up!!.first_without(cnd1,cnd2)
+    }
+}
+
+fun Expr.any (cnd: (Expr)->Boolean): Boolean {
+    return this.first(cnd) != null
+}
+fun Expr.none (cnd: (Expr)->Boolean): Boolean {
+    return this.first(cnd) == null
+}
+
+fun Expr.first_task_outer (): Expr.Proto? {
+    return this.first {
+        when {
+            (it !is Expr.Proto) -> false
+            (it.tk.str != "task") -> false
+            !it.fake -> true
+            (it.first { it is Expr.Do }!!.up == null) -> true
+            else -> false
+        }
+    } as Expr.Proto?
+}
+
 class Ups (val outer: Expr.Do) {
     val pub = outer.traverse()
 
-    fun all_until (e: Expr, cnd: (Expr)->Boolean): List<Expr> {
-        val up = pub[e]
-        return listOf(e) + when {
-            cnd(e) -> emptyList()
-            (up == null) -> emptyList()
-            else -> this.all_until(up,cnd)
-        }
-    }
-    fun all (e: Expr): List<Expr> {
-        val up = pub[e]
-        return listOf(e) + when {
-            (up == null) -> emptyList()
-            else -> this.all(up)
-        }
-    }
-    fun first (e: Expr, cnd: (Expr)->Boolean): Expr? {
-        val up = pub[e]
-        return when {
-            cnd(e) -> e
-            (up == null) -> null
-            else -> this.first(up,cnd)
-        }
-    }
-    fun first_without (e: Expr, cnd1: (Expr)->Boolean, cnd2: (Expr)->Boolean): Expr? {
-        val up = pub[e]
-        return when {
-            cnd2(e) -> null
-            cnd1(e) -> e
-            (up == null) -> null
-            else -> this.first_without(up,cnd1,cnd2)
-        }
-    }
-    fun any (e: Expr, cnd: (Expr)->Boolean): Boolean {
-        return this.first(e,cnd) != null
-    }
-    fun none (e: Expr, cnd: (Expr)->Boolean): Boolean {
-        return this.first(e,cnd) == null
-    }
-    fun first_task_outer (e: Expr): Expr.Proto? {
-        return this.first(e) {
-            when {
-                (it !is Expr.Proto) -> false
-                (it.tk.str != "task") -> false
-                !it.fake -> true
-                (this.first(it) { it is Expr.Do } == outer) -> true
-                else -> false
-            }
-        } as Expr.Proto?
-    }
     fun exe (e: Expr, tp: String?=null): Expr.Proto? {
-        return this.first(e) { it is Expr.Proto }.let {
+        return e.first { it is Expr.Proto }.let {
             if (it==null || it.tk.str=="func" || (tp!=null && it.tk.str!=tp)) {
                 null
             } else {
@@ -77,11 +64,11 @@ class Ups (val outer: Expr.Do) {
     }
 
     fun dcl_to_blk (dcl: Expr.Dcl): Expr {
-        return this.first(dcl) { it is Expr.Do || it is Expr.Proto }!! // ?: outer /*TODO: remove outer*/
+        return dcl.first { it is Expr.Do || it is Expr.Proto }!! // ?: outer /*TODO: remove outer*/
     }
 
     fun id_to_dcl (id: String, from: Expr, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?=null): Expr.Dcl? {
-        val up = this.first(this.pub[from]!!) { it is Expr.Do || it is Expr.Proto }
+        val up = this.pub[from]!!.first { it is Expr.Do || it is Expr.Proto }
         fun aux (es: List<Expr>): Expr.Dcl? {
             return es.firstNotNullOfOrNull {
                 when {
