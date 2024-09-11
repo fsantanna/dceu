@@ -41,7 +41,7 @@ class Coder(val outer: Expr.Do, val vars: Vars, val sta: Static) {
             is Expr.Proto -> {
                 val isexe = (this.tk.str != "func")
                 val code = this.blk.code()
-                val id = this.id(outer)
+                val id = this.id()
 
                 val mem = """
                     // PROTO | ${this.dump()}
@@ -166,7 +166,7 @@ class Coder(val outer: Expr.Do, val vars: Vars, val sta: Static) {
                         ${(CEU >= 4).cond { """
                              ${(!sta.ismem(this)).cond { "CEU_Block" }} $blkc = NULL;
                         """}}
-                        ${(this == outer).cond { """
+                        ${(this.up == null).cond { """
                             { // ARGC / ARGV
                                 CEU_Value args[ceu_argc];
                                 for (int i=0; i<ceu_argc; i++) {
@@ -178,7 +178,7 @@ class Coder(val outer: Expr.Do, val vars: Vars, val sta: Static) {
                             }
                         """}}
                         
-                        ${(this != outer).cond { 
+                        ${(this.up != null).cond { 
                             this.to_dcls().let { dcls ->
                                 """
                                 ${(!sta.ismem(this)).cond { """

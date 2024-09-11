@@ -83,7 +83,7 @@ class Vars (val outer: Expr.Do) {
         val blk = dcl.toblk()
         val up  = src.up_first { it is Expr.Proto || it==blk }
         return when {
-            (blk == outer) -> Type.GLOBAL
+            (blk.up == null) -> Type.GLOBAL
             (blk == up)    -> Type.LOCAL
             else -> {
                 up as Expr.Proto

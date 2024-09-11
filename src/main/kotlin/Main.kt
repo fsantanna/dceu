@@ -233,15 +233,15 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
             me.es.forEach { it.up = me }
             me
         }
-        val tags  = Tags(outer)
-        val vars  = Vars(outer)
-        val sta   = Static(outer, vars)
-        //val opt   = Optim(outer, ups, vars)
+        val tags = Tags(outer)
+        val vars = Vars(outer)
+        val sta  = Static(outer, vars)
+        //val opt   = Optim(outer, vars)
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
         if (verbose) {
             System.err.println("... ceu -> c ...")
         }
-        //val coder = Coder(opt.outer1, ups, vars, sta)
+        //val coder = Coder(opt.outer1, vars, sta)
         val coder = Coder(outer, vars, sta)
         coder.main(tags)
     } catch (e: Throwable) {

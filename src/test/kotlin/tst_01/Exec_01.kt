@@ -1808,6 +1808,20 @@ class Exec_01 {
         )
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun export8x() {
+        val out = test("""
+            do {
+                val v
+                val f = func () {
+                    v
+                }
+                val x = f
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // SCOPE
 
