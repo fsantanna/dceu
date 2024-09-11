@@ -76,7 +76,7 @@ fun Expr.Proto.to_nonlocs (): List<Expr.Dcl> {
 class Vars (val outer: Expr.Do) {
     val datas = mutableMapOf<String,LData>()
 
-    public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
+    public val nats: MutableMap<Expr.Nat,Pair<List<String>,String>> = mutableMapOf()
 
     init {
         this.outer.traverse()
@@ -239,7 +239,7 @@ class Vars (val outer: Expr.Do) {
             is Expr.Nat    -> {
                 nats[this] = this.tk.str.let {
                     assert(!it.contains("XXX")) { "TODO: native cannot contain XXX"}
-                    val set = mutableListOf<Expr.Dcl>()
+                    val set = mutableListOf<String>()
                     var str = ""
                     var i = 0
 
@@ -277,8 +277,8 @@ class Vars (val outer: Expr.Do) {
                             if (id.length == 0) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
-                            val dcl = acc(this, id)
-                            set.add(dcl)
+                            acc(this, id)
+                            set.add(id)
                             "(XXX)$no"
                         }
                     }

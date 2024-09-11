@@ -671,7 +671,8 @@ class Coder(val outer: Expr.Do, val vars: Vars, val sta: Static) {
             is Expr.Nat -> {
                 val body = vars.nats[this]!!.let { (set, str) ->
                     var x = str
-                    for (dcl in set) {
+                    for (id in set) {
+                        val dcl = this.id_to_dcl(id)!!
                         val idx = sta.idx(dcl, this)
                         //println(setOf(x, v))
                         x = x.replaceFirst("XXX", idx)
