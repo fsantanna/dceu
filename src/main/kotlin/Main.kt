@@ -236,7 +236,7 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         val tags = Tags(outer)
         val vars = Vars(outer)
         val sta  = Static(outer, vars)
-        val opt   = Optim(outer, vars)
+        val opt  = Optim(outer, vars)
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
         if (verbose) {
             System.err.println("... ceu -> c ...")

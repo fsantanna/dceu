@@ -49,7 +49,7 @@ class Optim (val outer: Expr.Do, val vars: Vars) {
             }
             is Expr.Group  -> {
                 val (reqs, subs) = this.es.map { it.blocks() }.unzip()
-                Pair(reqs.any(), Expr.Group(this.tk_, subs).let { me ->
+                Pair(reqs.any { it }, Expr.Group(this.tk_, subs).let { me ->
                     me.es.forEach { it.up = me }
                     me
                 })
@@ -109,8 +109,8 @@ class Optim (val outer: Expr.Do, val vars: Vars) {
                 })
             }
             is Expr.Defer  -> {
-                val (req, blk) = this.blk.blocks()
-                Pair(req, Expr.Defer(this.tk_, blk as Expr.Do).let { me ->
+                val (_, blk) = this.blk.blocks()
+                Pair(true, Expr.Defer(this.tk_, blk as Expr.Do).let { me ->
                     me.blk.up = me
                     me
                 })
@@ -126,7 +126,7 @@ class Optim (val outer: Expr.Do, val vars: Vars) {
             is Expr.Resume -> {
                 val (req1, co) = this.co.blocks()
                 val (reqs2, args) = this.args.map { it.blocks() }.unzip()
-                Pair(req1||reqs2.any(), Expr.Resume(this.tk_,co,args).let { me ->
+                Pair(req1||reqs2.any { it }, Expr.Resume(this.tk_,co,args).let { me ->
                     me.co.up = me
                     me.args.forEach { it.up = me }
                     me
@@ -139,7 +139,7 @@ class Optim (val outer: Expr.Do, val vars: Vars) {
                 }
                 val (req2, tsk)  = this.tsk.blocks()
                 val (req3, args) = this.args.map { it.blocks() }.unzip()
-                Pair(req1||req2||req3.any(), Expr.Spawn(this.tk_,tsks,tsk,args).let { me ->
+                Pair(req1||req2||req3.any { it }, Expr.Spawn(this.tk_,tsks,tsk,args).let { me ->
                     me.tsks?.up = me
                     me.tsk.up = me
                     me.args.forEach { it.up = me }
@@ -177,14 +177,14 @@ class Optim (val outer: Expr.Do, val vars: Vars) {
 
             is Expr.Tuple  -> {
                 val (reqs, args) = this.args.map { it.blocks() }.unzip()
-                Pair(reqs.any(), Expr.Tuple(this.tk_,args).let { me ->
+                Pair(reqs.any { it }, Expr.Tuple(this.tk_,args).let { me ->
                     me.args.forEach { it.up = me }
                     me
                 })
             }
             is Expr.Vector  -> {
                 val (reqs, args) = this.args.map { it.blocks() }.unzip()
-                Pair(reqs.any(), Expr.Vector(this.tk_,args).let { me ->
+                Pair(reqs.any { it }, Expr.Vector(this.tk_,args).let { me ->
                     me.args.forEach { it.up = me }
                     me
                 })
@@ -195,7 +195,7 @@ class Optim (val outer: Expr.Do, val vars: Vars) {
                     val (req2, v) = v.blocks()
                     Pair(req1||req2, Pair(k,v))
                 }.unzip()
-                Pair(reqs.any(), Expr.Dict(this.tk_, args).let { me ->
+                Pair(reqs.any { it }, Expr.Dict(this.tk_, args).let { me ->
                     me.args.forEach {
                         it.first.up = me
                         it.second.up = me
@@ -215,7 +215,7 @@ class Optim (val outer: Expr.Do, val vars: Vars) {
             is Expr.Call   -> {
                 val (req1, clo)  = this.clo.blocks()
                 val (req2, args) = this.args.map { it.blocks() }.unzip()
-                Pair(req1||req2.any(), Expr.Call(this.tk_,clo,args).let { me ->
+                Pair(req1||req2.any { it }, Expr.Call(this.tk_,clo,args).let { me ->
                     me.clo.up = me
                     me.args.forEach { it.up = me }
                     me

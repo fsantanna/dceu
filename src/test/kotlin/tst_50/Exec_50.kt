@@ -55,6 +55,27 @@ class Exec_50 {
         """)
         assert(out == "1\t1\n") { out }
     }
+    @Test
+    fun aa_05_depth_opt() {
+        val out = test("""
+            do {
+                val x
+                println(`:number ceux->depth`)
+            }
+            println(`:number ceux->depth`)
+        """)
+        assert(out == "2\n1\n") { out }
+    }
+    @Test
+    fun aa_06_depth_opt() {
+        val out = test("""
+            do {
+                println(`:number ceux->depth`)
+            }
+            println(`:number ceux->depth`)
+        """)
+        assert(out == "1\n1\n") { out }
+    }
 
     // BASIC
 
