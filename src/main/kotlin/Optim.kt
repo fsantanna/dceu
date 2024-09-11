@@ -153,7 +153,10 @@ class Optim (val outer: Expr.Do, val vars: Vars) {
                 val (req, tsk) = if (tsk == null) Pair(false, null) else {
                     this.tsk.blocks()
                 }
-                Pair(req, Expr.Pub(this.tk_,tsk))
+                Pair(req, Expr.Pub(this.tk_,tsk).let { me ->
+                    me.tsk?.up = me
+                    me
+                })
             }
             is Expr.Toggle -> {
                 val (req1, tsk) = this.tsk.blocks()
