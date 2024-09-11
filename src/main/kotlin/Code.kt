@@ -42,6 +42,7 @@ class Coder(val outer: Expr.Do, val vars: Vars, val sta: Static) {
                 val isexe = (this.tk.str != "func")
                 val code = this.blk.code()
                 val id = this.id()
+                val upvs = this.to_nonlocs()
 
                 val mem = """
                     // PROTO | ${this.dump()}
@@ -110,16 +111,16 @@ class Coder(val outer: Expr.Do, val vars: Vars, val sta: Static) {
                         ceu_create_clo_${this.tk.str} (
                             ceu_pro_$id,
                             ${this.pars.size},
-                            ${vars.proto_to_upvs[this]!!.size}
+                            ${upvs.size}
                             ${isexe.cond {", sizeof(CEU_Pro_$id)"}}
                             CEU50(COMMA ceux->exe)
                             CEU_LEX_X(COMMA ((CEU_Lex) { ${if (this.nst) "CEU_LEX_IMMUT, ceux->depth" else "CEU_LEX_FLEET, CEU_LEX_UNDEF"} }))
                         )
                     );
                     
-                    // UPVALS = ${vars.proto_to_upvs[this]!!.size}
+                    // UPVALS = ${upvs.size}
                     {                        
-                        ${vars.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
+                        ${upvs.mapIndexed { i,dcl ->
                             """
                             {
                                 CEU_Value upv = ${sta.idx(dcl, this.up!!)};
@@ -137,7 +138,7 @@ class Coder(val outer: Expr.Do, val vars: Vars, val sta: Static) {
                         pres.add(Pair(mem, src))
                         cre
                     }
-                    (this.nst && vars.proto_has_outer.contains(this)) -> {
+                    (this.nst && !upvs.isEmpty()) -> {
                         src + cre
                     }
                     else -> {

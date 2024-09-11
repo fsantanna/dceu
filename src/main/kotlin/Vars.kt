@@ -20,11 +20,61 @@ fun Expr.Do.to_dcls (): List<Expr.Dcl> {
     return aux(this.es)
 }
 
+fun Expr.Proto.to_nonlocs (): List<Expr.Dcl> {
+    fun Expr.accs (): Set<Expr.Acc> {
+        return when (this) {
+            is Expr.Acc    -> setOf(this)
+
+            is Expr.Do -> this.es.map { it.accs() }.flatten().toSet()
+            is Expr.Escape -> this.e?.accs() ?: emptySet()
+            is Expr.Group -> this.es.map { it.accs() }.flatten().toSet()
+            is Expr.Dcl -> this.src?.accs() ?: emptySet()
+            is Expr.Set -> this.dst.accs() + this.src.accs()
+            is Expr.If -> this.cnd.accs() + this.t.accs() + this.f.accs()
+            is Expr.Loop -> this.blk.accs()
+            is Expr.Drop -> this.e.accs()
+
+            is Expr.Catch -> this.blk.accs()
+            is Expr.Defer -> this.blk.accs()
+
+            is Expr.Yield  -> this.e.accs()
+            is Expr.Resume -> this.co.accs() + this.args.map { it.accs() }.flatten().toSet()
+
+            is Expr.Spawn  -> (this.tsks?.accs() ?: emptySet()) + this.tsk.accs() + this.args.map { it.accs() }.flatten().toSet()
+            is Expr.Delay  -> emptySet()
+            is Expr.Pub    -> this.tsk?.accs() ?: emptySet()
+            is Expr.Toggle -> this.tsk.accs() + this.on.accs()
+            is Expr.Tasks  -> this.max.accs()
+
+            is Expr.Tuple  -> this.args.map { it.accs() }.flatten().toSet()
+            is Expr.Vector -> this.args.map { it.accs() }.flatten().toSet()
+            is Expr.Dict   -> this.args.map { it.first.accs() + it.second.accs() }.flatten().toSet()
+            is Expr.Index  -> this.col.accs() + this.idx.accs()
+            is Expr.Call   -> this.clo.accs() + this.args.map { it.accs() }.flatten().toSet()
+
+            is Expr.Proto, is Expr.Data, is Expr.Nat, is Expr.Nil,
+            is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> emptySet()
+        }
+    }
+    return this.blk.accs()
+        .map { it.id_to_dcl(it.tk.str)!! }
+        .filter { dcl ->
+            val blk = dcl.up_first {
+                (it is Expr.Proto && it.pars.contains(dcl)) || (it is Expr.Do && it.to_dcls().contains(dcl))
+            }!!
+            when {
+                (blk.up == null) -> false                       // global is never nonloc
+                (blk.up_first { it==this } != null) -> false    // crossing this proto is loc
+                else -> true                                    // otherwise is nonloc
+            }
+        }
+        .sortedBy { it.n }
+}
+
 class Vars (val outer: Expr.Do) {
     val datas = mutableMapOf<String,LData>()
 
     public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
-    public val proto_to_upvs: MutableMap<Expr.Proto,MutableList<Expr.Dcl>> = mutableMapOf()
     public val proto_has_outer: MutableSet<Expr.Proto> = mutableSetOf()
 
     init {
@@ -128,17 +178,6 @@ class Vars (val outer: Expr.Do) {
                 err(e.tk, "access error : outer variable \"${dcl.idtag.first.str}\" must be immutable")
             }
             val orig = dcl.toblk().up_first { it is Expr.Proto }
-            //println(listOf(dcl.id.str, orig?.tk))
-            val proto = e.up_first { it is Expr.Proto }!!
-            proto.up_all_until { it == orig }
-                .let {  // remove orig
-                    if (orig==null) it else it.dropLast(1)
-                }
-                .filter { it is Expr.Proto }
-                .forEach {
-                    //println(listOf(dcl.id.str, it.tk))
-                    this.proto_to_upvs[it]!!.add(dcl)
-                }
         }
 
         return dcl
@@ -147,7 +186,6 @@ class Vars (val outer: Expr.Do) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
-                proto_to_upvs[this] = mutableListOf()
                 if (this.tag !=null && !datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }

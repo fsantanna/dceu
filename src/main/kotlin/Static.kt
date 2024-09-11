@@ -73,7 +73,7 @@ class Static(val outer: Expr.Do, val vars: Vars) {
             }
             else -> {
                 val proto = src.up_first { it is Expr.Proto } as Expr.Proto
-                val i = vars.proto_to_upvs[proto]!!.indexOfFirst { it == dcl }
+                val i = proto.to_nonlocs().indexOfFirst { it == dcl }
                 assert(i != -1)
                 "ceux->clo->upvs.buf[$i]"
             }
@@ -98,7 +98,7 @@ class Static(val outer: Expr.Do, val vars: Vars) {
                         (this.tk.str != "func") -> {
                             // OK: nested coro/task always ok b/c of ceux/MEM
                         }
-                        (!vars.proto_has_outer.contains(this)) -> {
+                        this.to_nonlocs().isEmpty() -> {
                             // OK: no access to outer - unset :nested
                         }
                         this.up_any { it is Expr.Proto && it.tk.str!="func" } -> {
