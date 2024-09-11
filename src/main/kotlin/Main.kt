@@ -322,6 +322,9 @@ fun main (args: Array<String>) {
             }
         }
     } catch (e: Throwable) {
+        if (THROW) {
+            throw e
+        }
         println(e.message!!)
     }
 }

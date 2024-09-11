@@ -832,7 +832,10 @@ class Parser (lexer_: Lexer)
                     this.expr()
                 }
                 this.acceptFix_err(")")
-                Expr.Tasks(tk0, nn)
+                Expr.Tasks(tk0, nn).let { me ->
+                    me.max.up = me
+                    me
+                }
             }
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)

@@ -18,6 +18,14 @@ class Exec_05 {
         assert(out.contains("tasks: 0x")) { out }
     }
     @Test
+    fun aa_01x_tasks() {
+        val out = test("""
+            val X = 10
+            println(tasks(X))
+        """)
+        assert(out.contains("tasks: 0x")) { out }
+    }
+    @Test
     fun aa_02_tasks() {
         val out = test("""
             println(type(tasks()))

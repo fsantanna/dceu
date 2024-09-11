@@ -169,7 +169,10 @@ class Optim (val outer: Expr.Do, val vars: Vars) {
             }
             is Expr.Tasks  -> {
                 val (req, max) = this.max.blocks()
-                Pair(req, Expr.Tasks(this.tk_,max))
+                Pair(req, Expr.Tasks(this.tk_,max).let { me ->
+                    me.max.up = me
+                    me
+                })
             }
 
             is Expr.Tuple  -> {
