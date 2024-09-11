@@ -25,17 +25,18 @@ fun Expr.Proto.to_nonlocs (): List<Expr.Dcl> {
         return when (this) {
             is Expr.Acc    -> setOf(this)
 
-            is Expr.Do -> this.es.map { it.accs() }.flatten().toSet()
+            is Expr.Proto  -> this.blk.accs()
+            is Expr.Do     -> this.es.map { it.accs() }.flatten().toSet()
             is Expr.Escape -> this.e?.accs() ?: emptySet()
-            is Expr.Group -> this.es.map { it.accs() }.flatten().toSet()
-            is Expr.Dcl -> this.src?.accs() ?: emptySet()
-            is Expr.Set -> this.dst.accs() + this.src.accs()
-            is Expr.If -> this.cnd.accs() + this.t.accs() + this.f.accs()
-            is Expr.Loop -> this.blk.accs()
-            is Expr.Drop -> this.e.accs()
+            is Expr.Group  -> this.es.map { it.accs() }.flatten().toSet()
+            is Expr.Dcl    -> this.src?.accs() ?: emptySet()
+            is Expr.Set    -> this.dst.accs() + this.src.accs()
+            is Expr.If     -> this.cnd.accs() + this.t.accs() + this.f.accs()
+            is Expr.Loop   -> this.blk.accs()
+            is Expr.Drop   -> this.e.accs()
 
-            is Expr.Catch -> this.blk.accs()
-            is Expr.Defer -> this.blk.accs()
+            is Expr.Catch  -> this.blk.accs()
+            is Expr.Defer  -> this.blk.accs()
 
             is Expr.Yield  -> this.e.accs()
             is Expr.Resume -> this.co.accs() + this.args.map { it.accs() }.flatten().toSet()
@@ -52,11 +53,12 @@ fun Expr.Proto.to_nonlocs (): List<Expr.Dcl> {
             is Expr.Index  -> this.col.accs() + this.idx.accs()
             is Expr.Call   -> this.clo.accs() + this.args.map { it.accs() }.flatten().toSet()
 
-            is Expr.Proto, is Expr.Data, is Expr.Nat, is Expr.Nil,
-            is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> emptySet()
+            is Expr.Data, is Expr.Nat, is Expr.Nil,
+            is Expr.Tag, is Expr.Bool, is Expr.Char,
+            is Expr.Num -> emptySet()
         }
     }
-    return this.blk.accs()
+    return this.accs()
         .map { it.id_to_dcl(it.tk.str)!! }
         .filter { dcl ->
             val blk = dcl.up_first {
@@ -75,7 +77,6 @@ class Vars (val outer: Expr.Do) {
     val datas = mutableMapOf<String,LData>()
 
     public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
-    public val proto_has_outer: MutableSet<Expr.Proto> = mutableSetOf()
 
     init {
         this.outer.traverse()
@@ -137,7 +138,6 @@ class Vars (val outer: Expr.Do) {
             (blk == up)    -> Type.LOCAL
             else -> {
                 up as Expr.Proto
-                this.proto_has_outer.add(up)
                 val nst = up.up_all_until { it == blk }
                     .filter { it is Expr.Proto }
                     .let { it as List<Expr.Proto> }
