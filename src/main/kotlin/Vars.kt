@@ -21,43 +21,6 @@ fun Expr.Do.to_dcls (): List<Expr.Dcl> {
 }
 
 fun Expr.Proto.to_nonlocs (): List<Expr.Dcl> {
-    fun Expr.accs (): Set<Expr.Acc> {
-        return when (this) {
-            is Expr.Acc    -> setOf(this)
-
-            is Expr.Proto  -> this.blk.accs()
-            is Expr.Do     -> this.es.map { it.accs() }.flatten().toSet()
-            is Expr.Escape -> this.e?.accs() ?: emptySet()
-            is Expr.Group  -> this.es.map { it.accs() }.flatten().toSet()
-            is Expr.Dcl    -> this.src?.accs() ?: emptySet()
-            is Expr.Set    -> this.dst.accs() + this.src.accs()
-            is Expr.If     -> this.cnd.accs() + this.t.accs() + this.f.accs()
-            is Expr.Loop   -> this.blk.accs()
-            is Expr.Drop   -> this.e.accs()
-
-            is Expr.Catch  -> this.blk.accs()
-            is Expr.Defer  -> this.blk.accs()
-
-            is Expr.Yield  -> this.e.accs()
-            is Expr.Resume -> this.co.accs() + this.args.map { it.accs() }.flatten().toSet()
-
-            is Expr.Spawn  -> (this.tsks?.accs() ?: emptySet()) + this.tsk.accs() + this.args.map { it.accs() }.flatten().toSet()
-            is Expr.Delay  -> emptySet()
-            is Expr.Pub    -> this.tsk?.accs() ?: emptySet()
-            is Expr.Toggle -> this.tsk.accs() + this.on.accs()
-            is Expr.Tasks  -> this.max.accs()
-
-            is Expr.Tuple  -> this.args.map { it.accs() }.flatten().toSet()
-            is Expr.Vector -> this.args.map { it.accs() }.flatten().toSet()
-            is Expr.Dict   -> this.args.map { it.first.accs() + it.second.accs() }.flatten().toSet()
-            is Expr.Index  -> this.col.accs() + this.idx.accs()
-            is Expr.Call   -> this.clo.accs() + this.args.map { it.accs() }.flatten().toSet()
-
-            is Expr.Data, is Expr.Nat, is Expr.Nil,
-            is Expr.Tag, is Expr.Bool, is Expr.Char,
-            is Expr.Num -> emptySet()
-        }
-    }
     return this
         .dn_gather { if (it is Expr.Acc) mapOf(Pair(it,true)) else emptyMap() }
         .map { (it,_) -> it.id_to_dcl(it.tk.str)!! }
