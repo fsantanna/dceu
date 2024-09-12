@@ -140,7 +140,7 @@ sealed class Expr (val n: Int, var up: Expr?, val tk: Tk) {
     data class Group  (val tk_: Tk.Fix, val es: List<Expr>) : Expr(N++, null, tk_)
     data class Dcl    (val tk_: Tk.Fix, val lex: Boolean, /*val poly: Boolean,*/ val idtag: Id_Tag, val src: Expr?):  Expr(N++, null, tk_)
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, null, tk_)
-    data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, null, tk_)
+    data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr, val f: Expr): Expr(N++, null, tk_)
     data class Loop   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, null, tk_)
     data class Data   (val tk_: Tk.Tag, val ids: List<Id_Tag>): Expr(N++, null, tk_)
     data class Drop   (val tk_: Tk.Fix, val e: Expr, val prime: Boolean): Expr(N++, null, tk_)

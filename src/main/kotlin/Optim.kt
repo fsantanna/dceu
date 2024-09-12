@@ -23,9 +23,11 @@ class Optim (val outer: Expr.Do, val vars: Vars) {
             is Expr.Do     -> {
                 val (reqs, subs) = this.es.map { it.blocks() }.unzip()
                 val up = this.up.let {
-                    it is Expr.Proto || it is Expr.If || it is Expr.Loop || it is Expr.Catch || it is Expr.Defer
+                    it is Expr.Proto || it is Expr.Loop || it is Expr.Catch || it is Expr.Defer
                 }
-                val ret = if (this.up==null || this.tag!=null || up || reqs.any()) {
+                //println(reqs)
+                //println(listOf(this.up==null , this.tag!=null , up , reqs.any { it }))
+                val ret = if (this.up==null || this.tag!=null || up || reqs.any { it }) {
                     Expr.Do(this.tk_, this.tag, subs).let { me ->
                         me.es.forEach { it.up = me }
                         me
@@ -78,7 +80,7 @@ class Optim (val outer: Expr.Do, val vars: Vars) {
                 val (req1, cnd) = this.cnd.blocks()
                 val (req2, t)   = this.t.blocks()
                 val (req3, f)   = this.f.blocks()
-                Pair(req1||req2||req3, Expr.If(this.tk_, cnd, t as Expr.Do, f as Expr.Do).let { me ->
+                Pair(req1||req2||req3, Expr.If(this.tk_, cnd, t, f).let { me ->
                     me.cnd.up = me
                     me.t.up = me
                     me.f.up = me
