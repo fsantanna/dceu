@@ -995,9 +995,9 @@ fun Coder.main (tags: Tags): String {
             var last = "NULL"
             var i1 = 0
             l3.map { it1 ->
-                val (s1,c1,e1) = tags.pub[':'+it1.first]!!
+                val (s1,c1) = tags.pub[':'+it1.first]!!
                 val c1c = c1.idc()
-                val ie1 = e1 ?: i1++
+                val ie1 = i1++
                 val prv1 = last
                 last = "&ceu_tag__$c1c"
                 var i2 = 0
@@ -1005,9 +1005,8 @@ fun Coder.main (tags: Tags): String {
                 #define CEU_TAG_$c1c ($ie1)
                 CEU_Tags_Names ceu_tag__$c1c = { CEU_TAG_$c1c, "$s1", $prv1 };
                 """ + it1.second.map { it2 ->
-                    val (s2,c2,e2) = tags.pub[':'+it1.first+'.'+it2.first]!!
+                    val (s2,c2) = tags.pub[':'+it1.first+'.'+it2.first]!!
                     val c2c = c2.idc()
-                    assert(e2 == null)
                     i2++
                     val prv2 = last
                     last = "&ceu_tag__$c2c"
@@ -1016,8 +1015,7 @@ fun Coder.main (tags: Tags): String {
                     #define CEU_TAG_$c2c (($i2 << 8) | $ie1)
                     CEU_Tags_Names ceu_tag__$c2c = { CEU_TAG_$c2c, "$s2", $prv2 };
                     """ + it2.second.map { it3 ->
-                        val (s3,c3,e3) = tags.pub[':'+it1.first+'.'+it2.first+'.'+it3.first]!!
-                        assert(e3 == null)
+                        val (s3,c3) = tags.pub[':'+it1.first+'.'+it2.first+'.'+it3.first]!!
                         i3++
                         val prv3 = last
                         last = "&ceu_tag__$c3"
@@ -1026,8 +1024,7 @@ fun Coder.main (tags: Tags): String {
                         #define CEU_TAG_$c3 (($i3 << 16) | ($i2 << 8) | $ie1)
                         CEU_Tags_Names ceu_tag__$c3 = { CEU_TAG_$c3, "$s3", $prv3 };
                         """ + it3.second.map { it4 ->
-                            val (s4,c4,e4) = tags.pub[':'+it1.first+'.'+it2.first+'.'+it3.first+'.'+it4.first]!!
-                            assert(e4 == null)
+                            val (s4,c4) = tags.pub[':'+it1.first+'.'+it2.first+'.'+it3.first+'.'+it4.first]!!
                             i4++
                             val prv4 = last
                             last = "&ceu_tag__$c4"
