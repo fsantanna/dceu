@@ -1,5 +1,41 @@
 package dceu
 
+fun <T> Expr.dn_gather (f: (Expr)->Set<T>): Set<T> {
+    return f(this) + when (this) {
+        is Expr.Proto  -> this.blk.dn_gather(f)
+        is Expr.Do     -> this.es.map { it.dn_gather(f) }.flatten().toSet()
+        is Expr.Escape -> this.e?.dn_gather(f) ?: emptySet()
+        is Expr.Group  -> this.es.map { it.dn_gather(f) }.flatten().toSet()
+        is Expr.Dcl    -> this.src?.dn_gather(f) ?: emptySet()
+        is Expr.Set    -> this.dst.dn_gather(f) + this.src.dn_gather(f)
+        is Expr.If     -> this.cnd.dn_gather(f) + this.t.dn_gather(f) + this.f.dn_gather(f)
+        is Expr.Loop   -> this.blk.dn_gather(f)
+        is Expr.Drop   -> this.e.dn_gather(f)
+
+        is Expr.Catch  -> this.blk.dn_gather(f)
+        is Expr.Defer  -> this.blk.dn_gather(f)
+
+        is Expr.Yield  -> this.e.dn_gather(f)
+        is Expr.Resume -> this.co.dn_gather(f) + this.args.map { it.dn_gather(f) }.flatten().toSet()
+
+        is Expr.Spawn  -> (this.tsks?.dn_gather(f) ?: emptySet()) + this.tsk.dn_gather(f) + this.args.map { it.dn_gather(f) }.flatten().toSet()
+        is Expr.Delay  -> emptySet()
+        is Expr.Pub    -> this.tsk?.dn_gather(f) ?: emptySet()
+        is Expr.Toggle -> this.tsk.dn_gather(f) + this.on.dn_gather(f)
+        is Expr.Tasks  -> this.max.dn_gather(f)
+
+        is Expr.Tuple  -> this.args.map { it.dn_gather(f) }.flatten().toSet()
+        is Expr.Vector -> this.args.map { it.dn_gather(f) }.flatten().toSet()
+        is Expr.Dict   -> this.args.map { it.first.dn_gather(f) + it.second.dn_gather(f) }.flatten().toSet()
+        is Expr.Index  -> this.col.dn_gather(f) + this.idx.dn_gather(f)
+        is Expr.Call   -> this.clo.dn_gather(f) + this.args.map { it.dn_gather(f) }.flatten().toSet()
+
+        is Expr.Acc, is Expr.Data, is Expr.Nat,
+        is Expr.Nil, is Expr.Tag, is Expr.Bool,
+        is Expr.Char, is Expr.Num -> emptySet()
+    }
+}
+
 fun Expr.up_first (cnd: (Expr)->Boolean): Expr? {
     return when {
         cnd(this) -> this

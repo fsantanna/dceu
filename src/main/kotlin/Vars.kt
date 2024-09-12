@@ -58,7 +58,8 @@ fun Expr.Proto.to_nonlocs (): List<Expr.Dcl> {
             is Expr.Num -> emptySet()
         }
     }
-    return this.accs()
+    return this
+        .dn_gather { if (it is Expr.Acc) setOf(it) else emptySet() }
         .map { it.id_to_dcl(it.tk.str)!! }
         .filter { dcl ->
             val blk = dcl.up_first {
