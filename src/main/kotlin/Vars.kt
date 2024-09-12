@@ -59,8 +59,8 @@ fun Expr.Proto.to_nonlocs (): List<Expr.Dcl> {
         }
     }
     return this
-        .dn_gather { if (it is Expr.Acc) setOf(it) else emptySet() }
-        .map { it.id_to_dcl(it.tk.str)!! }
+        .dn_gather { if (it is Expr.Acc) mapOf(Pair(it,true)) else emptyMap() }
+        .map { (it,_) -> it.id_to_dcl(it.tk.str)!! }
         .filter { dcl ->
             val blk = dcl.up_first {
                 (it is Expr.Proto && it.pars.contains(dcl)) || (it is Expr.Do && it.to_dcls().contains(dcl))
