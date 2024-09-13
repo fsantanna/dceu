@@ -1587,6 +1587,16 @@ class Exec_99 {
         """)
         assert(out == "1\t2\n") { out }
     }
+    @Test
+    fun hj_12_tplate_nest() {
+        val out = test("""
+            data :Pico = [] {
+                :Any = []
+            }
+            println(:ok)
+        """)
+        assert(out == "1\t2\n") { out }
+    }
 
     // ENUM
 

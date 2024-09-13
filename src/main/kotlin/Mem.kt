@@ -72,7 +72,7 @@ class Mem (val vars: Vars, val sta: Static, val defers: MutableMap<Expr.Do, Trip
                     ${(CEU >= 4).cond { """
                         CEU_Block block_$n;
                     """ }}
-                    ${this.to_dcls().map { """
+                    ${this.to_dcls().values.map { """
                         CEU_Value ${it.idtag.first.str.idc() + "_" + it.n };
                     """ }.joinToString("") }
                     ${defers[this].cond { it.first.map { """

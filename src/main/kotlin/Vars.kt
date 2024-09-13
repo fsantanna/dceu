@@ -6,34 +6,46 @@ enum class Type {
     GLOBAL, LOCAL, NESTED, UPVAL
 }
 
-fun Expr.Do.to_dcls (): List<Expr.Dcl> {
-    fun aux (es: List<Expr>): List<Expr.Dcl> {
-        return es.flatMap {
-            when {
-                (it is Expr.Group) -> aux(it.es)
-                (it is Expr.Dcl) -> listOf(it) + aux(listOfNotNull(it.src))
-                (it is Expr.Set) -> aux(listOf(it.src))
-                else -> emptyList()
-            }
+fun Expr.Dcl.toblk (): Expr {
+    return this.up_first { it is Expr.Do || it is Expr.Proto }!! // ?: outer /*TODO: remove outer*/
+}
+
+fun Expr.id_to_dcl (id: String, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?=null): Expr.Dcl? {
+    val up = this.up!!.up_first { it is Expr.Do || it is Expr.Proto }
+    val dcl: Expr.Dcl? = when {
+        (up is Expr.Proto) -> up.pars.firstOrNull { (but==null||!but(it)) && it.idtag.first.str==id }
+        (up is Expr.Do) -> up.to_dcls()[id]
+        else -> null
+    }
+    return when {
+        (dcl != null) -> dcl
+        (up!!.up == null) -> null
+        (up is Expr.Proto && !cross) -> null
+        else -> up!!.id_to_dcl(id, cross, but)
+    }
+}
+
+fun Expr.Do.to_dcls (): Map<String,Expr.Dcl> {
+    return this.dn_gather {
+        when (it) {
+            this -> emptyMap()
+            is Expr.Proto -> null
+            is Expr.Do -> null
+            is Expr.Dcl -> mapOf(Pair(it.idtag.first.str,it))
+            else -> emptyMap()
         }
     }
-    return aux(this.es)
 }
 
 fun Expr.Proto.to_nonlocs (): List<Expr.Dcl> {
     return this
         .dn_gather { if (it is Expr.Acc) mapOf(Pair(it,true)) else emptyMap() }
-        .map { (it,_) -> it.id_to_dcl(it.tk.str)!! }
-        .filter { dcl ->
-            val blk = dcl.up_first {
-                (it is Expr.Proto && it.pars.contains(dcl)) || (it is Expr.Do && it.to_dcls().contains(dcl))
-            }!!
-            when {
-                (blk.up == null) -> false                       // global is never nonloc
-                (blk.up_first { it==this } != null) -> false    // crossing this proto is loc
-                else -> true                                    // otherwise is nonloc
-            }
-        }
+        .map { (acc,_) -> acc.id_to_dcl(acc.tk.str)!!.let {
+            Pair(it, it.toblk())
+        }}
+        .filter { (_,blk) -> blk.up!=null }
+        .filter { (_,blk) -> this.up!!.up_first { it==blk } != null }
+        .map { (dcl,_) -> dcl }
         .sortedBy { it.n }
 }
 
@@ -43,6 +55,34 @@ class Vars (val outer: Expr.Do) {
     public val nats: MutableMap<Expr.Nat,Pair<List<String>,String>> = mutableMapOf()
 
     init {
+        val blks = outer.dn_gather {
+            when (it) {
+                is Expr.Do -> mapOf(Pair(it,true))
+                is Expr.Proto -> mapOf(Pair(it,true))
+                else -> emptyMap()
+            }
+        }
+        for (blk in blks.keys) {
+            val dcls = when (blk) {
+                is Expr.Do -> blk.to_dcls().values
+                is Expr.Proto -> blk.pars
+                else -> error("impossible case")
+            }
+            val oths = blk.dn_gather {
+                when (it) {
+                    is Expr.Dcl -> mapOf(Pair(it,true))
+                    is Expr.Proto -> null
+                    else -> emptyMap()
+                }
+            }.keys
+            for (dcl in dcls) {
+                for (oth in oths) {
+                    if (dcl!=oth && dcl.idtag.first.str==oth.idtag.first.str) {
+                        err(oth.tk, "declaration error : variable \"${oth.idtag.first.str}\" is already declared")
+                    }
+                }
+            }
+        }
         this.outer.traverse()
     }
 
@@ -97,6 +137,8 @@ class Vars (val outer: Expr.Do) {
     fun type (dcl: Expr.Dcl, src: Expr): Type {
         val blk = dcl.toblk()
         val up  = src.up_first { it is Expr.Proto || it==blk }
+        //println(dcl)
+        //println(src)
         return when {
             (blk.up == null) -> Type.GLOBAL
             (blk == up)    -> Type.LOCAL
@@ -123,7 +165,7 @@ class Vars (val outer: Expr.Do) {
             if (xdcl == null) {
                 // ok
             } else {
-                err(dcl.tk, "declaration error : variable \"${dcl.idtag.first.str}\" is already declared")
+                //err(dcl.tk, "declaration error : variable \"${dcl.idtag.first.str}\" is already declared")
             }
         }
     }

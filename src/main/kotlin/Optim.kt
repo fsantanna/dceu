@@ -136,12 +136,12 @@ class Optim (val outer: Expr.Do, val vars: Vars) {
             }
 
             is Expr.Spawn  -> {
-                val (req1, tsks) = if (this.tsks == null) Pair(false,null) else {
+                val (_, tsks) = if (this.tsks == null) Pair(false,null) else {
                     this.tsks.blocks()
                 }
-                val (req2, tsk)  = this.tsk.blocks()
-                val (req3, args) = this.args.map { it.blocks() }.unzip()
-                Pair(req1||req2||req3.any { it }, Expr.Spawn(this.tk_,tsks,tsk,args).let { me ->
+                val (_, tsk)  = this.tsk.blocks()
+                val (_, args) = this.args.map { it.blocks() }.unzip()
+                Pair(true, Expr.Spawn(this.tk_,tsks,tsk,args).let { me ->
                     me.tsks?.up = me
                     me.tsk.up = me
                     me.args.forEach { it.up = me }

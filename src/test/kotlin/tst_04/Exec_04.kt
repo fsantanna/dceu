@@ -234,7 +234,7 @@ class Exec_04 {
             println(5)
         """)
         //assert(out == "1\n2\n3\n4\n5\n") { out }
-        assert(out == " |  anon : (lin 13, col 22) : (spawn if true { t; } else { nil; }())\n" +
+        assert(out == " |  anon : (lin 13, col 22) : (spawn if true group { t; } else group { n...\n" +
                 " v  error : expected task\n") { out }
     }
     @Test

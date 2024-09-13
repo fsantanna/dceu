@@ -20,14 +20,13 @@ class Static(val outer: Expr.Do, val vars: Vars) {
     // void: block is innocuous -> should be a proxy to up block
     fun void (blk: Expr.Do): Boolean {
         // no declarations, no spawns, no tasks
-        val dcls = blk.to_dcls()
         //println(listOf("-=-=-", blk.tk, ups.pub[blk]?.javaClass?.name))
         //println(blk.tostr())
         return when {
             true -> false
             ismem(blk,true) -> false
             (blk.tag != null) -> false
-            !dcls.isEmpty() -> false
+            !blk.to_dcls().isEmpty() -> false
             (blk.up is Expr.Proto) -> false
             this.defer_catch_spawn_tasks.contains(blk) -> false
             else -> true

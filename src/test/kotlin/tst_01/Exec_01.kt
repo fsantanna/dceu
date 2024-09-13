@@ -383,6 +383,16 @@ class Exec_01 {
         assert(out == "10\n") { out }
     }
     @Test
+    fun be_02x_rec() {
+        val out = test("""
+            val g = func (x) {
+                x
+            }    
+            println(g(:ok))
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
     fun be_03_rec_rec() {
         val out = test("""
             $PLUS

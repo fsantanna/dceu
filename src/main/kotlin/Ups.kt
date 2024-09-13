@@ -4,8 +4,12 @@ fun <K,V> List<Map<K,V>>.union (): Map<K,V> {
     return this.fold(emptyMap()) { acc, value -> acc + value }
 }
 
-fun <K,V> Expr.dn_gather (f: (Expr)->Map<K,V>): Map<K,V> {
-    return f(this) + when (this) {
+fun <K,V> Expr.dn_gather (f: (Expr)->Map<K,V>?): Map<K,V> {
+    val v = f(this)
+    if (v == null) {
+        return emptyMap()
+    }
+    return v + when (this) {
         is Expr.Proto  -> this.blk.dn_gather(f)
         is Expr.Do     -> this.es.map { it.dn_gather(f) }.union()
         is Expr.Escape -> this.e?.dn_gather(f) ?: emptyMap()
@@ -100,36 +104,4 @@ fun Expr.isdst (): Boolean {
 
 fun Expr.isdrop (): Boolean {
     return LEX && this.up.let { it is Expr.Drop && it.e==this }
-}
-
-fun Expr.Dcl.toblk (): Expr {
-    return this.up_first { it is Expr.Do || it is Expr.Proto }!! // ?: outer /*TODO: remove outer*/
-}
-
-fun Expr.id_to_dcl (id: String, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?=null): Expr.Dcl? {
-    val up = this.up!!.up_first { it is Expr.Do || it is Expr.Proto }
-    fun aux (es: List<Expr>): Expr.Dcl? {
-        return es.firstNotNullOfOrNull {
-            when {
-                (it is Expr.Set) -> aux(listOfNotNull(it.src))
-                (it is Expr.Group) -> aux(it.es)
-                (it !is Expr.Dcl) -> null
-                (but!=null && but(it)) -> aux(listOfNotNull(it.src))
-                (it.idtag.first.str == id) -> it
-                else -> aux(listOfNotNull(it.src))
-            }
-        }
-
-    }
-    val dcl: Expr.Dcl? = when {
-        (up is Expr.Proto) -> up.pars.firstOrNull { (but==null||!but(it)) && it.idtag.first.str==id }
-        (up is Expr.Do) -> aux(up.es)
-        else -> null
-    }
-    return when {
-        (dcl != null) -> dcl
-        (up!!.up == null) -> null
-        (up is Expr.Proto && !cross) -> null
-        else -> up!!.id_to_dcl(id, cross, but)
-    }
 }

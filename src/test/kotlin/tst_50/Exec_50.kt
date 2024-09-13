@@ -1970,7 +1970,7 @@ class Exec_50 {
             }
             println(v)
         """)
-        assert(out == " |  anon : (lin 2, col 13) : (val v = do { (val x = []); if x { x; } el...\n" +
+        assert(out == " |  anon : (lin 2, col 13) : (val v = do { (val x = []); if x group { x...\n" +
                 " v  error : cannot copy reference out\n") { out }
         //assert(out == "[]\n") { out }
     }
