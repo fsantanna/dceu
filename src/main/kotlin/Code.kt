@@ -238,7 +238,7 @@ class Coder(val outer: Expr.Do, val vars: Vars, val sta: Static) {
                         """ }}
 
                         { // dcls gc-dec
-                            ${this.to_dcls().values
+                            ${this.to_dcls().values.reversed()
                                 .filter { !GLOBALS.contains(it.idtag.first.str) }
                                 .map { """
                                     ceu_gc_dec_val(${sta.idx(it, it)});

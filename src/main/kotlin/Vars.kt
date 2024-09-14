@@ -76,9 +76,13 @@ class Vars (val outer: Expr.Do) {
                 }
             }.keys
             for (dcl in dcls) {
-                for (oth in oths) {
-                    if (dcl!=oth && dcl.idtag.first.str==oth.idtag.first.str) {
-                        err(oth.tk, "declaration error : variable \"${oth.idtag.first.str}\" is already declared")
+                if (dcl.idtag.first.str == "it") {
+                    // ok
+                } else {
+                    for (oth in oths) {
+                        if (dcl != oth && dcl.idtag.first.str == oth.idtag.first.str) {
+                            err(oth.tk, "declaration error : variable \"${oth.idtag.first.str}\" is already declared")
+                        }
                     }
                 }
             }

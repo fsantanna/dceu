@@ -271,6 +271,50 @@ class Exec_01 {
         //assert(out == "anon : (lin 6, col 13) : declaration error : cannot cross block (anon : (lin 2, col 13))\n") { out }
     }
 
+    // IT
+
+    @Test
+    fun bc_01_it() {
+        val out = test(
+            """
+            val it = do {
+                val it = 10
+                it
+            }
+            println(it)
+        """
+        )
+        assert(out == "10\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : declaration error : variable \"x\" is already declared\n") { out }
+    }
+    @Test
+    fun bc_02_it() {
+        val out = test(
+            """
+            var it
+            set it = do {
+                val it = 10
+                it
+            }
+            println(it)
+        """
+        )
+        assert(out == "10\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : declaration error : variable \"x\" is already declared\n") { out }
+    }
+    @Test
+    fun bc_03_it() {
+        val out = test(
+            """
+            val it = 1
+            val it = 2
+            println(it)
+        """
+        )
+        assert(out == "2\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : declaration error : variable \"x\" is already declared\n") { out }
+    }
+
     // DCL
 
     @Test

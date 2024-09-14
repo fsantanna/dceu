@@ -3023,4 +3023,30 @@ class Exec_50 {
         //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
+    @Test
+    fun zz_17_it() {
+        val out = test("""
+            func () {
+                do {
+                    val' it = :1
+                    println(it)
+                }
+                val' it = :2
+                println(it)
+            } ()
+        """)
+        assert(out == ":1\n:2\n") { out }
+    }
+    @Test
+    fun zz_18_it() {
+        val out = test("""
+            func () {
+                val' it = :1
+                println(it)
+                val' it = :2
+                println(it)
+            } ()
+        """)
+        assert(out == ":1\n:2\n") { out }
+    }
 }

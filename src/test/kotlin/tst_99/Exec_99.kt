@@ -536,6 +536,18 @@ class Exec_99 {
         assert(out == "10\n") { out }
 
     }
+    @Test
+    fun ee_05_it() {
+        val out = test("""
+            func f () {
+                match nil {
+                    |nil => nil
+                    |nil => nil
+                }
+            }
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // IFS
 
