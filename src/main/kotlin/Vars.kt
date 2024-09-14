@@ -52,9 +52,10 @@ fun Expr.Proto.to_nonlocs (): List<Expr.Dcl> {
 class Vars (val outer: Expr.Do) {
     val datas = mutableMapOf<String,LData>()
 
-    public val nats: MutableMap<Expr.Nat,Pair<List<String>,String>> = mutableMapOf()
+    public val nats: Map<Expr.Nat,Pair<List<String>,String>>
 
     init {
+        // check variable declarations
         val blks = outer.dn_gather {
             when (it) {
                 is Expr.Do -> mapOf(Pair(it,true))
@@ -87,7 +88,123 @@ class Vars (val outer: Expr.Do) {
                 }
             }
         }
-        this.outer.traverse()
+
+        // check data declarations
+        val dats = outer.dn_gather {
+            when (it) {
+                is Expr.Data -> {
+                    val sup = it.tk.str.dropLastWhile { it != '.' }.dropLast(1)
+                    val ids = (datas[sup] ?: emptyList()) + it.ids
+                    datas[it.tk.str] = ids
+                    mapOf(Pair(it, true))
+                }
+                is Expr.Index -> {
+                    data(it)
+                    emptyMap()
+                }
+                else -> emptyMap()
+            }
+        }.keys
+        val ids_dats = dats.map { Pair(it.tk.str,it) }.toMap()
+
+        fun Expr.Data.fields (): LData {
+            val sup = this.tk.str.dropLastWhile { it != '.' }.dropLast(1)
+            return (ids_dats[sup]?.fields() ?: emptyList()) + this.ids
+        }
+
+        for (dat in dats) {
+            if (ids_dats[dat.tk.str] != dat) {
+                err(dat.tk, "data error : data ${dat.tk.str} is already declared")
+            }
+            val flds = dat.fields()
+            flds.map { it.first.str }.let {
+                if (it.size != it.distinct().size) {
+                    err(dat.tk, "data error : found duplicate ids")
+                }
+            }
+            for ((_,tag) in flds) {
+                if (tag != null && !ids_dats.containsKey(tag.str)) {
+                    err(tag, "data error : data ${tag.str} is not declared")
+                }
+            }
+        }
+
+        outer.dn_gather {
+            if (it is Expr.Proto) {
+                if (it.tag !=null && !datas.containsKey(it.tag.str)) {
+                    err(it.tag, "declaration error : data ${it.tag.str} is not declared")
+                }
+            }
+            emptyMap<Unit,Unit>()
+        }
+
+        // gather nats
+        this.nats = outer.dn_gather { nat ->
+            if (nat !is Expr.Nat) emptyMap() else {
+                val src = nat.tk.str
+                assert(!src.contains("XXX")) { "TODO: native cannot contain XXX"}
+                val set = mutableListOf<String>()
+                var str = ""
+                var i = 0
+
+                var lin = 1
+                var col = 1
+                fun read (): Char {
+                    //assert(i < src.length) { "bug found" }
+                    if (i >= src.length) {
+                        err(nat.tk, "native error : (lin $lin, col $col) : unterminated token")
+                    }
+                    val x = src[i++]
+                    if (x == '\n') {
+                        lin++; col=0
+                    } else {
+                        col++
+                    }
+                    return x
+                }
+
+                while (i < src.length) {
+                    val x1 = read()
+                    str += if (x1 != '$') x1 else {
+                        val (l,c) = Pair(lin,col)
+                        var id = ""
+                        var no = ""
+                        while (i < src.length) {
+                            val x2 = read()
+                            if (x2.isLetterOrDigit() || x2=='_' || x2=='-') {
+                                id += x2
+                            } else {
+                                no += x2
+                                break
+                            }
+                        }
+                        if (id.length == 0) {
+                            err(nat.tk, "native error : (lin $l, col $c) : invalid identifier")
+                        }
+                        set.add(id)
+                        "(XXX)$no"
+                    }
+                }
+                mapOf(Pair(nat, Pair(set, str)))
+            }
+        }
+
+        // check accs
+        val xaccs = outer.dn_gather {
+            if (it is Expr.Acc) mapOf(Pair(it,true)) else emptyMap()
+        }.keys.map { Pair(it, it.tk.str) }
+        val xnats = nats.map { v -> v.value.first.map { Pair(v.key, it) } }.flatten()
+        for ((e,id) in xaccs+xnats) {
+            val dcl: Expr.Dcl? = e.id_to_dcl(id)
+            if (dcl == null) {
+                err(e.tk, "access error : variable \"${id}\" is not declared")
+            }
+            if (type(dcl,e) == Type.UPVAL) {
+                if (dcl.tk.str=="var" || dcl.tk.str=="var'") {
+                    err(e.tk, "access error : outer variable \"${dcl.idtag.first.str}\" must be immutable")
+                }
+            }
+        }
     }
 
     fun data (e: Expr): Pair<Int?,LData?>? {
@@ -158,158 +275,6 @@ class Vars (val outer: Expr.Do) {
                     else -> Type.NESTED
                 }
             }
-        }
-    }
-
-    fun check (dcl: Expr.Dcl) {
-        if (CEU>=99 && dcl.idtag.first.str=="it") {
-            // ok
-        } else {
-            val xdcl = dcl.id_to_dcl(dcl.idtag.first.str, false, { it==dcl })
-            if (xdcl == null) {
-                // ok
-            } else {
-                //err(dcl.tk, "declaration error : variable \"${dcl.idtag.first.str}\" is already declared")
-            }
-        }
-    }
-
-    fun acc (e: Expr, id: String): Expr.Dcl {
-        val dcl: Expr.Dcl? = e.id_to_dcl(id)
-        if (dcl == null) {
-            err(e.tk, "access error : variable \"${id}\" is not declared")
-        }
-
-        // add upval to all protos upwards
-        // stop at declaration (orig)
-        // use blk bc of args
-        if (type(dcl,e) == Type.UPVAL) {
-            if (dcl.tk.str!="val" && dcl.tk.str!="val'") {
-                err(e.tk, "access error : outer variable \"${dcl.idtag.first.str}\" must be immutable")
-            }
-            val orig = dcl.toblk().up_first { it is Expr.Proto }
-        }
-
-        return dcl
-    }
-
-    fun Expr.traverse () {
-        when (this) {
-            is Expr.Proto  -> {
-                if (this.tag !=null && !datas.containsKey(this.tag.str)) {
-                    err(this.tag, "declaration error : data ${this.tag.str} is not declared")
-                }
-                this.pars.forEach { check(it) }
-                this.blk.traverse()
-            }
-            is Expr.Do     -> this.es.forEach { it.traverse() }
-            is Expr.Escape -> this.e?.traverse()
-            is Expr.Group -> this.es.forEach { it.traverse() }
-            is Expr.Dcl    -> {
-                this.src?.traverse()
-                check(this)
-            }
-            is Expr.Set    -> {
-                this.dst.traverse()
-                this.src.traverse()
-            }
-            is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
-            is Expr.Loop   -> this.blk.traverse()
-            is Expr.Data   -> {
-                val sup = this.tk.str.dropLastWhile { it != '.' }.dropLast(1)
-                if (datas.containsKey(this.tk.str)) {
-                    err(this.tk, "data error : data ${this.tk.str} is already declared")
-                }
-                val ids = (datas[sup] ?: emptyList()) + this.ids
-                val xids = ids.map { it.first.str }
-                if (xids.size != xids.distinct().size) {
-                    err(this.tk, "data error : found duplicate ids")
-                }
-                ids.forEach { (_,tag) ->
-                    if (tag!=null && !datas.containsKey(tag.str)) {
-                        err(tag, "data error : data ${tag.str} is not declared")
-                    }
-                }
-                datas[this.tk.str] = ids
-            }
-            is Expr.Drop   -> this.e.traverse()
-
-            is Expr.Catch  -> this.blk.traverse()
-            is Expr.Defer  -> this.blk.traverse()
-
-            is Expr.Yield  -> this.e.traverse()
-            is Expr.Resume -> { this.co.traverse() ; this.args.forEach { it.traverse() } }
-
-            is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.args.forEach { it.traverse() } }
-            is Expr.Delay  -> {}
-            is Expr.Pub    -> this.tsk?.traverse()
-            is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
-            is Expr.Tasks  -> this.max.traverse()
-
-            is Expr.Nat    -> {
-                nats[this] = this.tk.str.let {
-                    assert(!it.contains("XXX")) { "TODO: native cannot contain XXX"}
-                    val set = mutableListOf<String>()
-                    var str = ""
-                    var i = 0
-
-                    var lin = 1
-                    var col = 1
-                    fun read (): Char {
-                        //assert(i < it.length) { "bug found" }
-                        if (i >= it.length) {
-                            err(tk, "native error : (lin $lin, col $col) : unterminated token")
-                        }
-                        val x = it[i++]
-                        if (x == '\n') {
-                            lin++; col=0
-                        } else {
-                            col++
-                        }
-                        return x
-                    }
-
-                    while (i < it.length) {
-                        val x1 = read()
-                        str += if (x1 != '$') x1 else {
-                            val (l,c) = Pair(lin,col)
-                            var id = ""
-                            var no = ""
-                            while (i < it.length) {
-                                val x2 = read()
-                                if (x2.isLetterOrDigit() || x2=='_' || x2=='-') {
-                                    id += x2
-                                } else {
-                                    no += x2
-                                    break
-                                }
-                            }
-                            if (id.length == 0) {
-                                err(tk, "native error : (lin $l, col $c) : invalid identifier")
-                            }
-                            acc(this, id)
-                            set.add(id)
-                            "(XXX)$no"
-                        }
-                    }
-                    Pair(set, str)
-                }
-            }
-            is Expr.Acc    -> acc(this, this.tk.str)
-            is Expr.Nil    -> {}
-            is Expr.Tag    -> {}
-            is Expr.Bool   -> {}
-            is Expr.Char   -> {}
-            is Expr.Num    -> {}
-            is Expr.Tuple  -> this.args.forEach { it.traverse() }
-            is Expr.Vector -> this.args.forEach { it.traverse() }
-            is Expr.Dict   -> this.args.forEach { it.first.traverse() ; it.second.traverse() }
-            is Expr.Index  -> {
-                this.col.traverse()
-                this.idx.traverse()
-                data(this)
-            }
-            is Expr.Call   -> { this.clo.traverse() ; this.args.forEach { it.traverse() } }
         }
     }
 }
