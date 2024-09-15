@@ -61,7 +61,7 @@ class Static(val outer: Expr.Do, val vars: Vars) {
         val ismem = this.ismem(blk)
         //println(listOf(src.tk.pos.lin, id, type(dcl,src)))
 
-        return when (vars.type(dcl,src)) {
+        return when (type(dcl,src)) {
             Type.GLOBAL -> "ceu_glb_$id"
             Type.LOCAL -> if (ismem) "(ceu_mem->${id}_${dcl.n})" else "ceu_loc_${id}_${dcl.n}"  // idx b/c of "it"
             Type.NESTED -> {

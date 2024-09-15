@@ -49,46 +49,146 @@ fun Expr.Proto.to_nonlocs (): List<Expr.Dcl> {
         .sortedBy { it.n }
 }
 
-class Vars (val outer: Expr.Do) {
-    val datas = mutableMapOf<String,LData>()
 
-    public val nats: Map<Expr.Nat,Pair<List<String>,String>>
-
-    init {
-        // check variable declarations
-        val blks = outer.dn_gather {
-            when (it) {
-                is Expr.Do -> mapOf(Pair(it,true))
-                is Expr.Proto -> mapOf(Pair(it,true))
-                else -> emptyMap()
+fun type (dcl: Expr.Dcl, src: Expr): Type {
+    val blk = dcl.toblk()
+    val up  = src.up_first { it is Expr.Proto || it==blk }
+    //println(dcl)
+    //println(src)
+    return when {
+        (blk.up == null) -> Type.GLOBAL
+        (blk == up)    -> Type.LOCAL
+        else -> {
+            up as Expr.Proto
+            val nst = up.up_all_until { it == blk }
+                .filter { it is Expr.Proto }
+                .let { it as List<Expr.Proto> }
+                .all { it.nst }
+            when {
+                !nst -> Type.UPVAL
+                (up.tk.str == "func") -> Type.LOCAL
+                else -> Type.NESTED
             }
         }
-        for (blk in blks.keys) {
-            val dcls = when (blk) {
-                is Expr.Do -> blk.to_dcls().values
-                is Expr.Proto -> blk.pars
-                else -> error("impossible case")
-            }
-            val oths = blk.dn_gather {
-                when (it) {
-                    is Expr.Dcl -> mapOf(Pair(it,true))
-                    is Expr.Proto -> null
-                    else -> emptyMap()
+    }
+}
+
+fun Expr.Do.nats (): Map<Expr.Nat,Pair<List<String>,String>> {
+    return this.dn_gather { nat ->
+        if (nat !is Expr.Nat) emptyMap() else {
+            val src = nat.tk.str
+            assert(!src.contains("XXX")) { "TODO: native cannot contain XXX"}
+            val set = mutableListOf<String>()
+            var str = ""
+            var i = 0
+
+            var lin = 1
+            var col = 1
+            fun read (): Char {
+                //assert(i < src.length) { "bug found" }
+                if (i >= src.length) {
+                    err(nat.tk, "native error : (lin $lin, col $col) : unterminated token")
                 }
-            }.keys
-            for (dcl in dcls) {
-                if (dcl.idtag.first.str == "it") {
-                    // ok
+                val x = src[i++]
+                if (x == '\n') {
+                    lin++; col=0
                 } else {
-                    for (oth in oths) {
-                        if (dcl != oth && dcl.idtag.first.str == oth.idtag.first.str) {
-                            err(oth.tk, "declaration error : variable \"${oth.idtag.first.str}\" is already declared")
+                    col++
+                }
+                return x
+            }
+
+            while (i < src.length) {
+                val x1 = read()
+                str += if (x1 != '$') x1 else {
+                    val (l,c) = Pair(lin,col)
+                    var id = ""
+                    var no = ""
+                    while (i < src.length) {
+                        val x2 = read()
+                        if (x2.isLetterOrDigit() || x2=='_' || x2=='-') {
+                            id += x2
+                        } else {
+                            no += x2
+                            break
                         }
+                    }
+                    if (id.length == 0) {
+                        err(nat.tk, "native error : (lin $l, col $c) : invalid identifier")
+                    }
+                    set.add(id)
+                    "(XXX)$no"
+                }
+            }
+            mapOf(Pair(nat, Pair(set, str)))
+        }
+    }
+
+}
+fun Expr.Do.check_dcls_accs_nats (nats: Map<Expr.Nat,Pair<List<String>,String>>) {
+    // all do/proto
+    val blks = this.dn_gather {
+        when (it) {
+            is Expr.Do -> mapOf(Pair(it,true))
+            is Expr.Proto -> mapOf(Pair(it,true))
+            else -> emptyMap()
+        }
+    }
+
+    // check dcls redeclarations
+    // go through each do/proto
+    for (blk in blks.keys) {
+        // get all dcls
+        val dcls = when (blk) {
+            is Expr.Do -> blk.to_dcls().values
+            is Expr.Proto -> blk.pars
+            else -> error("impossible case")
+        }
+
+        // starting at each blk, get inner dcls
+        val oths = blk.dn_gather {
+            when (it) {
+                is Expr.Dcl -> mapOf(Pair(it,true))
+                is Expr.Proto -> null
+                else -> emptyMap()
+            }
+        }.keys
+
+        // check if oths redeclare dcls
+        for (dcl in dcls) {
+            if (dcl.idtag.first.str == "it") {
+                // ok
+            } else {
+                for (oth in oths) {
+                    if (dcl != oth && dcl.idtag.first.str == oth.idtag.first.str) {
+                        err(oth.tk, "declaration error : variable \"${oth.idtag.first.str}\" is already declared")
                     }
                 }
             }
         }
+    }
 
+    // check accs
+    val xaccs = this.dn_gather {
+        if (it is Expr.Acc) mapOf(Pair(it,true)) else emptyMap()
+    }.keys.map { Pair(it, it.tk.str) }
+    val xnats = nats.map { v -> v.value.first.map { Pair(v.key, it) } }.flatten()
+    for ((e,id) in xaccs+xnats) {
+        val dcl: Expr.Dcl? = e.id_to_dcl(id)
+        if (dcl == null) {
+            err(e.tk, "access error : variable \"${id}\" is not declared")
+        }
+        if (type(dcl,e) == Type.UPVAL) {
+            if (dcl.tk.str=="var" || dcl.tk.str=="var'") {
+                err(e.tk, "access error : outer variable \"${dcl.idtag.first.str}\" must be immutable")
+            }
+        }
+    }
+}
+
+class Vars (val outer: Expr.Do) {
+    val datas = mutableMapOf<String,LData>()
+    init {
         // check data declarations
         val dats = outer.dn_gather {
             when (it) {
@@ -131,79 +231,11 @@ class Vars (val outer: Expr.Do) {
 
         outer.dn_gather {
             if (it is Expr.Proto) {
-                if (it.tag !=null && !datas.containsKey(it.tag.str)) {
+                if (it.tag !=null && !ids_dats.containsKey(it.tag.str)) {
                     err(it.tag, "declaration error : data ${it.tag.str} is not declared")
                 }
             }
             emptyMap<Unit,Unit>()
-        }
-
-        // gather nats
-        this.nats = outer.dn_gather { nat ->
-            if (nat !is Expr.Nat) emptyMap() else {
-                val src = nat.tk.str
-                assert(!src.contains("XXX")) { "TODO: native cannot contain XXX"}
-                val set = mutableListOf<String>()
-                var str = ""
-                var i = 0
-
-                var lin = 1
-                var col = 1
-                fun read (): Char {
-                    //assert(i < src.length) { "bug found" }
-                    if (i >= src.length) {
-                        err(nat.tk, "native error : (lin $lin, col $col) : unterminated token")
-                    }
-                    val x = src[i++]
-                    if (x == '\n') {
-                        lin++; col=0
-                    } else {
-                        col++
-                    }
-                    return x
-                }
-
-                while (i < src.length) {
-                    val x1 = read()
-                    str += if (x1 != '$') x1 else {
-                        val (l,c) = Pair(lin,col)
-                        var id = ""
-                        var no = ""
-                        while (i < src.length) {
-                            val x2 = read()
-                            if (x2.isLetterOrDigit() || x2=='_' || x2=='-') {
-                                id += x2
-                            } else {
-                                no += x2
-                                break
-                            }
-                        }
-                        if (id.length == 0) {
-                            err(nat.tk, "native error : (lin $l, col $c) : invalid identifier")
-                        }
-                        set.add(id)
-                        "(XXX)$no"
-                    }
-                }
-                mapOf(Pair(nat, Pair(set, str)))
-            }
-        }
-
-        // check accs
-        val xaccs = outer.dn_gather {
-            if (it is Expr.Acc) mapOf(Pair(it,true)) else emptyMap()
-        }.keys.map { Pair(it, it.tk.str) }
-        val xnats = nats.map { v -> v.value.first.map { Pair(v.key, it) } }.flatten()
-        for ((e,id) in xaccs+xnats) {
-            val dcl: Expr.Dcl? = e.id_to_dcl(id)
-            if (dcl == null) {
-                err(e.tk, "access error : variable \"${id}\" is not declared")
-            }
-            if (type(dcl,e) == Type.UPVAL) {
-                if (dcl.tk.str=="var" || dcl.tk.str=="var'") {
-                    err(e.tk, "access error : outer variable \"${dcl.idtag.first.str}\" must be immutable")
-                }
-            }
         }
     }
 
@@ -252,29 +284,6 @@ class Vars (val outer: Expr.Do) {
                 }
             }
             else -> null
-        }
-    }
-
-    fun type (dcl: Expr.Dcl, src: Expr): Type {
-        val blk = dcl.toblk()
-        val up  = src.up_first { it is Expr.Proto || it==blk }
-        //println(dcl)
-        //println(src)
-        return when {
-            (blk.up == null) -> Type.GLOBAL
-            (blk == up)    -> Type.LOCAL
-            else -> {
-                up as Expr.Proto
-                val nst = up.up_all_until { it == blk }
-                    .filter { it is Expr.Proto }
-                    .let { it as List<Expr.Proto> }
-                    .all { it.nst }
-                when {
-                    !nst -> Type.UPVAL
-                    (up.tk.str == "func") -> Type.LOCAL
-                    else -> Type.NESTED
-                }
-            }
         }
     }
 }

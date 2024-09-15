@@ -234,6 +234,8 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
             me
         }
         val tags = Tags(outer)
+        val nats = outer.nats()
+        outer.check_dcls_accs_nats(nats)
         val vars = Vars(outer)
         val sta  = Static(outer, vars)
         val opt  = Optim(outer, vars)
@@ -241,7 +243,7 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         if (verbose) {
             System.err.println("... ceu -> c ...")
         }
-        val coder = Coder(opt.outer1, vars, sta)
+        val coder = Coder(opt.outer1, vars, sta, nats)
         //val coder = Coder(outer, vars, sta)
         coder.main(tags)
     } catch (e: Throwable) {

@@ -2,7 +2,7 @@ package dceu
 
 import kotlin.math.max
 
-class Coder(val outer: Expr.Do, val vars: Vars, val sta: Static) {
+class Coder(val outer: Expr.Do, val vars: Vars, val sta: Static, val nats: Map<Expr.Nat,Pair<List<String>,String>>) {
     // Pair<mems,protos>: need to separate b/c protos must be inner->outer, while mems outer->inner
     val pres: MutableList<Pair<String,String>> = mutableListOf()
     val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
@@ -668,7 +668,7 @@ class Coder(val outer: Expr.Do, val vars: Vars, val sta: Static) {
             }
 
             is Expr.Nat -> {
-                val body = vars.nats[this]!!.let { (set, str) ->
+                val body = nats[this]!!.let { (set, str) ->
                     var x = str
                     for (id in set) {
                         val dcl = this.id_to_dcl(id)!!
