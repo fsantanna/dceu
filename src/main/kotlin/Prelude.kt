@@ -45,13 +45,13 @@ val COMP = """
 """.replace("\n", " ")
 
 fun OR (v1:String, v2:String): String {
-    N++
-    return "do { val it_$N = $v1 ; if it_$N { it_$N } else { $v2 } }"
+    G.N++
+    return "do { val it_${G.N} = $v1 ; if it_${G.N} { it_${G.N} } else { $v2 } }"
 }
 
 fun AND (v1:String, v2:String): String {
-    N++
-    return "do { val it_$N = $v1 ; if it_$N { $v2 } else { $v1 } }"
+    G.N++
+    return "do { val it_${G.N} = $v1 ; if it_${G.N} { $v2 } else { $v1 } }"
 }
 
 fun AWAIT (v:String="(type(it) /= :exe-task)"): String {

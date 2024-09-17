@@ -47,7 +47,6 @@ class Parser_99 {
 
     @Test
     fun bb_01_bin_or() {
-        N = 1
         val l = lexer("1 or 2")
         val parser = Parser(l)
         val e = parser.expr()
@@ -62,7 +61,6 @@ class Parser_99 {
     }
     @Test
     fun bb_02_bin_and() {
-        N = 1
         val l = lexer("1 and 2")
         val parser = Parser(l)
         val e = parser.expr()
@@ -77,7 +75,6 @@ class Parser_99 {
     }
     @Test
     fun bb_03_not() {
-        N = 1
         val l = lexer("not true")
         val parser = Parser(l)
         val e = parser.expr()
@@ -85,7 +82,6 @@ class Parser_99 {
     }
     @Test
     fun bb_04_bin_not_or_and() {
-        N = 1
         val l = lexer("((not true) and false) or true")
         val parser = Parser(l)
         val e = parser.expr()

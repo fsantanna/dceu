@@ -4,7 +4,6 @@ import java.io.File
 import java.io.PushbackReader
 import java.io.Reader
 import java.io.StringReader
-import java.lang.Integer.max
 
 data class Lex (
     var file: String,
@@ -30,9 +29,6 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
     val comms = ArrayDeque<String>()
 
     init {
-        if (reset) {
-            N = 1
-        }
         for (inp in inps) {
             stack.addFirst(Lex(inp.first.first, inp.first.second, inp.first.third, 0, 0, PushbackReader(inp.second,2)))
         }

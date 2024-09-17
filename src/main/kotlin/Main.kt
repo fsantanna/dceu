@@ -29,7 +29,6 @@ val VALGRIND = ""
 val THROW = false
 //val THROW = true
 
-var N = 1
 val D = "\$"
 
 // VERSION
@@ -115,12 +114,15 @@ val GLOBALS = setOf (
 ))
 
 object G {
+    var N: Int = 0
     var ups: MutableMap<Expr,Expr> = mutableMapOf()
     val datas = mutableMapOf<String,LData>()
     val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
     val proto_to_upvs: MutableMap<Expr.Proto,MutableList<Expr.Dcl>> = mutableMapOf()
     val proto_has_outer: MutableSet<Expr.Proto> = mutableSetOf()
     fun reset () {
+        N = 0
+        ups.clear()
         datas.clear()
         nats.clear()
         proto_to_upvs.clear()
@@ -135,54 +137,54 @@ sealed class Patt (val id: Tk.Id, val tag: Tk.Tag?, val pos: Expr) {
 }
 
 sealed class Tk (val str: String, val pos: Pos) {
-    data class Eof (val pos_: Pos, val n_: Int=N++): Tk("", pos_)
-    data class Fix (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
-    data class Tag (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
-    data class Op  (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
-    data class Id  (val str_: String, val pos_: Pos, val n_: Int = N++): Tk(str_, pos_)  // up: 0=var, 1=upvar, 2=upref
-    data class Num (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
-    data class Chr (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
-    data class Nat (val str_: String, val pos_: Pos, val tag: String?, val n_: Int=N++): Tk(str_, pos_)
+    data class Eof (val pos_: Pos, val n_: Int=G.N++): Tk("", pos_)
+    data class Fix (val str_: String, val pos_: Pos, val n_: Int=G.N++): Tk(str_, pos_)
+    data class Tag (val str_: String, val pos_: Pos, val n_: Int=G.N++): Tk(str_, pos_)
+    data class Op  (val str_: String, val pos_: Pos, val n_: Int=G.N++): Tk(str_, pos_)
+    data class Id  (val str_: String, val pos_: Pos, val n_: Int=G.N++): Tk(str_, pos_)  // up: 0=var, 1=upvar, 2=upref
+    data class Num (val str_: String, val pos_: Pos, val n_: Int=G.N++): Tk(str_, pos_)
+    data class Chr (val str_: String, val pos_: Pos, val n_: Int=G.N++): Tk(str_, pos_)
+    data class Nat (val str_: String, val pos_: Pos, val tag: String?, val n_: Int=G.N++): Tk(str_, pos_)
 }
 
 typealias Id_Tag  = Pair<Tk.Id,Tk.Tag?>
 
 sealed class Expr (val n: Int, val tk: Tk) {
-    data class Proto  (val tk_: Tk.Fix, val nst: Boolean, val fake: Boolean, val tag: Tk.Tag?, val pars: List<Expr.Dcl>, val blk: Do): Expr(N++, tk_)
-    data class Do     (val tk_: Tk, val tag: Tk.Tag?, val es: List<Expr>) : Expr(N++, tk_)
-    data class Escape (val tk_: Tk.Fix, val tag: Tk.Tag, val e: Expr?): Expr(N++, tk_)
-    data class Group  (val tk_: Tk.Fix, val es: List<Expr>) : Expr(N++, tk_)
-    data class Dcl    (val tk_: Tk.Fix, val lex: Boolean, /*val poly: Boolean,*/ val idtag: Id_Tag, val src: Expr?):  Expr(N++, tk_)
-    data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
-    data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
-    data class Loop   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
-    data class Data   (val tk_: Tk.Tag, val ids: List<Id_Tag>): Expr(N++, tk_)
-    data class Drop   (val tk_: Tk.Fix, val e: Expr, val prime: Boolean): Expr(N++, tk_)
+    data class Proto  (val tk_: Tk.Fix, val nst: Boolean, val fake: Boolean, val tag: Tk.Tag?, val pars: List<Expr.Dcl>, val blk: Do): Expr(G.N++, tk_)
+    data class Do     (val tk_: Tk, val tag: Tk.Tag?, val es: List<Expr>) : Expr(G.N++, tk_)
+    data class Escape (val tk_: Tk.Fix, val tag: Tk.Tag, val e: Expr?): Expr(G.N++, tk_)
+    data class Group  (val tk_: Tk.Fix, val es: List<Expr>) : Expr(G.N++, tk_)
+    data class Dcl    (val tk_: Tk.Fix, val lex: Boolean, /*val poly: Boolean,*/ val idtag: Id_Tag, val src: Expr?):  Expr(G.N++, tk_)
+    data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(G.N++, tk_)
+    data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(G.N++, tk_)
+    data class Loop   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(G.N++, tk_)
+    data class Data   (val tk_: Tk.Tag, val ids: List<Id_Tag>): Expr(G.N++, tk_)
+    data class Drop   (val tk_: Tk.Fix, val e: Expr, val prime: Boolean): Expr(G.N++, tk_)
 
-    data class Catch  (val tk_: Tk.Fix, val tag: Tk.Tag?, val blk: Expr.Do): Expr(N++, tk_)
-    data class Defer  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
+    data class Catch  (val tk_: Tk.Fix, val tag: Tk.Tag?, val blk: Expr.Do): Expr(G.N++, tk_)
+    data class Defer  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(G.N++, tk_)
 
-    data class Yield  (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
-    data class Resume (val tk_: Tk.Fix, val co: Expr, val args: List<Expr>): Expr(N++, tk_)
+    data class Yield  (val tk_: Tk.Fix, val e: Expr): Expr(G.N++, tk_)
+    data class Resume (val tk_: Tk.Fix, val co: Expr, val args: List<Expr>): Expr(G.N++, tk_)
 
-    data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val tsk: Expr, val args: List<Expr>): Expr(N++, tk_)
-    data class Delay  (val tk_: Tk.Fix): Expr(N++, tk_)
-    data class Pub    (val tk_: Tk, val tsk: Expr?): Expr(N++, tk_)
-    data class Toggle (val tk_: Tk.Fix, val tsk: Expr, val on: Expr): Expr(N++, tk_)
-    data class Tasks  (val tk_: Tk.Fix, val max: Expr): Expr(N++, tk_)
+    data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val tsk: Expr, val args: List<Expr>): Expr(G.N++, tk_)
+    data class Delay  (val tk_: Tk.Fix): Expr(G.N++, tk_)
+    data class Pub    (val tk_: Tk, val tsk: Expr?): Expr(G.N++, tk_)
+    data class Toggle (val tk_: Tk.Fix, val tsk: Expr, val on: Expr): Expr(G.N++, tk_)
+    data class Tasks  (val tk_: Tk.Fix, val max: Expr): Expr(G.N++, tk_)
 
-    data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
-    data class Acc    (val tk_: Tk.Id, val ign: Boolean=false): Expr(N++, tk_)
-    data class Nil    (val tk_: Tk.Fix): Expr(N++, tk_)
-    data class Tag    (val tk_: Tk.Tag): Expr(N++, tk_)
-    data class Bool   (val tk_: Tk.Fix): Expr(N++, tk_)
-    data class Char   (val tk_: Tk.Chr): Expr(N++, tk_)
-    data class Num    (val tk_: Tk.Num): Expr(N++, tk_)
-    data class Tuple  (val tk_: Tk.Fix, val args: List<Expr>): Expr(N++, tk_)
-    data class Vector (val tk_: Tk.Fix, val args: List<Expr>): Expr(N++, tk_)
-    data class Dict   (val tk_: Tk.Fix, val args: List<Pair<Expr,Expr>>): Expr(N++, tk_)
-    data class Index  (val tk_: Tk, val col: Expr, val idx: Expr): Expr(N++, tk_)
-    data class Call   (val tk_: Tk, val clo: Expr, val args: List<Expr>): Expr(N++, tk_)
+    data class Nat    (val tk_: Tk.Nat): Expr(G.N++, tk_)
+    data class Acc    (val tk_: Tk.Id, val ign: Boolean=false): Expr(G.N++, tk_)
+    data class Nil    (val tk_: Tk.Fix): Expr(G.N++, tk_)
+    data class Tag    (val tk_: Tk.Tag): Expr(G.N++, tk_)
+    data class Bool   (val tk_: Tk.Fix): Expr(G.N++, tk_)
+    data class Char   (val tk_: Tk.Chr): Expr(G.N++, tk_)
+    data class Num    (val tk_: Tk.Num): Expr(G.N++, tk_)
+    data class Tuple  (val tk_: Tk.Fix, val args: List<Expr>): Expr(G.N++, tk_)
+    data class Vector (val tk_: Tk.Fix, val args: List<Expr>): Expr(G.N++, tk_)
+    data class Dict   (val tk_: Tk.Fix, val args: List<Pair<Expr,Expr>>): Expr(G.N++, tk_)
+    data class Index  (val tk_: Tk, val col: Expr, val idx: Expr): Expr(G.N++, tk_)
+    data class Call   (val tk_: Tk, val clo: Expr, val args: List<Expr>): Expr(G.N++, tk_)
 }
 
 fun exec (hold: Boolean, cmds: List<String>): Pair<Boolean,String> {
