@@ -21,12 +21,6 @@ fun Expr.Do.to_dcls (): List<Expr.Dcl> {
 }
 
 class Vars (val outer: Expr.Do, val ups: Ups) {
-    val datas = mutableMapOf<String,LData>()
-
-    public val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
-    public val proto_to_upvs: MutableMap<Expr.Proto,MutableList<Expr.Dcl>> = mutableMapOf()
-    public val proto_has_outer: MutableSet<Expr.Proto> = mutableSetOf()
-
     init {
         this.outer.traverse()
     }
@@ -39,7 +33,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     if (it == null) {
                         null
                     } else {
-                        Pair(null, this.datas[it.str])
+                        Pair(null, G.datas[it.str])
                     }
                 }
             }
@@ -47,9 +41,9 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 if (e.tsk != null) {
                     this.data(e.tsk)
                 } else {
-                    val task = ups.first_task_outer(e)
+                    val task = e.up_first_task_outer()
                     if (task?.tag == null) null else {
-                        Pair(null, this.datas[task.tag.str]!!)
+                        Pair(null, G.datas[task.tag.str]!!)
                     }
                 }
             }
@@ -69,7 +63,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                             }
                             (v.second == null) -> Pair(idx, null)
                             else -> {
-                                Pair(idx, this.datas[v.second!!.str]!!)
+                                Pair(idx, G.datas[v.second!!.str]!!)
                             }
                         }
                     }
@@ -81,14 +75,14 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
     fun type (dcl: Expr.Dcl, src: Expr): Type {
         val blk = ups.dcl_to_blk(dcl)
-        val up  = ups.first(src) { it is Expr.Proto || it==blk }
+        val up  = src.up_first { it is Expr.Proto || it==blk }
         return when {
             (blk == outer) -> Type.GLOBAL
             (blk == up)    -> Type.LOCAL
             else -> {
                 up as Expr.Proto
-                this.proto_has_outer.add(up)
-                val nst = ups.all_until(up) { it == blk }
+                G.proto_has_outer.add(up)
+                val nst = up.up_all_until { it == blk }
                     .filter { it is Expr.Proto }
                     .let { it as List<Expr.Proto> }
                     .all { it.nst }
@@ -127,17 +121,17 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             if (dcl.tk.str!="val" && dcl.tk.str!="val'") {
                 err(e.tk, "access error : outer variable \"${dcl.idtag.first.str}\" must be immutable")
             }
-            val orig = ups.first(ups.dcl_to_blk(dcl)) { it is Expr.Proto }
+            val orig = ups.dcl_to_blk(dcl).up_first { it is Expr.Proto }
             //println(listOf(dcl.id.str, orig?.tk))
-            val proto = ups.first(e) { it is Expr.Proto }!!
-            ups.all_until(proto) { it == orig }
+            val proto = e.up_first { it is Expr.Proto }!!
+            proto.up_all_until { it == orig }
                 .let {  // remove orig
                     if (orig==null) it else it.dropLast(1)
                 }
                 .filter { it is Expr.Proto }
                 .forEach {
                     //println(listOf(dcl.id.str, it.tk))
-                    this.proto_to_upvs[it]!!.add(dcl)
+                    G.proto_to_upvs[it]!!.add(dcl)
                 }
         }
 
@@ -147,8 +141,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
-                proto_to_upvs[this] = mutableListOf()
-                if (this.tag !=null && !datas.containsKey(this.tag.str)) {
+                G.proto_to_upvs[this] = mutableListOf()
+                if (this.tag !=null && !G.datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
                 this.pars.forEach { check(it) }
@@ -169,20 +163,20 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Loop   -> this.blk.traverse()
             is Expr.Data   -> {
                 val sup = this.tk.str.dropLastWhile { it != '.' }.dropLast(1)
-                if (datas.containsKey(this.tk.str)) {
+                if (G.datas.containsKey(this.tk.str)) {
                     err(this.tk, "data error : data ${this.tk.str} is already declared")
                 }
-                val ids = (datas[sup] ?: emptyList()) + this.ids
+                val ids = (G.datas[sup] ?: emptyList()) + this.ids
                 val xids = ids.map { it.first.str }
                 if (xids.size != xids.distinct().size) {
                     err(this.tk, "data error : found duplicate ids")
                 }
                 ids.forEach { (_,tag) ->
-                    if (tag!=null && !datas.containsKey(tag.str)) {
+                    if (tag!=null && !G.datas.containsKey(tag.str)) {
                         err(tag, "data error : data ${tag.str} is not declared")
                     }
                 }
-                datas[this.tk.str] = ids
+                G.datas[this.tk.str] = ids
             }
             is Expr.Drop   -> this.e.traverse()
 
@@ -199,7 +193,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Tasks  -> this.max.traverse()
 
             is Expr.Nat    -> {
-                nats[this] = this.tk.str.let {
+                G.nats[this] = this.tk.str.let {
                     assert(!it.contains("XXX")) { "TODO: native cannot contain XXX"}
                     val set = mutableListOf<Expr.Dcl>()
                     var str = ""

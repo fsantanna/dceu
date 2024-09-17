@@ -136,7 +136,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
             """
             is Expr.Pub -> """
                 struct { // PUB
-                    ${ups.isdst(this).cond { """
+                    ${this.isdst().cond { """
                         CEU_Value val_$n;
                     """ }}
                     ${this.tsk?.mem() ?: ""}
@@ -183,7 +183,7 @@ class Mem (val ups: Ups, val vars: Vars, val sta: Static, val defers: MutableMap
             is Expr.Index -> """
                 struct { // INDEX
                     CEU_Value col_$n;
-                    ${ups.isdst(this).cond { """
+                    ${this.isdst().cond { """
                         CEU_Value val_$n;
                     """ }}
                     $union {

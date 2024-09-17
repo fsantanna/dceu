@@ -1,79 +1,78 @@
 package dceu
 
-class Ups (val outer: Expr.Do) {
-    val pub = outer.traverse()
+fun Expr.up_first (cnd: (Expr)->Boolean): Expr? {
+    return when {
+        cnd(this) -> this
+        (G.ups[this] == null) -> null
+        else -> G.ups[this]!!.up_first(cnd)
+    }
+}
 
-    fun all_until (e: Expr, cnd: (Expr)->Boolean): List<Expr> {
-        val up = pub[e]
-        return listOf(e) + when {
-            cnd(e) -> emptyList()
-            (up == null) -> emptyList()
-            else -> this.all_until(up,cnd)
+fun Expr.up_all_until (cnd: (Expr)->Boolean): List<Expr> {
+    return listOf(this) + when {
+        cnd(this) -> emptyList()
+        (G.ups[this] == null) -> emptyList()
+        else -> G.ups[this]!!.up_all_until(cnd)
+    }
+}
+
+fun Expr.up_first_without (cnd1: (Expr)->Boolean, cnd2: (Expr)->Boolean): Expr? {
+    return when {
+        cnd2(this) -> null
+        cnd1(this) -> this
+        (G.ups[this] == null) -> null
+        else -> G.ups[this]!!.up_first_without(cnd1,cnd2)
+    }
+}
+
+fun Expr.up_any (cnd: (Expr)->Boolean): Boolean {
+    return this.up_first(cnd) != null
+}
+fun Expr.up_none (cnd: (Expr)->Boolean): Boolean {
+    return this.up_first(cnd) == null
+}
+
+fun Expr.up_first_task_outer (): Expr.Proto? {
+    return this.up_first {
+        when {
+            (it !is Expr.Proto) -> false
+            (it.tk.str != "task") -> false
+            !it.fake -> true
+            (G.ups[it.up_first { it is Expr.Do }!!] == null) -> true
+            else -> false
+        }
+    } as Expr.Proto?
+}
+
+fun Expr.up_exe (tp: String?=null): Expr.Proto? {
+    return this.up_first { it is Expr.Proto }.let {
+        if (it==null || it.tk.str=="func" || (tp!=null && it.tk.str!=tp)) {
+            null
+        } else {
+            it as Expr.Proto
         }
     }
-    fun all (e: Expr): List<Expr> {
-        val up = pub[e]
-        return listOf(e) + when {
-            (up == null) -> emptyList()
-            else -> this.all(up)
-        }
-    }
-    fun first (e: Expr, cnd: (Expr)->Boolean): Expr? {
-        val up = pub[e]
-        return when {
-            cnd(e) -> e
-            (up == null) -> null
-            else -> this.first(up,cnd)
-        }
-    }
-    fun first_without (e: Expr, cnd1: (Expr)->Boolean, cnd2: (Expr)->Boolean): Expr? {
-        val up = pub[e]
-        return when {
-            cnd2(e) -> null
-            cnd1(e) -> e
-            (up == null) -> null
-            else -> this.first_without(up,cnd1,cnd2)
-        }
-    }
-    fun any (e: Expr, cnd: (Expr)->Boolean): Boolean {
-        return this.first(e,cnd) != null
-    }
-    fun none (e: Expr, cnd: (Expr)->Boolean): Boolean {
-        return this.first(e,cnd) == null
-    }
-    fun first_task_outer (e: Expr): Expr.Proto? {
-        return this.first(e) {
-            when {
-                (it !is Expr.Proto) -> false
-                (it.tk.str != "task") -> false
-                !it.fake -> true
-                (this.first(it) { it is Expr.Do } == outer) -> true
-                else -> false
-            }
-        } as Expr.Proto?
-    }
-    fun exe (e: Expr, tp: String?=null): Expr.Proto? {
-        return this.first(e) { it is Expr.Proto }.let {
-            if (it==null || it.tk.str=="func" || (tp!=null && it.tk.str!=tp)) {
-                null
-            } else {
-                it as Expr.Proto
-            }
-        }
-    }
-    fun isdst (e: Expr): Boolean {
-        return this.pub[e].let { it is Expr.Set && it.dst==e }
-    }
-    fun isdrop (e: Expr): Boolean {
-        return LEX && this.pub[e].let { it is Expr.Drop && it.e==e }
+}
+
+fun Expr.isdst (): Boolean {
+    return G.ups[this].let { it is Expr.Set && it.dst==this }
+}
+
+fun Expr.isdrop (): Boolean {
+    return LEX && G.ups[this].let { it is Expr.Drop && it.e==this }
+}
+
+class Ups (val outer: Expr.Do) {
+    init {
+        G.ups = outer.traverse().toMutableMap()
     }
 
     fun dcl_to_blk (dcl: Expr.Dcl): Expr {
-        return this.first(dcl) { it is Expr.Do || it is Expr.Proto }!! // ?: outer /*TODO: remove outer*/
+        return dcl.up_first { it is Expr.Do || it is Expr.Proto }!! // ?: outer /*TODO: remove outer*/
     }
 
     fun id_to_dcl (id: String, from: Expr, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?=null): Expr.Dcl? {
-        val up = this.first(this.pub[from]!!) { it is Expr.Do || it is Expr.Proto }
+        val up = G.ups[from]!!.up_first { it is Expr.Do || it is Expr.Proto }
         fun aux (es: List<Expr>): Expr.Dcl? {
             return es.firstNotNullOfOrNull {
                 when {

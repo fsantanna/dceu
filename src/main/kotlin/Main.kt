@@ -114,6 +114,20 @@ val GLOBALS = setOf (
     "next-tasks",
 ))
 
+object G {
+    var ups: MutableMap<Expr,Expr> = mutableMapOf()
+    val datas = mutableMapOf<String,LData>()
+    val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
+    val proto_to_upvs: MutableMap<Expr.Proto,MutableList<Expr.Dcl>> = mutableMapOf()
+    val proto_has_outer: MutableSet<Expr.Proto> = mutableSetOf()
+    fun reset () {
+        datas.clear()
+        nats.clear()
+        proto_to_upvs.clear()
+        proto_has_outer.clear()
+    }
+}
+
 sealed class Patt (val id: Tk.Id, val tag: Tk.Tag?, val pos: Expr) {
     data class None (val id_: Tk.Id, val tag_: Tk.Tag?, val pos_: Expr): Patt(id_,tag_,pos_)
     data class One  (val id_: Tk.Id, val tag_: Tk.Tag?, val e: Expr, val pos_: Expr): Patt(id_,tag_,pos_)
@@ -195,6 +209,7 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
     if (verbose) {
         System.err.println("... parsing ...")
     }
+    G.reset()
     val lexer = Lexer(inps)
     val parser = Parser(lexer)
     val es = try {
