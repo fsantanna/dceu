@@ -1,6 +1,6 @@
 package dceu
 
-fun Coder.main (tags: Tags): String {
+fun Coder.main (): String {
 
     // INCLUDES / DEFINES / ENUMS
     fun h_includes (): String {
@@ -959,93 +959,82 @@ fun Coder.main (tags: Tags): String {
 
     // TAGS
     fun c_tags (): String {
-        return tags.pub.values.let {
-            fun f1 (l: List<List<String>>): List<Pair<String, List<List<String>>>> {
-                return l
-                    .groupBy { it.first() }
-                    .toList()
-                    .map {
-                        Pair(it.first, it.second.map { it.drop(1) }.filter{it.size>0})
-                    }
-            }
-            /*
-            fun <T> f2 (l: List<Pair<String, List<List<String>>>>): List<Pair<String, T>> {
-                return l.map {
+        fun f1 (l: List<List<String>>): List<Pair<String, List<List<String>>>> {
+            return l
+                .groupBy { it.first() }
+                .toList()
+                .map {
+                    Pair(it.first, it.second.map { it.drop(1) }.filter{it.size>0})
+                }
+        }
+        val l1 = G.tags!!.keys.map { it.drop(1).split('.') }
+        val l2 = f1(l1)
+        val l3 = l2.map {
+            val a = f1(it.second)
+            val b = a.map {
+                val i = f1(it.second)
+                val j = i.map {
                     val x = f1(it.second)
-                    Pair(it.first, f2(x))
+                    Pair(it.first, x)
                 }
+                Pair(it.first, j)
             }
-            */
-            val l1 = it.map { it.first }.map { it.drop(1).split('.') }
-            val l2 = f1(l1)
-            val l3 = l2.map {
-                val a = f1(it.second)
-                val b = a.map {
-                    val i = f1(it.second)
-                    val j = i.map {
-                        val x = f1(it.second)
-                        Pair(it.first, x)
-                    }
-                    Pair(it.first, j)
-                }
-                Pair(it.first, b)
-            }
-            //println(l3)
+            Pair(it.first, b)
+        }
+        //println(l3)
 
-            var last = "NULL"
-            var i1 = 0
-            l3.map { it1 ->
-                val (s1,c1,e1) = tags.pub[':'+it1.first]!!
-                val c1c = c1.idc()
-                val ie1 = e1 ?: i1++
-                val prv1 = last
-                last = "&ceu_tag__$c1c"
-                var i2 = 0
+        var last = "NULL"
+        var i1 = 0
+        return l3.map { it1 ->
+            val s1 = ':' + it1.first
+            val c1 = s1.idc()
+            val ie1 = i1++
+            val prv1 = last
+            last = "&ceu_tag__$c1"
+            var i2 = 0
+            """
+            #define CEU_TAG_$c1 ($ie1)
+            CEU_Tags_Names ceu_tag__$c1 = { CEU_TAG_$c1, "$s1", $prv1 };
+            """ + it1.second.map { it2 ->
+                val s2 = ':' + it1.first + '.'+ it2.first
+                val c2 = s2.idc()
+                i2++
+                val prv2 = last
+                last = "&ceu_tag__$c2"
+                var i3 = 0
                 """
-                #define CEU_TAG_$c1c ($ie1)
-                CEU_Tags_Names ceu_tag__$c1c = { CEU_TAG_$c1c, "$s1", $prv1 };
-                """ + it1.second.map { it2 ->
-                    val (s2,c2,e2) = tags.pub[':'+it1.first+'.'+it2.first]!!
-                    val c2c = c2.idc()
-                    assert(e2 == null)
-                    i2++
-                    val prv2 = last
-                    last = "&ceu_tag__$c2c"
-                    var i3 = 0
+                #define CEU_TAG_$c2 (($i2 << 8) | $ie1)
+                CEU_Tags_Names ceu_tag__$c2 = { CEU_TAG_$c2, "$s2", $prv2 };
+                """ + it2.second.map { it3 ->
+                    val s3 = ':' + it1.first + '.' + it2.first + '.' + it3.first
+                    val c3 = s3.idc()
+                    i3++
+                    val prv3 = last
+                    last = "&ceu_tag__$c3"
+                    var i4 = 0
                     """
-                    #define CEU_TAG_$c2c (($i2 << 8) | $ie1)
-                    CEU_Tags_Names ceu_tag__$c2c = { CEU_TAG_$c2c, "$s2", $prv2 };
-                    """ + it2.second.map { it3 ->
-                        val (s3,c3,e3) = tags.pub[':'+it1.first+'.'+it2.first+'.'+it3.first]!!
-                        assert(e3 == null)
-                        i3++
-                        val prv3 = last
-                        last = "&ceu_tag__$c3"
-                        var i4 = 0
+                    #define CEU_TAG_$c3 (($i3 << 16) | ($i2 << 8) | $ie1)
+                    CEU_Tags_Names ceu_tag__$c3 = { CEU_TAG_$c3, "$s3", $prv3 };
+                    """ + it3.second.map { it4 ->
+                        val s4 = ':' + it1.first + '.' + it2.first + '.' + it3.first + '.' + it4.first
+                        val c4 = s4.idc()
+                        i4++
+                        val prv4 = last
+                        last = "&ceu_tag__$c4"
                         """
-                        #define CEU_TAG_$c3 (($i3 << 16) | ($i2 << 8) | $ie1)
-                        CEU_Tags_Names ceu_tag__$c3 = { CEU_TAG_$c3, "$s3", $prv3 };
-                        """ + it3.second.map { it4 ->
-                            val (s4,c4,e4) = tags.pub[':'+it1.first+'.'+it2.first+'.'+it3.first+'.'+it4.first]!!
-                            assert(e4 == null)
-                            i4++
-                            val prv4 = last
-                            last = "&ceu_tag__$c4"
-                            """
-                            #define CEU_TAG_$c4 (($i4 << 24) | ($i3 << 16) | ($i2 << 8) | $ie1)
-                            CEU_Tags_Names ceu_tag__$c4 = { CEU_TAG_$c4, "$s4", $prv4 };
-                            """
-                        }
-                            .joinToString("")
+                        #define CEU_TAG_$c4 (($i4 << 24) | ($i3 << 16) | ($i2 << 8) | $ie1)
+                        CEU_Tags_Names ceu_tag__$c4 = { CEU_TAG_$c4, "$s4", $prv4 };
+                        """
                     }
                         .joinToString("")
                 }
                     .joinToString("")
             }
-                .joinToString("") + """
-                CEU_Tags_Names* CEU_TAGS = $last;
-            """
-        } +
+                .joinToString("")
+        }
+            .joinToString("") + """
+            CEU_Tags_Names* CEU_TAGS = $last;
+        """ +
         """
     char* ceu_tag_to_pointer (int tag) {
         CEU_Tags_Names* cur = CEU_TAGS;

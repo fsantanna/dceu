@@ -117,6 +117,7 @@ object G {
     var N: Int = 0
     var outer: Expr.Do? = null
     var ups: MutableMap<Expr,Expr> = mutableMapOf()
+    var tags: Map<String,Tk.Tag>? = null
     val datas = mutableMapOf<String,LData>()
     val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
     val proto_to_upvs: MutableMap<Expr.Proto,MutableList<Expr.Dcl>> = mutableMapOf()
@@ -130,6 +131,7 @@ object G {
         N = 0
         outer = null
         ups.clear()
+        tags = null
         datas.clear()
         nats.clear()
         proto_to_upvs.clear()
@@ -256,7 +258,7 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
 
         G.outer = Expr.Do(tk0, null, listOf(xargs)+glbs+es)
         ups_reset()
-        val tags  = Tags()
+        G.tags = tags_reset()
         val vars  = Vars()
         val sta   = Static()
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
@@ -264,7 +266,7 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
             System.err.println("... ceu -> c ...")
         }
         val coder = Coder(vars, sta)
-        coder.main(tags)
+        coder.main()
     } catch (e: Throwable) {
         if (THROW) {
             throw e
