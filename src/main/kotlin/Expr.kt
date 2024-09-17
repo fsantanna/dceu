@@ -1,11 +1,15 @@
 package dceu
 
-fun Expr.is_dst (): Boolean {
-    return G.ups[this].let { it is Expr.Set && it.dst==this }
-}
-
-fun Expr.isdrop (): Boolean {
-    return LEX && G.ups[this].let { it is Expr.Drop && it.e==this }
+fun Expr.base (): Expr {
+    return when (this) {
+        is Expr.Acc   -> this
+        is Expr.Index -> this.col.base()
+        is Expr.Pub   -> TODO() //this.tsk?.base(ups) ?: ups.first(this) { it is Expr.Proto }!!
+        else -> {
+            println(this)
+            TODO()
+        }
+    }
 }
 
 fun Expr.Call.main (): Expr.Proto {
@@ -21,6 +25,14 @@ fun Expr.Proto.id (outer: Expr.Do): String {
             else -> it.idtag.first.str.idc() + (this.up_first() { it is Expr.Do } != outer).cond { "_${this.n}" }
         }
     }
+}
+
+fun Expr.is_dst (): Boolean {
+    return G.ups[this].let { it is Expr.Set && it.dst==this }
+}
+
+fun Expr.is_drop (): Boolean {
+    return LEX && G.ups[this].let { it is Expr.Drop && it.e==this }
 }
 
 fun Expr.is_constructor (): Boolean {
@@ -49,18 +61,6 @@ fun Expr.is_lval (): Boolean {
     }
 }
 
-fun Expr.base (): Expr {
-    return when (this) {
-        is Expr.Acc   -> this
-        is Expr.Index -> this.col.base()
-        is Expr.Pub   -> TODO() //this.tsk?.base(ups) ?: ups.first(this) { it is Expr.Proto }!!
-        else -> {
-            println(this)
-            TODO()
-        }
-    }
-}
-
 fun Expr.is_mem (out: Boolean=false): Boolean {
     val proto = this.up_first { it is Expr.Proto }.let {
         when {
@@ -77,4 +77,51 @@ fun Expr.is_mem (out: Boolean=false): Boolean {
         else -> false
     }
 }
+
+fun Expr.Do.to_dcls (): List<Expr.Dcl> {
+    fun aux (es: List<Expr>): List<Expr.Dcl> {
+        return es.flatMap {
+            when {
+                (it is Expr.Group) -> aux(it.es)
+                (it is Expr.Dcl) -> listOf(it) + aux(listOfNotNull(it.src))
+                (it is Expr.Set) -> aux(listOf(it.src))
+                else -> emptyList()
+            }
+        }
+    }
+    return aux(this.es)
+}
+
+fun Expr.Dcl.to_blk (): Expr {
+    return this.up_first { it is Expr.Do || it is Expr.Proto }!! // ?: outer /*TODO: remove outer*/
+}
+
+fun Expr.id_to_dcl (id: String, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?=null): Expr.Dcl? {
+    val up = G.ups[this]!!.up_first { it is Expr.Do || it is Expr.Proto }
+    fun aux (es: List<Expr>): Expr.Dcl? {
+        return es.firstNotNullOfOrNull {
+            when {
+                (it is Expr.Set) -> aux(listOfNotNull(it.src))
+                (it is Expr.Group) -> aux(it.es)
+                (it !is Expr.Dcl) -> null
+                (but!=null && but(it)) -> aux(listOfNotNull(it.src))
+                (it.idtag.first.str == id) -> it
+                else -> aux(listOfNotNull(it.src))
+            }
+        }
+
+    }
+    val dcl: Expr.Dcl? = when {
+        (up is Expr.Proto) -> up.pars.firstOrNull { (but==null||!but(it)) && it.idtag.first.str==id }
+        (up is Expr.Do) -> aux(up.es)
+        else -> null
+    }
+    return when {
+        (dcl != null) -> dcl
+        (G.ups[up] == null) -> null
+        (up is Expr.Proto && !cross) -> null
+        else -> up!!.id_to_dcl(id, cross, but)
+    }
+}
+
 

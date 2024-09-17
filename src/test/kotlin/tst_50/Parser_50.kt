@@ -13,7 +13,7 @@ class Parser_50 {
         )
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(func :nested () {\nnil;\n})") { e.tostr() }
+        assert(e.to_str() == "(func :nested () {\nnil;\n})") { e.to_str() }
         //assert(trap { parser.expr() } == "anon : (lin 2, col 18) : expected \"(\" : have \":nested\"")
     }
     @Test
@@ -25,7 +25,7 @@ class Parser_50 {
         )
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(coro :nested () {\nnil;\n})") { e.tostr() }
+        assert(e.to_str() == "(coro :nested () {\nnil;\n})") { e.to_str() }
         //assert(trap { parser.expr() } == "anon : (lin 2, col 18) : expected \"(\" : have \":nested\"")
     }
     @Test
@@ -42,7 +42,7 @@ class Parser_50 {
         val l = lexer("task (a,b) :nested { 10 }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(task (a,b) :nested {\n10;\n})") { e.tostr() }
+        assert(e.to_str() == "(task (a,b) :nested {\n10;\n})") { e.to_str() }
     }
 
 }

@@ -66,7 +66,7 @@ class Parser_01 {
         val l = lexer("println(2 * (3 - 1))")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "println({{*}}(2,{{-}}(3,1)))")
+        assert(e.to_str() == "println({{*}}(2,{{-}}(3,1)))")
     }
 
     // NUM / NIL / BOOL
@@ -129,7 +129,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr_4_suf()
         assert(e is Expr.Call && e.clo is Expr.Call && e.args.size==0)
-        assert(e.tostr() == "f(x,8)()")
+        assert(e.to_str() == "f(x,8)()")
     }
     @Test
     fun dd_04_call_err() {
@@ -158,7 +158,7 @@ class Parser_01 {
         val l = lexer("[[],[1,2,3]]")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
-        assert(e.tostr() == "[[],[1,2,3]]")
+        assert(e.to_str() == "[[],[1,2,3]]")
     }
     @Test
     fun ee_03_tuple_err() {
@@ -188,7 +188,7 @@ class Parser_01 {
         val l = lexer("@[(:dict,@[]), (:tuple,[1,2,3])]")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "@[(:dict,@[]),(:tuple,[1,2,3])]")
+        assert(e.to_str() == "@[(:dict,@[]),(:tuple,[1,2,3])]")
     }
     @Test
     fun dict3_err() {
@@ -236,7 +236,7 @@ class Parser_01 {
         val l = lexer("#[:dict,#[], :tuple,[1,2,3]]")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "#[:dict,#[],:tuple,[1,2,3]]")
+        assert(e.to_str() == "#[:dict,#[],:tuple,[1,2,3]]")
     }
     @Test
     fun vector3_err() {
@@ -249,7 +249,7 @@ class Parser_01 {
         val l = lexer("v[{{#}}(v)]")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "v[{{#}}(v)]") { e.tostr() }
+        assert(e.to_str() == "v[{{#}}(v)]") { e.to_str() }
     }
 
     // INDEX
@@ -272,7 +272,7 @@ class Parser_01 {
         val l = lexer("x . a")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "x[:a]") { e.tostr() }
+        assert(e.to_str() == "x[:a]") { e.to_str() }
         //assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected \"pub\" : have \"a\"")
     }
     @Test
@@ -296,15 +296,15 @@ class Parser_01 {
         val l = lexer("f ()")
         val parser = Parser(l)
         val es = parser.exprs()
-        assert(es.size==1 && es[0] is Expr.Call && es[0].tostr() == "f()")
-        assert(es.tostr() == "f();\n")
+        assert(es.size==1 && es[0] is Expr.Call && es[0].to_str() == "f()")
+        assert(es.to_str() == "f();\n")
     }
     @Test
     fun exprs_call_err() {
         val l = lexer("f")
         val parser = Parser(l)
         val es = parser.exprs()
-        assert(es.tostr() == "f;\n")
+        assert(es.to_str() == "f;\n")
     }
 
     // EXPRS
@@ -314,14 +314,14 @@ class Parser_01 {
         val l = lexer("; f () ; g () h()\ni() ;\n;")
         val parser = Parser(l)
         val es = parser.exprs()
-        assert(es.tostr() == "f();\ng();\nh();\ni();\n") { es.tostr() }
+        assert(es.to_str() == "f();\ng();\nh();\ni();\n") { es.to_str() }
     }
     @Test
     fun exprs_seq2() {
         val l = lexer("; f () \n (1) ; h()\ni() ;\n;")
         val parser = Parser(l)
         val es = parser.exprs()
-        assert(es.tostr() == "f();\n1;\nh();\ni();\n") { es.tostr() }
+        assert(es.to_str() == "f();\n1;\nh();\ni();\n") { es.to_str() }
         //assert(trap { parser.exprs() } == "anon : (lin 2, col 3) : expression error : innocuous expression")
     }
     @Test
@@ -330,7 +330,7 @@ class Parser_01 {
         val parser = Parser(l)
         // TODO: ambiguous
         val es = parser.exprs()
-        assert(es.tostr() == "f();\n1;\nh();\ni();\n") { es.tostr() }
+        assert(es.to_str() == "f();\n1;\nh();\ni();\n") { es.to_str() }
         //assert(ceu.trap { parser.exprs() } == "anon : (lin 2, col 3) : call error : \"(\" in the next line")
     }
     @Test
@@ -339,7 +339,7 @@ class Parser_01 {
         val parser = Parser(l)
         // TODO: ambiguous
         val es = parser.exprs()
-        assert(es.tostr() == "(var v2);\n[tp,v1,v2];\n") { es.tostr() }
+        assert(es.to_str() == "(var v2);\n[tp,v1,v2];\n") { es.to_str() }
     }
 
     // DCL
@@ -350,7 +350,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Dcl && e.tk.str=="var" && e.idtag.first.str=="x")
-        assert(e.tostr() == "(var x)")
+        assert(e.to_str() == "(var x)")
     }
     @Test
     fun expr_dcl_val() {
@@ -358,7 +358,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Dcl && e.tk.str=="val" && e.idtag.first.str=="x")
-        assert(e.tostr() == "(val x)")
+        assert(e.to_str() == "(val x)")
     }
     @Test
     fun expr_dcl_err() {
@@ -372,7 +372,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Dcl && e.idtag.first.str == "x" && e.src is Expr.Num)
-        assert(e.tostr() == "(var x = 1)")
+        assert(e.to_str() == "(var x = 1)")
     }
 
     // SET
@@ -383,7 +383,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Set && e.tk.str == "set")
-        assert(e.tostr() == "(set x = [10])") { e.tostr() }
+        assert(e.to_str() == "(set x = [10])") { e.to_str() }
     }
     @Test
     fun expr_err1() {  // set number?
@@ -436,7 +436,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.If)
-        assert(e.tostr() == "if true {\n1;\n} else {\n0;\n}") { e.tostr() }
+        assert(e.to_str() == "if true {\n1;\n} else {\n0;\n}") { e.to_str() }
     }
     @Test
     fun expr_if2_err() {
@@ -452,7 +452,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.If)
-        assert(e.tostr() == "if f() {\nnil;\n} else {\nnil;\n}") { e.tostr() }
+        assert(e.to_str() == "if f() {\nnil;\n} else {\nnil;\n}") { e.to_str() }
         //assert(trap { parser.expr_prim() } == "anon : (lin 2, col 16) : access error : variable \"f\" is not declared")
     }
 
@@ -473,7 +473,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Do && e.es.size==3)
-        assert(e.tostr() == "do {\n(var a);\n(set a = 1);\nprint(a);\n}") { e.tostr() }
+        assert(e.to_str() == "do {\n(var a);\n(set a = 1);\nprint(a);\n}") { e.to_str() }
     }
     @Test
     fun expr_do3() {
@@ -482,7 +482,7 @@ class Parser_01 {
         val e = parser.expr()
         assert(e is Expr.Do /*&& e.arg!=null*/)
         //assert(e.tostr() == "do (a) {\nprint(a)\n}") { e.tostr() }
-        assert(e.tostr() == "do {\nprint(a);\n}") { e.tostr() }
+        assert(e.to_str() == "do {\nprint(a);\n}") { e.to_str() }
     }
     @Test
     fun expr_do4() {
@@ -490,13 +490,13 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Do)
-        assert(e.tostr() == "do {\n" +
+        assert(e.to_str() == "do {\n" +
                 "do {\n" +
                 "nil;\n" +
                 "};\n" +
                 "(val x);\n" +
                 "(val y);\n" +
-                "}") { e.tostr() }
+                "}") { e.to_str() }
     }
 
     // FUNC
@@ -507,7 +507,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Proto)
-        assert(e.tostr() == "(func () {\nnil;\n})") { e.tostr() }
+        assert(e.to_str() == "(func () {\nnil;\n})") { e.to_str() }
         //assert(trap { parser.expr_prim() } == "anon : (lin 1, col 10) : expected expression : have \"}\"")
     }
     @Test
@@ -516,7 +516,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Proto && e.pars.size==2)
-        assert(e.tostr() == "(func (a,b) {\n10;\n})") { e.tostr() }
+        assert(e.to_str() == "(func (a,b) {\n10;\n})") { e.to_str() }
     }
     @Test
     fun pp_07_func_args_err() {
@@ -543,9 +543,9 @@ class Parser_01 {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(val f = (func (v) {\n" +
+        assert(e.to_str() == "(val f = (func (v) {\n" +
                 "{{-}}(v);\n" +
-                "}))") { e.tostr() }
+                "}))") { e.to_str() }
     }
 
     // FUNC / :REC
@@ -565,9 +565,9 @@ class Parser_01 {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(val f = (func () {\n" +
+        assert(e.to_str() == "(val f = (func () {\n" +
                 "nil;\n" +
-                "}))") { e.tostr() }
+                "}))") { e.to_str() }
     }
 
     // NATIVE
@@ -577,7 +577,7 @@ class Parser_01 {
         val l = lexer("`a`")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "```a```") { e.tostr() }
+        assert(e.to_str() == "```a```") { e.to_str() }
     }
     @Test
     fun native1() {
@@ -591,7 +591,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Nat)
-        assert(e.tostr() == "```\n    printf(\"xxx\\n\");\n```") { "."+e.tostr()+"." }
+        assert(e.to_str() == "```\n    printf(\"xxx\\n\");\n```") { "."+e.to_str()+"." }
     }
     @Test
     fun native2_err() {
@@ -636,7 +636,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Nat)
-        assert(e.tostr() == "```:ola ```") { "."+e.tostr()+"." }
+        assert(e.to_str() == "```:ola ```") { "."+e.to_str()+"." }
     }
 
     // BINARY / UNARY / OPS
@@ -653,7 +653,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr_1_bin()
         assert(e is Expr.Call)
-        assert(e.tostr() == "{{+}}(10,1)") { e.tostr() }
+        assert(e.to_str() == "{{+}}(10,1)") { e.to_str() }
     }
     @Test
     fun bin3() {
@@ -661,7 +661,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr_1_bin()
         assert(e is Expr.Call)
-        assert(e.tostr() == "{{/=}}(10,1)") { e.tostr() }
+        assert(e.to_str() == "{{/=}}(10,1)") { e.to_str() }
     }
     @Test
     fun pre1() {
@@ -669,7 +669,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Call)
-        assert(e.tostr() == "{{-}}({{-}}(1))") { e.tostr() }
+        assert(e.to_str() == "{{-}}({{-}}(1))") { e.to_str() }
     }
     @Test
     fun bin4() {
@@ -677,14 +677,14 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Call)
-        assert(e.tostr() == "{{+}}({{+}}(1,2),3)") { e.tostr() }
+        assert(e.to_str() == "{{+}}({{+}}(1,2),3)") { e.to_str() }
     }
     @Test
     fun pre_pos1() {
         val l = lexer("-x[0]")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "{{-}}(x[0])") { e.tostr() }
+        assert(e.to_str() == "{{-}}(x[0])") { e.to_str() }
     }
 
     // TEMPLATE
@@ -698,7 +698,7 @@ class Parser_01 {
         )
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "(data :T = [x,y]);\n") { e.tostr() }
+        assert(e.to_str() == "(data :T = [x,y]);\n") { e.to_str() }
     }
     @Test
     fun tplate01() {
@@ -709,7 +709,7 @@ class Parser_01 {
         )
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "(var t :T = [1,2]);\n") { e.tostr() }
+        assert(e.to_str() == "(var t :T = [1,2]);\n") { e.to_str() }
     }
     @Test
     fun tplate02_err() {
@@ -760,7 +760,7 @@ class Parser_01 {
         )
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "(data :U = [t :T]);\n") { e.tostr() }
+        assert(e.to_str() == "(data :U = [t :T]);\n") { e.to_str() }
     }
 
     // GROUP
@@ -785,7 +785,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Group /*&& e.ids.isEmpty()*/ && e.es.size==1)
-        assert(e.tostr() == "group {\nnil;\n}") { e.tostr() }
+        assert(e.to_str() == "group {\nnil;\n}") { e.to_str() }
     }
     @Test
     fun tt_04_export() {
@@ -794,7 +794,7 @@ class Parser_01 {
         val e = parser.expr()
         assert(e is Expr.Group /*&& e.ids.first()=="x"*/ && e.es.size==1)
         //assert(e.tostr() == "group [x] {\nnil\n}") { e.tostr() }
-        assert(e.tostr() == "group {\nnil;\n}") { e.tostr() }
+        assert(e.to_str() == "group {\nnil;\n}") { e.to_str() }
     }
     @Test
     fun tt_05_export() {
@@ -803,7 +803,7 @@ class Parser_01 {
         val e = parser.expr()
         assert(e is Expr.Group /*&& e.ids.last()=="y"*/ && e.es.size==1 /*&& e.ids.size==2*/)
         //assert(e.tostr() == "group [x,y] {\nnil\n}") { e.tostr() }
-        assert(e.tostr() == "group {\nnil;\n}") { e.tostr() }
+        assert(e.to_str() == "group {\nnil;\n}") { e.to_str() }
     }
 
     // DASH
@@ -815,7 +815,7 @@ class Parser_01 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "{{-}}((val v),1);\n") { e.tostr() }
+        assert(e.to_str() == "{{-}}((val v),1);\n") { e.to_str() }
     }
     @Test
     fun vv_02_dash_num() {
@@ -824,7 +824,7 @@ class Parser_01 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "println({{-}}(:X,1));\n") { e.tostr() }
+        assert(e.to_str() == "println({{-}}(:X,1));\n") { e.to_str() }
     }
     @Test
     fun vv_03_dash_let() {
@@ -833,7 +833,7 @@ class Parser_01 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "println(:X-a);\n") { e.tostr() }
+        assert(e.to_str() == "println(:X-a);\n") { e.to_str() }
     }
 
     // INNOCUOUS
@@ -848,7 +848,7 @@ class Parser_01 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "do {\n1;\n};\nnil;\n") { e.tostr() }
+        assert(e.to_str() == "do {\n1;\n};\nnil;\n") { e.to_str() }
         //assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : expression error : innocuous expression")
     }
     @Test

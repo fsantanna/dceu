@@ -1,7 +1,6 @@
 package tst_02
 
 import dceu.*
-import org.junit.BeforeClass
 import org.junit.Test
 
 class Parser_02 {
@@ -12,7 +11,7 @@ class Parser_02 {
         val l = lexer("defer { nil }")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "defer {\nnil;\n};\n") { e.tostr() }
+        assert(e.to_str() == "defer {\nnil;\n};\n") { e.to_str() }
     }
 
     // THROW / CATCH
@@ -31,9 +30,9 @@ class Parser_02 {
                 "error(1);\n" +
                 "};\n") { e.tostr() }
          */
-        assert(e.tostr() == "catch :x {\n" +
+        assert(e.to_str() == "catch :x {\n" +
                 "error(1);\n" +
-                "};\n") { e.tostr() }
+                "};\n") { e.to_str() }
     }
     @Test
     fun bb_02_throw_catch() {
@@ -57,7 +56,7 @@ class Parser_02 {
         val l = lexer("it")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "it;\n") { e.tostr() }
+        assert(e.to_str() == "it;\n") { e.to_str() }
     }
     @Test
     fun cc_02_as() {
@@ -112,7 +111,7 @@ class Parser_02 {
         val l = tst_01.lexer("loop' { ;;;do;;; nil }")
         val parser = Parser(l)
         val e1 = parser.expr() as Expr.Loop
-        assert(e1.blk.tostr() == "{\nnil;\n}") { e1.blk.tostr() }
+        assert(e1.blk.to_str() == "{\nnil;\n}") { e1.blk.to_str() }
     }
     @Test
     fun qq_02_loop_err() {

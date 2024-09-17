@@ -13,7 +13,7 @@ class Coder (val vars: Vars, val sta: Static) {
     }
 
     fun Expr.toerr (): String {
-        val src = this.tostr(false).replace("_\\d+".toRegex(), "").quote(45)
+        val src = this.to_str(false).replace("_\\d+".toRegex(), "").quote(45)
         return "\"${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : $src\""
     }
 
@@ -585,7 +585,7 @@ class Coder (val vars: Vars, val sta: Static) {
                         "(ceux->exe_task${"->clo->up_nst".repeat(n)})"
                     }
                 }
-                if (this.isdrop()) {
+                if (this.is_drop()) {
                     error("TODO: drop pub")
                 }
             """
@@ -719,7 +719,7 @@ class Coder (val vars: Vars, val sta: Static) {
                         $idx = ceu_acc;
                         """
                     }
-                    this.isdrop() -> {
+                    this.is_drop() -> {
                         val prime = (this.up_first { it is Expr.Drop } as Expr.Drop).prime
                         """
                         { // ACC - DROP | ${this.dump()}
@@ -844,7 +844,7 @@ class Coder (val vars: Vars, val sta: Static) {
                             );
                         }
                         """
-                    this.isdrop() -> {
+                    this.is_drop() -> {
                         val prime = (this.up_first { it is Expr.Drop } as Expr.Drop).prime
                         """
                         { // INDEX | DROP | ${this.dump()}

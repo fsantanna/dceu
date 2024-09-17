@@ -6,52 +6,6 @@ enum class Type {
     GLOBAL, LOCAL, NESTED, UPVAL
 }
 
-fun Expr.Do.to_dcls (): List<Expr.Dcl> {
-    fun aux (es: List<Expr>): List<Expr.Dcl> {
-        return es.flatMap {
-            when {
-                (it is Expr.Group) -> aux(it.es)
-                (it is Expr.Dcl) -> listOf(it) + aux(listOfNotNull(it.src))
-                (it is Expr.Set) -> aux(listOf(it.src))
-                else -> emptyList()
-            }
-        }
-    }
-    return aux(this.es)
-}
-
-fun Expr.Dcl.to_blk (): Expr {
-    return this.up_first { it is Expr.Do || it is Expr.Proto }!! // ?: outer /*TODO: remove outer*/
-}
-
-fun Expr.id_to_dcl (id: String, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?=null): Expr.Dcl? {
-    val up = G.ups[this]!!.up_first { it is Expr.Do || it is Expr.Proto }
-    fun aux (es: List<Expr>): Expr.Dcl? {
-        return es.firstNotNullOfOrNull {
-            when {
-                (it is Expr.Set) -> aux(listOfNotNull(it.src))
-                (it is Expr.Group) -> aux(it.es)
-                (it !is Expr.Dcl) -> null
-                (but!=null && but(it)) -> aux(listOfNotNull(it.src))
-                (it.idtag.first.str == id) -> it
-                else -> aux(listOfNotNull(it.src))
-            }
-        }
-
-    }
-    val dcl: Expr.Dcl? = when {
-        (up is Expr.Proto) -> up.pars.firstOrNull { (but==null||!but(it)) && it.idtag.first.str==id }
-        (up is Expr.Do) -> aux(up.es)
-        else -> null
-    }
-    return when {
-        (dcl != null) -> dcl
-        (G.ups[up] == null) -> null
-        (up is Expr.Proto && !cross) -> null
-        else -> up!!.id_to_dcl(id, cross, but)
-    }
-}
-
 fun type (dcl: Expr.Dcl, src: Expr): Type {
     val blk = dcl.to_blk()
     val up  = src.up_first { it is Expr.Proto || it==blk }

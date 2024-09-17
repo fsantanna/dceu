@@ -12,7 +12,7 @@ fun Tk.dump (): String {
 }
 fun Expr.dump (): String {
     return if (!DUMP) "" else {
-        this.tk.dump() + " | " + this.tostr().quote(15)
+        this.tk.dump() + " | " + this.to_str().quote(15)
     }
 }
 
@@ -21,24 +21,24 @@ fun Tk.fpre (pre: Boolean): String {
 }
 
 @JvmName("Id_Tag_tostr")
-fun Id_Tag.tostr (pre: Boolean = false): String {
+fun Id_Tag.to_str (pre: Boolean = false): String {
     return this.first.fpre(pre) + this.first.str + this.second.cond { " " + it.fpre(pre) + it.str }
 }
 
 @JvmName("Clock_tostr")
-fun Clock.tostr (pre: Boolean): String {
-    return "<" + this.map { it.second.tostr(pre) + " " + it.first.str }.joinToString(",") + ">"
+fun Clock.to_str (pre: Boolean): String {
+    return "<" + this.map { it.second.to_str(pre) + " " + it.first.str }.joinToString(",") + ">"
 }
 
-fun Patt.tostr (pre: Boolean = false): String {
+fun Patt.to_str (pre: Boolean = false): String {
     return when (this) {
-        is Patt.None -> "(${Pair(this.id,this.tag).tostr(pre)} | ${this.pos.tostr(true)})"
-        is Patt.One  -> "(${Pair(this.id,this.tag).tostr(pre)} | ${this.e.tostr(pre)} and ${this.pos.tostr(true)})"
+        is Patt.None -> "(${Pair(this.id,this.tag).to_str(pre)} | ${this.pos.to_str(true)})"
+        is Patt.One  -> "(${Pair(this.id,this.tag).to_str(pre)} | ${this.e.to_str(pre)} and ${this.pos.to_str(true)})"
         is Patt.Tup  -> TODO()
     }
 }
 
-fun Expr.tostr (pre: Boolean = false): String {
+fun Expr.to_str (pre: Boolean = false): String {
     return when (this) {
         is Expr.Proto  -> {
             val mod = when {
@@ -46,37 +46,37 @@ fun Expr.tostr (pre: Boolean = false): String {
                 this.nst  -> " :nested"
                 else      -> ""
             }
-            val pars = this.pars.map { it.idtag.tostr(pre) }.joinToString(",")
-            "(" + this.tk.str + mod + " (" + pars + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
+            val pars = this.pars.map { it.idtag.to_str(pre) }.joinToString(",")
+            "(" + this.tk.str + mod + " (" + pars + ") " + this.tag.cond{ it.str+" " } + this.blk.to_str(pre) + ")"
         }
         is Expr.Do     -> {
             when (this.tk.str) {
-                "do" -> "do " + this.tag.cond { it.str+" " } + "{\n" + this.es.tostr(pre) + "}"
-                else -> "{\n" + this.es.tostr(pre) + "}"
+                "do" -> "do " + this.tag.cond { it.str+" " } + "{\n" + this.es.to_str(pre) + "}"
+                else -> "{\n" + this.es.to_str(pre) + "}"
             }
         }
-        is Expr.Escape -> "escape(" + this.tag.str + this.e.cond { ","+it.tostr(pre) } + ")"
-        is Expr.Group -> "group {\n" + this.es.tostr(pre) + "}"
+        is Expr.Escape -> "escape(" + this.tag.str + this.e.cond { ","+it.to_str(pre) } + ")"
+        is Expr.Group -> "group {\n" + this.es.to_str(pre) + "}"
         is Expr.Dcl    -> {
-            "(" + this.tk_.str + " " + this.idtag.tostr(pre) + this.src.cond { " = ${it.tostr(pre)}" } + ")"
+            "(" + this.tk_.str + " " + this.idtag.to_str(pre) + this.src.cond { " = ${it.to_str(pre)}" } + ")"
         }
-        is Expr.Set    -> "(set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre) + ")"
-        is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
-        is Expr.Loop   -> "loop' " + this.blk.tostr(pre)
-        is Expr.Data   -> "(data " + this.tk.str + " = [" + this.ids.map { it.tostr() }.joinToString(",") + "])"
-        is Expr.Drop   -> "drop${if (this.prime) "'" else ""}(" + this.e.tostr(pre) + ")"
+        is Expr.Set    -> "(set " + this.dst.to_str(pre) + " = " + this.src.to_str(pre) + ")"
+        is Expr.If     -> "if " + this.cnd.to_str(pre) + " " + this.t.to_str(pre) + " else " + this.f.to_str(pre)
+        is Expr.Loop   -> "loop' " + this.blk.to_str(pre)
+        is Expr.Data   -> "(data " + this.tk.str + " = [" + this.ids.map { it.to_str() }.joinToString(",") + "])"
+        is Expr.Drop   -> "drop${if (this.prime) "'" else ""}(" + this.e.to_str(pre) + ")"
 
-        is Expr.Catch  -> "catch " + this.tag.cond { it.str+" " } + this.blk.tostr(pre)
-        is Expr.Defer  -> "defer " + this.blk.tostr(pre)
+        is Expr.Catch  -> "catch " + this.tag.cond { it.str+" " } + this.blk.to_str(pre)
+        is Expr.Defer  -> "defer " + this.blk.to_str(pre)
 
-        is Expr.Yield  -> "yield(" + this.e.tostr(pre) + ")"
-        is Expr.Resume -> "(resume (" + this.co.tostr(pre) + ")(" + this.args.map { it.tostr(pre) }.joinToString(",") + "))"
+        is Expr.Yield  -> "yield(" + this.e.to_str(pre) + ")"
+        is Expr.Resume -> "(resume (" + this.co.to_str(pre) + ")(" + this.args.map { it.to_str(pre) }.joinToString(",") + "))"
 
-        is Expr.Spawn  -> "(spawn " + this.tsk.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")" + this.tsks.cond { " in ${it.tostr(pre)}" } + ")"
+        is Expr.Spawn  -> "(spawn " + this.tsk.to_str(pre) + "(" + this.args.map { it.to_str(pre) }.joinToString(",") + ")" + this.tsks.cond { " in ${it.to_str(pre)}" } + ")"
         is Expr.Delay  -> "delay"
-        is Expr.Pub    -> this.tsk.cond { it.tostr(pre)+"." } + "pub"
-        is Expr.Toggle -> "(toggle ${this.tsk.tostr(pre)}(${this.on.tostr(pre)}))"
-        is Expr.Tasks  -> "tasks(" + this.max.tostr(pre) + ")"
+        is Expr.Pub    -> this.tsk.cond { it.to_str(pre)+"." } + "pub"
+        is Expr.Toggle -> "(toggle ${this.tsk.to_str(pre)}(${this.on.to_str(pre)}))"
+        is Expr.Tasks  -> "tasks(" + this.max.to_str(pre) + ")"
 
         is Expr.Nat    -> "```" + this.tk_.tag.cond { it+" " } + this.tk.str + "```"
         is Expr.Acc    -> this.ign.cond { "__" } + this.tk.str
@@ -85,11 +85,11 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Bool   -> this.tk.str
         is Expr.Char   -> this.tk.str
         is Expr.Num    -> this.tk.str
-        is Expr.Tuple  -> "[" + this.args.map { it.tostr(pre) }.joinToString(",") + "]"
-        is Expr.Vector -> "#[" + this.args.map { it.tostr(pre) }.joinToString(",") + "]"
-        is Expr.Dict   -> "@[" + this.args.map { "(${it.first.tostr(pre)},${it.second.tostr(pre)})" }.joinToString(",") + "]"
-        is Expr.Index  -> this.col.tostr(pre) + "[" + this.idx.tostr(pre) + "]"
-        is Expr.Call   -> this.clo.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")"
+        is Expr.Tuple  -> "[" + this.args.map { it.to_str(pre) }.joinToString(",") + "]"
+        is Expr.Vector -> "#[" + this.args.map { it.to_str(pre) }.joinToString(",") + "]"
+        is Expr.Dict   -> "@[" + this.args.map { "(${it.first.to_str(pre)},${it.second.to_str(pre)})" }.joinToString(",") + "]"
+        is Expr.Index  -> this.col.to_str(pre) + "[" + this.idx.to_str(pre) + "]"
+        is Expr.Call   -> this.clo.to_str(pre) + "(" + this.args.map { it.to_str(pre) }.joinToString(",") + ")"
                             // TODO: collapse broadcast'
     }.let {
         when {
@@ -100,6 +100,6 @@ fun Expr.tostr (pre: Boolean = false): String {
     }
 }
 
-fun List<Expr>.tostr (pre: Boolean=false): String {
-    return this.map { it.tostr(pre) }.joinToString(";\n") + ";\n"
+fun List<Expr>.to_str (pre: Boolean=false): String {
+    return this.map { it.to_str(pre) }.joinToString(";\n") + ";\n"
 }

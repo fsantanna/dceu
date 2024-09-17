@@ -25,7 +25,7 @@ class Parser_03 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Proto && e.pars.size==2)
-        assert(e.tostr() == "(coro (a,b) {\n10;\n})") { e.tostr() }
+        assert(e.to_str() == "(coro (a,b) {\n10;\n})") { e.to_str() }
     }
     @Test
     fun aa_04_coro_nested() {
@@ -67,7 +67,7 @@ class Parser_03 {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(resume (f())())") { e.tostr() }
+        assert(e.to_str() == "(resume (f())())") { e.to_str() }
     }
     @Test
     fun bb_07_yield_err() {
@@ -76,7 +76,7 @@ class Parser_03 {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "yield(1)")
+        assert(e.to_str() == "yield(1)")
         //assert(trap { parser.expr() } == "anon : (lin 3, col 9) : expected \"thus\" : have end of file")
     }
 
@@ -89,7 +89,7 @@ class Parser_03 {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(resume (co)(1))") { e.tostr() }
+        assert(e.to_str() == "(resume (co)(1))") { e.to_str() }
 
     }
     @Test
@@ -99,7 +99,7 @@ class Parser_03 {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "yield(1)") { e.tostr() }
+        assert(e.to_str() == "yield(1)") { e.to_str() }
     }
     @Test
     fun cc_03_yield() {
