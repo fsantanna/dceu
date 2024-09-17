@@ -34,7 +34,7 @@ class Coder (val vars: Vars, val sta: Static) {
     }
 
     fun Expr.code(): String {
-        if (this.isdst()) {
+        if (this.is_dst()) {
             assert(this is Expr.Acc || this is Expr.Index || this is Expr.Pub)
         }
         return when (this) {
@@ -67,7 +67,7 @@ class Coder (val vars: Vars, val sta: Static) {
                         
                         //{ // pars
                             ${this.pars.mapIndexed { i,dcl -> """
-                                ${this.blk.ismem().cond2({ """
+                                ${this.blk.is_mem().cond2({ """
                                     ceu_mem->${dcl.idtag.first.str.idc()}_${dcl.n}
                                 """ },{ """
                                     CEU_Value ceu_loc_${dcl.idtag.first.str.idc()}_${dcl.n}
@@ -87,7 +87,7 @@ class Coder (val vars: Vars, val sta: Static) {
                             CEU_Value ceu_acc_$n = CEU_ACC_KEEP();
                             ${this.pars.mapIndexed { i,dcl -> """
                                 ceu_gc_dec_val (
-                                    ${this.blk.ismem().cond2({ """
+                                    ${this.blk.is_mem().cond2({ """
                                         ceu_mem->${dcl.idtag.first.str.idc()}_${dcl.n}
                                     """ },{ """
                                         ceu_loc_${dcl.idtag.first.str.idc()}_${dcl.n}
@@ -165,7 +165,7 @@ class Coder (val vars: Vars, val sta: Static) {
                         ceux->depth++;
                 #endif
                         ${(CEU >= 4).cond { """
-                             ${(!this.ismem()).cond { "CEU_Block" }} $blkc = NULL;
+                             ${(!this.is_mem()).cond { "CEU_Block" }} $blkc = NULL;
                         """}}
                         ${(this == G.outer).cond { """
                             { // ARGC / ARGV
@@ -182,7 +182,7 @@ class Coder (val vars: Vars, val sta: Static) {
                         ${(this != G.outer).cond { 
                             this.to_dcls().let { dcls ->
                                 """
-                                ${(!this.ismem()).cond { """
+                                ${(!this.is_mem()).cond { """
                                     //{ // inline vars dcls
                                         ${dcls.map { """
                                             CEU_Value ${sta.idx(it,it)};
@@ -404,7 +404,7 @@ class Coder (val vars: Vars, val sta: Static) {
                 val coro = sta.idx(this,"coro_$n")
                 """
                 { // RESUME | ${this.dump()}
-                    ${(!this.ismem()).cond { """
+                    ${(!this.is_mem()).cond { """
                         CEU_Value $coro;
                         CEU_Value ceu_args_$n[${this.args.size}];
                     """ }}
@@ -487,7 +487,7 @@ class Coder (val vars: Vars, val sta: Static) {
                 val blkc = sta.idx(blk, "block_${blk.n}")
                 """
                 { // SPAWN | ${this.dump()}
-                    ${(!this.ismem()).cond { """
+                    ${(!this.is_mem()).cond { """
                         CEU_Value ceu_tsks_$n;
                         CEU_Value ceu_args_$n[${this.args.size}];
                     """ }}
@@ -590,7 +590,7 @@ class Coder (val vars: Vars, val sta: Static) {
                 }
             """
             { // PUB | ${this.dump()}
-                ${this.isdst().cond{ """
+                ${this.is_dst().cond{ """
                     ${sta.dcl(this,"CEU_Value")} $id = CEU_ACC_KEEP();
                 """ }}
                 ${this.tsk.cond2({"""
@@ -606,7 +606,7 @@ class Coder (val vars: Vars, val sta: Static) {
                 """},{"""
                     CEU_Value tsk = ceu_dyn_to_val((CEU_Dyn*)$exe);
                 """})}
-                ${this.isdst().cond2({ """
+                ${this.is_dst().cond2({ """
                     ceu_gc_dec_val(tsk.Dyn->Exe_Task.pub);
                     tsk.Dyn->Exe_Task.pub = $id;
                 """ },{ """
@@ -701,7 +701,7 @@ class Coder (val vars: Vars, val sta: Static) {
                 val idx = sta.idx(this)
                 val dcl = this.id_to_dcl(this.tk.str)!!
                 when {
-                    this.isdst() -> {
+                    this.is_dst() -> {
                         val depth = this.id_to_dcl(this.tk.str)!!.to_blk().let { blk ->
                             this.up_all_until { it == blk }.filter { it is Expr.Do }.count() - 1
                         }
@@ -752,7 +752,7 @@ class Coder (val vars: Vars, val sta: Static) {
                 val id_args = sta.idx(this,"args_$n")
                 """
                 { // TUPLE | ${this.dump()}
-                    ${(!this.ismem()).cond { """
+                    ${(!this.is_mem()).cond { """
                         CEU_Value ceu_args_$n[${max(1,this.args.size)}];
                     """ }}
                     ${this.args.mapIndexed { i, it ->
@@ -812,7 +812,7 @@ class Coder (val vars: Vars, val sta: Static) {
                 """
                 { // INDEX | ${this.dump()}
                     // VAL
-                    ${this.isdst().cond { """
+                    ${this.is_dst().cond { """
                         ${sta.dcl(this)} $id_val = CEU_ACC_KEEP();
                     """ }}
                     
@@ -831,7 +831,7 @@ class Coder (val vars: Vars, val sta: Static) {
                     CEU_Value ceu_idx_$n = CEU_ACC_KEEP();
                 """ +
                 when {
-                    this.isdst() -> """
+                    this.is_dst() -> """
                         { // INDEX | DST | ${this.dump()}
                             char* ceu_err_$n = ceu_col_set($id_col, ceu_idx_$n, $id_val);
                             ceu_gc_dec_val($id_col);
@@ -875,7 +875,7 @@ class Coder (val vars: Vars, val sta: Static) {
             }
             is Expr.Call -> """
                 { // CALL | ${this.dump()}
-                    ${(!this.ismem()).cond { """
+                    ${(!this.is_mem()).cond { """
                         CEU_Value ceu_args_$n[${this.args.size}];
                     """ }}
                     ${this.args.mapIndexed { i,e ->

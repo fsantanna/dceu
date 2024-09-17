@@ -1331,7 +1331,7 @@ class Parser (lexer_: Lexer)
 
     fun expr_4_suf (xe: Expr? = null): Expr {
         val e = if (xe != null) xe else this.expr_prim()
-        val ok = this.tk0.pos.isSameLine(this.tk1.pos) && (
+        val ok = this.tk0.pos.is_same_line(this.tk1.pos) && (
                     this.acceptFix("[") || this.acceptFix(".") || this.acceptFix("(")
                  )
         if (!ok) {
@@ -1458,7 +1458,7 @@ class Parser (lexer_: Lexer)
     }
     fun expr_1_bin (xop: String? = null, xe1: Expr? = null): Expr {
         val e1 = if (xe1 != null) xe1 else this.expr_2_pre()
-        val ok = this.tk1.pos.isSameLine(this.tk0.pos.copy()) && // x or \n y (ok) // x \n or y (not allowed) // problem with '==' in 'ifs'
+        val ok = this.tk1.pos.is_same_line(this.tk0.pos.copy()) && // x or \n y (ok) // x \n or y (not allowed) // problem with '==' in 'ifs'
                     this.acceptEnu("Op")
         if (!ok) {
             return e1

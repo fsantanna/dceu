@@ -21,7 +21,7 @@ class Static () {
         //println(blk.tostr())
         return when {
             true -> false
-            blk.ismem(true) -> false
+            blk.is_mem(true) -> false
             (blk.tag != null) -> false
             !dcls.isEmpty() -> false
             (G.ups[blk] is Expr.Proto) -> false
@@ -38,7 +38,7 @@ class Static () {
     fun idx (dcl: Expr.Dcl, src: Expr): String {
         val id = dcl.idtag.first.str.idc()
         val blk = dcl.to_blk()
-        val ismem = blk.ismem()
+        val ismem = blk.is_mem()
         //println(listOf(src.tk.pos.lin, id, type(dcl,src)))
 
         return when (type(dcl,src)) {
@@ -59,10 +59,10 @@ class Static () {
         }
     }
     fun idx (e: Expr, idc: String): String {
-        return if (e.ismem()) "(ceu_mem->$idc)" else "ceu_$idc"
+        return if (e.is_mem()) "(ceu_mem->$idc)" else "ceu_$idc"
     }
     fun dcl (e: Expr, tp: String="CEU_Value"): String {
-        return if (e.ismem()) "" else tp
+        return if (e.is_mem()) "" else tp
     }
 
     init {

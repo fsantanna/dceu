@@ -5,23 +5,6 @@ import kotlin.math.max
 val union = "union"
 //val union = "struct"
 
-fun Expr.ismem (out: Boolean=false): Boolean {
-    val proto = this.up_first { it is Expr.Proto }.let {
-        when {
-            (it == null) -> null
-            (it.tk.str == "func") -> null
-            else -> it
-        }
-    }
-    val up = this.up_first() { it is Expr.Do || it is Expr.Proto }!!
-    return when {
-        (!out && proto==null) -> false
-        //true -> true
-        G.mems.contains(up) -> true
-        else -> false
-    }
-}
-
 class Mem (val sta: Static, val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>>) {
     fun pub (e: Expr.Proto): String {
         return """
@@ -83,7 +66,7 @@ class Mem (val sta: Static, val defers: MutableMap<Expr.Do, Triple<MutableList<I
     fun Expr.mem (): String {
         return when (this) {
             is Expr.Proto -> ""
-            is Expr.Do -> this.ismem().cond {
+            is Expr.Do -> this.is_mem().cond {
                 """
                 struct { // BLOCK | ${this.dump()}
                     ${(CEU >= 4).cond { """
@@ -153,7 +136,7 @@ class Mem (val sta: Static, val defers: MutableMap<Expr.Do, Triple<MutableList<I
             """
             is Expr.Pub -> """
                 struct { // PUB
-                    ${this.isdst().cond { """
+                    ${this.is_dst().cond { """
                         CEU_Value val_$n;
                     """ }}
                     ${this.tsk?.mem() ?: ""}
@@ -200,7 +183,7 @@ class Mem (val sta: Static, val defers: MutableMap<Expr.Do, Triple<MutableList<I
             is Expr.Index -> """
                 struct { // INDEX
                     CEU_Value col_$n;
-                    ${this.isdst().cond { """
+                    ${this.is_dst().cond { """
                         CEU_Value val_$n;
                     """ }}
                     $union {

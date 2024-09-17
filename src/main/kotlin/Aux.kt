@@ -1,5 +1,49 @@
 package dceu
 
+fun <K,V> List<Map<K,V>>.union (): Map<K,V> {
+    return this.fold(emptyMap()) { acc, value -> acc + value }
+}
+
+fun <K,V> Expr.dn_gather (f: (Expr)->Map<K,V>?): Map<K,V> {
+    val v = f(this)
+    if (v == null) {
+        return emptyMap()
+    }
+    return v + when (this) {
+        is Expr.Proto  -> this.blk.dn_gather(f)
+        is Expr.Do     -> this.es.map { it.dn_gather(f) }.union()
+        is Expr.Escape -> this.e?.dn_gather(f) ?: emptyMap()
+        is Expr.Group  -> this.es.map { it.dn_gather(f) }.union()
+        is Expr.Dcl    -> this.src?.dn_gather(f) ?: emptyMap()
+        is Expr.Set    -> this.dst.dn_gather(f) + this.src.dn_gather(f)
+        is Expr.If     -> this.cnd.dn_gather(f) + this.t.dn_gather(f) + this.f.dn_gather(f)
+        is Expr.Loop   -> this.blk.dn_gather(f)
+        is Expr.Drop   -> this.e.dn_gather(f)
+
+        is Expr.Catch  -> this.blk.dn_gather(f)
+        is Expr.Defer  -> this.blk.dn_gather(f)
+
+        is Expr.Yield  -> this.e.dn_gather(f)
+        is Expr.Resume -> this.co.dn_gather(f) + this.args.map { it.dn_gather(f) }.union()
+
+        is Expr.Spawn  -> (this.tsks?.dn_gather(f) ?: emptyMap()) + this.tsk.dn_gather(f) + this.args.map { it.dn_gather(f) }.union()
+        is Expr.Delay  -> emptyMap()
+        is Expr.Pub    -> this.tsk?.dn_gather(f) ?: emptyMap()
+        is Expr.Toggle -> this.tsk.dn_gather(f) + this.on.dn_gather(f)
+        is Expr.Tasks  -> this.max.dn_gather(f)
+
+        is Expr.Tuple  -> this.args.map { it.dn_gather(f) }.union()
+        is Expr.Vector -> this.args.map { it.dn_gather(f) }.union()
+        is Expr.Dict   -> this.args.map { it.first.dn_gather(f) + it.second.dn_gather(f) }.union()
+        is Expr.Index  -> this.col.dn_gather(f) + this.idx.dn_gather(f)
+        is Expr.Call   -> this.clo.dn_gather(f) + this.args.map { it.dn_gather(f) }.union()
+
+        is Expr.Acc, is Expr.Data, is Expr.Nat,
+        is Expr.Nil, is Expr.Tag, is Expr.Bool,
+        is Expr.Char, is Expr.Num -> emptyMap()
+    }
+}
+
 fun trap (f: ()->Unit): String {
     try {
         f()
@@ -9,7 +53,7 @@ fun trap (f: ()->Unit): String {
     }
 }
 
-fun Pos.isSameLine (oth: Pos): Boolean {
+fun Pos.is_same_line (oth: Pos): Boolean {
     return (this.file==oth.file && this.lin==oth.lin && this.brks==oth.brks)
 }
 
@@ -23,60 +67,6 @@ fun <T> T?.cond2 (f: (v:T)->String, g: (()->String)?): String {
 fun <T> T?.cond (f: (v:T)->String): String {
     return this.cond2(f) {""}
 }
-
-fun Expr.Call.main (): Expr.Proto {
-    assert(this.tk.str == "main")
-    return this.clo as Expr.Proto
-}
-
-fun Expr.Proto.id (outer: Expr.Do): String {
-    return G.ups[this].let {
-        when {
-            (it !is Expr.Dcl) -> this.n.toString()
-            (it.src != this) -> error("bug found")
-            else -> it.idtag.first.str.idc() + (this.up_first() { it is Expr.Do } != outer).cond { "_${this.n}" }
-        }
-    }
-}
-
-fun Expr.is_constructor (): Boolean {
-    return when {
-        this.is_static() -> true
-        else -> when (this) {
-            is Expr.Tuple, is Expr.Vector, is Expr.Dict -> true
-            else -> false
-        }
-    }
-}
-
-fun Expr.is_static (): Boolean {
-    return when (this) {
-        is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> true
-        else -> false
-    }
-}
-
-fun Expr.is_lval (): Boolean {
-    return when (this) {
-        is Expr.Acc -> true
-        is Expr.Index -> true
-        is Expr.Pub -> true
-        else -> false
-    }
-}
-
-fun Expr.base (): Expr {
-    return when (this) {
-        is Expr.Acc   -> this
-        is Expr.Index -> this.col.base()
-        is Expr.Pub   -> TODO() //this.tsk?.base(ups) ?: ups.first(this) { it is Expr.Proto }!!
-        else -> {
-            println(this)
-            TODO()
-        }
-    }
-}
-
 fun String.quote (n: Int): String {
     return this
         .replace('\n',' ')
