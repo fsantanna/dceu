@@ -13,10 +13,6 @@ class Static () {
         }
     }
 
-    // Do or Proto that requires mem:
-    //  - yield // nested coro/task // spawn/tasks (block needs mem)
-    val mems: MutableSet<Expr>  = mutableSetOf()
-
     // void: block is innocuous -> should be a proxy to up block
     fun void (blk: Expr.Do): Boolean {
         // no declarations, no spawns, no tasks
@@ -35,23 +31,6 @@ class Static () {
     }
     val defer_catch_spawn_tasks: MutableSet<Expr.Do> = mutableSetOf()
 
-    fun ismem (e: Expr, out: Boolean=false): Boolean {
-        val proto = e.up_first { it is Expr.Proto }.let {
-            when {
-                (it == null) -> null
-                (it.tk.str == "func") -> null
-                else -> it
-            }
-        }
-        val up = e.up_first() { it is Expr.Do || it is Expr.Proto }!!
-        return when {
-            (!out && proto==null) -> false
-            //true -> true
-            mems.contains(up) -> true
-            else -> false
-        }
-    }
-
     fun idx (acc: Expr.Acc): String {
         val dcl = acc.id_to_dcl(acc.tk.str)!!
         return this.idx(dcl, acc)
@@ -59,7 +38,7 @@ class Static () {
     fun idx (dcl: Expr.Dcl, src: Expr): String {
         val id = dcl.idtag.first.str.idc()
         val blk = dcl.to_blk()
-        val ismem = this.ismem(blk)
+        val ismem = ismem(blk)
         //println(listOf(src.tk.pos.lin, id, type(dcl,src)))
 
         return when (type(dcl,src)) {
@@ -80,10 +59,10 @@ class Static () {
         }
     }
     fun idx (e: Expr, idc: String): String {
-        return if (this.ismem(e)) "(ceu_mem->$idc)" else "ceu_$idc"
+        return if (ismem(e)) "(ceu_mem->$idc)" else "ceu_$idc"
     }
     fun dcl (e: Expr, tp: String="CEU_Value"): String {
-        return if (this.ismem(e)) "" else tp
+        return if (ismem(e)) "" else tp
     }
 
     init {
@@ -109,7 +88,7 @@ class Static () {
 
                     G.ups[this]!!.up_all_until { it is Expr.Proto }
                         .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
-                        .forEach { mems.add(it) }
+                        .forEach { G.mems.add(it) }
 
                     /*
                     val up1 = G.ups[this]
@@ -189,7 +168,7 @@ class Static () {
                 }
                 this.up_all_until { it is Expr.Proto }
                     .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
-                    .forEach { mems.add(it) }
+                    .forEach { G.mems.add(it) }
             }
             is Expr.Resume -> {
                 this.co.traverse()
@@ -206,7 +185,7 @@ class Static () {
                     // tasks is the one relevant, not the spawn itself
                     this.up_all_until { it is Expr.Proto }
                         .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
-                        .forEach { mems.add(it) }
+                        .forEach { G.mems.add(it) }
                 }
                 /*
                 when {
@@ -237,7 +216,7 @@ class Static () {
                 this.max.traverse()
                 this.up_all_until { it is Expr.Proto }
                     .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
-                    .forEach { mems.add(it) }
+                    .forEach { G.mems.add(it) }
             }
 
             is Expr.Nat    -> {}

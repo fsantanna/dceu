@@ -121,6 +121,11 @@ object G {
     val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
     val proto_to_upvs: MutableMap<Expr.Proto,MutableList<Expr.Dcl>> = mutableMapOf()
     val proto_has_outer: MutableSet<Expr.Proto> = mutableSetOf()
+
+    // Do or Proto that requires mem:
+    //  - yield // nested coro/task // spawn/tasks (block needs mem)
+    val mems: MutableSet<Expr>  = mutableSetOf()
+
     fun reset () {
         N = 0
         outer = null
@@ -129,6 +134,7 @@ object G {
         nats.clear()
         proto_to_upvs.clear()
         proto_has_outer.clear()
+        mems.clear()
     }
 }
 

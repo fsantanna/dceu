@@ -67,7 +67,7 @@ class Coder (val vars: Vars, val sta: Static) {
                         
                         //{ // pars
                             ${this.pars.mapIndexed { i,dcl -> """
-                                ${sta.ismem(this.blk).cond2({ """
+                                ${ismem(this.blk).cond2({ """
                                     ceu_mem->${dcl.idtag.first.str.idc()}_${dcl.n}
                                 """ },{ """
                                     CEU_Value ceu_loc_${dcl.idtag.first.str.idc()}_${dcl.n}
@@ -87,7 +87,7 @@ class Coder (val vars: Vars, val sta: Static) {
                             CEU_Value ceu_acc_$n = CEU_ACC_KEEP();
                             ${this.pars.mapIndexed { i,dcl -> """
                                 ceu_gc_dec_val (
-                                    ${sta.ismem(this.blk).cond2({ """
+                                    ${ismem(this.blk).cond2({ """
                                         ceu_mem->${dcl.idtag.first.str.idc()}_${dcl.n}
                                     """ },{ """
                                         ceu_loc_${dcl.idtag.first.str.idc()}_${dcl.n}
@@ -165,7 +165,7 @@ class Coder (val vars: Vars, val sta: Static) {
                         ceux->depth++;
                 #endif
                         ${(CEU >= 4).cond { """
-                             ${(!sta.ismem(this)).cond { "CEU_Block" }} $blkc = NULL;
+                             ${(!ismem(this)).cond { "CEU_Block" }} $blkc = NULL;
                         """}}
                         ${(this == G.outer).cond { """
                             { // ARGC / ARGV
@@ -182,7 +182,7 @@ class Coder (val vars: Vars, val sta: Static) {
                         ${(this != G.outer).cond { 
                             this.to_dcls().let { dcls ->
                                 """
-                                ${(!sta.ismem(this)).cond { """
+                                ${(!ismem(this)).cond { """
                                     //{ // inline vars dcls
                                         ${dcls.map { """
                                             CEU_Value ${sta.idx(it,it)};
@@ -404,7 +404,7 @@ class Coder (val vars: Vars, val sta: Static) {
                 val coro = sta.idx(this,"coro_$n")
                 """
                 { // RESUME | ${this.dump()}
-                    ${(!sta.ismem(this)).cond { """
+                    ${(!ismem(this)).cond { """
                         CEU_Value $coro;
                         CEU_Value ceu_args_$n[${this.args.size}];
                     """ }}
@@ -487,7 +487,7 @@ class Coder (val vars: Vars, val sta: Static) {
                 val blkc = sta.idx(blk, "block_${blk.n}")
                 """
                 { // SPAWN | ${this.dump()}
-                    ${(!sta.ismem(this)).cond { """
+                    ${(!ismem(this)).cond { """
                         CEU_Value ceu_tsks_$n;
                         CEU_Value ceu_args_$n[${this.args.size}];
                     """ }}
@@ -752,7 +752,7 @@ class Coder (val vars: Vars, val sta: Static) {
                 val id_args = sta.idx(this,"args_$n")
                 """
                 { // TUPLE | ${this.dump()}
-                    ${(!sta.ismem(this)).cond { """
+                    ${(!ismem(this)).cond { """
                         CEU_Value ceu_args_$n[${max(1,this.args.size)}];
                     """ }}
                     ${this.args.mapIndexed { i, it ->
@@ -875,7 +875,7 @@ class Coder (val vars: Vars, val sta: Static) {
             }
             is Expr.Call -> """
                 { // CALL | ${this.dump()}
-                    ${(!sta.ismem(this)).cond { """
+                    ${(!ismem(this)).cond { """
                         CEU_Value ceu_args_$n[${this.args.size}];
                     """ }}
                     ${this.args.mapIndexed { i,e ->
