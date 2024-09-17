@@ -1,6 +1,6 @@
 package dceu
 
-class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
+class Static(val outer: Expr.Do, val vars: Vars) {
     // protos_unused: const proto is not used: do not generate code
     val protos_use_unused: MutableSet<Expr.Proto> = mutableSetOf()
     val protos_use_map: MutableMap<Expr.Proto, MutableSet<Expr.Proto>> = mutableMapOf()
@@ -67,7 +67,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             Type.LOCAL -> if (ismem) "(ceu_mem->${id}_${dcl.n})" else "ceu_loc_${id}_${dcl.n}"  // idx b/c of "it"
             Type.NESTED -> {
                 val xups = src.up_all_until { it == blk } // all ups between src -> dcl
-                val pid = (blk.up_first { it is Expr.Proto } as Expr.Proto).id(outer, ups)
+                val pid = (blk.up_first { it is Expr.Proto } as Expr.Proto).id(outer)
                 val xn = xups.count { it is Expr.Proto && it!=blk }
                 "((CEU_Pro_$pid*)ceux->exe_task->${"clo->up_nst->".repeat(xn)}mem)->${id}_${dcl.n}"
             }

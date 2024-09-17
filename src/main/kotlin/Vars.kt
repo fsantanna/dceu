@@ -52,7 +52,7 @@ fun Expr.id_to_dcl (id: String, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?
     }
 }
 
-class Vars (val outer: Expr.Do, val ups: Ups) {
+class Vars(val outer: Expr.Do) {
     init {
         this.outer.traverse()
     }

@@ -108,51 +108,73 @@ fun Expr.isdrop (): Boolean {
     return LEX && G.ups[this].let { it is Expr.Drop && it.e==this }
 }
 
-class Ups (val outer: Expr.Do) {
-    init {
-        G.ups = outer.traverse().toMutableMap()
-    }
-
-    fun Expr.traverse (): Map<Expr,Expr> {
-        fun Expr.map (l: List<Expr>): Map<Expr,Expr> {
-            return l.map { it.traverse() }.fold(l.map { Pair(it,this) }.toMap(), { a, b->a+b})
+fun Expr.ups_reset () {
+    when (this) {
+        is Expr.Proto  -> {
+            G.ups[this.blk] = this
+            this.pars.forEach { G.ups[it] = this }
         }
-        return when (this) {
-            is Expr.Proto  -> this.map(listOf(this.blk) + this.pars)
-            is Expr.Do     -> this.map(this.es)
-            is Expr.Escape -> this.map(listOfNotNull(this.e))
-            is Expr.Group  -> this.map(this.es)
-            is Expr.Dcl    -> this.map(listOfNotNull(this.src))
-            is Expr.Set    -> this.map(listOf(this.dst, this.src))
-            is Expr.If     -> this.map(listOf(this.cnd, this.t, this.f))
-            is Expr.Loop   -> this.map(listOf(this.blk))
-            is Expr.Data   -> emptyMap()
-            is Expr.Drop   -> this.map(listOf(this.e))
+        is Expr.Do     -> this.es.forEach { G.ups[it] = this }
+        is Expr.Escape -> if (this.e != null) G.ups[this.e] = this
+        is Expr.Group  -> this.es.forEach { G.ups[it] = this }
+        is Expr.Dcl    -> if (this.src != null) G.ups[this.src] = this
+        is Expr.Set    -> {
+            G.ups[this.dst] = this
+            G.ups[this.src] = this
+        }
+        is Expr.If     -> {
+            G.ups[this.cnd] = this
+            G.ups[this.t]   = this
+            G.ups[this.f]   = this
+        }
+        is Expr.Loop   -> G.ups[this.blk] = this
+        is Expr.Data   -> {}
+        is Expr.Drop   -> G.ups[this.e] = this
 
-            is Expr.Catch  -> this.map(listOf(this.blk))
-            is Expr.Defer  -> this.map(listOf(this.blk))
+        is Expr.Catch  -> G.ups[this.blk] = this
+        is Expr.Defer  -> G.ups[this.blk] = this
 
-            is Expr.Yield  -> this.map(listOf(this.e))
-            is Expr.Resume -> this.map(listOf(this.co) + this.args)
+        is Expr.Yield  -> G.ups[this.e] = this
+        is Expr.Resume -> {
+            G.ups[this.co] = this
+            this.args.forEach { G.ups[it] = this }
+        }
 
-            is Expr.Spawn  -> this.map(listOfNotNull(this.tsks,this.tsk) + this.args)
-            is Expr.Delay  -> emptyMap()
-            is Expr.Pub    -> this.map(listOfNotNull(this.tsk))
-            is Expr.Toggle -> this.map(listOf(this.tsk, this.on))
-            is Expr.Tasks  -> this.map(listOf(this.max))
+        is Expr.Spawn  -> {
+            if (this.tsks != null) G.ups[this.tsks] = this
+            G.ups[this.tsk] = this
+            this.args.forEach { G.ups[it] = this }
+        }
+        is Expr.Delay  -> {}
+        is Expr.Pub    -> if (this.tsk != null) G.ups[this.tsk] = this
+        is Expr.Toggle -> {
+            G.ups[this.tsk] = this
+            G.ups[this.on]  = this
+        }
+        is Expr.Tasks  -> G.ups[this.max] = this
 
-            is Expr.Nat    -> emptyMap()
-            is Expr.Acc    -> emptyMap()
-            is Expr.Nil    -> emptyMap()
-            is Expr.Tag    -> emptyMap()
-            is Expr.Bool   -> emptyMap()
-            is Expr.Char   -> emptyMap()
-            is Expr.Num    -> emptyMap()
-            is Expr.Tuple  -> this.map(this.args)
-            is Expr.Vector -> this.map(this.args)
-            is Expr.Dict   -> this.map(this.args.map { listOf(it.first,it.second) }.flatten())
-            is Expr.Index  -> this.map(listOf(this.col, this.idx))
-            is Expr.Call   -> this.map(listOf(this.clo)+this.args)
+        is Expr.Nat    -> {}
+        is Expr.Acc    -> {}
+        is Expr.Nil    -> {}
+        is Expr.Tag    -> {}
+        is Expr.Bool   -> {}
+        is Expr.Char   -> {}
+        is Expr.Num    -> {}
+        is Expr.Tuple  -> this.args.forEach { G.ups[it] = this }
+        is Expr.Vector -> this.args.forEach { G.ups[it] = this }
+        is Expr.Dict   -> {
+            this.args.forEach {
+                G.ups[it.first]  = this
+                G.ups[it.second] = this
+            }
+        }
+        is Expr.Index  -> {
+            G.ups[this.col] = this
+            G.ups[this.idx] = this
+        }
+        is Expr.Call   -> {
+            G.ups[this.clo] = this
+            this.args.forEach { G.ups[it] = this }
         }
     }
 }

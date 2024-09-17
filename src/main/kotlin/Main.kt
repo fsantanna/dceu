@@ -247,15 +247,15 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         )
 
         val outer = Expr.Do(tk0, null, listOf(xargs)+glbs+es)
-        val ups   = Ups(outer)
+        outer.ups_reset()
         val tags  = Tags(outer)
-        val vars  = Vars(outer, ups)
-        val sta   = Static(outer, ups, vars)
+        val vars  = Vars(outer)
+        val sta   = Static(outer, vars)
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
         if (verbose) {
             System.err.println("... ceu -> c ...")
         }
-        val coder = Coder(outer, ups, vars, sta)
+        val coder = Coder(outer, vars, sta)
         coder.main(tags)
     } catch (e: Throwable) {
         if (THROW) {

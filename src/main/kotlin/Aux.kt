@@ -29,7 +29,7 @@ fun Expr.Call.main (): Expr.Proto {
     return this.clo as Expr.Proto
 }
 
-fun Expr.Proto.id (outer: Expr.Do, ups: Ups): String {
+fun Expr.Proto.id (outer: Expr.Do): String {
     return G.ups[this].let {
         when {
             (it !is Expr.Dcl) -> this.n.toString()
@@ -65,10 +65,10 @@ fun Expr.is_lval (): Boolean {
     }
 }
 
-fun Expr.base (ups: Ups): Expr {
+fun Expr.base (): Expr {
     return when (this) {
         is Expr.Acc   -> this
-        is Expr.Index -> this.col.base(ups)
+        is Expr.Index -> this.col.base()
         is Expr.Pub   -> TODO() //this.tsk?.base(ups) ?: ups.first(this) { it is Expr.Proto }!!
         else -> {
             println(this)
