@@ -1,6 +1,5 @@
 package dceu
 
-/*
 fun <K,V> List<Map<K,V>>.union (): Map<K,V> {
     return this.fold(emptyMap()) { acc, value -> acc + value }
 }
@@ -44,7 +43,6 @@ fun <K,V> Expr.dn_gather (f: (Expr)->Map<K,V>?): Map<K,V> {
         is Expr.Char, is Expr.Num -> emptyMap()
     }
 }
- */
 
 fun Expr.up_first (cnd: (Expr)->Boolean): Expr? {
     return when {
@@ -109,72 +107,82 @@ fun Expr.isdrop (): Boolean {
 }
 
 fun Expr.ups_reset () {
-    when (this) {
-        is Expr.Proto  -> {
-            G.ups[this.blk] = this
-            this.pars.forEach { G.ups[it] = this }
-        }
-        is Expr.Do     -> this.es.forEach { G.ups[it] = this }
-        is Expr.Escape -> if (this.e != null) G.ups[this.e] = this
-        is Expr.Group  -> this.es.forEach { G.ups[it] = this }
-        is Expr.Dcl    -> if (this.src != null) G.ups[this.src] = this
-        is Expr.Set    -> {
-            G.ups[this.dst] = this
-            G.ups[this.src] = this
-        }
-        is Expr.If     -> {
-            G.ups[this.cnd] = this
-            G.ups[this.t]   = this
-            G.ups[this.f]   = this
-        }
-        is Expr.Loop   -> G.ups[this.blk] = this
-        is Expr.Data   -> {}
-        is Expr.Drop   -> G.ups[this.e] = this
+    this.dn_gather { me ->
+        when (me) {
+            is Expr.Proto -> {
+                G.ups[me.blk] = me
+                me.pars.forEach { G.ups[it] = me }
+            }
 
-        is Expr.Catch  -> G.ups[this.blk] = this
-        is Expr.Defer  -> G.ups[this.blk] = this
+            is Expr.Do -> me.es.forEach { G.ups[it] = me }
+            is Expr.Escape -> if (me.e != null) G.ups[me.e] = me
+            is Expr.Group -> me.es.forEach { G.ups[it] = me }
+            is Expr.Dcl -> if (me.src != null) G.ups[me.src] = me
+            is Expr.Set -> {
+                G.ups[me.dst] = me
+                G.ups[me.src] = me
+            }
 
-        is Expr.Yield  -> G.ups[this.e] = this
-        is Expr.Resume -> {
-            G.ups[this.co] = this
-            this.args.forEach { G.ups[it] = this }
-        }
+            is Expr.If -> {
+                G.ups[me.cnd] = me
+                G.ups[me.t] = me
+                G.ups[me.f] = me
+            }
 
-        is Expr.Spawn  -> {
-            if (this.tsks != null) G.ups[this.tsks] = this
-            G.ups[this.tsk] = this
-            this.args.forEach { G.ups[it] = this }
-        }
-        is Expr.Delay  -> {}
-        is Expr.Pub    -> if (this.tsk != null) G.ups[this.tsk] = this
-        is Expr.Toggle -> {
-            G.ups[this.tsk] = this
-            G.ups[this.on]  = this
-        }
-        is Expr.Tasks  -> G.ups[this.max] = this
+            is Expr.Loop -> G.ups[me.blk] = me
+            is Expr.Data -> {}
+            is Expr.Drop -> G.ups[me.e] = me
 
-        is Expr.Nat    -> {}
-        is Expr.Acc    -> {}
-        is Expr.Nil    -> {}
-        is Expr.Tag    -> {}
-        is Expr.Bool   -> {}
-        is Expr.Char   -> {}
-        is Expr.Num    -> {}
-        is Expr.Tuple  -> this.args.forEach { G.ups[it] = this }
-        is Expr.Vector -> this.args.forEach { G.ups[it] = this }
-        is Expr.Dict   -> {
-            this.args.forEach {
-                G.ups[it.first]  = this
-                G.ups[it.second] = this
+            is Expr.Catch -> G.ups[me.blk] = me
+            is Expr.Defer -> G.ups[me.blk] = me
+
+            is Expr.Yield -> G.ups[me.e] = me
+            is Expr.Resume -> {
+                G.ups[me.co] = me
+                me.args.forEach { G.ups[it] = me }
+            }
+
+            is Expr.Spawn -> {
+                if (me.tsks != null) G.ups[me.tsks] = me
+                G.ups[me.tsk] = me
+                me.args.forEach { G.ups[it] = me }
+            }
+
+            is Expr.Delay -> {}
+            is Expr.Pub -> if (me.tsk != null) G.ups[me.tsk] = me
+            is Expr.Toggle -> {
+                G.ups[me.tsk] = me
+                G.ups[me.on] = me
+            }
+
+            is Expr.Tasks -> G.ups[me.max] = me
+
+            is Expr.Nat -> {}
+            is Expr.Acc -> {}
+            is Expr.Nil -> {}
+            is Expr.Tag -> {}
+            is Expr.Bool -> {}
+            is Expr.Char -> {}
+            is Expr.Num -> {}
+            is Expr.Tuple -> me.args.forEach { G.ups[it] = me }
+            is Expr.Vector -> me.args.forEach { G.ups[it] = me }
+            is Expr.Dict -> {
+                me.args.forEach {
+                    G.ups[it.first] = me
+                    G.ups[it.second] = me
+                }
+            }
+
+            is Expr.Index -> {
+                G.ups[me.col] = me
+                G.ups[me.idx] = me
+            }
+
+            is Expr.Call -> {
+                G.ups[me.clo] = me
+                me.args.forEach { G.ups[it] = me }
             }
         }
-        is Expr.Index  -> {
-            G.ups[this.col] = this
-            G.ups[this.idx] = this
-        }
-        is Expr.Call   -> {
-            G.ups[this.clo] = this
-            this.args.forEach { G.ups[it] = this }
-        }
+        emptyMap<Unit,Unit>()
     }
 }
