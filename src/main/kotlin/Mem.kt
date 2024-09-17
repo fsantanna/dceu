@@ -5,15 +5,15 @@ import kotlin.math.max
 val union = "union"
 //val union = "struct"
 
-fun ismem (e: Expr, out: Boolean=false): Boolean {
-    val proto = e.up_first { it is Expr.Proto }.let {
+fun Expr.ismem (out: Boolean=false): Boolean {
+    val proto = this.up_first { it is Expr.Proto }.let {
         when {
             (it == null) -> null
             (it.tk.str == "func") -> null
             else -> it
         }
     }
-    val up = e.up_first() { it is Expr.Do || it is Expr.Proto }!!
+    val up = this.up_first() { it is Expr.Do || it is Expr.Proto }!!
     return when {
         (!out && proto==null) -> false
         //true -> true
@@ -83,7 +83,7 @@ class Mem (val sta: Static, val defers: MutableMap<Expr.Do, Triple<MutableList<I
     fun Expr.mem (): String {
         return when (this) {
             is Expr.Proto -> ""
-            is Expr.Do -> ismem(this).cond {
+            is Expr.Do -> this.ismem().cond {
                 """
                 struct { // BLOCK | ${this.dump()}
                     ${(CEU >= 4).cond { """
