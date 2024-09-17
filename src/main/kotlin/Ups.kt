@@ -1,5 +1,51 @@
 package dceu
 
+/*
+fun <K,V> List<Map<K,V>>.union (): Map<K,V> {
+    return this.fold(emptyMap()) { acc, value -> acc + value }
+}
+
+fun <K,V> Expr.dn_gather (f: (Expr)->Map<K,V>?): Map<K,V> {
+    val v = f(this)
+    if (v == null) {
+        return emptyMap()
+    }
+    return v + when (this) {
+        is Expr.Proto  -> this.blk.dn_gather(f)
+        is Expr.Do     -> this.es.map { it.dn_gather(f) }.union()
+        is Expr.Escape -> this.e?.dn_gather(f) ?: emptyMap()
+        is Expr.Group  -> this.es.map { it.dn_gather(f) }.union()
+        is Expr.Dcl    -> this.src?.dn_gather(f) ?: emptyMap()
+        is Expr.Set    -> this.dst.dn_gather(f) + this.src.dn_gather(f)
+        is Expr.If     -> this.cnd.dn_gather(f) + this.t.dn_gather(f) + this.f.dn_gather(f)
+        is Expr.Loop   -> this.blk.dn_gather(f)
+        is Expr.Drop   -> this.e.dn_gather(f)
+
+        is Expr.Catch  -> this.blk.dn_gather(f)
+        is Expr.Defer  -> this.blk.dn_gather(f)
+
+        is Expr.Yield  -> this.e.dn_gather(f)
+        is Expr.Resume -> this.co.dn_gather(f) + this.args.map { it.dn_gather(f) }.union()
+
+        is Expr.Spawn  -> (this.tsks?.dn_gather(f) ?: emptyMap()) + this.tsk.dn_gather(f) + this.args.map { it.dn_gather(f) }.union()
+        is Expr.Delay  -> emptyMap()
+        is Expr.Pub    -> this.tsk?.dn_gather(f) ?: emptyMap()
+        is Expr.Toggle -> this.tsk.dn_gather(f) + this.on.dn_gather(f)
+        is Expr.Tasks  -> this.max.dn_gather(f)
+
+        is Expr.Tuple  -> this.args.map { it.dn_gather(f) }.union()
+        is Expr.Vector -> this.args.map { it.dn_gather(f) }.union()
+        is Expr.Dict   -> this.args.map { it.first.dn_gather(f) + it.second.dn_gather(f) }.union()
+        is Expr.Index  -> this.col.dn_gather(f) + this.idx.dn_gather(f)
+        is Expr.Call   -> this.clo.dn_gather(f) + this.args.map { it.dn_gather(f) }.union()
+
+        is Expr.Acc, is Expr.Data, is Expr.Nat,
+        is Expr.Nil, is Expr.Tag, is Expr.Bool,
+        is Expr.Char, is Expr.Num -> emptyMap()
+    }
+}
+ */
+
 fun Expr.up_first (cnd: (Expr)->Boolean): Expr? {
     return when {
         cnd(this) -> this
@@ -65,38 +111,6 @@ fun Expr.isdrop (): Boolean {
 class Ups (val outer: Expr.Do) {
     init {
         G.ups = outer.traverse().toMutableMap()
-    }
-
-    fun dcl_to_blk (dcl: Expr.Dcl): Expr {
-        return dcl.up_first { it is Expr.Do || it is Expr.Proto }!! // ?: outer /*TODO: remove outer*/
-    }
-
-    fun id_to_dcl (id: String, from: Expr, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?=null): Expr.Dcl? {
-        val up = G.ups[from]!!.up_first { it is Expr.Do || it is Expr.Proto }
-        fun aux (es: List<Expr>): Expr.Dcl? {
-            return es.firstNotNullOfOrNull {
-                when {
-                    (it is Expr.Set) -> aux(listOfNotNull(it.src))
-                    (it is Expr.Group) -> aux(it.es)
-                    (it !is Expr.Dcl) -> null
-                    (but!=null && but(it)) -> aux(listOfNotNull(it.src))
-                    (it.idtag.first.str == id) -> it
-                    else -> aux(listOfNotNull(it.src))
-                }
-            }
-
-        }
-        val dcl: Expr.Dcl? = when {
-            (up is Expr.Proto) -> up.pars.firstOrNull { (but==null||!but(it)) && it.idtag.first.str==id }
-            (up is Expr.Do) -> aux(up.es)
-            else -> null
-        }
-        return when {
-            (dcl != null) -> dcl
-            (up == outer) -> null
-            (up is Expr.Proto && !cross) -> null
-            else -> this.id_to_dcl(id, up!!, cross, but)
-        }
     }
 
     fun Expr.traverse (): Map<Expr,Expr> {
