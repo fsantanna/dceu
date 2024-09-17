@@ -252,7 +252,7 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         ups_reset()
         val tags  = Tags()
         val vars  = Vars()
-        val sta   = Static(vars)
+        val sta   = Static()
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
         if (verbose) {
             System.err.println("... ceu -> c ...")

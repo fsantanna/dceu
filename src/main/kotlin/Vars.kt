@@ -52,6 +52,28 @@ fun Expr.id_to_dcl (id: String, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?
     }
 }
 
+fun type (dcl: Expr.Dcl, src: Expr): Type {
+    val blk = dcl.to_blk()
+    val up  = src.up_first { it is Expr.Proto || it==blk }
+    return when {
+        (blk == G.outer) -> Type.GLOBAL
+        (blk == up)      -> Type.LOCAL
+        else -> {
+            up as Expr.Proto
+            G.proto_has_outer.add(up)
+            val nst = up.up_all_until { it == blk }
+                .filter { it is Expr.Proto }
+                .let { it as List<Expr.Proto> }
+                .all { it.nst }
+            when {
+                !nst -> Type.UPVAL
+                (up.tk.str == "func") -> Type.LOCAL
+                else -> Type.NESTED
+            }
+        }
+    }
+}
+
 class Vars () {
     init {
         G.outer!!.traverse()
@@ -102,28 +124,6 @@ class Vars () {
                 }
             }
             else -> null
-        }
-    }
-
-    fun type (dcl: Expr.Dcl, src: Expr): Type {
-        val blk = dcl.to_blk()
-        val up  = src.up_first { it is Expr.Proto || it==blk }
-        return when {
-            (blk == G.outer) -> Type.GLOBAL
-            (blk == up)      -> Type.LOCAL
-            else -> {
-                up as Expr.Proto
-                G.proto_has_outer.add(up)
-                val nst = up.up_all_until { it == blk }
-                    .filter { it is Expr.Proto }
-                    .let { it as List<Expr.Proto> }
-                    .all { it.nst }
-                when {
-                    !nst -> Type.UPVAL
-                    (up.tk.str == "func") -> Type.LOCAL
-                    else -> Type.NESTED
-                }
-            }
         }
     }
 

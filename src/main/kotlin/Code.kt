@@ -47,7 +47,7 @@ class Coder (val vars: Vars, val sta: Static) {
                     // PROTO | ${this.dump()}
                     ${isexe.cond { """
                         typedef struct CEU_Pro_$id {
-                            ${Mem(vars, sta, defers).pub(this)}
+                            ${Mem(sta, defers).pub(this)}
                         } CEU_Pro_$id;                        
                     """ }}
                 """

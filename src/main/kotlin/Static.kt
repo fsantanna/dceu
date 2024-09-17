@@ -1,6 +1,6 @@
 package dceu
 
-class Static (val vars: Vars) {
+class Static () {
     // protos_unused: const proto is not used: do not generate code
     val protos_use_unused: MutableSet<Expr.Proto> = mutableSetOf()
     val protos_use_map: MutableMap<Expr.Proto, MutableSet<Expr.Proto>> = mutableMapOf()
@@ -62,7 +62,7 @@ class Static (val vars: Vars) {
         val ismem = this.ismem(blk)
         //println(listOf(src.tk.pos.lin, id, type(dcl,src)))
 
-        return when (vars.type(dcl,src)) {
+        return when (type(dcl,src)) {
             Type.GLOBAL -> "ceu_glb_$id"
             Type.LOCAL -> if (ismem) "(ceu_mem->${id}_${dcl.n})" else "ceu_loc_${id}_${dcl.n}"  // idx b/c of "it"
             Type.NESTED -> {
