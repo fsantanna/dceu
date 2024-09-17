@@ -106,8 +106,8 @@ fun Expr.isdrop (): Boolean {
     return LEX && G.ups[this].let { it is Expr.Drop && it.e==this }
 }
 
-fun Expr.ups_reset () {
-    this.dn_gather { me ->
+fun ups_reset () {
+    G.outer!!.dn_gather { me ->
         when (me) {
             is Expr.Proto -> {
                 G.ups[me.blk] = me

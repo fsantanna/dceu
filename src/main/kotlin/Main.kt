@@ -115,6 +115,7 @@ val GLOBALS = setOf (
 
 object G {
     var N: Int = 0
+    var outer: Expr.Do? = null
     var ups: MutableMap<Expr,Expr> = mutableMapOf()
     val datas = mutableMapOf<String,LData>()
     val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
@@ -122,6 +123,7 @@ object G {
     val proto_has_outer: MutableSet<Expr.Proto> = mutableSetOf()
     fun reset () {
         N = 0
+        outer = null
         ups.clear()
         datas.clear()
         nats.clear()
@@ -246,16 +248,16 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
             null
         )
 
-        val outer = Expr.Do(tk0, null, listOf(xargs)+glbs+es)
-        outer.ups_reset()
-        val tags  = Tags(outer)
-        val vars  = Vars(outer)
-        val sta   = Static(outer, vars)
+        G.outer = Expr.Do(tk0, null, listOf(xargs)+glbs+es)
+        ups_reset()
+        val tags  = Tags()
+        val vars  = Vars()
+        val sta   = Static(vars)
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
         if (verbose) {
             System.err.println("... ceu -> c ...")
         }
-        val coder = Coder(outer, vars, sta)
+        val coder = Coder(vars, sta)
         coder.main(tags)
     } catch (e: Throwable) {
         if (THROW) {

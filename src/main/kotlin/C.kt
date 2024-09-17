@@ -2343,7 +2343,7 @@ fun Coder.main (tags: Tags): String {
             };
             """
         }.joinToString("")
-        val poss = outer.to_dcls().map {
+        val poss = G.outer!!.to_dcls().map {
             val id = it.idtag.first.str
             (!GLOBALS.contains(id)).cond { """
                 CEU_Value ceu_glb_${id.idc()} = { CEU_VALUE_NIL };    

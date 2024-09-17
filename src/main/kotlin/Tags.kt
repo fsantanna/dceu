@@ -1,6 +1,6 @@
 package dceu
 
-class Tags (outer: Expr.Do) {
+class Tags () {
     val pub: MutableMap<String,Triple<String,String,String?>> = TAGS.map { Pair(it,Triple(it, it.idc(), null)) }.toMap().toMutableMap()
 
     fun add (tk: Tk, id: String, c: String, enu: String?) {
@@ -17,7 +17,7 @@ class Tags (outer: Expr.Do) {
     }
 
     init {
-        outer.traverse()
+        G.outer!!.traverse()
     }
 
     fun Expr.traverse () {

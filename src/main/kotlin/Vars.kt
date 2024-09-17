@@ -52,9 +52,9 @@ fun Expr.id_to_dcl (id: String, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?
     }
 }
 
-class Vars(val outer: Expr.Do) {
+class Vars () {
     init {
-        this.outer.traverse()
+        G.outer!!.traverse()
     }
 
     fun data (e: Expr): Pair<Int?,LData?>? {
@@ -109,8 +109,8 @@ class Vars(val outer: Expr.Do) {
         val blk = dcl.to_blk()
         val up  = src.up_first { it is Expr.Proto || it==blk }
         return when {
-            (blk == outer) -> Type.GLOBAL
-            (blk == up)    -> Type.LOCAL
+            (blk == G.outer) -> Type.GLOBAL
+            (blk == up)      -> Type.LOCAL
             else -> {
                 up as Expr.Proto
                 G.proto_has_outer.add(up)

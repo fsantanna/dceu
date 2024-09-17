@@ -2,11 +2,11 @@ package dceu
 
 import kotlin.math.max
 
-class Coder(val outer: Expr.Do, val vars: Vars, val sta: Static) {
+class Coder (val vars: Vars, val sta: Static) {
     // Pair<mems,protos>: need to separate b/c protos must be inner->outer, while mems outer->inner
     val pres: MutableList<Pair<String,String>> = mutableListOf()
     val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
-    val code: String = outer.code()
+    val code: String = G.outer!!.code()
 
     fun List<Expr>.code (): String {
         return this.map { it.code() }.joinToString("")
@@ -41,7 +41,7 @@ class Coder(val outer: Expr.Do, val vars: Vars, val sta: Static) {
             is Expr.Proto -> {
                 val isexe = (this.tk.str != "func")
                 val code = this.blk.code()
-                val id = this.id(outer)
+                val id = this.id(G.outer!!)
 
                 val mem = """
                     // PROTO | ${this.dump()}
@@ -167,7 +167,7 @@ class Coder(val outer: Expr.Do, val vars: Vars, val sta: Static) {
                         ${(CEU >= 4).cond { """
                              ${(!sta.ismem(this)).cond { "CEU_Block" }} $blkc = NULL;
                         """}}
-                        ${(this == outer).cond { """
+                        ${(this == G.outer).cond { """
                             { // ARGC / ARGV
                                 CEU_Value args[ceu_argc];
                                 for (int i=0; i<ceu_argc; i++) {
@@ -179,7 +179,7 @@ class Coder(val outer: Expr.Do, val vars: Vars, val sta: Static) {
                             }
                         """}}
                         
-                        ${(this != outer).cond { 
+                        ${(this != G.outer).cond { 
                             this.to_dcls().let { dcls ->
                                 """
                                 ${(!sta.ismem(this)).cond { """
