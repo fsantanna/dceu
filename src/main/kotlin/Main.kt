@@ -257,8 +257,8 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         )
 
         G.outer = Expr.Do(tk0, null, listOf(xargs)+glbs+es)
-        ups_reset()
-        G.tags = tags_reset()
+        cache_ups()
+        G.tags = cache_tags()
         val vars  = Vars()
         val sta   = Static()
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
