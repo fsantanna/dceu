@@ -1,7 +1,5 @@
 package dceu
 
-typealias LData = List<Id_Tag>
-
 enum class Type {
     GLOBAL, LOCAL, NESTED, UPVAL
 }
