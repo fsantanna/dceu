@@ -172,4 +172,39 @@ fun Expr.id_to_dcl (id: String, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?
     }
 }
 
+fun Expr.Acc.idx (): String {
+    val dcl = this.id_to_dcl(this.tk.str)!!
+    return dcl.idx(this)
+}
+fun Expr.Dcl.idx (src: Expr): String {
+    val id = this.idtag.first.str.idc()
+    val blk = this.to_blk()
+    val ismem = blk.is_mem()
+    //println(listOf(src.tk.pos.lin, id, type(dcl,src)))
+
+    return when (type(this,src)) {
+        Type.GLOBAL -> "ceu_glb_$id"
+        Type.LOCAL -> if (ismem) "(ceu_mem->${id}_${this.n})" else "ceu_loc_${id}_${this.n}"  // idx b/c of "it"
+        Type.NESTED -> {
+            val xups = src.up_all_until { it == blk } // all ups between src -> dcl
+            val pid = (blk.up_first { it is Expr.Proto } as Expr.Proto).id(G.outer!!)
+            val xn = xups.count { it is Expr.Proto && it!=blk }
+            "((CEU_Pro_$pid*)ceux->exe_task->${"clo->up_nst->".repeat(xn)}mem)->${id}_${this.n}"
+        }
+        else -> {
+            val proto = src.up_first { it is Expr.Proto } as Expr.Proto
+            val i = G.proto_to_upvs[proto]!!.indexOfFirst { it == this }
+            assert(i != -1)
+            "ceux->clo->upvs.buf[$i]"
+        }
+    }
+}
+fun Expr.idx (idc: String): String {
+    return if (this.is_mem()) "(ceu_mem->$idc)" else "ceu_$idc"
+}
+
+fun Expr.dcl (tp: String="CEU_Value"): String {
+    return if (this.is_mem()) "" else tp
+}
+
 

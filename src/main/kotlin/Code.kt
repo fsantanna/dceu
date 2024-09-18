@@ -122,7 +122,7 @@ class Coder (val vars: Vars, val sta: Static) {
                         ${G.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
                             """
                             {
-                                CEU_Value upv = ${sta.idx(dcl, G.ups[this]!!)};
+                                CEU_Value upv = ${dcl.idx(G.ups[this]!!)};
                                 ceu_gc_inc_val(upv);
                                 ceu_acc.Dyn->Clo.upvs.buf[$i] = upv;
                             }
@@ -158,7 +158,7 @@ class Coder (val vars: Vars, val sta: Static) {
                     }
                     """
                 } else {
-                    val blkc = sta.idx(this, "block_$n")
+                    val blkc = this.idx("block_$n")
                     """
                     { // BLOCK | ${this.dump()}
                 #ifdef CEU_LEX
@@ -185,13 +185,13 @@ class Coder (val vars: Vars, val sta: Static) {
                                 ${(!this.is_mem()).cond { """
                                     //{ // inline vars dcls
                                         ${dcls.map { """
-                                            CEU_Value ${sta.idx(it,it)};
+                                            CEU_Value ${it.idx(it)};
                                         """ }.joinToString("")}
                                     //}
                                 """ }}
                                 { // vars inits
                                     ${dcls.map { """
-                                        ${sta.idx(it,it)} = (CEU_Value) { CEU_VALUE_NIL };
+                                        ${it.idx(it)} = (CEU_Value) { CEU_VALUE_NIL };
                                     """ }.joinToString("")}
                                 }
                                 """
@@ -242,7 +242,7 @@ class Coder (val vars: Vars, val sta: Static) {
                                 .asReversed()
                                 .filter { !GLOBALS.contains(it.idtag.first.str) }
                                 .map { """
-                                    ceu_gc_dec_val(${sta.idx(it, it)});
+                                    ceu_gc_dec_val(${it.idx(it)});
                                 """ }
                                 .joinToString("")
                             }
@@ -285,7 +285,7 @@ class Coder (val vars: Vars, val sta: Static) {
             """
             is Expr.Group -> "// GROUP | ${this.dump()}\n" + this.es.code()
             is Expr.Dcl -> {
-                val idx = sta.idx(this, this)
+                val idx = this.idx(this)
                 """
                 // DCL | ${this.dump()}
                 ${when {
@@ -377,9 +377,9 @@ class Coder (val vars: Vars, val sta: Static) {
             is Expr.Defer -> {
                 val bup = this.up_first { it is Expr.Do } as Expr.Do
                 val (ns,ini,end) = defers.getOrDefault(bup, Triple(mutableListOf(),"",""))
-                val id = sta.idx(this, "defer_$n")
+                val id = this.idx("defer_$n")
                 val inix = """
-                    ${sta.dcl(this,"int")} $id = 0;   // not yet reached
+                    ${this.dcl("int")} $id = 0;   // not yet reached
                 """
                 val endx = """
                     if ($id) {     // if true: reached, finalize
@@ -401,7 +401,7 @@ class Coder (val vars: Vars, val sta: Static) {
             }
 
             is Expr.Resume -> {
-                val coro = sta.idx(this,"coro_$n")
+                val coro = this.idx("coro_$n")
                 """
                 { // RESUME | ${this.dump()}
                     ${(!this.is_mem()).cond { """
@@ -429,7 +429,7 @@ class Coder (val vars: Vars, val sta: Static) {
                                     ${this.toerr()}
                                 );
                             #endif
-                            ${sta.idx(this,"args_$n")}[$i] = CEU_ACC_KEEP();
+                            ${this.idx("args_$n")}[$i] = CEU_ACC_KEEP();
                         """
                     }.joinToString("")}
                     
@@ -440,7 +440,7 @@ class Coder (val vars: Vars, val sta: Static) {
                         CEU4(ceux COMMA)
                         CEU_LEX_X($coro.Dyn->Exe.depth COMMA)
                         ${this.args.size},
-                        ${sta.idx(this,"args_$n")}
+                        ${this.idx("args_$n")}
                     };
                     $coro.Dyn->Exe.clo->proto(&ceux_$n);
                     ceu_gc_dec_val($coro);
@@ -484,7 +484,7 @@ class Coder (val vars: Vars, val sta: Static) {
 
             is Expr.Spawn -> {
                 val blk = this.up_first { it is Expr.Do } as Expr.Do
-                val blkc = sta.idx(blk, "block_${blk.n}")
+                val blkc = blk.idx("block_${blk.n}")
                 """
                 { // SPAWN | ${this.dump()}
                     ${(!this.is_mem()).cond { """
@@ -494,7 +494,7 @@ class Coder (val vars: Vars, val sta: Static) {
 
                     ${(CEU>=5 && this.tsks!=null).cond {
                         this.tsks!!.code() + """
-                            ${sta.idx(this,"tsks_$n")} = ceu_acc;                            
+                            ${this.idx("tsks_$n")} = ceu_acc;                            
                             if (ceu_acc.type != CEU_VALUE_TASKS) {
                                 CEU_ERROR_CHK_PTR (
                                     continue,
@@ -514,14 +514,14 @@ class Coder (val vars: Vars, val sta: Static) {
                                     ${this.toerr()}
                                 );
                             #endif
-                            ${sta.idx(this,"args_$n")}[$i] = CEU_ACC_KEEP();
+                            ${this.idx("args_$n")}[$i] = CEU_ACC_KEEP();
                         """
                     }.joinToString("")}
 
                     ${this.tsk.code()}
                     CEU_Dyn* ceu_a_$n = ${when {
                         (CEU<5 || this.tsks==null) -> "(CEU_Dyn*)ceu_task_up(ceux)"
-                        else -> sta.idx(this,"tsks_$n") + ".Dyn"
+                        else -> this.idx("tsks_$n") + ".Dyn"
                     }};
                     CEU_Block* ceu_b_$n = ${this.tsks.cond2({"NULL"}, {"&$blkc"})};
                     CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, ceu_a_$n, ceu_b_$n CEU_LEX_X(COMMA ceux->depth));
@@ -554,7 +554,7 @@ class Coder (val vars: Vars, val sta: Static) {
                             ceux,
                             CEU_LEX_X(ceu_exe_$n.Dyn->Exe.depth COMMA)
                             ${this.args.size},
-                            ${sta.idx(this,"args_$n")}
+                            ${this.idx("args_$n")}
                         };
                         ceu_exe_$n.Dyn->Exe.clo->proto(&ceux_$n);
                         CEU_ERROR_CHK_ERR({ceu_gc_dec_val(ceu_exe_$n);continue;}, ${this.toerr()});
@@ -574,7 +574,7 @@ class Coder (val vars: Vars, val sta: Static) {
                 ceux->exe_task->time = CEU_TIME;
             """
             is Expr.Pub -> {
-                val id = sta.idx(this, "val_$n")
+                val id = this.idx( "val_$n")
                 val exe = if (this.tsk != null) "" else {
                     this.up_first_task_outer().let { outer ->
                         val n = this.up_all_until() {
@@ -591,7 +591,7 @@ class Coder (val vars: Vars, val sta: Static) {
             """
             { // PUB | ${this.dump()}
                 ${this.is_dst().cond{ """
-                    ${sta.dcl(this,"CEU_Value")} $id = CEU_ACC_KEEP();
+                    ${this.dcl("CEU_Value")} $id = CEU_ACC_KEEP();
                 """ }}
                 ${this.tsk.cond2({"""
                     ${it.code()}
@@ -616,11 +616,11 @@ class Coder (val vars: Vars, val sta: Static) {
             """
             }
             is Expr.Toggle -> {
-                val id = sta.idx(this, "tsk_$n")
+                val id = this.idx( "tsk_$n")
                 """
                 {  // TOGGLE | ${this.dump()}
                     ${this.tsk.code()}
-                    ${sta.dcl(this,"CEU_Value")} $id = CEU_ACC_KEEP();
+                    ${this.dcl("CEU_Value")} $id = CEU_ACC_KEEP();
                     ${this.on.code()}
                     {   // TOGGLE | ${this.dump()}
                         int on = ceu_as_bool(ceu_acc);
@@ -657,7 +657,7 @@ class Coder (val vars: Vars, val sta: Static) {
             }
             is Expr.Tasks -> {
                 val blk = this.up_first { it is Expr.Do } as Expr.Do
-                val blkc = sta.idx(blk, "block_${blk.n}")
+                val blkc = blk.idx("block_${blk.n}")
                 """
                 {  // TASKS | ${this.dump()}
                     ${this.max.code()}
@@ -672,7 +672,7 @@ class Coder (val vars: Vars, val sta: Static) {
                 val body = G.nats[this]!!.let { (set, str) ->
                     var x = str
                     for (dcl in set) {
-                        val idx = sta.idx(dcl, this)
+                        val idx = dcl.idx(this)
                         //println(setOf(x, v))
                         x = x.replaceFirst("XXX", idx)
                     }
@@ -698,7 +698,7 @@ class Coder (val vars: Vars, val sta: Static) {
                 }
             }
             is Expr.Acc -> {
-                val idx = sta.idx(this)
+                val idx = this.idx()
                 val dcl = this.id_to_dcl(this.tk.str)!!
                 when {
                     this.is_dst() -> {
@@ -749,7 +749,7 @@ class Coder (val vars: Vars, val sta: Static) {
             is Expr.Num  -> "CEU_ACC(((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} }));"
 
             is Expr.Tuple -> {
-                val id_args = sta.idx(this,"args_$n")
+                val id_args = this.idx("args_$n")
                 """
                 { // TUPLE | ${this.dump()}
                     ${(!this.is_mem()).cond { """
@@ -767,10 +767,10 @@ class Coder (val vars: Vars, val sta: Static) {
             """
             }
             is Expr.Vector -> {
-                val id_vec = sta.idx(this,"vec_$n")
+                val id_vec = this.idx("vec_$n")
                 """
                 { // VECTOR | ${this.dump()}
-                    ${sta.dcl(this)} $id_vec = ceu_create_vector();
+                    ${this.dcl()} $id_vec = ceu_create_vector();
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
                             assert(NULL == ceu_col_set($id_vec, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=$i} }, ceu_acc));
@@ -781,15 +781,15 @@ class Coder (val vars: Vars, val sta: Static) {
             """
             }
             is Expr.Dict -> {
-                val id_dic = sta.idx(this,"dic_$n")
-                val id_key = sta.idx(this,"key_$n")
+                val id_dic = this.idx("dic_$n")
+                val id_key = this.idx("key_$n")
                 """
                 { // DICT | ${this.dump()}
-                    ${sta.dcl(this)} $id_dic = ceu_create_dict();
+                    ${this.dcl()} $id_dic = ceu_create_dict();
                     ${this.args.map { """
                         {
                             ${it.first.code()}
-                            ${sta.dcl(this)} $id_key = CEU_ACC_KEEP();
+                            ${this.dcl()} $id_key = CEU_ACC_KEEP();
                             ${it.second.code()}
                             CEU_Value ceu_val_$n = CEU_ACC_KEEP();
                             CEU_ERROR_CHK_PTR (
@@ -807,18 +807,18 @@ class Coder (val vars: Vars, val sta: Static) {
             }
             is Expr.Index -> {
                 val idx = this.data().let { if (it == null) -1 else it.first!! }
-                val id_col = sta.idx(this, "col_$n")
-                val id_val = sta.idx(this, "val_$n")
+                val id_col = this.idx("col_$n")
+                val id_val = this.idx("val_$n")
                 """
                 { // INDEX | ${this.dump()}
                     // VAL
                     ${this.is_dst().cond { """
-                        ${sta.dcl(this)} $id_val = CEU_ACC_KEEP();
+                        ${this.dcl()} $id_val = CEU_ACC_KEEP();
                     """ }}
                     
                     // COL
                     ${this.col.code()}
-                    ${sta.dcl(this)} $id_col = CEU_ACC_KEEP();
+                    ${this.dcl()} $id_col = CEU_ACC_KEEP();
 
                     // IDX
                     ${if (idx == -1) {
@@ -880,7 +880,7 @@ class Coder (val vars: Vars, val sta: Static) {
                     """ }}
                     ${this.args.mapIndexed { i,e ->
                         e.code() + """
-                            ${sta.idx(this,"args_$n")}[$i] = CEU_ACC_KEEP();
+                            ${this.idx("args_$n")}[$i] = CEU_ACC_KEEP();
                         """
                     }.joinToString("")}
                     ${this.clo.code()}
@@ -903,7 +903,7 @@ class Coder (val vars: Vars, val sta: Static) {
                     #endif
                         CEU_LEX_X(ceux->depth+1 COMMA)
                         ${this.args.size},
-                        ${sta.idx(this, "args_$n")}
+                        ${this.idx("args_$n")}
                     };
                     ceu_clo_$n.Dyn->Clo.proto(&ceux_$n);
                     ceu_gc_dec_val(ceu_clo_$n);

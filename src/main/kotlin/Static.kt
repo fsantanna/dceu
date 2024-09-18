@@ -31,40 +31,6 @@ class Static () {
     }
     val defer_catch_spawn_tasks: MutableSet<Expr.Do> = mutableSetOf()
 
-    fun idx (acc: Expr.Acc): String {
-        val dcl = acc.id_to_dcl(acc.tk.str)!!
-        return this.idx(dcl, acc)
-    }
-    fun idx (dcl: Expr.Dcl, src: Expr): String {
-        val id = dcl.idtag.first.str.idc()
-        val blk = dcl.to_blk()
-        val ismem = blk.is_mem()
-        //println(listOf(src.tk.pos.lin, id, type(dcl,src)))
-
-        return when (type(dcl,src)) {
-            Type.GLOBAL -> "ceu_glb_$id"
-            Type.LOCAL -> if (ismem) "(ceu_mem->${id}_${dcl.n})" else "ceu_loc_${id}_${dcl.n}"  // idx b/c of "it"
-            Type.NESTED -> {
-                val xups = src.up_all_until { it == blk } // all ups between src -> dcl
-                val pid = (blk.up_first { it is Expr.Proto } as Expr.Proto).id(G.outer!!)
-                val xn = xups.count { it is Expr.Proto && it!=blk }
-                "((CEU_Pro_$pid*)ceux->exe_task->${"clo->up_nst->".repeat(xn)}mem)->${id}_${dcl.n}"
-            }
-            else -> {
-                val proto = src.up_first { it is Expr.Proto } as Expr.Proto
-                val i = G.proto_to_upvs[proto]!!.indexOfFirst { it == dcl }
-                assert(i != -1)
-                "ceux->clo->upvs.buf[$i]"
-            }
-        }
-    }
-    fun idx (e: Expr, idc: String): String {
-        return if (e.is_mem()) "(ceu_mem->$idc)" else "ceu_$idc"
-    }
-    fun dcl (e: Expr, tp: String="CEU_Value"): String {
-        return if (e.is_mem()) "" else tp
-    }
-
     init {
         G.outer!!.traverse()
     }
