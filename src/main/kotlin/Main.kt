@@ -263,7 +263,7 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         G.tags = cache_tags()
         Vars()
         static_checks()
-        Static()
+        //Static()
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
         if (verbose) {
             System.err.println("... ceu -> c ...")
