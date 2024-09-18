@@ -33,54 +33,6 @@ class Vars () {
         G.outer!!.traverse()
     }
 
-    fun data (e: Expr): Pair<Int?,LData?>? {
-        return when (e) {
-            is Expr.Acc -> {
-                val dcl = e.id_to_dcl(e.tk.str)!!
-                dcl.idtag.second.let {
-                    if (it == null) {
-                        null
-                    } else {
-                        Pair(null, G.datas[it.str])
-                    }
-                }
-            }
-            is Expr.Pub -> {
-                if (e.tsk != null) {
-                    this.data(e.tsk)
-                } else {
-                    val task = e.up_first_task_outer()
-                    if (task?.tag == null) null else {
-                        Pair(null, G.datas[task.tag.str]!!)
-                    }
-                }
-            }
-            is Expr.Index -> {
-                val d = this.data(e.col)
-                val l = d?.second
-                when {
-                    (d == null) -> null
-                    (l == null) -> null
-                    (e.idx !is Expr.Tag) -> null
-                    else -> {
-                        val idx = l.indexOfFirst { it.first.str == e.idx.tk.str.drop(1) }
-                        val v = if (idx == -1) null else l[idx]
-                        when {
-                            (v == null) -> {
-                                err(e.idx.tk, "index error : undeclared data field ${e.idx.tk.str}")
-                            }
-                            (v.second == null) -> Pair(idx, null)
-                            else -> {
-                                Pair(idx, G.datas[v.second!!.str]!!)
-                            }
-                        }
-                    }
-                }
-            }
-            else -> null
-        }
-    }
-
     fun check (dcl: Expr.Dcl) {
         if (CEU>=99 && dcl.idtag.first.str=="it") {
             // ok
@@ -239,7 +191,7 @@ class Vars () {
             is Expr.Index  -> {
                 this.col.traverse()
                 this.idx.traverse()
-                data(this)
+                this.data()
             }
             is Expr.Call   -> { this.clo.traverse() ; this.args.forEach { it.traverse() } }
         }

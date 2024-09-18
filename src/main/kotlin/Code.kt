@@ -806,7 +806,7 @@ class Coder (val vars: Vars, val sta: Static) {
             """
             }
             is Expr.Index -> {
-                val idx = vars.data(this).let { if (it == null) -1 else it.first!! }
+                val idx = this.data().let { if (it == null) -1 else it.first!! }
                 val id_col = sta.idx(this, "col_$n")
                 val id_val = sta.idx(this, "val_$n")
                 """

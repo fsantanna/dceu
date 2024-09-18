@@ -96,6 +96,54 @@ fun Expr.Dcl.to_blk (): Expr {
     return this.up_first { it is Expr.Do || it is Expr.Proto }!! // ?: outer /*TODO: remove outer*/
 }
 
+fun Expr.data (): Pair<Int?,LData?>? {
+    return when (this) {
+        is Expr.Acc -> {
+            val dcl = this.id_to_dcl(this.tk.str)!!
+            dcl.idtag.second.let {
+                if (it == null) {
+                    null
+                } else {
+                    Pair(null, G.datas[it.str])
+                }
+            }
+        }
+        is Expr.Pub -> {
+            if (this.tsk != null) {
+                this.tsk.data()
+            } else {
+                val task = this.up_first_task_outer()
+                if (task?.tag == null) null else {
+                    Pair(null, G.datas[task.tag.str]!!)
+                }
+            }
+        }
+        is Expr.Index -> {
+            val d = this.col.data()
+            val l = d?.second
+            when {
+                (d == null) -> null
+                (l == null) -> null
+                (this.idx !is Expr.Tag) -> null
+                else -> {
+                    val idx = l.indexOfFirst { it.first.str == this.idx.tk.str.drop(1) }
+                    val v = if (idx == -1) null else l[idx]
+                    when {
+                        (v == null) -> {
+                            err(this.idx.tk, "index error : undeclared data field ${this.idx.tk.str}")
+                        }
+                        (v.second == null) -> Pair(idx, null)
+                        else -> {
+                            Pair(idx, G.datas[v.second!!.str]!!)
+                        }
+                    }
+                }
+            }
+        }
+        else -> null
+    }
+}
+
 fun Expr.id_to_dcl (id: String, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?=null): Expr.Dcl? {
     val up = G.ups[this]!!.up_first { it is Expr.Do || it is Expr.Proto }
     fun aux (es: List<Expr>): Expr.Dcl? {
