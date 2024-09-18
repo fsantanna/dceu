@@ -72,7 +72,7 @@ fun Expr.is_mem (out: Boolean=false): Boolean {
     val up = this.up_first() { it is Expr.Do || it is Expr.Proto }!!
     return when {
         (!out && proto==null) -> false
-        //true -> true
+        true -> true
         G.mems.contains(up) -> true
         else -> false
     }

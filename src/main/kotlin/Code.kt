@@ -150,7 +150,7 @@ class Coder () {
                 val body = this.es.code()   // before defers[this] check
                 val up = G.ups[this]
 
-                val void = sta.void(this)
+                val void = false //sta.void(this)
                 if (void) {
                     """
                     { // BLOCK | void | ${this.dump()}
@@ -289,9 +289,9 @@ class Coder () {
                 """
                 // DCL | ${this.dump()}
                 ${when {
-                    sta.protos_use_unused.contains(this.src) -> """
-                        // $idx: unused function
-                    """
+                    //sta.protos_use_unused.contains(this.src) -> """
+                    //    // $idx: unused function
+                    //"""
                     (this.src != null) -> """
                         ${this.src.code()}
                         #ifdef CEU_LEX

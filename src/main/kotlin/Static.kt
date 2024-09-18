@@ -81,6 +81,7 @@ fun static_checks () {
 
 class Static () {
     // protos_unused: const proto is not used: do not generate code
+    /*
     val protos_use_unused: MutableSet<Expr.Proto> = mutableSetOf()
     val protos_use_map: MutableMap<Expr.Proto, MutableSet<Expr.Proto>> = mutableMapOf()
     fun protos_use_f (proto: Expr.Proto) {
@@ -91,7 +92,9 @@ class Static () {
             }
         }
     }
+     */
 
+    /*
     // void: block is innocuous -> should be a proxy to up block
     fun void (blk: Expr.Do): Boolean {
         // no declarations, no spawns, no tasks
@@ -109,6 +112,7 @@ class Static () {
         }
     }
     val defer_catch_spawn_tasks: MutableSet<Expr.Do> = mutableSetOf()
+     */
 
     init {
         G.outer!!.traverse()
@@ -139,8 +143,8 @@ class Static () {
             is Expr.Group  -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> {
                 if (this.src is Expr.Proto && (this.tk.str=="val" || this.tk.str=="val'")) {
-                    protos_use_unused.add(this.src)
-                    protos_use_map[this.src] = mutableSetOf()
+                    //protos_use_unused.add(this.src)
+                    //protos_use_map[this.src] = mutableSetOf()
                 }
                 this.src?.traverse()
             }
@@ -175,7 +179,7 @@ class Static () {
                 this.tsk.traverse()
                 this.args.forEach { it.traverse() }
                 if (this.tsks == null) {
-                    defer_catch_spawn_tasks.add(this.up_first { it is Expr.Do } as Expr.Do)
+                    //defer_catch_spawn_tasks.add(this.up_first { it is Expr.Do } as Expr.Do)
 
                     // tasks is the one relevant, not the spawn itself
                     this.up_all_until { it is Expr.Proto }
@@ -201,6 +205,7 @@ class Static () {
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
+                /*
                 val dcl = this.id_to_dcl(this.tk.str)!!
                 if (dcl.src is Expr.Proto && (dcl.tk.str=="val" || dcl.tk.str=="val'")) {
                     // f is accessed
@@ -216,6 +221,7 @@ class Static () {
                         else -> protos_use_map[up_proto]!!.add(dcl.src)
                     }
                 }
+                 */
             }
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
@@ -233,7 +239,7 @@ class Static () {
                 this.clo.traverse()
                 this.args.forEach { it.traverse() }
                 if (this.clo is Expr.Acc && this.clo.tk.str=="tasks") {
-                    defer_catch_spawn_tasks.add(this.up_first { it is Expr.Do } as Expr.Do)
+                    //defer_catch_spawn_tasks.add(this.up_first { it is Expr.Do } as Expr.Do)
                 }
 
             }
