@@ -5,7 +5,7 @@ import kotlin.math.max
 val union = "union"
 //val union = "struct"
 
-class Mem (val sta: Static, val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>>) {
+class Mem (val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>>) {
     fun pub (e: Expr.Proto): String {
         return """
             struct { // PROTO | ${e.dump()}

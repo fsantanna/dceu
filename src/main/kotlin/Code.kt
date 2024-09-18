@@ -2,7 +2,7 @@ package dceu
 
 import kotlin.math.max
 
-class Coder (val vars: Vars, val sta: Static) {
+class Coder () {
     // Pair<mems,protos>: need to separate b/c protos must be inner->outer, while mems outer->inner
     val pres: MutableList<Pair<String,String>> = mutableListOf()
     val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
@@ -47,7 +47,7 @@ class Coder (val vars: Vars, val sta: Static) {
                     // PROTO | ${this.dump()}
                     ${isexe.cond { """
                         typedef struct CEU_Pro_$id {
-                            ${Mem(sta, defers).pub(this)}
+                            ${Mem(defers).pub(this)}
                         } CEU_Pro_$id;                        
                     """ }}
                 """

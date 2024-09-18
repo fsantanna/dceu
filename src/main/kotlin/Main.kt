@@ -259,13 +259,13 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         G.outer = Expr.Do(tk0, null, listOf(xargs)+glbs+es)
         cache_ups()
         G.tags = cache_tags()
-        val vars  = Vars()
-        val sta   = Static()
+        Vars()
+        Static()
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
         if (verbose) {
             System.err.println("... ceu -> c ...")
         }
-        val coder = Coder(vars, sta)
+        val coder = Coder()
         coder.main()
     } catch (e: Throwable) {
         if (THROW) {
