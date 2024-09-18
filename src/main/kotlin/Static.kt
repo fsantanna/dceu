@@ -1,5 +1,85 @@
 package dceu
 
+fun static_checks () {
+    G.outer!!.dn_gather { me ->
+        when (me) {
+            is Expr.Proto  -> {
+                if (me.nst) {
+                    when {
+                        (me.tk.str != "func") -> {
+                            // OK: nested coro/task always ok b/c of ceux/MEM
+                        }
+                        (!G.proto_has_outer.contains(me)) -> {
+                            // OK: no access to outer - unset :nested
+                        }
+                        me.up_any { it is Expr.Proto && it.tk.str != "func" } -> {
+                            val proto = me.up_first { it is Expr.Proto && it.tk.str != "func" }!!
+                            err(me.tk, "func :nested error : unexpected enclosing ${proto.tk.str}")
+                        }
+                    }
+                }
+            }
+            is Expr.Escape -> {
+                val fst = me.up_first { (it is Expr.Do && it.tag?.str==me.tag.str) || (it is Expr.Proto && !it.nst)}
+                if (fst !is Expr.Do) {
+                    err(me.tk, "escape error : expected matching \"do\" block")
+                }
+            }
+            is Expr.Group  -> {
+                val up = G.ups[me]!!
+                val ok = (up is Expr.Do) || (up is Expr.Group) || (up is Expr.Dcl) || (up is Expr.Set && up.src==me)
+                if (!ok) {
+                    err(me.tk, "group error : unexpected context")
+                }
+            }
+            is Expr.Set    -> {
+                if (me.dst is Expr.Acc) {
+                    val dcl = me.dst.id_to_dcl(me.dst.tk.str)!!
+                    if (dcl.tk.str=="val" || dcl.tk.str=="val'") {
+                        err(me.tk, "set error : destination is immutable")
+                    }
+                }
+            }
+            is Expr.Defer  -> {
+                val f = me.up_first { it is Expr.Proto && it.tk.str=="func" }
+                if (f != null) {
+                    val co = f.up_any { it is Expr.Proto && it.tk.str!="func" }
+                    if (co) {
+                        err(me.tk, "defer error : unexpected func with enclosing coro or task")
+                    }
+                }
+            }
+            is Expr.Yield  -> {
+                when {
+                    me.up_any { defer -> (defer is Expr.Defer) }
+                        -> err(me.tk, "yield error : unexpected enclosing defer")
+                    me.up_first { it is Expr.Proto }.let { it?.tk?.str=="func" }
+                        -> err(me.tk, "yield error : unexpected enclosing func")
+                    (me.up_exe() == null)
+                        -> err(me.tk, "yield error : expected enclosing coro" + (if (CEU <= 3) "" else " or task"))
+                }
+            }
+            is Expr.Delay  -> {
+                if (!me.up_first { it is Expr.Proto }.let { it?.tk?.str=="task" }) {
+                    err(me.tk, "delay error : expected enclosing task")
+                }
+            }
+            is Expr.Pub    -> {
+                if (me.tsk == null) {
+                    val outer = me.up_first_task_outer()
+                    val ok = (outer != null) && me.up_all_until { it == outer }.none { it is Expr.Proto && it.tk.str!="task" }
+                    if (!ok) {
+                        err(me.tk, "pub error : expected enclosing task")
+                    }
+                    //(ups.first_task_outer(this) == null) -> err(this.tk, "pub error : expected enclosing task")
+                }
+            }
+            else -> {}
+        }
+        emptyMap<Unit,Unit>()
+    }
+}
+
 class Static () {
     // protos_unused: const proto is not used: do not generate code
     val protos_use_unused: MutableSet<Expr.Proto> = mutableSetOf()
@@ -39,23 +119,9 @@ class Static () {
         when (this) {
             is Expr.Proto  -> {
                 if (this.nst) {
-                    when {
-                        (this.tk.str != "func") -> {
-                            // OK: nested coro/task always ok b/c of ceux/MEM
-                        }
-                        (!G.proto_has_outer.contains(this)) -> {
-                            // OK: no access to outer - unset :nested
-                        }
-                        this.up_any { it is Expr.Proto && it.tk.str!="func" } -> {
-                            val proto = this.up_first { it is Expr.Proto && it.tk.str!="func" }!!
-                            err(this.tk, "func :nested error : unexpected enclosing ${proto.tk.str}")
-                        }
-                    }
-
                     G.ups[this]!!.up_all_until { it is Expr.Proto }
                         .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
                         .forEach { G.mems.add(it) }
-
                     /*
                     val up1 = G.ups[this]
                     val up2 = if (up1==null) null else G.ups[up1]
@@ -70,21 +136,8 @@ class Static () {
                 this.blk.traverse()
             }
             is Expr.Do     -> this.es.forEach { it.traverse() }
-            is Expr.Escape -> {
-                val fst = this.up_first { (it is Expr.Do && it.tag?.str==this.tag.str) || (it is Expr.Proto && !it.nst)}
-                if (fst !is Expr.Do) {
-                    err(this.tk, "escape error : expected matching \"do\" block")
-                }
-                this.e?.traverse()
-            }
-            is Expr.Group  -> {
-                val up = G.ups[this]!!
-                val ok = (up is Expr.Do) || (up is Expr.Group) || (up is Expr.Dcl) || (up is Expr.Set && up.src==this)
-                if (!ok) {
-                    err(this.tk, "group error : unexpected context")
-                }
-                this.es.forEach { it.traverse() }
-            }
+            is Expr.Escape -> this.e?.traverse()
+            is Expr.Group  -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> {
                 if (this.src is Expr.Proto && (this.tk.str=="val" || this.tk.str=="val'")) {
                     protos_use_unused.add(this.src)
@@ -95,12 +148,6 @@ class Static () {
             is Expr.Set    -> {
                 this.dst.traverse()
                 this.src.traverse()
-                if (this.dst is Expr.Acc) {
-                    val dcl = this.dst.id_to_dcl(this.dst.tk.str)!!
-                    if (dcl.tk.str=="val" || dcl.tk.str=="val'") {
-                        err(this.tk, "set error : destination is immutable")
-                    }
-                }
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.Loop   -> this.blk.traverse()
@@ -109,29 +156,12 @@ class Static () {
 
             is Expr.Catch  -> this.blk.traverse()
             is Expr.Defer  -> {
-                val f = this.up_first { it is Expr.Proto && it.tk.str=="func" }
-                if (f != null) {
-                    val co = f.up_any { it is Expr.Proto && it.tk.str!="func" }
-                    if (co) {
-                        err(this.tk, "defer error : unexpected func with enclosing coro or task")
-                    }
-                }
-                defer_catch_spawn_tasks.add(this.up_first { it is Expr.Do } as Expr.Do)
+                //defer_catch_spawn_tasks.add(this.up_first { it is Expr.Do } as Expr.Do)
                 this.blk.traverse()
             }
 
             is Expr.Yield  -> {
                 this.e.traverse()
-                when {
-                    this.up_any { defer -> (defer is Expr.Defer) }
-                        -> err(this.tk, "yield error : unexpected enclosing defer")
-                    this.up_first { it is Expr.Proto }.let { it?.tk?.str=="func" }
-                        -> err(this.tk, "yield error : unexpected enclosing func")
-                    (this.up_exe() == null)
-                        -> err(this.tk, "yield error : expected enclosing coro" + (if (CEU <= 3) "" else " or task"))
-                    //ups.any(this) { it is Expr.Do && it.arg!=null }
-                    //    -> err(this.tk, "yield error : unexpected enclosing thus")
-                }
                 this.up_all_until { it is Expr.Proto }
                     .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
                     .forEach { G.mems.add(it) }
@@ -160,23 +190,8 @@ class Static () {
                 }
                  */
             }
-            is Expr.Delay  -> {
-                if (!this.up_first { it is Expr.Proto }.let { it?.tk?.str=="task" }) {
-                    err(this.tk, "delay error : expected enclosing task")
-                }
-            }
-            is Expr.Pub    -> {
-                if (this.tsk == null) {
-                    val outer = this.up_first_task_outer()
-                    val ok = (outer != null) && this.up_all_until { it == outer }.none { it is Expr.Proto && it.tk.str!="task" }
-                    if (!ok) {
-                        err(this.tk, "pub error : expected enclosing task")
-                    }
-                    //(ups.first_task_outer(this) == null) -> err(this.tk, "pub error : expected enclosing task")
-                } else {
-                    this.tsk.traverse()
-                }
-            }
+            is Expr.Delay  -> {}
+            is Expr.Pub    -> this.tsk?.traverse()
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
             is Expr.Tasks  -> {
                 this.max.traverse()

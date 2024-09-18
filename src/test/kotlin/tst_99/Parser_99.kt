@@ -1,11 +1,18 @@
 package tst_99
 
 import dceu.*
+import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
+
 class Parser_99 {
     // EMPTY IF / BLOCK
+
+    @Before
+    fun init() {
+        G.N = 1
+    }
 
     @Test
     fun aa_01_empty_if() {

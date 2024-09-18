@@ -114,7 +114,7 @@ val GLOBALS = setOf (
 ))
 
 object G {
-    var N: Int = 0
+    var N: Int = 1
     var outer: Expr.Do? = null
     var ups: MutableMap<Expr,Expr> = mutableMapOf()
     var tags: Map<String,Tk.Tag>? = null
@@ -128,7 +128,7 @@ object G {
     val mems: MutableSet<Expr>  = mutableSetOf()
 
     fun reset () {
-        N = 0
+        N = 1
         outer = null
         ups.clear()
         tags = null
@@ -262,6 +262,7 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         cache_ups()
         G.tags = cache_tags()
         Vars()
+        static_checks()
         Static()
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
         if (verbose) {
