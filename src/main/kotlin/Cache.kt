@@ -1,7 +1,7 @@
 package dceu
 
 fun cache_ups () {
-    G.outer!!.dn_gather { me ->
+    G.outer!!.dn_visit { me ->
         when (me) {
             is Expr.Proto -> {
                 G.ups[me.blk] = me
@@ -77,12 +77,11 @@ fun cache_ups () {
                 me.args.forEach { G.ups[it] = me }
             }
         }
-        emptyMap<Unit,Unit>()
     }
 }
 
 fun cache_tags (): Map<String,Tk.Tag> {
-    val ret = TAGS.map { Pair(it,Tk.Tag(it,G.outer!!.tk.pos.copy())) }.toMap() + G.outer!!.dn_gather {
+    val ret = TAGS.map { Pair(it,Tk.Tag(it,G.outer!!.tk.pos.copy())) }.toMap() + G.outer!!.dn_collect {
         when (it) {
             is Expr.Do     -> if (it.tag == null) emptyMap() else mapOf(Pair(it.tag.str,it.tag))
             is Expr.Escape -> mapOf(Pair(it.tag.str,it.tag))

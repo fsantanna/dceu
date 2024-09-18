@@ -1,7 +1,7 @@
 package dceu
 
 fun static_checks () {
-    G.outer!!.dn_gather { me ->
+    G.outer!!.dn_visit { me ->
         when (me) {
             is Expr.Proto  -> {
                 if (me.nst) {
@@ -76,7 +76,6 @@ fun static_checks () {
             }
             else -> {}
         }
-        emptyMap<Unit,Unit>()
     }
 }
 

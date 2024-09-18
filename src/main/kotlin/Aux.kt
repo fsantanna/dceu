@@ -4,44 +4,48 @@ fun <K,V> List<Map<K,V>>.union (): Map<K,V> {
     return this.fold(emptyMap()) { acc, value -> acc + value }
 }
 
-fun <K,V> Expr.dn_gather (f: (Expr)->Map<K,V>?): Map<K,V> {
+fun <K,V> Expr.dn_collect (f: (Expr)->Map<K,V>?): Map<K,V> {
     val v = f(this)
     if (v == null) {
         return emptyMap()
     }
     return v + when (this) {
-        is Expr.Proto  -> this.blk.dn_gather(f)
-        is Expr.Do     -> this.es.map { it.dn_gather(f) }.union()
-        is Expr.Escape -> this.e?.dn_gather(f) ?: emptyMap()
-        is Expr.Group  -> this.es.map { it.dn_gather(f) }.union()
-        is Expr.Dcl    -> this.src?.dn_gather(f) ?: emptyMap()
-        is Expr.Set    -> this.dst.dn_gather(f) + this.src.dn_gather(f)
-        is Expr.If     -> this.cnd.dn_gather(f) + this.t.dn_gather(f) + this.f.dn_gather(f)
-        is Expr.Loop   -> this.blk.dn_gather(f)
-        is Expr.Drop   -> this.e.dn_gather(f)
+        is Expr.Proto  -> this.blk.dn_collect(f)
+        is Expr.Do     -> this.es.map { it.dn_collect(f) }.union()
+        is Expr.Escape -> this.e?.dn_collect(f) ?: emptyMap()
+        is Expr.Group  -> this.es.map { it.dn_collect(f) }.union()
+        is Expr.Dcl    -> this.src?.dn_collect(f) ?: emptyMap()
+        is Expr.Set    -> this.dst.dn_collect(f) + this.src.dn_collect(f)
+        is Expr.If     -> this.cnd.dn_collect(f) + this.t.dn_collect(f) + this.f.dn_collect(f)
+        is Expr.Loop   -> this.blk.dn_collect(f)
+        is Expr.Drop   -> this.e.dn_collect(f)
 
-        is Expr.Catch  -> this.blk.dn_gather(f)
-        is Expr.Defer  -> this.blk.dn_gather(f)
+        is Expr.Catch  -> this.blk.dn_collect(f)
+        is Expr.Defer  -> this.blk.dn_collect(f)
 
-        is Expr.Yield  -> this.e.dn_gather(f)
-        is Expr.Resume -> this.co.dn_gather(f) + this.args.map { it.dn_gather(f) }.union()
+        is Expr.Yield  -> this.e.dn_collect(f)
+        is Expr.Resume -> this.co.dn_collect(f) + this.args.map { it.dn_collect(f) }.union()
 
-        is Expr.Spawn  -> (this.tsks?.dn_gather(f) ?: emptyMap()) + this.tsk.dn_gather(f) + this.args.map { it.dn_gather(f) }.union()
+        is Expr.Spawn  -> (this.tsks?.dn_collect(f) ?: emptyMap()) + this.tsk.dn_collect(f) + this.args.map { it.dn_collect(f) }.union()
         is Expr.Delay  -> emptyMap()
-        is Expr.Pub    -> this.tsk?.dn_gather(f) ?: emptyMap()
-        is Expr.Toggle -> this.tsk.dn_gather(f) + this.on.dn_gather(f)
-        is Expr.Tasks  -> this.max.dn_gather(f)
+        is Expr.Pub    -> this.tsk?.dn_collect(f) ?: emptyMap()
+        is Expr.Toggle -> this.tsk.dn_collect(f) + this.on.dn_collect(f)
+        is Expr.Tasks  -> this.max.dn_collect(f)
 
-        is Expr.Tuple  -> this.args.map { it.dn_gather(f) }.union()
-        is Expr.Vector -> this.args.map { it.dn_gather(f) }.union()
-        is Expr.Dict   -> this.args.map { it.first.dn_gather(f) + it.second.dn_gather(f) }.union()
-        is Expr.Index  -> this.col.dn_gather(f) + this.idx.dn_gather(f)
-        is Expr.Call   -> this.clo.dn_gather(f) + this.args.map { it.dn_gather(f) }.union()
+        is Expr.Tuple  -> this.args.map { it.dn_collect(f) }.union()
+        is Expr.Vector -> this.args.map { it.dn_collect(f) }.union()
+        is Expr.Dict   -> this.args.map { it.first.dn_collect(f) + it.second.dn_collect(f) }.union()
+        is Expr.Index  -> this.col.dn_collect(f) + this.idx.dn_collect(f)
+        is Expr.Call   -> this.clo.dn_collect(f) + this.args.map { it.dn_collect(f) }.union()
 
         is Expr.Acc, is Expr.Data, is Expr.Nat,
         is Expr.Nil, is Expr.Tag, is Expr.Bool,
         is Expr.Char, is Expr.Num -> emptyMap()
     }
+}
+
+fun Expr.dn_visit (f: (Expr)->Unit) {
+    this.dn_collect { f(it) ; emptyMap<Unit,Unit>() }
 }
 
 fun trap (f: ()->Unit): String {
