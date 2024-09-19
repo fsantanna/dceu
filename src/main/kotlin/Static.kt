@@ -26,7 +26,7 @@ fun static_checks () {
                 }
             }
             is Expr.Group  -> {
-                val up = G.ups[me]!!
+                val up = me.fupx()
                 val ok = (up is Expr.Do) || (up is Expr.Group) || (up is Expr.Dcl) || (up is Expr.Set && up.src==me)
                 if (!ok) {
                     err(me.tk, "group error : unexpected context")
@@ -122,7 +122,7 @@ class Static () {
         when (this) {
             is Expr.Proto  -> {
                 if (this.nst) {
-                    G.ups[this]!!.up_all_until { it is Expr.Proto }
+                    this.fupx().up_all_until { it is Expr.Proto }
                         .filter  { it is Expr.Do || it is Expr.Proto }              // all blocks up to proto
                         .forEach { G.mems.add(it) }
                     /*

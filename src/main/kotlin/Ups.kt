@@ -3,16 +3,16 @@ package dceu
 fun Expr.up_first (cnd: (Expr)->Boolean): Expr? {
     return when {
         cnd(this) -> this
-        (G.ups[this] == null) -> null
-        else -> G.ups[this]!!.up_first(cnd)
+        (this.fup() == null) -> null
+        else -> this.fupx().up_first(cnd)
     }
 }
 
 fun Expr.up_all_until (cnd: (Expr)->Boolean): List<Expr> {
     return listOf(this) + when {
         cnd(this) -> emptyList()
-        (G.ups[this] == null) -> emptyList()
-        else -> G.ups[this]!!.up_all_until(cnd)
+        (this.fup() == null) -> emptyList()
+        else -> this.fupx().up_all_until(cnd)
     }
 }
 
@@ -20,8 +20,8 @@ fun Expr.up_first_without (cnd1: (Expr)->Boolean, cnd2: (Expr)->Boolean): Expr? 
     return when {
         cnd2(this) -> null
         cnd1(this) -> this
-        (G.ups[this] == null) -> null
-        else -> G.ups[this]!!.up_first_without(cnd1,cnd2)
+        (this.fup() == null) -> null
+        else -> this.fupx().up_first_without(cnd1,cnd2)
     }
 }
 
@@ -39,7 +39,7 @@ fun Expr.up_first_task_outer (): Expr.Proto? {
             (it !is Expr.Proto) -> false
             (it.tk.str != "task") -> false
             !it.fake -> true
-            (G.ups[it.up_first { it is Expr.Do }!!] == null) -> true
+            (it.up_first { it is Expr.Do }!!.fup() == null) -> true
             else -> false
         }
     } as Expr.Proto?

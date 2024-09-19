@@ -18,7 +18,7 @@ fun Expr.Call.main (): Expr.Proto {
 }
 
 fun Expr.Proto.id (outer: Expr.Do): String {
-    return G.ups[this].let {
+    return this.fupx().let {
         when {
             (it !is Expr.Dcl) -> this.n.toString()
             (it.src != this) -> error("bug found")
@@ -28,11 +28,11 @@ fun Expr.Proto.id (outer: Expr.Do): String {
 }
 
 fun Expr.is_dst (): Boolean {
-    return G.ups[this].let { it is Expr.Set && it.dst==this }
+    return this.fup().let { it is Expr.Set && it.dst==this }
 }
 
 fun Expr.is_drop (): Boolean {
-    return LEX && G.ups[this].let { it is Expr.Drop && it.e==this }
+    return LEX && this.fupx().let { it is Expr.Drop && it.e==this }
 }
 
 fun Expr.is_constructor (): Boolean {
@@ -145,7 +145,7 @@ fun Expr.data (): Pair<Int?,LData?>? {
 }
 
 fun Expr.id_to_dcl (id: String, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?=null): Expr.Dcl? {
-    val up = G.ups[this]!!.up_first { it is Expr.Do || it is Expr.Proto }
+    val up = this.fupx().up_first { it is Expr.Do || it is Expr.Proto }
     fun aux (es: List<Expr>): Expr.Dcl? {
         return es.firstNotNullOfOrNull {
             when {
@@ -166,7 +166,7 @@ fun Expr.id_to_dcl (id: String, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?
     }
     return when {
         (dcl != null) -> dcl
-        (G.ups[up] == null) -> null
+        (up?.fup() == null) -> null
         (up is Expr.Proto && !cross) -> null
         else -> up!!.id_to_dcl(id, cross, but)
     }

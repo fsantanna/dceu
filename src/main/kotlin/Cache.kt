@@ -1,55 +1,73 @@
 package dceu
 
+fun NExpr.ne (): Expr {
+    return G.ns[this]!!
+}
+
+fun Expr.fup (): Expr? {
+    return G.ups[this.n]?.ne()
+}
+
+fun Expr.fupx (): Expr {
+    return this.fup()!!
+}
+
+fun cache_ns () {
+    G.outer!!.dn_visit {
+        G.ns[it.n] = it
+    }
+}
+
 fun cache_ups () {
     G.outer!!.dn_visit { me ->
         when (me) {
             is Expr.Proto -> {
-                G.ups[me.blk] = me
-                me.pars.forEach { G.ups[it] = me }
+                G.ups[me.blk.n] = me.n
+                me.pars.forEach { G.ups[it.n] = me.n }
             }
 
-            is Expr.Do -> me.es.forEach { G.ups[it] = me }
-            is Expr.Escape -> if (me.e != null) G.ups[me.e] = me
-            is Expr.Group -> me.es.forEach { G.ups[it] = me }
-            is Expr.Dcl -> if (me.src != null) G.ups[me.src] = me
+            is Expr.Do -> me.es.forEach { G.ups[it.n] = me.n }
+            is Expr.Escape -> if (me.e != null) G.ups[me.e.n] = me.n
+            is Expr.Group -> me.es.forEach { G.ups[it.n] = me.n }
+            is Expr.Dcl -> if (me.src != null) G.ups[me.src.n] = me.n
             is Expr.Set -> {
-                G.ups[me.dst] = me
-                G.ups[me.src] = me
+                G.ups[me.dst.n] = me.n
+                G.ups[me.src.n] = me.n
             }
 
             is Expr.If -> {
-                G.ups[me.cnd] = me
-                G.ups[me.t] = me
-                G.ups[me.f] = me
+                G.ups[me.cnd.n] = me.n
+                G.ups[me.t.n] = me.n
+                G.ups[me.f.n] = me.n
             }
 
-            is Expr.Loop -> G.ups[me.blk] = me
+            is Expr.Loop -> G.ups[me.blk.n] = me.n
             is Expr.Data -> {}
-            is Expr.Drop -> G.ups[me.e] = me
+            is Expr.Drop -> G.ups[me.e.n] = me.n
 
-            is Expr.Catch -> G.ups[me.blk] = me
-            is Expr.Defer -> G.ups[me.blk] = me
+            is Expr.Catch -> G.ups[me.blk.n] = me.n
+            is Expr.Defer -> G.ups[me.blk.n] = me.n
 
-            is Expr.Yield -> G.ups[me.e] = me
+            is Expr.Yield -> G.ups[me.e.n] = me.n
             is Expr.Resume -> {
-                G.ups[me.co] = me
-                me.args.forEach { G.ups[it] = me }
+                G.ups[me.co.n] = me.n
+                me.args.forEach { G.ups[it.n] = me.n }
             }
 
             is Expr.Spawn -> {
-                if (me.tsks != null) G.ups[me.tsks] = me
-                G.ups[me.tsk] = me
-                me.args.forEach { G.ups[it] = me }
+                if (me.tsks != null) G.ups[me.tsks.n] = me.n
+                G.ups[me.tsk.n] = me.n
+                me.args.forEach { G.ups[it.n] = me.n }
             }
 
             is Expr.Delay -> {}
-            is Expr.Pub -> if (me.tsk != null) G.ups[me.tsk] = me
+            is Expr.Pub -> if (me.tsk != null) G.ups[me.tsk.n] = me.n
             is Expr.Toggle -> {
-                G.ups[me.tsk] = me
-                G.ups[me.on] = me
+                G.ups[me.tsk.n] = me.n
+                G.ups[me.on.n] = me.n
             }
 
-            is Expr.Tasks -> G.ups[me.max] = me
+            is Expr.Tasks -> G.ups[me.max.n] = me.n
 
             is Expr.Nat -> {}
             is Expr.Acc -> {}
@@ -58,23 +76,23 @@ fun cache_ups () {
             is Expr.Bool -> {}
             is Expr.Char -> {}
             is Expr.Num -> {}
-            is Expr.Tuple -> me.args.forEach { G.ups[it] = me }
-            is Expr.Vector -> me.args.forEach { G.ups[it] = me }
+            is Expr.Tuple -> me.args.forEach { G.ups[it.n] = me.n }
+            is Expr.Vector -> me.args.forEach { G.ups[it.n] = me.n }
             is Expr.Dict -> {
                 me.args.forEach {
-                    G.ups[it.first] = me
-                    G.ups[it.second] = me
+                    G.ups[it.first.n] = me.n
+                    G.ups[it.second.n] = me.n
                 }
             }
 
             is Expr.Index -> {
-                G.ups[me.col] = me
-                G.ups[me.idx] = me
+                G.ups[me.col.n] = me.n
+                G.ups[me.idx.n] = me.n
             }
 
             is Expr.Call -> {
-                G.ups[me.clo] = me
-                me.args.forEach { G.ups[it] = me }
+                G.ups[me.clo.n] = me.n
+                me.args.forEach { G.ups[it.n] = me.n }
             }
         }
     }

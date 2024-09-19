@@ -113,10 +113,13 @@ val GLOBALS = setOf (
     "next-tasks",
 ))
 
+typealias NExpr = Int
+
 object G {
     var N: Int = 1
     var outer: Expr.Do? = null
-    var ups: MutableMap<Expr,Expr> = mutableMapOf()
+    var ns: MutableMap<NExpr,Expr> = mutableMapOf()
+    var ups: MutableMap<NExpr,NExpr> = mutableMapOf()
     var tags: Map<String,Tk.Tag>? = null
     val datas = mutableMapOf<String,LData>()
     val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
@@ -130,6 +133,7 @@ object G {
     fun reset () {
         N = 1
         outer = null
+        ns.clear()
         ups.clear()
         tags = null
         datas.clear()
@@ -259,11 +263,13 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         )
 
         G.outer = Expr.Do(tk0, null, listOf(xargs)+glbs+es)
+        cache_ns()
         cache_ups()
         G.tags = cache_tags()
         Vars()
         static_checks()
         //Static()
+        optim_blocks()
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
         if (verbose) {
             System.err.println("... ceu -> c ...")

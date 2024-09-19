@@ -122,7 +122,7 @@ class Coder () {
                         ${G.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
                             """
                             {
-                                CEU_Value upv = ${dcl.idx(G.ups[this]!!)};
+                                CEU_Value upv = ${dcl.idx(this.fupx())};
                                 ceu_gc_inc_val(upv);
                                 ceu_acc.Dyn->Clo.upvs.buf[$i] = upv;
                             }
@@ -148,7 +148,7 @@ class Coder () {
             }
             is Expr.Do -> {
                 val body = this.es.code()   // before defers[this] check
-                val up = G.ups[this]
+                val up = this.fup()
 
                 val void = false //sta.void(this)
                 if (void) {
@@ -342,7 +342,7 @@ class Coder () {
                     CEU_ERROR_CHK_PTR (
                         continue,
                         ceu_drop(${if (this.prime) "1" else "0"}, ceu_acc, ceux->depth),
-                        ${G.ups[this]!!.toerr()}
+                        ${this.fupx().toerr()}
                     );
                 """ }}
             """
@@ -729,7 +729,7 @@ class Coder () {
                             CEU_ERROR_CHK_PTR (
                                 continue,
                                 ceu_drop(${if (prime) "1" else "0"}, ceu_$n, ceux->depth),
-                                ${G.ups[this]!!.toerr()}
+                                ${this.fupx().toerr()}
                             );
                             CEU_ACC(ceu_$n);
                             ceu_gc_dec_val(ceu_$n);
@@ -856,7 +856,7 @@ class Coder () {
                             CEU_ERROR_CHK_PTR (
                                 continue,
                                 ceu_drop(${if (prime) "1" else "0"}, ceu_$n, ceux->depth),
-                                ${G.ups[this]!!.toerr()}
+                                ${this.fupx().toerr()}
                             );
                             CEU_ACC(ceu_$n);
                             ceu_gc_dec_val(ceu_$n);
