@@ -1688,6 +1688,7 @@ class Exec_01 {
         val out = test(
             """
             do { nil }
+            ;;println(ARGS)
         """
         )
         assert(out == "") { out }

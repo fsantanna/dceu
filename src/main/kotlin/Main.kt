@@ -172,7 +172,7 @@ sealed class Expr (var n: Int, val tk: Tk) {
     data class Group  (val tk_: Tk.Fix, val es: List<Expr>) : Expr(G.N++, tk_)
     data class Dcl    (val tk_: Tk.Fix, val lex: Boolean, /*val poly: Boolean,*/ val idtag: Id_Tag, val src: Expr?):  Expr(G.N++, tk_)
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(G.N++, tk_)
-    data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(G.N++, tk_)
+    data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr, val f: Expr): Expr(G.N++, tk_)
     data class Loop   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(G.N++, tk_)
     data class Data   (val tk_: Tk.Tag, val ids: List<Id_Tag>): Expr(G.N++, tk_)
     data class Drop   (val tk_: Tk.Fix, val e: Expr, val prime: Boolean): Expr(G.N++, tk_)
@@ -238,7 +238,7 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         }
         return e.message!! + "\n"
     }
-    //println(es.tostr())
+    //println(es.to_str())
     val c = try {
         if (verbose) {
             System.err.println("... analysing ...")
@@ -263,6 +263,7 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         )
 
         G.outer = Expr.Do(tk0, null, listOf(xargs)+glbs+es)
+        //println(G.outer)
         cache_ns()
         cache_ups()
         G.tags = cache_tags()
@@ -270,6 +271,7 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         static_checks()
         //Static()
         optim_blocks()
+        //println(G.outer)
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
         if (verbose) {
             System.err.println("... ceu -> c ...")

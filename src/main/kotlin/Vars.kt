@@ -8,7 +8,7 @@ fun type (dcl: Expr.Dcl, src: Expr): Type {
     val blk = dcl.to_blk()
     val up  = src.up_first { it is Expr.Proto || it==blk }
     return when {
-        (blk == G.outer) -> Type.GLOBAL
+        (blk.n == G.outer!!.n) -> Type.GLOBAL
         (blk == up)      -> Type.LOCAL
         else -> {
             up as Expr.Proto

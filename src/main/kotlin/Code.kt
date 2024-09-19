@@ -167,7 +167,7 @@ class Coder () {
                         ${(CEU >= 4).cond { """
                              ${(!this.is_mem()).cond { "CEU_Block" }} $blkc = NULL;
                         """}}
-                        ${(this == G.outer).cond { """
+                        ${(this.n == G.outer!!.n).cond { """
                             { // ARGC / ARGV
                                 CEU_Value args[ceu_argc];
                                 for (int i=0; i<ceu_argc; i++) {
@@ -179,7 +179,7 @@ class Coder () {
                             }
                         """}}
                         
-                        ${(this != G.outer).cond { 
+                        ${(this.n != G.outer!!.n).cond { 
                             this.to_dcls().let { dcls ->
                                 """
                                 ${(!this.is_mem()).cond { """

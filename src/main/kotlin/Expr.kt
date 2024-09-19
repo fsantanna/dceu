@@ -21,7 +21,7 @@ fun Expr.Proto.id (outer: Expr.Do): String {
     return this.fupx().let {
         when {
             (it !is Expr.Dcl) -> this.n.toString()
-            (it.src != this) -> error("bug found")
+            (it.src!!.n != this.n) -> error("bug found")
             else -> it.idtag.first.str.idc() + (this.up_first() { it is Expr.Do } != outer).cond { "_${this.n}" }
         }
     }
