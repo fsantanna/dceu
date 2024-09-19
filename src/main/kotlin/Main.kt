@@ -123,7 +123,7 @@ object G {
     var tags: Map<String,Tk.Tag>? = null
     val datas = mutableMapOf<String,LData>()
     val nats: MutableMap<NExpr,Pair<List<NExpr>,String>> = mutableMapOf()
-    val proto_to_upvs: MutableMap<Expr.Proto,MutableList<Expr.Dcl>> = mutableMapOf()
+    val proto_to_upvs: MutableMap<NExpr,MutableList<NExpr>> = mutableMapOf()
     val proto_has_outer: MutableSet<Expr.Proto> = mutableSetOf()
 
     // Do or Proto that requires mem:

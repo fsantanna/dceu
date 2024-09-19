@@ -110,19 +110,19 @@ class Coder () {
                         ceu_create_clo_${this.tk.str} (
                             ceu_pro_$id,
                             ${this.pars.size},
-                            ${G.proto_to_upvs[this]!!.size}
+                            ${G.proto_to_upvs[this.n]!!.size}
                             ${isexe.cond {", sizeof(CEU_Pro_$id)"}}
                             CEU50(COMMA ceux->exe)
                             CEU_LEX_X(COMMA ((CEU_Lex) { ${if (this.nst) "CEU_LEX_IMMUT, ceux->depth" else "CEU_LEX_FLEET, CEU_LEX_UNDEF"} }))
                         )
                     );
                     
-                    // UPVALS = ${G.proto_to_upvs[this]!!.size}
+                    // UPVALS = ${G.proto_to_upvs[this.n]!!.size}
                     {                        
-                        ${G.proto_to_upvs[this]!!.mapIndexed { i,dcl ->
+                        ${G.proto_to_upvs[this.n]!!.mapIndexed { i,dcl ->
                             """
                             {
-                                CEU_Value upv = ${dcl.idx(this.fupx())};
+                                CEU_Value upv = ${(dcl.fnex() as Expr.Dcl).idx(this.fupx())};
                                 ceu_gc_inc_val(upv);
                                 ceu_acc.Dyn->Clo.upvs.buf[$i] = upv;
                             }

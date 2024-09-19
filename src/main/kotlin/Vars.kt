@@ -67,7 +67,7 @@ class Vars () {
                 .filter { it is Expr.Proto }
                 .forEach {
                     //println(listOf(dcl.id.str, it.tk))
-                    G.proto_to_upvs[it]!!.add(dcl)
+                    G.proto_to_upvs[it.n]!!.add(dcl.n)
                 }
         }
 
@@ -77,7 +77,7 @@ class Vars () {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
-                G.proto_to_upvs[this] = mutableListOf()
+                G.proto_to_upvs[this.n] = mutableListOf()
                 if (this.tag !=null && !G.datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
