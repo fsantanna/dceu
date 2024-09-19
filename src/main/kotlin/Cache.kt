@@ -1,11 +1,11 @@
 package dceu
 
-fun NExpr.ne (): Expr {
+fun NExpr.fnex (): Expr {
     return G.ns[this]!!
 }
 
 fun Expr.fup (): Expr? {
-    return G.ups[this.n]?.ne()
+    return G.ups[this.n]?.fnex()
 }
 
 fun Expr.fupx (): Expr {

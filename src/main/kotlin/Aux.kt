@@ -10,7 +10,7 @@ fun <K,V> Expr.dn_collect (f: (Expr)->Map<K,V>?): Map<K,V> {
         return emptyMap()
     }
     return v + when (this) {
-        is Expr.Proto  -> this.blk.dn_collect(f)
+        is Expr.Proto  -> this.blk.dn_collect(f) + this.pars.map { it.dn_collect(f) }.union()
         is Expr.Do     -> this.es.map { it.dn_collect(f) }.union()
         is Expr.Escape -> this.e?.dn_collect(f) ?: emptyMap()
         is Expr.Group  -> this.es.map { it.dn_collect(f) }.union()

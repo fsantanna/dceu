@@ -669,10 +669,10 @@ class Coder () {
             }
 
             is Expr.Nat -> {
-                val body = G.nats[this]!!.let { (set, str) ->
+                val body = G.nats[this.n]!!.let { (set, str) ->
                     var x = str
                     for (dcl in set) {
-                        val idx = dcl.idx(this)
+                        val idx = (dcl.fnex() as Expr.Dcl).idx(this)
                         //println(setOf(x, v))
                         x = x.replaceFirst("XXX", idx)
                     }

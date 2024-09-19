@@ -122,7 +122,7 @@ object G {
     var ups: MutableMap<NExpr,NExpr> = mutableMapOf()
     var tags: Map<String,Tk.Tag>? = null
     val datas = mutableMapOf<String,LData>()
-    val nats: MutableMap<Expr.Nat,Pair<List<Expr.Dcl>,String>> = mutableMapOf()
+    val nats: MutableMap<NExpr,Pair<List<NExpr>,String>> = mutableMapOf()
     val proto_to_upvs: MutableMap<Expr.Proto,MutableList<Expr.Dcl>> = mutableMapOf()
     val proto_has_outer: MutableSet<Expr.Proto> = mutableSetOf()
 
@@ -165,7 +165,7 @@ sealed class Tk (val str: String, val pos: Pos) {
 
 typealias Id_Tag  = Pair<Tk.Id,Tk.Tag?>
 
-sealed class Expr (val n: Int, val tk: Tk) {
+sealed class Expr (var n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val nst: Boolean, val fake: Boolean, val tag: Tk.Tag?, val pars: List<Expr.Dcl>, val blk: Do): Expr(G.N++, tk_)
     data class Do     (val tk_: Tk, val tag: Tk.Tag?, val es: List<Expr>) : Expr(G.N++, tk_)
     data class Escape (val tk_: Tk.Fix, val tag: Tk.Tag, val e: Expr?): Expr(G.N++, tk_)

@@ -129,9 +129,9 @@ class Vars () {
             is Expr.Tasks  -> this.max.traverse()
 
             is Expr.Nat    -> {
-                G.nats[this] = this.tk.str.let {
+                G.nats[this.n] = this.tk.str.let {
                     assert(!it.contains("XXX")) { "TODO: native cannot contain XXX"}
-                    val set = mutableListOf<Expr.Dcl>()
+                    val set = mutableListOf<NExpr>()
                     var str = ""
                     var i = 0
 
@@ -170,7 +170,7 @@ class Vars () {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
                             val dcl = acc(this, id)
-                            set.add(dcl)
+                            set.add(dcl.n)
                             "(XXX)$no"
                         }
                     }
