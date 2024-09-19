@@ -12,7 +12,7 @@ fun type (dcl: Expr.Dcl, src: Expr): Type {
         (blk == up)      -> Type.LOCAL
         else -> {
             up as Expr.Proto
-            G.proto_has_outer.add(up)
+            G.proto_has_outer.add(up.n)
             val nst = up.up_all_until { it == blk }
                 .filter { it is Expr.Proto }
                 .let { it as List<Expr.Proto> }

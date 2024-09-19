@@ -137,7 +137,7 @@ class Coder () {
                         pres.add(Pair(mem, src))
                         cre
                     }
-                    (this.nst && G.proto_has_outer.contains(this)) -> {
+                    (this.nst && G.proto_has_outer.contains(this.n)) -> {
                         src + cre
                     }
                     else -> {

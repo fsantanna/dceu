@@ -124,7 +124,7 @@ object G {
     val datas = mutableMapOf<String,LData>()
     val nats: MutableMap<NExpr,Pair<List<NExpr>,String>> = mutableMapOf()
     val proto_to_upvs: MutableMap<NExpr,MutableList<NExpr>> = mutableMapOf()
-    val proto_has_outer: MutableSet<Expr.Proto> = mutableSetOf()
+    val proto_has_outer: MutableSet<NExpr> = mutableSetOf()
 
     // Do or Proto that requires mem:
     //  - yield // nested coro/task // spawn/tasks (block needs mem)
