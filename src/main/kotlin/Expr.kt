@@ -144,27 +144,14 @@ fun Expr.data (): Pair<Int?,LData?>? {
 
 fun Expr.id_to_dcl (id: String, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?=null): Expr.Dcl? {
     val up = this.fupx().up_first { it is Expr.Do || it is Expr.Proto }
-    fun aux (es: List<Expr>): Expr.Dcl? {
-        return es.firstNotNullOfOrNull {
-            when {
-                (it is Expr.Set) -> aux(listOfNotNull(it.src))
-                (it is Expr.Group) -> aux(it.es)
-                (it !is Expr.Dcl) -> null
-                (but!==null && but(it)) -> aux(listOfNotNull(it.src))
-                (it.idtag.first.str == id) -> it
-                else -> aux(listOfNotNull(it.src))
-            }
-        }
-
-    }
     val dcl: Expr.Dcl? = when {
         (up is Expr.Proto) -> up.pars.firstOrNull { (but==null||!but(it)) && it.idtag.first.str==id }
-        (up is Expr.Do) -> aux(up.es)
+        (up is Expr.Do) -> up.to_dcls().firstOrNull { (but==null||!but(it)) && it.idtag.first.str==id }
         else -> null
     }
     return when {
-        (dcl !== null) -> dcl
-        (up?.fup() === null) -> null
+        (dcl != null) -> dcl
+        (up!!.fup() == null) -> null
         (up is Expr.Proto && !cross) -> null
         else -> up!!.id_to_dcl(id, cross, but)
     }
