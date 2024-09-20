@@ -186,7 +186,7 @@ class Parser (lexer_: Lexer)
                     if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
                 }
                 val e2 = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
-                val xe = if (e2 == null) {
+                val xe = if (e2 === null) {
                     "$op(${id.str})"
                 } else {
                     "$op(${id.str}, ${e2.to_str(true)})"
@@ -328,7 +328,7 @@ class Parser (lexer_: Lexer)
 
     fun block (tk0: Tk? = null): Expr.Do {
         val tk = when {
-            (tk0 != null) -> tk0
+            (tk0 !== null) -> tk0
             (this.tk0.str=="do") -> this.tk0
             else -> this.tk1
         }
@@ -429,7 +429,7 @@ class Parser (lexer_: Lexer)
                     }
                     val tag2 = when {
                         (CEU < 99) -> tag1
-                        (tag1 != null) -> tag1
+                        (tag1 !== null) -> tag1
                         (src !is Expr.Call) -> null
                         (src.clo !is Expr.Acc) -> null
                         (src.clo.tk.str != "tag") -> null
@@ -554,7 +554,7 @@ class Parser (lexer_: Lexer)
                 }
                 val blk = this.block(this.tk1)
                 val proto = Expr.Proto(tk0, nst, fak, tag, pars, blk)
-                if (dcl == null) {
+                if (dcl === null) {
                     proto
                 } else {
                     this.nest("""
@@ -568,7 +568,7 @@ class Parser (lexer_: Lexer)
                 val tag = this.tk0 as Tk.Tag
 
                 fun one (pre: Tk.Tag?, me: Tk.Tag): List<Expr.Data> {
-                    val xme = if (pre == null) me else {
+                    val xme = if (pre === null) me else {
                         Tk.Tag(pre.str+'.'+me.str.drop(1), me.pos.copy())
                     }
                     this.acceptFix_err("=")
@@ -587,7 +587,7 @@ class Parser (lexer_: Lexer)
                             this.tk0 as Tk.Tag
                         }
                         if (this.checkFix("=")) {
-                            val xxtag = if (xtag!=null) xtag else Tk.Tag(":ceu_tag_${G.N}",id.pos.copy())
+                            val xxtag = if (xtag!==null) xtag else Tk.Tag(":ceu_tag_${G.N}",id.pos.copy())
                             Pair(Pair(id, xxtag), one(null, xxtag))
                         } else {
                             Pair(Pair(id, xtag), emptyList())
@@ -838,7 +838,7 @@ class Parser (lexer_: Lexer)
                 }
 
                 when {
-                    (ids == null) -> {
+                    (ids === null) -> {
                         val blk = this.block()
                         this.nest("""
                             do :break {
@@ -996,7 +996,7 @@ class Parser (lexer_: Lexer)
                         ${ifs.map { (cnd,idstags_es) ->
                             val (idstags,es) = idstags_es
                             val idtagx = if (idstags.isEmpty()) Pair(Tk.Id("ceu_ifs_${G.N}",tk0.pos.copy()),null) else idstags.first() 
-                            if (cnd == null) {
+                            if (cnd === null) {
                                 es.to_str(true) // do ...
                             } else {
                                 """
@@ -1330,7 +1330,7 @@ class Parser (lexer_: Lexer)
     // expr_prim
 
     fun expr_4_suf (xe: Expr? = null): Expr {
-        val e = if (xe != null) xe else this.expr_prim()
+        val e = if (xe !== null) xe else this.expr_prim()
         val ok = this.tk0.pos.is_same_line(this.tk1.pos) && (
                     this.acceptFix("[") || this.acceptFix(".") || this.acceptFix("(")
                  )
@@ -1417,12 +1417,12 @@ class Parser (lexer_: Lexer)
         )
     }
     fun expr_3_met (xop: String? = null, xe: Expr? = null): Expr {
-        val e = if (xe != null) xe else this.expr_4_suf()
+        val e = if (xe !== null) xe else this.expr_4_suf()
         val ok = (CEU>=99) && (this.acceptFix("->") || this.acceptFix("<-"))
         if (!ok) {
             return e
         }
-        if (xop!=null && xop!=this.tk0.str) {
+        if (xop!==null && xop!==this.tk0.str) {
             //err(this.tk0, "sufix operation error : expected surrounding parentheses")
         }
         return when (this.tk0.str) {
@@ -1457,13 +1457,13 @@ class Parser (lexer_: Lexer)
         }
     }
     fun expr_1_bin (xop: String? = null, xe1: Expr? = null): Expr {
-        val e1 = if (xe1 != null) xe1 else this.expr_2_pre()
+        val e1 = if (xe1 !== null) xe1 else this.expr_2_pre()
         val ok = this.tk1.pos.is_same_line(this.tk0.pos.copy()) && // x or \n y (ok) // x \n or y (not allowed) // problem with '==' in 'ifs'
                     this.acceptEnu("Op")
         if (!ok) {
             return e1
         }
-        if (xop!=null && xop!=this.tk0.str) {
+        if (xop!==null && xop!=this.tk0.str) {
             err(this.tk0, "binary operation error : expected surrounding parentheses")
         }
         val op = this.tk0
@@ -1502,12 +1502,12 @@ class Parser (lexer_: Lexer)
         )
     }
     fun expr_0_out (xop: String? = null, xe: Expr? = null): Expr {
-        val e = if (xe != null) xe else this.expr_1_bin()
+        val e = if (xe !== null) xe else this.expr_1_bin()
         val ok = (CEU>=99 && (this.acceptFix("where") || this.acceptFix("thus") || this.acceptFix("-->") || this.acceptFix("<--")))
         if (!ok) {
             return e
         }
-        if (xop!=null && xop!=this.tk0.str) {
+        if (xop!==null && xop!=this.tk0.str) {
             //err(this.tk0, "sufix operation error : expected surrounding parentheses")
         }
         val op = this.tk0

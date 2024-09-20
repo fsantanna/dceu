@@ -6,7 +6,7 @@ fun <K,V> List<Map<K,V>>.union (): Map<K,V> {
 
 fun <K,V> Expr.dn_collect (f: (Expr)->Map<K,V>?): Map<K,V> {
     val v = f(this)
-    if (v == null) {
+    if (v === null) {
         return emptyMap()
     }
     return v + when (this) {
@@ -63,7 +63,7 @@ fun Pos.is_same_line (oth: Pos): Boolean {
 
 fun <T> T?.cond2 (f: (v:T)->String, g: (()->String)?): String {
     return when (this) {
-        false, null -> if (g != null) g() else ""
+        false, null -> if (g !== null) g() else ""
         else  -> f(this)
     }
 }

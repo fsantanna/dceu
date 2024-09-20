@@ -42,7 +42,7 @@ fun static_checks () {
             }
             is Expr.Defer  -> {
                 val f = me.up_first { it is Expr.Proto && it.tk.str=="func" }
-                if (f != null) {
+                if (f !== null) {
                     val co = f.up_any { it is Expr.Proto && it.tk.str!="func" }
                     if (co) {
                         err(me.tk, "defer error : unexpected func with enclosing coro or task")
@@ -55,7 +55,7 @@ fun static_checks () {
                         -> err(me.tk, "yield error : unexpected enclosing defer")
                     me.up_first { it is Expr.Proto }.let { it?.tk?.str=="func" }
                         -> err(me.tk, "yield error : unexpected enclosing func")
-                    (me.up_exe() == null)
+                    (me.up_exe() === null)
                         -> err(me.tk, "yield error : expected enclosing coro" + (if (CEU <= 3) "" else " or task"))
                 }
             }
@@ -65,13 +65,13 @@ fun static_checks () {
                 }
             }
             is Expr.Pub    -> {
-                if (me.tsk == null) {
+                if (me.tsk === null) {
                     val outer = me.up_first_task_outer()
-                    val ok = (outer != null) && me.up_all_until { it == outer }.none { it is Expr.Proto && it.tk.str!="task" }
+                    val ok = (outer !== null) && me.up_all_until { it == outer }.none { it is Expr.Proto && it.tk.str!="task" }
                     if (!ok) {
                         err(me.tk, "pub error : expected enclosing task")
                     }
-                    //(ups.first_task_outer(this) == null) -> err(this.tk, "pub error : expected enclosing task")
+                    //(ups.first_task_outer(this) === null) -> err(this.tk, "pub error : expected enclosing task")
                 }
             }
             else -> {}
@@ -104,7 +104,7 @@ class Static () {
         return when {
             true -> false
             blk.is_mem(true) -> false
-            (blk.tag != null) -> false
+            (blk.tag !== null) -> false
             !dcls.isEmpty() -> false
             (G.ups[blk] is Expr.Proto) -> false
             this.defer_catch_spawn_tasks.contains(blk) -> false
@@ -178,7 +178,7 @@ class Static () {
                 this.tsks?.traverse()
                 this.tsk.traverse()
                 this.args.forEach { it.traverse() }
-                if (this.tsks == null) {
+                if (this.tsks === null) {
                     //defer_catch_spawn_tasks.add(this.up_first { it is Expr.Do } as Expr.Do)
 
                     // tasks is the one relevant, not the spawn itself
@@ -188,7 +188,7 @@ class Static () {
                 }
                 /*
                 when {
-                    (ups.first(this) { f -> ((f is Expr.Proto) && f.tk.str == "func") } != null)
+                    (ups.first(this) { f -> ((f is Expr.Proto) && f.tk.str == "func") } !== null)
                        -> err(this.tk, "spawn error : unexpected enclosing func")
                 }
                  */
@@ -216,7 +216,7 @@ class Static () {
                     //      - f is ok and all fs' accessed from f
                     val up_proto = this.up_first { it is Expr.Proto && G.ups[it].let { it is Expr.Dcl && (it.tk.str=="val" || it.tk.str=="val'") } }
                     when {
-                        (up_proto == null) -> protos_use_f(dcl.src)
+                        (up_proto === null) -> protos_use_f(dcl.src)
                         //!protos_use_unused.contains(up_proto) -> protos_use_f(dcl.src)
                         else -> protos_use_map[up_proto]!!.add(dcl.src)
                     }

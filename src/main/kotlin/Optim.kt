@@ -26,7 +26,7 @@ fun optim_blocks () {
             }
 
             is Expr.Escape -> {
-                val (req1, e1) = if (this.e == null) Pair(false, null) else {
+                val (req1, e1) = if (this.e === null) Pair(false, null) else {
                     this.e.traverse()
                 }
                 Pair(req1, Expr.Escape(this.tk_, this.tag, e1))
@@ -39,7 +39,7 @@ fun optim_blocks () {
 
             is Expr.Dcl -> {
                 val req1 = (this.tk.str == "val" || this.tk.str == "var")
-                val (req2, src2) = if (this.src == null) Pair(false, null) else {
+                val (req2, src2) = if (this.src === null) Pair(false, null) else {
                     this.src.traverse()
                 }
                 val ret1 = Expr.Dcl(this.tk_, lex, idtag, src2)
@@ -92,7 +92,7 @@ fun optim_blocks () {
             }
 
             is Expr.Spawn -> {
-                val (_, tsks) = if (this.tsks == null) Pair(false, null) else {
+                val (_, tsks) = if (this.tsks === null) Pair(false, null) else {
                     this.tsks.traverse()
                 }
                 val (_, tsk) = this.tsk.traverse()
@@ -105,7 +105,7 @@ fun optim_blocks () {
             }
 
             is Expr.Pub -> {
-                val (req, tsk) = if (tsk == null) Pair(false, null) else {
+                val (req, tsk) = if (tsk === null) Pair(false, null) else {
                     this.tsk.traverse()
                 }
                 Pair(req, Expr.Pub(this.tk_, tsk))

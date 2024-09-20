@@ -20,7 +20,7 @@ class Coder () {
     fun Expr.check_aborted (cmd: String): String {
         val exe = this.up_exe()
         val defer = this.up_first_without({ it is Expr.Defer }, { it is Expr.Proto })
-        return (CEU>=3 && exe!=null && defer==null).cond { """
+        return (CEU>=3 && exe!==null && defer===null).cond { """
             if (ceux->exe->status == CEU_EXE_STATUS_TERMINATED) {
                 $cmd;
             }
@@ -292,7 +292,7 @@ class Coder () {
                     //sta.protos_use_unused.contains(this.src) -> """
                     //    // $idx: unused function
                     //"""
-                    (this.src != null) -> """
+                    (this.src !== null) -> """
                         ${this.src.code()}
                         #ifdef CEU_LEX
                         CEU_ERROR_CHK_PTR (
@@ -492,7 +492,7 @@ class Coder () {
                         CEU_Value ceu_args_$n[${this.args.size}];
                     """ }}
 
-                    ${(CEU>=5 && this.tsks!=null).cond {
+                    ${(CEU>=5 && this.tsks!==null).cond {
                         this.tsks!!.code() + """
                             ${this.idx("tsks_$n")} = ceu_acc;                            
                             if (ceu_acc.type != CEU_VALUE_TASKS) {
@@ -520,7 +520,7 @@ class Coder () {
 
                     ${this.tsk.code()}
                     CEU_Dyn* ceu_a_$n = ${when {
-                        (CEU<5 || this.tsks==null) -> "(CEU_Dyn*)ceu_task_up(ceux)"
+                        (CEU<5 || this.tsks===null) -> "(CEU_Dyn*)ceu_task_up(ceux)"
                         else -> this.idx("tsks_$n") + ".Dyn"
                     }};
                     CEU_Block* ceu_b_$n = ${this.tsks.cond2({"NULL"}, {"&$blkc"})};
@@ -532,7 +532,7 @@ class Coder () {
                     CEU_ERROR_CHK_PTR (
                         continue,
                         ceu_lex_chk_own(ceu_acc,
-                            ${if (CEU>=5 && this.tsks!=null) {
+                            ${if (CEU>=5 && this.tsks!==null) {
                                 "ceu_a_$n->Any.lex"
                             } else {
                                 "(CEU_Lex) { CEU_LEX_IMMUT, ceux->depth }"  
@@ -542,7 +542,7 @@ class Coder () {
                     );
                 #endif
         
-                    ${(CEU>=5 && this.tsks!=null).cond { """
+                    ${(CEU>=5 && this.tsks!==null).cond { """
                         if (ceu_acc.type != CEU_VALUE_NIL)
                     """ }}
                     {
@@ -575,7 +575,7 @@ class Coder () {
             """
             is Expr.Pub -> {
                 val id = this.idx( "val_$n")
-                val exe = if (this.tsk != null) "" else {
+                val exe = if (this.tsk !== null) "" else {
                     this.up_first_task_outer().let { outer ->
                         val n = this.up_all_until() {
                             it is Expr.Proto && it.tk.str=="task" && !it.fake
@@ -806,7 +806,7 @@ class Coder () {
             """
             }
             is Expr.Index -> {
-                val idx = this.data().let { if (it == null) -1 else it.first!! }
+                val idx = this.data().let { if (it === null) -1 else it.first!! }
                 val id_col = this.idx("col_$n")
                 val id_val = this.idx("val_$n")
                 """

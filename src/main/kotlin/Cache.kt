@@ -27,9 +27,9 @@ fun cache_ups () {
             }
 
             is Expr.Do -> me.es.forEach { G.ups[it.n] = me.n }
-            is Expr.Escape -> if (me.e != null) G.ups[me.e.n] = me.n
+            is Expr.Escape -> if (me.e !== null) G.ups[me.e.n] = me.n
             is Expr.Group -> me.es.forEach { G.ups[it.n] = me.n }
-            is Expr.Dcl -> if (me.src != null) G.ups[me.src.n] = me.n
+            is Expr.Dcl -> if (me.src !== null) G.ups[me.src.n] = me.n
             is Expr.Set -> {
                 G.ups[me.dst.n] = me.n
                 G.ups[me.src.n] = me.n
@@ -55,13 +55,13 @@ fun cache_ups () {
             }
 
             is Expr.Spawn -> {
-                if (me.tsks != null) G.ups[me.tsks.n] = me.n
+                if (me.tsks !== null) G.ups[me.tsks.n] = me.n
                 G.ups[me.tsk.n] = me.n
                 me.args.forEach { G.ups[it.n] = me.n }
             }
 
             is Expr.Delay -> {}
-            is Expr.Pub -> if (me.tsk != null) G.ups[me.tsk.n] = me.n
+            is Expr.Pub -> if (me.tsk !== null) G.ups[me.tsk.n] = me.n
             is Expr.Toggle -> {
                 G.ups[me.tsk.n] = me.n
                 G.ups[me.on.n] = me.n
@@ -101,10 +101,10 @@ fun cache_ups () {
 fun cache_tags (): Map<String,Tk.Tag> {
     val ret = TAGS.map { Pair(it,Tk.Tag(it,G.outer!!.tk.pos.copy())) }.toMap() + G.outer!!.dn_collect {
         when (it) {
-            is Expr.Do     -> if (it.tag == null) emptyMap() else mapOf(Pair(it.tag.str,it.tag))
+            is Expr.Do     -> if (it.tag === null) emptyMap() else mapOf(Pair(it.tag.str,it.tag))
             is Expr.Escape -> mapOf(Pair(it.tag.str,it.tag))
             is Expr.Data   -> mapOf(Pair(it.tk_.str,it.tk_))
-            is Expr.Catch  -> if (it.tag == null) emptyMap() else mapOf(Pair(it.tag.str,it.tag))
+            is Expr.Catch  -> if (it.tag === null) emptyMap() else mapOf(Pair(it.tag.str,it.tag))
             is Expr.Tag    -> mapOf(Pair(it.tk_.str,it.tk_))
             else           -> emptyMap()
         }

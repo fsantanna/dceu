@@ -46,7 +46,7 @@ class Vars () {
 
     fun acc (e: Expr, id: String): Expr.Dcl {
         val dcl: Expr.Dcl? = e.id_to_dcl(id)
-        if (dcl == null) {
+        if (dcl === null) {
             err(e.tk, "access error : variable \"${id}\" is not declared")
         }
 
@@ -78,7 +78,7 @@ class Vars () {
         when (this) {
             is Expr.Proto  -> {
                 G.proto_to_upvs[this.n] = mutableListOf()
-                if (this.tag !=null && !G.datas.containsKey(this.tag.str)) {
+                if (this.tag !==null && !G.datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
                 this.pars.forEach { check(it) }
@@ -108,7 +108,7 @@ class Vars () {
                     err(this.tk, "data error : found duplicate ids")
                 }
                 ids.forEach { (_,tag) ->
-                    if (tag!=null && !G.datas.containsKey(tag.str)) {
+                    if (tag!==null && !G.datas.containsKey(tag.str)) {
                         err(tag, "data error : data ${tag.str} is not declared")
                     }
                 }

@@ -22,7 +22,7 @@ fun Expr.Proto.id (outer: Expr.Do): String {
         when {
             (it !is Expr.Dcl) -> this.n.toString()
             (it.src!!.n != this.n) -> error("bug found")
-            else -> it.idtag.first.str.idc() + (this.up_first() { it is Expr.Do } != outer).cond { "_${this.n}" }
+            else -> it.idtag.first.str.idc() + (this.up_first() { it is Expr.Do } !== outer).cond { "_${this.n}" }
         }
     }
 }
@@ -64,7 +64,7 @@ fun Expr.is_lval (): Boolean {
 fun Expr.is_mem (out: Boolean=false): Boolean {
     val proto = this.up_first { it is Expr.Proto }.let {
         when {
-            (it == null) -> null
+            (it === null) -> null
             (it.tk.str == "func") -> null
             else -> it
         }
@@ -101,7 +101,7 @@ fun Expr.data (): Pair<Int?,LData?>? {
         is Expr.Acc -> {
             val dcl = this.id_to_dcl(this.tk.str)!!
             dcl.idtag.second.let {
-                if (it == null) {
+                if (it === null) {
                     null
                 } else {
                     Pair(null, G.datas[it.str])
@@ -109,11 +109,11 @@ fun Expr.data (): Pair<Int?,LData?>? {
             }
         }
         is Expr.Pub -> {
-            if (this.tsk != null) {
+            if (this.tsk !== null) {
                 this.tsk.data()
             } else {
                 val task = this.up_first_task_outer()
-                if (task?.tag == null) null else {
+                if (task?.tag === null) null else {
                     Pair(null, G.datas[task.tag.str]!!)
                 }
             }
@@ -129,10 +129,10 @@ fun Expr.data (): Pair<Int?,LData?>? {
                     val idx = l.indexOfFirst { it.first.str == this.idx.tk.str.drop(1) }
                     val v = if (idx == -1) null else l[idx]
                     when {
-                        (v == null) -> {
+                        (v === null) -> {
                             err(this.idx.tk, "index error : undeclared data field ${this.idx.tk.str}")
                         }
-                        (v.second == null) -> Pair(idx, null)
+                        (v.second === null) -> Pair(idx, null)
                         else -> {
                             Pair(idx, G.datas[v.second!!.str]!!)
                         }
@@ -152,7 +152,7 @@ fun Expr.id_to_dcl (id: String, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?
                 (it is Expr.Set) -> aux(listOfNotNull(it.src))
                 (it is Expr.Group) -> aux(it.es)
                 (it !is Expr.Dcl) -> null
-                (but!=null && but(it)) -> aux(listOfNotNull(it.src))
+                (but!==null && but(it)) -> aux(listOfNotNull(it.src))
                 (it.idtag.first.str == id) -> it
                 else -> aux(listOfNotNull(it.src))
             }
@@ -165,8 +165,8 @@ fun Expr.id_to_dcl (id: String, cross: Boolean=true, but: ((Expr.Dcl)->Boolean)?
         else -> null
     }
     return when {
-        (dcl != null) -> dcl
-        (up?.fup() == null) -> null
+        (dcl !== null) -> dcl
+        (up?.fup() === null) -> null
         (up is Expr.Proto && !cross) -> null
         else -> up!!.id_to_dcl(id, cross, but)
     }
