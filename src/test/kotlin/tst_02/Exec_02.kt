@@ -552,6 +552,20 @@ class Exec_02 {
         """)
         assert(out == "2\n4\n5\n111\n333\n222\n7\n6\n8\n10\n9\n3\n11\n13\n12\n1\n") { out }
     }
+    @Test
+    fun ee_06_defer () {
+        val out = test("""
+            do {
+                defer {
+                    println(:ok)
+                };
+                do {
+                    nil
+                }
+            }
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // THROW / CATCH
 

@@ -332,10 +332,27 @@ class Exec_50 {
                 println(x)
             }
             val co = coroutine(CO)
+            do {    ;; block optimized out
+                val t = []
+                do {
+                    resume co(drop(t))
+                }
+            }
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun hh_07x_coro_depth() {
+        val out = test("""
+            val CO = coro (x) {
+                println(x)
+            }
+            val co = coroutine(CO)
             do {
                 val t = []
                 do {
                     resume co(drop(t))
+                    val x
                 }
             }
         """)
@@ -380,13 +397,28 @@ class Exec_50 {
                 func :nested () {
                     nil
                 }
+                val x
             }
             println(:no)
         """)
         //assert(out == "anon : (lin 3, col 17) : :nested error : expected enclosing prototype\n") { out }
         //assert(out == ":ok\n") { out }
-        assert(out == " |  anon : (lin 2, col 13) : (val f = do { (func :nested () { nil; }); })\n" +
+        assert(out == " |  anon : (lin 2, col 13) : (val f = do { (func :nested () { nil; }); ...\n" +
                 " v  error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun nn_02x_nested() {
+        val out = test("""
+            val f = do {
+                func :nested () {
+                    nil
+                }
+            }
+            println(:ok)
+        """)
+        //assert(out == "anon : (lin 3, col 17) : :nested error : expected enclosing prototype\n") { out }
+        //assert(out == ":ok\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun nn_03_nested() {
@@ -1535,7 +1567,7 @@ class Exec_50 {
                 " v  error : cannot copy reference out\n") { out }
     }
     @Test
-    fun cd_01_val_prime_err() {
+    fun cd_02_val_prime_err() {
         val out = test("""
             var x
             do {
@@ -1545,6 +1577,25 @@ class Exec_50 {
             println(x)
         """)
         assert(out == "[99]\n") { out }
+    }
+    @Test
+    fun cd_03_val_prime() {
+        val out = test("""
+            println(do {
+                (val' xxx = true);
+                xxx
+            });
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun cd_04_val_prime() {
+        val out = test("""
+            println(do {
+                (val' xxx = true);
+            });
+        """)
+        assert(out == "true\n") { out }
     }
 
     @Test

@@ -99,16 +99,16 @@ fun cache_ups () {
 }
 
 fun cache_tags (): Map<String,Tk.Tag> {
-    val ret = TAGS.map { Pair(it,Tk.Tag(it,G.outer!!.tk.pos.copy())) }.toMap() + G.outer!!.dn_collect {
+    val ret = (TAGS.map { Pair(it,Tk.Tag(it,G.outer!!.tk.pos.copy())) } + G.outer!!.dn_collect {
         when (it) {
-            is Expr.Do     -> if (it.tag === null) emptyMap() else mapOf(Pair(it.tag.str,it.tag))
-            is Expr.Escape -> mapOf(Pair(it.tag.str,it.tag))
-            is Expr.Data   -> mapOf(Pair(it.tk_.str,it.tk_))
-            is Expr.Catch  -> if (it.tag === null) emptyMap() else mapOf(Pair(it.tag.str,it.tag))
-            is Expr.Tag    -> mapOf(Pair(it.tk_.str,it.tk_))
-            else           -> emptyMap()
+            is Expr.Do     -> if (it.tag === null) emptyList() else listOf(Pair(it.tag.str,it.tag))
+            is Expr.Escape -> listOf(Pair(it.tag.str,it.tag))
+            is Expr.Data   -> listOf(Pair(it.tk_.str,it.tk_))
+            is Expr.Catch  -> if (it.tag === null) emptyList() else listOf(Pair(it.tag.str,it.tag))
+            is Expr.Tag    -> listOf(Pair(it.tk_.str,it.tk_))
+            else           -> emptyList()
         }
-    }
+    }).toMap()
     for ((id,tk) in ret) {
         val issub = id.contains('.')
         //println(listOf(id,issub))

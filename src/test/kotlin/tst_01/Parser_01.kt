@@ -480,7 +480,7 @@ class Parser_01 {
         val l = lexer("do ;;;(a);;; { print(a) }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Do /*&& e.arg!=null*/)
+        assert(e is Expr.Do /*&& e.arg!==null*/)
         //assert(e.tostr() == "do (a) {\nprint(a)\n}") { e.tostr() }
         assert(e.to_str() == "do {\nprint(a);\n}") { e.to_str() }
     }
