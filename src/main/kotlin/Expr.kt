@@ -79,17 +79,15 @@ fun Expr.is_mem (out: Boolean=false): Boolean {
 }
 
 fun Expr.Do.to_dcls (): List<Expr.Dcl> {
-    fun aux (es: List<Expr>): List<Expr.Dcl> {
-        return es.flatMap {
-            when {
-                (it is Expr.Group) -> aux(it.es)
-                (it is Expr.Dcl) -> listOf(it) + aux(listOfNotNull(it.src))
-                (it is Expr.Set) -> aux(listOf(it.src))
-                else -> emptyList()
-            }
+    return this.dn_collect {
+        when (it) {
+            this -> emptyList()
+            is Expr.Proto -> null
+            is Expr.Do -> null
+            is Expr.Dcl -> listOf(it)
+            else -> emptyList()
         }
     }
-    return aux(this.es)
 }
 
 fun Expr.Dcl.to_blk (): Expr {
