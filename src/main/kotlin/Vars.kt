@@ -6,14 +6,14 @@ enum class Type {
 
 fun type (dcl: Expr.Dcl, src: Expr): Type {
     val blk = dcl.to_blk()
-    val up  = src.up_first { it is Expr.Proto || it==blk }
+    val up  = src.up_first { it is Expr.Proto || it.n==blk.n }
     return when {
         (blk.n == G.outer!!.n) -> Type.GLOBAL
-        (blk == up)      -> Type.LOCAL
+        (blk.n == up?.n)      -> Type.LOCAL
         else -> {
             up as Expr.Proto
             G.proto_has_outer.add(up.n)
-            val nst = up.up_all_until { it == blk }
+            val nst = up.up_all_until { it.n == blk.n }
                 .filter { it is Expr.Proto }
                 .let { it as List<Expr.Proto> }
                 .all { it.nst }
@@ -35,8 +35,8 @@ class Vars () {
         if (CEU>=99 && dcl.idtag.first.str=="it") {
             // ok
         } else {
-            val xdcl = dcl.id_to_dcl(dcl.idtag.first.str, false, { it==dcl })
-            if (xdcl == null) {
+            val xdcl = dcl.id_to_dcl(dcl.idtag.first.str, false, { it.n==dcl.n })
+            if (xdcl === null) {
                 // ok
             } else {
                 err(dcl.tk, "declaration error : variable \"${dcl.idtag.first.str}\" is already declared")

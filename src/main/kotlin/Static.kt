@@ -27,7 +27,7 @@ fun static_checks () {
             }
             is Expr.Group  -> {
                 val up = me.fupx()
-                val ok = (up is Expr.Do) || (up is Expr.Group) || (up is Expr.Dcl) || (up is Expr.Set && up.src==me)
+                val ok = (up is Expr.Do) || (up is Expr.Group) || (up is Expr.Dcl) || (up is Expr.Set && up.src.n==me.n)
                 if (!ok) {
                     err(me.tk, "group error : unexpected context")
                 }

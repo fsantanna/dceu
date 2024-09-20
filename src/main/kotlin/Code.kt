@@ -703,7 +703,7 @@ class Coder () {
                 when {
                     this.is_dst() -> {
                         val depth = this.id_to_dcl(this.tk.str)!!.to_blk().let { blk ->
-                            this.up_all_until { it == blk }.filter { it is Expr.Do }.count() - 1
+                            this.up_all_until { it.n == blk.n }.filter { it is Expr.Do }.count() - 1
                         }
                         """
                         // ACC - SET | ${this.dump()}

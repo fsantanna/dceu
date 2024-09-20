@@ -188,7 +188,7 @@ fun Expr.Dcl.idx (src: Expr): String {
         Type.NESTED -> {
             val xups = src.up_all_until { it == blk } // all ups between src -> dcl
             val pid = (blk.up_first { it is Expr.Proto } as Expr.Proto).id(G.outer!!)
-            val xn = xups.count { it is Expr.Proto && it!=blk }
+            val xn = xups.count { it is Expr.Proto && it.n!=blk.n }
             "((CEU_Pro_$pid*)ceux->exe_task->${"clo->up_nst->".repeat(xn)}mem)->${id}_${this.n}"
         }
         else -> {
