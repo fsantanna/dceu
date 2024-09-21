@@ -128,7 +128,7 @@ fun cache_nonlocs () {
     }
     G.outer!!.dn_visit {
         if (it is Expr.Proto) {
-            G.proto_to_nonlocs[it.n] = it.to_nonlocs().map { it.n }
+            G.nonlocs[it.n] = it.to_nonlocs().map { it.n }
         }
     }
 
