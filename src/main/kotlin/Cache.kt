@@ -113,3 +113,23 @@ fun cache_tags () {
         }
     }
 }
+
+fun cache_nonlocs () {
+    fun Expr.Proto.to_nonlocs (): List<Expr.Dcl> {
+        return this
+            .dn_collect { if (it is Expr.Acc) listOf(it) else emptyList() }
+            .map { acc -> acc.id_to_dcl(acc.tk.str)!!.let {
+                Pair(it, it.to_blk())
+            }}
+            .filter { (_,blk) -> blk.fup()!=null }
+            .filter { (_,blk) -> this.fupx().up_first { it==blk } != null }
+            .map { (dcl,_) -> dcl }
+            .sortedBy { it.n }
+    }
+    G.outer!!.dn_visit {
+        if (it is Expr.Proto) {
+            G.proto_to_nonlocs[it.n] = it.to_nonlocs().map { it.n }
+        }
+    }
+
+}

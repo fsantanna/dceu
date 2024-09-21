@@ -137,7 +137,7 @@ class Coder () {
                         pres.add(Pair(mem, src))
                         cre
                     }
-                    (this.nst && G.proto_has_outer.contains(this.n)) -> {
+                    (this.nst && !G.proto_to_nonlocs[this.n]!!.isEmpty()) -> {
                         src + cre
                     }
                     else -> {

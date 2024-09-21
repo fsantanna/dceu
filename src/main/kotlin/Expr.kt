@@ -8,7 +8,6 @@ fun type (dcl: Expr.Dcl, src: Expr): Scope {
         (blk.n == up?.n)      -> Scope.LOCAL
         else -> {
             up as Expr.Proto
-            G.proto_has_outer.add(up.n)
             val nst = up.up_all_until { it.n == blk.n }
                 .filter { it is Expr.Proto }
                 .let { it as List<Expr.Proto> }

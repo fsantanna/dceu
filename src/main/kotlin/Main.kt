@@ -124,7 +124,7 @@ object G {
     val datas = mutableMapOf<String,LData>()
     val nats: MutableMap<NExpr,Pair<List<NExpr>,String>> = mutableMapOf()
     val proto_to_upvs: MutableMap<NExpr,MutableList<NExpr>> = mutableMapOf()
-    val proto_has_outer: MutableSet<NExpr> = mutableSetOf()
+    var proto_to_nonlocs: MutableMap<NExpr,List<NExpr>> = mutableMapOf()
 
     // Do or Proto that requires mem:
     //  - yield // nested coro/task // spawn/tasks (block needs mem)
@@ -139,7 +139,7 @@ object G {
         datas.clear()
         nats.clear()
         proto_to_upvs.clear()
-        proto_has_outer.clear()
+        proto_to_nonlocs.clear()
         mems.clear()
     }
 }
@@ -270,7 +270,9 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         //println(G.outer)
         cache_ns()
         cache_ups()
-        G.tags = cache_tags()
+        cache_tags()
+        cache_nonlocs()
+        check_tags()
         check_vars()
         check_statics()
         //Static()

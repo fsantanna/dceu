@@ -186,7 +186,7 @@ fun check_statics () {
                         (me.tk.str != "func") -> {
                             // OK: nested coro/task always ok b/c of ceux/MEM
                         }
-                        (!G.proto_has_outer.contains(me.n)) -> {
+                        (G.proto_to_nonlocs[me.n]!!.isEmpty()) -> {
                             // OK: no access to outer - unset :nested
                         }
                         me.up_any { it is Expr.Proto && it.tk.str != "func" } -> {
