@@ -1,5 +1,27 @@
 package dceu
 
+fun type (dcl: Expr.Dcl, src: Expr): Scope {
+    val blk = dcl.to_blk()
+    val up  = src.up_first { it is Expr.Proto || it.n==blk.n }
+    return when {
+        (blk.n == G.outer!!.n) -> Scope.GLOBAL
+        (blk.n == up?.n)      -> Scope.LOCAL
+        else -> {
+            up as Expr.Proto
+            G.proto_has_outer.add(up.n)
+            val nst = up.up_all_until { it.n == blk.n }
+                .filter { it is Expr.Proto }
+                .let { it as List<Expr.Proto> }
+                .all { it.nst }
+            when {
+                !nst -> Scope.UPVAL
+                (up.tk.str == "func") -> Scope.LOCAL
+                else -> Scope.NESTED
+            }
+        }
+    }
+}
+
 fun Expr.base (): Expr {
     return when (this) {
         is Expr.Acc   -> this
@@ -168,9 +190,9 @@ fun Expr.Dcl.idx (src: Expr): String {
     //println(listOf(src.tk.pos.lin, id, type(dcl,src)))
 
     return when (type(this,src)) {
-        Type.GLOBAL -> "ceu_glb_$id"
-        Type.LOCAL -> if (ismem) "(ceu_mem->${id}_${this.n})" else "ceu_loc_${id}_${this.n}"  // idx b/c of "it"
-        Type.NESTED -> {
+        Scope.GLOBAL -> "ceu_glb_$id"
+        Scope.LOCAL -> if (ismem) "(ceu_mem->${id}_${this.n})" else "ceu_loc_${id}_${this.n}"  // idx b/c of "it"
+        Scope.NESTED -> {
             val xups = src.up_all_until { it == blk } // all ups between src -> dcl
             val pid = (blk.up_first { it is Expr.Proto } as Expr.Proto).id(G.outer!!)
             val xn = xups.count { it is Expr.Proto && it.n!=blk.n }

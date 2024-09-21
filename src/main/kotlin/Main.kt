@@ -146,6 +146,10 @@ object G {
 
 typealias LData = List<Id_Tag>
 
+enum class Scope {
+    GLOBAL, LOCAL, NESTED, UPVAL
+}
+
 sealed class Patt (val id: Tk.Id, val tag: Tk.Tag?, val pos: Expr) {
     data class None (val id_: Tk.Id, val tag_: Tk.Tag?, val pos_: Expr): Patt(id_,tag_,pos_)
     data class One  (val id_: Tk.Id, val tag_: Tk.Tag?, val e: Expr, val pos_: Expr): Patt(id_,tag_,pos_)
