@@ -111,7 +111,7 @@ class Parser_02 {
         val l = tst_01.lexer("loop' { ;;;do;;; nil }")
         val parser = Parser(l)
         val e1 = parser.expr() as Expr.Loop
-        assert(e1.blk.to_str() == "{\nnil;\n}") { e1.blk.to_str() }
+        assert(e1.blk.to_str_x(false) == "{\nnil;\n}") { e1.blk.to_str() }
     }
     @Test
     fun qq_02_loop_err() {

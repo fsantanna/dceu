@@ -38,6 +38,16 @@ fun Patt.to_str (pre: Boolean = false): String {
     }
 }
 
+fun Expr.to_str_x (pre: Boolean): String {
+    return when (this) {
+        is Expr.Do    -> this.es.to_str(pre)
+        is Expr.Group -> this.es.to_str(pre)
+        else          -> error("impossible case")
+    }.let {
+        "{\n" + it + "}"
+    }
+}
+
 fun Expr.to_str (pre: Boolean = false): String {
     return when (this) {
         is Expr.Proto  -> {
@@ -47,27 +57,22 @@ fun Expr.to_str (pre: Boolean = false): String {
                 else      -> ""
             }
             val pars = this.pars.map { it.idtag.to_str(pre) }.joinToString(",")
-            "(" + this.tk.str + mod + " (" + pars + ") " + this.tag.cond{ it.str+" " } + this.blk.to_str(pre) + ")"
+            "(" + this.tk.str + mod + " (" + pars + ") " + this.tag.cond{ it.str+" " } + this.blk.to_str_x(pre) + ")"
         }
-        is Expr.Do     -> {
-            when (this.tk.str) {
-                "do" -> "do " + this.tag.cond { it.str+" " } + "{\n" + this.es.to_str(pre) + "}"
-                else -> "{\n" + this.es.to_str(pre) + "}"
-            }
-        }
+        is Expr.Do     -> "do " + this.tag.cond { it.str+" " } + this.to_str_x(pre)
         is Expr.Escape -> "escape(" + this.tag.str + this.e.cond { ","+it.to_str(pre) } + ")"
-        is Expr.Group -> "group {\n" + this.es.to_str(pre) + "}"
+        is Expr.Group  -> "group " + this.to_str_x(pre)
         is Expr.Dcl    -> {
             "(" + this.tk_.str + " " + this.idtag.to_str(pre) + this.src.cond { " = ${it.to_str(pre)}" } + ")"
         }
         is Expr.Set    -> "(set " + this.dst.to_str(pre) + " = " + this.src.to_str(pre) + ")"
-        is Expr.If     -> "if " + this.cnd.to_str(pre) + " " + this.t.to_str(pre) + " else " + this.f.to_str(pre)
-        is Expr.Loop   -> "loop' " + this.blk.to_str(pre)
+        is Expr.If     -> "if " + this.cnd.to_str(pre) + " " + this.t.to_str_x(pre) + " else " + this.f.to_str_x(pre)
+        is Expr.Loop   -> "loop' " + this.blk.to_str_x(pre)
         is Expr.Data   -> "(data " + this.tk.str + " = [" + this.ids.map { it.to_str() }.joinToString(",") + "])"
         is Expr.Drop   -> "drop${if (this.prime) "'" else ""}(" + this.e.to_str(pre) + ")"
 
-        is Expr.Catch  -> "catch " + this.tag.cond { it.str+" " } + this.blk.to_str(pre)
-        is Expr.Defer  -> "defer " + this.blk.to_str(pre)
+        is Expr.Catch  -> "catch " + this.tag.cond { it.str+" " } + this.blk.to_str_x(pre)
+        is Expr.Defer  -> "defer " + this.blk.to_str_x(pre)
 
         is Expr.Yield  -> "yield(" + this.e.to_str(pre) + ")"
         is Expr.Resume -> "(resume (" + this.co.to_str(pre) + ")(" + this.args.map { it.to_str(pre) }.joinToString(",") + "))"
