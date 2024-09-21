@@ -2941,7 +2941,7 @@ class Exec_99 {
             $PLUS
             loop it {
                 println(it)
-                 until true
+                until true
             }
         """)
         assert(out == "0\n") { out }

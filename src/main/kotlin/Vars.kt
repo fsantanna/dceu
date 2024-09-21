@@ -32,7 +32,7 @@ class Vars () {
     }
 
     fun check (dcl: Expr.Dcl) {
-        if (CEU>=99 && dcl.idtag.first.str=="it") {
+        if (CEU>=50 && dcl.idtag.first.str=="it") {
             // ok
         } else {
             val xdcl = dcl.id_to_dcl(dcl.idtag.first.str, false, { it.n==dcl.n })

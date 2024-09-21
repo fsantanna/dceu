@@ -3053,4 +3053,20 @@ class Exec_50 {
         //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
+    @Test
+    fun zz_17_loop_optim() {
+        val out = test("""
+            do :break {
+                (var it = 10);
+                loop' {
+                    println(it);
+                    do {
+                        (val' it = true);
+                        escape(:break,it);
+                    };
+                };
+            };
+        """)
+        assert(out == "10\n") { out }
+    }
 }

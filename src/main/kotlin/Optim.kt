@@ -15,9 +15,7 @@ fun optim_blocks () {
                 val (reqs, subs) = this.es.map { it.traverse() }.unzip()
                 val up = this.fup()
                 val isup = (up is Expr.Proto || up is Expr.Loop || up is Expr.Catch || up is Expr.Defer)
-                //println(reqs)
-                //println(listOf(this.up==null , this.tag!=null , up , reqs.any { it }))
-                val ret = if (up == null || this.tag != null || isup || reqs.any { it }) {
+                val ret = if (up === null || this.tag !== null || isup || reqs.any { it }) {
                     Expr.Do(this.tk_, this.tag, subs)
                 } else {
                     Expr.Group(Tk.Fix("group", this.tk.pos.copy()), subs)
@@ -38,7 +36,7 @@ fun optim_blocks () {
             }
 
             is Expr.Dcl -> {
-                val req1 = (this.tk.str == "val" || this.tk.str == "var")
+                val req1 = (this.tk.str=="val" || this.tk.str=="var" || this.idtag.first.str=="it")
                 val (req2, src2) = if (this.src === null) Pair(false, null) else {
                     this.src.traverse()
                 }
@@ -156,8 +154,13 @@ fun optim_blocks () {
             is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.Tag,
             is Expr.Bool, is Expr.Char, is Expr.Num -> Pair(false, this)
         }.let {
-            if (this::class == it.second::class) {
-                it.second.n = this.n
+            val (_,me) = it
+            if (me !== this) {
+                me.n = this.n
+                G.ns[me.n] = me
+                if (this !== G.outer) {
+                    G.ups[me.n] = G.ups[this.n]!!
+                }
             }
             it
         }
