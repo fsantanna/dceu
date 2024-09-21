@@ -26,11 +26,7 @@ fun type (dcl: Expr.Dcl, src: Expr): Type {
     }
 }
 
-class Vars () {
-    init {
-        G.outer!!.traverse()
-    }
-
+fun check_vars () {
     fun check (dcl: Expr.Dcl) {
         if (CEU>=50 && dcl.idtag.first.str=="it") {
             // ok
@@ -194,4 +190,5 @@ class Vars () {
             is Expr.Call   -> { this.clo.traverse() ; this.args.forEach { it.traverse() } }
         }
     }
+    G.outer!!.traverse()
 }

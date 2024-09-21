@@ -1,6 +1,6 @@
 package dceu
 
-fun static_checks () {
+fun check_statics () {
     G.outer!!.dn_visit { me ->
         when (me) {
             is Expr.Proto  -> {
