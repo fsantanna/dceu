@@ -149,130 +149,120 @@ class Coder () {
             is Expr.Do -> {
                 val body = this.es.code()   // before defers[this] check
                 val up = this.fup()
-
-                val void = false //sta.void(this)
-                if (void) {
-                    """
-                    { // BLOCK | void | ${this.dump()}
-                        $body
-                    }
-                    """
-                } else {
-                    val blkc = this.idx("block_$n")
-                    """
-                    { // BLOCK | ${this.dump()}
-                #ifdef CEU_LEX
-                        ceux->depth++;
-                #endif
-                        ${(CEU >= 4).cond { """
-                             ${(!this.is_mem()).cond { "CEU_Block" }} $blkc = NULL;
-                        """}}
-                        ${(this.n == G.outer!!.n).cond { """
-                            { // ARGC / ARGV
-                                CEU_Value args[ceu_argc];
-                                for (int i=0; i<ceu_argc; i++) {
-                                    args[i] = ceu_pointer_to_string(ceu_argv[i]);
-                                    ceu_gc_inc_val(args[i]);
-                                }
-                                ceu_glb_ARGS = ceu_create_tuple(1, ceu_argc, args);
-                                ceu_gc_inc_val(ceu_glb_ARGS);
+                val blkc = this.idx("block_$n")
+                """
+                { // BLOCK | ${this.dump()}
+            #ifdef CEU_LEX
+                    ceux->depth++;
+            #endif
+                    ${(CEU >= 4).cond { """
+                         ${(!this.is_mem()).cond { "CEU_Block" }} $blkc = NULL;
+                    """}}
+                    ${(this.n == G.outer!!.n).cond { """
+                        { // ARGC / ARGV
+                            CEU_Value args[ceu_argc];
+                            for (int i=0; i<ceu_argc; i++) {
+                                args[i] = ceu_pointer_to_string(ceu_argv[i]);
+                                ceu_gc_inc_val(args[i]);
                             }
-                        """}}
-                        
-                        ${(this.n != G.outer!!.n).cond { 
-                            this.to_dcls().let { dcls ->
-                                """
-                                ${(!this.is_mem()).cond { """
-                                    //{ // inline vars dcls
-                                        ${dcls.map { """
-                                            CEU_Value ${it.idx(it)};
-                                        """ }.joinToString("")}
-                                    //}
-                                """ }}
-                                { // vars inits
-                                    ${dcls.map { """
-                                        ${it.idx(it)} = (CEU_Value) { CEU_VALUE_NIL };
-                                    """ }.joinToString("")}
-                                }
-                                """
-                            }
-                        }}
+                            ceu_glb_ARGS = ceu_create_tuple(1, ceu_argc, args);
+                            ceu_gc_inc_val(ceu_glb_ARGS);
+                        }
+                    """}}
                     
-                        ${defers[this].cond { """
-                            //{ // BLOCK | defers | init | ${this.dump()}
-                                ${it.second}
-                            //}
-                        """ }}
-                        
-                        do { // BLOCK | ${this.dump()}
-                            $body
-                            ${(up is Expr.Loop).cond { """
-                                CEU_LOOP_STOP_${up!!.n}:
+                    ${(this.n != G.outer!!.n).cond { 
+                        this.to_dcls().let { dcls ->
+                            """
+                            ${(!this.is_mem()).cond { """
+                                //{ // inline vars dcls
+                                    ${dcls.map { """
+                                        CEU_Value ${it.idx(it)};
+                                    """ }.joinToString("")}
+                                //}
                             """ }}
-                        } while (0);
-    
-                        // keep ceu_acc and restore after defers/gc_dec/kills
-                        // b/c they may change ceu_acc
-                        
-                        CEU_Value ceu_acc_$n = CEU_ACC_KEEP();
-
-                        ${defers[this].cond { """
-                            { // BLOCK | defers | term | ${this.dump()}
-                                ${it.third}
+                            { // vars inits
+                                ${dcls.map { """
+                                    ${it.idx(it)} = (CEU_Value) { CEU_VALUE_NIL };
+                                """ }.joinToString("")}
                             }
+                            """
+                        }
+                    }}
+                
+                    ${defers[this].cond { """
+                        //{ // BLOCK | defers | init | ${this.dump()}
+                            ${it.second}
+                        //}
+                    """ }}
+                    
+                    do { // BLOCK | ${this.dump()}
+                        $body
+                        ${(up is Expr.Loop).cond { """
+                            CEU_LOOP_STOP_${up!!.n}:
                         """ }}
-                        
-                        ${(CEU >= 4).cond { """
-                            if ($blkc != NULL) {
-                                CEU_LNKS($blkc)->up.blk = NULL; // also on ceu_task_unlink (if unlinked before leave)
+                    } while (0);
+
+                    // keep ceu_acc and restore after defers/gc_dec/kills
+                    // b/c they may change ceu_acc
+                    
+                    CEU_Value ceu_acc_$n = CEU_ACC_KEEP();
+
+                    ${defers[this].cond { """
+                        { // BLOCK | defers | term | ${this.dump()}
+                            ${it.third}
+                        }
+                    """ }}
+                    
+                    ${(CEU >= 4).cond { """
+                        if ($blkc != NULL) {
+                            CEU_LNKS($blkc)->up.blk = NULL; // also on ceu_task_unlink (if unlinked before leave)
+                        }
+                        {
+                            CEU_Block cur = ceu_task_get($blkc);
+                            while (cur != NULL) {
+                                ceu_abort_dyn(cur);
+                                CEU_Dyn* nxt = ceu_task_get(CEU_LNKS(cur)->sd.nxt);
+                                ceu_gc_dec_dyn(cur); // TODO: could affect nxt?
+                                cur = nxt;
                             }
-                            {
-                                CEU_Block cur = ceu_task_get($blkc);
-                                while (cur != NULL) {
-                                    ceu_abort_dyn(cur);
-                                    CEU_Dyn* nxt = ceu_task_get(CEU_LNKS(cur)->sd.nxt);
-                                    ceu_gc_dec_dyn(cur); // TODO: could affect nxt?
-                                    cur = nxt;
-                                }
-                            }                            
+                        }                            
+                    """ }}
+
+                    { // dcls gc-dec
+                        ${this.to_dcls()
+                            .asReversed()
+                            .filter { !GLOBALS.contains(it.idtag.first.str) }
+                            .map { """
+                                ceu_gc_dec_val(${it.idx(it)});
+                            """ }
+                            .joinToString("")
+                        }
+                    }                        
+
+                    CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
+                    ceu_acc = ceu_acc_$n;
+                    
+            #ifdef CEU_LEX
+                    ceux->depth--;
+            #endif
+
+                    ${(CEU >= 2).cond { """
+                        if (CEU_ERROR != CEU_ERROR_NONE) {
+                            continue;
+                        }
+                        ${this.check_aborted("continue")}
+                        if (CEU_ESCAPE == CEU_ESCAPE_NONE) {
+                            // no escape
+                        ${this.tag.cond { """
+                        } else if (CEU_ESCAPE == CEU_TAG_${it.str.idc()}) {
+                            CEU_ESCAPE = CEU_ESCAPE_NONE;   // caught escape: go ahead
                         """ }}
-
-                        { // dcls gc-dec
-                            ${this.to_dcls()
-                                .asReversed()
-                                .filter { !GLOBALS.contains(it.idtag.first.str) }
-                                .map { """
-                                    ceu_gc_dec_val(${it.idx(it)});
-                                """ }
-                                .joinToString("")
-                            }
-                        }                        
-
-                        CEU_ACC((CEU_Value) { CEU_VALUE_NIL });
-                        ceu_acc = ceu_acc_$n;
-                        
-                #ifdef CEU_LEX
-                        ceux->depth--;
-                #endif
-
-                        ${(CEU >= 2).cond { """
-                            if (CEU_ERROR != CEU_ERROR_NONE) {
-                                continue;
-                            }
-                            ${this.check_aborted("continue")}
-                            if (CEU_ESCAPE == CEU_ESCAPE_NONE) {
-                                // no escape
-                            ${this.tag.cond { """
-                            } else if (CEU_ESCAPE == CEU_TAG_${it.str.idc()}) {
-                                CEU_ESCAPE = CEU_ESCAPE_NONE;   // caught escape: go ahead
-                            """ }}
-                            } else {
-                                continue;                       // uncaught escape: propagate up
-                            }                                                            
-                        """ }}
-                    }
-                    """
+                        } else {
+                            continue;                       // uncaught escape: propagate up
+                        }                                                            
+                    """ }}
                 }
+                """
             }
             is Expr.Escape -> """ // ESCAPE | ${this.dump()}
             {
