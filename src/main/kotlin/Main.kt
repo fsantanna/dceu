@@ -123,11 +123,7 @@ object G {
     var tags: MutableMap<String,Tk.Tag> = mutableMapOf()
     val datas = mutableMapOf<String,LData>()
     val nats: MutableMap<NExpr,Pair<List<NExpr>,String>> = mutableMapOf()
-    val proto_to_upvs: MutableMap<NExpr,MutableList<NExpr>> = mutableMapOf()
-    var proto_to_nonlocs: MutableMap<NExpr,List<NExpr>> = mutableMapOf()
-
-    // Do or Proto that requires mem:
-    //  - yield // nested coro/task // spawn/tasks (block needs mem)
+    var nonlocs: MutableMap<NExpr,List<NExpr>> = mutableMapOf()
     val mems: MutableSet<Expr>  = mutableSetOf()
 
     fun reset () {
@@ -138,8 +134,7 @@ object G {
         tags.clear()
         datas.clear()
         nats.clear()
-        proto_to_upvs.clear()
-        proto_to_nonlocs.clear()
+        nonlocs.clear()
         mems.clear()
     }
 }

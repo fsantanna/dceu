@@ -37,18 +37,6 @@ fun check_vars () {
             if (dcl.tk.str!="val" && dcl.tk.str!="val'") {
                 err(e.tk, "access error : outer variable \"${dcl.idtag.first.str}\" must be immutable")
             }
-            val orig = dcl.to_blk().up_first { it is Expr.Proto }
-            //println(listOf(dcl.id.str, orig?.tk))
-            val proto = e.up_first { it is Expr.Proto }!!
-            proto.up_all_until { it == orig }
-                .let {  // remove orig
-                    if (orig==null) it else it.dropLast(1)
-                }
-                .filter { it is Expr.Proto }
-                .forEach {
-                    //println(listOf(dcl.id.str, it.tk))
-                    G.proto_to_upvs[it.n]!!.add(dcl.n)
-                }
         }
 
         return dcl
@@ -57,7 +45,6 @@ fun check_vars () {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
-                G.proto_to_upvs[this.n] = mutableListOf()
                 if (this.tag !==null && !G.datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }

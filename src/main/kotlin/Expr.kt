@@ -199,7 +199,7 @@ fun Expr.Dcl.idx (src: Expr): String {
         }
         else -> {
             val proto = src.up_first { it is Expr.Proto } as Expr.Proto
-            val i = G.proto_to_upvs[proto.n]!!.indexOfFirst { it == this.n }
+            val i = G.nonlocs[proto.n]!!.indexOfFirst { it == this.n }
             assert(i != -1)
             "ceux->clo->upvs.buf[$i]"
         }
