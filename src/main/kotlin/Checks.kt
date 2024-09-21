@@ -1,5 +1,15 @@
 package dceu
 
+fun check_tags () {
+    for ((id,tk) in G.tags) {
+        val issub = id.contains('.')
+        //println(listOf(id,issub))
+        val sup = id.dropLastWhile { it != '.' }.dropLast(1)
+        if (issub && !G.tags.containsKey(sup)) {
+            err(tk, "tag error : parent tag $sup is not declared")
+        }
+    }
+}
 fun check_vars () {
     fun check (dcl: Expr.Dcl) {
         if (CEU>=50 && dcl.idtag.first.str=="it") {

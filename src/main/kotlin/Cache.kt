@@ -98,24 +98,18 @@ fun cache_ups () {
     }
 }
 
-fun cache_tags (): Map<String,Tk.Tag> {
-    val ret = (TAGS.map { Pair(it,Tk.Tag(it,G.outer!!.tk.pos.copy())) } + G.outer!!.dn_collect {
+fun cache_tags () {
+    TAGS.forEach {
+        G.tags[it] = Tk.Tag(it,G.outer!!.tk.pos.copy())
+    }
+    G.outer!!.dn_visit {
         when (it) {
-            is Expr.Do     -> if (it.tag === null) emptyList() else listOf(Pair(it.tag.str,it.tag))
-            is Expr.Escape -> listOf(Pair(it.tag.str,it.tag))
-            is Expr.Data   -> listOf(Pair(it.tk_.str,it.tk_))
-            is Expr.Catch  -> if (it.tag === null) emptyList() else listOf(Pair(it.tag.str,it.tag))
-            is Expr.Tag    -> listOf(Pair(it.tk_.str,it.tk_))
-            else           -> emptyList()
-        }
-    }).toMap()
-    for ((id,tk) in ret) {
-        val issub = id.contains('.')
-        //println(listOf(id,issub))
-        val sup = id.dropLastWhile { it != '.' }.dropLast(1)
-        if (issub && !ret.containsKey(sup)) {
-            err(tk, "tag error : parent tag $sup is not declared")
+            is Expr.Do     -> if (it.tag !== null) { G.tags[it.tag.str] = it.tag }
+            is Expr.Escape -> G.tags[it.tag.str] = it.tag
+            is Expr.Data   -> G.tags[it.tk_.str] = it.tk_
+            is Expr.Catch  -> if (it.tag !== null) { G.tags[it.tag.str] = it.tag }
+            is Expr.Tag    -> G.tags[it.tk_.str] = it.tk_
+            else           -> {}
         }
     }
-    return ret
 }

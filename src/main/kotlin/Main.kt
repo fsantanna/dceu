@@ -120,7 +120,7 @@ object G {
     var outer: Expr.Do? = null
     var ns: MutableMap<NExpr,Expr> = mutableMapOf()
     var ups: MutableMap<NExpr,NExpr> = mutableMapOf()
-    var tags: Map<String,Tk.Tag>? = null
+    var tags: MutableMap<String,Tk.Tag> = mutableMapOf()
     val datas = mutableMapOf<String,LData>()
     val nats: MutableMap<NExpr,Pair<List<NExpr>,String>> = mutableMapOf()
     val proto_to_upvs: MutableMap<NExpr,MutableList<NExpr>> = mutableMapOf()
@@ -135,7 +135,7 @@ object G {
         outer = null
         ns.clear()
         ups.clear()
-        tags = null
+        tags.clear()
         datas.clear()
         nats.clear()
         proto_to_upvs.clear()
