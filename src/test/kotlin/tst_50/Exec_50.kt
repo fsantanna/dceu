@@ -45,7 +45,7 @@ class Exec_50 {
     fun aa_04_depth() {
         val out = test("""
             val t1 = []
-            do :X {
+            enclose' :X {
                 loop' {
                     escape(:X, nil)
                 }
@@ -204,7 +204,7 @@ class Exec_50 {
                 yield([3,4])
             }
             val co = coroutine(CO)
-            do :break {
+            enclose' :break {
                 loop' {
                     val v = resume co()
                     if status(co) == :terminated {
@@ -841,7 +841,7 @@ class Exec_50 {
         val out = test(
             """
             var ang = 0
-            do :break {
+            enclose' :break {
                 loop' {
                     escape(:break, nil) ;; if true
                     ang
@@ -873,7 +873,7 @@ class Exec_50 {
     fun zna_08_escape() {
         val out = test("""
             spawn (task () {
-                val v = do :X {
+                val v = enclose' :X {
                     spawn (task :nested () {
                         escape(:X,:ok)
                     })()
@@ -891,7 +891,7 @@ class Exec_50 {
     fun zna_09_escape() {
         val out = test("""
             spawn (task () {
-                val v = do :X {
+                val v = enclose' :X {
                     spawn (task :nested () {
                         defer {
                             println(:def)
@@ -925,7 +925,7 @@ class Exec_50 {
     fun zna_11_escape() {
         val out = test("""
             spawn (task () {
-                val v = do :X {
+                val v = enclose' :X {
                     spawn (task :nested () {
                         yield(nil)
                         escape(:X,:ok)
@@ -3056,7 +3056,7 @@ class Exec_50 {
     @Test
     fun zz_17_loop_optim() {
         val out = test("""
-            do :break {
+            enclose' :break {
                 (var it = 10);
                 loop' {
                     println(it);

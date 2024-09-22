@@ -52,8 +52,9 @@ fun check_vars () {
                 this.blk.traverse()
             }
             is Expr.Do     -> this.es.forEach { it.traverse() }
-            is Expr.Escape -> this.e?.traverse()
             is Expr.Group -> this.es.forEach { it.traverse() }
+            is Expr.Enclose -> this.blk.traverse()
+            is Expr.Escape -> this.e?.traverse()
             is Expr.Dcl    -> {
                 this.src?.traverse()
                 check(this)
@@ -184,9 +185,9 @@ fun check_statics () {
                 }
             }
             is Expr.Escape -> {
-                val fst = me.up_first { (it is Expr.Do && it.tag?.str==me.tag.str) || (it is Expr.Proto && !it.nst)}
-                if (fst !is Expr.Do) {
-                    err(me.tk, "escape error : expected matching \"do\" block")
+                val fst = me.up_first { (it is Expr.Enclose && it.tag.str==me.tag.str) || (it is Expr.Proto && !it.nst)}
+                if (fst !is Expr.Enclose) {
+                    err(me.tk, "escape error : expected matching enclosing block")
                 }
             }
             is Expr.Group  -> {
@@ -303,8 +304,9 @@ class Static () {
                 this.blk.traverse()
             }
             is Expr.Do     -> this.es.forEach { it.traverse() }
-            is Expr.Escape -> this.e?.traverse()
             is Expr.Group  -> this.es.forEach { it.traverse() }
+            is Expr.Enclose -> this.blk.traverse()
+            is Expr.Escape -> this.e?.traverse()
             is Expr.Dcl    -> {
                 if (this.src is Expr.Proto && (this.tk.str=="val" || this.tk.str=="val'")) {
                     //protos_use_unused.add(this.src)

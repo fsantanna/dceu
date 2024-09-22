@@ -19,8 +19,9 @@ class Mem (val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String
 
     fun Expr.coexists (): Boolean {
         return when (this) {
-            is Expr.Escape -> (this.e?.coexists() ?: false)
             is Expr.Group  -> this.es.any { it.coexists() }
+            is Expr.Enclose -> this.blk.coexists()
+            is Expr.Escape -> (this.e?.coexists() ?: false)
             is Expr.Dcl    -> true
             is Expr.Set    -> this.dst.coexists() || this.src.coexists()
             is Expr.If     -> this.cnd.coexists()
@@ -82,12 +83,13 @@ class Mem (val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String
                 };
                 """
             }
-            is Expr.Escape -> this.e.cond { it.mem() }
             is Expr.Group -> """
                 $union {
                     ${this.es.map { it.mem() }.joinToString("")}
                 };
             """
+            is Expr.Enclose -> this.blk.mem()
+            is Expr.Escape -> this.e.cond { it.mem() }
             is Expr.Dcl -> this.src.cond { it.mem() }
             is Expr.Set -> """
                 struct { // SET

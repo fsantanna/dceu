@@ -1695,21 +1695,21 @@ class Exec_99 {
         val out = test("""
             break()
         """)
-        assert(out == "anon : (lin 2, col 13) : escape error : expected matching \"do\" block\n") { out }
+        assert(out == "anon : (lin 2, col 13) : escape error : expected matching enclosing block\n") { out }
     }
     @Test
     fun ja_02_skip_err() {
         val out = test("""
             skip()
         """)
-        assert(out == "anon : (lin 2, col 13) : escape error : expected matching \"do\" block\n") { out }
+        assert(out == "anon : (lin 2, col 13) : escape error : expected matching enclosing block\n") { out }
     }
     @Test
     fun ja_03_return_err() {
         val out = test("""
             return()
         """)
-        assert(out == "anon : (lin 2, col 13) : escape error : expected matching \"do\" block\n") { out }
+        assert(out == "anon : (lin 2, col 13) : escape error : expected matching enclosing block\n") { out }
     }
     @Test
     fun ja_04_break() {
@@ -1729,6 +1729,17 @@ class Exec_99 {
             println(f())
         """)
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun ja_06_skip_optim() {
+        val out = test("""
+            loop {
+                val x
+                break()
+            }
+            println(:ok)
+        """)
+        assert(out == "skip/no, break/ok\n") { out }
     }
 
     @Test

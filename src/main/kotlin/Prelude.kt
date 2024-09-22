@@ -56,7 +56,7 @@ fun AND (v1:String, v2:String): String {
 
 fun AWAIT (v:String="(type(it) /= :exe-task)"): String {
     return """
-        do :break {
+        enclose' :break {
             loop' {
                 val${(CEU>=50).cond{"'"}} it = yield(nil)
                 val${(CEU>=50).cond{"'"}} xxx = ${AND(v, OR("it","true"))}

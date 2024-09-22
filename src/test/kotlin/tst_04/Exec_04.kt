@@ -405,7 +405,7 @@ class Exec_04 {
             """
             $PLUS
             var i = 0
-            do :break {
+            enclose' :break {
                 loop' {
                     broadcast(nil)
                     if i == 254 {
@@ -460,7 +460,7 @@ class Exec_04 {
         DEBUG = true
         val out = test("""
             spawn (task () {
-                val v = do :break {
+                val v = enclose' :break {
                     loop' {
                         escape(:break,100) ;;;if true;;;
                     }
@@ -1054,7 +1054,7 @@ class Exec_04 {
         val out = test(
             """
             val T = task () {
-                val e1 = do :break {
+                val e1 = enclose' :break {
                     loop' {
                         val it = yield(nil)
                         do {
@@ -1635,7 +1635,7 @@ class Exec_04 {
             set fff = func (x) { x }
             spawn task () {
                 var evt = yield(nil)
-                do :break {
+                enclose' :break {
                     loop' {
                         if evt[:type]==:x {
                             escape(:break, nil)
@@ -3852,7 +3852,7 @@ class Exec_04 {
             $PLUS
             println(:1)
             var x = 0
-            do :break {
+            enclose' :break {
                 loop' {
                     if x == 2 {
                         escape(:break, nil)
@@ -5953,7 +5953,7 @@ class Exec_04 {
         val out = test(
             """
             spawn (task () {
-                println(do :break { loop' {
+                println(enclose' :break { loop' {
                     val t = [10]
                     if t[0] {
                         escape(:break,t[0])
@@ -6026,7 +6026,7 @@ class Exec_04 {
             spawn task () {
                 loop' {
                     var evt = yield(nil);
-                    do :break {
+                    enclose' :break {
                         loop' {
                             if evt==10 {
                                 escape(:break,nil)
@@ -6037,7 +6037,7 @@ class Exec_04 {
                     println(:1)
                     var t = spawn task () {
                         var evt2 = yield(nil);
-                        do :break {
+                        enclose' :break {
                             loop' {
                                 if evt2==10 {
                                     escape(:break,nil)
@@ -6046,7 +6046,7 @@ class Exec_04 {
                             }
                         }
                     } ()
-                    do :break {
+                    enclose' :break {
                         loop' {
                             if status(t)==:terminated {
                                 escape(:break,nil)
@@ -6296,7 +6296,7 @@ class Exec_04 {
             spawn (task () {
                 spawn (task () {
                     loop' {
-                        do :skip {
+                        enclose' :skip {
                             yield(nil)
                             if (func () {
                                 true
@@ -6339,7 +6339,7 @@ class Exec_04 {
                 spawn (task () {
                     yield(nil)
                 }) ()
-                do :break {
+                enclose' :break {
                     loop' {
                         yield(nil)
                         escape(:break, nil) ;; if true
@@ -6390,7 +6390,7 @@ class Exec_04 {
     fun zz_10_optim() {
         val out = test("""
             spawn (task () {
-                println(do :break {
+                println(enclose' :break {
                     loop' {
                         yield(nil)
                         escape(:break, nil) ;; if true

@@ -335,7 +335,7 @@ class Parser (lexer_: Lexer)
         this.acceptFix_err("{")
         val es = this.exprs()
         this.acceptFix_err("}")
-        return Expr.Do(tk, tag, es)
+        return Expr.Do(tk, es)
     }
 
     fun lambda (it: Boolean): Pair<List<Id_Tag>,List<Expr>> {
@@ -399,9 +399,19 @@ class Parser (lexer_: Lexer)
     fun expr_prim (): Expr {
         return when {
             this.acceptFix("do") -> {
-                val tk0 = this.tk0
-                val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
-                Expr.Do(tk0, tag, this.block().es)
+                val tk0 = this.tk0 as Tk.Fix
+                if (CEU>=99 && this.acceptEnu("Tag")) {
+                    Expr.Enclose(tk0, this.tk0 as Tk.Tag, Expr.Do(tk0, this.block().es))
+                } else {
+                    Expr.Do(tk0, this.block().es)
+                }
+            }
+            this.acceptFix("enclose'") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptEnu_err("Tag")
+                val tag = this.tk0 as Tk.Tag
+                val blk = this.block()
+                Expr.Enclose(tk0, tag, blk)
             }
             this.acceptFix("escape") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -488,11 +498,11 @@ class Parser (lexer_: Lexer)
                 val arr = (CEU>=99) && this.acceptFix("=>")
                 var idtag: Id_Tag? = null
                 val t = when {
-                    arr -> Expr.Do(this.tk0, null, listOf(this.expr_1_bin()))
+                    arr -> Expr.Do(this.tk0, listOf(this.expr_1_bin()))
                     (CEU >= 99) -> {
                         val (x,es) = this.lambda(false)
                         idtag = x.firstOrNull()
-                        Expr.Do(this.tk0, null, es)
+                        Expr.Do(this.tk0, es)
                     }
                     else -> this.block()
                 }
@@ -505,10 +515,10 @@ class Parser (lexer_: Lexer)
                         this.block()
                     }
                     arr && this.acceptFix_err("=>") -> {
-                        Expr.Do(this.tk0, null, listOf(this.expr_1_bin()))
+                        Expr.Do(this.tk0, listOf(this.expr_1_bin()))
                     }
                     else -> {
-                        Expr.Do(tk0, null, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
+                        Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
                     }
                 }
                 if (idtag == null) {
@@ -616,7 +626,7 @@ class Parser (lexer_: Lexer)
                 when {
                     (dts.size == 1) -> dts.first()
                     (CEU < 99) -> error("bug found")
-                    else -> Expr.Do(Tk.Fix("do",pos), null, dts)
+                    else -> Expr.Do(Tk.Fix("do",pos), dts)
                 }
             }
             (CEU>=50 && (this.acceptFix("drop") || this.acceptFix("drop'"))) -> {
@@ -630,7 +640,7 @@ class Parser (lexer_: Lexer)
                 Expr.Drop(tk0, e, tk0.str=="drop'")
             }
 
-            (CEU>=2 && this.acceptFix("loop'")) -> Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, null, this.block().es))
+            (CEU>=2 && this.acceptFix("loop'")) -> Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, this.block().es))
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val par = this.acceptFix("(")
@@ -841,9 +851,9 @@ class Parser (lexer_: Lexer)
                     (ids === null) -> {
                         val blk = this.block()
                         this.nest("""
-                            do :break {
+                            enclose' :break {
                                 loop' {
-                                    do :skip {
+                                    enclose' :skip {
                                         ${blk.es.to_str(true)}
                                     }
                                 }
@@ -857,7 +867,7 @@ class Parser (lexer_: Lexer)
                             else -> (ids as Id_Tag).first.str
                         }
                         this.nest("""
-                            do :break {
+                            enclose' :break {
                                 var $id = 0
                                 loop' {
                                     ${blk.es.to_str(true)}
@@ -900,7 +910,7 @@ class Parser (lexer_: Lexer)
                         }
 
                         this.nest("""
-                            do :break {
+                            enclose' :break {
                                 val ceu_ste_${G.N} = ${if (step == null) 1 else step.to_str(true)}
                                 var $id = ${eA.to_str(true)} $op (
                                     ${if (tkA.str == "{") 0 else "ceu_ste_${G.N}"}
@@ -927,7 +937,7 @@ class Parser (lexer_: Lexer)
                         }
                         //println(blk.es.tostr())
                         this.nest("""
-                            do :break {
+                            enclose' :break {
                                 val' ceu_itr_$nn :Iterator = ${iter.tk.pos.pre()}to-iter(${iter.to_str(true)})
                                 loop' {
                                     val' ceu_val_$nn = ceu_itr_$nn.f(ceu_itr_$nn)

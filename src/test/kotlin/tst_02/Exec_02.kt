@@ -14,7 +14,7 @@ class Exec_02 {
     @Test
     fun cc_01_escape() {
         val out = test("""
-            do :x {
+            enclose' :x {
                 println(:1)
                 escape(:x,nil)
                 println(:2)
@@ -26,7 +26,7 @@ class Exec_02 {
     @Test
     fun cc_02_escape() {
         val out = test("""
-            val v = do :x {
+            val v = enclose' :x {
                 escape(:x, 10)
             }
             println(v)
@@ -36,8 +36,8 @@ class Exec_02 {
     @Test
     fun cc_03_escape() {
         val out = test("""
-            val v = do :x {
-                do :y {
+            val v = enclose' :x {
+                enclose' :y {
                     escape(:x, 10)
                 }
                 println(:no)
@@ -49,8 +49,8 @@ class Exec_02 {
     @Test
     fun cc_04_escape() {
         val out = test("""
-            val v = do :x {
-                do :y {
+            val v = enclose' :x {
+                enclose' :y {
                     escape(:y, 10)
                     println(:no)
                 }
@@ -62,7 +62,7 @@ class Exec_02 {
     @Test
     fun cc_05_escape() {
         val out = test("""
-            val v = do :x {
+            val v = enclose' :x {
                 10
             }
             println(v)
@@ -72,13 +72,13 @@ class Exec_02 {
     @Test
     fun cc_06_escape_err() {
         val out = test("""
-            do :X {
+            enclose' :X {
                 func () {
                     escape(:X,nil)
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 21) : escape error : expected matching \"do\" block\n") { out }
+        assert(out == "anon : (lin 4, col 21) : escape error : expected matching enclosing block\n") { out }
     }
 
     // LOOP
@@ -86,7 +86,7 @@ class Exec_02 {
     @Test
     fun dd_01_loop() {
         val out = test("""
-            do :break {
+            enclose' :break {
                 loop' {
                     if true {
                         escape(:break,nil)
@@ -100,7 +100,7 @@ class Exec_02 {
     @Test
     fun dd_00_loop() {
         val out = test("""
-            do :break {
+            enclose' :break {
                 loop' {
                     if true {
                         escape(:break, nil)
@@ -114,7 +114,7 @@ class Exec_02 {
     @Test
     fun dd_01_loop_no_err() {
         val out = test("""
-            do :break {
+            enclose' :break {
                 loop' {
                     do {
                         escape(:break, nil)   ;; should not be allowed
@@ -129,7 +129,7 @@ class Exec_02 {
     @Test
     fun dd_01x_loop_err_no() {
         val out = test("""
-            do :break {
+            enclose' :break {
                 loop' {
                     do { ;;do(nil)
                         escape(:break, nil) ;; if true
@@ -144,10 +144,10 @@ class Exec_02 {
     @Test
     fun dd_01y_loop_err() {
         val out = test("""
-            do :break {
+            enclose' :break {
                 loop' {
                     escape(:break, nil)
-                    do :skip {
+                    enclose' :skip {
                         escape(:skip, nil)
                     }
                 }
@@ -161,9 +161,9 @@ class Exec_02 {
     fun dd_01z_loop_err() {
         val out = test("""
             var ok = false
-            do :break {
+            enclose' :break {
                 loop' {
-                    do :skip {
+                    enclose' :skip {
                         if ok {
                             escape(:break, nil)
                         } else { nil }
@@ -182,7 +182,7 @@ class Exec_02 {
         val out = test(
             """
             do {
-                do :break {
+                enclose' :break {
                     loop' {
                         println(:in)
                         if true {
@@ -200,9 +200,9 @@ class Exec_02 {
     fun dd_02x_loop() {
         val out = test(
             """
-            do :break {
+            enclose' :break {
                 loop' {
-                    do :skip {
+                    enclose' :skip {
                         println(:in)
                         if false {
                             escape(:skip, nil)
@@ -224,7 +224,7 @@ class Exec_02 {
             """
             var x
             set x = false
-            do :break {
+            enclose' :break {
                 loop' {
                     if x {
                         escape(:break, nil)
@@ -252,7 +252,7 @@ class Exec_02 {
             do {
                 val it = [f, 0]
                 var i = it[0](it)
-                do :break {
+                enclose' :break {
                     loop' {
                         if (i == nil) {
                             escape(:break, nil)
@@ -284,7 +284,7 @@ class Exec_02 {
     fun dd_06_loop() {
         val out = test(
             """
-            val v = do :break {
+            val v = enclose' :break {
                 loop' {
                     if (10) {
                         escape(:break, 10)
@@ -300,14 +300,14 @@ class Exec_02 {
     fun dd_07_loop() {
         val out = test(
             """
-            val v1 = do :break {
+            val v1 = enclose' :break {
                 loop' {
                     if (10) {
                         escape(:break, 10)
                     } else {nil}
                 }
             }
-            val v2 = do :break {
+            val v2 = enclose' :break {
                 loop' {
                     if true {
                         escape(:break, nil)
@@ -323,7 +323,7 @@ class Exec_02 {
     fun dd_08_loop() {
         val out = test("""
             val x = 10
-            println(do :break {
+            println(enclose' :break {
                 loop' {
                     if (x) {
                         escape(:break,x)
@@ -336,7 +336,7 @@ class Exec_02 {
     @Test
     fun dd_09_loop_break() {
         val out = test("""
-            do :break {
+            enclose' :break {
                 loop' {
                     func () {
                         escape(:break,nil)
@@ -346,12 +346,12 @@ class Exec_02 {
         """)
         //assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
         //assert(out == "anon : (lin 4, col 21) : break error : expected parent loop\n") { out }
-        assert(out == "anon : (lin 5, col 25) : escape error : expected matching \"do\" block\n") { out }
+        assert(out == "anon : (lin 5, col 25) : escape error : expected matching enclosing block\n") { out }
     }
     @Test
     fun dd_10_loop() {
         val out = test("""
-            do :break {
+            enclose' :break {
                 loop' {
                     do {
                         val t = []
@@ -367,7 +367,7 @@ class Exec_02 {
     @Test
     fun dd_11_loop() {
         val out = test("""
-            do :break {
+            enclose' :break {
                 loop' {
                     val t = []
                     if true {
@@ -391,7 +391,7 @@ class Exec_02 {
                     t[1]
                 }
             }
-            do :break {
+            enclose' :break {
                 val it = [f, 0]
                 var i = it[0](it)
                 loop' {
@@ -410,9 +410,9 @@ class Exec_02 {
         val out = test("""
             $PLUS
             var i = 0
-            do :break {
+            enclose' :break {
                 loop' {
-                    do :skip {
+                    enclose' :skip {
                         set i = i + 1
                         println(i)
                         if i /= 2 {
@@ -430,7 +430,7 @@ class Exec_02 {
     @Test
     fun dd_14_loop_break_error_bug() {
         val out = test("""
-            do :break {
+            enclose' :break {
                 loop' {
                     do { nil }
                     if true {
@@ -445,7 +445,7 @@ class Exec_02 {
     @Test
     fun dd_15_loop_break_immed() {
         val out = test("""
-            do :break {
+            enclose' :break {
                 loop' {
                     do { nil }
                     val e = nil
@@ -461,7 +461,7 @@ class Exec_02 {
     @Test
     fun dd_16_until() {
         val out = test("""
-            println(do :break {
+            println(enclose' :break {
                 loop' {
                     if 10 {
                         escape(:break,10)
@@ -1029,7 +1029,7 @@ class Exec_02 {
             set t[:b] = 20
             set t[:c] = 30
             var k = next-dict(t)
-            do :break {
+            enclose' :break {
                 loop' {
                     if (k == nil) {
                         escape(:break,nil)
@@ -1049,7 +1049,7 @@ class Exec_02 {
             do {
                 var t1 = []
                 var ok = false
-                do :break {
+                enclose' :break {
                     loop' {
                         val t2 = t1
                         set t1 = nil
@@ -1070,7 +1070,7 @@ class Exec_02 {
             var sum = func (n) {                                                            
                 var i = n                                                                   
                 var s = 0
-                do :break {
+                enclose' :break {
                     loop' {                                                                      
                         if i == 0 {
                             escape(:break,s)

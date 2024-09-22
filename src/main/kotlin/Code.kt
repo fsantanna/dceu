@@ -251,17 +251,29 @@ class Coder () {
                             continue;
                         }
                         ${this.check_aborted("continue")}
-                        if (CEU_ESCAPE == CEU_ESCAPE_NONE) {
-                            // no escape
-                        ${this.tag.cond { """
-                        } else if (CEU_ESCAPE == CEU_TAG_${it.str.idc()}) {
-                            CEU_ESCAPE = CEU_ESCAPE_NONE;   // caught escape: go ahead
-                        """ }}
-                        } else {
-                            continue;                       // uncaught escape: propagate up
-                        }                                                            
+                        if (CEU_ESCAPE != CEU_ESCAPE_NONE) {
+                            continue;
+                        }
                     """ }}
                 }
+                """
+            }
+            is Expr.Enclose -> {
+                """
+                do { // ENCLOSE | ${this.dump()}
+                    ${this.blk.code()}
+                } while (0);
+                if (CEU_ERROR != CEU_ERROR_NONE) {
+                    continue;
+                }
+                ${this.check_aborted("continue")}
+                if (CEU_ESCAPE == CEU_ESCAPE_NONE) {
+                    // no escape
+                } else if (CEU_ESCAPE == CEU_TAG_${this.tag.str.idc()}) {
+                    CEU_ESCAPE = CEU_ESCAPE_NONE;   // caught escape: go ahead
+                } else {
+                    continue;                       // uncaught escape: propagate up
+                }                                                            
                 """
             }
             is Expr.Escape -> """ // ESCAPE | ${this.dump()}

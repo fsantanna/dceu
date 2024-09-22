@@ -11,11 +11,11 @@ fun Expr.do_has_var (): Boolean {
     }.isNotEmpty()
 }
 
-fun Expr.do_has_escape (tag: String): Boolean {
+fun Expr.has_escape (tag: String): Boolean {
     return this.dn_collect {
         when (it) {
-            is Expr.Do -> if (it.tag?.str == tag) null else emptyList()
-            is Expr.Escape -> if (it.tag.str == tag) listOf(Unit) else emptyList()
+            is Expr.Enclose -> if (it.tag.str == tag) null else emptyList()
+            is Expr.Escape  -> if (it.tag.str == tag) listOf(Unit) else emptyList()
             else -> emptyList()
         }
     }.isNotEmpty()
@@ -33,17 +33,21 @@ fun Expr.prune (): Expr {
             val es = this.es.map { it.prune() }
             val up = this.fup()
             val isup = (up is Expr.Proto || up is Expr.Catch || up is Expr.Defer)
-            val req = (up===null || isup || (this.tag!=null && this.es.any { it.do_has_escape(this.tag.str) }) || this.es.any { it.do_has_var() })
-            if (this.tag != null) {
-                println(listOf(this.tag, req, this.es.any { it.do_has_var() }, this.es.any { it.do_has_escape(this.tag.str) }))
-            }
+            val req = (up===null || isup || this.es.any { it.do_has_var() })
             if (req) {
-                Expr.Do(this.tk_, this.tag, es)
+                Expr.Do(this.tk_, es)
             } else {
                 Expr.Group(Tk.Fix("group", this.tk.pos.copy()), es)
             }
         }
 
+        is Expr.Enclose -> {
+            if (this.blk.has_escape(this.tag.str)) {
+                this
+            } else {
+                this.blk
+            }
+        }
         is Expr.Escape -> Expr.Escape(this.tk_, this.tag, this.e?.prune())
         is Expr.Group -> Expr.Group(this.tk_, this.es.map { it.prune() })
         is Expr.Dcl -> Expr.Dcl(this.tk_, lex, idtag, this.src?.prune())
