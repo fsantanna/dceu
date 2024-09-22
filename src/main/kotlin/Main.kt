@@ -273,7 +273,8 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         check_vars()
         check_statics()
         //Static()
-        optim_blocks()
+        //optim_escapes()
+        G.outer = G.outer!!.prune() as Expr.Do
         //println(G.outer)
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
         if (verbose) {

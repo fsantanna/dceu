@@ -137,7 +137,7 @@ class Coder () {
                         pres.add(Pair(mem, src))
                         cre
                     }
-                    (this.nst && !G.nonlocs[this.n]!!.isEmpty()) -> {
+                    (this.nst && G.nonlocs[this.n]!!.isNotEmpty()) -> {
                         src + cre
                     }
                     else -> {
