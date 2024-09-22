@@ -1688,6 +1688,138 @@ class Exec_99 {
         //assert(out == "[42,1000,1001,1002,10,11,12,43,36,101,44]\n") { out }
     }
 
+    // BREAK / SKIP / RETURN
+
+    @Test
+    fun ja_01_break_err() {
+        val out = test("""
+            break()
+        """)
+        assert(out == "anon : (lin 2, col 13) : escape error : expected matching \"do\" block\n") { out }
+    }
+    @Test
+    fun ja_02_skip_err() {
+        val out = test("""
+            skip()
+        """)
+        assert(out == "anon : (lin 2, col 13) : escape error : expected matching \"do\" block\n") { out }
+    }
+    @Test
+    fun ja_03_return_err() {
+        val out = test("""
+            return()
+        """)
+        assert(out == "anon : (lin 2, col 13) : escape error : expected matching \"do\" block\n") { out }
+    }
+    @Test
+    fun ja_04_break() {
+        val out = test("""
+            println(loop { break(10) })
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun ja_05_return() {
+        val out = test("""
+            func f () {
+                loop {
+                    return(10)
+                }
+            }
+            println(f())
+        """)
+        assert(out == "10\n") { out }
+    }
+
+    @Test
+    fun jj_01_break() {
+        val out = test("""
+            loop {
+                if true {
+                    break(nil)
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun jj_02_break() {
+        val out = test("""
+            loop {
+                break(nil)
+                do {
+                    skip()
+                }
+            }
+            println(:out)
+        """)
+        assert(out == ":out\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : skip error : expected immediate parent loop\n") { out }
+    }
+    @Test
+    fun jj_03_skip() {
+        val out = test("""
+            var ok = false
+            loop {
+                if ok {
+                    break(nil)
+                } else { nil }
+                set ok = true
+                skip()
+            }
+            println(:out)
+        """)
+        assert(out == ":out\n") { out }
+    }
+    @Test
+    fun jj_04_break() {
+        val out = test("""
+            do {
+                loop {
+                    println(:in)
+                    if true {
+                        break(nil)
+                    }
+                }
+            }
+            println(:out)
+        """
+        )
+        assert(out == ":in\n:out\n") { out }
+    }
+    @Test
+    fun jj_05_break_err() {
+        val out = test("""
+            loop {
+                func () {
+                    break (nil)
+                }
+            }
+        """)
+        //assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
+        assert(out == "anon : (lin 4, col 21) : break error : expected parent loop\n") { out }
+    }
+    @Test
+    fun jj_06_break_sum() {
+        val out = test("""
+            $PLUS
+            var sum = func (n) {                                                            
+                var i = n                                                                   
+                var s = 0                                                                   
+                loop {                                                                      
+                    if i == 0 {
+                        break(s)
+                    } else {nil}
+                    set s = s + i                                                           
+                    set i = i - 1                                                           
+                }                                                                           
+            }                                                                               
+            println(sum(5))                                                                
+        """)
+        assert(out == "15\n") { out }
+    }
+
     // THUS / SCOPE / :FLEET / :fleet
 
     @Test

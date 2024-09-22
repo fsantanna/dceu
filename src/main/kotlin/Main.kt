@@ -56,9 +56,11 @@ val KEYWORDS: SortedSet<String> = (
     )) + (if (CEU < 50) setOf() else setOf(
         "drop", "drop'", "val'", "var'",
     )) + (if (CEU < 99) setOf() else setOf(
-        "await", "break", "enum", "every", "ifs", "loop", "match",
+        "await", "break", "enum", "every",
+        "ifs", "loop", "match",
         "par", "par-and", "par-or",
-        "resume-yield-all", "skip", "test",
+        "resume-yield-all", "return",
+        "skip", "test",
         "thus", "until", "watching",
         "with", "where", "while",
     ))

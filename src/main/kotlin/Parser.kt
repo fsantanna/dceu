@@ -326,7 +326,7 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun block (tk0: Tk? = null): Expr.Do {
+    fun block (tk0: Tk? = null, tag: Tk.Tag? = null): Expr.Do {
         val tk = when {
             (tk0 !== null) -> tk0
             (this.tk0.str=="do") -> this.tk0
@@ -335,7 +335,7 @@ class Parser (lexer_: Lexer)
         this.acceptFix_err("{")
         val es = this.exprs()
         this.acceptFix_err("}")
-        return Expr.Do(tk, null, es)
+        return Expr.Do(tk, tag, es)
     }
 
     fun lambda (it: Boolean): Pair<List<Id_Tag>,List<Expr>> {
@@ -552,7 +552,7 @@ class Parser (lexer_: Lexer)
                     !this.acceptEnu("Tag") -> null
                     else -> this.tk0 as Tk.Tag
                 }
-                val blk = this.block(this.tk1)
+                val blk = this.block(this.tk1, if (CEU<99) null else Tk.Tag(":return",this.tk1.pos.copy()))
                 val proto = Expr.Proto(tk0, nst, fak, tag, pars, blk)
                 if (dcl === null) {
                     proto
@@ -843,7 +843,9 @@ class Parser (lexer_: Lexer)
                         this.nest("""
                             do :break {
                                 loop' {
-                                    ${blk.es.to_str(true)}
+                                    do :skip {
+                                        ${blk.es.to_str(true)}
+                                    }
                                 }
                             }
                         """)
@@ -940,18 +942,14 @@ class Parser (lexer_: Lexer)
                     }
                 }
             }
-            (CEU>=99 && this.acceptFix("break")) -> {
+            (CEU>=99 && (this.acceptFix("break") || this.acceptFix("skip") || this.acceptFix("return"))) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("(")
                 val e = if (this.checkFix(")")) null else {
                     this.expr()
                 }
                 this.acceptFix_err(")")
-                Expr.Escape(tk0, Tk.Tag(":break",tk0.pos.copy()), e)
-            }
-            (CEU>=99 && this.acceptFix("skip")) -> {
-                TODO()
-                //Expr.Skip(this.tk0 as Tk.Fix)
+                Expr.Escape(tk0, Tk.Tag(":"+tk0.str,tk0.pos.copy()), e)
             }
             (CEU>=99 && (this.acceptFix("while") || this.acceptFix("until"))) -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -1031,7 +1029,7 @@ class Parser (lexer_: Lexer)
                                 val (idstags, es) = this.lambda(false)
                                 """
                                 set ceu_ret_$nn = group {
-                                    ${(!idstags.isEmpty()).cond { "val' ${idstags.first().to_str(true)} = `:ceu ceu_acc`" }}
+                                    ${(idstags.isNotEmpty()).cond { "val' ${idstags.first().to_str(true)} = `:ceu ceu_acc`" }}
                                     ${es.to_str(true)}
                                 }
                                 true
