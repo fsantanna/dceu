@@ -1,11 +1,21 @@
 package dceu
 
-fun Expr.is_required (): Boolean {
+fun Expr.do_has_var (): Boolean {
     return this.dn_collect {
         when (it) {
             is Expr.Proto, is Expr.Do -> null
             is Expr.Dcl -> if (it.tk.str=="val" || it.tk.str=="var" || it.idtag.first.str=="it") listOf(Unit) else emptyList()
             is Expr.Defer, is Expr.Yield, is Expr.Spawn, is Expr.Delay, is Expr.Tasks -> listOf(Unit)
+            else -> emptyList()
+        }
+    }.isNotEmpty()
+}
+
+fun Expr.do_has_escape (tag: String): Boolean {
+    return this.dn_collect {
+        when (it) {
+            is Expr.Do -> if (it.tag?.str == tag) null else emptyList()
+            is Expr.Escape -> if (it.tag.str == tag) listOf(Unit) else emptyList()
             else -> emptyList()
         }
     }.isNotEmpty()
@@ -22,8 +32,12 @@ fun Expr.prune (): Expr {
         is Expr.Do -> {
             val es = this.es.map { it.prune() }
             val up = this.fup()
-            val isup = (up is Expr.Proto || up is Expr.Loop || up is Expr.Catch || up is Expr.Defer)
-            if (up===null || this.tag!==null || isup || this.es.any { it.is_required() }) {
+            val isup = (up is Expr.Proto || up is Expr.Catch || up is Expr.Defer)
+            val req = (up===null || isup || (this.tag!=null && this.es.any { it.do_has_escape(this.tag.str) }) || this.es.any { it.do_has_var() })
+            if (this.tag != null) {
+                println(listOf(this.tag, req, this.es.any { it.do_has_var() }, this.es.any { it.do_has_escape(this.tag.str) }))
+            }
+            if (req) {
                 Expr.Do(this.tk_, this.tag, es)
             } else {
                 Expr.Group(Tk.Fix("group", this.tk.pos.copy()), es)
@@ -36,7 +50,7 @@ fun Expr.prune (): Expr {
 
         is Expr.Set -> Expr.Set(this.tk_, this.dst.prune(), this.src.prune())
         is Expr.If -> Expr.If(this.tk_, this.cnd.prune(), this.t.prune(), this.f.prune())
-        is Expr.Loop -> Expr.Loop(this.tk_, this.blk.prune() as Expr.Do)
+        is Expr.Loop -> Expr.Loop(this.tk_, this.blk.prune())
         is Expr.Data -> this
         is Expr.Drop -> Expr.Drop(this.tk_, this.e.prune(), this.prime)
         is Expr.Catch -> Expr.Catch(this.tk_, this.tag, this.blk.prune() as Expr.Do)
