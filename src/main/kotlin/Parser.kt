@@ -326,7 +326,7 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun block (tk0: Tk? = null, tag: Tk.Tag? = null): Expr.Do {
+    fun block (tk0: Tk? = null): Expr.Do {
         val tk = when {
             (tk0 !== null) -> tk0
             (this.tk0.str=="do") -> this.tk0

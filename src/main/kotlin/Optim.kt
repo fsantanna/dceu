@@ -42,10 +42,11 @@ fun Expr.prune (): Expr {
         }
 
         is Expr.Enclose -> {
+            val blk = this.blk.prune()
             if (this.blk.has_escape(this.tag.str)) {
-                this
+                Expr.Enclose(this.tk_, this.tag, blk)
             } else {
-                this.blk
+                blk
             }
         }
         is Expr.Escape -> Expr.Escape(this.tk_, this.tag, this.e?.prune())

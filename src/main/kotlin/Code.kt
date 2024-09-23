@@ -82,6 +82,10 @@ class Coder () {
                         do {
                             $code
                         } while (0);
+                        
+                    #if CEU >= 2
+                        assert(CEU_ESCAPE == CEU_ESCAPE_NONE);
+                    #endif
 
                         { // pars
                             CEU_Value ceu_acc_$n = CEU_ACC_KEEP();

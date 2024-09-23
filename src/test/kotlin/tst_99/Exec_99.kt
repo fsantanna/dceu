@@ -1731,15 +1731,46 @@ class Exec_99 {
         assert(out == "10\n") { out }
     }
     @Test
-    fun ja_06_skip_optim() {
+    fun ja_06_break_not_optim() {
         val out = test("""
             loop {
-                val x
-                break()
+                if false {
+                    break()
+                }
+                ``` // asserts that :break is not optimized out
+                CEU_ESCAPE = CEU_TAG_break;
+                continue;
+                ```
             }
             println(:ok)
         """)
-        assert(out == "skip/no, break/ok\n") { out }
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun ja_07_skip_optim() {
+        val out = test("""
+            loop {
+                ``` // asserts that :skip is optimized out
+                CEU_ESCAPE = CEU_TAG_skip;
+                continue;
+                ```
+            }
+            println(:ok)
+        """)
+        assert(out.contains("main: Assertion `CEU_ESCAPE == CEU_ESCAPE_NONE' failed.\n")) { out }
+    }
+    @Test
+    fun ja_08_return_optim() {
+        val out = test("""
+            func () {
+                ``` // asserts that :return is optimized out
+                CEU_ESCAPE = CEU_TAG_return;
+                continue;
+                ```
+            } ()
+            println(:ok)
+        """)
+        assert(out.contains(": Assertion `CEU_ESCAPE == CEU_ESCAPE_NONE' failed.\n")) { out }
     }
 
     @Test
@@ -5307,7 +5338,7 @@ class Exec_99 {
                 println(x)
             }
             println(:ok)
-        """, true)
+        """)
         assert(out == "10\n:ok\n") { out }
     }
 

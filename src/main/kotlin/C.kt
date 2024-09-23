@@ -2366,6 +2366,8 @@ fun Coder.main (): String {
         } while (0);
 
     #if CEU >= 2
+        assert(CEU_ESCAPE == CEU_ESCAPE_NONE);
+
         // uncaught throw
         if (CEU_ERROR != CEU_ERROR_NONE) {
             CEU_Vector* vec = &CEU_ERROR_STACK.Dyn->Vector;
