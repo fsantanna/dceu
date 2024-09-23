@@ -53,7 +53,7 @@ fun check_vars () {
             }
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Group -> this.es.forEach { it.traverse() }
-            is Expr.Enclose -> this.blk.traverse()
+            is Expr.Enclose -> this.es.forEach { it.traverse() }
             is Expr.Escape -> this.e?.traverse()
             is Expr.Dcl    -> {
                 this.src?.traverse()
@@ -305,7 +305,7 @@ class Static () {
             }
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Group  -> this.es.forEach { it.traverse() }
-            is Expr.Enclose -> this.blk.traverse()
+            is Expr.Enclose -> this.es.forEach { it.traverse() }
             is Expr.Escape -> this.e?.traverse()
             is Expr.Dcl    -> {
                 if (this.src is Expr.Proto && (this.tk.str=="val" || this.tk.str=="val'")) {

@@ -170,7 +170,7 @@ sealed class Expr (var n: Int, val tk: Tk) {
     data class Proto   (val tk_: Tk.Fix, val nst: Boolean, val fake: Boolean, val tag: Tk.Tag?, val pars: List<Expr.Dcl>, val blk: Do): Expr(G.N++, tk_)
     data class Do      (val tk_: Tk, val es: List<Expr>) : Expr(G.N++, tk_)
     data class Group   (val tk_: Tk.Fix, val es: List<Expr>) : Expr(G.N++, tk_)
-    data class Enclose (val tk_: Tk.Fix, val tag: Tk.Tag, val blk: Expr): Expr(G.N++, tk_)
+    data class Enclose (val tk_: Tk.Fix, val tag: Tk.Tag, val es: List<Expr>): Expr(G.N++, tk_)
     data class Escape  (val tk_: Tk.Fix, val tag: Tk.Tag, val e: Expr?): Expr(G.N++, tk_)
     data class Dcl     (val tk_: Tk.Fix, val lex: Boolean, /*val poly: Boolean,*/ val idtag: Id_Tag, val src: Expr?):  Expr(G.N++, tk_)
     data class Set     (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(G.N++, tk_)

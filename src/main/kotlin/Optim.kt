@@ -42,11 +42,11 @@ fun Expr.prune (): Expr {
         }
 
         is Expr.Enclose -> {
-            val blk = this.blk.prune()
-            if (this.blk.has_escape(this.tag.str)) {
-                Expr.Enclose(this.tk_, this.tag, blk)
+            val es = this.es.map { it.prune() }
+            if (this.es.any { it.has_escape(this.tag.str) }) {
+                Expr.Enclose(this.tk_, this.tag, es)
             } else {
-                blk
+                Expr.Group(this.tk_, es)
             }
         }
         is Expr.Escape -> Expr.Escape(this.tk_, this.tag, this.e?.prune())

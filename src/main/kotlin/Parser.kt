@@ -400,10 +400,11 @@ class Parser (lexer_: Lexer)
         return when {
             this.acceptFix("do") -> {
                 val tk0 = this.tk0 as Tk.Fix
+                val blk = this.block(tk0)
                 if (CEU>=99 && this.acceptEnu("Tag")) {
-                    Expr.Enclose(tk0, this.tk0 as Tk.Tag, Expr.Do(tk0, this.block().es))
+                    Expr.Enclose(tk0, this.tk0 as Tk.Tag, listOf(blk))
                 } else {
-                    Expr.Do(tk0, this.block().es)
+                    blk
                 }
             }
             this.acceptFix("enclose'") -> {
@@ -411,7 +412,7 @@ class Parser (lexer_: Lexer)
                 this.acceptEnu_err("Tag")
                 val tag = this.tk0 as Tk.Tag
                 val blk = this.block()
-                Expr.Enclose(tk0, tag, blk)
+                Expr.Enclose(tk0, tag, blk.es)
             }
             this.acceptFix("escape") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -562,8 +563,12 @@ class Parser (lexer_: Lexer)
                     !this.acceptEnu("Tag") -> null
                     else -> this.tk0 as Tk.Tag
                 }
-                val blk = this.block(this.tk1, if (CEU<99) null else Tk.Tag(":return",this.tk1.pos.copy()))
-                val proto = Expr.Proto(tk0, nst, fak, tag, pars, blk)
+                val blk = this.block(this.tk1)
+                val proto = Expr.Proto(tk0, nst, fak, tag, pars,
+                    if (CEU < 99) blk else {
+                        Expr.Do(blk.tk, listOf(Expr.Enclose(tk0, Tk.Tag(":return",tk0.pos.copy()), blk.es)))
+                    }
+                )
                 if (dcl === null) {
                     proto
                 } else {

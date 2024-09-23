@@ -83,9 +83,11 @@ class Coder () {
                             $code
                         } while (0);
                         
-                    #if CEU >= 2
-                        assert(CEU_ESCAPE == CEU_ESCAPE_NONE);
-                    #endif
+                        ${(!this.fake).cond { """
+                        #if CEU >= 2
+                            assert(CEU_ESCAPE == CEU_ESCAPE_NONE);
+                        #endif
+                        """ }}
 
                         { // pars
                             CEU_Value ceu_acc_$n = CEU_ACC_KEEP();
@@ -265,7 +267,7 @@ class Coder () {
             is Expr.Enclose -> {
                 """
                 do { // ENCLOSE | ${this.dump()}
-                    ${this.blk.code()}
+                    ${this.es.code()}
                 } while (0);
                 if (CEU_ERROR != CEU_ERROR_NONE) {
                     continue;

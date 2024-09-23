@@ -28,7 +28,7 @@ fun cache_ups () {
 
             is Expr.Do -> me.es.forEach { G.ups[it.n] = me.n }
             is Expr.Group -> me.es.forEach { G.ups[it.n] = me.n }
-            is Expr.Enclose -> G.ups[me.blk.n] = me.n
+            is Expr.Enclose -> me.es.forEach { G.ups[it.n] = me.n }
             is Expr.Escape -> if (me.e !== null) G.ups[me.e.n] = me.n
             is Expr.Dcl -> if (me.src !== null) G.ups[me.src.n] = me.n
             is Expr.Set -> {

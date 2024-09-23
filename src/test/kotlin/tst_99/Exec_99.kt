@@ -1840,7 +1840,8 @@ class Exec_99 {
             }
         """)
         //assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
-        assert(out == "anon : (lin 4, col 21) : break error : expected parent loop\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : break error : expected parent loop\n") { out }
+        assert(out == "anon : (lin 4, col 21) : escape error : expected matching enclosing block\n") { out }
     }
     @Test
     fun jj_06_break_sum() {

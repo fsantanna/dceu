@@ -13,7 +13,7 @@ fun <V> Expr.dn_collect (f: (Expr)->List<V>?): List<V> {
         is Expr.Proto  -> this.blk.dn_collect(f) + this.pars.map { it.dn_collect(f) }.flatten()
         is Expr.Do     -> this.es.map { it.dn_collect(f) }.flatten()
         is Expr.Group  -> this.es.map { it.dn_collect(f) }.flatten()
-        is Expr.Enclose -> this.blk.dn_collect(f)
+        is Expr.Enclose -> this.es.map { it.dn_collect(f) }.flatten()
         is Expr.Escape -> this.e?.dn_collect(f) ?: emptyList()
         is Expr.Dcl    -> this.src?.dn_collect(f) ?: emptyList()
         is Expr.Set    -> this.dst.dn_collect(f) + this.src.dn_collect(f)
