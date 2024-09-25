@@ -400,11 +400,10 @@ class Parser (lexer_: Lexer)
         return when {
             this.acceptFix("do") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val blk = this.block(tk0)
                 if (CEU>=99 && this.acceptEnu("Tag")) {
-                    Expr.Enclose(tk0, this.tk0 as Tk.Tag, listOf(blk))
+                    Expr.Enclose(tk0, this.tk0 as Tk.Tag, listOf(this.block(tk0)))
                 } else {
-                    blk
+                    this.block(tk0)
                 }
             }
             this.acceptFix("enclose'") -> {
@@ -728,7 +727,7 @@ class Parser (lexer_: Lexer)
                     this.nest("""
                         do {
                             val task_${G.N} = spawn ;;{
-                                ${blk.to_str(true)}
+                                ${blk.to_str_x(true)}
                             ;;}
                             if (status(task_${G.N}) /= :terminated) { 
                                 watching (|it==task_${G.N}) {
@@ -915,7 +914,7 @@ class Parser (lexer_: Lexer)
                         }
 
                         this.nest("""
-                            enclose' :break {
+                            do :break {
                                 val ceu_ste_${G.N} = ${if (step == null) 1 else step.to_str(true)}
                                 var $id = ${eA.to_str(true)} $op (
                                     ${if (tkA.str == "{") 0 else "ceu_ste_${G.N}"}

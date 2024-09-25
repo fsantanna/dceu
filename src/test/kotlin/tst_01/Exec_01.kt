@@ -5604,4 +5604,13 @@ class Exec_01 {
         //assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
         assert(out == "2\n") { out }
     }
+    @Test
+    fun zz_08_nonlocs() {
+        val out = test("""
+            func () {
+                x
+            }
+        """)
+        assert(out == "anon : (lin 3, col 17) : access error : variable \"x\" is not declared\n") { out }
+    }
 }

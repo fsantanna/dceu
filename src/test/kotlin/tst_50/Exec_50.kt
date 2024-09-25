@@ -874,7 +874,7 @@ class Exec_50 {
         val out = test("""
             spawn (task () {
                 val v = enclose' :X {
-                    spawn (task :nested () {
+                    spawn (task :fake () {
                         escape(:X,:ok)
                     })()
                     loop' {
@@ -892,7 +892,7 @@ class Exec_50 {
         val out = test("""
             spawn (task () {
                 val v = enclose' :X {
-                    spawn (task :nested () {
+                    spawn (task :fake () {
                         defer {
                             println(:def)
                         }
@@ -926,7 +926,7 @@ class Exec_50 {
         val out = test("""
             spawn (task () {
                 val v = enclose' :X {
-                    spawn (task :nested () {
+                    spawn (task :fake () {
                         yield(nil)
                         escape(:X,:ok)
                     })()
@@ -2806,6 +2806,66 @@ class Exec_50 {
         //        " v  anon : (lin 11, col 38) : block escape error : cannot expose task in pool to outer scope\n") { out }
     }
 
+    // IT
+
+    @Test
+    fun gg_01_it() {
+        val out = test("""
+            do {
+                val it = 10
+                println(it)
+                do {
+                    val it = 100
+                    println(it)
+                }
+                println(it)
+            }
+        """)
+        assert(out == "10\n100\n10\n") { out }
+    }
+    @Test
+    fun gg_02_it() {
+        val out = test("""
+            do {
+                val' it = 10
+                println(it)
+                do {
+                    val' it = 100
+                    println(it)
+                }
+                println(it)
+            }
+        """)
+        assert(out == "10\n100\n10\n") { out }
+    }
+    @Test
+    fun gg_03_it() {
+        val out = test("""
+            val' it = 10
+            println(it)
+            val' it = 100
+            println(it)
+        """)
+        assert(out == "10\n100\n10\n") { out }
+    }
+    @Test
+    fun gg_10_loop_optim_it() {
+        val out = test("""
+            enclose' :break {
+                (var it = 10);
+                loop' {
+                    println(it);
+                    do {
+                        (val' it = true);
+                        escape(:break,it);
+                    };
+                };
+            };
+        """)
+        assert(out == "10\n") { out }
+    }
+
+
     @Test
     fun jj_02_tracks() {
         val out = test("""
@@ -3052,21 +3112,5 @@ class Exec_50 {
         //        " v  anon : (lin 4, col 27) : block escape error : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
-    }
-    @Test
-    fun zz_17_loop_optim() {
-        val out = test("""
-            enclose' :break {
-                (var it = 10);
-                loop' {
-                    println(it);
-                    do {
-                        (val' it = true);
-                        escape(:break,it);
-                    };
-                };
-            };
-        """)
-        assert(out == "10\n") { out }
     }
 }

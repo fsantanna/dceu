@@ -61,7 +61,7 @@ fun Expr.to_str (pre: Boolean = false): String {
         }
         is Expr.Do     -> "do " + this.to_str_x(pre)
         is Expr.Group  -> "group " + this.to_str_x(pre)
-        is Expr.Enclose -> "enclose' " + this.tag.str + "{\n" + this.es.to_str(pre) + "}"
+        is Expr.Enclose -> "enclose' " + this.tag.str + " {\n" + this.es.to_str(pre) + "}"
         is Expr.Escape -> "escape(" + this.tag.str + this.e.cond { ","+it.to_str(pre) } + ")"
         is Expr.Dcl    -> {
             "(" + this.tk_.str + " " + this.idtag.to_str(pre) + this.src.cond { " = ${it.to_str(pre)}" } + ")"

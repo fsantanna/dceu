@@ -269,9 +269,9 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         cache_ns()
         cache_ups()
         cache_tags()
-        cache_nonlocs()
         check_tags()
         check_vars()
+        cache_nonlocs()
         check_statics()
         //Static()
         G.outer = G.outer!!.prune() as Expr.Do

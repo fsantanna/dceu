@@ -76,7 +76,7 @@ class Exec_99 {
         //assert(out == "\n") { out }
     }
 
-    // AS
+    // AS / DO
 
     @Test
     fun ab_01_yield() {
@@ -85,6 +85,19 @@ class Exec_99 {
             println(x)
         """)
         assert(out == "1\n") { out }
+    }
+    @Test
+    fun ab_02_do_escape() {
+        val out = test("""
+            val v = do :x {
+                do :y {
+                    escape(:y, 10)
+                    println(:no)
+                }
+            }
+            println(v)
+        """)
+        assert(out == "10\n") { out }
     }
 
     // OPS: not, and, or
@@ -1750,6 +1763,7 @@ class Exec_99 {
     fun ja_07_skip_optim() {
         val out = test("""
             loop {
+                ;;break()
                 ``` // asserts that :skip is optimized out
                 CEU_ESCAPE = CEU_TAG_skip;
                 continue;
@@ -2750,6 +2764,20 @@ class Exec_99 {
             }
         """, true)
         assert(out == "0\n1\n") { out }
+    }
+    @Test
+    fun fg_26_loop_num() {
+        val out = test("""
+            $PLUS ; $COMP
+            loop in {0 => -2{ {
+                nil
+            }
+            loop in {1 => 2} {
+                nil
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
     }
 
     // LOOP / ITER / :ITERATOR
@@ -5014,7 +5042,7 @@ class Exec_99 {
             }
         """)
         //assert(out == "anon : (lin 2, col 27) : expected non-pool spawn : have \"spawn\"") { out }
-        assert(out == " |  anon : (lin 5, col 14) : (spawn (task :fake () { (val ts = tasks(ni...\n" +
+        assert(out == " |  anon : (lin 5, col 14) : (spawn (task :fake () { group { (val ts = ...\n" +
                 " |  anon : (lin 4, col 31) : (spawn nil() in ts)\n" +
                 " v  error : expected task\n") { out }
     }
@@ -5031,7 +5059,7 @@ class Exec_99 {
         """, true)
         //assert(out.contains("[]\n")) { out }
         //assert(out.contains("anon : (lin 3, col 53) : block escape error : incompatible scopes")) { out }
-        assert(out == " |  anon : (lin 8, col 14) : (spawn (task :fake () { (var x = do { (val...\n" +
+        assert(out == " |  anon : (lin 8, col 14) : (spawn (task :fake () { group { (var x = d...\n" +
                 " |  anon : (lin 3, col 17) : (var x = do { (val' ceu_spw = (spawn (task...\n" +
                 " v  error : cannot copy reference out\n") { out }
     }
@@ -5332,6 +5360,7 @@ class Exec_99 {
     @Test
     fun mm_03_toggle() {
         val out = test("""
+            $IS
             spawn {
                 val x = toggle :Show {
                     10
