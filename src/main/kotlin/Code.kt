@@ -303,6 +303,9 @@ class Coder () {
                     (this.src !== null) -> """
                         ${this.src.code()}
                         #ifdef CEU_LEX
+                        ${(!this.lex).cond { """
+                            //assert(ceu_acc.type<CEU_VALUE_DYNAMIC || ceu_acc.Dyn->Any.lex.depth!=CEU_LEX_UNDEF);
+                        """ }}
                         CEU_ERROR_CHK_PTR (
                             continue,
                             ceu_lex_chk_own(ceu_acc, (CEU_Lex) { ${if (this.lex) "CEU_LEX_MUTAB" else "CEU_LEX_FLEET"}, ceux->depth }),

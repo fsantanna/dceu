@@ -597,12 +597,12 @@ fun Coder.main (): String {
         if (src.type < CEU_VALUE_DYNAMIC) {
             return NULL;
         } else if (
-            dst.type != CEU_LEX_FLEET &&
+            dst.type != CEU_LEX_FLEET              &&
             src.Dyn->Any.lex.type == CEU_LEX_FLEET &&
             src.Dyn->Any.lex.depth < dst.depth     &&
             src.Dyn->Any.refs > 1
         ) {
-            assert(0 && "impossible case");
+            //assert(0 && "impossible case");
             return "dropped value has pending outer reference";
         } else if (
             src.Dyn->Any.lex.depth > dst.depth && (
@@ -622,6 +622,10 @@ fun Coder.main (): String {
 
         if (dst.type == CEU_LEX_FLEET) {
             // val' x = ...
+            if (src.Dyn->Any.lex.depth == CEU_LEX_UNDEF) {
+                assert(src.Dyn->Any.lex.type == CEU_LEX_FLEET);
+                src.Dyn->Any.lex.depth = dst.depth;
+            }
         } else {
             src.Dyn->Any.lex = dst;
         }

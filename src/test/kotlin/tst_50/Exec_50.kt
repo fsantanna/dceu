@@ -101,6 +101,20 @@ class Exec_50 {
         """)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun bb_04_lex_outer() {
+        val out = test("""
+            val' a = []
+            do {
+                ;;dump(a)
+                val b = a
+                ;;dump(a)
+            }
+            ;;dump(a)
+        """)
+        assert(out == " |  anon : (lin 5, col 17) : (val b = a)\n" +
+                " v  error : dropped value has pending outer reference\n") { out }
+    }
 
     // COLLECTIONS
 
@@ -409,8 +423,8 @@ class Exec_50 {
     @Test
     fun nn_02x_nested() {
         val out = test("""
-            val f = do {
-                func' :nested () {
+            val f = do {            ;; optim block?
+                func' :nested () {  ;; no error
                     nil
                 }
             }
@@ -3112,5 +3126,24 @@ class Exec_50 {
         //        " v  anon : (lin 4, col 27) : block escape error : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
+    }
+    @Test
+    fun zz_17_it() {
+        val out = test("""
+            val' a = []
+            do {
+                val' it = a
+                do {
+                    ;;dump(a)
+                    val yyy = a
+                    ;;dump(a)
+                }
+            }
+            do {
+                val' it = a
+                nil
+            }
+        """)
+        assert(out == "[]\n") { out }
     }
 }

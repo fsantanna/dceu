@@ -857,6 +857,17 @@ class Exec_99 {
         assert(out == ":ok\n") { out }
     }
     @Test
+    fun fh_01x_ifs () {
+        val out = test("""
+            $IS ; $COMP
+            match [10] {
+                [30] => error(:no)
+                [10] => println(:ok)
+            }
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
     fun fh_02_ifs () {
         val out = test("""
             $IS ; $COMP

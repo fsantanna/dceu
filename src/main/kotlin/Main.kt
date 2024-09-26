@@ -274,8 +274,8 @@ fun all (tst: Boolean, verbose: Boolean, inps: List<Pair<Triple<String, Int, Int
         cache_nonlocs()
         check_statics()
         //Static()
-        G.outer = G.outer!!.prune() as Expr.Do
-        //println(G.outer)
+        //G.outer = G.outer!!.prune() as Expr.Do
+        //println(G.outer!!.to_str())
         //rets.pub.forEach { println(listOf(it.value,it.key.javaClass.name,it.key.tk.pos.lin)) }
         if (verbose) {
             System.err.println("... ceu -> c ...")
