@@ -5042,7 +5042,7 @@ class Exec_99 {
             }
         """)
         //assert(out == "anon : (lin 2, col 27) : expected non-pool spawn : have \"spawn\"") { out }
-        assert(out == " |  anon : (lin 5, col 14) : (spawn (task :fake () { group { (val ts = ...\n" +
+        assert(out == " |  anon : (lin 5, col 14) : (spawn (task' :fake () { group { (val ts =...\n" +
                 " |  anon : (lin 4, col 31) : (spawn nil() in ts)\n" +
                 " v  error : expected task\n") { out }
     }
@@ -5059,7 +5059,7 @@ class Exec_99 {
         """, true)
         //assert(out.contains("[]\n")) { out }
         //assert(out.contains("anon : (lin 3, col 53) : block escape error : incompatible scopes")) { out }
-        assert(out == " |  anon : (lin 8, col 14) : (spawn (task :fake () { group { (var x = d...\n" +
+        assert(out == " |  anon : (lin 8, col 14) : (spawn (task' :fake () { group { (var x = ...\n" +
                 " |  anon : (lin 3, col 17) : (var x = do { (val' ceu_spw = (spawn (task...\n" +
                 " v  error : cannot copy reference out\n") { out }
     }

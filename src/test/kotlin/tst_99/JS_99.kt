@@ -158,7 +158,7 @@ class JS_99 {
             }
         """, true)
         assert(out.contains("json :good\n" +
-                " |  anon : (lin 33, col 14) : (spawn (task :fake () { group { (val co1 =...\n" +
+                " |  anon : (lin 33, col 14) : (spawn (task' :fake () { group { (val co1 ...\n" +
                 " |  anon : (lin 32, col 48) : (resume (ceu_co)(ceu_arg))\n" +
                 " |  anon : (lin 22, col 48) : (resume (ceu_co)(ceu_arg))\n" +
                 " |  anon : (lin 5, col 25) : error(:error)\n" +

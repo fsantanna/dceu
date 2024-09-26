@@ -36,7 +36,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Proto && e.pars.size==0)
-        assert(e.to_str() == "(func () {\n" +
+        assert(e.to_str() == "(func' () {\n" +
                 "enclose' :return {\n" +
                 "nil;\n" +
                 "};\n" +
@@ -178,7 +178,11 @@ class Parser_99 {
         val l = lexer("func f () {}")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.to_str() == "(val f = (func () {\nnil;\n}));\n") { e.to_str() }
+        assert(e.to_str() == "(val f = (func' :nested () {\n" +
+                "enclose' :return {\n" +
+                "nil;\n" +
+                "};\n" +
+                "}));\n") { e.to_str() }
     }
     @Test
     fun cc_02_func_rec_err() {
@@ -194,8 +198,10 @@ class Parser_99 {
         val l = lexer("func f () {}")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.to_str() == "(val f = (func () {\n" +
+        assert(e.to_str() == "(val f = (func' :nested () {\n" +
+                "enclose' :return {\n" +
                 "nil;\n" +
+                "};\n" +
                 "}));\n") { e.to_str() }
     }
 
@@ -343,7 +349,7 @@ class Parser_99 {
                 "(var' ceu_ret_5);\n" +
                 "(val' ceu_val_5 = v);\n" +
                 "do {\n" +
-                "(val' ceu_or_60 = do {\n" +
+                "(val' ceu_or_59 = do {\n" +
                 "(val' a = ceu_val_5);\n" +
                 "if true {\n" +
                 "(set ceu_ret_5 = it);\n" +
@@ -352,8 +358,8 @@ class Parser_99 {
                 "nil;\n" +
                 "};\n" +
                 "});\n" +
-                "if ceu_or_60 {\n" +
-                "ceu_or_60;\n" +
+                "if ceu_or_59 {\n" +
+                "ceu_or_59;\n" +
                 "} else {\n" +
                 "nil;\n" +
                 "};\n" +
@@ -371,7 +377,7 @@ class Parser_99 {
                 "(var' ceu_ret_5);\n" +
                 "(val' ceu_val_5 = v);\n" +
                 "do {\n" +
-                "(val' ceu_or_83 = do {\n" +
+                "(val' ceu_or_82 = do {\n" +
                 "(val' it = ceu_val_5);\n" +
                 "if a {\n" +
                 "(set ceu_ret_5 = group {\n" +
@@ -382,11 +388,11 @@ class Parser_99 {
                 "nil;\n" +
                 "};\n" +
                 "});\n" +
-                "if ceu_or_83 {\n" +
-                "ceu_or_83;\n" +
+                "if ceu_or_82 {\n" +
+                "ceu_or_82;\n" +
                 "} else {\n" +
                 "do {\n" +
-                "(val' ceu_or_115 = do {\n" +
+                "(val' ceu_or_113 = do {\n" +
                 "(val' it = ceu_val_5);\n" +
                 "if b {\n" +
                 "(set ceu_ret_5 = v);\n" +
@@ -395,8 +401,8 @@ class Parser_99 {
                 "nil;\n" +
                 "};\n" +
                 "});\n" +
-                "if ceu_or_115 {\n" +
-                "ceu_or_115;\n" +
+                "if ceu_or_113 {\n" +
+                "ceu_or_113;\n" +
                 "} else {\n" +
                 "do {\n" +
                 "(set ceu_ret_5 = group {\n" +
@@ -478,7 +484,7 @@ class Parser_99 {
                 "(var' ceu_ret_5);\n" +
                 "(val' ceu_val_5 = v);\n" +
                 "do {\n" +
-                "(val' ceu_or_60 = do {\n" +
+                "(val' ceu_or_59 = do {\n" +
                 "(val' x = ceu_val_5);\n" +
                 "if true {\n" +
                 "(set ceu_ret_5 = 10);\n" +
@@ -487,8 +493,8 @@ class Parser_99 {
                 "nil;\n" +
                 "};\n" +
                 "});\n" +
-                "if ceu_or_60 {\n" +
-                "ceu_or_60;\n" +
+                "if ceu_or_59 {\n" +
+                "ceu_or_59;\n" +
                 "} else {\n" +
                 "nil;\n" +
                 "};\n" +
@@ -705,12 +711,14 @@ class Parser_99 {
         )
         val parser = Parser(l)
         val e = parser.exprs()
-        println(e.size)
-        assert(e.to_str() == "(set t = (coro (v) {\n" +
+        //println(e.size)
+        assert(e.to_str() == "(set t = (coro' (v) {\n" +
+                "enclose' :return {\n" +
                 "(set v = yield(1));\n" +
                 "do {\n" +
                 "(val' it = yield(2));\n" +
                 "nil;\n" +
+                "};\n" +
                 "};\n" +
                 "}));\n" +
                 "coroutine(t);\n" +
@@ -725,7 +733,7 @@ class Parser_99 {
         val l = lexer("loop x in f { x }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "do :break {\n" +
+        assert(e.to_str() == "enclose' :break {\n" +
                 "(val' ceu_itr_14 :Iterator = to-iter(f));\n" +
                 "loop' {\n" +
                 "(val' ceu_val_14 = ceu_itr_14[:f](ceu_itr_14));\n" +
@@ -768,14 +776,16 @@ class Parser_99 {
         val l = lexer("loop { until (x==1) }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "do :break {\n" +
+        assert(e.to_str() == "enclose' :break {\n" +
                 "loop' {\n" +
+                "enclose' :skip {\n" +
                 "do {\n" +
                 "(val' it = {{==}}(x,1));\n" +
                 "if it {\n" +
                 "escape(:break,it);\n" +
                 "} else {\n" +
                 "nil;\n" +
+                "};\n" +
                 "};\n" +
                 "};\n" +
                 "};\n" +
@@ -789,7 +799,8 @@ class Parser_99 {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "do :break {\n" +
+        assert(e.to_str() == "enclose' :break {\n" +
+                "do {\n" +
                 "(val ceu_ste_23 = x);\n" +
                 "(var i = {{+}}(0,0));\n" +
                 "(val ceu_lim_23 = n);\n" +
@@ -801,6 +812,7 @@ class Parser_99 {
                 "};\n" +
                 "nil;\n" +
                 "(set i = {{+}}(i,ceu_ste_23));\n" +
+                "};\n" +
                 "};\n" +
                 "}") { e.to_str() }
     }
@@ -1029,8 +1041,10 @@ class Parser_99 {
         val l = lexer("spawn {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "(spawn (task :nested () {\n" +
+        assert(e.to_str() == "(spawn (task' :fake () {\n" +
+                "enclose' :return {\n" +
                 "nil;\n" +
+                "};\n" +
                 "})())") { e.to_str() }
     }
     @Test
@@ -1052,8 +1066,10 @@ class Parser_99 {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "(spawn (task :nested () {\n" +
+        assert(e.to_str() == "(spawn (task' :fake () {\n" +
+                "enclose' :return {\n" +
                 "broadcast'(nil,nil);\n" +
+                "};\n" +
                 "})())") { e.to_str() }
     }
 
@@ -1065,15 +1081,21 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.to_str() == "do {\n" +
-                "(spawn (task () {\n" +
+                "(spawn (task' :fake () {\n" +
+                "enclose' :return {\n" +
                 "nil;\n" +
+                "};\n" +
                 "})());\n" +
-                "(spawn (task () {\n" +
+                "(spawn (task' :fake () {\n" +
+                "enclose' :return {\n" +
                 "nil;\n" +
+                "};\n" +
                 "})());\n" +
-                "do :break {\n" +
+                "enclose' :break {\n" +
                 "loop' {\n" +
+                "enclose' :skip {\n" +
                 "yield(nil);\n" +
+                "};\n" +
                 "};\n" +
                 "};\n" +
                 "}") { e.to_str() }
@@ -1273,8 +1295,10 @@ class Parser_99 {
         val l = lexer("(func() {}) <- 20")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "(func () {\n" +
+        assert(e.to_str() == "(func' () {\n" +
+                "enclose' :return {\n" +
                 "nil;\n" +
+                "};\n" +
                 "})(20)") { e.to_str() }
     }
     @Test
@@ -1367,8 +1391,10 @@ class Parser_99 {
         val l = lexer("{}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "(func (it) {\n" +
+        assert(e.to_str() == "(func' (it) {\n" +
+                "enclose' :return {\n" +
                 "nil;\n" +
+                "};\n" +
                 "})") { e.to_str() }
     }
     @Test
@@ -1376,8 +1402,10 @@ class Parser_99 {
         val l = lexer("{it}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "(func (it) {\n" +
+        assert(e.to_str() == "(func' (it) {\n" +
+                "enclose' :return {\n" +
                 "it;\n" +
+                "};\n" +
                 "})") { e.to_str() }
     }
     @Test
@@ -1385,8 +1413,10 @@ class Parser_99 {
         val l = lexer("{\\:X => it}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "(func (it :X) {\n" +
+        assert(e.to_str() == "(func' (it :X) {\n" +
+                "enclose' :return {\n" +
                 "it;\n" +
+                "};\n" +
                 "})") { e.to_str() }
     }
     @Test
