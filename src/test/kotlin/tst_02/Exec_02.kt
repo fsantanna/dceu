@@ -73,7 +73,7 @@ class Exec_02 {
     fun cc_06_escape_err() {
         val out = test("""
             enclose' :X {
-                func () {
+                func' () {
                     escape(:X,nil)
                 }
             }
@@ -241,7 +241,7 @@ class Exec_02 {
     fun dd_04_loop() {
         val out = test(
             """
-            val f = func (t) {
+            val f = func' (t) {
                 if t[1] == 5 {
                     nil
                 } else {
@@ -270,7 +270,7 @@ class Exec_02 {
     fun dd_05_loop() {
         val out = test(
             """
-            val f = func (t) {
+            val f = func' (t) {
                 nil
             }
             val v = []
@@ -338,7 +338,7 @@ class Exec_02 {
         val out = test("""
             enclose' :break {
                 loop' {
-                    func () {
+                    func' () {
                         escape(:break,nil)
                     }
                 }
@@ -383,7 +383,7 @@ class Exec_02 {
     fun dd_12_iter() {
         val out = test("""
             $PLUS
-            val f = func (t) {
+            val f = func' (t) {
                 if t[1] == 5 {
                     nil
                 } else {
@@ -501,7 +501,7 @@ class Exec_02 {
     @Test
     fun ee_03_defer() {
         val out = test("""
-            val f = func () {
+            val f = func' () {
                 defer { 99 }
                 1
             }
@@ -526,7 +526,7 @@ class Exec_02 {
     fun ee_05_defer() {
         val out = test("""
             var f
-            set f = func () {
+            set f = func' () {
                 println(111)
                 defer { println(222) }
                 println(333)
@@ -621,7 +621,7 @@ class Exec_02 {
     @Test
     fun jj_03_catch_err() {
         val out = test("""
-            val f = func () {
+            val f = func' () {
                 error(:y)
                 println(9)
             }
@@ -639,7 +639,7 @@ class Exec_02 {
     fun jj_04_catch() {
         val out = test("""
             var f
-            set f = func () {
+            set f = func' () {
                 catch :xxx ;;;(it | it==:xxx);;; {
                     error(:yyy)
                     println(91)
@@ -887,7 +887,7 @@ class Exec_02 {
     @Test
     fun kk_02_func_err() {
         val out = test("""
-            val f = func () {
+            val f = func' () {
                 1(1)
             }
             f()
@@ -900,7 +900,7 @@ class Exec_02 {
     fun kk_03_func_args() {
         val out = test(
             """
-            val f = func (x) {
+            val f = func' (x) {
                 println(x)
             }
             f(10)
@@ -1067,7 +1067,7 @@ class Exec_02 {
     @Test
     fun zz_01_sum() {
         val out = test("""
-            var sum = func (n) {                                                            
+            var sum = func' (n) {                                                            
                 var i = n                                                                   
                 var s = 0
                 enclose' :break {

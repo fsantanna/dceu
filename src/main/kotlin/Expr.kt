@@ -14,7 +14,7 @@ fun type (dcl: Expr.Dcl, src: Expr): Scope {
                 .all { it.nst }
             when {
                 !nst -> Scope.UPVAL
-                (up.tk.str == "func") -> Scope.LOCAL
+                (up.tk.str == "func'") -> Scope.LOCAL
                 else -> Scope.NESTED
             }
         }
@@ -86,7 +86,7 @@ fun Expr.is_mem (out: Boolean=false): Boolean {
     val proto = this.up_first { it is Expr.Proto }.let {
         when {
             (it === null) -> null
-            (it.tk.str == "func") -> null
+            (it.tk.str == "func'") -> null
             else -> it
         }
     }

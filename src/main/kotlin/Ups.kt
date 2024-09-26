@@ -37,7 +37,7 @@ fun Expr.up_first_task_outer (): Expr.Proto? {
     return this.up_first {
         when {
             (it !is Expr.Proto) -> false
-            (it.tk.str != "task") -> false
+            (it.tk.str != "task'") -> false
             !it.fake -> true
             (it.up_first { it is Expr.Do }!!.fup() === null) -> true
             else -> false
@@ -47,7 +47,7 @@ fun Expr.up_first_task_outer (): Expr.Proto? {
 
 fun Expr.up_exe (tp: String?=null): Expr.Proto? {
     return this.up_first { it is Expr.Proto }.let {
-        if (it===null || it.tk.str=="func" || (tp!==null && it.tk.str!=tp)) {
+        if (it===null || it.tk.str=="func'" || (tp!==null && it.tk.str!=tp)) {
             null
         } else {
             it as Expr.Proto

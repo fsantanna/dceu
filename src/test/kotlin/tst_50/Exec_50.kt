@@ -25,7 +25,7 @@ class Exec_50 {
     fun aa_02_depth() {
         val out = test("""
             val t1 = []
-            (func () { nil })()
+            (func' () { nil })()
             val t2 = []
             println(`:number ${D}t1.Dyn->Any.lex.depth`, `:number ${D}t2.Dyn->Any.lex.depth`)
         """)
@@ -35,7 +35,7 @@ class Exec_50 {
     fun aa_03_depth() {
         val out = test("""
             val t1 = []
-            resume (coroutine(coro () { nil })) ()
+            resume (coroutine(coro' () { nil })) ()
             val t2 = []
             println(`:number ${D}t1.Dyn->Any.lex.depth`, `:number ${D}t2.Dyn->Any.lex.depth`)
         """)
@@ -63,7 +63,7 @@ class Exec_50 {
         val out = test("""
             val t1 = []
             val t2 = t1
-            val f = func (v) {
+            val f = func' (v) {
                 println(`:number ${D}v.Dyn->Any.lex.type`, `:number ${D}v.Dyn->Any.lex.depth`)
             }
             println(`:number ${D}t1.Dyn->Any.lex.type`, `:number ${D}t1.Dyn->Any.lex.depth`)
@@ -89,7 +89,7 @@ class Exec_50 {
     @Test
     fun bb_03_acc() {
         val out = test("""
-            val f = func (x) {
+            val f = func' (x) {
                 x
             }
             val x = do {
@@ -151,7 +151,7 @@ class Exec_50 {
     @Test
     fun cc_05_col() {
         val out = test("""
-            val f = func (inp) {
+            val f = func' (inp) {
                 val out = [inp[0]]
                 drop(out)
             }
@@ -164,13 +164,13 @@ class Exec_50 {
     @Test
     fun cc_06_col() {
         val out = test("""
-            val copy = func (vec) {
+            val copy = func' (vec) {
                 val ret = #[]
                 set ret[0] = vec[0]
                 drop(ret)
             }
-            func () {
-                val f = func :nested () {
+            func' () {
+                val f = func' :nested () {
                     nil
                 }
                 val t = copy([f])
@@ -182,7 +182,7 @@ class Exec_50 {
     @Test
     fun cc_10_col() {   // TODO: criacao de closure faz upval virar MUTAB
         val out = test("""
-            val f = func (t, v) {
+            val f = func' (t, v) {
                 val' t' = t
                 set t[0] = v
                 set t'[0] = v
@@ -199,7 +199,7 @@ class Exec_50 {
     @Test
     fun hh_01_coro() {
         val out = test("""
-            val CO = coro () {
+            val CO = coro' () {
                 yield([1,2])
                 yield([3,4])
             }
@@ -222,8 +222,8 @@ class Exec_50 {
     @Test
     fun hh_02_coro_upval() {
         val out = test("""
-            val F = func (x) {
-                coro () {
+            val F = func' (x) {
+                coro' () {
                     yield(drop(x))  ;; x is an upval
                 }
             }
@@ -240,8 +240,8 @@ class Exec_50 {
     @Test
     fun hh_03_coro_upval() {
         val out = test("""
-            val F = func (x) {
-                coro () {
+            val F = func' (x) {
+                coro' () {
                     yield(drop(x))  ;; x is an upval
                 }
             }
@@ -259,8 +259,8 @@ class Exec_50 {
     @Test
     fun hh_04_func_upval() {
         val out = test("""
-            val F = func (x) {
-                func () {
+            val F = func' (x) {
+                func' () {
                     (drop(x))  ;; x is an upval
                 }
             }
@@ -275,8 +275,8 @@ class Exec_50 {
     @Test
     fun hh_04x_func_upval() {
         val out = test("""
-            val F = func (x) {
-                func () {
+            val F = func' (x) {
+                func' () {
                     drop(x)  ;; x is an upval
                 }
             }
@@ -289,7 +289,7 @@ class Exec_50 {
     @Test
     fun hh_05_coro() {
         val out = test("""
-            val CO = coro () {
+            val CO = coro' () {
                 val x = [99]
                 do {
                     yield(drop'(x))
@@ -304,14 +304,14 @@ class Exec_50 {
     @Test
     fun hh_06_coro_err() {
         val out = test("""
-            val f = func (co1, xco2) {
+            val f = func' (co1, xco2) {
                 val' xco1 = coroutine(CO1)
                 resume xco1()
             }
-            val CO2 = coro () {
+            val CO2 = coro' () {
                 nil
             }
-            val CO1 = coro () {
+            val CO1 = coro' () {
                 var x
                 do {
                     val y = []
@@ -328,7 +328,7 @@ class Exec_50 {
     @Test
     fun hh_07_coro_depth() {
         val out = test("""
-            val CO = coro (x) {
+            val CO = coro' (x) {
                 println(x)
             }
             val co = coroutine(CO)
@@ -344,7 +344,7 @@ class Exec_50 {
     @Test
     fun hh_07x_coro_depth() {
         val out = test("""
-            val CO = coro (x) {
+            val CO = coro' (x) {
                 println(x)
             }
             val co = coroutine(CO)
@@ -362,7 +362,7 @@ class Exec_50 {
     @Test
     fun hh_08_coro_depth() {
         val out = test("""
-            val CO = coro (x) {
+            val CO = coro' (x) {
                 println(x)
             }
             val co = coroutine(CO)
@@ -381,8 +381,8 @@ class Exec_50 {
     @Test
     fun nn_01_nested() {
         val out = test("""
-            spawn (task () {
-                val t1 = spawn (task :nested () {
+            spawn (task' () {
+                val t1 = spawn (task' :nested () {
                     println(:ok)
                 }) ()
                 nil
@@ -394,7 +394,7 @@ class Exec_50 {
     fun nn_02_nested() {
         val out = test("""
             val f = do {
-                func :nested () {
+                func' :nested () {
                     nil
                 }
                 val x
@@ -403,14 +403,14 @@ class Exec_50 {
         """)
         //assert(out == "anon : (lin 3, col 17) : :nested error : expected enclosing prototype\n") { out }
         //assert(out == ":ok\n") { out }
-        assert(out == " |  anon : (lin 2, col 13) : (val f = do { (func :nested () { nil; }); ...\n" +
+        assert(out == " |  anon : (lin 2, col 13) : (val f = do { (func' :nested () { nil; });...\n" +
                 " v  error : cannot copy reference out\n") { out }
     }
     @Test
     fun nn_02x_nested() {
         val out = test("""
             val f = do {
-                func :nested () {
+                func' :nested () {
                     nil
                 }
             }
@@ -425,7 +425,7 @@ class Exec_50 {
         val out = test("""
             ;;do {
                 var x = 10
-                val g = func :nested () {
+                val g = func' :nested () {
                     set x = 100
                 }
                 g()
@@ -439,9 +439,9 @@ class Exec_50 {
     @Test
     fun nn_04_nested() {
         val out = test("""
-            val f = func () { 
+            val f = func' () { 
                 var x = 10
-                val g = func :nested () {
+                val g = func' :nested () {
                     set x = 100
                 }
                 g()
@@ -456,8 +456,8 @@ class Exec_50 {
     @Test
     fun nn_05_nested() {
         val out = test("""
-            val f = func (x) { 
-                val g = func :nested () {
+            val f = func' (x) { 
+                val g = func' :nested () {
                     println(x)
                 }
                 g()
@@ -471,11 +471,11 @@ class Exec_50 {
     @Test
     fun nn_06_nested() {
         val out = test("""
-            spawn (task () {
-                val T = task :nested () {
+            spawn (task' () {
+                val T = task' :nested () {
                     set pub = [99]
                     println(:A, pub)
-                    spawn (task :fake () {
+                    spawn (task' :fake () {
                         println(:B, pub)
                     }) ()
                     yield(nil)
@@ -492,12 +492,12 @@ class Exec_50 {
     @Test
     fun nn_07_nested() {
         val out = test("""
-            val T = task () {
+            val T = task' () {
                 val t = 10
-                val S = task :nested () {
+                val S = task' :nested () {
                     println(t)
                 }
-                spawn (task :nested () {
+                spawn (task' :nested () {
                     spawn S()
                 }) ()
             }
@@ -508,12 +508,12 @@ class Exec_50 {
     @Test
     fun nn_08_nested() {
         val out = test("""
-            val T = func () {
+            val T = func' () {
                 val t = 10
-                val S = func :nested () {
+                val S = func' :nested () {
                     println(t)
                 }
-                (func :nested () {
+                (func' :nested () {
                     S()
                 }) ()
             }
@@ -524,12 +524,12 @@ class Exec_50 {
     @Test
     fun nn_09_nested() {
         val out = test("""
-            val T = coro () {
+            val T = coro' () {
                 val t = 10
-                val S = coro :nested () {
+                val S = coro' :nested () {
                     println(t)
                 }
-                resume coroutine(coro :nested () {
+                resume coroutine(coro' :nested () {
                     resume coroutine(S)()
                 }) ()
             }
@@ -540,15 +540,15 @@ class Exec_50 {
     @Test
     fun nn_10_nested() {
         val out = test("""
-            val T = task () {
+            val T = task' () {
                 set pub = 10
-                val S = task :fake () {
+                val S = task' :fake () {
                     println(pub)
                 }
-                spawn (task :fake () {
+                spawn (task' :fake () {
                     spawn S()
                 }) ()
-                spawn (task () {
+                spawn (task' () {
                     spawn S()
                 }) ()
             }
@@ -559,10 +559,10 @@ class Exec_50 {
     @Test
     fun nn_11_nested() {
         val out = test("""
-            spawn (task () {
-                val T = task () {
+            spawn (task' () {
+                val T = task' () {
                     set pub = [10]
-                    spawn (task :fake () {
+                    spawn (task' :fake () {
                         println(pub[0])
                     }) ()
                 }
@@ -574,10 +574,10 @@ class Exec_50 {
     @Test
     fun nn_12_nested() {
         val out = test("""
-            spawn (task :fake () {
-                val T = task :nested () {
+            spawn (task' :fake () {
+                val T = task' :nested () {
                     set pub = [10]
-                    spawn (task :fake () {
+                    spawn (task' :fake () {
                         println(pub[0])
                     }) ()
                 }
@@ -589,8 +589,8 @@ class Exec_50 {
     @Test
     fun TODO_nn_13_nest_yield_func() {
         val out = test("""
-            spawn (task () {
-                val f = func :nested () {
+            spawn (task' () {
+                val f = func' :nested () {
                     nil
                 }
                 yield(nil)
@@ -604,8 +604,8 @@ class Exec_50 {
     @Test
     fun TODO_nn_14_nest_task_func() {
         val out = test("""
-            spawn (task () {
-                val f = func :nested () {
+            spawn (task' () {
+                val f = func' :nested () {
                     set pub = :pub
                 }
                 yield(nil)
@@ -619,9 +619,9 @@ class Exec_50 {
     @Test
     fun TODO_nn_15_nest_task_func() {
         val out = test("""
-            spawn (task () {
+            spawn (task' () {
                 val x = :x
-                val f = func :nested () {
+                val f = func' :nested () {
                     println(x)
                 }
                 yield(nil)
@@ -634,9 +634,9 @@ class Exec_50 {
     @Test
     fun nn_16_nest_task_func() {
         val out = test("""
-            spawn (task () {
+            spawn (task' () {
                 val x = :x
-                val f = func :nested () {
+                val f = func' :nested () {
                     println(:ok)
                 }
                 yield(nil)
@@ -652,7 +652,7 @@ class Exec_50 {
         val out = test("""
             $PLUS
             do {
-                val f = func :nested (v) {
+                val f = func' :nested (v) {
                     ;;println(:F, f)      ;; f is upval which is assigned nil
                     if v /= 0 {
                         println(v)
@@ -669,8 +669,8 @@ class Exec_50 {
     @Test
     fun nn_18_nest_rec() {
         val out = test("""
-            spawn (task () {
-                val f = func :nested () {
+            spawn (task' () {
+                val f = func' :nested () {
                     nil
                 }
                 yield(nil)
@@ -685,11 +685,11 @@ class Exec_50 {
     @Test
     fun nn_19_nested() {
         val out = test("""
-            spawn (task () {
-                val fff = func :nested () {
+            spawn (task' () {
+                val fff = func' :nested () {
                     println(:ok)
                 }
-                val T = task () {
+                val T = task' () {
                     fff()
                 }
                 yield(nil)
@@ -706,10 +706,10 @@ class Exec_50 {
     @Test
     fun lm_02_fake() {
         val out = test("""
-            spawn (task () {
+            spawn (task' () {
                 set pub = 10
                 val x = [99]
-                spawn (task :fake () {
+                spawn (task' :fake () {
                     set x[0] = pub
                 }) ()
                 println(x)
@@ -720,12 +720,12 @@ class Exec_50 {
     @Test
     fun lm_03_fake() {
         val out = test("""
-            val T = task () {
+            val T = task' () {
                 val t = 10
-                val S = task :fake () {
+                val S = task' :fake () {
                     println(t)
                 }
-                spawn (task :fake () {
+                spawn (task' :fake () {
                     spawn S()
                 }) ()
             }
@@ -736,10 +736,10 @@ class Exec_50 {
     @Test
     fun lm_04_fake() {
         val out = test("""
-            spawn (task () {
-                val T = task () {
+            spawn (task' () {
+                val T = task' () {
                     set pub = [10]
-                    spawn (task :fake () {
+                    spawn (task' :fake () {
                         println(pub[0])
                     }) ()
                 }
@@ -755,9 +755,9 @@ class Exec_50 {
     fun zna_01_set() {
         val out = test(
             """
-            spawn( task () {
+            spawn( task' () {
                 var t = [1]
-                spawn( task :nested () {
+                spawn( task' :nested () {
                     set t = [2]
                 }) ()
                 println(t)
@@ -770,9 +770,9 @@ class Exec_50 {
     fun zna_02_set() {
         val out = test(
             """
-            spawn( task () {
+            spawn( task' () {
                 var t = [1]
-                spawn (task :nested () {
+                spawn (task' :nested () {
                     yield(nil) ;;thus { it => nil }
                     set t = [2]
                 } )()
@@ -788,9 +788,9 @@ class Exec_50 {
     fun zna_03_set() {
         val out = test(
             """
-            spawn( task () {
+            spawn( task' () {
                 val t = [1]
-                ;;func () {
+                ;;func' () {
                     set t[0] = 2
                 ;;} ()
                 println(t)
@@ -803,10 +803,10 @@ class Exec_50 {
     fun TODO_zna_04_set() {
         val out = test(
             """
-            spawn (task () {
+            spawn (task' () {
                 var t = [1]
-                spawn( task :nested () {
-                    func (it) {
+                spawn( task' :nested () {
+                    func' (it) {
                         set t = copy(it)    ;; TODO: func -> nested -> task
                     } (yield(nil))
                 }) ()
@@ -823,9 +823,9 @@ class Exec_50 {
     fun zna_05_set() {
         val out = test(
             """
-            spawn (task () {
+            spawn (task' () {
                 var t = [1]
-                spawn( task :nested () {
+                spawn( task' :nested () {
                     set t = copy(yield(nil))
                 }) ()
                 yield(nil) ;;thus { it => nil }
@@ -857,9 +857,9 @@ class Exec_50 {
     fun zna_07_nst() {
         val out = test(
             """
-            val T = task (t) {
+            val T = task' (t) {
                 var ang = 0
-                spawn (task :nested () {
+                spawn (task' :nested () {
                     set ang = 10
                 })()
                 println(ang)
@@ -872,9 +872,9 @@ class Exec_50 {
     @Test
     fun zna_08_escape() {
         val out = test("""
-            spawn (task () {
+            spawn (task' () {
                 val v = enclose' :X {
-                    spawn (task :fake () {
+                    spawn (task' :fake () {
                         escape(:X,:ok)
                     })()
                     loop' {
@@ -890,9 +890,9 @@ class Exec_50 {
     @Test
     fun zna_09_escape() {
         val out = test("""
-            spawn (task () {
+            spawn (task' () {
                 val v = enclose' :X {
-                    spawn (task :fake () {
+                    spawn (task' :fake () {
                         defer {
                             println(:def)
                         }
@@ -907,9 +907,9 @@ class Exec_50 {
     @Test
     fun zna_10_escape() {
         val out = test("""
-            spawn (task () {
+            spawn (task' () {
                 val v = catch :X {
-                    spawn (task :nested () {
+                    spawn (task' :nested () {
                         defer {
                             println(:def)
                         }
@@ -924,9 +924,9 @@ class Exec_50 {
     @Test
     fun zna_11_escape() {
         val out = test("""
-            spawn (task () {
+            spawn (task' () {
                 val v = enclose' :X {
-                    spawn (task :fake () {
+                    spawn (task' :fake () {
                         yield(nil)
                         escape(:X,:ok)
                     })()
@@ -943,7 +943,7 @@ class Exec_50 {
     fun znb_01_pub_err() {
         val out = test(
             """
-            task :nested () {
+            task' :nested () {
                 pub
             }
             println(:ok)
@@ -959,7 +959,7 @@ class Exec_50 {
     fun znc_01_nested() {
         val out = test(
             """
-            task :nested () {
+            task' :nested () {
                 nil
             }
             println(:ok)
@@ -973,10 +973,10 @@ class Exec_50 {
     fun znc_02_nested() {
         val out = test(
             """
-            spawn (task () {
+            spawn (task' () {
                 var xxx = 1
                 yield(nil)
-                spawn(task :nested () {
+                spawn(task' :nested () {
                     set xxx = 10
                 }) ()
                 println(xxx)
@@ -990,10 +990,10 @@ class Exec_50 {
     fun znc_03_nested() {
         val out = test(
             """
-            spawn (task () {
+            spawn (task' () {
                 var xxx = 1
                 yield(nil)
-                spawn( task :nested () {
+                spawn( task' :nested () {
                     set xxx = 10
                 }) ()
                 println(xxx)
@@ -1009,11 +1009,11 @@ class Exec_50 {
     fun znc_04_nested_err() {
         val out = test(
             """
-            spawn (task () {
+            spawn (task' () {
                 var xxx = 1
                 yield(nil)
-                spawn(task () {     ;; ERROR: crosses non :nested
-                    spawn(task :nested () {
+                spawn(task' () {     ;; ERROR: crosses non :nested
+                    spawn(task' :nested () {
                         set xxx = 10
                     }) ()
                 }) ()
@@ -1029,7 +1029,7 @@ class Exec_50 {
     fun znc_05_nested_err() {
         val out = test(
             """
-            spawn (task :nested () {
+            spawn (task' :nested () {
                 nil
             } )()
             println(:ok)
@@ -1043,12 +1043,12 @@ class Exec_50 {
         val out = test(
             """
             var T
-            set T = task (v) {
-                spawn (task :nested () {
+            set T = task' (v) {
+                spawn (task' :nested () {
                     val evt = yield(nil)
                     println(v, evt)
                 }) ()
-                spawn (task :nested () {
+                spawn (task' :nested () {
                     do {
                         broadcast(:ok) in :task
                     }
@@ -1056,7 +1056,7 @@ class Exec_50 {
                 yield(nil)
                 println(:err)
             }
-            spawn (task () {
+            spawn (task' () {
                 yield(nil)
                 println(:err)
             }) ()
@@ -1069,9 +1069,9 @@ class Exec_50 {
     @Test
     fun znc_07_pub_fake_task() {
         val out = test("""
-            spawn (task () {
+            spawn (task' () {
                 set pub = 1
-                spawn (task :fake () {
+                spawn (task' :fake () {
                     println(pub)
                 }) ()
                 nil
@@ -1082,10 +1082,10 @@ class Exec_50 {
     @Test
     fun znc_08_pub_fake_task_err() {
         val out = test("""
-            spawn (task () {
+            spawn (task' () {
                 set pub = []
                 var x
-                spawn (task :fake () {
+                spawn (task' :fake () {
                     set x = pub
                 }) ()
                 println(x)
@@ -1103,10 +1103,10 @@ class Exec_50 {
     @Test
     fun znc_09_pub_fake_task() {
         val out = test("""
-            spawn (task () {
+            spawn (task' () {
                 set pub = [10]
                 var x
-                spawn (task :fake () {
+                spawn (task' :fake () {
                     set x = pub[0]
                 }) ()
                 println(x)
@@ -1117,7 +1117,7 @@ class Exec_50 {
     @Test
     fun znc_10_pub_fake_err() {
         val out = test("""
-            spawn (task :nested () {
+            spawn (task' :nested () {
                 println(pub)
             }) ()
         """)
@@ -1129,10 +1129,10 @@ class Exec_50 {
     @Test
     fun znc_11_xceu3() {
         val out = test("""
-            spawn task () {
+            spawn task' () {
                 var evt = yield(nil)
                 println(evt)
-                spawn (task :nested () {
+                spawn (task' :nested () {
                     loop' {
                         println(evt)    ;; kept reference
                         set evt = yield(nil)
@@ -1150,7 +1150,7 @@ class Exec_50 {
     @Test
     fun znd_01_bcast_err() {
         val out = test("""
-            spawn (task :nested () {
+            spawn (task' :nested () {
                 broadcast(nil) in :task
             }) ()
             println(:ok)
@@ -1163,9 +1163,9 @@ class Exec_50 {
     @Test
     fun znd_02_throw_fake() {
         val out = test("""
-            spawn (task () {
+            spawn (task' () {
                 catch :err ;;;(err|err==:err);;; {
-                    spawn (task :nested () {
+                    spawn (task' :nested () {
                         error(:err)
                     }) ()
                 }
@@ -1177,9 +1177,9 @@ class Exec_50 {
     @Test
     fun znd_03_throw_fake() {
         val out = test("""
-            spawn task () { 
+            spawn task' () { 
                 catch :err ;;;(err|{{==}}(err,:err));;; {
-                    spawn (task :nested () {
+                    spawn (task' :nested () {
                         yield(nil)
                         error(:err)
                     })()
@@ -1196,10 +1196,10 @@ class Exec_50 {
     fun zne_01_anon() {
         val out = test(
             """
-            spawn (task () {
+            spawn (task' () {
                 do {
                     println(:xxx, pub)
-                    spawn (task :nested () {
+                    spawn (task' :nested () {
                         println(:yyy, pub)
                         yield(nil) ;;thus { it => nil }
                     }) ()
@@ -1216,8 +1216,8 @@ class Exec_50 {
         val out = test(
             """
             var T
-            set T = task () {
-                spawn (task :nested () {
+            set T = task' () {
+                spawn (task' :nested () {
                     println(1)
                     nil
                 }) ()
@@ -1239,8 +1239,8 @@ class Exec_50 {
         val out = test(
             """
             var T
-            set T = task () {
-                spawn (task :nested () {
+            set T = task' () {
+                spawn (task' :nested () {
                     (999)
                 })()
                 nil
@@ -1257,8 +1257,8 @@ class Exec_50 {
     @Test
     fun znf_01_99() {
         val out = test("""
-            spawn (task (v) {
-                spawn (task :nested () {
+            spawn (task' (v) {
+                spawn (task' :nested () {
                     println(v)
                 }) ()
             }) (100)
@@ -1269,11 +1269,11 @@ class Exec_50 {
     @Test
     fun znf_02_hh_pub_task() {
         val out = test("""
-        spawn task () { 
+        spawn task' () { 
             var y
             set y = do {     
                 var ceu_spw_54     
-                set ceu_spw_54 = spawn task :nested () {         
+                set ceu_spw_54 = spawn task' :nested () {         
                     yield(nil)         
                     [2]             
                 }()        
@@ -1294,9 +1294,9 @@ class Exec_50 {
         val out = test(
             """
             data :X = [x]
-            val T = task () :X {
+            val T = task' () :X {
                 set pub = [10]
-                spawn (task :fake () {
+                spawn (task' :fake () {
                     ;;println(pub)
                     println(pub.x)
                 }) ()
@@ -1311,8 +1311,8 @@ class Exec_50 {
     fun znf_04_xceu () {
         val out = test("""
             data :X = [x]
-            task () :X {
-                task :nested () {
+            task' () :X {
+                task' :nested () {
                     ;;;task.;;;pub.x
                 }
             }
@@ -1326,7 +1326,7 @@ class Exec_50 {
     @Test
     fun cc_tuple7_hold_err() {
         val out = test("""
-            val f = func (v) {
+            val f = func' (v) {
                 var x
                 if v > 0 {
                     set x = f(v - 1)
@@ -1346,7 +1346,7 @@ class Exec_50 {
     fun cc_tuple8_hold_err() {
         val out = test(
             """
-            val f = func (v) {
+            val f = func' (v) {
                 if v > 0 {
                     val x = f(v - 1)
                     [x] ;; invalid return
@@ -1395,9 +1395,9 @@ class Exec_50 {
     fun cc_07_global() {
         //DEBUG = true
         val out = test("""
-            val e = func () {nil}
+            val e = func' () {nil}
             ;;dump(e)
-            val g = func () {
+            val g = func' () {
                 val co = [e]
                 drop(co)
             }
@@ -1409,8 +1409,8 @@ class Exec_50 {
     @Test
     fun cc_07x_global() {
         val out = test("""
-            val e = func () {nil}
-            val g = func () {
+            val e = func' () {nil}
+            val g = func' () {
                 val co = [e]
                 println(:e,e)
                 ;;dump(co)
@@ -1875,7 +1875,7 @@ class Exec_50 {
     fun scope26x_args_err() {
         val out = test(
             """
-            val f = func (v) {
+            val f = func' (v) {
                 [v, [2]]
             }
             val y = do {
@@ -1895,7 +1895,7 @@ class Exec_50 {
     fun scope28_err() {
         val out = test(
             """
-            var f = func (v) {
+            var f = func' (v) {
                 [v]
             }
             var g = do {
@@ -1913,7 +1913,7 @@ class Exec_50 {
     @Test
     fun scope30_cyc() {
         val out = test("""
-            val cycle = func (v) {
+            val cycle = func' (v) {
                 set v[3] = v
                 v
             }
@@ -1933,7 +1933,7 @@ class Exec_50 {
     @Test
     fun scope30x_cyc() {
         val out = test("""
-            val cycle = func (v) {
+            val cycle = func' (v) {
                 set v[3] = v
                 v
             }
@@ -2011,7 +2011,7 @@ class Exec_50 {
             val f = do {
                 val x = []
                 ;;println(x)
-                func () {   ;; block_set(1)
+                func' () {   ;; block_set(1)
                     x       ;; because of x
                 }           ;; err: scope on return
             }
@@ -2021,15 +2021,15 @@ class Exec_50 {
         //assert(out == "anon : (lin 3, col 21) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "anon : (lin 3, col 21) : block escape error : reference has immutable scope\n") { out }
         //assert(out == "[]\n") { out }
-        assert(out == " |  anon : (lin 2, col 13) : (val f = do { (val x = []); (func () { x; ...\n" +
+        assert(out == " |  anon : (lin 2, col 13) : (val f = do { (val x = []); (func' () { x;...\n" +
                 " v  error : cannot copy reference out\n") { out }
     }
     @Test
     fun clo21_err() {
         val out = test(
             """
-            var f = func (a) {
-                func () {
+            var f = func' (a) {
+                func' () {
                     a
                 }
             }
@@ -2049,8 +2049,8 @@ class Exec_50 {
     fun clo23_err() {
         val out = test(
             """
-            var f = func (a) {
-                func () {       ;; fleet
+            var f = func' (a) {
+                func' () {       ;; fleet
                     a           ;; non-fleet [1]
                 }
             }
@@ -2071,7 +2071,7 @@ class Exec_50 {
     fun clo23x_err() {
         val out = test(
             """
-            var f = func (v) {
+            var f = func' (v) {
                 [v]
             }
             var g = do {
@@ -2090,8 +2090,8 @@ class Exec_50 {
     fun clo23x() {
         val out = test(
             """
-            var f = func (a) {
-                func () {
+            var f = func' (a) {
+                func' () {
                     a
                 }
             }
@@ -2163,10 +2163,10 @@ class Exec_50 {
     @Test
     fun ff_01_drop() {
         val out = test("""
-        val f = func (co) {
+        val f = func' (co) {
             resume co()
         }
-        val C = coro () {
+        val C = coro' () {
             var t = []
             yield(drop(t)) ;;thus { it => nil }
             println(:in, t)
@@ -2187,7 +2187,7 @@ class Exec_50 {
     fun ff_04_move_err () {
         val out = test("""
             val y = do {
-                val x = coroutine(coro () {
+                val x = coroutine(coro' () {
                     println(:1)
                     yield(nil)
                     println(:2)
@@ -2206,7 +2206,7 @@ class Exec_50 {
         val out = test("""
             val tup = [nil]
             val co = do {
-                var x = coroutine (coro () {
+                var x = coroutine (coro' () {
                     yield(nil)
                     println(:ok)
                 })
@@ -2220,8 +2220,8 @@ class Exec_50 {
     @Test
     fun ff_06_move() {
         val out = test("""
-            val F = func (x) {
-                val y = (coroutine (coro () {
+            val F = func' (x) {
+                val y = (coroutine (coro' () {
                     yield(nil)
                     x
                 }))
@@ -2239,7 +2239,7 @@ class Exec_50 {
     @Test
     fun ff_07_move() {
         val out = test("""
-            val CO = coro () {
+            val CO = coro' () {
                 val a = [:a]
                 do {
                     yield(nil)
@@ -2266,7 +2266,7 @@ class Exec_50 {
     @Test
     fun gg_02_scope() {
         val out = test("""
-            val T = coro (v) {
+            val T = coro' (v) {
                 yield(nil) ;;thus { it => nil }
                 println(v)                
             }
@@ -2293,8 +2293,8 @@ class Exec_50 {
     @Test
     fun gg_03_scope() {
         val out = test("""
-            val T = coro () {
-                val v = func (x) {
+            val T = coro' () {
+                val v = func' (x) {
                     x
                 } (
                     yield(nil)
@@ -2330,7 +2330,7 @@ class Exec_50 {
     @Test
     fun gg_03x_scope() {
         val out = test("""
-            val T = coro () {
+            val T = coro' () {
                 val v = yield(nil)
                 yield(nil)
                 println(v)                
@@ -2352,7 +2352,7 @@ class Exec_50 {
     @Test
     fun gg_03y_scope() {
         val out = test("""
-            val T = coro (v) {
+            val T = coro' (v) {
                 yield(nil)
                 println(v)                
             }
@@ -2370,7 +2370,7 @@ class Exec_50 {
     @Test
     fun gg_05_scope() {
         val out = test("""
-            val T = coro () {
+            val T = coro' () {
                 do {
                     val x = []
                     yield(x) ;;thus { it => nil }    ;; err
@@ -2404,7 +2404,7 @@ class Exec_50 {
     @Test
     fun gg_06_scope() {
         val out = test("""
-            val T = coro () {
+            val T = coro' () {
                 val x = []
                 yield(drop(x)) ;;thus { it => nil }    ;; err
                 println(:in, x)
@@ -2423,7 +2423,7 @@ class Exec_50 {
     @Test
     fun kk_02_scope() {
         val out = test("""
-            val T = coro () {
+            val T = coro' () {
                 val t = []
                 yield(t)
                 println(t)                
@@ -2445,7 +2445,7 @@ class Exec_50 {
     @Test
     fun nn_02_catch() {
         val out = test("""
-            val CO = coro () {
+            val CO = coro' () {
                 catch :x ;;;( it | do {
                     yield(nil)
                 } );;;
@@ -2464,7 +2464,7 @@ class Exec_50 {
     @Test
     fun oo_04_tmp_tuple() {
         val out = test("""
-            val CO = coro () {
+            val CO = coro' () {
                 val t = [yield(nil),yield(nil),yield(nil)]
                 yield(nil)
                 drop(t)
@@ -2482,7 +2482,7 @@ class Exec_50 {
     @Test
     fun oo_05_tmp_vector() {
         val out = test("""
-            val CO = coro () {
+            val CO = coro' () {
                 val t = #[yield(nil),yield(nil),yield(nil)]
                 yield(nil)
                 drop(t)
@@ -2500,7 +2500,7 @@ class Exec_50 {
     @Test
     fun oo_06_tmp_dict() {
         val out = test("""
-            val CO = coro () {
+            val CO = coro' () {
                 val t = @[(1,yield(nil)),(yield(nil),20)]
                 yield(nil)
                 drop(t)
@@ -2519,7 +2519,7 @@ class Exec_50 {
     fun cd_01_every() {
         val out = test(
             """
-            spawn (task () {
+            spawn (task' () {
                 val it = yield(nil)
                 println(it;;;, evt;;;)
                 yield(nil)
@@ -2542,7 +2542,7 @@ class Exec_50 {
     fun cd_02_bcast_spawn_arg() {
         val out = test(
             """
-            val T = task () {
+            val T = task' () {
                 val x = yield(nil)
             }
             spawn T() 
@@ -2563,7 +2563,7 @@ class Exec_50 {
     fun cd_03_bcast_pub_arg() {
         val out = test(
             """
-            val T = task () {
+            val T = task' () {
                 val evt = yield(nil)
                 set pub = evt
                 println(:in, pub)
@@ -2589,7 +2589,7 @@ class Exec_50 {
         val out = test("""
             val ts = tasks()
             do {
-                val T = task () {
+                val T = task' () {
                     nil
                 }
                 spawn T() in ts
@@ -2607,7 +2607,7 @@ class Exec_50 {
     fun bd_01_track_err() {
         val out = test("""
             var T
-            set T = task () { yield(nil) }
+            set T = task' () { yield(nil) }
             var x
             do {
                 val t = spawn (T) ()
@@ -2627,7 +2627,7 @@ class Exec_50 {
     fun bd_02_track_err() {
         val out = test("""
             var T
-            set T = task () { yield(nil) }
+            set T = task' () { yield(nil) }
             val x = do {
                 val t = spawn (T) ()
                 ;;;track;;;(t)         ;; error scope
@@ -2647,7 +2647,7 @@ class Exec_50 {
     fun bd_04_track_err() {
         val out = test("""
             var T
-            set T = task () { yield(nil) }
+            set T = task' () { yield(nil) }
             var x =
             do {
                 val t = spawn (T) ()
@@ -2667,7 +2667,7 @@ class Exec_50 {
     @Test
     fun bc_02_track_drop_err() {
         val out = test("""
-            val T = task () { yield(nil) }
+            val T = task' () { yield(nil) }
             val y = do {
                 val t = spawn T ()
                 ;;;track;;;(t)
@@ -2682,7 +2682,7 @@ class Exec_50 {
     @Test
     fun bc_02x_track_drop_err() {
         val out = test("""
-            val T = task () { yield(nil) }
+            val T = task' () { yield(nil) }
             val y = do {
                 val t = spawn T ()
                 val x = ;;;track;;;(t)
@@ -2698,7 +2698,7 @@ class Exec_50 {
     @Test
     fun bc_02y_track_drop_err() {
         val out = test("""
-            val T = task () { yield(nil) }
+            val T = task' () { yield(nil) }
             val y = do {
                 val t = spawn T ()
                 ;;val x = ;;;track;;;(t)
@@ -2714,7 +2714,7 @@ class Exec_50 {
     @Test
     fun bc_04_track_drop() {
         val out = test("""
-            val T = task () { yield(nil) }
+            val T = task' () { yield(nil) }
             val y = do {
                 val ts = tasks()
                 spawn T () in ts
@@ -2732,7 +2732,7 @@ class Exec_50 {
     @Test
     fun ff_01_scope() {
         val out = test("""
-            val T = task () { yield(nil) }
+            val T = task' () { yield(nil) }
             var x
             do {
                 val t = spawn T()
@@ -2748,7 +2748,7 @@ class Exec_50 {
     @Test
     fun ff_05_track_err() {
         val out = test("""
-            val T = task () {
+            val T = task' () {
                 ${AWAIT()}
             }
             val x = do {
@@ -2765,7 +2765,7 @@ class Exec_50 {
     @Test
     fun ff_06_track_err() {
         val out = test("""
-            val T = task () {
+            val T = task' () {
                 ${AWAIT()}
             }
             val x = do {
@@ -2784,7 +2784,7 @@ class Exec_50 {
         val out = test("""
             val x = do {
                 val ts = tasks()
-                var T = task () {
+                var T = task' () {
                     set pub = []
                     yield(nil) ;; nil
                     nil
@@ -2869,11 +2869,11 @@ class Exec_50 {
     @Test
     fun jj_02_tracks() {
         val out = test("""
-            val f = func (trk) {
+            val f = func' (trk) {
                 ;;println(detrack(trk) { it => status(it) })
                 println(status(trk))
             }
-            val T = task () { yield(nil) ; nil }
+            val T = task' () { yield(nil) ; nil }
             val x' = do {
                 val ts = tasks()
                 spawn T() in ts
@@ -2898,7 +2898,7 @@ class Exec_50 {
     fun oo_03_track_err() {
         val out = test("""
             var T
-            set T = task (v) {
+            set T = task' (v) {
                 set pub = [v]
                 yield(nil) ; nil
             }
@@ -2925,7 +2925,7 @@ class Exec_50 {
     fun op_03_track_err() {
         val out = test("""
             var T
-            set T = task () {
+            set T = task' () {
                 set pub = [10]
                 yield(nil) ; nil
             }
@@ -2950,7 +2950,7 @@ class Exec_50 {
     @Test
     fun op_08_track_scope() {
         val out = test("""
-            val T = task () {
+            val T = task' () {
                 set pub = 1
                 yield(nil) ; nil
             }
@@ -2970,7 +2970,7 @@ class Exec_50 {
     @Test
     fun de_05_evt_err_valgrind() {
         val out = test("""
-            spawn (task () {
+            spawn (task' () {
                 var evt = yield(nil)
                 val x = evt
                 println(x)
@@ -2990,7 +2990,7 @@ class Exec_50 {
     @Test
     fun de_07_evt_err() {
         val out = test("""
-            spawn (task () {
+            spawn (task' () {
                 val evt = yield(nil)
                 val x = evt[0]
                 println(x)
@@ -3009,7 +3009,7 @@ class Exec_50 {
     fun ee_10_bcast_err2() {
         val out = test(
             """
-            val T = task (v) {
+            val T = task' (v) {
                 val e = yield(nil)
                 println(v,e)                
             }
@@ -3031,7 +3031,7 @@ class Exec_50 {
     fun zz_15_bcast_err() {
         val out = test(
             """
-            var T = task () {
+            var T = task' () {
                 var v = yield(nil)
                 println(v)
             }
@@ -3066,7 +3066,7 @@ class Exec_50 {
     fun zz_15_bcast_okr() {
         val out = test(
             """
-            var T = task () {
+            var T = task' () {
                 println(yield(nil))
             }
             var t = spawn T()
@@ -3082,9 +3082,9 @@ class Exec_50 {
     fun zz_16_bcast_err() {
         val out = test(
             """
-            var T = task () {
+            var T = task' () {
                 var v =
-                    func (it) {it} (yield(nil))
+                    func' (it) {it} (yield(nil))
                 println(v)
             }
             var t = spawn T()

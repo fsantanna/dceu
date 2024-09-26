@@ -1,6 +1,6 @@
 ;; is', is-not'
 
-val not = func (v) {
+val not = func' (v) {
     if v {
         v
     } else {
@@ -8,7 +8,7 @@ val not = func (v) {
     }
 }
 
-val is? = func (v1,v2) {
+val is? = func' (v1,v2) {
     if (v1 == v2) {
         true
     } else {
@@ -24,13 +24,13 @@ val is? = func (v1,v2) {
     }
 }
 
-val is-not? = func (v1,v2) {
+val is-not? = func' (v1,v2) {
     not (is?(v1,v2))
 }
 
 ;; LOGICAL
 
-val {{&&}} = func (v1, v2) {
+val {{&&}} = func' (v1, v2) {
     if v1 {
         v2
     } else {
@@ -38,7 +38,7 @@ val {{&&}} = func (v1, v2) {
     }
 }
 
-val {{||}} = func (v1, v2) {
+val {{||}} = func' (v1, v2) {
     if v1 {
         true
     } else {
@@ -48,7 +48,7 @@ val {{||}} = func (v1, v2) {
 
 ;; ARITHMETIC
 
-val {{+}} = func (v1, v2) {
+val {{+}} = func' (v1, v2) {
     if (type(v1) == :number) && (type(v2) == :number) {
         `:number ($v1.Number + $v2.Number)`
     } else {
@@ -64,7 +64,7 @@ val {{+}} = func (v1, v2) {
     }
 }
 
-val {{-}} = func (v1, v2) {
+val {{-}} = func' (v1, v2) {
     val t1 = type(v1)
     val t2 = type(v2)
     ;;println(t1,t2)
@@ -91,7 +91,7 @@ val {{-}} = func (v1, v2) {
     }
 }
 
-val {{*}} = func (v1, v2) {
+val {{*}} = func' (v1, v2) {
     if (type(v1) /= :number) || (type(v2) /= :number) {
         error(:error)
     } else {
@@ -99,7 +99,7 @@ val {{*}} = func (v1, v2) {
     }
 }
 
-val {{**}} = func (v1, v2) {
+val {{**}} = func' (v1, v2) {
     if (type(v1) /= :number) || (type(v2) /= :number) {
         error(:error)
     } else {
@@ -107,7 +107,7 @@ val {{**}} = func (v1, v2) {
     }
 }
 
-val {{/}} = func (v1, v2) {
+val {{/}} = func' (v1, v2) {
     if (type(v1) /= :number) || (type(v2) /= :number) {
         error(:error)
     } else {
@@ -115,7 +115,7 @@ val {{/}} = func (v1, v2) {
     }
 }
 
-val {{//}} = func (v1, v2) {
+val {{//}} = func' (v1, v2) {
     if (type(v1) /= :number) || (type(v2) /= :number) {
         error(:error)
     } else {
@@ -123,7 +123,7 @@ val {{//}} = func (v1, v2) {
     }
 }
 
-val {{%}} = func (v1, v2) {
+val {{%}} = func' (v1, v2) {
     if (type(v1) /= :number) || (type(v2) /= :number) {
         error(:error)
     } else {
@@ -133,7 +133,7 @@ val {{%}} = func (v1, v2) {
 
 ;; RELATIONAL
 
-val {{>=}} = func (v1,v2) {
+val {{>=}} = func' (v1,v2) {
     val t1 = type(v1)
     if (t1 == :number) || (t1 == :number) {
         `:bool ($v1.Number >= $v2.Number)`
@@ -146,7 +146,7 @@ val {{>=}} = func (v1,v2) {
     }
 }
 
-val {{>}} = func (v1,v2) {
+val {{>}} = func' (v1,v2) {
     val t1 = type(v1)
     if (t1 == :number) || (t1 == :number) {
         `:bool ($v1.Number > $v2.Number)`
@@ -159,7 +159,7 @@ val {{>}} = func (v1,v2) {
     }
 }
 
-val {{<=}} = func (v1,v2) {
+val {{<=}} = func' (v1,v2) {
     val t1 = type(v1)
     if (t1 == :number) || (t1 == :number) {
         `:bool ($v1.Number <= $v2.Number)`
@@ -172,7 +172,7 @@ val {{<=}} = func (v1,v2) {
     }
 }
 
-val {{<}} = func (v1,v2) {
+val {{<}} = func' (v1,v2) {
     val t1 = type(v1)
     if (t1 == :number) || (t1 == :number) {
         `:bool ($v1.Number < $v2.Number)`
@@ -187,7 +187,7 @@ val {{<}} = func (v1,v2) {
 
 ;; TO-*
 
-val to-string = func (v) {
+val to-string = func' (v) {
     if type(v) == :pointer {
         to-string-pointer(v)
     } else {
@@ -203,7 +203,7 @@ val to-string = func (v) {
     }
 }
 
-val to-number = func (v) {
+val to-number = func' (v) {
     if type(v) == :tag {
         `:number $v.Tag`
     } else {
@@ -223,7 +223,7 @@ val to-number = func (v) {
     }
 }
 
-val to-tag = func (v) {
+val to-tag = func' (v) {
     if type(v) == :vector {
         if (#v > 0) {
             if (type(v[0]) == :char) {
@@ -239,7 +239,7 @@ val to-tag = func (v) {
     }
 }
 
-val to-pointer = func (v) {
+val to-pointer = func' (v) {
     if type(v) == :tag {
         `:pointer ceu_tag_to_pointer($v.Tag)`
     } else {
@@ -253,10 +253,10 @@ val to-pointer = func (v) {
 
 ;; TYPE-*
 
-val type-static? = func (v) {
+val type-static? = func' (v) {
     to-number(v) < `:number CEU_VALUE_DYNAMIC`
 }
-val type-dynamic? = func (v) {
+val type-dynamic? = func' (v) {
     to-number(v) > `:number CEU_VALUE_DYNAMIC`
 }
 
@@ -264,7 +264,7 @@ val type-dynamic? = func (v) {
 
 var copy
 
-val copy-tuple = func (dst, src, i) {
+val copy-tuple = func' (dst, src, i) {
     if i == #src {
         dst
     } else {
@@ -273,7 +273,7 @@ val copy-tuple = func (dst, src, i) {
     }
 }
 
-val copy-dict = func (dst, src, key) {
+val copy-dict = func' (dst, src, key) {
     val key' = next-dict(src, key)
     if key' == nil {
         dst
@@ -283,7 +283,7 @@ val copy-dict = func (dst, src, key) {
     }
 }
 
-set copy = func (v) {
+set copy = func' (v) {
     if type-static?(type(v)) {
         v
     } else {
@@ -306,7 +306,7 @@ set copy = func (v) {
 ;; DETRACK
 
 ;;;
-val detrack'' = func (trk) {
+val detrack'' = func' (trk) {
     if detrack'(trk) {
         true
     } else {
@@ -317,10 +317,10 @@ val detrack'' = func (trk) {
 
 ;; AWAIT
 ;;;
-val await = func (e) {
+val await = func' (e) {
     loop {
         if yield(nil) { as it =>
-            if type(e) == :func {
+            if type(e) == :func' {
                 e(it)
             } else {
                 is?(e, it)

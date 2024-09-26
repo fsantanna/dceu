@@ -1,10 +1,10 @@
 package dceu
 
 val PLUS = """
-    val {{+}} = func (v1, v2) {
+    val {{+}} = func' (v1, v2) {
         `:number (${D}v1.Number + ${D}v2.Number)`
     }    
-    val {{-}} = func (v1, v2) {
+    val {{-}} = func' (v1, v2) {
         if v2 == nil {
             `:number - ${D}v1.Number`
         } else {
@@ -14,10 +14,10 @@ val PLUS = """
 """.replace("\n", " ")
 
 val MULT = """
-    val {{*}} = func (v1, v2) {
+    val {{*}} = func' (v1, v2) {
         `:number (${D}v1.Number * ${D}v2.Number)`
     }    
-    val {{/}} = func (v1, v2) {
+    val {{/}} = func' (v1, v2) {
         `:number (${D}v1.Number / ${D}v2.Number)`
     }    
 """.replace("\n", " ")

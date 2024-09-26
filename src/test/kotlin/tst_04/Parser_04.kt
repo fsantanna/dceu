@@ -8,16 +8,16 @@ class Parser_04 {
 
     @Test
     fun aa_01_task() {
-        val l = lexer("task (a,b) { 10 }")
+        val l = lexer("task' (a,b) { 10 }")
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Proto && e.pars.size==2)
-        assert(e.to_str() == "(task (a,b) {\n10;\n})") { e.to_str() }
+        assert(e.to_str() == "(task' (a,b) {\n10;\n})") { e.to_str() }
     }
     @Test
     fun aa_02_task() {
         val l = lexer("""
-            set t = task (v) {
+            set t = task' (v) {
                 set v = yield((1)) ;;thus { it => nil }
                 yield((2)) ;;thus { it => nil }
             }
@@ -28,7 +28,7 @@ class Parser_04 {
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.to_str() == """
-            (set t = (task (v) {
+            (set t = (task' (v) {
             (set v = yield(1));
             yield(2);
             }));
@@ -69,11 +69,11 @@ class Parser_04 {
     @Test
     fun bb_04_spawn_err() {
         val l = lexer("""
-            spawn task () { nil } ()
+            spawn task' () { nil } ()
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.to_str() == "(spawn (task () {\n" +
+        assert(e.to_str() == "(spawn (task' () {\n" +
                 "nil;\n" +
                 "})());\n") { e.to_str() }
         //assert(trap { parser.exprs() } == "anon : (lin 2, col 19) : spawn error : unexpected \"task\"")
@@ -81,11 +81,11 @@ class Parser_04 {
     @Test
     fun bb_05_spawn() {
         val l = lexer("""
-            spawn (task () { nil }) ()
+            spawn (task' () { nil }) ()
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.to_str() == "(spawn (task () {\n" +
+        assert(e.to_str() == "(spawn (task' () {\n" +
                 "nil;\n" +
                 "})());\n") { e.to_str() }
     }
@@ -227,13 +227,13 @@ class Parser_04 {
     @Test
     fun dd_03_pub_tag() {
         val l = lexer("""
-            task () :X {
+            task' () :X {
                 nil
             }
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.to_str() == "(task () :X {\nnil;\n});\n") { e.to_str() }
+        assert(e.to_str() == "(task' () :X {\nnil;\n});\n") { e.to_str() }
     }
     @Test
     fun dd_04_pub() {

@@ -536,18 +536,10 @@ class Parser (lexer_: Lexer)
                     """)
                 }
             }
-            this.acceptFix("func") || (CEU>=3 && this.acceptFix("coro")) || (CEU>=4 && this.acceptFix("task")) -> {
+            this.acceptFix("func'") || (CEU>=3 && this.acceptFix("coro'")) || (CEU>=4 && this.acceptFix("task'")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val fak = (CEU >= 50) && (tk0.str=="task") && this.acceptTag(":fake")
+                val fak = (CEU >= 50) && (tk0.str=="task'") && this.acceptTag(":fake")
                 var nst = (CEU >= 50) && (fak || this.acceptTag(":nested"))
-                val dcl = if (CEU < 99) null else {
-                    if (this.acceptEnu("Id")) {
-                        nst = true
-                        this.tk0
-                    } else {
-                        null
-                    }
-                }
                 this.acceptFix_err("(")
                 val pars = this.list0(",", ")") {
                     this.acceptEnu_err("Id")
@@ -558,23 +550,12 @@ class Parser (lexer_: Lexer)
                     Expr.Dcl(Tk.Fix("val",xid.pos.copy()), true, Pair(xid, tag), null)
                 }
                 val tag = when {
-                    (tk0.str != "task") -> null
+                    (tk0.str != "task'") -> null
                     !this.acceptEnu("Tag") -> null
                     else -> this.tk0 as Tk.Tag
                 }
                 val blk = this.block(this.tk1)
-                val proto = Expr.Proto(tk0, nst, fak, tag, pars,
-                    if (CEU < 99) blk else {
-                        Expr.Do(blk.tk, listOf(Expr.Enclose(tk0, Tk.Tag(":return",tk0.pos.copy()), blk.es)))
-                    }
-                )
-                if (dcl === null) {
-                    proto
-                } else {
-                    this.nest("""
-                        ${tk0.pos.pre()}val ${dcl.str} = ${proto.to_str(true)}
-                    """)
-                }
+                Expr.Proto(tk0, nst, fak, tag, pars, blk)
             }
             this.acceptFix("data") -> {
                 val pos = this.tk0.pos.copy()
@@ -812,6 +793,44 @@ class Parser (lexer_: Lexer)
                 e
             }
 
+            (CEU>=99 && (this.acceptFix("func") || this.acceptFix("coro") || this.acceptFix("task"))) -> {
+                val tk0 = this.tk0.let {
+                    Tk.Fix(it.str+'\'', it.pos.copy())
+                }
+                val fak = (tk0.str=="task'") && this.acceptTag(":fake")
+                var nst = (fak || this.acceptTag(":nested"))
+                val dcl = if (this.acceptEnu("Id")) {
+                    nst = true
+                    this.tk0
+                } else {
+                    null
+                }
+                this.acceptFix_err("(")
+                val pars = this.list0(",", ")") {
+                    this.acceptEnu_err("Id")
+                    val xid = this.tk0 as Tk.Id
+                    val tag = if (!this.acceptEnu("Tag")) null else {
+                        this.tk0 as Tk.Tag
+                    }
+                    Expr.Dcl(Tk.Fix("val",xid.pos.copy()), true, Pair(xid, tag), null)
+                }
+                val tag = when {
+                    (tk0.str != "task'") -> null
+                    !this.acceptEnu("Tag") -> null
+                    else -> this.tk0 as Tk.Tag
+                }
+                val blk = this.block(this.tk1)
+                val proto = Expr.Proto(tk0, nst, fak, tag, pars,
+                    Expr.Do(blk.tk, listOf(Expr.Enclose(tk0, Tk.Tag(":return",tk0.pos.copy()), blk.es)))
+                )
+                if (dcl === null) {
+                    proto
+                } else {
+                    this.nest("""
+                        ${tk0.pos.pre()}val ${dcl.str} = ${proto.to_str(true)}
+                    """)
+                }
+            }
             (CEU>=99 && this.acceptFix("enum")) -> {
                 if (this.acceptEnu("Tag")) {
                     val tag = this.tk0 as Tk.Tag

@@ -503,47 +503,47 @@ class Parser_01 {
 
     @Test
     fun expr_func1_err() {
-        val l = lexer("func () {nil}")
+        val l = lexer("func' () {nil}")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Proto)
-        assert(e.to_str() == "(func () {\nnil;\n})") { e.to_str() }
+        assert(e.to_str() == "(func' () {\nnil;\n})") { e.to_str() }
         //assert(trap { parser.expr_prim() } == "anon : (lin 1, col 10) : expected expression : have \"}\"")
     }
     @Test
     fun expr_func2() {
-        val l = lexer("func (a,b) { 10; }")
+        val l = lexer("func' (a,b) { 10; }")
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Proto && e.pars.size==2)
-        assert(e.to_str() == "(func (a,b) {\n10;\n})") { e.to_str() }
+        assert(e.to_str() == "(func' (a,b) {\n10;\n})") { e.to_str() }
     }
     @Test
     fun pp_07_func_args_err() {
-        val l = lexer("func (1) { nil }")
+        val l = lexer("func' (1) { nil }")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected identifier : have \"1\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : expected identifier : have \"1\"")
     }
     @Test
     fun pp_12_func_nested() {
         val l = lexer(
             """
-            func :nested () { nil }
+            func' :nested () { nil }
         """
         )
         val parser = Parser(l)
         //val e = parser.expr()
         //assert(e.tostr() == "(func :nested () {\nnil\n})") { e.tostr() }
-        assert(trap { parser.expr() } == "anon : (lin 2, col 18) : expected \"(\" : have \":nested\"")
+        assert(trap { parser.expr() } == "anon : (lin 2, col 19) : expected \"(\" : have \":nested\"")
     }
     @Test
     fun pp_13_minus() {
         val l = lexer("""
-            val f = func (v) { -v }
+            val f = func' (v) { -v }
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "(val f = (func (v) {\n" +
+        assert(e.to_str() == "(val f = (func' (v) {\n" +
                 "{{-}}(v);\n" +
                 "}))") { e.to_str() }
     }
@@ -553,19 +553,19 @@ class Parser_01 {
     @Test
     fun pq_01_rec() {
         val l = lexer("""
-            val f = func () { }
+            val f = func' () { }
         """)
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 2, col 31) : expected expression : have \"}\"")
+        assert(trap { parser.expr() } == "anon : (lin 2, col 32) : expected expression : have \"}\"")
     }
     @Test
     fun pq_02_rec() {
         val l = lexer("""
-            val f = func () { nil }
+            val f = func' () { nil }
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "(val f = (func () {\n" +
+        assert(e.to_str() == "(val f = (func' () {\n" +
                 "nil;\n" +
                 "}))") { e.to_str() }
     }

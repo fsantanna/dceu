@@ -39,7 +39,7 @@ class Coder () {
         }
         return when (this) {
             is Expr.Proto -> {
-                val isexe = (this.tk.str != "func")
+                val isexe = (this.tk.str != "func'")
                 val code = this.blk.code()
                 val id = this.id(G.outer!!)
 
@@ -113,7 +113,7 @@ class Coder () {
                 val cre = """ // CREATE | ${this.dump()}
                 {
                     CEU_ACC (
-                        ceu_create_clo_${this.tk.str} (
+                        ceu_create_clo_${this.tk.str.dropLast(1)} (
                             ceu_pro_$id,
                             ${this.pars.size},
                             ${G.nonlocs[this.n]!!.size}
@@ -361,7 +361,7 @@ class Coder () {
                     do { // catch
                         ${this.blk.code()}
                     } while (0); // catch
-                    ${(CEU>=3 && this.up_any { it is Expr.Proto && it.tk.str!="func" }).cond { """
+                    ${(CEU>=3 && this.up_any { it is Expr.Proto && it.tk.str!="func'" }).cond { """
                         if (ceux->act == CEU_ACTION_ABORT) {
                             continue;   // do not execute next statement, instead free up block
                         }
@@ -586,7 +586,7 @@ class Coder () {
                 val exe = if (this.tsk !== null) "" else {
                     this.up_first_task_outer().let { outer ->
                         val n = this.up_all_until() {
-                            it is Expr.Proto && it.tk.str=="task" && !it.fake
+                            it is Expr.Proto && it.tk.str=="task'" && !it.fake
                         }
                             .filter { it is Expr.Proto } // but count all protos in between
                             .count() - 1

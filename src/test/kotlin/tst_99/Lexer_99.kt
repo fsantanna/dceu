@@ -47,7 +47,7 @@ class Lexer_99 {
     @Test
     fun aa_03_cmds() {
         val l =
-            lexer("ifs thus resume-yield-all await while enum watching par every where par-and par-or until break skip with")
+            lexer("ifs thus resume-yield-all await while enum watching par every func where par-and par-or until break skip with")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "ifs" })
         assert(tks.next().let { it is Tk.Fix && it.str == "thus" })
@@ -58,6 +58,7 @@ class Lexer_99 {
         assert(tks.next().let { it is Tk.Fix && it.str == "watching" })
         assert(tks.next().let { it is Tk.Fix && it.str == "par" })
         assert(tks.next().let { it is Tk.Fix && it.str == "every" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "func" })
         assert(tks.next().let { it is Tk.Fix && it.str == "where" })
         assert(tks.next().let { it is Tk.Fix && it.str == "par-and" })
         assert(tks.next().let { it is Tk.Fix && it.str == "par-or" })

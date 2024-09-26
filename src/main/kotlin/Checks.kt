@@ -171,14 +171,14 @@ fun check_statics () {
             is Expr.Proto  -> {
                 if (me.nst) {
                     when {
-                        (me.tk.str != "func") -> {
+                        (me.tk.str != "func'") -> {
                             // OK: nested coro/task always ok b/c of ceux/MEM
                         }
                         (G.nonlocs[me.n]!!.isEmpty()) -> {
                             // OK: no access to outer - unset :nested
                         }
-                        me.up_any { it is Expr.Proto && it.tk.str != "func" } -> {
-                            val proto = me.up_first { it is Expr.Proto && it.tk.str != "func" }!!
+                        me.up_any { it is Expr.Proto && it.tk.str != "func'" } -> {
+                            val proto = me.up_first { it is Expr.Proto && it.tk.str != "func'" }!!
                             err(me.tk, "func :nested error : unexpected enclosing ${proto.tk.str}")
                         }
                     }
@@ -206,9 +206,9 @@ fun check_statics () {
                 }
             }
             is Expr.Defer  -> {
-                val f = me.up_first { it is Expr.Proto && it.tk.str=="func" }
+                val f = me.up_first { it is Expr.Proto && it.tk.str=="func'" }
                 if (f !== null) {
-                    val co = f.up_any { it is Expr.Proto && it.tk.str!="func" }
+                    val co = f.up_any { it is Expr.Proto && it.tk.str!="func'" }
                     if (co) {
                         err(me.tk, "defer error : unexpected func with enclosing coro or task")
                     }
@@ -218,21 +218,21 @@ fun check_statics () {
                 when {
                     me.up_any { defer -> (defer is Expr.Defer) }
                         -> err(me.tk, "yield error : unexpected enclosing defer")
-                    me.up_first { it is Expr.Proto }.let { it?.tk?.str=="func" }
+                    me.up_first { it is Expr.Proto }.let { it?.tk?.str=="func'" }
                         -> err(me.tk, "yield error : unexpected enclosing func")
                     (me.up_exe() === null)
                         -> err(me.tk, "yield error : expected enclosing coro" + (if (CEU <= 3) "" else " or task"))
                 }
             }
             is Expr.Delay  -> {
-                if (!me.up_first { it is Expr.Proto }.let { it?.tk?.str=="task" }) {
+                if (!me.up_first { it is Expr.Proto }.let { it?.tk?.str=="task'" }) {
                     err(me.tk, "delay error : expected enclosing task")
                 }
             }
             is Expr.Pub    -> {
                 if (me.tsk === null) {
                     val outer = me.up_first_task_outer()
-                    val ok = (outer !== null) && me.up_all_until { it == outer }.none { it is Expr.Proto && it.tk.str!="task" }
+                    val ok = (outer !== null) && me.up_all_until { it == outer }.none { it is Expr.Proto && it.tk.str!="task'" }
                     if (!ok) {
                         err(me.tk, "pub error : expected enclosing task")
                     }

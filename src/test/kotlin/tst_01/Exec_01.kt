@@ -37,7 +37,7 @@ class Exec_01 {
     fun aa_03_print() {
         val out = test(
             """
-            println(func () { nil })
+            println(func' () { nil })
         """
         )
         assert(out.contains("func: 0x")) { out }
@@ -47,7 +47,7 @@ class Exec_01 {
         val out = test(
             """
             println([[],[1,2,3]])
-            println(func () { nil })
+            println(func' () { nil })
         """
         )
         assert(out.contains("[[],[1,2,3]]\nfunc: 0x")) { out }
@@ -56,7 +56,7 @@ class Exec_01 {
     fun aa_05_print() {
         val out = test("""
             var f
-            set f = (func () { nil })
+            set f = (func' () { nil })
             do {
                 var g
                 set g = f
@@ -227,7 +227,7 @@ class Exec_01 {
     @Test
     fun bb_11_err() {
         val out = test("""
-            var f = func () {
+            var f = func' () {
                 t
             }
             var t = 10
@@ -320,10 +320,10 @@ class Exec_01 {
     @Test
     fun bd_02_set_op() {
         val out = test("""
-            var {{+}} = func (v1, v2) {
+            var {{+}} = func' (v1, v2) {
                 `:number (${D}v1.Number + ${D}v2.Number)`
             }    
-            var {{-}} = func (v1, v2) {
+            var {{-}} = func' (v1, v2) {
                 if v2 == nil {
                     `:number - ${D}v1.Number`
                 } else {
@@ -338,7 +338,7 @@ class Exec_01 {
     @Test
     fun bd_02x_set_op() {
         val out = test("""
-            val f = func (v1,v2) {
+            val f = func' (v1,v2) {
                 nil
             }
             println(f)
@@ -360,7 +360,7 @@ class Exec_01 {
     fun be_02_rec() {
         val out = test("""
             $PLUS
-            val f = func (v) {
+            val f = func' (v) {
                 if v == 0 {
                     0
                 } else {
@@ -376,14 +376,14 @@ class Exec_01 {
         val out = test("""
             $PLUS
             ;;var g
-            val f = func (v) {
+            val f = func' (v) {
                 if v == 0 {
                     0
                 } else {
                     v + g(v - 1)
                 }
             }
-            val g = func (v) {
+            val g = func' (v) {
                 if v == 0 {
                     0
                 } else {
@@ -399,7 +399,7 @@ class Exec_01 {
         val out = test("""
             $PLUS
             do {
-                val f = func (v) {
+                val f = func' (v) {
                     println(:F, f)      ;; f is upval which is assigned nil
                     if v /= 0 {
                         println(v)
@@ -421,7 +421,7 @@ class Exec_01 {
     fun be_05_rec() {
         val out = test("""
             val f = group {
-                func () {
+                func' () {
                     println(g)
                 }
             }
@@ -434,11 +434,11 @@ class Exec_01 {
     fun be_06_rec() {
         val out = test("""
             val f = group {
-                func () {
+                func' () {
                     println(:g, g)
                 }
             }
-            val g = func (v) {
+            val g = func' (v) {
                 nil
             }
             f()
@@ -587,7 +587,7 @@ class Exec_01 {
     @Test
     fun cc_tuple5_free() {
         val out = test("""
-            val f = func () { nil }
+            val f = func' () { nil }
             f([1,2,3])
             println(1)
         """)
@@ -609,7 +609,7 @@ class Exec_01 {
     fun cc_tuple6a_free() {
         val out = test(
             """
-            val f = func (v) {
+            val f = func' (v) {
                 if v > 0 {
                     [f(v - 1)]
                 } else {
@@ -625,7 +625,7 @@ class Exec_01 {
     fun cc_tuple6_free() {
         val out = test(
             """
-            val f = func (v) {
+            val f = func' (v) {
                 if v > 0 {
                     [f(v - 1)]
                 } else {
@@ -641,7 +641,7 @@ class Exec_01 {
     @Test
     fun cc_tuple7_hold_err() {
         val out = test("""
-            val f = func (v) {
+            val f = func' (v) {
                 var x
                 if v > 0 {
                     set x = f(v - 1)
@@ -659,7 +659,7 @@ class Exec_01 {
     fun cc_tuple8_hold_err() {
         val out = test(
             """
-            val f = func (v) {
+            val f = func' (v) {
                 if v > 0 {
                     val x = f(v - 1)
                     [x] ;; invalid return
@@ -722,7 +722,7 @@ class Exec_01 {
     fun cc_15_tuple_call_scope() {
         val out = test(
             """
-            val f = func (v) {
+            val f = func' (v) {
                 v
             }
             f([10])
@@ -737,7 +737,7 @@ class Exec_01 {
     fun cc_tuple15x_call_scope() {
         val out = test(
             """
-            val f = func (v) {
+            val f = func' (v) {
                 v
             }
             println(f(10))
@@ -829,7 +829,7 @@ class Exec_01 {
     fun cm_00_drop () {
         val out = test(
             """
-            val f = func () {
+            val f = func' () {
                 [0,'a']
             }
             println(f())
@@ -841,10 +841,10 @@ class Exec_01 {
     fun cm_01_drop () {
         val out = test(
             """
-            val f = func () {
+            val f = func' () {
                 [0,'a']
             }
-            val g = func () {
+            val g = func' () {
                 var v = f()
                 ;;;drop;;;(v)
             }
@@ -903,7 +903,7 @@ class Exec_01 {
     fun cm_04() {
         val out = test(
             """
-            var f = func (t) {
+            var f = func' (t) {
                 var x = [;;;drop;;;(t)]
                 ;;;drop;;;(x)
             }
@@ -940,10 +940,10 @@ class Exec_01 {
     fun cc_07a_global() {
         //DEBUG = true
         val out = test("""
-            val e = func () {
+            val e = func' () {
                 nil
             }
-            val g = func () {
+            val g = func' () {
                 e
             }
             println(g())
@@ -954,9 +954,9 @@ class Exec_01 {
     fun cc_07_global() {
         //DEBUG = true
         val out = test("""
-            val e = func () {nil}
+            val e = func' () {nil}
             ;;dump(e)
-            val g = func () {
+            val g = func' () {
                 val co = [e]
                 ;;;drop;;;(co)
             }
@@ -969,7 +969,7 @@ class Exec_01 {
     fun cc_07y_global() {
         //DEBUG = true
         val out = test("""
-            val g = func () {
+            val g = func' () {
                 val x
                 10
             }
@@ -980,9 +980,9 @@ class Exec_01 {
     @Test
     fun cc_07x_global() {
         val out = test("""
-            val e = func () {nil}
+            val e = func' () {nil}
             ;;dump(e)
-            val g = func () {
+            val g = func' () {
                 val co = [e]
                 println(:e,e)
                 (co)
@@ -995,9 +995,9 @@ class Exec_01 {
     @Test
     fun cc_08_drop() {
         val out = test("""
-            val F = func (x) {
+            val F = func' (x) {
                 ;;println(:1, x)
-                func () {
+                func' () {
                     ;;println(:3, x)
                     x
                 }
@@ -1014,8 +1014,8 @@ class Exec_01 {
     @Test
     fun cc_08x_drop() {
         val out = test("""
-            val F = func (x) {
-                func () {
+            val F = func' (x) {
+                func' () {
                     nil
                 }
             }
@@ -1031,7 +1031,7 @@ class Exec_01 {
     fun cc_09_drop_nest() {
         val out = test(
             """
-            val f = func (v) {
+            val f = func' (v) {
                 ;; consumes v
                 10
             }
@@ -1049,7 +1049,7 @@ class Exec_01 {
     fun cc_09x_drop_nest() {
         val out = test(
             """
-            val f = func () {
+            val f = func' () {
                 nil
             }
             f(nil)
@@ -1063,7 +1063,7 @@ class Exec_01 {
     fun cc_09x_call_arg() {
         val out = test(
             """
-            val f = func (v) {
+            val f = func' (v) {
                 1
             }
             f([])
@@ -1200,7 +1200,7 @@ class Exec_01 {
         DEBUG = true
         val out = test(
             """
-            val f = func (v) {
+            val f = func' (v) {
                 ;;;drop;;;(v)
             }
             println(f([1]))
@@ -1594,7 +1594,7 @@ class Exec_01 {
     @Test
     fun BUG_ee_18_vector_f() {
         val out = test("""
-            func f () { ('z',0) }
+            func' f () { ('z',0) }
             val t = #['a', (f())]   ;; need way to adjust arity to 1
             println(t)
         """)
@@ -1785,7 +1785,7 @@ class Exec_01 {
             """
             do {
                 val v = []
-                val f = func () {
+                val f = func' () {
                     v                   ;; holds outer v
                 }
                 do {
@@ -2007,8 +2007,8 @@ class Exec_01 {
     fun scope15_global_func() {
         val out = test(
             """
-            val f = func () { nil }
-            val g = func (v) {
+            val f = func' () { nil }
+            val g = func' (v) {
                 [f, v]
             }
             val tup = do {
@@ -2037,8 +2037,8 @@ class Exec_01 {
     fun scope16_glb_vs_tup() {
         val out = test(
             """
-            val g = func () { nil }
-            val f = func (v) {
+            val g = func' () { nil }
+            val f = func' (v) {
                 [g, v]
             }
             do {
@@ -2055,7 +2055,7 @@ class Exec_01 {
     fun scope17_glb_vs_tup() {
         val out = test(
             """
-            val f = func () {
+            val f = func' () {
                 nil
             }
             do {
@@ -2299,7 +2299,7 @@ class Exec_01 {
     fun scope26_args() {
         val out = test(
             """
-            val f = func (v) {
+            val f = func' (v) {
                 [v, [2]]
             }
             do {
@@ -2315,7 +2315,7 @@ class Exec_01 {
     fun scope26y_args() {
         val out = test(
             """
-            val f = func (v) {
+            val f = func' (v) {
                 [v, [2]]
             }
             val v = [1]
@@ -2342,7 +2342,7 @@ class Exec_01 {
     fun scope26x_args_err() {
         val out = test(
             """
-            val f = func (v) {
+            val f = func' (v) {
                 [v, [2]]
             }
             val y = do {
@@ -2359,7 +2359,7 @@ class Exec_01 {
     @Test
     fun scope27_glb_vs_tup_err() {
         val out = test("""
-            val f = func (t) {
+            val f = func' (t) {
                 val x = []
                 ;;dump(x)
                 set t[0] = x
@@ -2375,7 +2375,7 @@ class Exec_01 {
     fun scope28_err() {
         val out = test(
             """
-            var f = func (v) {
+            var f = func' (v) {
                 [v]
             }
             var g = do {
@@ -2391,7 +2391,7 @@ class Exec_01 {
     @Test
     fun scope29() {
         val out = test("""
-            val f = func (v) {
+            val f = func' (v) {
                 v
             }
             val x = [2]
@@ -2404,7 +2404,7 @@ class Exec_01 {
     @Test
     fun scope29x() {
         val out = test("""
-            val f = func (v) {
+            val f = func' (v) {
                 v
             }
             do {
@@ -2417,7 +2417,7 @@ class Exec_01 {
     @Test
     fun scope30_cyc() {
         val out = test("""
-            val cycle = func (v) {
+            val cycle = func' (v) {
                 set v[3] = v
                 v
             }
@@ -2436,7 +2436,7 @@ class Exec_01 {
     @Test
     fun scope30x_cyc() {
         val out = test("""
-            val cycle = func (v) {
+            val cycle = func' (v) {
                 set v[3] = v
                 v
             }
@@ -2457,7 +2457,7 @@ class Exec_01 {
     @Test
     fun ll_01_fleet_tuple_func() {
         val out = test("""
-            val f = func (v) {
+            val f = func' (v) {
                 println(v[0])
             }
             f([[1]])
@@ -2467,10 +2467,10 @@ class Exec_01 {
     @Test
     fun ll_02_fleet_tuple_func() {
         val out = test("""
-            val g = func (v) {
+            val g = func' (v) {
                 println(v)
             }
-            val f = func (v) {
+            val f = func' (v) {
                 println(v[0])
             }
             f([[1]])
@@ -2480,7 +2480,7 @@ class Exec_01 {
     @Test
     fun ll_03_fleet_tuple_func_err() {
         val out = test("""
-            var g = func (v) {
+            var g = func' (v) {
                 val v' = v
                 nil
             }
@@ -2492,10 +2492,10 @@ class Exec_01 {
     @Test
     fun ll_04_fleet_tuple_func_err() {
         val out = test("""
-            val f = func (v) {
+            val f = func' (v) {
                 println(v[0])
             }
-            var g = func (v) {
+            var g = func' (v) {
                 val evt = v
                 f(evt)
             }
@@ -2506,7 +2506,7 @@ class Exec_01 {
     @Test
     fun ll_05_nest() {
         val out = test("""
-            var f = func (v) {  ;; (but they are in the same block)
+            var f = func' (v) {  ;; (but they are in the same block)
                 ;;dump(v)
                 val x = v[0]    ;; v also holds x, both are fleeting -> unsafe
                 println(x)      ;; x will be freed and v would contain dangling pointer
@@ -2519,7 +2519,7 @@ class Exec_01 {
     @Test
     fun ll_05_nest_err() {
         val out = test("""
-            var f = func (v) {
+            var f = func' (v) {
                 val x = v[0]    ;; v also holds x, both are fleeting -> unsafe
                 ;;println(x)      ;; x will be freed and v would contain dangling pointer
                 v
@@ -2533,11 +2533,11 @@ class Exec_01 {
     @Test
     fun ll_06_xxx() {
         val out = test("""
-            val g = func (v) {
+            val g = func' (v) {
                 ;;dump(v)
                 println(v)
             }
-            val f = func (v) {
+            val f = func' (v) {
                 ;;dump(v)
                 g(v)
             }
@@ -2548,10 +2548,10 @@ class Exec_01 {
     @Test
     fun ll_07_xxx() {
         val out = test("""
-            val g = func (v) {
+            val g = func' (v) {
                 println(v)
             }
-            val f = func (v) {
+            val f = func' (v) {
                 ;;dump(v)
                 g(v)
                 ;;dump(v)
@@ -2564,14 +2564,14 @@ class Exec_01 {
     @Test
     fun ll_08_xxx() {
         val out = test("""
-            val g = func (v) {
+            val g = func' (v) {
                 ;;dump(v)
                 val k = v
                 ;;dump(v)
                 println(v)
                 ;;dump(v)
             }
-            val f = func (v) {
+            val f = func' (v) {
                 ;;dump(v)
                 g(v)
                 ;;dump(v)
@@ -2726,8 +2726,8 @@ class Exec_01 {
     @Test
     fun mm_07_and_or() {
         val out = test("""
-            val t = func () { println(:t) ; true  }
-            val f = func () { println(:f) ; false }
+            val t = func' () { println(:t) ; true  }
+            val f = func' () { println(:f) ; false }
             println(${AND("t()", "f()")})
             println(${OR("t()", "f()")})
             println(${AND("[]", "false")})
@@ -2827,7 +2827,7 @@ class Exec_01 {
     @Test
     fun oo_01_func() {
         val out = test("""
-            val f = func (v) { v }
+            val f = func' (v) { v }
             val x = f(10)
             println(x)
         """)
@@ -2836,7 +2836,7 @@ class Exec_01 {
     @Test
     fun oo_01x_func() {
         val out = test("""
-            val f = func () {
+            val f = func' () {
                 println(:ok)
             }
             f()
@@ -2848,7 +2848,7 @@ class Exec_01 {
         val out = test(
             """
             val x
-            val f = func (x) { nil }
+            val f = func' (x) { nil }
             println(:no)
         """
         )
@@ -2859,7 +2859,7 @@ class Exec_01 {
     fun func1() {
         val out = test(
             """
-            val f = func () { nil }
+            val f = func' () { nil }
             val x = f()
             println(x)
         """
@@ -2871,7 +2871,7 @@ class Exec_01 {
         val out = test(
             """
             var f
-            set f = func () {
+            set f = func' () {
                 1
             }
             var x
@@ -2886,7 +2886,7 @@ class Exec_01 {
         val out = test(
             """
             var f
-            set f = func (xxx) {
+            set f = func' (xxx) {
                 ;;println(xxx)
                 xxx
             }
@@ -2901,7 +2901,7 @@ class Exec_01 {
     fun func4() {
         val out = test(
             """
-            val f = func (x) {
+            val f = func' (x) {
                 x
             }
             val x = f()
@@ -2915,7 +2915,7 @@ class Exec_01 {
         val out = test(
             """
             var f
-            set f = func (x) {
+            set f = func' (x) {
                 [x]
             }
             var x
@@ -2948,7 +2948,7 @@ class Exec_01 {
         val out = test(
             """
             var f
-            set f = func (a,b) {
+            set f = func' (a,b) {
                 [a,b]
             }
             println(f())
@@ -2972,9 +2972,9 @@ class Exec_01 {
     fun func11() {
         val out = test(
             """
-            println(func (x) {
+            println(func' (x) {
                 var fff
-                set fff = func (xxx) {
+                set fff = func' (xxx) {
                     println(type(xxx))
                     xxx
                 }
@@ -2988,11 +2988,11 @@ class Exec_01 {
     fun func12() {
         val out = test(
             """
-            val fff = func (xxx) {
+            val fff = func' (xxx) {
                 println(type(xxx))
                 xxx
             }
-            println(func () {
+            println(func' () {
                 fff(10)
             } ())
         """
@@ -3003,9 +3003,9 @@ class Exec_01 {
     fun func13() {
         val out = test(
             """
-            func () {
+            func' () {
                 var fff
-                set fff = func () {
+                set fff = func' () {
                     println(1)
                 }
                 fff()
@@ -3018,9 +3018,9 @@ class Exec_01 {
     fun func14() {
         val out = test(
             """
-            println(func (x) {
+            println(func' (x) {
                 var fff
-                set fff = func (xxx) {
+                set fff = func' (xxx) {
                     println(type(xxx))
                     xxx
                 }
@@ -3034,9 +3034,9 @@ class Exec_01 {
     fun func15() {
         val out = test(
             """
-            func (xxx) {
+            func' (xxx) {
                 println(xxx)
-                func () {
+                func' () {
                     println(xxx)
                 }()
             }(10)
@@ -3070,7 +3070,7 @@ class Exec_01 {
     fun func18_rec() {
         val out = test(
             """
-            val f = func () {
+            val f = func' () {
                 f()
             }
             println(f)
@@ -3081,10 +3081,10 @@ class Exec_01 {
     @Test
     fun nn_19_func_out() {
         val out = test("""
-        val f = func (x) {
+        val f = func' (x) {
             x()
         }
-        val F = func () {
+        val F = func' () {
             []
         }
         do {
@@ -3099,7 +3099,7 @@ class Exec_01 {
     fun nn_20_func_err() {
         DEBUG = true
         val out = test("""
-            val f = func (v) {
+            val f = func' (v) {
                 ;;dump(v)
                 val x = v
                 nil
@@ -3114,7 +3114,7 @@ class Exec_01 {
     fun nn_20x_func_err() {
         DEBUG = true
         val out = test("""
-            val f = func (v) {
+            val f = func' (v) {
                 ;;dump(v)
                 val x = v
                 nil
@@ -3128,7 +3128,7 @@ class Exec_01 {
     @Test
     fun nn_21_func() {
         val out = test("""
-            val f = func (v) {
+            val f = func' (v) {
                 1
             }
             val t = [[nil]]
@@ -3141,7 +3141,7 @@ class Exec_01 {
     @Test
     fun nn_22_func_block() {
         val out = test("""
-            val f = func (v) {
+            val f = func' (v) {
                 do {
                     val x = nil
                 }
@@ -3156,7 +3156,7 @@ class Exec_01 {
     fun nn_23_pipe() {
         val out = test("""
             $PLUS
-            val f = func (v) { -v }
+            val f = func' (v) { -v }
             println(f(10))
         """)
         assert(out == "-10\n") { out }
@@ -3165,7 +3165,7 @@ class Exec_01 {
     fun nn_24_func_args() {
         val out = test(
             """
-            val f = func (a,b) {
+            val f = func' (a,b) {
                 b
             }
             println(f(1,2))
@@ -3178,11 +3178,11 @@ class Exec_01 {
         val out = test(
             """
             do {
-                val f = func () {nil}
+                val f = func' () {nil}
                 f()
             }
             do {
-                val f = func () {nil}
+                val f = func' () {nil}
                 f()
             }
             println(:ok)
@@ -3289,7 +3289,7 @@ class Exec_01 {
             var x
             set x = 0
             var f
-            set f = func () {
+            set f = func' () {
                 ```
                     ${D}x.Number = 20;
                 ```
@@ -3325,13 +3325,13 @@ class Exec_01 {
         val out = test(
             """
             var f
-            set f = func () {
+            set f = func' () {
                 `:pointer
                     "ola"
                 `
             }
             var g
-            set g = func (x) {
+            set g = func' (x) {
                 `
                     printf("%s\n", (char*)${D}x.Pointer);
                 `
@@ -3360,7 +3360,7 @@ class Exec_01 {
             int Z = 1;          // should it be visible...
             ```
             var f
-            set f = func () {
+            set f = func' () {
                 `:number Z`     ;; ...here?
             }
             println(f())
@@ -3384,7 +3384,7 @@ class Exec_01 {
     fun native15_func() {
         val out = test(
             """
-            var f = func (v) {
+            var f = func' (v) {
                 println(v)
                 v
             }
@@ -3420,7 +3420,7 @@ class Exec_01 {
     fun TODO_native17() {    // cannot write C -> Ceu
         val out = test(
             """
-            func () {
+            func' () {
                 val x = 1
                 val y = `:number ${D}x.Number`
                 ```
@@ -3436,7 +3436,7 @@ class Exec_01 {
     fun on_18_nat_loc() {
         val out = test("""
             val n = 10
-            val f = func () {
+            val f = func' () {
                 val i = 5
                 println(:i, i, `:number ${D}i.Number`)
                 n
@@ -3449,7 +3449,7 @@ class Exec_01 {
     fun on_19_nat_glb() {
         val out = test("""
             `:pre int v = 10;`
-            val f = func () {
+            val f = func' () {
                 `:number v`
             }
             println(f())
@@ -3471,7 +3471,7 @@ class Exec_01 {
     fun op_umn0() {
         val out = test(
             """
-            val f = func (v1, v2) {
+            val f = func' (v1, v2) {
                 println(v1,v2)
             }
             f(10)
@@ -3562,7 +3562,7 @@ class Exec_01 {
     fun ops_id() {
         val out = test(
             """
-            val add = func (x,y) {
+            val add = func' (x,y) {
                 x + y
             }
             println(10 {{add}} 20)
@@ -3814,10 +3814,10 @@ class Exec_01 {
     fun gg_02_tags() {
         val out = test(
             """
-            func () {
+            func' () {
                 println(:xxx)
             }()
-            func () {
+            func' () {
                 println(:xxx)
             }()
         """
@@ -3828,10 +3828,10 @@ class Exec_01 {
     fun gg_03_tags() {
         val out = test(
             """
-            func () {
+            func' () {
                 println(:Xxx.Yyy)
             }()
-            func () {
+            func' () {
                 println(:a.b.c)
             }()
         """
@@ -3842,10 +3842,10 @@ class Exec_01 {
     fun gg_04_tags() {
         val out = test(
             """
-            func () {
+            func' () {
                 println(:Xxx)
             }()
-            func () {
+            func' () {
                 println(:1)
             }()
         """
@@ -4010,7 +4010,7 @@ class Exec_01 {
             tag(:Y, t)
             tag(:Z, t)
             ;;println(tag(t))
-            var f = func (ts) {
+            var f = func' (ts) {
                 println(ts)
             }
             f(tag(t))
@@ -4077,9 +4077,9 @@ class Exec_01 {
             """
             val g = 10
             var f
-            set f = func (x) {
+            set f = func' (x) {
                 set x = []  ;; err: cannot reassign
-                func () {
+                func' () {
                     x == g
                 }
             }
@@ -4096,8 +4096,8 @@ class Exec_01 {
             var g
             set g = 10
             var f
-            set f = func (x) {
-                func () {
+            set f = func' (x) {
+                func' () {
                     set x = []  ;; err: cannot reassign
                     ;;x + g
                 }
@@ -4125,7 +4125,7 @@ class Exec_01 {
             val f = do {
                 val x = []
                 ;;println(x)
-                func () {   ;; block_set(1)
+                func' () {   ;; block_set(1)
                     x       ;; because of x
                 }           ;; err: scope on return
             }
@@ -4142,7 +4142,7 @@ class Exec_01 {
             val f = do {
                 var x = []
                 ;;println(x)
-                func () {   ;; block_set(1)
+                func' () {   ;; block_set(1)
                     x       ;; because of x
                 }           ;; err: scope on return
             }
@@ -4159,7 +4159,7 @@ class Exec_01 {
             val f = do {
                 var x = []
                 ;;println(x)
-                func () {   ;; block_set(1)
+                func' () {   ;; block_set(1)
                     set x = nil
                 }
             }
@@ -4175,8 +4175,8 @@ class Exec_01 {
         val out = test(
             """
             var f
-            set f = func (x) {
-                func () {   ;; block_set(1)
+            set f = func' (x) {
+                func' () {   ;; block_set(1)
                     x       ;; because of x
                 }           ;; err: scope on return
             }
@@ -4193,8 +4193,8 @@ class Exec_01 {
             """
             val g = 10
             var f
-            set f = func (x) {
-                func () {       ;; block_set(0)
+            set f = func' (x) {
+                func' () {       ;; block_set(0)
                     x + g     ;; all (non-global) upvals are marked
                 }
             }
@@ -4209,8 +4209,8 @@ class Exec_01 {
             """
             val g = 10
             var f
-            set f = func (x) {
-                func () {
+            set f = func' (x) {
+                func' () {
                     x[0] + g
                 }
             }
@@ -4224,8 +4224,8 @@ class Exec_01 {
         val out = test(
             """
             var f
-            set f = func (x) {
-                ;;;val :fleet z =;;; func (y) {
+            set f = func' (x) {
+                ;;;val :fleet z =;;; func' (y) {
                     [x,y]
                 }
                 ;;dump(z)
@@ -4241,9 +4241,9 @@ class Exec_01 {
         val out = test(
             """
             var f
-            set f = func () {
+            set f = func' () {
                 val x = 10     ;; TODO: needs initialization
-                func (y) {
+                func' (y) {
                     [x,y]
                 }
             }
@@ -4257,9 +4257,9 @@ class Exec_01 {
         val out = test(
             """
             var f
-            set f = func (x) {
+            set f = func' (x) {
                 println(:1, x)
-                func () {
+                func' () {
                     println(:2, x)
                     x
                 }
@@ -4274,8 +4274,8 @@ class Exec_01 {
         val out = test(
             """
             var f
-            set f = func (x) {
-                func () {
+            set f = func' (x) {
+                func' () {
                     x
                 }
             }
@@ -4288,18 +4288,18 @@ class Exec_01 {
     fun clo19() {
         val out = test(
             """
-            val curry = func (fff) {
+            val curry = func' (fff) {
                 ;;println(:1, fff)
-                func (xxx) {
+                func' (xxx) {
                     ;;println(:2, fff, xxx)
-                    func (yyy) {
+                    func' (yyy) {
                         ;;println(:3, fff, xxx, yyy)
                         fff(xxx,yyy)
                     }
                 }
             }
 
-            val f = func (a,b) {
+            val f = func' (a,b) {
                 [a,b]
             }
             val f'  = curry(f)
@@ -4314,14 +4314,14 @@ class Exec_01 {
         val out = test(
             """
             var curry
-            set curry = func (fff) {
-                func (xxx) {
-                    func (yyy) {
+            set curry = func' (fff) {
+                func' (xxx) {
+                    func' (yyy) {
                         fff(xxx,yyy)
                     }
                 }
             }
-            var f = func (a,b) {
+            var f = func' (a,b) {
                 [a,b]
             }
             println(curry(f)(1)(2))
@@ -4333,8 +4333,8 @@ class Exec_01 {
     fun clo21_err() {
         val out = test(
             """
-            var f = func (a) {
-                func () {
+            var f = func' (a) {
+                func' () {
                     a
                 }
             }
@@ -4366,8 +4366,8 @@ class Exec_01 {
     fun clo23_err() {
         val out = test(
             """
-            var f = func (a) {
-                func () {
+            var f = func' (a) {
+                func' () {
                     a
                 }
             }
@@ -4385,7 +4385,7 @@ class Exec_01 {
     fun clo23x_err() {
         val out = test(
             """
-            var f = func (v) {
+            var f = func' (v) {
                 [v]
             }
             var g = do {
@@ -4402,8 +4402,8 @@ class Exec_01 {
     fun clo23x() {
         val out = test(
             """
-            var f = func (a) {
-                func () {
+            var f = func' (a) {
+                func' () {
                     a
                 }
             }
@@ -4420,12 +4420,12 @@ class Exec_01 {
     fun clo25_compose() {
         val out = test(
             """
-            var comp = func (f) {
-                func (v) {
+            var comp = func' (f) {
+                func' (v) {
                     f(v)
                 }
             }
-            var f = func (x) {
+            var f = func' (x) {
                 x
             }
             var ff = comp(f)
@@ -4438,12 +4438,12 @@ class Exec_01 {
     fun clo26_compose() {
         val out = test(
             """
-            var comp = func (f,g) {
-                func (v) {
+            var comp = func' (f,g) {
+                func' (v) {
                     f(g(v))
                 }
             }
-            var f = func (x) {
+            var f = func' (x) {
                 x
             }
             var ff = comp(f,f)
@@ -4457,8 +4457,8 @@ class Exec_01 {
         val out = test(
             """
             val x = 10
-            val f = func (y) {
-                val g = func () {
+            val f = func' (y) {
+                val g = func' () {
                     y
                 }
                 ;;;drop;;;(g)
@@ -4472,8 +4472,8 @@ class Exec_01 {
     @Test
     fun pp_28_clo_print() {
         val out = test("""
-            val f = func (x) {
-                func () {
+            val f = func' (x) {
+                func' () {
                     x[0]
                 }
             }
@@ -4486,8 +4486,8 @@ class Exec_01 {
     fun pp_29_func_escape() {
         val out = test(
             """
-            val f = func () {
-                func () {
+            val f = func' () {
+                func' () {
                     println(:ok)
                 }
             }
@@ -4504,7 +4504,7 @@ class Exec_01 {
         val out = test("""
             do {
                 var x = 10
-                val g = func :nested () {
+                val g = func' :nested () {
                     set x = 100
                 }
                 g()
@@ -4513,7 +4513,7 @@ class Exec_01 {
         """
         )
         //assert(out == "100\n") { out }
-        assert(out == "anon : (lin 4, col 30) : expected \"(\" : have \":nested\"\n") { out }
+        assert(out == "anon : (lin 4, col 31) : expected \"(\" : have \":nested\"\n") { out }
     }
 
     //  MEM-GC-REF-COUNT
@@ -4637,7 +4637,7 @@ class Exec_01 {
         DEBUG = true
         val out = test(
             """
-            var f = func (v) {
+            var f = func' (v) {
                 v
             }
             #( #[ f([1]) ] )
@@ -4666,7 +4666,7 @@ class Exec_01 {
         DEBUG = true
         val out = test(
             """
-            var f = func (v) {
+            var f = func' (v) {
                 [2]
             }
             f([1])
@@ -4732,7 +4732,7 @@ class Exec_01 {
     fun gc_11() {
         val out = test(
             """
-            var f = func (v) {
+            var f = func' (v) {
                 v   ;; not captured, should be checked after call
             }
             f([])   ;; v is not captured
@@ -4760,7 +4760,7 @@ class Exec_01 {
     fun gc_15_arg() {
         val out = test(
             """
-            var f = func (v) {
+            var f = func' (v) {
                 nil
             }
             f([])
@@ -4836,7 +4836,7 @@ class Exec_01 {
         val out = test(
             """
             var xxx
-            set xxx = func () {nil}
+            set xxx = func' () {nil}
             println(xxx())
         """
         )
@@ -4847,8 +4847,8 @@ class Exec_01 {
         val out = test(
             """
             var f
-            set f = func (x) {
-                func (y) {
+            set f = func' (x) {
+                func' (y) {
                     if x { x } else { y }
                 }
             }
@@ -5078,7 +5078,7 @@ class Exec_01 {
         val out = test(
             """
             data :T = [x,y]
-            var f = func (t:T) {
+            var f = func' (t:T) {
                 t.x
             }
             println(f([1,99]))
@@ -5101,12 +5101,12 @@ class Exec_01 {
     fun tplate19_err() {
         val out = test(
             """
-            val f = func (x :X) { x.s }
+            val f = func' (x :X) { x.s }
             println(f([]))
         """
         )
         //assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared\n") { out }
-        assert(out == " |  anon : (lin 2, col 35) : x[:s]\n" +
+        assert(out == " |  anon : (lin 2, col 36) : x[:s]\n" +
                 " v  error : expected number\n") { out }
     }
     @Test
@@ -5114,7 +5114,7 @@ class Exec_01 {
         val out = test(
             """
             data :X = [s]
-            val f = func (x :X) {
+            val f = func' (x :X) {
                 println(x.s)
             }
             f([10])
@@ -5176,7 +5176,7 @@ class Exec_01 {
     @Test
     fun qq_03x_copy() {
         val out = test("""
-            func () {
+            func' () {
                 val t1
             }
             val t1 = [1,2,3]
@@ -5188,7 +5188,7 @@ class Exec_01 {
     fun qq_04_copy() {
         val out = test("""
             var f
-            set f = func (v) {
+            set f = func' (v) {
                 ;;println(v)
                 if v > 0 {
                     copy([f(v - 1)])
@@ -5265,8 +5265,8 @@ class Exec_01 {
     @Test
     fun TODO_qq_09_copy() {     // copy closure
         val out = test("""
-            var f = func (a) {
-                func () {
+            var f = func' (a) {
+                func' () {
                     a
                 }
             }
@@ -5360,16 +5360,16 @@ class Exec_01 {
     @Test
     fun ss_01_code_unused() {
         val out = test("""
-            var f = func () {
+            var f = func' () {
                 nil
             }
-            val g = func () {
+            val g = func' () {
                 f()
             }
-            val h = func () {
+            val h = func' () {
                 h()
             }
-            val i = func () {
+            val i = func' () {
                 42
             }
             println(`:ceu ${D}g`)
@@ -5439,7 +5439,7 @@ class Exec_01 {
         val out = test("""
             group ;;;[f];;; {
                 val v = []
-                val f = func () {
+                val f = func' () {
                     v
                 }
                 ;;println(v, f)
@@ -5458,7 +5458,7 @@ class Exec_01 {
             do {
                 group ;;;[f];;; {
                     val v = []
-                    val f = func () {
+                    val f = func' () {
                         v
                     }
                     ;;println(v, f)
@@ -5514,7 +5514,7 @@ class Exec_01 {
     fun zz_02_use_bef_dcl_func() {
         val out = test("""
             var f
-            set f = func () {
+            set f = func' () {
                 println(v)
             }
             var v
@@ -5527,7 +5527,7 @@ class Exec_01 {
     @Test
     fun zz_03_func_scope() {
         val out = test("""
-            val f = func (v) {
+            val f = func' (v) {
                 if v == nil {
                     1
                 } else {
@@ -5549,7 +5549,7 @@ class Exec_01 {
                 ]),
                 (:right, nil)
             ]
-            val itemCheck = func (tree) {
+            val itemCheck = func' (tree) {
                 if tree == nil {
                     1
                 }
@@ -5564,7 +5564,7 @@ class Exec_01 {
     @Test
     fun zz_05_dup_ids() {
         val out = test("""
-            val f = func (x,y) {
+            val f = func' (x,y) {
                 y
             }
             println(f(1,2,3))
@@ -5607,7 +5607,7 @@ class Exec_01 {
     @Test
     fun zz_08_nonlocs() {
         val out = test("""
-            func () {
+            func' () {
                 x
             }
         """)

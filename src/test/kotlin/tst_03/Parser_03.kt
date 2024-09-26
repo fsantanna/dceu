@@ -9,35 +9,35 @@ class Parser_03 {
 
     @Test
     fun aa_01_coro_err() {
-        val l = lexer("coro (a,b) :fake { 10 }")
+        val l = lexer("coro' (a,b) :fake { 10 }")
         val parser = Parser(l)
-        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 12) : expected \"{\" : have \":fake\"")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 13) : expected \"{\" : have \":fake\"")
     }
     @Test
     fun aa_02_coro_err() {
-        val l = lexer("coro (a,b) :xxx { 10 }")
+        val l = lexer("coro' (a,b) :xxx { 10 }")
         val parser = Parser(l)
-        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 12) : expected \"{\" : have \":xxx\"")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 13) : expected \"{\" : have \":xxx\"")
     }
     @Test
     fun aa_03_coro() {
-        val l = lexer("coro (a,b) { 10 }")
+        val l = lexer("coro' (a,b) { 10 }")
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Proto && e.pars.size==2)
-        assert(e.to_str() == "(coro (a,b) {\n10;\n})") { e.to_str() }
+        assert(e.to_str() == "(coro' (a,b) {\n10;\n})") { e.to_str() }
     }
     @Test
     fun aa_04_coro_nested() {
         val l = tst_04.lexer(
             """
-            coro :nested () { nil }
+            coro' :nested () { nil }
         """
         )
         val parser = Parser(l)
         //val e = parser.expr()
         //assert(e.tostr() == "(coro :nested () {\nnil\n})") { e.tostr() }
-        assert(trap { parser.expr() } == "anon : (lin 2, col 18) : expected \"(\" : have \":nested\"")
+        assert(trap { parser.expr() } == "anon : (lin 2, col 19) : expected \"(\" : have \":nested\"")
     }
 
     // COROUTINE / YIELD / RESUME

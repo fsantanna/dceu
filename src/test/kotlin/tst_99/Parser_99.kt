@@ -36,16 +36,22 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Proto && e.pars.size==0)
-        assert(e.to_str() == "(func () {\nnil;\n})") { e.to_str() }
+        assert(e.to_str() == "(func () {\n" +
+                "enclose' :return {\n" +
+                "nil;\n" +
+                "};\n" +
+                "})") { e.to_str() }
     }
     @Test
     fun aa_04_empty_loop() {
         val l = lexer("loop { }")
         val parser = Parser(l)
         val e = parser.expr_prim()
-        assert(e.to_str() == "do :break {\n" +
+        assert(e.to_str() == "enclose' :break {\n" +
                 "loop' {\n" +
+                "enclose' :skip {\n" +
                 "nil;\n" +
+                "};\n" +
                 "};\n" +
                 "}") { e.to_str() }
     }
@@ -94,7 +100,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.to_str() == """
             do {
-            (val' ceu_or_74 = do {
+            (val' ceu_or_73 = do {
             (val' ceu_and_27 = if true {
             false;
             } else {
@@ -106,8 +112,8 @@ class Parser_99 {
             ceu_and_27;
             };
             });
-            if ceu_or_74 {
-            ceu_or_74;
+            if ceu_or_73 {
+            ceu_or_73;
             } else {
             true;
             };
@@ -136,7 +142,7 @@ class Parser_99 {
             ceu_or_5;
             } else {
             do {
-            (val' ceu_or_42 = do {
+            (val' ceu_or_41 = do {
             (val' ceu_or_10 = ```b```);
             if ceu_or_10 {
             ceu_or_10;
@@ -144,8 +150,8 @@ class Parser_99 {
             ```c```;
             };
             });
-            if ceu_or_42 {
-            ceu_or_42;
+            if ceu_or_41 {
+            ceu_or_41;
             } else {
             ```d```;
             };
@@ -738,8 +744,9 @@ class Parser_99 {
         val l = lexer("loop { while (i<10) }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "do :break {\n" +
+        assert(e.to_str() == "enclose' :break {\n" +
                 "loop' {\n" +
+                "enclose' :skip {\n" +
                 "do {\n" +
                 "(val' it = if {{<}}(i,10) {\n" +
                 "false;\n" +
@@ -750,6 +757,7 @@ class Parser_99 {
                 "escape(:break,it);\n" +
                 "} else {\n" +
                 "nil;\n" +
+                "};\n" +
                 "};\n" +
                 "};\n" +
                 "};\n" +
