@@ -1104,10 +1104,10 @@ class Parser (lexer_: Lexer)
                 }
                 this.nest("""
                     do {
-                        var' ceu_ret_$nn
-                        val' ceu_val_$nn = ${xv.to_str(true)}
+                        var ceu_ret_$nn
+                        val ceu_val_$nn = ${xv.to_str(true)}
                         ${case()}
-                        ceu_ret_$nn
+                        drop(ceu_ret_$nn)
                     }
                 """)//.let { println(it);it })
             }
@@ -1121,14 +1121,14 @@ class Parser (lexer_: Lexer)
                 call as Expr.Call
                 this.nest("""
                     do {
-                        val' ceu_co_${G.N} = ${call.clo.to_str(true)}
-                        var' ceu_arg_${G.N} = ${if (call.args.size==0) "nil" else call.args[0].to_str(true)}
+                        val ceu_co_${G.N} = ${call.clo.to_str(true)}
+                        var ceu_arg_${G.N} = ${if (call.args.size==0) "nil" else call.args[0].to_str(true)}
                         loop {
-                            val' ceu_v_${G.N} = resume ceu_co_${G.N}(ceu_arg_${G.N})
+                            val ceu_v_${G.N} = resume ceu_co_${G.N}(ceu_arg_${G.N})
                             if (status(ceu_co_${G.N}) == :terminated) {
-                                break(ceu_v_${G.N})
+                                break(drop(ceu_v_${G.N}))
                             }
-                            set ceu_arg_${G.N} = yield(ceu_v_${G.N})
+                            set ceu_arg_${G.N} = yield(drop(ceu_v_${G.N}))
                         }
                     }
                 """)
@@ -1168,7 +1168,7 @@ class Parser (lexer_: Lexer)
                         spw as Expr.Spawn
                         val ret = this.nest("""
                             do {
-                                val' ceu_spw_${G.N} = ${spw.to_str(true)}
+                                val ceu_spw_${G.N} = ${spw.to_str(true)}
                                 if (status(ceu_spw_${G.N}) /= :terminated) {
                                     await(|it==ceu_spw_${G.N})
                                 }
@@ -1278,7 +1278,7 @@ class Parser (lexer_: Lexer)
                 this.nest("""
                     ${pre0}do {
                         ${pars.mapIndexed { i,body -> """
-                            val' ceu_par_${i}_$n = spawn {
+                            val ceu_par_${i}_$n = spawn {
                                 ${body.es.to_str(true)}
                             }
                         """}.joinToString("")}
@@ -1307,7 +1307,7 @@ class Parser (lexer_: Lexer)
                 this.nest("""
                     ${pre0}do {
                         ${pars.mapIndexed { i,body -> """
-                            val' ceu_par_${i}_$n = spawn {
+                            val ceu_par_${i}_$n = spawn {
                                 ${body.es.to_str(true)}
                             }
                         """}.joinToString("")}
