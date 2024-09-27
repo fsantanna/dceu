@@ -21,15 +21,12 @@ fun type (dcl: Expr.Dcl, src: Expr): Scope {
     }
 }
 
-fun Expr.base (): Expr {
+fun Expr.base (): Expr.Acc? {
     return when (this) {
         is Expr.Acc   -> this
         is Expr.Index -> this.col.base()
         is Expr.Pub   -> TODO() //this.tsk?.base(ups) ?: ups.first(this) { it is Expr.Proto }!!
-        else -> {
-            println(this)
-            TODO()
-        }
+        else -> null
     }
 }
 
@@ -212,5 +209,20 @@ fun Expr.idx (idc: String): String {
 fun Expr.dcl (tp: String="CEU_Value"): String {
     return if (this.is_mem()) "" else tp
 }
+
+fun Expr.Acc.depth_diff (): Int {
+    /*
+    do {
+        val x       <---*
+        do {            |
+            ...         |
+                x   <---*
+        }
+    }
+     */
+    val blk = this.id_to_dcl(this.tk.str)!!.to_blk()
+    return this.up_all_until { it.n == blk.n }.filter { it is Expr.Do }.count() - 1
+}
+
 
 

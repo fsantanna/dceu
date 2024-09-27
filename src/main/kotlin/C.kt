@@ -602,8 +602,11 @@ fun Coder.main (): String {
             src.Dyn->Any.lex.depth < dst.depth     &&
             src.Dyn->Any.refs > 1
         ) {
+            //printf(">>> %d / %d = %d\n", dst.type, dst.depth, src.Dyn->Any.lex.depth<dst.depth);
+            //ceu_dump_val(src);
             //assert(0 && "impossible case");
-            return "dropped value has pending outer reference";
+            //return "dropped value has pending outer reference";
+            return NULL;    // Exec_99.xa_00_eqeqeq_tup
         } else if (
             src.Dyn->Any.lex.depth > dst.depth && (
                 src.Dyn->Any.lex.type == CEU_LEX_MUTAB ||

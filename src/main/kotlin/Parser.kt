@@ -231,7 +231,7 @@ class Parser (lexer_: Lexer)
         val pre = idtag.first.pos.pre()
         return """
             group {
-                val' ${idtag.to_str(true)} = ${v.cond2({it},{"nil"})}
+                val ${idtag.to_str(true)} = ${v.cond2({it},{"nil"})}
                 ${when (this) {
                     is Patt.None -> """
                         ${pre}assert(${this.pos.to_str(true)}, :Patt)
@@ -245,7 +245,7 @@ class Parser (lexer_: Lexer)
                         """
                         ${v.cond { """
                             ${pre}assert((type(${id.str})==:tuple) and (#${id.str}==${l.size}), :Patt)
-                            val' ceu_tup_$nn = ${id.str}
+                            val ceu_tup_$nn = ${id.str}
                         """ }}
                         ${pre}assert(${this.pos.to_str(true)}, :Patt)
                         ${this.l.mapIndexed { i,x ->
@@ -263,7 +263,7 @@ class Parser (lexer_: Lexer)
         val idtag = Pair(this.id, this.tag)
         return """
             do {
-                val' ${idtag.to_str(true)} = $v
+                val ${idtag.to_str(true)} = $v
                 ${this.tag.cond{ "if ${this.id.str} is? ${it.str} {" }}
                 ${when (this) {
             is Patt.None -> """
@@ -954,16 +954,16 @@ class Parser (lexer_: Lexer)
                         val blk = this.block()
                         val nn = G.N++
                         val dcl_set = when (ids) {
-                            is Tk.Id -> "val' ${ids.str} = ceu_val_$nn"
+                            is Tk.Id -> "val ${ids.str} = ceu_val_$nn"
                             is Patt  -> ids.code2("ceu_val_$nn")
-                            else     -> "val' ${(ids as Id_Tag).to_str(true)} = ceu_val_$nn"
+                            else     -> "val ${(ids as Id_Tag).to_str(true)} = ceu_val_$nn"
                         }
                         //println(blk.es.tostr())
                         this.nest("""
                             enclose' :break {
-                                val' ceu_itr_$nn :Iterator = ${iter.tk.pos.pre()}to-iter(${iter.to_str(true)})
+                                val ceu_itr_$nn :Iterator = ${iter.tk.pos.pre()}to-iter(${iter.to_str(true)})
                                 loop' {
-                                    val' ceu_val_$nn = ceu_itr_$nn.f(ceu_itr_$nn)
+                                    val ceu_val_$nn = ceu_itr_$nn.f(ceu_itr_$nn)
                                     if (ceu_val_$nn == nil) {
                                         break(false)
                                     }
@@ -1031,7 +1031,7 @@ class Parser (lexer_: Lexer)
                                 es.to_str(true) // do ...
                             } else {
                                 """
-                                val' ${idtagx.to_str(true)} = ${cnd.to_str(true)}
+                                val ${idtagx.to_str(true)} = ${cnd.to_str(true)}
                                 if ${idtagx.first.str} {
                                     ${es.to_str(true)}
                                 } else {
@@ -1062,7 +1062,7 @@ class Parser (lexer_: Lexer)
                                 val (idstags, es) = this.lambda(false)
                                 """
                                 set ceu_ret_$nn = group {
-                                    ${(idstags.isNotEmpty()).cond { "val' ${idstags.first().to_str(true)} = `:ceu ceu_acc`" }}
+                                    ${(idstags.isNotEmpty()).cond { "val ${idstags.first().to_str(true)} = `:ceu ceu_acc`" }}
                                     ${es.to_str(true)}
                                 }
                                 true
@@ -1197,7 +1197,7 @@ class Parser (lexer_: Lexer)
                         val pat2 = pat1.code3("ceu_ret_$nn", cnt)
                         this.nest("""
                             do {
-                                var' ceu_ret_$nn
+                                var ceu_ret_$nn
                                 loop {
                                     set ceu_ret_$nn = ${pre}yield()
                                     until $pat2                                
@@ -1226,7 +1226,7 @@ class Parser (lexer_: Lexer)
                     val blk = this.block()
                     this.nest("""
                         do {
-                            var' ceu_ret_$nn
+                            var ceu_ret_$nn
                             loop {
                                 until await ${pat.to_str(true)} {
                                     var ceu_brk_$nn = true
@@ -1503,19 +1503,19 @@ class Parser (lexer_: Lexer)
             when (op.str) {
                 "and" -> this.nest("""
                     do {
-                        val' ceu_and_${e1.n} = ${e1.to_str(true)}
+                        val ceu_and_${e1.n} = ${e1.to_str(true)}
                         if ceu_and_${e1.n} {
                             ${e2.to_str(true)}
                         } else {
-                            ceu_and_${e1.n}
+                            drop(ceu_and_${e1.n})
                         }
                     }
                 """)
                 "or" -> this.nest("""
                     do {
-                        val' ceu_or_${e1.n} = ${e1.to_str(true)}
+                        val ceu_or_${e1.n} = ${e1.to_str(true)}
                         if ceu_or_${e1.n} {
-                            ceu_or_${e1.n}
+                            drop(ceu_or_${e1.n})
                         } else {
                             ${e2.to_str(true)}
                         }

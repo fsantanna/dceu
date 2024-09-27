@@ -178,11 +178,11 @@ val to-iter = group {
         }
         match type(v) {
             | sup?(:Iterator, tag(v)) {
-                val' v' :Iterator = v       ;; TODO: where
+                val v' :Iterator = v       ;; TODO: where
                 if #v' >= 4 {
                     set v'.tp = tp'(v'.tp)
                 }
-                v'
+                drop(v')
             }
             ==:tuple    => :Iterator [iter-tuple, v, 0, tp'([:val])]
             ==:vector   => :Iterator [iter-tuple, v, 0, tp'([:val])]
@@ -553,10 +553,10 @@ func next (v, x) {
 }
 
 func create-resume (CO, x, y, z) {
-    val' co = coroutine(CO)         ;; TODO: where
+    val co = coroutine(CO)         ;; TODO: where
     val v = resume co(x,y,z)
     assert(v == nil)
-    co
+    drop(co)
 }
 
 func copy (v) {

@@ -226,13 +226,15 @@ class Exec_99 {
             }
             println(x)
         """)
+        //assert(out == " |  anon : (lin 2, col 13) : (val x = do { do { (val it = []); it; }; })\n" +
+        //        " v  error : cannot copy reference out\n") { out }
         assert(out == "[]\n") { out }
     }
     @Test
     fun bc_03_op_thus_tuple_lex() {
         val out = test("""
             val x = do {
-                [] thus { it }
+                [] thus { drop(it) }
             }
             println(x)
         """)
@@ -1774,7 +1776,7 @@ class Exec_99 {
     fun ja_07_skip_optim() {
         val out = test("""
             loop {
-                ;;break()
+                break()
                 ``` // asserts that :skip is optimized out
                 CEU_ESCAPE = CEU_TAG_skip;
                 continue;
@@ -1905,8 +1907,8 @@ class Exec_99 {
         )
         assert(out == "[1,2,3]\n") { out }
         //assert(out == " v  anon : (lin 5, col 25) : set error : cannot assign reference to outer scope\n") { out }
-        //assert(out == " |  anon : (lin 4, col 30) : (func (a) { (set x = a) })([1,2,3])\n" +
-        //        " v  anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 5, col 25) : x\n" +
+        //        " v  error : cannot copy reference out\n") { out }
     }
     @Test
     fun mm_01_tmp_err() {
@@ -1915,7 +1917,7 @@ class Exec_99 {
             var x
             do {
                 [1,2,3] thus { \a =>
-                    set x = ;;;drop;;;(a)
+                    set x = drop(a)
                 }
             }
             println(x)
@@ -1930,7 +1932,7 @@ class Exec_99 {
             """
             val x = do {
                 [1,2,3] thus { \a =>
-                    a
+                    drop(a)
                 }
             }
             println(x)
@@ -1985,7 +1987,8 @@ class Exec_99 {
             }
             println(v)
         """)
-        //assert(out == "anon : (lin 3, col 20) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 2, col 13) : (val v = do { do { (val x = []); if x { x;...\n" +
+        //        " v  error : cannot copy reference out\n") { out }
         assert(out == "[]\n") { out }
     }
     @Test
@@ -1993,7 +1996,7 @@ class Exec_99 {
         val out = test("""
             val v = do {
                 [] thus { \x =>
-                    if x { ;;;drop;;;(x) } else { [] }
+                    if x { drop(x) } else { [] }
                 }
             }
             println(v)
@@ -3427,6 +3430,21 @@ class Exec_99 {
             println(to.vector(coroutine(T)))
         """, true)
         assert(out == "#[1,2,3]\n") { out }
+    }
+    @Test
+    fun fk_06x_iter() {
+        val out = test("""
+            func fff (col, tp) {
+                val ret = #[]
+                loop v in to-iter(col,tp) {
+                    set ret[+] = v
+                }
+                drop(ret)
+            }
+            println(fff([1]))
+        """, true)
+        //tst_99.Exec_99#fg_07_ifs
+        assert(out == "#[1]\n") { out }
     }
     @Test
     fun fk_07_iter() {
@@ -6140,6 +6158,20 @@ class Exec_99 {
 
     // ==, ===, /=, =/=
 
+    @Test
+    fun xa_00_eqeqeq_tup() {
+        val out = test(
+            """
+            println(do {
+                val' it = [1]
+                do {
+                    var v = it
+                }
+                it
+            })
+        """)
+        assert(out == "[1]\n") { out }
+    }
     @Test
     fun xa_01_eqeqeq_tup() {
         val out = test(
