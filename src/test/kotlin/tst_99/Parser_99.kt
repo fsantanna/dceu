@@ -64,9 +64,9 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.to_str() == "do {\n" +
-                "(val' ceu_or_5 = 1);\n" +
-                "if ceu_or_5 {\n" +
-                "ceu_or_5;\n" +
+                "(val' ceu_or_9 = 1);\n" +
+                "if ceu_or_9 {\n" +
+                "ceu_or_9;\n" +
                 "} else {\n" +
                 "2;\n" +
                 "};\n" +
@@ -78,11 +78,11 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.to_str() == "do {\n" +
-                "(val' ceu_and_5 = 1);\n" +
-                "if ceu_and_5 {\n" +
+                "(val' ceu_and_9 = 1);\n" +
+                "if ceu_and_9 {\n" +
                 "2;\n" +
                 "} else {\n" +
-                "ceu_and_5;\n" +
+                "ceu_and_9;\n" +
                 "};\n" +
                 "}") { e.to_str() }
     }
@@ -98,27 +98,25 @@ class Parser_99 {
         val l = lexer("((not true) and false) or true")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == """
-            do {
-            (val' ceu_or_73 = do {
-            (val' ceu_and_27 = if true {
-            false;
-            } else {
-            true;
-            });
-            if ceu_and_27 {
-            false;
-            } else {
-            ceu_and_27;
-            };
-            });
-            if ceu_or_73 {
-            ceu_or_73;
-            } else {
-            true;
-            };
-            }
-        """.trimIndent()) { e.to_str() }
+        assert(e.to_str() == "do {\n" +
+                "(val' ceu_or_114 = do {\n" +
+                "(val' ceu_and_33 = if true {\n" +
+                "false;\n" +
+                "} else {\n" +
+                "true;\n" +
+                "});\n" +
+                "if ceu_and_33 {\n" +
+                "false;\n" +
+                "} else {\n" +
+                "ceu_and_33;\n" +
+                "};\n" +
+                "});\n" +
+                "if ceu_or_114 {\n" +
+                "ceu_or_114;\n" +
+                "} else {\n" +
+                "true;\n" +
+                "};\n" +
+                "}") { e.to_str() }
     }
     @Test
     fun bb_05_pre() {
@@ -137,21 +135,21 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.to_str() == """
             do {
-            (val' ceu_or_5 = ```a```);
-            if ceu_or_5 {
-            ceu_or_5;
+            (val' ceu_or_171 = ```a```);
+            if ceu_or_171 {
+            ceu_or_171;
             } else {
             do {
-            (val' ceu_or_41 = do {
-            (val' ceu_or_10 = ```b```);
-            if ceu_or_10 {
-            ceu_or_10;
+            (val' ceu_or_69 = do {
+            (val' ceu_or_14 = ```b```);
+            if ceu_or_14 {
+            ceu_or_14;
             } else {
             ```c```;
             };
             });
-            if ceu_or_41 {
-            ceu_or_41;
+            if ceu_or_69 {
+            ceu_or_69;
             } else {
             ```d```;
             };
@@ -295,11 +293,11 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.to_str() == "do {\n" +
-                "(val' ceu_ifs_19 = a);\n" +
+                "(val ceu_ifs_19 = a);\n" +
                 "if ceu_ifs_19 {\n" +
                 "1;\n" +
                 "} else {\n" +
-                "(val' ceu_ifs_20 = true);\n" +
+                "(val ceu_ifs_20 = true);\n" +
                 "if ceu_ifs_20 {\n" +
                 "0;\n" +
                 "} else {\n" +
@@ -324,13 +322,13 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.to_str() == "do {\n" +
-                "(var' ceu_ret_5);\n" +
-                "(val' ceu_val_5 = nil);\n" +
+                "(var ceu_ret_5);\n" +
+                "(val ceu_val_5 = nil);\n" +
                 "do {\n" +
                 "(set ceu_ret_5 = it);\n" +
                 "true;\n" +
                 "};\n" +
-                "ceu_ret_5;\n" +
+                "drop(ceu_ret_5);\n" +
                 "}") { e.to_str() }
     }
     @Test
@@ -346,11 +344,11 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.to_str() == "do {\n" +
-                "(var' ceu_ret_5);\n" +
-                "(val' ceu_val_5 = v);\n" +
+                "(var ceu_ret_5);\n" +
+                "(val ceu_val_5 = v);\n" +
                 "do {\n" +
-                "(val' ceu_or_59 = do {\n" +
-                "(val' a = ceu_val_5);\n" +
+                "(val' ceu_or_63 = do {\n" +
+                "(val a = ceu_val_5);\n" +
                 "if true {\n" +
                 "(set ceu_ret_5 = it);\n" +
                 "true;\n" +
@@ -358,13 +356,13 @@ class Parser_99 {
                 "nil;\n" +
                 "};\n" +
                 "});\n" +
-                "if ceu_or_59 {\n" +
-                "ceu_or_59;\n" +
+                "if ceu_or_63 {\n" +
+                "ceu_or_63;\n" +
                 "} else {\n" +
                 "nil;\n" +
                 "};\n" +
                 "};\n" +
-                "ceu_ret_5;\n" +
+                "drop(ceu_ret_5);\n" +
                 "}") { e.to_str() }
         //assert(trap { parser.expr() } == "anon : (lin 1, col 13) : expected \",\" : have \"=>\"")
     }
@@ -374,11 +372,11 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.to_str() == "do {\n" +
-                "(var' ceu_ret_5);\n" +
-                "(val' ceu_val_5 = v);\n" +
+                "(var ceu_ret_5);\n" +
+                "(val ceu_val_5 = v);\n" +
                 "do {\n" +
-                "(val' ceu_or_82 = do {\n" +
-                "(val' it = ceu_val_5);\n" +
+                "(val' ceu_or_289 = do {\n" +
+                "(val it = ceu_val_5);\n" +
                 "if a {\n" +
                 "(set ceu_ret_5 = group {\n" +
                 "1;\n" +
@@ -388,12 +386,12 @@ class Parser_99 {
                 "nil;\n" +
                 "};\n" +
                 "});\n" +
-                "if ceu_or_82 {\n" +
-                "ceu_or_82;\n" +
+                "if ceu_or_289 {\n" +
+                "ceu_or_289;\n" +
                 "} else {\n" +
                 "do {\n" +
-                "(val' ceu_or_113 = do {\n" +
-                "(val' it = ceu_val_5);\n" +
+                "(val' ceu_or_133 = do {\n" +
+                "(val it = ceu_val_5);\n" +
                 "if b {\n" +
                 "(set ceu_ret_5 = v);\n" +
                 "true;\n" +
@@ -401,8 +399,8 @@ class Parser_99 {
                 "nil;\n" +
                 "};\n" +
                 "});\n" +
-                "if ceu_or_113 {\n" +
-                "ceu_or_113;\n" +
+                "if ceu_or_133 {\n" +
+                "ceu_or_133;\n" +
                 "} else {\n" +
                 "do {\n" +
                 "(set ceu_ret_5 = group {\n" +
@@ -414,7 +412,7 @@ class Parser_99 {
                 "};\n" +
                 "};\n" +
                 "};\n" +
-                "ceu_ret_5;\n" +
+                "drop(ceu_ret_5);\n" +
                 "}") { e.to_str() }
     }
     @Test
@@ -423,7 +421,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.to_str() == "do {\n" +
-                "(val' ceu_ifs_15 = f());\n" +
+                "(val ceu_ifs_15 = f());\n" +
                 "if ceu_ifs_15 {\n" +
                 "nil;\n" +
                 "} else {\n" +
@@ -441,7 +439,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.to_str() == "do {\n" +
-                "(val' ceu_ifs_16 = {{==}}(20));\n" +
+                "(val ceu_ifs_16 = {{==}}(20));\n" +
                 "if ceu_ifs_16 {\n" +
                 "nil;\n" +
                 "} else {\n" +
@@ -481,11 +479,11 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.to_str() == "do {\n" +
-                "(var' ceu_ret_5);\n" +
-                "(val' ceu_val_5 = v);\n" +
+                "(var ceu_ret_5);\n" +
+                "(val ceu_val_5 = v);\n" +
                 "do {\n" +
-                "(val' ceu_or_59 = do {\n" +
-                "(val' x = ceu_val_5);\n" +
+                "(val' ceu_or_63 = do {\n" +
+                "(val x = ceu_val_5);\n" +
                 "if true {\n" +
                 "(set ceu_ret_5 = 10);\n" +
                 "true;\n" +
@@ -493,13 +491,13 @@ class Parser_99 {
                 "nil;\n" +
                 "};\n" +
                 "});\n" +
-                "if ceu_or_59 {\n" +
-                "ceu_or_59;\n" +
+                "if ceu_or_63 {\n" +
+                "ceu_or_63;\n" +
                 "} else {\n" +
                 "nil;\n" +
                 "};\n" +
                 "};\n" +
-                "ceu_ret_5;\n" +
+                "drop(ceu_ret_5);\n" +
                 "}") { e.to_str() }
         //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
     }
@@ -734,15 +732,15 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.to_str() == "enclose' :break {\n" +
-                "(val' ceu_itr_14 :Iterator = to-iter(f));\n" +
+                "(val ceu_itr_14 :Iterator = to-iter(f));\n" +
                 "loop' {\n" +
-                "(val' ceu_val_14 = ceu_itr_14[:f](ceu_itr_14));\n" +
+                "(val ceu_val_14 = ceu_itr_14[:f](ceu_itr_14));\n" +
                 "if {{==}}(ceu_val_14,nil) {\n" +
                 "escape(:break,false);\n" +
                 "} else {\n" +
                 "nil;\n" +
                 "};\n" +
-                "(val' x = ceu_val_14);\n" +
+                "(val x = ceu_val_14);\n" +
                 "x;\n" +
                 "};\n" +
                 "}") { e.to_str() }
@@ -1491,30 +1489,28 @@ class Parser_99 {
         val l = lexer("val [x,y] = [:T [1], :U [2]]")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == """
-            group {
-            (val' ceu_patt_5 = [tag(:T,[1]),tag(:U,[2])]);
-            assert(do {
-            (val' ceu_and_122 = {{==}}(type(ceu_patt_5),:tuple));
-            if ceu_and_122 {
-            {{==}}({{#}}(ceu_patt_5),2);
-            } else {
-            ceu_and_122;
-            };
-            },:Patt);
-            (val' ceu_tup_66 = ceu_patt_5);
-            assert(true,:Patt);
-            group {
-            (val' x = ceu_tup_66[0]);
-            assert(true,:Patt);
-            };
-            group {
-            (val' y = ceu_tup_66[1]);
-            assert(true,:Patt);
-            };
-            assert(true,:Patt);
-            }
-        """.trimIndent()) { e.to_str() }
+        assert(e.to_str() == "group {\n" +
+                "(val ceu_patt_5 = [tag(:T,[1]),tag(:U,[2])]);\n" +
+                "assert(do {\n" +
+                "(val' ceu_and_139 = {{==}}(type(ceu_patt_5),:tuple));\n" +
+                "if ceu_and_139 {\n" +
+                "{{==}}({{#}}(ceu_patt_5),2);\n" +
+                "} else {\n" +
+                "ceu_and_139;\n" +
+                "};\n" +
+                "},:Patt);\n" +
+                "(val ceu_tup_66 = ceu_patt_5);\n" +
+                "assert(true,:Patt);\n" +
+                "group {\n" +
+                "(val x = ceu_tup_66[0]);\n" +
+                "assert(true,:Patt);\n" +
+                "};\n" +
+                "group {\n" +
+                "(val y = ceu_tup_66[1]);\n" +
+                "assert(true,:Patt);\n" +
+                "};\n" +
+                "assert(true,:Patt);\n" +
+                "}") { e.to_str() }
     }
     @Test
     fun uu_05_tags() {

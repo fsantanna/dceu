@@ -103,7 +103,7 @@ class JS_99 {
             coro objectEntries (obj) {
                 yield()
                 loop kv in to-iter(obj) {
-                    yield(kv)
+                    yield(drop(kv))
                 }
             }
             
@@ -159,8 +159,8 @@ class JS_99 {
         """, true)
         assert(out.contains("json :good\n" +
                 " |  anon : (lin 33, col 14) : (spawn (task' :fake () { group { (val co1 ...\n" +
-                " |  anon : (lin 32, col 48) : (resume (ceu_co)(ceu_arg))\n" +
-                " |  anon : (lin 22, col 48) : (resume (ceu_co)(ceu_arg))\n" +
+                " |  anon : (lin 32, col 47) : (resume (ceu_co)(ceu_arg))\n" +
+                " |  anon : (lin 22, col 47) : (resume (ceu_co)(ceu_arg))\n" +
                 " |  anon : (lin 5, col 25) : error(:error)\n" +
                 " v  error : :error\n")) { out }
     }
@@ -724,7 +724,7 @@ class JS_99 {
         """, true)
         assert(out == "1: ;; is', is-not'\n" +
                 "2: \n" +
-                "3: val not = func (v) {\n" +
+                "3: val not = func' (v) {\n" +
                 "1: data :Clock = [ms]\n" +
                 "2: \n" +
                 "3: func {{+}} (v1, v2) {\n") { out }

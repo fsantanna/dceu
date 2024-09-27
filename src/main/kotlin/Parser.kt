@@ -1502,23 +1502,13 @@ class Parser (lexer_: Lexer)
         return this.expr_1_bin(op.str,
             when (op.str) {
                 "and" -> this.nest("""
-                    do {
-                        val ceu_and_${e1.n} = ${e1.to_str(true)}
-                        if ceu_and_${e1.n} {
-                            ${e2.to_str(true)}
-                        } else {
-                            drop(ceu_and_${e1.n})
-                        }
+                    ${e1.to_str(true)} thus { \ceu_and_${G.N} =>
+                        if ceu_and_${G.N} => ${e2.to_str(true)} => ceu_and_${G.N}
                     }
                 """)
                 "or" -> this.nest("""
-                    do {
-                        val ceu_or_${e1.n} = ${e1.to_str(true)}
-                        if ceu_or_${e1.n} {
-                            drop(ceu_or_${e1.n})
-                        } else {
-                            ${e2.to_str(true)}
-                        }
+                    ${e1.to_str(true)} thus { \ceu_or_${G.N} =>
+                        if ceu_or_${G.N} => ceu_or_${G.N} => ${e2.to_str(true)}
                     }
                 """)
                 "is?" -> this.nest("is'(${e1.to_str(true)}, ${e2.to_str(true)})")

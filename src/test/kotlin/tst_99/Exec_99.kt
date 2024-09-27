@@ -1776,7 +1776,7 @@ class Exec_99 {
     fun ja_07_skip_optim() {
         val out = test("""
             loop {
-                break()
+                ;;break()
                 ``` // asserts that :skip is optimized out
                 CEU_ESCAPE = CEU_TAG_skip;
                 continue;
@@ -5089,7 +5089,7 @@ class Exec_99 {
         //assert(out.contains("[]\n")) { out }
         //assert(out.contains("anon : (lin 3, col 53) : block escape error : incompatible scopes")) { out }
         assert(out == " |  anon : (lin 8, col 14) : (spawn (task' :fake () { group { (var x = ...\n" +
-                " |  anon : (lin 3, col 17) : (var x = do { (val' ceu_spw = (spawn (task...\n" +
+                " |  anon : (lin 3, col 17) : (var x = do { (val ceu_spw = (spawn (task'...\n" +
                 " v  error : cannot copy reference out\n") { out }
     }
     @Test
@@ -7174,6 +7174,9 @@ class Exec_99 {
             }
             println(resume (f(CO1, coroutine(CO2))) ())
         """)
-        assert(out == "abc\n") { out }
+        assert(out == " |  anon : (lin 16, col 29) : f(CO1,coroutine(CO2))\n" +
+                " |  anon : (lin 4, col 17) : (resume (xco1)())\n" +
+                " |  anon : (lin 13, col 25) : x\n" +
+                " v  error : cannot copy reference out\n") { out }
     }
 }
