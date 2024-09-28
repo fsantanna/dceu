@@ -111,9 +111,11 @@ class Exec_50 {
                 ;;dump(a)
             }
             ;;dump(a)
+            println(a)
         """)
-        assert(out == " |  anon : (lin 5, col 17) : (val b = a)\n" +
-                " v  error : dropped value has pending outer reference\n") { out }
+        //assert(out == " |  anon : (lin 5, col 17) : (val b = a)\n" +
+        //        " v  error : dropped value has pending outer reference\n") { out }
+        assert(out == "[]\n") { out }
     }
 
     // COLLECTIONS
@@ -259,12 +261,12 @@ class Exec_50 {
                     yield(drop(x))  ;; x is an upval
                 }
             }
-            do {
+            println(do {
                 val x = []
                 val CO = F(drop(x))
                 val co = coroutine(CO)
                 resume co()
-            }
+            })
         """)
         assert(out == " |  anon : (lin 11, col 17) : (resume (co)())\n" +
                 " |  anon : (lin 4, col 21) : yield(drop(x))\n" +

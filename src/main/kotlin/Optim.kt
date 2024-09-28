@@ -1,10 +1,10 @@
 package dceu
 
-fun Expr.do_has_var (): Boolean {
+fun Expr.do_has_var (prime: Boolean): Boolean {
     return this.dn_collect {
         when (it) {
             is Expr.Proto, is Expr.Do -> null
-            is Expr.Dcl -> if (it.tk.str=="val" || it.tk.str=="var" || it.idtag.first.str=="it") listOf(Unit) else emptyList()
+            is Expr.Dcl -> if (prime || it.tk.str=="val" || it.tk.str=="var" || it.idtag.first.str=="it") listOf(Unit) else emptyList()
             is Expr.Defer, is Expr.Yield, is Expr.Spawn, is Expr.Delay, is Expr.Tasks -> listOf(Unit)
             else -> emptyList()
         }
@@ -33,7 +33,7 @@ fun Expr.prune (): Expr {
             val es = this.es.map { it.prune() }
             val up = this.fup()
             val isup = (up is Expr.Proto || up is Expr.Catch || up is Expr.Defer)
-            val req = (up===null || isup || this.es.any { it.do_has_var() })
+            val req = (up===null || isup || es.any { it.do_has_var(up is Expr.Loop) })
             if (req) {
                 Expr.Do(this.tk_, es)
             } else {

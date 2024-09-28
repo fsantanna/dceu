@@ -5480,7 +5480,9 @@ class Exec_01 {
                 nil
             })
         """)
-        assert(out == "anon : (lin 3, col 15) : group error : unexpected context\n") { out }
+        //assert(out == "anon : (lin 3, col 15) : group error : unexpected context\n") { out }
+        assert(out == " |  anon : (lin 3, col 13) : f(group { nil; })\n" +
+                " v  error : expected function\n") { out }
     }
     @Test
     fun tt_08_group() {

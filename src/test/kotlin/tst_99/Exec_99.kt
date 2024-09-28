@@ -7179,4 +7179,16 @@ class Exec_99 {
                 " |  anon : (lin 13, col 25) : x\n" +
                 " v  error : cannot copy reference out\n") { out }
     }
+    @Test
+    fun zz_11_js_x_03() {
+        val out = test("""
+            $PLUS ; $COMP
+            val v = #[]
+            loop i in {1 => 2} {
+                val' x = v
+            }
+            println(v)
+        """)
+        assert(out == "#[]\n") { out }
+    }
 }
