@@ -468,7 +468,7 @@ fun Coder.main (): String {
     fun lex (): String {
         return """
     #ifdef CEU_LEX
-    char* ceu_drop (int prime, CEU_Value src, uint8_t depth) {
+    char* ceu_drop (CEU_Value src, uint8_t depth) {
         if (src.type < CEU_VALUE_DYNAMIC) {
             return NULL;
         } else if (src.Dyn->Any.lex.type == CEU_LEX_FLEET) {
@@ -477,7 +477,7 @@ fun Coder.main (): String {
             } else if (src.Dyn->Any.refs > 1) {
                 return NULL;    // must keep depth (see below)
             }
-        } else if (!prime && src.Dyn->Any.lex.depth<depth) {
+        } else if (src.Dyn->Any.lex.depth<depth) {
             //printf(">>> %d\n", depth);
             //ceu_dump_val(src);
             //assert(0);
@@ -492,9 +492,6 @@ fun Coder.main (): String {
         } else if (src.Dyn->Any.refs > 1) {
             // safe to drop to outer, but not to inner:
             // keep depth to encode this restriction
-            if (prime) {
-                return "value has multiple references";
-            }
             src.Dyn->Any.lex.type = CEU_LEX_FLEET;
             //src.Dyn->Any.lex.depth = <keep>;
         } else {
@@ -512,7 +509,7 @@ fun Coder.main (): String {
     #endif
                 for (int i=0; i<src.Dyn->Clo.upvs.its; i++) {
                     //ceu_dump_val(src.Dyn->Clo.upvs.buf[i]);
-                    char* err = ceu_drop(prime, src.Dyn->Clo.upvs.buf[i], depth);
+                    char* err = ceu_drop(src.Dyn->Clo.upvs.buf[i], depth);
                     if (err != NULL) {
                         return err;
                     }
@@ -520,7 +517,7 @@ fun Coder.main (): String {
                 break;
             case CEU_VALUE_TUPLE: {
                 for (int i=0; i<src.Dyn->Tuple.its; i++) {
-                    char* err = ceu_drop(prime, src.Dyn->Tuple.buf[i], depth);
+                    char* err = ceu_drop(src.Dyn->Tuple.buf[i], depth);
                     if (err != NULL) {
                         return err;
                     }
@@ -531,7 +528,7 @@ fun Coder.main (): String {
                 for (int i=0; i<src.Dyn->Vector.its; i++) {
                     CEU_Value v = ceu_vector_get(&src.Dyn->Vector, i);
                     assert(CEU_ERROR == CEU_ERROR_NONE);
-                    char* err = ceu_drop(prime, v, depth);
+                    char* err = ceu_drop(v, depth);
                     if (err != NULL) {
                         return err;
                     }
@@ -541,11 +538,11 @@ fun Coder.main (): String {
             case CEU_VALUE_DICT: {
                 for (int i=0; i<src.Dyn->Dict.max; i++) {
                     char* err;
-                    err = ceu_drop(prime, (*src.Dyn->Dict.buf)[i][0], depth);
+                    err = ceu_drop((*src.Dyn->Dict.buf)[i][0], depth);
                     if (err != NULL) {
                         return err;
                     }
-                    err = ceu_drop(prime, (*src.Dyn->Dict.buf)[i][1], depth);
+                    err = ceu_drop((*src.Dyn->Dict.buf)[i][1], depth);
                     if (err != NULL) {
                         return err;
                     }
@@ -560,7 +557,7 @@ fun Coder.main (): String {
             {
                 CEU4(assert(src.type==CEU_VALUE_EXE_CORO && "TODO: drop task");)
                 CEU_Value clo = ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.clo);
-                char* err = ceu_drop(prime, clo, depth);
+                char* err = ceu_drop(clo, depth);
                 if (err != NULL) {
                     return err;
                 }
@@ -576,7 +573,7 @@ fun Coder.main (): String {
                     tsk != NULL;
                     tsk = (CEU_Exe_Task*) tsk->lnks.sd.nxt
                 ) {
-                    char* err = ceu_drop(prime, ceu_dyn_to_val((CEU_Dyn*)tsk), depth);
+                    char* err = ceu_drop(ceu_dyn_to_val((CEU_Dyn*)tsk), depth);
                     if (err != NULL) {
                         return err;
                     }

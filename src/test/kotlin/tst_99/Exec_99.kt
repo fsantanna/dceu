@@ -2878,11 +2878,13 @@ class Exec_99 {
         //        ":error\n") { out }
     }
     @Test
-    fun fx_07_drop() {
+    fun TODO_fx_07_drop_prime() {
+        // drop' was removed
+        // this is an example in which drop' is required
         val out = test("""
             val F = func (x) {
                 coro () {
-                    yield(drop'(x))  ;; x is an upval
+                    yield(drop ;;;';;;(x))  ;; x is an upval
                 } --> {
                     to-iter(it)
                 }

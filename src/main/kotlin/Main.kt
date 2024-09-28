@@ -54,7 +54,7 @@ val KEYWORDS: SortedSet<String> = (
     )) + (if (CEU < 5) setOf() else setOf(
         "tasks",
     )) + (if (CEU < 50) setOf() else setOf(
-        "drop", "drop'", "val'", "var'",
+        "drop", "val'", "var'",
     )) + (if (CEU < 99) setOf() else setOf(
         "await", "break", "coro", "enum", "every",
         "func", "ifs", "loop", "match",
@@ -177,7 +177,7 @@ sealed class Expr (var n: Int, val tk: Tk) {
     data class If      (val tk_: Tk.Fix, val cnd: Expr, val t: Expr, val f: Expr): Expr(G.N++, tk_)
     data class Loop    (val tk_: Tk.Fix, val blk: Expr): Expr(G.N++, tk_)
     data class Data    (val tk_: Tk.Tag, val ids: List<Id_Tag>): Expr(G.N++, tk_)
-    data class Drop    (val tk_: Tk.Fix, val e: Expr, val prime: Boolean): Expr(G.N++, tk_)
+    data class Drop    (val tk_: Tk.Fix, val e: Expr): Expr(G.N++, tk_)
 
     data class Catch   (val tk_: Tk.Fix, val tag: Tk.Tag?, val blk: Expr.Do): Expr(G.N++, tk_)
     data class Defer   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(G.N++, tk_)

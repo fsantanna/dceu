@@ -614,7 +614,7 @@ class Parser (lexer_: Lexer)
                     else -> Expr.Do(Tk.Fix("do",pos), dts)
                 }
             }
-            (CEU>=50 && (this.acceptFix("drop") || this.acceptFix("drop'"))) -> {
+            (CEU>=50 && (this.acceptFix("drop"))) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("(")
                 val e = this.expr()
@@ -622,7 +622,7 @@ class Parser (lexer_: Lexer)
                     //err(tk0, "drop error : expected assignable destination")
                 }
                 this.acceptFix_err(")")
-                Expr.Drop(tk0, e, tk0.str=="drop'")
+                Expr.Drop(tk0, e)
             }
 
             (CEU>=2 && this.acceptFix("loop'")) -> Expr.Loop(this.tk0 as Tk.Fix, this.block())

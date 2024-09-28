@@ -57,7 +57,7 @@ fun Expr.prune (): Expr {
         is Expr.If -> Expr.If(this.tk_, this.cnd.prune(), this.t.prune(), this.f.prune())
         is Expr.Loop -> Expr.Loop(this.tk_, this.blk.prune())
         is Expr.Data -> this
-        is Expr.Drop -> Expr.Drop(this.tk_, this.e.prune(), this.prime)
+        is Expr.Drop -> Expr.Drop(this.tk_, this.e.prune())
         is Expr.Catch -> Expr.Catch(this.tk_, this.tag, this.blk.prune() as Expr.Do)
         is Expr.Defer -> Expr.Defer(this.tk_, this.blk.prune() as Expr.Do)
         is Expr.Yield -> Expr.Yield(this.tk_, this.e.prune())

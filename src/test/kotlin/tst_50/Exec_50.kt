@@ -308,7 +308,7 @@ class Exec_50 {
             val CO = coro' () {
                 val x = [99]
                 do {
-                    yield(drop'(x))
+                    yield(drop ;;;';;;(x))
                 }
             }
             val co = coroutine(CO)
@@ -385,7 +385,7 @@ class Exec_50 {
             do {
                 val t = []
                 do {
-                    resume co(drop'(t))
+                    resume co(drop ;;;';;;(t))
                 }
             }
         """)

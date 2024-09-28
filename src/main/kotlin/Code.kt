@@ -361,7 +361,7 @@ class Coder () {
                 ${(LEX && !this.e.is_lval()).cond { """
                     CEU_ERROR_CHK_PTR (
                         continue,
-                        ceu_drop(${if (this.prime) "1" else "0"}, ceu_acc, ceux->depth),
+                        ceu_drop(ceu_acc, ceux->depth),
                         ${this.fupx().toerr()}
                     );
                 """ }}
@@ -738,7 +738,6 @@ class Coder () {
                         """
                     }
                     this.is_drop() -> {
-                        val prime = (this.up_first { it is Expr.Drop } as Expr.Drop).prime
                         val depth = this.base()!!.depth_diff()
                         """
                         { // ACC - DROP | ${this.dump()}
@@ -747,7 +746,7 @@ class Coder () {
                             $idx = (CEU_Value) { CEU_VALUE_NIL };
                             CEU_ERROR_CHK_PTR (
                                 continue,
-                                ceu_drop(${if (prime) "1" else "0"}, ceu_$n, ceux->depth-$depth),
+                                ceu_drop(ceu_$n, ceux->depth-$depth),
                                 ${this.fupx().toerr()}
                             );
                             CEU_ACC(ceu_$n);
@@ -864,7 +863,6 @@ class Coder () {
                         }
                         """
                     this.is_drop() -> {
-                        val prime = (this.up_first { it is Expr.Drop } as Expr.Drop).prime
                         val depth = this.base()!!.depth_diff()
                         """
                         { // INDEX | DROP | ${this.dump()}
@@ -875,7 +873,7 @@ class Coder () {
                             ceu_gc_dec_val($id_col);
                             CEU_ERROR_CHK_PTR (
                                 continue,
-                                ceu_drop(${if (prime) "1" else "0"}, ceu_$n, ceux->depth-$depth),
+                                ceu_drop(ceu_$n, ceux->depth-$depth),
                                 ${this.fupx().toerr()}
                             );
                             CEU_ACC(ceu_$n);

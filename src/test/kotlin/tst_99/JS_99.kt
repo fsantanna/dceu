@@ -488,7 +488,7 @@ class JS_99 {
                         if c == '\n' {
                             ;;dump(cur)
                             ;;dump(target)
-                            resume target(drop'(cur))
+                            resume target(drop ;;;';;;(cur))
                             set cur = ""
                         } else {
                             set cur[+] = c
@@ -537,7 +537,7 @@ class JS_99 {
                     val tmp = yield(nil)
                     loop c in to.iter(tmp) {
                         if c == '\n' {
-                            yield(drop'(cur))
+                            yield(drop ;;;';;;(cur))
                             set cur = ""
                         } else {
                             set cur[+] = c
@@ -653,7 +653,7 @@ class JS_99 {
             var line = ""
             loop c in to.iter(chars) {
                 if c == '\n' {
-                    yield(drop'(line))
+                    yield(drop ;;;';;;(line))
                     set line = ""
                 } else {
                     set line[+] = c

@@ -70,7 +70,7 @@ fun Expr.to_str (pre: Boolean = false): String {
         is Expr.If     -> "if " + this.cnd.to_str(pre) + " " + this.t.to_str_x(pre) + " else " + this.f.to_str_x(pre)
         is Expr.Loop   -> "loop' " + this.blk.to_str_x(pre)
         is Expr.Data   -> "(data " + this.tk.str + " = [" + this.ids.map { it.to_str() }.joinToString(",") + "])"
-        is Expr.Drop   -> "drop${if (this.prime) "'" else ""}(" + this.e.to_str(pre) + ")"
+        is Expr.Drop   -> "drop(" + this.e.to_str(pre) + ")"
 
         is Expr.Catch  -> "catch " + this.tag.cond { it.str+" " } + this.blk.to_str_x(pre)
         is Expr.Defer  -> "defer " + this.blk.to_str_x(pre)
