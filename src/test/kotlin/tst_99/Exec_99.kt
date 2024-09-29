@@ -596,7 +596,7 @@ class Exec_99 {
             }
         """)
         assert(out == " |  anon : (lin 3, col 25) : error()\n" +
-                " v  error : :nil\n") { out }
+                " v  error : nil\n") { out }
     }
 
     // MATCH
@@ -1890,6 +1890,56 @@ class Exec_99 {
         assert(out == "15\n") { out }
     }
 
+    // ERROR / ASSERT
+
+    @Test
+    fun kk_01_error() {
+        val out = test("""
+            error(:X [:x])
+        """)
+        assert(out == " |  anon : (lin 2, col 13) : error(tag(:X,[:x]))\n" +
+                " v  error : :X [:x]\n") { out }
+    }
+    @Test
+    fun kk_02_error() {
+        val out = test("""
+            catch {
+                error(:X [:x])
+            } thus {
+                println(it)
+            }
+        """)
+        assert(out == ":X [:x]\n") { out }
+    }
+    @Test
+    fun za_09_assert() {
+        val out = test("""
+            assert(false, 10)
+        """, true)
+        assert(out == " |  anon : (lin 2, col 13) : assert(false,10)\n" +
+                " |  build/prelude-x.ceu : (lin 38, col 30) : error(:error,msg)\n" +
+                " v  error : 10\n") { out }
+    }
+    @Test
+    fun za_10_assert() {
+        val out = test("""
+            assert(false, :type [])
+        """, true)
+        assert(out == " |  anon : (lin 2, col 13) : assert(false,tag(:type,[]))\n" +
+                " |  build/prelude-x.ceu : (lin 37, col 30) : error(:error,msg)\n" +
+                " v  error : :type []\n") { out }
+    }
+    @Test
+    fun za_11_assert() {
+        val out = test("""
+            val v = catch :X {
+                assert(false, :X [:x])
+            }
+            println(v)
+        """, true)
+        assert(out == ":X [:x]\n") { out }
+    }
+
     // THUS / SCOPE / :FLEET / :fleet
 
     @Test
@@ -2823,7 +2873,7 @@ class Exec_99 {
         """, true)
         //assert(out.contains("assertion error : expected :Iterator")) { out }
         assert(out.contains(" |  anon : (lin 2, col 23) : to-iter(nil)\n" +
-                " |  build/prelude-x.ceu : (lin 194, col 28) : error(:error,#['i','n','v','a','l','i','d'...\n" +
+                " |  build/prelude-x.ceu : (lin 195, col 28) : error(:error,#['i','n','v','a','l','i','d'...\n" +
                 " v  error : invalid collection\n")) { out }
     }
     @Test
@@ -6486,24 +6536,6 @@ class Exec_99 {
             println(quad(3))
         """, true)
         assert(out == "81\n") { out }
-    }
-    @Test
-    fun za_09_assert() {
-        val out = test("""
-            assert(false, 10)
-        """, true)
-        assert(out == " |  anon : (lin 2, col 13) : assert(false,10)\n" +
-                " |  build/prelude-x.ceu : (lin 37, col 17) : error(:error,msg)\n" +
-                " v  error : 10\n") { out }
-    }
-    @Test
-    fun za_10_assert() {
-        val out = test("""
-            assert(false, :type [])
-        """, true)
-        assert(out == " |  anon : (lin 2, col 13) : assert(false,tag(:type,[]))\n" +
-                " |  build/prelude-x.ceu : (lin 37, col 17) : error(:error,msg)\n" +
-                " v  error : :type []\n") { out }
     }
 
     // ORIGINAL

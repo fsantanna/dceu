@@ -667,7 +667,7 @@ class Exec_02 {
             }
             println(1)
         """)
-        assert(out.contains("ceu_pro_error: Assertion `tag.type == CEU_VALUE_TAG' failed.")) { out }
+        assert(out.contains("ceu_pro_error: Assertion `t.type == CEU_VALUE_TAG' failed.")) { out }
         //assert(out == "anon : (lin 2, col 5) : throw error : expected tag\n") { out }
         //assert(out == " |  anon : (lin 3, col 17) : error([])\n" +
         //        " v  error : []\n") { out }
@@ -1146,7 +1146,7 @@ class Exec_02 {
             error()
         """)
         assert(out == " |  anon : (lin 2, col 13) : error()\n" +
-                " v  error : :nil\n") { out }
+                " v  error : nil\n") { out }
     }
     @Test
     fun zz_05_err() {

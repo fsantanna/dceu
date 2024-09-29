@@ -34,7 +34,8 @@ func assert (v, msg) {
         type(msg)==:func  => error(:error, msg())
         msg->xx-string?() => error(:error, xx-cat-move(xx-cat-move(#[], "assertion error : "), msg))
         (msg == nil)      => error(:error, "assertion error")
-        else => error(:error, msg)
+        tag(msg)          => error(msg)   ;; custom exception
+        else              => error(:error, msg)
     }
 }
 
@@ -542,7 +543,7 @@ func tag-or (t1,t2) {
     `:tag $t1.Tag | $t2.Tag`
 }
 
-func next (v, x) {
+func next (v :Iterator, x) {
     match v {
         :exe-coro => resume v(x)
         :tasks    => next-tasks(v, x)

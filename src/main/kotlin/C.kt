@@ -793,17 +793,24 @@ fun Coder.main (): String {
     }
     
     void ceu_pro_error (CEUX* ceux) {
-        CEU_Value tag; {
-            if (ceux->n==0 || ceux->args[0].type==CEU_VALUE_NIL) {
-                tag = (CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_nil} };
-            } else {
-                tag = ceux->args[0];
+        CEU_Value v = (CEU_Value) { CEU_VALUE_NIL };
+        if (ceux->n > 0) {
+            v = ceux->args[0];
+        }
+        CEU_Value t = v;
+        {
+            if (v.type == CEU_VALUE_NIL) {
+                t = (CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_nil} };
+    #if CEU >= 99
+            } else if (v.type > CEU_VALUE_DYNAMIC) {
+                t = ceux->args[0].Dyn->Any.tag;
+    #endif
             }
         }
-        assert(tag.type == CEU_VALUE_TAG);
-        CEU_ERROR = tag.Tag;
+        assert(t.type == CEU_VALUE_TAG);
+        CEU_ERROR = t.Tag;
         CEU_ACC (
-            (ceux->n >= 2) ? ceux->args[1] : tag;
+            (ceux->n >= 2) ? ceux->args[1] : v;
         );
         ceu_gc_dec_args(ceux->n, ceux->args);
     }
