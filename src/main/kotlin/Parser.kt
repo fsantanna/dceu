@@ -1197,7 +1197,7 @@ class Parser (lexer_: Lexer)
                         val pat2 = pat1.code3("ceu_ret_$nn", cnt)
                         this.nest("""
                             do {
-                                var ceu_ret_$nn
+                                var' ceu_ret_$nn
                                 loop {
                                     set ceu_ret_$nn = ${pre}yield()
                                     until $pat2                                
