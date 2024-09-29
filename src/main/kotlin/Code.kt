@@ -505,6 +505,8 @@ class Coder () {
             is Expr.Spawn -> {
                 val blk = this.up_first { it is Expr.Do } as Expr.Do
                 val blkc = blk.idx("block_${blk.n}")
+                val tsks = this.idx("tsks_$n")
+                val depth = if (this.tsks == null) "ceux->depth" else "$tsks.Dyn->Any.lex.depth"
                 """
                 { // SPAWN | ${this.dump()}
                     ${(!this.is_mem()).cond { """
@@ -514,7 +516,7 @@ class Coder () {
 
                     ${(CEU>=5 && this.tsks!==null).cond {
                         this.tsks!!.code() + """
-                            ${this.idx("tsks_$n")} = ceu_acc;                            
+                            $tsks = ceu_acc;                            
                             if (ceu_acc.type != CEU_VALUE_TASKS) {
                                 CEU_ERROR_CHK_PTR (
                                     continue,
@@ -530,7 +532,7 @@ class Coder () {
                             #ifdef CEU_LEX
                                 CEU_ERROR_CHK_PTR (
                                     continue,
-                                    ceu_lex_chk_own(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, ceux->depth }),
+                                    ceu_lex_chk_own(ceu_acc, (CEU_Lex) { CEU_LEX_MUTAB, $depth }),
                                     ${this.toerr()}
                                 );
                             #endif
@@ -541,10 +543,10 @@ class Coder () {
                     ${this.tsk.code()}
                     CEU_Dyn* ceu_a_$n = ${when {
                         (CEU<5 || this.tsks===null) -> "(CEU_Dyn*)ceu_task_up(ceux)"
-                        else -> this.idx("tsks_$n") + ".Dyn"
+                        else -> "$tsks.Dyn"
                     }};
                     CEU_Block* ceu_b_$n = ${this.tsks.cond2({"NULL"}, {"&$blkc"})};
-                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, ceu_a_$n, ceu_b_$n CEU_LEX_X(COMMA ceux->depth));
+                    CEU_Value ceu_exe_$n = ceu_create_exe_task(ceu_acc, ceu_a_$n, ceu_b_$n CEU_LEX_X(COMMA $depth));
                     CEU_ACC(ceu_exe_$n);
                     CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
                     
@@ -594,7 +596,7 @@ class Coder () {
                 ceux->exe_task->time = CEU_TIME;
             """
             is Expr.Pub -> {
-                val id = this.idx( "val_$n")
+                val set = this.idx( "val_$n")
                 val exe = if (this.tsk !== null) "" else {
                     this.up_first_task_outer().let { outer ->
                         val n = this.up_all_until() {
@@ -605,35 +607,45 @@ class Coder () {
                         "(ceux->exe_task${"->clo->up_nst".repeat(n)})"
                     }
                 }
-                if (this.is_drop()) {
-                    error("TODO: drop pub")
-                }
-            """
-            { // PUB | ${this.dump()}
-                ${this.is_dst().cond{ """
-                    ${this.dcl("CEU_Value")} $id = CEU_ACC_KEEP();
-                """ }}
-                ${this.tsk.cond2({"""
-                    ${it.code()}
-                    CEU_Value tsk = ceu_acc;
-                    if (!ceu_istask_val(tsk)) {
-                        CEU_ERROR_CHK_PTR (
-                            continue,
-                            "expected task",
-                            ${this.toerr()}
-                        );
+                """
+                { // PUB | ${this.dump()}
+                    ${this.is_dst().cond{ """
+                        ${this.dcl("CEU_Value")} $set = CEU_ACC_KEEP();
+                    """ }}
+                    CEU_Value ceu_tsk_${G.N}; {
+                        ${this.tsk.cond2({"""
+                            ${it.code()}
+                            ceu_tsk_${G.N} = ceu_acc;
+                            if (!ceu_istask_val(ceu_tsk_${G.N})) {
+                                CEU_ERROR_CHK_PTR (
+                                    continue,
+                                    "expected task",
+                                    ${this.toerr()}
+                                );
+                            }
+                        """},{"""
+                            ceu_tsk_${G.N} = ceu_dyn_to_val((CEU_Dyn*)$exe);
+                        """})}
                     }
-                """},{"""
-                    CEU_Value tsk = ceu_dyn_to_val((CEU_Dyn*)$exe);
-                """})}
-                ${this.is_dst().cond2({ """
-                    ceu_gc_dec_val(tsk.Dyn->Exe_Task.pub);
-                    tsk.Dyn->Exe_Task.pub = $id;
-                """ },{ """
-                    CEU_ACC(tsk.Dyn->Exe_Task.pub);
-                """ })}
-            }
-            """
+                    """ + when {
+                        this.is_dst() -> """
+                            #ifdef CEU_LEX
+                            CEU_ERROR_CHK_PTR (
+                                continue,
+                                ceu_lex_chk_own($set, (CEU_Lex) { CEU_LEX_MUTAB, ceu_tsk_${G.N}.Dyn->Any.lex.depth }),
+                                ${this.toerr()}
+                            );
+                            #endif
+                            ceu_gc_dec_val(ceu_tsk_${G.N}.Dyn->Exe_Task.pub);
+                            ceu_tsk_${G.N}.Dyn->Exe_Task.pub = $set;
+                        """
+                        this.is_drop() -> error("TODO: drop pub")
+                        else -> """
+                            CEU_ACC(ceu_tsk_${G.N}.Dyn->Exe_Task.pub);                        
+                        """
+                    } + """
+                }
+                """
             }
             is Expr.Toggle -> {
                 val id = this.idx( "tsk_$n")

@@ -1926,7 +1926,7 @@ class Exec_99 {
             assert(false, :type [])
         """, true)
         assert(out == " |  anon : (lin 2, col 13) : assert(false,tag(:type,[]))\n" +
-                " |  build/prelude-x.ceu : (lin 37, col 30) : error(:error,msg)\n" +
+                " |  build/prelude-x.ceu : (lin 37, col 30) : error(msg)\n" +
                 " v  error : :type []\n") { out }
     }
     @Test

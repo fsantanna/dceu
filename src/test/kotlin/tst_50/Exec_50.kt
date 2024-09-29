@@ -210,6 +210,87 @@ class Exec_50 {
         assert(out == "[[]]\n") { out }
     }
 
+    // TASKS / PUB
+
+    @Test
+    fun cd_01_tasks() {
+        val out = test("""
+            val T = task' () {
+                set pub = []
+                yield(nil)
+            }
+            val ts = tasks()
+            spawn T() in ts
+            dump(next-tasks(ts).pub)
+        """)
+        assert(out.contains("lex   = {type=2, depth=1}")) { out }
+    }
+    @Test
+    fun cc_02_task() {
+        val out = test("""
+            val T = task' (x) {
+                set pub = x
+                yield(nil)
+            }
+            do {
+                val x = [10]
+                val t = spawn T(x)
+                println(t.pub)
+            }
+        """)
+        assert(out == "[10]\n") { out }
+    }
+    @Test
+    fun cc_03_tasks() {
+        val out = test("""
+            val ts = tasks()
+            val T = task' (x) {
+                set pub = x
+                yield(nil)
+            }
+            do {
+                val x = [10]
+                val t = spawn T(x) in ts
+                println(t.pub)
+            }
+        """)
+        assert(out == " |  anon : (lin 9, col 25) : (spawn T(x) in ts)\n" +
+                " v  error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun cc_04_tasks() {
+        val out = test("""
+            val ts = tasks()
+            val T = task' (x) {
+                set pub = x
+                yield(nil)
+            }
+            do {
+                val x = [10]
+                val t = spawn T(drop(x)) in ts
+                println(t.pub)
+            }
+        """)
+        assert(out == "[10]\n") { out }
+    }
+    @Test
+    fun cc_05_tasks() {
+        val out = test("""
+            val ts = tasks()
+            val T = task' (x) {
+                set pub = x
+                yield(nil)
+            }
+            spawn (task' () {
+                val x = [10]
+                val t = spawn T(drop(x)) in ts
+                println(t.pub)
+                yield(nil)
+            }) ()
+        """)
+        assert(out == "[10]\n") { out }
+    }
+
     // PROTOS / COROS
 
     @Test
