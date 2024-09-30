@@ -31,7 +31,11 @@ func xx-cat-move (v1, v2) {
 func assert (v, msg) {
     ifs {
         v => v
-        type(msg)==:func  => error(:error, msg())
+        type(msg)==:func  => msg() thus { \e =>
+            tag(e) thus { \t =>
+                if t => error(e) => error(:error, e)
+            }
+        }
         msg->xx-string?() => error(:error, xx-cat-move(xx-cat-move(#[], "assertion error : "), msg))
         (msg == nil)      => error(:error, "assertion error")
         tag(msg)          => error(msg)   ;; custom exception

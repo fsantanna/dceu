@@ -1917,7 +1917,7 @@ class Exec_99 {
             assert(false, 10)
         """, true)
         assert(out == " |  anon : (lin 2, col 13) : assert(false,10)\n" +
-                " |  build/prelude-x.ceu : (lin 38, col 30) : error(:error,msg)\n" +
+                " |  build/prelude-x.ceu : (lin 42, col 30) : error(:error,msg)\n" +
                 " v  error : 10\n") { out }
     }
     @Test
@@ -1926,7 +1926,7 @@ class Exec_99 {
             assert(false, :type [])
         """, true)
         assert(out == " |  anon : (lin 2, col 13) : assert(false,tag(:type,[]))\n" +
-                " |  build/prelude-x.ceu : (lin 37, col 30) : error(msg)\n" +
+                " |  build/prelude-x.ceu : (lin 41, col 30) : error(msg)\n" +
                 " v  error : :type []\n") { out }
     }
     @Test
@@ -2873,7 +2873,7 @@ class Exec_99 {
         """, true)
         //assert(out.contains("assertion error : expected :Iterator")) { out }
         assert(out.contains(" |  anon : (lin 2, col 23) : to-iter(nil)\n" +
-                " |  build/prelude-x.ceu : (lin 195, col 28) : error(:error,#['i','n','v','a','l','i','d'...\n" +
+                " |  build/prelude-x.ceu : (lin 199, col 28) : error(:error,#['i','n','v','a','l','i','d'...\n" +
                 " v  error : invalid collection\n")) { out }
     }
     @Test
@@ -6502,7 +6502,7 @@ class Exec_99 {
         """, true)
         assert(out == "10\n" +
                 " |  anon : (lin 3, col 13) : assert(nil)\n" +
-                " |  build/prelude-x.ceu : (lin 36, col 30) : error(:error,#['a','s','s','e','r','t','i'...\n" +
+                " |  build/prelude-x.ceu : (lin 40, col 30) : error(:error,#['a','s','s','e','r','t','i'...\n" +
                 " v  error : assertion error\n") { out }
     }
     @Test
@@ -6523,7 +6523,7 @@ class Exec_99 {
             assert(1 is-not? :number)
         """, true)
         assert(out.contains(" |  anon : (lin 3, col 17) : assert(is'([],:bool),#['o','k'])\n" +
-                " |  build/prelude-x.ceu : (lin 35, col 30) : error(:error,xx-cat-move(xx-cat-move(#[],#...\n" +
+                " |  build/prelude-x.ceu : (lin 39, col 30) : error(:error,xx-cat-move(xx-cat-move(#[],#...\n" +
                 " v  error : assertion error : ok\n")) { out }
     }
     @Test
