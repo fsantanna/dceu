@@ -210,6 +210,12 @@ fun Expr.dcl (tp: String="CEU_Value"): String {
     return if (this.is_mem()) "" else tp
 }
 
+fun Expr.depth (): Int {
+    // closest outer prototype
+    // TODO: :fake should be ignored?
+    return this.up_all_until { it is Expr.Proto }.count { it is Expr.Do }
+}
+
 fun Expr.Acc.depth_diff (): Int {
     /*
     do {

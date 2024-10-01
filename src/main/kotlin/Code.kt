@@ -752,7 +752,7 @@ class Coder () {
                         """
                     }
                     this.is_drop() -> {
-                        val depth = this.base()!!.depth_diff()
+                        val depth = this.depth()
                         """
                         { // ACC - DROP | ${this.dump()}
                             CEU_ACC((CEU_Value) { CEU_VALUE_NIL });     // ceu_acc may be equal to $idx (hh_05_coro)
