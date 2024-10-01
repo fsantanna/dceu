@@ -384,11 +384,13 @@ class Coder () {
                         ${this.tag.cond2({"""
                             if (CEU_ERROR==CEU_TAG_nil || _ceu_sup_(CEU_TAG_${it.str.idc()}, CEU_ERROR)) {
                                 CEU_ERROR = CEU_ERROR_NONE; // caught error: go ahead
+                                ceu_error_clear();
                             } else {
                                 continue;                   // uncaught error: propagate up
                             }                            
                         """},{"""
                             CEU_ERROR = CEU_ERROR_NONE; // caught error: go ahead
+                            ceu_error_clear();
                         """})}
                     }
                 }

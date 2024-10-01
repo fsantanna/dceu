@@ -814,6 +814,17 @@ fun Coder.main (): String {
         );
         ceu_gc_dec_args(ceux->n, ceux->args);
     }
+    
+    void ceu_error_clear (void) {
+        char* ceu_col_set (CEU_Value col, CEU_Value idx, CEU_Value val);
+        for (int i=CEU_ERROR_STACK.Dyn->Vector.its-1; i>=0; i--) {
+            ceu_col_set (
+                CEU_ERROR_STACK,
+                (CEU_Value) { CEU_VALUE_NUMBER, {.Number=i} },
+                (CEU_Value) { CEU_VALUE_NIL }
+            );        
+        }
+    }
 
     #endif
     """
@@ -2381,6 +2392,7 @@ fun Coder.main (): String {
 
         // uncaught throw
         if (CEU_ERROR != CEU_ERROR_NONE) {
+            CEU_ERROR = CEU_ERROR_NONE;     // ceu_print1 may raise error?
             CEU_Vector* vec = &CEU_ERROR_STACK.Dyn->Vector;
             for (int i=vec->its-1; i>=0; i--) {
                 CEU_Value s = ceu_vector_get(vec, i);
@@ -2393,6 +2405,7 @@ fun Coder.main (): String {
                 puts((char*) ceu_acc.Pointer);
             } else {
                 ceu_print1(ceu_acc);
+                assert(CEU_ERROR == CEU_ERROR_NONE);
                 puts("");
             }
         }

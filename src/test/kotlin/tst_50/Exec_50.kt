@@ -117,6 +117,29 @@ class Exec_50 {
         //        " v  error : dropped value has pending outer reference\n") { out }
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun bb_05_lex_nest() {
+        val out = test("""
+            $PLUS
+            func' () {
+                val str = #[]
+                var i = 0
+                loop' {
+                    val c
+                    if i==2 {
+                        error(:X, [drop(str)])
+                    } else {
+                        set str[#str] = i
+                        set i = i + 1
+                    }
+                }
+                println(str)
+            } ()
+        """)
+        assert(out == " |  anon : (lin 3, col 13) : (func' () { (val str = #[]); (var i = 0); ...\n" +
+                " |  anon : (lin 9, col 25) : error(:X,[drop(str)])\n" +
+                " v  error : [#[0,1]]\n") { out }
+    }
 
     // COLLECTIONS
 

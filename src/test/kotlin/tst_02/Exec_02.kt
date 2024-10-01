@@ -908,6 +908,34 @@ class Exec_02 {
         )
         assert(out == "10\n") { out }
     }
+    @Test
+    fun kk_04_double_throw() {
+        val out = test(
+            """
+            func' () {
+                catch {
+                    (func' () {
+                        error(:X)
+                    }) ()
+                }
+                error(:Y)
+            } ()
+        """
+        )
+        assert(out == " |  anon : (lin 2, col 13) : (func' () { catch { (func' () { error(:X);...\n" +
+                " |  anon : (lin 8, col 17) : error(:Y)\n" +
+                " v  error : :Y\n") { out }
+    }
+    @Test
+    fun kk_05_index() {
+        val out = test("""
+            val str = #[0]
+            error(:X, str)
+            println(str)
+        """)
+        assert(out == " |  anon : (lin 3, col 13) : error(:X,str)\n" +
+                " v  error : #[0]\n") { out }
+    }
 
     // THROW/CATCH / DEFER
 

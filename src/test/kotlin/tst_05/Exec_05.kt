@@ -1377,7 +1377,7 @@ class Exec_05 {
         )
         assert(out == " |  anon : (lin 9, col 13) : broadcast'(:task,@[])\n" +
                 " |  anon : (lin 5, col 17) : error(nil)\n" +
-                " v  error : :nil\n") { out }
+                " v  error : nil\n") { out }
     }
 
     // SCOPE
