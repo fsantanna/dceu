@@ -128,7 +128,7 @@ class Coder () {
                             ${G.nonlocs[this.n]!!.size}
                             ${isexe.cond {", sizeof(CEU_Pro_$id)"}}
                             CEU50(COMMA ceux->exe)
-                            CEU_LEX_X(COMMA ((CEU_Lex) { ${if (this.nst) "CEU_LEX_IMMUT, ceux->depth" else "CEU_LEX_FLEET, CEU_LEX_UNDEF"} }))
+                            CEU_LEX_X(COMMA ((CEU_Lex) { ${if (this.nst) "CEU_LEX_IMMUT" else "CEU_LEX_FLEET"}, ceux->depth }))
                         )
                     );
                     
@@ -177,10 +177,10 @@ class Coder () {
                         { // ARGC / ARGV
                             CEU_Value args[ceu_argc];
                             for (int i=0; i<ceu_argc; i++) {
-                                args[i] = ceu_pointer_to_string(ceu_argv[i]);
+                                args[i] = ceu_pointer_to_string(ceu_argv[i] CEU_LEX_X(COMMA 1));
                                 ceu_gc_inc_val(args[i]);
                             }
-                            ceu_glb_ARGS = ceu_create_tuple(1, ceu_argc, args);
+                            ceu_glb_ARGS = ceu_create_tuple(1, ceu_argc, args CEU_LEX_X(COMMA 1));
                             ceu_gc_inc_val(ceu_glb_ARGS);
                         }
                     """}}
@@ -313,7 +313,7 @@ class Coder () {
                         ${this.src.code()}
                         #ifdef CEU_LEX
                         ${(!this.lex).cond { """
-                            //assert(ceu_acc.type<CEU_VALUE_DYNAMIC || ceu_acc.Dyn->Any.lex.depth!=CEU_LEX_UNDEF);
+                            //assert(ceu_acc.type<CEU_VALUE_DYNAMIC || ceu_acc.Dyn->Any.lex.depth!=CEU_LEX_MAX);
                         """ }}
                         CEU_ERROR_CHK_PTR (
                             continue,
@@ -695,7 +695,7 @@ class Coder () {
                 """
                 {  // TASKS | ${this.dump()}
                     ${this.max.code()}
-                    CEU_Value ceu_tsks_$n = ceu_create_tasks(ceux, &$blkc, ceu_acc CEU_LEX_X(COMMA CEU_LEX_UNDEF));
+                    CEU_Value ceu_tsks_$n = ceu_create_tasks(ceux, &$blkc, ceu_acc CEU_LEX_X(COMMA ceux->depth));
                     CEU_ACC(ceu_tsks_$n);
                     CEU_ERROR_CHK_ERR(continue, ${this.toerr()});
                 }
@@ -793,7 +793,7 @@ class Coder () {
                         """
                 }.joinToString("")}
                     CEU_ACC (
-                        ceu_create_tuple(1, ${this.args.size}, $id_args);
+                        ceu_create_tuple(1, ${this.args.size}, $id_args CEU_LEX_X(COMMA ceux->depth));
                     );
                 }
             """
@@ -802,7 +802,7 @@ class Coder () {
                 val id_vec = this.idx("vec_$n")
                 """
                 { // VECTOR | ${this.dump()}
-                    ${this.dcl()} $id_vec = ceu_create_vector();
+                    ${this.dcl()} $id_vec = ceu_create_vector(CEU_LEX_X(ceux->depth));
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
                             assert(NULL == ceu_col_set($id_vec, (CEU_Value) { CEU_VALUE_NUMBER, {.Number=$i} }, ceu_acc));
@@ -817,7 +817,7 @@ class Coder () {
                 val id_key = this.idx("key_$n")
                 """
                 { // DICT | ${this.dump()}
-                    ${this.dcl()} $id_dic = ceu_create_dict();
+                    ${this.dcl()} $id_dic = ceu_create_dict(CEU_LEX_X(ceux->depth));
                     ${this.args.map { """
                         {
                             ${it.first.code()}

@@ -1295,9 +1295,7 @@ class Exec_99 {
             }
             println(x)
         """.trimIndent(), true)
-        //assert(out == "anon : (lin 9, col 5) : set error : incompatible scopes\n") { out }
         assert(out == " |  anon : (lin 2, col 5) : x\n" +
-                " |  anon : (lin 5, col 9) : error(:z,[10])\n" +
                 " v  error : cannot copy reference out\n") { out }
         //assert(out == "[10]\n") { out }
     }
@@ -6326,6 +6324,43 @@ class Exec_99 {
             """
             println([@[]] === [@[]])
         """, true)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun xb_10_eqs() {
+        val out = test("""
+            func g (v1', v2') {
+                ;;println(:XXX)
+                ;;dump(v1') ; dump(v1'[0])
+                ;;dump(v2') ; dump(v2'[0])
+                not (
+                    loop [i,v] in to-iter(v1',[:idx,:val]) {
+                        while eq(v2'[i], v)
+                    }
+                )
+            }
+            val f = func (v1,v2) {
+                g(v1,v2) and g(v2,v1)
+            }
+            val d1 = [[10]]
+            println(f(d1, [[10]]))
+        """, true)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun xb_11_eqs() {
+        val out = test("""
+            func g (v) {
+                ;;dump(x)
+                val x = v[0]
+                ;;dump(x)
+                true
+            }
+            val f = func (v) {
+                g(v) and g(v)
+            }
+            println(f([[10]]))
+        """)
         assert(out == "true\n") { out }
     }
 

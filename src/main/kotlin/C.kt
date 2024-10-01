@@ -84,13 +84,12 @@ fun Coder.main (): String {
     fun h_enums (): String {
         return """
     #ifdef CEU_LEX
-    #define CEU_LEX_UNDEF 255   // undefined depth
+    #define CEU_LEX_MAX 255     // max required depth to own object
     typedef enum CEU_LEX_TYPE {
         CEU_LEX_NONE = 0,       // ignore on ceu_hold_set_rec
         CEU_LEX_FLEET,          // not assigned, dst assigns, can move upwards
         CEU_LEX_MUTAB,          // set and assignable downwards
-        CEU_LEX_IMMUT,          // set but not re-assignable (nested fun)
-        CEU_LEX_MAX
+        CEU_LEX_IMMUT           // set but not re-assignable (nested fun)
     } CEU_LEX_TYPE;
     #endif
 
@@ -379,7 +378,7 @@ fun Coder.main (): String {
     #ifdef CEU_LEX
         { CEU_LEX_IMMUT, 0 },
     #endif
-        NULL, CEU_EXE_STATUS_YIELDED, CEU_LEX_X(CEU_LEX_UNDEF COMMA) 0, NULL,
+        NULL, CEU_EXE_STATUS_YIELDED, CEU_LEX_X(1 COMMA) 0, NULL,
         0, {}, { {{NULL},NULL}, {NULL,NULL}, {NULL,NULL} }
     };
     #endif
@@ -472,7 +471,7 @@ fun Coder.main (): String {
         if (src.type < CEU_VALUE_DYNAMIC) {
             return NULL;
         } else if (src.Dyn->Any.lex.type == CEU_LEX_FLEET) {
-            if (src.Dyn->Any.lex.depth == CEU_LEX_UNDEF) {
+            if (src.Dyn->Any.lex.depth == CEU_LEX_MAX) {
                 return NULL;    // already fleeting
             } else if (src.Dyn->Any.refs > 1) {
                 return NULL;    // must keep depth (see below)
@@ -496,7 +495,7 @@ fun Coder.main (): String {
             //src.Dyn->Any.lex.depth = <keep>;
         } else {
             src.Dyn->Any.lex.type  = CEU_LEX_FLEET;
-            src.Dyn->Any.lex.depth = CEU_LEX_UNDEF;
+            src.Dyn->Any.lex.depth = CEU_LEX_MAX;
         }
 
         switch (src.type) {
@@ -622,7 +621,7 @@ fun Coder.main (): String {
 
         if (dst.type == CEU_LEX_FLEET) {
             // val' x = ...
-            if (src.Dyn->Any.lex.depth == CEU_LEX_UNDEF) {
+            if (src.Dyn->Any.lex.depth == CEU_LEX_MAX) {
                 assert(src.Dyn->Any.lex.type == CEU_LEX_FLEET);
                 src.Dyn->Any.lex.depth = dst.depth;
             }
@@ -764,8 +763,8 @@ fun Coder.main (): String {
 
     #else
 
-    CEU_Value ceu_pointer_to_string (const char* ptr);
-    CEU_Value ceu_create_vector (void);
+    CEU_Value ceu_pointer_to_string (const char* ptr  CEU_LEX_X(COMMA uint8_t depth));
+    CEU_Value ceu_create_vector (CEU_LEX_X(uint8_t depth));
 
     #define CEU_ERROR_CHK_ERR(cmd,pre) {            \
         if (CEU_ERROR != CEU_ERROR_NONE) {          \
@@ -1118,9 +1117,9 @@ fun Coder.main (): String {
     
     // TO-STRING-*
 
-    CEU_Value ceu_pointer_to_string (const char* ptr) {
+    CEU_Value ceu_pointer_to_string (const char* ptr CEU_LEX_X(COMMA uint8_t depth)) {
         assert(ptr != NULL);
-        CEU_Value str = ceu_create_vector();
+        CEU_Value str = ceu_create_vector(CEU_LEX_X(depth));
         str.Dyn->Vector.unit = CEU_VALUE_CHAR;
         ceu_vector_concat(&str.Dyn->Vector, strlen(ptr), (void*)ptr);
         return str;
@@ -1130,14 +1129,14 @@ fun Coder.main (): String {
         assert(ceux->n == 1);
         CEU_Value ptr = ceux->args[0];
         assert(ptr.type==CEU_VALUE_POINTER && ptr.Pointer!=NULL);
-        CEU_ACC(ceu_pointer_to_string(ptr.Pointer));
+        CEU_ACC(ceu_pointer_to_string(ptr.Pointer CEU_LEX_X(COMMA ceux->depth-1)));
     }
 
     void ceu_pro_to_dash_string_dash_tag (CEUX* ceux) {
         assert(ceux->n == 1);
         CEU_Value tag = ceux->args[0];
         assert(tag.type == CEU_VALUE_TAG);        
-        CEU_ACC(ceu_pointer_to_string(ceu_tag_to_pointer(tag.Tag)));
+        CEU_ACC(ceu_pointer_to_string(ceu_tag_to_pointer(tag.Tag) CEU_LEX_X(COMMA ceux->depth-1)));
     }
 
     void ceu_pro_to_dash_string_dash_number (CEUX* ceux) {
@@ -1149,7 +1148,7 @@ fun Coder.main (): String {
         snprintf(str, 255, "%g", num.Number);
         assert(strlen(str) < 255);
 
-        CEU_ACC(ceu_pointer_to_string(str));
+        CEU_ACC(ceu_pointer_to_string(str CEU_LEX_X(COMMA ceux->depth-1)));
     }
     """
     }
@@ -1467,14 +1466,14 @@ fun Coder.main (): String {
     }
     fun creates (): String {
         return """
-    CEU_Value ceu_create_tuple (int cpy, int n, CEU_Value args[]) {
+    CEU_Value ceu_create_tuple (int cpy, int n, CEU_Value args[] CEU_LEX_X(COMMA uint8_t depth)) {
         ceu_debug_add(CEU_VALUE_TUPLE);
         CEU_Tuple* ret = malloc(sizeof(CEU_Tuple) + n*sizeof(CEU_Value));
         assert(ret != NULL);
         *ret = (CEU_Tuple) {
             CEU_VALUE_TUPLE, 0, (CEU_Value) { CEU_VALUE_NIL },
     #ifdef CEU_LEX
-            { CEU_LEX_FLEET, CEU_LEX_UNDEF },
+            { CEU_LEX_FLEET, depth },
     #endif
             n, {}
         };
@@ -1491,11 +1490,11 @@ fun Coder.main (): String {
         CEU_Value arg = ceux->args[0];
         assert(arg.type == CEU_VALUE_NUMBER);
         CEU_ACC (
-            ceu_create_tuple(0, arg.Number, ceux->args)
+            ceu_create_tuple(0, arg.Number, ceux->args CEU_LEX_X(COMMA ceux->depth-1))
         );
     }
     
-    CEU_Value ceu_create_vector (void) {
+    CEU_Value ceu_create_vector (CEU_LEX_X(uint8_t depth)) {
         ceu_debug_add(CEU_VALUE_VECTOR);
         CEU_Vector* ret = malloc(sizeof(CEU_Vector));
         assert(ret != NULL);
@@ -1505,21 +1504,21 @@ fun Coder.main (): String {
         *ret = (CEU_Vector) {
             CEU_VALUE_VECTOR, 0, (CEU_Value) { CEU_VALUE_NIL },
     #ifdef CEU_LEX
-            { CEU_LEX_FLEET, CEU_LEX_UNDEF },
+            { CEU_LEX_FLEET, depth },
     #endif
             0, 0, CEU_VALUE_NIL, buf
         };
         return (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ret} };
     }
     
-    CEU_Value ceu_create_dict (void) {
+    CEU_Value ceu_create_dict (CEU_LEX_X(uint8_t depth)) {
         ceu_debug_add(CEU_VALUE_DICT);
         CEU_Dict* ret = malloc(sizeof(CEU_Dict));
         assert(ret != NULL);
         *ret = (CEU_Dict) {
             CEU_VALUE_DICT, 0, (CEU_Value) { CEU_VALUE_NIL },
     #ifdef CEU_LEX
-            { CEU_LEX_FLEET, CEU_LEX_UNDEF },
+            { CEU_LEX_FLEET, depth },
     #endif
             0, NULL
         };
@@ -1570,7 +1569,7 @@ fun Coder.main (): String {
             type, 0, (CEU_Value) { CEU_VALUE_NIL },
     #ifdef CEU_LEX
             //clo.Dyn->Clo.lex,
-            { CEU_LEX_FLEET, CEU_LEX_UNDEF },
+            { CEU_LEX_FLEET, depth },
     #endif
             &clo.Dyn->Clo, CEU_EXE_STATUS_YIELDED, CEU_LEX_X(depth COMMA) 0, mem
         };
@@ -1647,7 +1646,7 @@ fun Coder.main (): String {
     
     #if CEU >= 5        
     CEU_Exe_Task* ceu_task_up (CEUX* ceux);
-    CEU_Value ceu_create_tasks (CEUX* ceux, CEU_Block* up_blk, CEU_Value max CEU_LEX_X(COMMA uint8_t lex_depth)) {
+    CEU_Value ceu_create_tasks (CEUX* ceux, CEU_Block* up_blk, CEU_Value max CEU_LEX_X(COMMA uint8_t depth)) {
         CEU_Exe_Task* up_tsk = ceu_task_up(ceux);
 
         int xmax = 0;
@@ -1665,7 +1664,7 @@ fun Coder.main (): String {
         *ret = (CEU_Tasks) {
             CEU_VALUE_TASKS, 0, (CEU_Value) { CEU_VALUE_NIL },
         #ifdef CEU_LEX
-            { CEU_LEX_FLEET, lex_depth },
+            { CEU_LEX_FLEET, depth },
         #endif
             xmax, { {{(CEU_Dyn*)up_tsk},NULL}, {NULL,NULL}, {NULL,NULL} }
         };
@@ -2045,7 +2044,7 @@ fun Coder.main (): String {
         #if CEU >= 4
                         NULL,   // TODO: no access to up(ceux)
         #endif
-                        CEU_LEX_X(CEU_LEX_UNDEF COMMA)
+                        CEU_LEX_X(CEU_LEX_MAX COMMA)
                         0,
                         args
                     };
@@ -2213,7 +2212,7 @@ fun Coder.main (): String {
                     {.exe_task = tsk},
                     CEU_ACTION_ERROR,
                     NULL,   // TODO: no access to up(ceux)
-                    CEU_LEX_X(CEU_LEX_UNDEF COMMA)
+                    CEU_LEX_X(CEU_LEX_MAX COMMA)
                     1,
                     NULL
                 };
@@ -2225,7 +2224,7 @@ fun Coder.main (): String {
                     {.exe_task = tsk},
                     CEU_ACTION_RESUME,
                     NULL,   // TODO: no access to up(ceux)
-                    CEU_LEX_X(CEU_LEX_UNDEF COMMA)
+                    CEU_LEX_X(CEU_LEX_MAX COMMA)
                     1,
                     evt
                 };
@@ -2344,7 +2343,7 @@ fun Coder.main (): String {
             CEU_Clo ceu_clo_$id = {
                 CEU_VALUE_CLO_FUNC, 1, (CEU_Value) { CEU_VALUE_NIL },
             #ifdef CEU_LEX
-                { CEU_LEX_FLEET, CEU_LEX_UNDEF },
+                { CEU_LEX_FLEET, 1 },
             #endif
                 ceu_pro_$id, { 0, NULL }
                 CEU50(COMMA NULL)
@@ -2374,7 +2373,7 @@ fun Coder.main (): String {
         assert(CEU_TAG_nil == CEU_VALUE_NIL);
         
     #if CEU >= 2
-        CEU_ERROR_STACK = ceu_create_vector();
+        CEU_ERROR_STACK = ceu_create_vector(1);
         ceu_gc_inc_val(CEU_ERROR_STACK);
     #endif
 
