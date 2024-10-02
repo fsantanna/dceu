@@ -2202,9 +2202,9 @@ class Exec_50 {
         """
         )
         //assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == "[[1]]\n") { out }
-        assert(out == " |  anon : (lin 5, col 13) : (var g = do { (var t = [1]); drop(f(t)); })\n" +
-                " v  error : cannot copy reference out\n") { out }
+        assert(out == "[[1]]\n") { out }
+        //assert(out == " |  anon : (lin 5, col 13) : (var g = do { (var t = [1]); drop(f(t)); })\n" +
+        //        " v  error : cannot copy reference out\n") { out }
     }
     @Test
     fun clo23x() {

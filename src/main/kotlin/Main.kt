@@ -10,7 +10,7 @@ var DUMP = true
 var DEBUG = true
 var CEU = 1
 
-    //  1: dyn-lex                              ;; 25 "definitely lost" (errors or cycles)
+    //  1: dyn-lex                              ;; 26 "definitely lost" (errors or cycles)
     //  2: defer, throw/catch, do/escape, loop  ;;  4 "definitely lost" (C errors)
     //  3: coro, yield, resume                  ;;  0
     //  4: task, pub, bcast, toggle, delay      ;;  0
@@ -33,7 +33,7 @@ val D = "\$"
 
 // VERSION
 const val MAJOR    = 0
-const val MINOR    = 4
+const val MINOR    = 5
 const val REVISION = 0
 const val VERSION  = "v$MAJOR.$MINOR.$REVISION"
 

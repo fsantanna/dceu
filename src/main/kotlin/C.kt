@@ -606,7 +606,7 @@ fun Coder.main (): String {
         } else if (
             src.Dyn->Any.lex.depth > dst.depth && (
                 src.Dyn->Any.lex.type == CEU_LEX_MUTAB ||
-                (src.Dyn->Any.lex.type==CEU_LEX_IMMUT && src.Dyn->Any.lex.depth!=CEU_LEX_UNDEF)
+                (src.Dyn->Any.lex.type == CEU_LEX_IMMUT)
             )
         ) {
             //ceu_dump_val(src);

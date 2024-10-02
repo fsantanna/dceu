@@ -14,3 +14,17 @@ do {
     spawn T()           ;; spawns task T and attaches it to the block
     ;;<...>
 }                       ;; aborts spawned task
+
+do {
+    drop(#[1,2,3])      ;; OK
+}
+println(`:ceu ceu_acc`)
+
+val v = 10
+drop(v)             ;; --> 10 (innocuous drop)
+
+val u = do {
+    val t = [10]
+    drop(t)         ;; --> [10] (deattaches from `t`, reattaches to `u`)
+}
+println(u)
