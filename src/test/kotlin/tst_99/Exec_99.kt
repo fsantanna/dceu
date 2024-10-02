@@ -6670,7 +6670,10 @@ class Exec_99 {
             spawn T ()
             println(:ok)
         """)
-        assert(out == ":ok\n") { out }
+        assert(out == " |  anon : (lin 8, col 13) : (spawn T())\n" +
+                " |  anon : (lin 5, col 37) : pub\n" +
+                " v  error : cannot copy reference out\n") { out }
+        //assert(out == ":ok\n") { out }
         //assert(out == "anon : (lin 8, col 19) : T()\n" +
         //        "anon : (lin 5, col 30) : set error : incompatible scopes\n:error\n") { out }
     }

@@ -768,7 +768,7 @@ class Exec_50 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun nn_17_nest_rec() {
+    fun BUG_nn_17_nest_rec() {
         val out = test("""
             $PLUS
             do {
@@ -3251,5 +3251,17 @@ class Exec_50 {
             }
         """)
         assert(out == "[]\n") { out }
+    }
+    @Test
+    fun zz_18_tests() {
+        val out = test("""
+            do {
+                val x = 10
+                spawn (task' :fake () {
+                    println(x)
+                }) ()
+            }
+        """, true)
+        assert(out == "10\n") { out }
     }
 }

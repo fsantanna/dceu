@@ -1,17 +1,21 @@
 package dceu
 
 fun type (dcl: Expr.Dcl, src: Expr): Scope {
+    //println(listOf(dcl.idtag.first.str, dcl.tk.pos.lin, src.tk.pos.lin))
     val blk = dcl.to_blk()
     val up  = src.up_first { it is Expr.Proto || it.n==blk.n }
     return when {
         (blk.n == G.outer!!.n) -> Scope.GLOBAL
-        (blk.n == up?.n)      -> Scope.LOCAL
+        (blk.n == up?.n)       -> Scope.LOCAL
         else -> {
             up as Expr.Proto
-            val nst = up.up_all_until { it.n == blk.n }
-                .filter { it is Expr.Proto }
-                .let { it as List<Expr.Proto> }
-                .all { it.nst }
+            val nst = (blk.up_first { it is Expr.Proto } != null) &&
+                up.up_all_until { it.n == blk.n }
+                    .filter { it is Expr.Proto }
+                    .let { it as List<Expr.Proto> }
+                    .all { it.nst }
+                // 1. requires proto enclosing dcl blk
+                // 2. requires that all protos in betwenn blk<-src are nested
             when {
                 !nst -> Scope.UPVAL
                 (up.tk.str == "func'") -> Scope.LOCAL
@@ -183,13 +187,15 @@ fun Expr.Dcl.idx (src: Expr): String {
     val id = this.idtag.first.str.idc()
     val blk = this.to_blk()
     val ismem = blk.is_mem()
-    //println(listOf(src.tk.pos.lin, id, type(dcl,src)))
+    //println(listOf(src.tk.pos.lin, id))
 
     return when (type(this,src)) {
         Scope.GLOBAL -> "ceu_glb_$id"
         Scope.LOCAL -> if (ismem) "(ceu_mem->${id}_${this.n})" else "ceu_loc_${id}_${this.n}"  // idx b/c of "it"
         Scope.NESTED -> {
             val xups = src.up_all_until { it == blk } // all ups between src -> dcl
+            //println(blk.tk)
+            //println(blk.up_first { it is Expr.Proto })
             val pid = (blk.up_first { it is Expr.Proto } as Expr.Proto).id(G.outer!!)
             val xn = xups.count { it is Expr.Proto && it.n!=blk.n }
             "((CEU_Pro_$pid*)ceux->exe_task->${"clo->up_nst->".repeat(xn)}mem)->${id}_${this.n}"
