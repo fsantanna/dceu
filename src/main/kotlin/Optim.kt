@@ -14,6 +14,7 @@ fun Expr.do_has_var (prime: Boolean): Boolean {
 fun Expr.has_escape (tag: String): Boolean {
     return this.dn_collect {
         when (it) {
+            // TODO: should stop at Protos, but not fake spawn
             is Expr.Enclose -> if (it.tag.str == tag) null else emptyList()
             is Expr.Escape  -> if (it.tag.str == tag) listOf(Unit) else emptyList()
             else -> emptyList()

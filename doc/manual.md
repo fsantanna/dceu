@@ -6,6 +6,7 @@
     * Lexical Memory Management
     * Hierarchical Tags and Tuple Templates
     * Integration with C
+* EXECUTION
 * LEXICON
     * Keywords
     * Symbols
@@ -249,6 +250,8 @@ terminating the main block.
 
 ## Lexical Memory Management
 
+`TODO: review`
+
 Ceu respects the lexical structure of the program also when dealing with
 dynamic memory allocation.
 When a [dynamic value](#dynamic-values) is first assigned to a variable, it
@@ -434,6 +437,10 @@ embed native expressions in programs.
 - tag,char,bool,number C types
 - C errors
 -->
+
+# EXECUTION
+
+`TODO`
 
 # LEXICON
 
