@@ -4,19 +4,13 @@ val x = catch :Error {
 }
 println(x)              ;; --> :Error
 
-catch 1 {               ;; catches
-    defer {
-        println(1)
-    }
-    catch 2 {           ;; no catches
-        defer {
-            println(2)
+val y =
+    catch :X {
+        catch :Y {
+            error(:X [10,20])
         }
-        error(1)        ;; throws
-        ;; unreachable
     }
-    ;; unreachable
-}                       ;; --> 2, 1
+println(y)              ;; --> :X [10,20]
 
 data :Err = [] {
     :One = []

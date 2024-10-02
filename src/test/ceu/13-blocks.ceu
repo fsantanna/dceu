@@ -15,16 +15,23 @@ do {
     ;;<...>
 }                       ;; aborts spawned task
 
+val v = do :X {
+    println(1)      ;; --> 1
+    escape(:X, 2)
+    println(3)      ;; never executes
+}
+println(v)          ;; --> 2
+
 do {
     drop(#[1,2,3])      ;; OK
 }
 println(`:ceu ceu_acc`)
 
-val v = 10
-drop(v)             ;; --> 10 (innocuous drop)
+val x = 10
+drop(x)             ;; --> 10 (innocuous drop)
 
-val u = do {
+val y = do {
     val t = [10]
     drop(t)         ;; --> [10] (deattaches from `t`, reattaches to `u`)
 }
-println(u)
+println(y)

@@ -1,4 +1,4 @@
-# The Programming Language Ceu (v0.4)
+# The Programming Language Ceu (v0.5)
 
 * DESIGN
     * Structured Deterministic Concurrency
@@ -30,7 +30,7 @@
         - `exe-coro` `exe-task` `tasks` (actives)
 * EXPRESSIONS
     * Program, Sequences and Blocks
-        - `;` `do` `defer`
+        - `;` `do` `escape` `drop` `group` `test` `defer`
     * Declarations and Assignments
         - `val` `var` `set`
     * Tag Enumerations and Tuple Templates
@@ -460,9 +460,11 @@ The following keywords are reserved in Ceu:
     defer               ;; defer block
     delay               ;; delay task
     do                  ;; do block                         (10)
+    drop                ;; drop value                       (XX)
     else                ;; else block
     enum                ;; enum declaration
     error               ;; throw error
+    escape              ;; escape block                     (XX)
     every               ;; every block
     false               ;; false value
     func                ;; function prototype
@@ -486,6 +488,7 @@ The following keywords are reserved in Ceu:
     pub                 ;; public variable
     resume              ;; resume coroutine
     resume-yield-all    ;; resume coroutine
+    return              ;; escape prototype
     set                 ;; assign expression
     skip                ;; loop skip
     spawn               ;; spawn coroutine
@@ -521,7 +524,7 @@ The following symbols are reserved in Ceu:
     @[              ;; dictionary constructor delimeter
     \               ;; lambda declaration
     =               ;; assignment separator
-    =>              ;; catch/if/ifs/loop/lambda/thus clauses
+    =>              ;; if/ifs/loop/lambda/thus clauses
     <- ->           ;; method calls
     <-- -->         ;; pipe calls
     ;               ;; sequence separator
@@ -662,18 +665,20 @@ The following tags are pre-defined in Ceu:
     ;; type enumeration
 
     :nil :tag :bool :char :number :pointer          ;; basic types
+    :dynamic                                        ;; internal use
     :tuple :vector :dict                            ;; collections
     :func :coro :task                               ;; prototypes
     :exe-coro :exe-task                             ;; active coro/task
     :tasks                                          ;; task pool
 
     :ceu :pre                                       ;; native ceu value/pre code
-    :yielded :toggled :resumed :terminated          ;; coro/task status
-    :h :min :s :ms                                  ;; time unit
+    :break :skip :return                            ;; block labels
     :idx :key :val                                  ;; iterator modifier
     :global :task                                   ;; broadcast target
-
-    :dynamic :error :nested                         ;; internal use
+    :yielded :toggled :resumed :terminated          ;; coro/task status
+    :h :min :s :ms                                  ;; time unit
+    :fake :nested                                   ;; prototype modifiers
+    :error                                          ;; runtime error label
 ```
 
 ### Native Literals
@@ -1148,16 +1153,18 @@ automatically reclaimed.
 This is also valid for active [coroutines and tasks](#active-values), which are
 aborted on termination.
 
-A block is not an expression by itself, but it can be turned into one by
-prefixing it with an explicit `do`:
-
-```
-Do : `do´ Block
-```
-
-Blocks also appear in compound statements, such as
+Blocks appear in compound statements, such as
 [conditionals](#conditionals-and-pattern-matching),
 [loops](#loops-and-iterators), and many others.
+
+A block can also become an expression through an explicitly `do`:
+
+```
+Do : `do´ [TAG] Block
+```
+
+The optional [tag](#static-values) identifies the block such that it can match
+[escape](#escape) statements.
 
 Examples:
 
@@ -1177,19 +1184,37 @@ do {
     spawn T()           ;; spawns task T and attaches it to the block
     <...>
 }                       ;; aborts spawned task
+```
 
-do {
-    drop(#[1,2,3])      ;; OK
+#### Escape
+
+An `escape` immediatelly terminates the enclosing block matching the given tag:
+
+```
+Escape : `escape´ `(´ TAG [`,´ Expr] `)´
+```
+
+The optional expression, which defaults to `nil`, becomes the final result of
+the terminating block.
+
+Examples:
+
+```
+val v = do :X {
+    println(1)      ;; --> 1
+    escape(:X, 2)
+    println(3)      ;; never executes
 }
+println(v)          ;; --> 2
 ```
 
 #### Drop
 
-The `drop` operation dettaches the given [dynamic value](#dynamic-values) from
-its current block:
+A `drop` dettaches the given [dynamic value](#dynamic-values) from its current
+block:
 
 ```
-Drop : `drop´ Expr
+Drop : `drop´ `(´ Expr `)´
 ```
 
 A dropped value can be reattached to another block in a further assignment.
@@ -1199,16 +1224,20 @@ A dropped value can be reattached to another block in a further assignment.
 Examples:
 
 ```
+do {
+    drop(#[1,2,3])      ;; OK
+}
+
 val v = 10
-drop(v)             ;; --> 10 (innocuous drop)
+drop(v)                 ;; --> 10 (innocuous drop)
 
 val u = do {
     val t = [10]
-    drop(t)         ;; --> [10] (deattaches from `t`, reattaches to `u`)
+    drop(t)             ;; --> [10] (deattaches from `t`, reattaches to `u`)
 }
 ```
 
-### Groups
+### Group
 
 A `group` is a nested sequence of expressions:
 
@@ -1231,7 +1260,7 @@ group {
 println(x, y)       ;; --> 10 20
 ```
 
-### Tests
+### Test
 
 A `test` block behaves like a normal block, but is only included in the program
 when compiled with the flag `--test`:
@@ -1251,7 +1280,7 @@ test {
 }
 ```
 
-### Defers
+### Defer
 
 A `defer` block executes only when its enclosing block terminates:
 
@@ -1385,6 +1414,28 @@ func f (v) {
     v + 1
 }
 println(f(10))      ;; --> 11
+```
+
+##### Return
+
+A `return` immediatelly terminates the enclosing prototype:
+
+```
+Return : `return´ `(´ [Expr] `)´
+```
+
+The optional expression, which defaults to `nil`, becomes the final result of
+the terminating prototype.
+
+Examples:
+
+```
+func f () {
+    println(1)      ;; --> 1
+    return(2)
+    println(3)      ;; never executes
+}
+println(f())        ;; --> 2
 ```
 
 ### Assignments
@@ -2058,7 +2109,7 @@ val max = if x>y => x => y
 ifs {
     x > y => x
     x < y => y
-    else  => error("values are equal")
+    else  => error(:error, "values are equal")
 }
 ```
 
@@ -2144,8 +2195,7 @@ match [10,20,30,40] {
 
 Patterns are also used in
     [declarations](#declarations),
-    [iterators](#iterators-tuples),
-    [catch clauses](#exceptions), and
+    [iterators](#iterators-tuples), and
     [await statements](#awaits).
 In the case of declarations and iterators, the patterns are assertive in the
 sense that they cannot fail, raising an error if the match fails.
@@ -2161,15 +2211,6 @@ val [10,x] = [20,20]    ;; ERROR: match fails
 val d = @[x=1, y=2]
 loop [k,v] in d {
     println(k,v)        ;; --> x,1 y,2
-}
-```
-
-```
-catch :X {              ;; ok match
-    catch :Y {          ;; no match
-        error(:X)
-    }
-    ;; never reached
 }
 ```
 
@@ -2354,7 +2395,7 @@ enclosing blocks up to a matching `catch` block.
 
 ```
 Error : `error´ `(´ Expr `)´
-Catch : `catch´ [Patt] Block
+Catch : `catch´ [TAG | `(´ TAG `)´] Block
 ```
 
 An `error` propagates upwards and aborts all enclosing [blocks](#blocks) and
@@ -2362,10 +2403,12 @@ An `error` propagates upwards and aborts all enclosing [blocks](#blocks) and
 way.
 When crossing an execution unit, an `error` jumps back to the original calling
 site and continues to propagate upwards.
+The exception value must evaluate to a [tag](#static-values) or
+[tagged value](#hierarchical-tags) that represents the error.
 
 A `catch` executes its associated block normally, but also registers a
-[condition pattern](#pattern-matching) to be compared against the exception
-value when an `error` is crossing it.
+[tag](#static-values) to compare against exception values from errors crossing
+it.
 If they match, the exception is caught and the `catch` terminates and evaluates
 to exception value, also aborting its associated block, and properly triggering
 nested [`defer`](#defer) statements.
@@ -2381,19 +2424,13 @@ println(x)              ;; --> :Error
 ```
 
 ```
-catch 1 {               ;; catches
-    defer {
-        println(1)
-    }
-    catch 2 {           ;; no catches
-        defer {
-            println(2)
+val x =
+    catch :X {
+        catch :Y {
+            error(:X [10,20])
         }
-        error(1)        ;; throws
-        ;; unreachable
     }
-    ;; unreachable
-}                       ;; --> 2, 1
+println(x)              ;; --> :X [10,20]
 ```
 
 ```
@@ -3369,7 +3406,9 @@ random.next()       ;; --> :number
 ```
 Prog  : { Expr [`;´] }
 Block : `{´ { Expr [`;´] } `}´
-Expr  : `do´ Block                                      ;; explicit block
+Expr  : `do´[TAG]  Block                                ;; explicit block
+      | `escape´ `(´ TAG [`,´ Expr] `)´                 ;; escape block
+      | `drop´ `(´ Expr `)´                             ;; drop value from block
       | `group´ Block                                   ;; group statements
       | `test´ Block                                    ;; test block
       | `defer´ Block                                   ;; defer statements
@@ -3440,7 +3479,7 @@ Expr  : `do´ Block                                      ;; explicit block
       | `while´ Expr
       | `skip´                                          ;; loop restart
 
-      | `catch´ [Patt] Block                            ;; catch exception
+      | `catch´ [TAG | `(´ TAG `)´] Block               ;; catch exception
       | `error´ `(´ Expr `)´                            ;; throw exception
 
       | `status´ `(´ Expr `)´                           ;; coro/task status

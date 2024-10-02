@@ -1,17 +1,23 @@
-# The Programming Language Ceu (v0.4)
+# The Programming Language Ceu (v0.5)
 
 Ceu is a [synchronous programming language][1] that reconciles *[Structured
 Concurrency][2]* with *[Event-Driven Programming][3]* to extend classical
-structured programming:
+structured programming with three main functionalities:
 
 - Structured Deterministic Concurrency:
     - A set of structured primitives to lexically compose concurrent tasks
       (e.g., `spawn`, `par-or`, `toggle`).
     - A synchronous and deterministic scheduling policy, which provides
       predictable behavior and safe abortion of tasks.
+    - A container primitive to hold dynamic tasks, which automatically releases
+      them as they terminate.
 - Event Signaling Mechanisms:
     - An `await` primitive to suspend a task and wait for events.
     - A `broadcast` primitive to signal events and awake awaiting tasks.
+- Lexical Memory Management *(experimental)*:
+    - Even dynamic allocation is attached to lexical blocks.
+    - Strict escaping rules to preserve structure reasoning.
+    - Garbage collection restricted to local references only.
 
 Ceu is inspired by [Esterel][4] and [Lua][5].
 
@@ -63,8 +69,8 @@ sudo apt install gcc default-jre
 2. Install `ceu`:
 
 ```
-wget https://github.com/fsantanna/dceu/releases/download/v0.4.0/install-v0.4.0.sh
-sh install-v0.4.0.sh ./ceu/
+wget https://github.com/fsantanna/dceu/releases/download/v0.5.0/install-v0.5.0.sh
+sh install-v0.5.0.sh ./ceu/
 ```
 
 - We assume that you add `./ceu/` (the full path) to your environment `$PATH`.

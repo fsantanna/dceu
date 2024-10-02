@@ -23,6 +23,13 @@ func f (v) {
 }
 println(f(10))      ;; --> 11
 
+func g () {
+    println(1)      ;; --> 1
+    return(2)
+    println(3)      ;; never executes
+}
+println(g())        ;; --> 2
+
 val x
 do {
     val x               ;; `x´ cannot be redeclared

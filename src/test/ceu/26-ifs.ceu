@@ -7,7 +7,7 @@ println(max)
 ifs {
     x < y => x
     x > y => y
-    else  => error("values are equal")
+    else  => error(:error, "values are equal")
 } -> println
 
 if :f { \v =>
