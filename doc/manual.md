@@ -3,6 +3,7 @@
 * DESIGN
     * Structured Deterministic Concurrency
     * Event Signaling Mechanisms
+    * Lexical Memory Management
     * Hierarchical Tags and Tuple Templates
     * Integration with C
 * LEXICON
@@ -79,16 +80,22 @@
 
 Ceu is a [synchronous programming language][1] that reconciles *[Structured
 Concurrency][2]* with *[Event-Driven Programming][3]* to extend classical
-structured programming:
+structured programming with three main functionalities:
 
 - Structured Deterministic Concurrency:
     - A set of structured primitives to lexically compose concurrent tasks
       (e.g., `spawn`, `par-or`, `toggle`).
     - A synchronous and deterministic scheduling policy, which provides
       predictable behavior and safe abortion of tasks.
+    - A container primitive to hold dynamic tasks, which automatically releases
+      them as they terminate.
 - Event Signaling Mechanisms:
     - An `await` primitive to suspend a task and wait for events.
     - A `broadcast` primitive to signal events and awake awaiting tasks.
+- Lexical Memory Management *(experimental)*:
+    - Even dynamic allocation is attached to lexical blocks.
+    - Strict escaping rules to preserve structure reasoning.
+    - Garbage collection restricted to local references only.
 
 Ceu is inspired by [Esterel][4] and [Lua][5].
 
@@ -133,7 +140,8 @@ statements](#defer).
 
 Tasks in Ceu are built on top of [coroutines](#active-values), which unlike OS
 threads, have a predictable run-to-completion semantics, in which they execute
-uninterruptedly up to an explicit [yield](#yield) or [await](#awaits) operation.
+uninterruptedly up to an explicit [yield](#yield) or [await](#awaits)
+operation.
 
 The next example illustrates structured concurrency, abortion of tasks, and
 deterministic scheduling.
@@ -238,6 +246,63 @@ The first two `:tick` events awake the nested tasks respecting the structure of
 the program, printing `:tick-A` and `:tick-B` in this order.
 The last event aborts the `watching` block and prints `:done`, before
 terminating the main block.
+
+## Lexical Memory Management
+
+Ceu respects the lexical structure of the program also when dealing with
+dynamic memory allocation.
+When a [dynamic value](#dynamic-values) is first assigned to a variable, it
+becomes attached to the [block](#block) in which the variable is declared, and
+the value cannot escape that block in further assignments or as return
+expressions.
+This is valid not only for [collections](#constructors) (tuples, vectors, and
+dictionaries), but also for [closures](#prototypes),
+[coroutines](#active-values), and [tasks](#active-values).
+This restriction ensures that terminating blocks (and consequently tasks)
+deallocate all memory at once.
+*More importantly, it provides static means to reason about the program.*
+To overcome this restriction, Ceu also provides an explicit
+[drop](#copy-and-drop) operation to deattach a dynamic value from its block.
+
+The next example illustrates lexical memory management and the validity of
+assignments:
+
+```
+var x1 = [1,2,3]
+var x2 = do {
+    val y1 = x1         ;; ok, scope of x1>y1
+    val y2 = [4,5,6]
+    set x1 = y2         ;; no, scope of y2<x1
+    [7,8,9]             ;; ok, tuple not yet assigned
+}                       ;; deallocates [4,5,6], but not [7,8,9]
+```
+
+The assignment `y1=x1` is valid because the tuple `[1,2,3]` held in `x1` is
+guaranteed to be in memory while `y1` is visible.
+However, the assignment `x1=y2` is invalid because the tuple `[4,5,6]` held in
+`y2` is deallocated at the end of the block, but `x1` remains visible.
+
+The next example uses `drop` to reattach a local vector to an outer scope:
+
+```
+func to-vector (itr) {      ;; iterable -> vector
+    val ret = #[]           ;; vector is allocated locally
+    loop in itr, v {
+        set ret[+] = v      ;; each value is appended to vector
+    }
+    drop(ret)                   ;; local vector is moved out
+}
+```
+
+The function `to-vector` receives an iterable value, and copies all of its
+values to a new vector, which is finally returned.
+Since the vector `ret` is allocated inside the function, it requires an
+explicit `drop` to reattach it to the caller scope.
+
+Note that values of the [basic types](#basic-types), such as numbers, have no
+assignment restrictions because they are copied as a whole.
+Note also that Ceu still supports garbage collection for dynamic values to
+handle references in long-lasting blocks.
 
 ## Hierarchical Tags and Tuple Templates
 
@@ -810,7 +875,7 @@ Lits  : `nil´ | `false´ | `true´ | CHR | NUM | TAG | NAT
 ```
 
 Static values are immutable and are transferred between variables and across
-blocks as a whole copies without any restrictions.
+blocks as whole copies without any restrictions.
 
 ## Dynamic Values
 
@@ -826,13 +891,25 @@ Actvs  : exe-coro | exe-task | tasks    ;; active values (next section)
 
 Unlike static values, dynamic values are mutable and are transferred between
 variables and across blocks through references.
-As a consequence, multiple references may point to the same mutable value.
+As a consequence, multiple references (or aliases) may point to the same
+mutable value.
+
+As discussed in [Lexical Memory Management](#lexical-memory-management), a
+dynamic value is initially attached to the enclosing [block](#blocks) in
+which it is first assigned, and cannot escape to outer blocks in further
+assignments or as return expressions.
+If required, a [drop](#TODO) operation dettaches a dynamic value from its
+current block, allowing a further assignment to reattach it.
+
+`TODO: lex`
 
 Ceu uses reference counting to determine the life cycle of dynamic values.
 When the reference counter reaches zero, the dynamic value is immediately
 deallocated from memory.
 Note that mutually referenced values are never deallocated.
 Therefore, programmers need to break reference cycles manually.
+Nevertheless, when a block terminates, it automatically deallocates all dynamic
+values attached to it, regardless of remaining references due to cycles.
 
 ### Collection Values
 
@@ -912,7 +989,9 @@ A *closure* is a prototype that accesses variables from outer blocks, known as
 Ceu supports a restricted form of closures, in which *upvalues* must be
 immutable (thus declared with the modifier [`val`](#declarations)).
 
-`TODO: :nested, :anon`
+`TODO: lex`
+
+`TODO: :nested, :fake`
 
 Examples:
 
@@ -989,13 +1068,14 @@ The main difference between coroutines and tasks is how they resume execution:
 - A coroutine resumes explicitly from a [resume operation](#resume).
 - A task resumes implicitly from a [broadcast operation](#broadcast).
 
-Before a coroutine or task is [deallocated](#dynamic-values), it is implicitly
+Like other [dynamic values](#dynamic-values), coroutines and tasks are also
+attached to enclosing [blocks](#block), which may terminate and deallocate all
+of its attached values.
+Nevertheless, before a coroutine or task is deallocated, it is implicitly
 aborted, and all active [defer statements](#defer) execute automatically in
 reverse order.
 
-A task is lexically attached to the block in which it is created, such that
-when the block terminates, the task is implicitly terminated (triggering active
-defers).
+`TODO: lex`
 
 A task pool groups related active tasks as a collection.
 A task that lives in a pool is lexically attached to the block in which the
@@ -1055,11 +1135,18 @@ as a tuple.
 ### Blocks
 
 A block delimits a lexical scope for
-[variables](#declarations) and [tasks](#active-values):
+[variables](#declarations) and [dynamic values](#dynamic-values):
 A variable is only visible to expressions in the block in which it was
 declared.
-A task is automatically terminated when the block in which it was created
-terminates.
+A dynamic value cannot escape the block in which it was assigned, unless it is
+[dropped](#drop) out.
+
+`TODO: lex`
+
+When a block terminates, all memory that was allocated inside it is
+automatically reclaimed.
+This is also valid for active [coroutines and tasks](#active-values), which are
+aborted on termination.
 
 A block is not an expression by itself, but it can be turned into one by
 prefixing it with an explicit `do`:
@@ -1090,6 +1177,35 @@ do {
     spawn T()           ;; spawns task T and attaches it to the block
     <...>
 }                       ;; aborts spawned task
+
+do {
+    drop(#[1,2,3])      ;; OK
+}
+```
+
+#### Drop
+
+The `drop` operation dettaches the given [dynamic value](#dynamic-values) from
+its current block:
+
+```
+Drop : `drop´ Expr
+```
+
+A dropped value can be reattached to another block in a further assignment.
+
+`TODO: lex`
+
+Examples:
+
+```
+val v = 10
+drop(v)             ;; --> 10 (innocuous drop)
+
+val u = do {
+    val t = [10]
+    drop(t)         ;; --> [10] (deattaches from `t`, reattaches to `u`)
+}
 ```
 
 ### Groups
