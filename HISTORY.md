@@ -1,3 +1,17 @@
+v0.5 (oct'24)
+-------------
+
+- Additions:
+    - lexical memory management (lex): back - experimental
+    - statements
+        - `drop` (lex): dettach value from block
+        - `escape`: to escape from blocks
+        - `return`: to return from functions
+    - standard library
+        - `random.bool`, `random.int`
+- Changes:
+    - exceptions: tag required as argument
+
 v0.4 (jul'24)
 -------------
 
