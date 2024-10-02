@@ -17,8 +17,9 @@ fun type (dcl: Expr.Dcl, src: Expr): Scope {
                 // 1. requires proto enclosing dcl blk
                 // 2. requires that all protos in betwenn blk<-src are nested
             when {
+                (nst && (up.tk.str=="func'" || (blk.up_first { it is Expr.Proto } == null))) -> Scope.LOCAL
+                //(up.tk.str == "func'") -> Scope.LOCAL
                 !nst -> Scope.UPVAL
-                (up.tk.str == "func'") -> Scope.LOCAL
                 else -> Scope.NESTED
             }
         }
