@@ -1,6 +1,6 @@
 do {
-    val x = 10
-    ;;set x = 20      ;; ERROR: `x´ is immutable
+    val i = 10
+    ;;set i = 20      ;; ERROR: `x´ is immutable
 }
 ;;println(x)          ;; ERROR: `x´ is out of scope
 

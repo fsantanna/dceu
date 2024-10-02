@@ -2394,7 +2394,7 @@ The `error` expression raises an exception that aborts the execution of all
 enclosing blocks up to a matching `catch` block.
 
 ```
-Error : `error´ `(´ Expr `)´
+Error : `error´ `(´ [Expr] `)´
 Catch : `catch´ [TAG | `(´ TAG `)´] Block
 ```
 
@@ -2403,8 +2403,9 @@ An `error` propagates upwards and aborts all enclosing [blocks](#blocks) and
 way.
 When crossing an execution unit, an `error` jumps back to the original calling
 site and continues to propagate upwards.
-The exception value must evaluate to a [tag](#static-values) or
-[tagged value](#hierarchical-tags) that represents the error.
+The optional exception value, which defaults to `:nil`, must evaluate to a
+[tag](#static-values) or [tagged value](#hierarchical-tags) that represents the
+error.
 
 A `catch` executes its associated block normally, but also registers a
 [tag](#static-values) to compare against exception values from errors crossing
@@ -3204,6 +3205,8 @@ Otherwise, it returns the same `v`.
 The optional `msg` provides a string to accompany the error, or a function that
 generates the error string.
 
+`TODO: assert extra options`
+
 Examples:
 
 ```
@@ -3480,7 +3483,7 @@ Expr  : `do´[TAG]  Block                                ;; explicit block
       | `skip´                                          ;; loop restart
 
       | `catch´ [TAG | `(´ TAG `)´] Block               ;; catch exception
-      | `error´ `(´ Expr `)´                            ;; throw exception
+      | `error´ `(´ [Expr] `)´                          ;; throw exception
 
       | `status´ `(´ Expr `)´                           ;; coro/task status
 

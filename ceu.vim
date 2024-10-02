@@ -13,17 +13,17 @@ set cpo&vim
 let s:ft = matchstr(&ft, '^\([^.]\)\+')
 
 syn keyword Statement   data do drop else
-syn keyword Statement   enum false func group if
+syn keyword Statement   error enum false func group if
 syn keyword Statement   nil set
 syn keyword Statement   true val var
 syn keyword Statement   catch defer escape loop
 syn keyword Statement   coro resume yield
 syn keyword Statement   break broadcast delay in pub spawn task toggle
 syn keyword Statement   await every ifs match par par-and par-or
-syn keyword Statement   resume-yield-all skip test thus until watching
+syn keyword Statement   resume-yield-all return skip test thus until watching
 syn keyword Statement   with where while
 
-syn keyword Statement   dump error next-dict print println
+syn keyword Statement   dump next-dict print println
 syn keyword Statement   sup tag
 syn keyword Statement   to-string-number to-string-pointer to-string-tag
 syn keyword Statement   to-tag-string
