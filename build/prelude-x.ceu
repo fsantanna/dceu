@@ -291,7 +291,7 @@ data :Type = [
 ]
 ;;;
 
-val [static?, dynamic?, string?] = group {
+val [string?, static?, dynamic?] = group {
     func x-static? (tp) {
         `:bool ($tp.Tag < CEU_VALUE_DYNAMIC)`
     }
@@ -313,7 +313,7 @@ val [static?, dynamic?, string?] = group {
         x-f(:tasks),
     ]
     ;;;
-    [x-static?, x-dynamic?, xx-string?]
+    [xx-string?, x-static?, x-dynamic?]
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
