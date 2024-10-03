@@ -16,7 +16,7 @@
 #   - title  = <version>
 #   - Attach = { .zip, install.sh }
 
-VER=v0.4.0
+VER=v0.5.0
 DIR=/tmp/ceu-build/
 
 rm -Rf $DIR

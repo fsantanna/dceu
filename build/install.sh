@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VER=v0.4.0
+VER=v0.5.0
 
 if [ -z "$1" ]
 then
