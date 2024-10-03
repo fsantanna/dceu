@@ -10,7 +10,7 @@ endif
 syn iskeyword 33,39,45,63,97-122
 
 syn match   Comment   ";;.*$"
-syn region  Comment   start=";;;[^;]" end=";;;[^;]"
+syn region  Comment   start=/;;;$/ end=/;;;$/
 
 syn region  String    start=/\v"/ skip=/\v(\\[\\"]){-1}/ end=/\v"/
 syn match   String    "'.'"
