@@ -7,7 +7,7 @@ if exists("b:current_syntax")
     finish
 endif
 
-syn iskeyword 33,39,45,46,63,97-122
+syn iskeyword 33,39,45,46,63,95,97-122
 
 syn match   Comment   ";;.*$"
 syn region  Comment   start=/;;;$/ end=/;;;$/
@@ -33,7 +33,7 @@ syn keyword Function  assert
 syn keyword Function  static? dynamic? string?
 syn keyword Function  tag-or next create-resume copy
 syn match   Function  '\<\(to\|random\|math\)'
-syn match   Function  '\<pico'
+syn match   Function  '\<\(pico\|iup\)'
 
 syn match   Type      ':[a-zA-Z0-9'?!\.\-]\+'
 
