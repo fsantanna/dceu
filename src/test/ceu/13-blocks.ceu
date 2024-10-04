@@ -16,11 +16,14 @@ do {
 }                       ;; aborts spawned task
 
 val v = do :X {
-    println(1)      ;; --> 1
-    escape(:X, 2)
-    println(3)      ;; never executes
+    println(1)          ;; --> 1
+    do :Y {
+        escape(:X, 2)
+        println(3)      ;; never executes
+    }
+    println(4)          ;; never executes
 }
-println(v)          ;; --> 2
+println(v)              ;; --> 2
 
 do {
     drop(#[1,2,3])      ;; OK

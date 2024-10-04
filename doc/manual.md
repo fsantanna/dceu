@@ -533,8 +533,7 @@ The following symbols are reserved in Ceu:
     |               ;; pattern clause
     =               ;; assignment separator
     =>              ;; if/ifs/loop/lambda/thus clauses
-    <- ->           ;; method calls
-    <-- -->         ;; pipe calls
+    <-- <- -> -->   ;; pipe calls
     ;               ;; sequence separator
     ,               ;; argument/constructor separator
     .               ;; index/field discriminator
@@ -1146,14 +1145,11 @@ as a tuple.
 
 A block delimits a lexical scope for
 [variables](#declarations) and [dynamic values](#dynamic-values):
-A variable is only visible to expressions in the block in which it was
-declared.
-A dynamic value cannot escape the block in which it was assigned, unless it is
+A variable is only visible to expressions in the block in which it is declared.
+A dynamic value cannot escape the block in which it is assigned, unless it is
 [dropped](#drop) out.
 
-`TODO: lex`
-
-When a block terminates, all memory that was allocated inside it is
+When a block terminates, all memory that is allocated inside it is
 automatically reclaimed.
 This is also valid for active [coroutines and tasks](#active-values), which are
 aborted on termination.
@@ -1162,7 +1158,7 @@ Blocks appear in compound statements, such as
 [conditionals](#conditionals-and-pattern-matching),
 [loops](#loops-and-iterators), and many others.
 
-A block can also become an expression through an explicitly `do`:
+A block can also be created through an explicitly `do`:
 
 ```
 Do : `do´ [TAG] Block
@@ -1206,17 +1202,20 @@ Examples:
 
 ```
 val v = do :X {
-    println(1)      ;; --> 1
-    escape(:X, 2)
-    println(3)      ;; never executes
+    println(1)          ;; --> 1
+    do :Y {
+        escape(:X, 2)
+        println(3)      ;; never executes
+    }
+    println(4)          ;; never executes
 }
-println(v)          ;; --> 2
+println(v)              ;; --> 2
 ```
 
 #### Drop
 
 A `drop` dettaches the given [dynamic value](#dynamic-values) from its current
-block:
+holding block:
 
 ```
 Drop : `drop´ `(´ Expr `)´
@@ -1224,21 +1223,19 @@ Drop : `drop´ `(´ Expr `)´
 
 A dropped value can be reattached to another block in a further assignment.
 
-`TODO: lex`
-
 Examples:
 
 ```
-do {
-    drop(#[1,2,3])      ;; OK
+val u = do {
+    val v = 10
+    drop(v)         ;; --> 10 (innocuous drop)
 }
+```
 
-val v = 10
-drop(v)                 ;; --> 10 (innocuous drop)
-
+```
 val u = do {
     val t = [10]
-    drop(t)             ;; --> [10] (deattaches from `t`, reattaches to `u`)
+    drop(t)         ;; --> [10] (deattaches from `t`, reattaches to `u`)
 }
 ```
 
@@ -1252,8 +1249,8 @@ Group : group Block
 
 Unlike [blocks](#blocks), a group does not create a new scope for variables
 and tasks.
-Therefore, all nested declarations remain active as if they were declared on
-the enclosing block.
+Therefore, all nested declarations remain active as if they are declared on the
+enclosing block.
 
 Examples:
 
@@ -1323,22 +1320,23 @@ Val : `val´ (ID [TAG] | Patt) [`=´ Expr]    ;; immutable
 Var : `var´ (ID [TAG] | Patt) [`=´ Expr]    ;; mutable
 ```
 
-A declaration either specifies an identifier with an optional tag, or a
-[tuple pattern](#pattern-matching) for multiple declarations.
+A declaration either specifies an identifier with an optional tag, or specifies
+a [tuple pattern](#pattern-matching) for multiple declarations.
 The optional initialization expression assigns an initial value to the
-declaration, which is set to `nil` otherwise.
+declaration, which defaults to `nil`.
 
 The difference between `val` and `var` is that a `val` is immutable, while a
-`var` declaration can be modified by further `set` statements:
-The `val` modifier forbids that its name is reassigned, but it does not prevent
-a [dynamic value](#dynamic-values) it is holding to be modified.
+`var` declaration can be modified by further `set` statements.
+Note that the `val` modifier rejects that its name is reassigned, but it does
+not prevent that a holding [dynamic value](#dynamic-values) is internally
+modified (e.g., setting a vector index).
 
 Ceu does not support shadowing, i.e., if an identifier is visible, it cannot
 appear in a new variable declaration.
 
 When using an identifier, the optional tag specifies a
 [tuple template](#tag-enumerations-and-tuple-templates), which allows the
-variable to be indexed by a field name, instead of a numeric position.
+variable to be indexed by field names, instead of numeric positions.
 Note that the variable is not guaranteed to hold a value matching the template.
 The template association is static but with no runtime guarantees.
 
@@ -1371,8 +1369,8 @@ do {
 }
 ```
 
-When using the tuple pattern, it is possible to declare multiple variables by
-matching the initialization expression.
+A tuple pattern supports multiple variable declarations matching an
+initialization expression.
 The pattern is [assertive](#pattern-matching), raising an error if the match
 fails.
 
@@ -1385,7 +1383,7 @@ println(x,y)            ;; --> 2 3
 val [10,x] = [20,20]    ;; ERROR: match fails
 ```
 
-#### Prototype Declarations
+### Prototype Declarations
 
 [Execution unit](#execution-units) [prototypes](#prototype-values) can be
 declared as immutable variables as follows:
@@ -1421,9 +1419,9 @@ func f (v) {
 println(f(10))      ;; --> 11
 ```
 
-##### Return
+#### Return
 
-A `return` immediatelly terminates the enclosing prototype:
+A `return` immediately terminates the enclosing prototype:
 
 ```
 Return : `return´ `(´ [Expr] `)´
@@ -1442,6 +1440,8 @@ func f () {
 }
 println(f())        ;; --> 2
 ```
+
+`TODO: move section to escape?`
 
 ### Assignments
 
@@ -1523,12 +1523,12 @@ tuple positions with field identifiers:
 
 ```
 Template : `data´ Data [`{´ { Data } `}´]
-Data     : TAG `=´ `[´ List(ID [TAG]) `]´
+                Data : TAG `=´ `[´ List(ID [TAG]) `]´
 ```
 
 After the keyword `data`, a declaration expects a tag followed by `=` and a
 template.
-A template is surrounded by brackets (`[´ and `]´) to represent the tuple, and
+A template is surrounded by brackets (`[` and `]`) to represent the tuple, and
 includes a list of identifiers, each mapping an index into a field.
 Each field can be followed by a tag to represent nested templates.
 
@@ -1614,18 +1614,18 @@ f(10,20)        ;; normal call
 A pipe is an alternate notation to call a function:
 
 ```
-Expr : Expr (`<--` | `<-` | `->` | `-->` ) Expr
+Expr : Expr (`<--´ | `<-´ | `->´ | `-->´ ) Expr
 ```
 
 The operators `<--` and `<-` pass the argument in the right to the function in
 the left, while the operators `->` and `-->` pass the argument in the left to
 the function in the right.
 
-The single pipe operators `<-` and `->` have higher
-[precedence](@precedence-and-associativity) than the double pipe operators
+Single pipe operators `<-` and `->` have higher
+[precedence](@precedence-and-associativity) than double pipe operators
 `<--` and `-->`.
 
-If the receiving function is actually a call, then the pipe operator inserts
+If the receiving function is already a call, then the pipe operator inserts
 the extra argument into the call either as first (`->` and `-->`) or last (`<-`
 and `<--`).
 
@@ -1644,27 +1644,15 @@ t -> f(10)      ;; equivalent to `f(t,10)`
 ```
 Expr : Expr `[´ Expr `]´        ;; Index
      | Expr `.´ ID              ;; Field
+     | Expr `.´ `pub´ | `pub´   ;; Pub
 ```
 
 An index operation expects a collection and an index enclosed by brackets (`[`
 and `]`).
-For tuples and vectors, the index must be an number.
+For tuples and vectors, the index must be a number.
 For dictionaries, the index can be of any type.
 The operation evaluates to the current value in the given collection index, or
 `nil` if non existent.
-
-Examples:
-
-```
-tup[3]              ;; tuple access by index
-vec[i]              ;; vector access by index
-
-dict[:x]            ;; dict access by index
-dict.x              ;; dict access by field
-
-val t :T            ;; tuple template
-t.x
-```
 
 A field operation expects a dictionary or a tuple template, a dot separator
 (`.`), and a field identifier.
@@ -1676,15 +1664,20 @@ If the collection is a [tuple template](#tag-enumerations-and-tuple-templates)
 is equivalent to the index operation `t[i]`.
 
 A `pub` operation accesses the public field of an [active task](#active-values)
-and is discussed [further](#task-operations):
-
-```
-Expr : Expr `.´ `pub´ | `pub´   ;; Pub
-```
+and is discussed [further](#task-operations).
 
 Examples:
 
 ```
+tup[3]              ;; tuple access by index
+vec[i]              ;; vector access by index
+
+dict[:x]            ;; dict access by index
+dict.x              ;; dict access by field
+
+val t :T            ;; tuple template
+t.x                 ;; tuple access by field
+
 val t = spawn T()
 t.pub               ;; public field of task
 ```
