@@ -2228,7 +2228,7 @@ Break : `break´ `(´ [Expr] `)´
       | `until´ Expr
       | `while´ Expr
 
-Skip  : `skip´
+Skip  : `skip´ `(´ `)´
 ```
 
 A `loop` executes a block of code continuously until a termination condition is
@@ -3472,7 +3472,7 @@ Expr  : `do´[TAG]  Block                                ;; explicit block
       | `break´ `(´ [Expr] `)´                          ;; loop break
       | `until´ Expr
       | `while´ Expr
-      | `skip´                                          ;; loop restart
+      | `skip´ `(´ `)´                                  ;; loop restart
 
       | `catch´ [TAG | `(´ TAG `)´] Block               ;; catch exception
       | `error´ `(´ [Expr] `)´                          ;; throw exception
