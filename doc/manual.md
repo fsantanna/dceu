@@ -126,6 +126,7 @@ Then, we also introduce two other atypical aspects of the language:
 [3]: https://en.wikipedia.org/wiki/Event-driven_programming
 [4]: https://en.wikipedia.org/wiki/Esterel
 [5]: https://en.wikipedia.org/wiki/Lua_(programming_language)
+[6]: https://en.wikipedia.org/wiki/Symbol_(programming)
 
 ## Structured Deterministic Concurrency
 
@@ -310,8 +311,8 @@ handle references in long-lasting blocks.
 
 ### Hierarchical Tags
 
-Another key aspect of Ceu is its tag type, which is similar to *symbols* or
-*atoms* in other programming languages.
+Another distinguishing aspect of Ceu is its tag type, which is similar to
+[*symbols* or *atoms*][6] in other programming languages.
 A [tag](#basic-type) is a basic type that represents unique values in a
 human-readable form.
 Any identifier prefixed with a colon (`:`) is a valid tag that is guaranteed to
@@ -333,14 +334,14 @@ println(pos.x, pos[:y])     ;; --> 10, 20
 ```
 
 Tags can also be used to "tag" dynamic objects, such as dictionaries and
-tuples, to support the notion of user types in Ceu.
+tuples, introducing the notion of user types in Ceu.
 For instance, the call `tag(:Pos,pos)` associates the tag `:Pos` with the
 value `pos`, such that the query `tag(pos)` returns `:Pos`.
 
 As an innovative feature, tags can describe user type hierarchies by splitting
 identifiers with (`.`).
-For instance, a tag such as `:T.A.x` matches the types `:T`, `:T.A`, and
-`:T.A.x` at the same time, as verified by function `sup?`:
+For instance, a tag such as `:T.A.x` matches the tags `:T`, `:T.A`, and
+`:T.A.x` at the same time, as verified by the function `sup?`:
 
 <!-- dceu/src/test/02-tags.ceu -->
 
@@ -358,16 +359,16 @@ The next example illustrates hierarchical tags combined with the functions
 <!-- dceu/src/test/02-tags.ceu -->
 
 ```
-val x = []                      ;; an empty tuple
-tag(:T.A, x)                    ;; x is of user type :T.A
-println(tag(x))                 ;; --> :T.A
-println(sup?(:T,   tag(x)))     ;; --> true
-println(sup?(:T.A, tag(x)))     ;; --> true
-println(sup?(:T.B, tag(x)))     ;; --> false
-println(x is? :T)               ;; --> true  (equivalent to sup?(:T,tag(x)))
+val v = []                      ;; an empty tuple
+tag(:T.A, v)                    ;; v is of user type :T.A
+println(tag(v))                 ;; --> :T.A
+println(sup?(:T,   tag(v)))     ;; --> true
+println(sup?(:T.A, tag(v)))     ;; --> true
+println(sup?(:T.B, tag(v)))     ;; --> false
+println(v is? :T)               ;; --> true  (equivalent to sup?(:T,tag(v)))
 ```
 
-In the example, `x` is set to user type `:T.A`, which is compatible with types
+In the example, `v` is set to user type `:T.A`, which is compatible with types
 `:T` and `:T.A`, but not with type `:T.B`.
 
 ### Hierarchical Tuple Templates
@@ -392,12 +393,12 @@ println(pos.x, pos.y)   ;; --> 10, 20
 In the example, `pos.x` is equivalent to `pos[0]`, and `pos.y` is equivalent to
 `pos[1]`.
 
-The template mechanism of Ceu can also describe a tag hierarchy to support
-data inheritance, akin to class hierarchies in Object-Oriented Programming.
+The template mechanism of Ceu can also describe a data hierarchy to support
+inheritance, akin to class hierarchies in Object-Oriented Programming.
 A `data` description can be suffixed with a block to nest templates, in which
 inner tags reuse fields from outer tags.
 The next example illustrates an `:Event` super-type, in which each sub-type
-appends additional data to the template:
+appends additional data into the template:
 
 <!-- dceu/src/test/03-templates.ceu -->
 
@@ -410,8 +411,8 @@ data :Event = [ts] {            ;; All events carry a timestamp
     }
 }
 
-val but = :Event.Mouse.Button [0, [10,20], 1]   ;; [ts,[x,y],but]
-println(but.ts, but.pos.y, but is :Event.Mouse) ;; --> 0, 20, true
+val but = :Event.Mouse.Button [0, [10,20], 1]       ;; [ts,[x,y],but]
+println(but.ts, but.pos.y, but is? :Event.Mouse)    ;; --> 0, 20, true
 ```
 
 Considering the last two lines, a declaration such as
