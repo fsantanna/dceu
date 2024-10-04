@@ -104,9 +104,8 @@ The best way to try Ceu is through `pico-ceu`, a graphical library based on
         - `ceu --lib=pico main.ceu`
 - Academic publications:
     - http://ceu-lang.org/chico/#ceu
-- Mailing list:
+- Mailing list (JOIN US!):
     - https://groups.google.com/g/ceu-lang
-    - JOIN US!
 
 [1]: https://fsantanna.github.io/sc.html
 [2]: https://en.wikipedia.org/wiki/Structured_concurrency
