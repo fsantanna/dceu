@@ -1744,8 +1744,8 @@ function to execute.
 Examples:
 
 ```
-var x = (2 * y) where {     ;; x = 20
-    var y = 10
+val x = (2 * y) where {     ;; x = 20
+    val y = 10
 }
 ```
 
@@ -1760,9 +1760,8 @@ var x = (2 * y) where {     ;; x = 20
 Operations in Ceu can be combined in expressions with the following precedence
 priority (from higher to lower):
 
-```
 1. suffix (left associative)
-    - call:         `f()` `{op}()`
+    - call:         `f()` `{{op}}()`
     - index:        `t[i]` `t[=]` `t[+]` `t[-]`
     - field:        `t.x` `t.pub` `t.(:T)`
 2. inner (left associative)
@@ -1776,7 +1775,6 @@ priority (from higher to lower):
     - double pipe:  `v-->f` `f<--v`
     - where:        `v where {...}`
     - thus:         `v thus {...}`
-```
 
 All operations are left associative, except prefix operations, which are right
 associative.
