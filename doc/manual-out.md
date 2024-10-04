@@ -128,6 +128,7 @@ Then, we also introduce two other atypical aspects of the language:
 [3]: https://en.wikipedia.org/wiki/Event-driven_programming
 [4]: https://en.wikipedia.org/wiki/Esterel
 [5]: https://en.wikipedia.org/wiki/Lua_(programming_language)
+[6]: https://en.wikipedia.org/wiki/Symbol_(programming)
 
 <a name="structured-deterministic-concurrency"/>
 
@@ -322,8 +323,8 @@ handle references in long-lasting blocks.
 
 ### 1.4.1. Hierarchical Tags
 
-Another key aspect of Ceu is its tag type, which is similar to *symbols* or
-*atoms* in other programming languages.
+Another distinguishing aspect of Ceu is its tag type, which is similar to
+[*symbols* or *atoms*][6] in other programming languages.
 A [tag](#basic-type) is a basic type that represents unique values in a
 human-readable form.
 Any identifier prefixed with a colon (`:`) is a valid tag that is guaranteed to
@@ -345,14 +346,14 @@ println(pos.x, pos[:y])     ;; --> 10, 20
 ```
 
 Tags can also be used to "tag" dynamic objects, such as dictionaries and
-tuples, to support the notion of user types in Ceu.
+tuples, introducing the notion of user types in Ceu.
 For instance, the call `tag(:Pos,pos)` associates the tag `:Pos` with the
 value `pos`, such that the query `tag(pos)` returns `:Pos`.
 
 As an innovative feature, tags can describe user type hierarchies by splitting
 identifiers with (`.`).
-For instance, a tag such as `:T.A.x` matches the types `:T`, `:T.A`, and
-`:T.A.x` at the same time, as verified by function `sup?`:
+For instance, a tag such as `:T.A.x` matches the tags `:T`, `:T.A`, and
+`:T.A.x` at the same time, as verified by the function `sup?`:
 
 <!-- dceu/src/test/02-tags.ceu -->
 
@@ -370,16 +371,16 @@ The next example illustrates hierarchical tags combined with the functions
 <!-- dceu/src/test/02-tags.ceu -->
 
 ```
-val x = []                      ;; an empty tuple
-tag(:T.A, x)                    ;; x is of user type :T.A
-println(tag(x))                 ;; --> :T.A
-println(sup?(:T,   tag(x)))     ;; --> true
-println(sup?(:T.A, tag(x)))     ;; --> true
-println(sup?(:T.B, tag(x)))     ;; --> false
-println(x is? :T)               ;; --> true  (equivalent to sup?(:T,tag(x)))
+val v = []                      ;; an empty tuple
+tag(:T.A, v)                    ;; v is of user type :T.A
+println(tag(v))                 ;; --> :T.A
+println(sup?(:T,   tag(v)))     ;; --> true
+println(sup?(:T.A, tag(v)))     ;; --> true
+println(sup?(:T.B, tag(v)))     ;; --> false
+println(v is? :T)               ;; --> true  (equivalent to sup?(:T,tag(v)))
 ```
 
-In the example, `x` is set to user type `:T.A`, which is compatible with types
+In the example, `v` is set to user type `:T.A`, which is compatible with types
 `:T` and `:T.A`, but not with type `:T.B`.
 
 <a name="hierarchical-tuple-templates"/>
@@ -406,12 +407,12 @@ println(pos.x, pos.y)   ;; --> 10, 20
 In the example, `pos.x` is equivalent to `pos[0]`, and `pos.y` is equivalent to
 `pos[1]`.
 
-The template mechanism of Ceu can also describe a tag hierarchy to support
-data inheritance, akin to class hierarchies in Object-Oriented Programming.
+The template mechanism of Ceu can also describe a data hierarchy to support
+inheritance, akin to class hierarchies in Object-Oriented Programming.
 A `data` description can be suffixed with a block to nest templates, in which
 inner tags reuse fields from outer tags.
 The next example illustrates an `:Event` super-type, in which each sub-type
-appends additional data to the template:
+appends additional data into the template:
 
 <!-- dceu/src/test/03-templates.ceu -->
 
@@ -424,8 +425,8 @@ data :Event = [ts] {            ;; All events carry a timestamp
     }
 }
 
-val but = :Event.Mouse.Button [0, [10,20], 1]   ;; [ts,[x,y],but]
-println(but.ts, but.pos.y, but is :Event.Mouse) ;; --> 0, 20, true
+val but = :Event.Mouse.Button [0, [10,20], 1]       ;; [ts,[x,y],but]
+println(but.ts, but.pos.y, but is? :Event.Mouse)    ;; --> 0, 20, true
 ```
 
 Considering the last two lines, a declaration such as
@@ -488,18 +489,18 @@ The following keywords are reserved in Ceu:
     defer               ;; defer block
     delay               ;; delay task
     do                  ;; do block                         (10)
-    drop                ;; drop value                       (XX)
+    drop                ;; drop value
     else                ;; else block
     enum                ;; enum declaration
     error               ;; throw error
-    escape              ;; escape block                     (XX)
+    escape              ;; escape block
     every               ;; every block
     false               ;; false value
     func                ;; function prototype
     group               ;; group block
-    if                  ;; if block
+    if                  ;; if block                         (20)
     ifs                 ;; ifs block
-    in                  ;; in keyword                       (20)
+    in                  ;; in keyword
     in?                 ;; in? operator
     in-not?             ;; in-not? operator
     is?                 ;; is? operator
@@ -507,9 +508,9 @@ The following keywords are reserved in Ceu:
     it                  ;; implicit parameter
     loop                ;; loop block
     match               ;; match block
-    nil                 ;; nil value
+    nil                 ;; nil value                        (30)
     not                 ;; not operator
-    or                  ;; or operator                      (30)
+    or                  ;; or operator
     par-and             ;; par-and block
     par-or              ;; par-or block
     par                 ;; par block
@@ -517,23 +518,23 @@ The following keywords are reserved in Ceu:
     resume              ;; resume coroutine
     resume-yield-all    ;; resume coroutine
     return              ;; escape prototype
-    set                 ;; assign expression
+    set                 ;; assign expression                (40)
     skip                ;; loop skip
     spawn               ;; spawn coroutine
-    task                ;; task prototype                   (40)
+    task                ;; task prototype
     tasks               ;; task pool
     test                ;; test block
     thus                ;; thus pipe block
     toggle              ;; toggle coroutine/block
     true                ;; true value
     until               ;; until loop condition
-    val                 ;; constant declaration
+    val                 ;; constant declaration             (50)
     var                 ;; variable declaration
     watching            ;; watching block
-    where               ;; where block                      (50)
+    where               ;; where block
     while               ;; while loop condition
     with                ;; with block
-    yield               ;; yield coroutine                  (53)
+    yield               ;; yield coroutine                  (56)
 ```
 
 <a name="symbols"/>
@@ -553,6 +554,7 @@ The following symbols are reserved in Ceu:
     #[              ;; vector constructor delimeter
     @[              ;; dictionary constructor delimeter
     \               ;; lambda declaration
+    |               ;; pattern clause
     =               ;; assignment separator
     =>              ;; if/ifs/loop/lambda/thus clauses
     <- ->           ;; method calls
@@ -606,7 +608,7 @@ Ceu uses identifiers to refer to variables and operators:
 
 ```
 ID : [A-Za-z_][A-Za-z0-9_'?!-]*     ;; letter/under/digit/quote/quest/excl/dash
-   | `{´ OP `}´                     ;; operator enclosed by braces as identifier
+   | `{{´ OP `}}´                   ;; operator enclosed by double braces as identifier
 OP : [+-*/%><=|&~]+                 ;; see Operators
 ```
 
@@ -622,8 +624,8 @@ are rejected (e.g., `x` vs `x-a` vs `a-x`).
 
 An operator identifier is a sequence of operator symbols
 (see [Operators](#operators)).
-An operator can be used as a variable identifier when enclosed by braces (`{`
-and `}`).
+An operator can be used as a variable identifier when enclosed by double braces
+(`{{` and `}}`).
 
 Examples:
 
@@ -701,7 +703,6 @@ The following tags are pre-defined in Ceu:
 
 ```
     ;; type enumeration
-
     :nil :tag :bool :char :number :pointer          ;; basic types
     :dynamic                                        ;; internal use
     :tuple :vector :dict                            ;; collections
@@ -735,7 +736,7 @@ A native literal can specify a tag modifier as follows:
 The `:<type>` modifier assumes that the C code in `<...>` evaluates to an
 expression of the given type and converts it to Ceu.
 The `:ceu` modifier assumes that the code is already a value in Ceu and does
-not convert it.
+not modify it.
 
 The `:pre` modifier or lack of modifier assumes that the code is a C statement
 that does not evaluate to an expression.
@@ -772,6 +773,7 @@ Examples:
 
 ```
 ;; a comment        ;; single-line comment
+
 ;;;                 ;; multi-line comment
 ;; a
 ;; comment
@@ -782,7 +784,7 @@ Examples:
 
 # 4. TYPES
 
-Ceu provides dynamic types such that values carry their own types during
+Ceu is dynamically typed such that values carry their own types during
 execution.
 
 The function `type` returns the type of a value as a [tag](#basic-types):
@@ -799,7 +801,7 @@ type('x')   ;; --> :char
 Ceu has 6 basic types:
 
 ```
-nil    bool    char    number    tag    pointer
+:nil    :bool    :char    :number    :tag    :pointer
 ```
 
 The `nil` type represents the absence of values with its single value
@@ -832,7 +834,7 @@ literals](#literals).
 Ceu provides 3 types of collections:
 
 ```
-tuple    vector    dict
+:tuple    :vector    :dict
 ```
 
 The `tuple` type represents a fixed collection of heterogeneous values, in
@@ -845,8 +847,7 @@ Once the first index is assigned, its type becomes the type of the vector,
 which further assignments must respect.
 
 The `dict` type (dictionary) represents a variable collection of heterogeneous
-values, in which each index (or key) of any type maps to a value of a
-(possibly) different type.
+values, in which each index (or key) of any type maps to a value of any type.
 
 Examples:
 
@@ -863,8 +864,8 @@ Examples:
 Ceu provide 3 types of execution units: functions, coroutines, and tasks:
 
 ```
-func      coro      task
-exe-coro  exe-task  tasks
+:func      :coro      :task
+:exe-coro  :exe-task  :tasks
 ```
 
 The `func` type represents [function prototypes](#prototype-values).
@@ -931,7 +932,7 @@ A *static value* does not require dynamic allocation.
 All [basic types](#basic-types) have [literal](#literals) values:
 
 ```
-Types : nil | bool | char | number | tag | pointer
+Types : :nil | :bool | :char | :number | :tag | :pointer
 Lits  : `nil´ | `false´ | `true´ | CHR | NUM | TAG | NAT
 ```
 
@@ -947,13 +948,13 @@ variable or too big to fit as a static value.
 The following types have dynamic values:
 
 ```
-Colls  : tuple | vector | dict          ;; collections
-Protos : func | coro | task             ;; prototypes
-Actvs  : exe-coro | exe-task | tasks    ;; active values (next section)
+Colls  : :tuple | :vector | :dict          ;; collections
+Protos : :func | :coro | :task             ;; prototypes
+Actvs  : :exe-coro | :exe-task | :tasks    ;; active values (next section)
 ```
 
-Unlike static values, dynamic values are mutable and are transferred between
-variables and across blocks through references.
+Unlike static values, dynamic values are internally mutable and are transferred
+between variables and across blocks through references.
 As a consequence, multiple references (or aliases) may point to the same
 mutable value.
 
@@ -963,8 +964,6 @@ which it is first assigned, and cannot escape to outer blocks in further
 assignments or as return expressions.
 If required, a [drop](#TODO) operation dettaches a dynamic value from its
 current block, allowing a further assignment to reattach it.
-
-`TODO: lex`
 
 Ceu uses reference counting to determine the life cycle of dynamic values.
 When the reference counter reaches zero, the dynamic value is immediately
@@ -996,7 +995,7 @@ expressions.
 
 Dictionaries (`@[...]`) are built providing a list of pairs of expressions
 (`(key,val)`), in which each pair maps a key to a value.
-The first expression is the key, and the second is the associated value.
+The first expression is the key, and the second is its associated value.
 If the key is a tag, the alternate syntax `tag=val` may be used (omitting the
 tag colon prefix `:`).
 
@@ -1067,9 +1066,9 @@ func (v) { v }          ;; a function
 coro () { yield() }     ;; a coroutine
 task () { await(:X) }   ;; a task
 
-func (v1) {             ;; a closure
-    func () {
-        v1              ;; v1 is an upvalue
+func (v) {
+    func () {           ;; a closure
+        v               ;; v1 is an upvalue
     }
 }
 ```
@@ -1118,7 +1117,7 @@ cases.
 An *active value* corresponds to an active coroutine, task, or task pool:
 
 ```
-exe-coro  exe-task  tasks
+:exe-coro  :exe-task  :tasks
 ```
 
 Active coroutines and tasks are running instances of
@@ -1151,7 +1150,7 @@ reverse order.
 A task pool groups related active tasks as a collection.
 A task that lives in a pool is lexically attached to the block in which the
 pool is created, such that when the block terminates, all tasks in the pool are
-implicitly terminated (triggering active defers).
+implicitly terminated.
 
 The operations on [coroutines](#coroutine-operations) and
 [tasks](#tasks-operations) are discussed further.
@@ -1181,7 +1180,7 @@ All
     [literals](#literals),
     [identifiers](#identifiers),
     [operators](#operators),
-    [collection constructors](#collection-values], and
+    [collection constructors](#collection-values), and
     [function constructors](#protoype-values)
 are also valid expressions.
 
@@ -1190,13 +1189,13 @@ are also valid expressions.
 ## 6.1. Program, Sequences and Blocks
 
 A program in Ceu is a sequence of expressions, and a block is a sequence of
-expressions enclosed by braces (`{` and `}´):
+expressions enclosed by braces (`{` and `}`):
 
 ```
 Prog  : { Expr [`;´] }
 Block : `{´ { Expr [`;´] } `}´
 ```
-Each expression in a sequence may be separated by an optional semicolon (`;´).
+Each expression in a sequence may be separated by an optional semicolon (`;`).
 A sequence of expressions evaluate to its last expression.
 
 <!-- TODO: ; to remove ambiguity -->

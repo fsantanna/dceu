@@ -12,5 +12,3 @@ data :Event = [ts] {            ;; All events carry a timestamp
 
 val but = :Event.Mouse.Button [0, [10,20], 1]       ;; [ts,[x,y],but]
 println(but.ts, but.pos.y, but is? :Event.Mouse)    ;; --> 0, 20, true
-
-
