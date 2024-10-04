@@ -1797,7 +1797,7 @@ x or y or z     ;; (x or y) or z
 
 ## Standard Operators
 
-Ceu provides many standard operators:
+Ceu provides a number of standard operators:
 
 - length: `#`
 - equality: `==` `/=` `===` `=/=`
@@ -1835,8 +1835,6 @@ func {{==}} (v1 :any, v2 :any) => :bool
 func {{/=}} (v1 :any, v2 :any) => :bool
 ```
 
-The operators `==` and `/=` compare two values `v1` and `v2` to check if they
-are equal or not equal, respectively.
 The operator `==` returns `true` if the values are equal and `false` otherwise.
 The operator `/=` is the negation of `==`.
 
@@ -1867,8 +1865,6 @@ func {===} (v1 :any, v2 :any) => :bool
 func {=/=} (v1 :any, v2 :any) => :bool
 ```
 
-The operators `===` and `=/=` deeply compare two values `v1` and `v2` to check
-if they are equal or not equal, respectively.
 The operator `===` returns `true` if the values are deeply equal and `false`
 otherwise.
 The operator `=/=` is the negation of `===`.
@@ -1962,23 +1958,21 @@ A `not` receives a value `v` and is equivalent to the code as follows:
 if v { false } else { true }
 ```
 
-The operators `and` and `or` returns one of their operands `v1` or `v2`.
+The operators `and` and `or` return one of their operands `v1` or `v2`.
 
 An `and` is equivalent to the code as follows:
 
 ```
-do {
-    val x = v1
-    if x { v2 } else { x }
+v1 thus {
+    if it { v2 } else { it }
 }
 ```
 
 An `or` is equivalent to the code as follows:
 
 ```
-do {
-    val x = v1
-    if x { x } else { v2 }
+v1 thus {
+    if it { it } else { v2 }
 }
 ```
 
@@ -2047,8 +2041,10 @@ Examples:
 
 ### Vector Concatenation Operators
 
+```
 func {{++}}  (v1 :vector, v2 :vector) => :vector
 func {{<++}} (v1 :vector, v2 :vector) => :vector
+```
 
 The operators `++` and `<++` concatenate the given vectors.
 The operator `++` creates and returns a new vector, keeping the received
@@ -2142,12 +2138,12 @@ by the arrow symbol `=>`.
 A pattern is satisfied if all of its optional forms to test the head expression
 are satisfied:
 
-- An identifier `ID` that always matches and captures the value of the head
+1. An identifier `ID` that always matches and captures the value of the head
   expression with `ID = head`.
   If omitted, it assumes the implicit identifier `it`.
   If the pattern succeeds, the identifier can be used in its associated branch.
-- A tag `TAG` that tests the head expression with `head is? TAG`.
-- One of the three forms:
+2. A tag `TAG` that tests the head expression with `head is? TAG`.
+3. One of the three forms:
     - A [static literal](#static-values) `Const` that tests the head expression
       with `head == Const`.
     - An operation `OP` followed by an optional expression `Expr` that tests
@@ -2155,8 +2151,8 @@ are satisfied:
     - A tuple of patterns that tests if the head expression is a tuple, and
       then applies each nested pattern recursively.
       The head tuple size can be greater than the tuple pattern.
-- An extra "such that" condition following the pipe symbol `|` that must be
-  satisfied, regardless of the head expression valuue.
+4. An extra "such that" condition following the pipe symbol `|` that must be
+  satisfied, regardless of the head expression value.
   If given, this condition becomes the capture value of the branch.
 
 Except for `else` branches, note that the branches can use the
@@ -2261,7 +2257,7 @@ As any other statement, a loop is an expression that evaluates to a final value
 as a whole.
 A loop that terminates from the header condition evaluates to `false`.
 
-The block may also contain a `skip` statement to jump back to the next loop
+The block may also contain a `skip()` statement to jump back to the next loop
 step.
 
 Examples:
@@ -2270,7 +2266,7 @@ Examples:
 var i = 1
 loop {                  ;; infinite loop
     println(i)          ;; --> 1,2,...,10
-    while i < 10        ;; immediate termination
+    while i < 10        ;; conditional termination
     set i = i + 1
 }
 ```
@@ -2280,7 +2276,7 @@ var i = 0
 loop {                  ;; infinite loop
     set i = i + 1
     if (i % 2) == 0 {
-        skip            ;; jump back
+        skip()          ;; jump back
     }
     println(i)          ;; --> 1,3,5,...
 }
