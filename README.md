@@ -1,8 +1,8 @@
 # The Programming Language Ceu (v0.5)
 
 Ceu is a [synchronous programming language][1] that reconciles *[Structured
-Concurrency][2]* with *[Event-Driven Programming][3]* to extend classical
-structured programming with three main functionalities:
+Concurrency][2]* with *[Event-Driven Programming][3]* in order to extend
+classical structured programming with three main functionalities:
 
 - Structured Deterministic Concurrency:
     - A set of structured primitives to lexically compose concurrent tasks
@@ -15,9 +15,9 @@ structured programming with three main functionalities:
     - An `await` primitive to suspend a task and wait for events.
     - A `broadcast` primitive to signal events and awake awaiting tasks.
 - Lexical Memory Management *(experimental)*:
-    - Even dynamic allocation is attached to lexical blocks.
-    - Strict escaping rules to preserve structure reasoning.
-    - Garbage collection restricted to local references only.
+    - A lexical policy to manage dynamic allocation automatically.
+    - A set of strict escaping rules to preserve structured reasoning.
+    - A reference-counter collector for deterministic reclamation.
 
 Ceu is inspired by [Esterel][4] and [Lua][5].
 

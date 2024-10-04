@@ -82,8 +82,8 @@
 # 1. DESIGN
 
 Ceu is a [synchronous programming language][1] that reconciles *[Structured
-Concurrency][2]* with *[Event-Driven Programming][3]* to extend classical
-structured programming with three main functionalities:
+Concurrency][2]* with *[Event-Driven Programming][3]* in order to extend
+classical structured programming with three main functionalities:
 
 - Structured Deterministic Concurrency:
     - A set of structured primitives to lexically compose concurrent tasks
@@ -96,9 +96,9 @@ structured programming with three main functionalities:
     - An `await` primitive to suspend a task and wait for events.
     - A `broadcast` primitive to signal events and awake awaiting tasks.
 - Lexical Memory Management *(experimental)*:
-    - Even dynamic allocation is attached to lexical blocks.
-    - Strict escaping rules to preserve structure reasoning.
-    - Garbage collection restricted to local references only.
+    - A lexical policy to manage dynamic allocation automatically.
+    - A set of strict escaping rules to preserve structured reasoning.
+    - A reference-counter collector for deterministic reclamation.
 
 Ceu is inspired by [Esterel][4] and [Lua][5].
 
@@ -117,10 +117,10 @@ Follows an extended list of functionalities in Ceu:
 Ceu is in **experimental stage**.
 Both the compiler and runtime can become very slow.
 
-In the rest of this Section, we introduce the two key aspects of Ceu:
-*Structured Deterministic Concurrency* and *Event Signaling Mechanisms*.
-Then, we also introduce two other key aspects of the language, which do not
-appear in other languages:
+In the rest of this section, we introduce the three key aspects of Ceu:
+*Structured Deterministic Concurrency*, *Event Signaling Mechanisms*, and
+*Lexical Memory Management*.
+Then, we also introduce two other atypical aspects of the language:
 *Hierarchical Tags* and *Integration with C*.
 
 [1]: https://fsantanna.github.io/sc.html
@@ -134,7 +134,7 @@ appear in other languages:
 ## 1.1. Structured Deterministic Concurrency
 
 In structured concurrency, the life cycle of processes or tasks respect the
-structure of the source code in hierarchical blocks.
+structure of the source code as hierarchical blocks.
 In this sense, tasks in Ceu are treated in the same way as local variables in
 structured programming:
 When a [block](#blocks) of code terminates or goes out of scope, all of its
@@ -174,7 +174,7 @@ spawn {
 ```
 
 The [`par-or`](parallel-blocks) is a structured mechanism that combines tasks
-in blocks and rejoins as a whole when one of its tasks terminates,
+in nested blocks and rejoins as a whole when one of them terminates,
 automatically aborting the others.
 
 The [`every`](every-block) loop in the second task iterates exactly 9 times
@@ -215,11 +215,12 @@ The active block has a list of active tasks, which are traversed in sequence
 tasks `(4)`.
 After the nested blocks and tasks are traversed, the outer task itself is
 traversed at its single yielded execution point `(5)`.
+Finally, the task next to the outer task is traversed in the same way `(6)`.
 A broadcast traversal runs to completion before proceeding to the next
 statement, just like a function call.
 
 The next example illustrates event broadcasts and tasks traversal.
-The example uses an `watching` statement to observe an event condition while
+The example uses a `watching` statement to observe an event condition while
 executing a nested task.
 When the condition is satisfied, the nested task is aborted:
 
@@ -251,14 +252,12 @@ nested tasks awaiting `:tick` events.
 Then, the main block broadcasts three events in sequence.
 The first two `:tick` events awake the nested tasks respecting the structure of
 the program, printing `:tick-A` and `:tick-B` in this order.
-The last event aborts the `watching` block and prints `:done`, before
+The last event aborts the `watching` composition and prints `:done`, before
 terminating the main block.
 
 <a name="lexical-memory-management"/>
 
 ## 1.3. Lexical Memory Management
-
-`TODO: review`
 
 Ceu respects the lexical structure of the program also when dealing with
 dynamic memory allocation.
@@ -272,7 +271,7 @@ dictionaries), but also for [closures](#prototypes),
 This restriction ensures that terminating blocks (and consequently tasks)
 deallocate all memory at once.
 *More importantly, it provides static means to reason about the program.*
-To overcome this restriction, Ceu also provides an explicit
+To overcome the escaping restriction, Ceu also provides an explicit
 [drop](#copy-and-drop) operation to deattach a dynamic value from its block.
 
 The next example illustrates lexical memory management and the validity of
@@ -298,10 +297,10 @@ The next example uses `drop` to reattach a local vector to an outer scope:
 ```
 func to-vector (itr) {      ;; iterable -> vector
     val ret = #[]           ;; vector is allocated locally
-    loop in itr, v {
+    loop v in itr {
         set ret[+] = v      ;; each value is appended to vector
     }
-    drop(ret)                   ;; local vector is moved out
+    drop(ret)               ;; local vector is moved out
 }
 ```
 
@@ -310,8 +309,8 @@ values to a new vector, which is finally returned.
 Since the vector `ret` is allocated inside the function, it requires an
 explicit `drop` to reattach it to the caller scope.
 
-Note that values of the [basic types](#basic-types), such as numbers, have no
-assignment restrictions because they are copied as a whole.
+Note that values of the [basic types](#basic-types), such as numbers and
+booleans, have no assignment restrictions because they are copied as a whole.
 Note also that Ceu still supports garbage collection for dynamic values to
 handle references in long-lasting blocks.
 
