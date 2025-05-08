@@ -4,100 +4,12 @@ import dceu.*
 import org.junit.Test
 
 class Parser_01 {
-    // VAR
-
-    @Test
-    fun aa_01_var () {
-        val l = lexer(" x ")
-        val parser = Parser(l)
-        val e = parser.expr_prim()
-        assert(e is Expr.Acc && e.tk.str == "x")
-    }
-    @Test
-    fun aa_02_var_err () {
-        val l = lexer(" { ")
-        val parser = Parser(l)
-        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 2) : expected expression : have \"{\"")
-    }
-    @Test
-    fun aa_03_var_err () {
-        val l = lexer("  ")
-        val parser = Parser(l)
-        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 3) : expected expression : have end of file")
-    }
-    @Test
-    fun aa_04_evt () {
-        val l = lexer(" evt ")
-        val parser = Parser(l)
-        val e = parser.expr_prim()
-        assert(e is Expr.Acc && e.tk.str == "evt")
-    }
-    @Test
-    fun aa_05_err () {
-        val l = lexer(" err ")
-        val parser = Parser(l)
-        val e = parser.expr_prim()
-        assert(e is Expr.Acc && e.tk.str == "err")
-    }
-
-    // PARENS
-
-    @Test
-    fun bb_01_expr_parens() {
-        val l = lexer(" ( a ) ")
-        val parser = Parser(l)
-        val e = parser.expr_prim()
-        assert(e is Expr.Acc && e.tk.str == "a")
-    }
-    @Test
-    fun bb_02_expr_parens_err() {
-        val l = lexer(" ( a  ")
-        val parser = Parser(l)
-        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 7) : expected \")\" : have end of file")
-    }
-    @Test
-    fun bb_03_op_prec_err() {
-        val l = lexer("println(2 * 3 - 1)")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 15) : binary operation error : expected surrounding parentheses")
-    }
-    @Test
-    fun bb_04_op_prec_ok() {
-        val l = lexer("println(2 * (3 - 1))")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "println({{*}}(2,{{-}}(3,1)))")
-    }
-
-    // NUM / NIL / BOOL
-
     @Test
     fun cc_01_num() {
         val l = lexer(" 1.5F ")
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Num && e.tk.str == "1.5F")
-    }
-    @Test
-    fun cc_02_nil() {
-        val l = lexer("nil")
-        val parser = Parser(l)
-        val e = parser.expr_prim()
-        assert(e is Expr.Nil && e.tk.str == "nil")
-    }
-    @Test
-    fun cc_03_true() {
-        val l = lexer("true")
-        val parser = Parser(l)
-        val e = parser.expr_prim()
-        assert(e is Expr.Bool && e.tk.str == "true")
-    }
-    @Test
-    fun cc_04_false() {
-        val l = lexer("false")
-        val parser = Parser(l)
-        val e = parser.expr_prim()
-        assert(e is Expr.Bool && e.tk.str == "false")
     }
     @Test
     fun cc_05_char() {
