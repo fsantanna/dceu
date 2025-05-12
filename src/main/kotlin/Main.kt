@@ -8,7 +8,7 @@ var LEX = true
 var TEST = false
 var DUMP = true
 var DEBUG = true
-var CEU = 1
+var CEU = 99
 
     //  1: dyn-lex                              ;; 26 "definitely lost" (errors or cycles)
     //  2: defer, throw/catch, do/escape, loop  ;;  4 "definitely lost" (C errors)

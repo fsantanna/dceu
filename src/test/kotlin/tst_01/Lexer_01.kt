@@ -15,7 +15,6 @@ class Lexer_01 {
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : expected identifier")
     }
-
     @Test
     fun cc_01_vararg() {
         val l = lexer(".. ... .")
@@ -29,7 +28,6 @@ class Lexer_01 {
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
-
     @Test
     fun ee_01_native() {
         val l = lexer(
@@ -47,7 +45,6 @@ class Lexer_01 {
         //println(tks.next())
         assert(trap { tks.next() } == "anon : (lin 4, col 10) : native error : expected \"`\"")
     }
-
     @Test
     fun ff_03_ops() {
         val l = lexer("=== =/= {{===}} {{!!}}")
@@ -58,7 +55,6 @@ class Lexer_01 {
         assert(tks.next().str == "!!")
         assert(tks.next() is Tk.Eof)
     }
-
     @Test
     fun gg_01_chr() {
         val l = lexer("'x' '\\n' '\\'' '\\\\'")
