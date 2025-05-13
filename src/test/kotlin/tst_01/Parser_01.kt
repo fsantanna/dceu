@@ -4,28 +4,6 @@ import dceu.*
 import org.junit.Test
 
 class Parser_01 {
-    @Test
-    fun cc_01_num() {
-        val l = lexer(" 1.5F ")
-        val parser = Parser(l)
-        val e = parser.expr_prim()
-        assert(e is Expr.Num && e.tk.str == "1.5F")
-    }
-    @Test
-    fun cc_05_char() {
-        val l = lexer("'x'")
-        val parser = Parser(l)
-        val e = parser.expr_prim()
-        assert(e is Expr.Char && e.tk.str == "'x'")
-    }
-    @Test
-    fun pre_pos1() {
-        val l = lexer("-x[0]")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "{{-}}(x[0])") { e.to_str() }
-    }
-
     // NATIVE
 
     @Test

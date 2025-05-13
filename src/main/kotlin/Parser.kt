@@ -399,34 +399,12 @@ class Parser (lexer_: Lexer)
     fun expr_prim (): Expr {
         return when {
             this.acceptFix("val") || this.acceptFix("var") || (CEU>=50 && (this.acceptFix("val'") || this.acceptFix("var'"))) -> {
-                    val pat = this.patt(null)
-                    val src = if (this.acceptFix("=")) {
-                        this.expr().to_str(true)
-                    } else {
-                        null
-                    }
-                    this.nest(pat.code2(src)) as Expr.Group
+                val pat = this.patt(null)
+                TODO()
             }
             this.acceptFix("func'") || (CEU>=3 && this.acceptFix("coro'")) || (CEU>=4 && this.acceptFix("task'")) -> {
-                val tk0 = this.tk0 as Tk.Fix
                 val fak = (CEU >= 50) && (tk0.str=="task'") && this.acceptTag(":fake")
-                var nst = (CEU >= 50) && (fak || this.acceptTag(":nested"))
-                this.acceptFix_err("(")
-                val pars = this.list0(",", ")") {
-                    this.acceptEnu_err("Id")
-                    val xid = this.tk0 as Tk.Id
-                    val tag = if (!this.acceptEnu("Tag")) null else {
-                        this.tk0 as Tk.Tag
-                    }
-                    Expr.Dcl(Tk.Fix("val",xid.pos.copy()), true, Pair(xid, tag), null)
-                }
-                val tag = when {
-                    (tk0.str != "task'") -> null
-                    !this.acceptEnu("Tag") -> null
-                    else -> this.tk0 as Tk.Tag
-                }
-                val blk = this.block(this.tk1)
-                Expr.Proto(tk0, nst, fak, tag, pars, blk)
+                TODO()
             }
             this.acceptFix("data") -> {
                 val pos = this.tk0.pos.copy()
@@ -485,16 +463,6 @@ class Parser (lexer_: Lexer)
                     else -> Expr.Do(Tk.Fix("do",pos), dts)
                 }
             }
-            (CEU>=50 && (this.acceptFix("drop"))) -> {
-                val tk0 = this.tk0 as Tk.Fix
-                this.acceptFix_err("(")
-                val e = this.expr()
-                if (!e.is_lval()) {
-                    //err(tk0, "drop error : expected assignable destination")
-                }
-                this.acceptFix_err(")")
-                Expr.Drop(tk0, e)
-            }
 
             (CEU>=4 && this.acceptFix("spawn")) -> {
                 if (CEU>=99 && this.checkFix("{")) {
@@ -519,19 +487,8 @@ class Parser (lexer_: Lexer)
             (CEU>=4 && this.acceptFix("delay")) -> Expr.Delay(this.tk0 as Tk.Fix)
             (CEU>=4 && this.acceptFix("pub")) -> Expr.Pub(this.tk0 as Tk.Fix, null)
             (CEU>=4 && this.acceptFix("broadcast")) -> {
-                val tk0 = this.tk0 as Tk.Fix
-                this.acceptFix_err("(")
-                val arg = if (CEU>=99 && this.checkFix(")")) Expr.Nil(this.tk0 as Tk.Fix) else this.expr()
-                this.acceptFix_err(")")
-                val xin = if (this.acceptFix("in")) {
-                    this.expr()
-                } else {
-                    Expr.Tag(Tk.Tag(":task",this.tk0.pos.copy()))
-                }
-                Expr.Call(tk0,
-                    Expr.Acc(Tk.Id("broadcast'", tk0.pos.copy())),
-                    listOf(xin, arg)
-                )
+                this.acceptFix("in")
+                TODO()
             }
             (CEU>=4 && this.acceptFix("toggle")) -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -565,57 +522,19 @@ class Parser (lexer_: Lexer)
                 }
             }
             (CEU>=5 && this.acceptFix("tasks")) -> {
-                val tk0 = this.tk0 as Tk.Fix
-                this.acceptFix_err("(")
-                val nn = if (this.checkFix(")")) {
+                if (this.checkFix(")")) {
                     Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy()))
                 } else {
                     this.expr()
                 }
-                this.acceptFix_err(")")
-                Expr.Tasks(tk0, nn)
+                TODO()
             }
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)
-            this.acceptEnu("Chr")  -> Expr.Char(this.tk0 as Tk.Chr)
 
             (CEU>=99 && (this.acceptFix("func") || this.acceptFix("coro") || this.acceptFix("task"))) -> {
-                val tk0 = this.tk0.let {
-                    Tk.Fix(it.str+'\'', it.pos.copy())
-                }
                 val fak = (tk0.str=="task'") && this.acceptTag(":fake")
-                var nst = (fak || this.acceptTag(":nested"))
-                val dcl = if (this.acceptEnu("Id")) {
-                    nst = true
-                    this.tk0
-                } else {
-                    null
-                }
-                this.acceptFix_err("(")
-                val pars = this.list0(",", ")") {
-                    this.acceptEnu_err("Id")
-                    val xid = this.tk0 as Tk.Id
-                    val tag = if (!this.acceptEnu("Tag")) null else {
-                        this.tk0 as Tk.Tag
-                    }
-                    Expr.Dcl(Tk.Fix("val",xid.pos.copy()), true, Pair(xid, tag), null)
-                }
-                val tag = when {
-                    (tk0.str != "task'") -> null
-                    !this.acceptEnu("Tag") -> null
-                    else -> this.tk0 as Tk.Tag
-                }
-                val blk = this.block(this.tk1)
-                val proto = Expr.Proto(tk0, nst, fak, tag, pars,
-                    Expr.Do(blk.tk, listOf(Expr.Enclose(tk0, Tk.Tag(":return",tk0.pos.copy()), blk.es)))
-                )
-                if (dcl === null) {
-                    proto
-                } else {
-                    this.nest("""
-                        ${tk0.pos.pre()}val ${dcl.str} = ${proto.to_str(true)}
-                    """)
-                }
+                TODO()
             }
             (CEU>=99 && this.acceptFix("enum")) -> {
                 if (this.acceptEnu("Tag")) {
