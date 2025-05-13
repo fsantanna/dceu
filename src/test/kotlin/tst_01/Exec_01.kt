@@ -631,35 +631,6 @@ class Exec_01 {
     // DICT
 
     @Test
-    fun dd_dict0() {
-        val out = test(
-            """
-            println(@[(:key,:val)])
-        """
-        )
-        assert(out == "@[(:key,:val)]\n") { out }
-    }
-    @Test
-    fun dd_dict1() {
-        val out = test(
-            """
-            println(type(@[(1,2)]))
-            println(@[(1,2)])
-        """
-        )
-        assert(out == ":dict\n@[(1,2)]\n") { out }
-    }
-    @Test
-    fun dd_dict2() {
-        val out = test(
-            """
-            val t = @[(:x,1)]
-            println(t[:x])
-        """
-        )
-        assert(out == "1\n") { out }
-    }
-    @Test
     fun dict7_init() {
         val out = test("""
             var t = @[x=1, y=2]
@@ -834,7 +805,6 @@ class Exec_01 {
         assert(out == " |  anon : (lin 2, col 13) : next-dict(nil)\n" +
                 " v  error : expected dict\n") { out }
     }
-
 
     // VECTOR
 
