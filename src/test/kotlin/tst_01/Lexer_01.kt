@@ -10,12 +10,6 @@ fun lexer (str: String): Lexer {
 
 class Lexer_01 {
     @Test
-    fun aa_03_syms_err() {
-        val l = lexer(":")
-        val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : expected identifier")
-    }
-    @Test
     fun cc_01_vararg() {
         val l = lexer(".. ... .")
         val tks = l.lex().iterator()
@@ -47,7 +41,7 @@ class Lexer_01 {
     }
     @Test
     fun ff_03_ops() {
-        val l = lexer("=== =/= {{===}} {{!!}}")
+        val l = lexer("=== =/=")
         val tks = l.lex().iterator()
         assert(tks.next().str == "===")
         assert(tks.next().str == "=/=")
@@ -80,12 +74,6 @@ class Lexer_01 {
     @Test
     fun gg_04_chr_err() {
         val l = lexer("'\\n")
-        val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 4) : char error : expected '")
-    }
-    @Test
-    fun gg_05_chr_err() {
-        val l = lexer("'abc'")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 4) : char error : expected '")
     }

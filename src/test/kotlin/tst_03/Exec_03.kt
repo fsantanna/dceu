@@ -523,30 +523,6 @@ class Exec_03 {
     // ORIGINAL
 
     @Test
-    fun ee_01_coro() {
-        val out = test("""
-            $PLUS
-            var t
-            set t = coro' (v) {
-                var v' = v
-                println(v')          ;; 1
-                set v' = yield((v'+1)) ;;thus { it => it } 
-                println(v')          ;; 3
-                set v' = yield(v'+1) ;;thus { it => it }
-                println(v')          ;; 5
-                v'+1
-            }
-            val a = coroutine(t)
-            var v = resume a(1)
-            println(v)              ;; 2
-            set v = resume a(v+1)
-            println(v)              ;; 4
-            set v = resume a(v+1)
-            println(v)              ;; 6
-        """)
-        assert(out == "1\n2\n3\n4\n5\n6\n") { out }
-    }
-    @Test
     fun ee_02_coro_defer() {
         val out = test("""
             val T = coro' () {

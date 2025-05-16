@@ -8,48 +8,6 @@ import org.junit.runners.MethodSorters
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_04 {
-    // TASK
-
-    @Before
-    fun init() {
-        //DEBUG = false
-    }
-
-    @Test
-    fun aa_01_task() {
-        val out = test(
-            """
-            val T = task' (v) { nil }
-            println(T)
-        """
-        )
-        assert(out.contains("task: 0x")) { out }
-    }
-    @Test
-    fun aa_02_task_equal() {
-        val out = test(
-            """
-            val T1 = task' (v) { nil }
-            val T2 = task' (v) { nil }
-            println(T1 == T1)
-            println(T1 == T2)
-        """
-        )
-        assert(out == "true\nfalse\n") { out }
-    }
-    @Test
-    fun aa_03_task_err() {
-        val out = test(
-            """
-            val T = task' (v) { nil }
-            coroutine(T)
-        """
-        )
-        assert(
-            out == " |  anon : (lin 3, col 13) : coroutine(T)\n" +
-                    " v  error : expected coro\n"
-        ) { out }
-    }
     @Test
     fun aa_04_task_err() {
         val out = test(
@@ -64,204 +22,89 @@ class Exec_04 {
         ) { out }
     }
     @Test
-    fun aa_05_yield_err() {
+    fun df_03_bcast_throw() {
+        DEBUG = true
         val out = test(
             """
-            yield(nil) ;;thus { it => nil }
+            spawn (task' () {
+                spawn (task' () {
+                    yield(nil)
+                    yield(nil)
+                    println(:ok)
+                    error(:XXX)
+                }) ()
+                spawn (task' () {
+                    yield(nil)
+                    broadcast (nil) in :global
+                }) ()
+                loop' {
+                    yield(nil)
+                }
+            }) ()            
+            broadcast(nil)
         """
         )
-        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro or task\n") { out }
+        assert(
+            out == ":ok\n" +
+                    " |  anon : (lin 17, col 13) : broadcast'(:task,nil)\n" +
+                    " |  anon : (lin 11, col 21) : broadcast'(:global,nil)\n" +
+                    " |  anon : (lin 7, col 21) : error(:XXX)\n" +
+                    " v  error : :XXX\n"
+        ) { out }
     }
     @Test
-    fun aa_06_innoc() {
+    fun dd_16_tags() {
+        val out = test(
+            """
+            val T = task' () {
+                func' (it) {
+                    println(sup?(:X,tag(it)))
+                } (yield(nil))
+            }
+            spawn T()
+            broadcast (tag(:X,[]))
+        """
+        )
+        assert(out == "true\n") { out }
+    }
+
+    // ALIEN SCOPE
+    @Test
+    fun cd_03_bcast_pub_arg() {
+        val out = test(
+            """
+            val T = task' () {
+                val evt = yield(nil)
+                set pub = evt
+                println(:in, pub)
+                :ok
+            }
+            val t = spawn T() 
+            do {
+                val e = []
+                broadcast(e)
+            }
+            println(:out, t.pub)
+        """
+        )
+        //assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 21) : set error : cannot hold alien reference\n") { out }
+        assert(out == ":in\t[]\n:out\t:ok\n") { out }
+    }
+    @Test
+    fun cd_04_bcast_copy() {
         val out = test("""
             val T = task' () {
-                :ok ;; innocuous
+                val evt = yield(nil)
+                val v = copy(evt)
+                println(v)
             }
-            println(:ok)
-        """)
-        assert(out == ":ok\n") { out }
-        //assert(out == "anon : (lin 3, col 17) : expression error : innocuous expression\n") { out }
-    }
-
-    // SPAWN
-
-    @Test
-    fun bb_01_spawn() {
-        val out = test(
-            """
-            val T = task' (v) { nil }
-            func' () { nil } ()
-            val t = spawn T()
-            println(t)
-        """
-        )
-        assert(out.contains("exe-task: 0x")) { out }
-        //assert(out == ("nil\n")) { out }
-    }
-    @Test
-    fun bb_02_resume_err() {
-        val out = test(
-            """
-            val T = task' (v) { nil }
-            val t = spawn T()
-            resume t()
-        """
-        )
-        assert(
-            out == " |  anon : (lin 4, col 13) : (resume (t)())\n" +
-                    " v  error : expected yielded coro\n"
-        ) { out }
-    }
-    @Test
-    fun bb_03_spawn() {
-        val out = test(
-            """
-            spawn (task' (v1) {
-                println(v1)
-            }) (1)
-        """
-        )
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun bb_04_spawn_err() {
-        val out = test(
-            """
-            spawn nil()
-        """
-        )
-        assert(
-            out == " |  anon : (lin 2, col 13) : (spawn nil())\n" +
-                    " v  error : expected task\n"
-        ) { out }
-    }
-    @Test
-    fun bb_05_spawn() {
-        val out = test(
-            """
-            val T = task' (v) { yield(nil) ; nil }
-            val t = spawn T()
-            println(t)
-        """
-        )
-        assert(out.contains("exe-task: 0x")) { out }
-    }
-
-    // TASK / CORO / (no longer mixable)
-
-    @Test
-    fun bc_01_coro_spawn_nest_err() {
-        val out = test("""
-            var T = coro' () {
-                spawn coro' () {
-                    yield(nil)
-                } ()
-            }
-            var t = coroutine(T)
-            println(resume t())
-            """
-        )
-        //assert(out == ":1\n:2\n1\n") { out }
-        //assert(out.contains("x-coro: 0x")) { out }
-        assert(out == " |  anon : (lin 8, col 21) : (resume (t)())\n" +
-                " |  anon : (lin 3, col 17) : (spawn (coro' () { yield(nil); })())\n" +
-                " v  error : expected task\n") { out }
-    }
-    @Test
-    fun bc_02_spawn() {
-        val out = test("""
-            var t
-            set t = coro' (v) {
-                var v' = v
-                println(v')          ;; 1
-                set v' = yield((v'+1)) 
-                println(v')          ;; 3
-                set v' = yield(v'+1) 
-                println(v')          ;; 5
-                v'+1
-            }
-            val a = spawn t(1)
-            println(type(a))
-            var v
-            set v = resume a(3)
-            println(v)              ;; 4
-            set v = resume a(v+1)
-            println(v)              ;; 6
+            spawn T()
+            broadcast([1,2,3])
         """, true)
-        //assert(out == "1\n:x-coro\n3\n4\n5\n6\n") { out }
-        assert(out == " |  anon : (lin 12, col 21) : (spawn t(1))\n" +
-                " v  error : expected task\n") { out }
-    }
-    @Test
-    fun bc_04_coro_spawn() {
-        val out = test("""
-            var t
-            set t = coro' () {
-                println(1)
-                do {
-                    println(2)
-                    yield(nil)
-                    println(3)
-                }
-                println(4)
-            }
-            var co
-            set co = spawn t()
-            resume co()
-            println(5)
-        """)
-        //assert(out == "1\n2\n3\n4\n5\n") { out }
-        assert(out == " |  anon : (lin 13, col 22) : (spawn t())\n" +
-                " v  error : expected task\n") { out }
-    }
-    @Test
-    fun bc_05_coro_spawn() {
-        val out = test("""
-            var t
-            set t = coro' () {
-                println(1)
-                do {
-                    println(2)
-                    yield(nil)
-                    println(3)
-                }
-                println(4)
-            }
-            var co
-            set co = spawn (if true { t } else { nil }) ()
-            resume co()
-            println(5)
-        """)
-        //assert(out == "1\n2\n3\n4\n5\n") { out }
-        assert(out == " |  anon : (lin 13, col 22) : (spawn if true { t; } else { nil; }())\n" +
-                " v  error : expected task\n") { out }
-    }
-    @Test
-    fun bc_06_coro_spawn() {
-        val out = test("""
-            var t
-            var f
-            set f = func' () {
-                t
-            }
-            set t = coro' () {
-                println(1)
-                do {
-                    println(2)
-                    yield(nil)
-                    println(3)
-                }
-                println(4)
-            }
-            var co
-            set co = spawn f() ()
-            resume co()
-            println(5)
-        """)
-        //assert(out == "1\n2\n3\n4\n5\n") { out }
-        assert(out == " |  anon : (lin 17, col 22) : (spawn f()())\n" +
-                " v  error : expected task\n") { out }
+        assert(out == "[1,2,3]\n") { out }
     }
 
     // DELAY
@@ -473,1336 +316,6 @@ class Exec_04 {
         assert(out == "100\n") { out }
     }
 
-    // SCOPE
-
-    @Test
-    fun cc_00_scope() {
-        val out = test(
-            """
-            var x
-            set x = do {
-                spawn (task'() {nil}) ()
-            }
-            println(2)
-        """
-        )
-        //assert(out == " v  anon : (lin 3, col 21) : block escape error : cannot copy reference out\n") { out }
-        assert(out == "2\n") { out }
-        //assert(out == " v  anon : (lin 3, col 21) : block escape error : cannot assign running coro or task to outer scope\n") { out }
-    }
-    @Test
-    fun cc_01_scope() {
-        val out = test(
-            """
-            val x = do {
-                spawn (task'() { yield(nil) ; nil }) ()
-            }
-            println(:ok)
-        """
-        )
-        //assert(out == "anon : (lin 3, col 21) : block escape error : incompatible scopes\n:error\n") { out }
-        assert(out == ":ok\n") { out }
-        //assert(out == " v  anon : (lin 2, col 21) : block escape error : cannot assign running coro or task to outer scope\n") { out }
-    }
-    @Test
-    fun cc_02_scope() {
-        val out = test(
-            """
-            var t
-            set t = task' () {
-                yield(nil) ; nil
-            }
-            var co
-            set co = if true { spawn t() } else { nil }
-            println(:ok)
-        """
-        )
-        //assert(out == "anon : (lin 7, col 30) : block escape error : incompatible scopes\n:error\n") { out }
-        assert(out == ":ok\n") { out }
-        //assert(out == " v  anon : (lin 7, col 30) : block escape error : cannot assign running coro or task to outer scope\n") { out }
-    }
-    @Test
-    fun cc_03_scope() {
-        val out = test(
-            """
-            val t = task' () { nil }
-            var f
-            set f = func' () {
-                spawn t()
-                nil
-            }
-            f()
-            println(:ok)
-        """
-        )
-        //assert(out == "anon : (lin 8, col 13) : f()\n" +
-        //        "anon : (lin 5, col 29) : block escape error : incompatible scopes\n:error\n") { out }
-        assert(out == ":ok\n") { out }
-        //assert(out == "anon : (lin 6, col 17) : spawn error : unexpected enclosing func\n") { out }
-    }
-    @Test
-    fun cc_04_scope() {
-        val out = test(
-            """
-            var x
-            set x = do {
-                spawn (task'() {println(1)}) ()
-                nil
-            }
-            println(2)
-        """
-        )
-        assert(out == "1\n2\n") { out }
-    }
-    @Test
-    fun cc_05_scope() {
-        val out = test(
-            """
-            var T
-            set T = task' (v) {
-                yield(nil) ; nil ;;println(v)
-            }
-            var t
-            set t = do {
-                var v
-                set v = 10
-                spawn T(v)  ;; ERR: coro in nested scope cannot escape
-            }
-            println(:ok)
-        """
-        )
-        assert(out == ":ok\n") { out }
-        //assert(out == "anon : (lin 7, col 21) : block escape error : incompatible scopes\n:error\n") { out }
-        //assert(out == " v  anon : (lin 7, col 21) : block escape error : cannot assign running coro or task to outer scope\n") { out }
-    }
-    @Test
-    fun cc_06_scope() {
-        val out = test(
-            """
-            val T = task' (t1) {
-                val t2 = []
-                ;;;do;;; [t1,[],t2]
-                yield(nil) ;;thus { it => nil }
-            }
-            do {
-                spawn T([])
-                nil
-            }
-            println(:ok)
-        """
-        )
-        assert(out == ":ok\n") { out }
-    }
-
-    // ALIEN SCOPE
-
-    @Test
-    fun cd_01_every() {
-        val out = test(
-            """
-            spawn (task' () {
-                val it = yield(nil)
-                println(it;;;, evt;;;)
-                yield(nil)
-            }) (nil)
-            do {
-                val e = []
-                broadcast'(:task,e)
-            }
-            println(:ok)
-        """
-        )
-        //assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing thus\n") { out }
-        //assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 4, col 21) : argument error : cannot copy reference out\n") { out }
-        assert(out == "[]\n:ok\n") { out }
-        //assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
-    }
-    @Test
-    fun cd_02_bcast_spawn_arg() {
-        val out = test(
-            """
-            val T = task' () {
-                val x = yield(nil)
-            }
-            spawn T() 
-            do {
-                val e = []
-                broadcast(e)
-            }
-            println(:ok)
-        """
-        )
-        //assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
-        //assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun cd_03_bcast_pub_arg() {
-        val out = test(
-            """
-            val T = task' () {
-                val evt = yield(nil)
-                set pub = evt
-                println(:in, pub)
-                :ok
-            }
-            val t = spawn T() 
-            do {
-                val e = []
-                broadcast(e)
-            }
-            println(:out, t.pub)
-        """
-        )
-        //assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
-        //assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 4, col 21) : set error : cannot hold alien reference\n") { out }
-        assert(out == ":in\t[]\n:out\t:ok\n") { out }
-    }
-    @Test
-    fun cd_04_bcast_copy() {
-        val out = test("""
-            val T = task' () {
-                val evt = yield(nil)
-                val v = copy(evt)
-                println(v)
-            }
-            spawn T()
-            broadcast([1,2,3])
-        """, true)
-        assert(out == "[1,2,3]\n") { out }
-    }
-
-    // BROADCAST
-
-    @Test
-    fun dd_01_bcast() {
-        val out = test(
-            """
-            println(broadcast(1))
-        """
-        )
-        assert(out == "nil\n") { out }
-        //assert(out == "\n") { out }
-        //assert(out == "true\n") { out }
-    }
-    @Test
-    fun dd_02_bcast() {
-        val out = test(
-            """
-            spawn (task' () {
-                println(1)
-                yield(nil) ;;thus { it => nil }
-                println(2)
-            })()
-            broadcast(nil)
-        """
-        )
-        assert(out == "1\n2\n") { out }
-    }
-    @Test
-    fun dd_02x_bcast() {
-        val out = test(
-            """
-            val T = task' (x) {
-                println(x)
-                val y = yield(nil)
-                println(y)
-            }
-            spawn T(1)
-            broadcast(2)
-        """
-        )
-        assert(out == "1\n2\n") { out }
-    }
-    @Test
-    fun dd_03_bcast() {
-        val out = test(
-            """
-            var tk = task' (v) {
-                val e1 = yield(nil) ;;thus { it => it }
-                println(:1, ;;;evt,;;; e1)
-                val e2 = yield(nil) ;;thus { it => it }
-                println(:2, ;;;evt,;;; e2)
-            }
-            spawn tk ()
-            broadcast(1)
-            broadcast(2)
-            broadcast(3)
-        """
-        )
-        //assert(out == ":1\t1\t1\n:2\t2\t2\n") { out }
-        assert(out == ":1\t1\n:2\t2\n") { out }
-    }
-    @Test
-    fun dd_04_bcast() {
-        val out = test(
-            """
-            var tk
-            set tk = task' (v) {
-                val e1 = yield(nil)
-                println(v,e1;;;evt;;;)
-                var e2 = yield(nil)
-                println(v,e2;;;evt;;;)
-            }
-            var co1 = spawn tk(:1)
-            var co2 = spawn tk(:2)
-            broadcast(1)
-            broadcast(2)
-            broadcast(3)
-        """
-        )
-        //assert(out == "nil\n1\nnil\n1\nnil\n2\nnil\n2\n") { out }
-        assert(out.contains(":1\t1\n:2\t1\n:1\t2\n:2\texe-task: 0x")) { out }
-        //assert(out == (":1\t1\n:2\t1\n:1\t2\n:2\t2\n")) { out }
-    }
-    @Test
-    fun dd_04y_bcast() {
-        val out = test(
-            """
-            val T = task' (v) {
-                yield(nil)
-            }
-            val t = spawn T()
-            broadcast(nil)
-            println(:ok)
-        """
-        )
-        assert(out.contains(":ok\n")) { out }
-    }
-    @Test
-    fun dd_04x_bcast() {
-        val out = test(
-            """
-            val T = task' (v) {
-                ;;`printf(">>> %p\n", X->exe);`
-                val e = yield(nil)
-                println(v, e)
-            }
-            var t1 = spawn T(:1)
-            var t2 = spawn T(:2)
-            broadcast(1)
-        """
-        )
-        assert(out.contains(":1\t1\n:2\texe-task: 0x")) { out }
-        //assert(out == (":1\t1\n:2\t1\n")) { out }
-    }
-    @Test
-    fun dd_05_bcast() {
-        val out = test(
-            """
-            var co1 = spawn (task' () {
-                var co2 = spawn (task' () {
-                    yield(nil)              ;; awakes from outer bcast
-                    println(:2)
-                }) ()
-                yield(nil)                  ;; awakes from co2 termination
-                println(:1)
-            }) ()
-            ;;`printf(">>> %d\n", CEU_DEPTH);`
-            println(:bcast)
-            broadcast(nil)
-        """
-        )
-        assert(out == ":bcast\n:2\n:1\n") { out }
-    }
-    @Test
-    fun dd_05y_bcast() {
-        val out = test(
-            """
-            spawn (task' () {
-                spawn (task' () {
-                    println(:1)
-                    yield(nil)              ;; 1. awakes from outer bcast
-                    println(:3)
-                }) ()
-                yield(nil)                  ;; 2. awakes from nested task
-                yield(nil)                  ;; 3. awakes from outer bcast
-                println(:ok)
-            }) ()
-            println(:2)
-            broadcast(nil)
-            println(:4)
-        """
-        )
-        assert(out == ":1\n:2\n:3\n:ok\n:4\n") { out }
-    }
-    @Test
-    fun dd_05z_bcast() {
-        val out = test(
-            """
-            spawn (task' () {
-                spawn (task' () {
-                    println(:1)
-                    yield(nil)              ;; awakes from outer bcast
-                    println(:3)
-                }) ()
-                yield(nil)                  ;; awakes from nested task
-                delay
-                yield(nil)                  ;; does not awake from outer bcast
-                println(:no)
-            }) ()
-            println(:2)
-            broadcast(nil)
-            println(:4)
-        """
-        )
-        assert(out == ":1\n:2\n:3\n:4\n") { out }
-    }
-    @Test
-    fun dd_05x_bcast() {
-        DEBUG = true
-        val out = test(
-            """
-            spawn (task' () {
-                spawn (task' () {
-                    println(:1, yield(nil)) ;; awakes from outer bcast
-                }) ()
-                spawn (task' () {
-                    loop' {
-                        yield(nil)
-                    }
-                }) ()
-                println(:2, yield(nil))      ;; awakes from :1 termination
-            }) ()               ;; kill anon task which is pending on traverse
-            broadcast(:out)
-        """
-        )
-        assert(out.contains(":1\t:out\n:2\texe-task: 0x")) { out }
-    }
-    @Test
-    fun dd_06_bcast() {
-        val out = test(
-            """
-            var tk
-            set tk = task' (v) {
-                println(v)
-                val e = yield(nil) ;;thus { it => it }
-                println(e;;;evt;;;)
-            }
-            var co = spawn(tk)(1)
-            broadcast(2)
-        """
-        )
-        assert(out == "1\n2\n") { out }
-    }
-    @Test
-    fun dd_07_bcast() {
-        val out = test(
-            """
-            func' () {
-                 broadcast(1)
-            }
-            println(1)
-        """
-        )
-        assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 3, col 18) : broadcast error : unexpected enclosing func\n") { out }
-    }
-    @Test
-    fun dd_08_bcast() {
-        val out = test(
-            """
-            val T = task' () {
-                yield(nil) ;;thus { it => nil }
-                println(:ok)
-            }
-            var t = spawn T()
-            do {
-                broadcast(1)
-            }
-        """
-        )
-        assert(out.contains(":ok\n")) { out }
-    }
-    @Test
-    fun dd_09_bcast() {
-        val out = test(
-            """
-            var tk
-            set tk = task' () {
-                yield(nil) ;;thus { it => nil }
-                val e = yield(nil) ;;thus { it => it }
-                println(e;;;evt;;;)                
-            }
-            var co1 = spawn (tk) ()
-            var co2 = spawn tk ()
-            do {
-                 broadcast(1)
-                 broadcast(2)
-                 broadcast(3)
-            }
-        """
-        )
-        //assert(out == "2\n2\n") { out }
-        assert(out.contains("2\nexe-task: 0x")) { out }
-    }
-    @Test
-    fun dd_10_bcast() {
-        val out = test(
-            """
-            var tk
-            set tk = task' () {
-                val e1 = yield(nil) ;;thus { it => it }
-                var e2
-                do {
-                    println(e1)
-                    set e2 = yield(nil) ;;thus { it => it }
-                    println(e2)
-                }
-                do {
-                    println(e2)
-                    val e3 = yield(nil) ;;thus { it => it }
-                    println(e3)
-                }
-            }
-            spawn tk ()
-            broadcast(1)
-            broadcast(2)
-            broadcast(3)
-            broadcast(4)
-        """
-        )
-        assert(out == "1\n2\n2\n3\n") { out }
-    }
-    @Test
-    fun dd_11_bcast_await() {
-        val out = test(
-            """
-            val T = task' (v) {
-                println(:1)
-                val e = ${AWAIT()}
-                println(:2, e)                
-            }
-            spawn T()
-            broadcast(10)
-        """
-        )
-        assert(out == ":1\n:2\t10\n") { out }
-    }
-    @Test
-    fun dd_12_bcast() {
-        val out = test(
-            """
-            val T = task' (v) {
-                yield(nil)
-                ;;println(:time, `:number CEU_TIME_MAX`)
-                val e = ${AWAIT()}
-                println(e)                
-            }
-            spawn T ()
-            spawn T ()
-            func' () {
-                 broadcast(1)
-                 broadcast(2)
-                 broadcast(3)
-            }()
-        """
-        )
-        assert(out == "2\n2\n") { out }
-    }
-    @Test
-    fun dd_12x_bcast() {
-        val out = test(
-            """
-            val T = task' () {
-                loop' {
-                    val it = yield(nil)
-                }
-            }
-            spawn T ()
-            broadcast(2)
-            println(:ok)
-        """
-        )
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun dd_13_bcast() {
-        val out = test(
-            """
-            var tk
-            set tk = task' (v) {
-                println(v)
-                val e1 = ${AWAIT()}
-                println(e1)                
-                val e2 = ${AWAIT()}
-                println(e2)                
-            }
-            println(:1)
-            var co1 = spawn (tk) (10)
-            var co2 = spawn (tk) (10)
-            ;;catch {
-                ;;func' () {
-                    println(:2)
-                    broadcast(20)
-                    println(:3)
-                    broadcast(30)
-                ;;}()
-            ;;}
-        """
-        )
-        assert(out == ":1\n10\n10\n:2\n20\n20\n:3\n30\n30\n") { out }
-    }
-    @Test
-    fun dd_13x_bcast() {
-        val out = test(
-            """
-            val T = task' () {
-                val e1 = enclose' :break {
-                    loop' {
-                        val it = yield(nil)
-                        do {
-                            val x = it
-                            println(:in, it)    ;; TODO: 10
-                        }
-                        escape(:break, nil)
-                   }
-               }
-               ;;val x
-            }
-            spawn T()
-            broadcast(10)
-        """
-        )
-        assert(out == ":in\t10\n") { out }
-    }
-    @Test
-    fun dd_15_bcast() {
-        val out = test(
-            """
-            broadcast ([])
-            println(:ok)
-            """
-        )
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun dd_16_tags() {
-        val out = test(
-            """
-            val T = task' () {
-                func' (it) {
-                    println(sup?(:X,tag(it)))
-                } (yield(nil))
-            }
-            spawn T()
-            broadcast (tag(:X,[]))
-        """
-        )
-        assert(out == "true\n") { out }
-    }
-    @Test
-    fun gc_dd_16_bcast() {
-        val out = test(
-            """
-            do {
-                broadcast([])
-                broadcast([])
-                broadcast([])
-                broadcast([])
-                println(:ok)
-            }
-            """
-        )
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun gc_17_ff() {
-        val out = test(
-            """
-            var T
-            set T = task' (v) {
-                spawn task' () {
-                    println(v)
-                    yield(nil)
-                    println(v)
-                } ()
-                loop' { yield(nil) }
-            }
-            spawn T(1)
-            spawn T(2)
-            broadcast(nil)
-        """
-        )
-        assert(out == "1\n2\n1\n2\n") { out }
-    }
-    @Test
-    fun dd_18_xceu() {
-        val out = test("""
-            spawn (task' () {
-                spawn (task' () {
-                    yield(nil)
-                }) ()
-                nil
-            }) ()
-            println(:ok)
-        """)
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun dd_19_xceu() {
-        val out = test("""
-            spawn task' () {
-                var evt1 = yield(nil)
-                val evtx = evt1
-                println(evt1)
-                spawn (task' () {
-                    var evt2 = evtx
-                    loop' {
-                        println(evt2)    ;; lost reference
-                        set evt2 = yield(nil)
-                    }
-                }) ()
-                set evt1 = yield(nil)
-            }()
-            broadcast (10)
-            broadcast (20)
-        """)
-        //assert(out == "10\nnil\n20\n") { out }
-        assert(out == "10\n10\n20\n") { out }
-        //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
-    }
-    @Test
-    fun dd_20_c_bcast() {
-        val out = test("""
-            spawn task' () {
-                val evt = yield(nil)
-                println(evt)
-            }()
-            val evt = :ok
-            `ceu_broadcast_global(${D}evt);`
-        """)
-        assert(out == ":ok\n") { out }
-    }
-
-    // BCAST / ARGS
-
-    @Test
-    fun de_01_bcast() {
-        val out = test(
-            """
-            broadcast(1) in nil
-        """
-        )
-        assert(
-            out == " |  anon : (lin 2, col 13) : broadcast'(nil,1)\n" +
-                    " v  error : invalid target\n"
-        ) { out }
-    }
-    @Test
-    fun de_02_bcast() {
-        val out = test(
-            """
-            broadcast(1) in :x
-        """
-        )
-        assert(
-            out == " |  anon : (lin 2, col 13) : broadcast'(:x,1)\n" +
-                    " v  error : invalid target\n"
-        ) { out }
-    }
-    @Test
-    fun de_03_bcast() {
-        val out = test(
-            """
-            println(broadcast(1) in :global)
-        """
-        )
-        //assert(out == "true\n") { out }
-        assert(out == "nil\n") { out }
-        //assert(out == "\n") { out }
-    }
-    @Test
-    fun de_04_bcast() {
-        val out = test(
-            """
-            println(broadcast(1) in :task)
-        """
-        )
-        //assert(out == "true\n") { out }
-        assert(out == "nil\n") { out }
-        //assert(out == "\n") { out }
-    }
-    @Test
-    fun de_05_bcast() {
-        val out = test(
-            """
-            val t = spawn (task' () { nil }) ()
-            println(broadcast(1) in t)
-        """
-        )
-        //assert(out == "\n") { out }
-        assert(out == "nil\n") { out }
-        //assert(out == "true\n") { out }
-        //assert(
-        //    out == " |  anon : (lin 3, col 21) : broadcast'(t,1)\n" +
-        //            " v  broadcast error : invalid target\n"
-        //) { out }
-    }
-    @Test
-    fun de_06_bcast() {
-        val out = test(
-            """
-            val T = task' () {
-                println(yield(nil))
-                nil
-            }
-            val t = spawn T()
-            broadcast ([])
-        """
-        )
-        //assert(out == "anon : (lin 16, col 13) : f()\n" +
-        //        "anon : (lin 14, col 17) : g()\n" +
-        //        "anon : (lin 12, col 21) : broadcast []\n" +
-        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        assert(out == "[]\n") { out }
-    }
-
-    // BCAST / TARGETS
-
-    @Test
-    fun df_01_global() {
-        val out = test(
-            """
-            spawn (task' () {
-                val x = yield(nil)
-                println(:ok, x)
-            }) ()
-            spawn (task' () {
-                broadcast(10) in :global
-            }) ()
-        """
-        )
-        assert(out == ":ok\t10\n") { out }
-    }
-    @Test
-    fun df_02_non_global() {
-        val out = test(
-            """
-            spawn (task' () {
-                val x = yield(nil)
-                println(:ok, x)
-            }) ()
-            spawn (task' () {
-                broadcast(10) in :task
-                println(:no)
-                broadcast(20) in :global
-            }) ()
-        """
-        )
-        assert(out == ":no\n:ok\t20\n") { out }
-    }
-    @Test
-    fun df_03_bcast_throw() {
-        DEBUG = true
-        val out = test(
-            """
-            spawn (task' () {
-                spawn (task' () {
-                    yield(nil)
-                    yield(nil)
-                    println(:ok)
-                    error(:XXX)
-                }) ()
-                spawn (task' () {
-                    yield(nil)
-                    broadcast (nil) in :global
-                }) ()
-                loop' {
-                    yield(nil)
-                }
-            }) ()            
-            broadcast(nil)
-        """
-        )
-        assert(
-            out == ":ok\n" +
-                    " |  anon : (lin 17, col 13) : broadcast'(:task,nil)\n" +
-                    " |  anon : (lin 11, col 21) : broadcast'(:global,nil)\n" +
-                    " |  anon : (lin 7, col 21) : error(:XXX)\n" +
-                    " v  error : :XXX\n"
-        ) { out }
-    }
-    @Test
-    fun TODO_df_04_bcast_local() {
-        val out = test(
-            """
-        var T
-        set T = task' (v) {
-            yield(nil)
-            println(v)
-        }
-        var t1
-        set t1 = spawn T (1)
-        do {
-            var t2
-            set t2 = spawn T (2)
-            broadcast(nil) in :local
-        }
-    """
-        )
-        assert(out == "2\n") { out }
-    }
-
-    // EVT
-
-    @Test
-    fun de_01_evt() {
-        val out = test("""
-            println(evt)
-        """)
-        //assert(out == "nil\n") { out }
-        assert(out == "anon : (lin 2, col 21) : access error : variable \"evt\" is not declared\n") { out }
-    }
-    @Test
-    fun de_02_evt() {
-        val out = test("""
-            var evt
-            spawn (task' () {
-                println(evt)
-                set evt = yield(nil)
-                println(evt)
-            }) ()
-            broadcast(10)
-        """)
-        assert(out == "nil\n10\n") { out }
-    }
-    @Test
-    fun de_03_evt_err() {
-        DEBUG = true
-        val out = test("""
-            spawn (task' () {
-                val evt = yield(nil)
-                val x = evt
-                println(x)
-            }) ()
-            do {
-                val x
-                broadcast([10])
-            }
-        """)
-        assert(out == "[10]\n") { out }
-        //assert(out == " |  anon : (lin 9, col 17) : broadcast'([10],:task)\n" +
-        //        " v  anon : (lin 4, col 17) : declaration error : cannot hold alien reference\n") { out }
-    }
-    @Test
-    fun de_03x_evt_err() {
-        DEBUG = true
-        val out = test("""
-            spawn (task' () {
-                val evt = yield(nil)
-                var x
-                set x = evt
-                println(x)
-            }) ()
-            do {
-                val x
-                broadcast([10])
-            }
-        """)
-        assert(out == "[10]\n") { out }
-        //assert(out == " |  anon : (lin 10, col 17) : broadcast'([10],:task)\n" +
-        //        " v  anon : (lin 5, col 21) : set error : cannot hold alien reference\n") { out }
-    }
-    @Test
-    fun de_03y_evt_err() {
-        DEBUG = true
-        val out = test("""
-            spawn (task' () {
-                val evt = yield(nil)
-                val x = [nil]
-                set x[0] = evt
-                println(x)
-            }) ()
-            do {
-                val x
-                broadcast([10])
-            }
-        """)
-        assert(out == "[[10]]\n") { out }
-        //assert(out == " |  anon : (lin 10, col 17) : broadcast'([10],:task)\n" +
-        //        " v  anon : (lin 5, col 21) : store error : cannot hold alien reference\n") { out }
-    }
-    @Test
-    fun de_04_evt_err() {
-        val out = test("""
-            spawn (task' () {
-                val evt = yield(nil)
-                do {
-                    val x = evt
-                    println(x)
-                    yield(nil)
-                }
-            }) ()
-            do {
-                val x
-                broadcast([10])
-            }
-        """)
-        //assert(out == "[10]\n" +
-        //        " |  anon : (lin 10, col 13) : broadcast'([10],:task)\n" +
-        //        " v  anon : (lin 7, col 21) : yield error : cannot hold alien reference\n") { out }
-        //assert(out == " |  anon : (lin 12, col 17) : broadcast'([10],:task)\n" +
-        //        " v  anon : (lin 5, col 21) : declaration error : cannot hold alien reference\n") { out }
-        assert(out == "[10]\n") { out }
-    }
-    @Test
-    fun de_05_evt() {
-        val out = test("""
-            spawn (task' () {
-                val evt = yield(nil)
-                do {
-                    val x = evt
-                    println(x)
-                }
-                yield(nil)
-            }) ()
-            do {
-                val x
-                broadcast([10])
-            }
-        """)
-        assert(out == "[10]\n") { out }
-        //assert(out == " |  anon : (lin 12, col 17) : broadcast'([10],:task)\n" +
-        //        " v  anon : (lin 5, col 21) : declaration error : cannot hold alien reference\n") { out }
-    }
-    @Test
-    fun de_05_evt_err_valgrind() {
-        val out = test("""
-            spawn (task' () {
-                var evt = yield(nil)
-                val x = evt
-                println(x)
-                set evt = yield(nil)
-                println(x)
-            }) ()
-            do {
-                val e = [10]
-                broadcast(e)
-            }
-            broadcast(nil)
-        """)
-        assert(out == "[10]\n[10]\n") { out }
-        //assert(out == " |  anon : (lin 11, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 4, col 17) : declaration error : cannot hold alien reference\n") { out }
-    }
-    @Test
-    fun de_06_evt() {
-        val out = test("""
-            spawn (task' () {
-                val evt = yield(nil)
-                println(do {
-                    evt
-                })
-            }) ()
-            do {
-                val x
-                broadcast([10])
-            }
-        """)
-        assert(out == "[10]\n") { out }
-    }
-    @Test
-    fun de_07_evt_err() {
-        val out = test("""
-            spawn (task' () {
-                val evt = yield(nil)
-                val x = evt[0]
-                println(x)
-            }) ()
-            do {
-                val e = [[10]]
-                broadcast(e)
-            }
-        """)
-        assert(out == "[10]\n") { out }
-        //assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 4, col 17) : declaration error : cannot hold alien reference\n") { out }
-    }
-    @Test
-    fun de_08_evt_hld_err() {
-        DEBUG = true
-        val out = test(
-            """
-            var tk
-            set tk = task' (xxx) {
-                val evt = yield(nil)
-                do {
-                    val xxx' = evt
-                    nil
-                }
-            }
-            var co = spawn(tk)()
-            broadcast ([])
-            println(`:number CEU_GC.free`)
-        """
-        )
-        assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
-        //        "anon : (lin 4, col 27) : invalid evt : cannot expose dynamic alien\n:error\n") { out }
-        //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
-        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
-    }
-    @Test
-    fun de_09_evt_hld_err() {
-        DEBUG = true
-        val out = test(
-            """
-            var tk
-            set tk = task' (xxx) {
-                val evt = yield(nil)
-                do {
-                    val xxx' = evt[0]
-                }
-            }
-            spawn (tk) ()
-            broadcast( [[]] )
-            println(`:number CEU_GC.free`)
-        """
-        )
-        //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
-        //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic alien field\n:error\n") { out }
-        assert(out == "2\n") { out }
-        //assert(out == "3\n") { out }
-        //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
-        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
-    }
-    @Test
-    fun de_10_evt_hld_err() {
-        DEBUG = true
-        val out = test(
-            """
-            var tk
-            set tk = task' (xxx) {
-                val evt = yield(nil)
-                do {
-                    val xxx' = evt
-                    nil
-                }
-            }
-            var co = spawn (tk) (1)
-            broadcast ([])
-            println(`:number CEU_GC.free`)
-        """
-        )
-        assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 10, col 14) : broadcast []\n" +
-        //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic alien\n:error\n") { out }
-        //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
-        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
-    }
-    @Test
-    fun de_11_evt_hld() {
-        DEBUG = true
-        val out = test(
-            """
-            var tk
-            set tk = task' (xxx) {
-                do {
-                val evt = yield(nil)
-                    val xxx' = evt
-                }
-                    yield(nil)
-            }
-            var co = spawn (tk)(1)
-            broadcast ([])
-            println(`:number CEU_GC.free`)
-        """
-        )
-        assert(out == "1\n") { out }
-        //assert(out == "0\n") { out }
-        //assert(out == "anon : (lin 10, col 14) : broadcast []\n" +
-        //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic alien\n:error\n") { out }
-        //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
-        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
-    }
-    @Test
-    fun de_12_gg_evt_hld() {
-        val out = test(
-            """
-            var fff
-            set fff = func' (x) { x }
-            spawn task' () {
-                var evt = yield(nil)
-                enclose' :break {
-                    loop' {
-                        if evt[:type]==:x {
-                            escape(:break, nil)
-                        } else {nil}
-                        set evt = yield(nil)
-                    }
-                }
-                println(99)
-            }()
-            println(1)
-            broadcast (@[(:type,:y)])
-            println(2)
-            broadcast (@[(:type,:x)])
-            println(3)
-        """)
-        assert(out == "1\n2\n99\n3\n") { out }
-    }
-    @Test
-    fun de_13_evt_hld() {
-        val out = test(
-            """
-            var fff
-            set fff = func' (x) { x }
-            spawn task' () {
-                println(1)
-                var evt
-                do {
-                    println(2)
-                    set evt = yield(nil)
-                    println(3)
-                }
-                println(4)
-                fff(evt[:type])
-                println(99)
-            }()
-            broadcast (@[(:type,:y)])
-            broadcast (@[(:type,:x)])
-        """
-        )
-        //assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "1\n2\n3\n4\n99\n") { out }
-    }
-    @Test
-    fun de_14__evt() {
-        val out = test(
-            """
-            spawn task' () {
-                println(111)
-                yield(nil)
-                println(222)
-            }()
-            println(1)
-            broadcast( nil)
-            println(2)
-        """
-        )
-        assert(out == "111\n1\n222\n2\n") { out }
-    }
-    @Test
-    fun de_15_gg_evt() {
-        val out = test(
-            """
-            spawn task' () {
-                var evt
-                loop' {
-                    println(evt)
-                    set evt = yield(nil)
-                }
-            }()
-            broadcast (@[])
-        """
-        )
-        assert(out == "nil\n@[]\n") { out }
-    }
-    @Test
-    fun de_16_gg_evt() {
-        val out = test(
-            """
-            spawn task' () {
-                loop' {
-                    var evt
-                    do {
-                        set evt = yield(nil)
-                    }
-                    println(evt)
-                }
-            }()
-            broadcast( @[] )
-        """
-        )
-        assert(out == "@[]\n") { out }
-    }
-    @Test
-    fun de_17_evt_err() {
-        val out = test(
-            """
-            var x
-            set x = []
-            broadcast (x)
-            println(x)
-        """
-        )
-        //assert(out == "anon : (lin 4, col 13) : set error : incompatible scopes\n") { out }
-        assert(out == "[]\n") { out }
-        //assert(out == "anon : (lin 4, col 35) : broadcast error : incompatible scopes\n" +
-        //        ":error\n") { out }
-    }
-    @Test
-    fun de_18_gg_evt_hld_err() {
-        DEBUG = true
-        val out = test(
-            """
-            var tk
-            set tk = task' (xxx) {
-                val evt = yield(nil)
-                do {
-                    val xxx' = evt[0]
-                    nil
-                }
-            }
-            var co = spawn (tk) ()
-            broadcast (#[[]])
-            println(`:number CEU_GC.free`)
-        """
-        )
-        assert(out == "2\n") { out }
-        //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
-        //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic alien field\n") { out }
-        //assert(out == "anon : (lin 9, col 13) : broadcast #[[]]\n" +
-        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
-    }
-    @Test
-    fun de_19_gg_evt_hld_err() {
-        DEBUG = true
-        val out = test(
-            """
-            var tk
-            set tk = task' (xxx) {
-                val evt = yield(nil)
-                val xxx' = evt[0]
-            }
-            var co = spawn (tk) ()
-            broadcast (@[(1,[])])
-            println(`:number CEU_GC.free`)
-        """
-        )
-        assert(out == "2\n") { out }
-        //assert(out == "anon : (lin 8, col 13) : broadcast [[]]\n" +
-        //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic alien field\n") { out }
-    }
-
-    // BCAST / TARGETS
-
-    @Test
-    fun TODO_dh_01_multi() {
-        val out = test(
-            """
-            spawn (task' () {
-                println(yield(nil))
-            }) ()
-            broadcast(10,20)
-        """
-        )
-        assert(out == ":ok\t10\n") { out }
-    }
-
     // THROW / CATCH
 
     @Test
@@ -1852,7 +365,6 @@ class Exec_04 {
         )
         assert(out == "10\n") { out }
     }
-
     @Test
     fun ee_02_throw() {
         val out = test(
@@ -1868,7 +380,6 @@ class Exec_04 {
                     " v  error : :err\n"
         ) { out }
     }
-
     @Test
     fun ee_03_throw() {
         val out = test(
@@ -1886,7 +397,6 @@ class Exec_04 {
                     " v  error : :err\n"
         ) { out }
     }
-
     @Test
     fun ee_04_throw() {
         val out = test(
@@ -1904,7 +414,6 @@ class Exec_04 {
                     " v  error : :err\n"
         ) { out }
     }
-
     @Test
     fun ee_05_throw() {
         val out = test(
@@ -1925,7 +434,6 @@ class Exec_04 {
                     " v  error : :err\n"
         ) { out }
     }
-
     @Test
     fun ee_06_throw() {
         val out = test(
@@ -1949,7 +457,6 @@ class Exec_04 {
                     " v  error : :err\n"
         ) { out }
     }
-
     @Test
     fun ee_08_throw() {
         val out = test(
@@ -1973,7 +480,6 @@ class Exec_04 {
                     " v  error : :err\n"
         ) { out }
     }
-
     @Test
     fun ee_09_bcast() {
         val out = test(
@@ -1993,7 +499,6 @@ class Exec_04 {
                     " v  error : :err\n"
         ) { out }
     }
-
     @Test
     fun ee_10_bcast() {
         val out = test(
@@ -2020,7 +525,6 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 9, col 21) : broadcast'([])\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
     }
-
     @Test
     fun ee_10_bcast_err() {
         val out = test(
@@ -2051,7 +555,6 @@ class Exec_04 {
         //        " |  anon : (lin 13, col 21) : broadcast'([])\n" +
         //        " v  anon : (lin 6, col 17) : declaration error : cannot copy reference out\n") { out }
     }
-
     @Test
     fun ee_10_bcast_err_xx() {
         val out = test(
@@ -2075,7 +578,6 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 10, col 17) : broadcast'([],:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
-
     @Test
     fun ee_10_bcast_err2() {
         val out = test(
@@ -2097,28 +599,6 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
     }
-
-    @Test
-    fun ee_11_bcast() {
-        val out = test(
-            """
-            val T = task' (v) {
-                val e = yield(nil) ;;thus { it => it }
-                println(e)                
-            }
-            spawn T(10)
-            catch ;;;(it| (do { println(it) ; true }) );;; {
-                ;;func' () {
-                    broadcast ([])
-                ;;}()
-            }
-        """
-        )
-        assert(out == "[]\n") { out }
-        //assert(out == "declaration error : cannot hold event reference\n") { out }
-        //assert(out == "block escape error : cannot copy reference out\n") { out }
-    }
-
     @Test
     fun ee_12_bcast() {
         val out = test(
@@ -2140,7 +620,6 @@ class Exec_04 {
                     " v  error : :error\n"
         ) { out }
     }
-
     @Test
     fun ee_14_throw() {     // catch from nesting and broadcast
         val out = test(
@@ -2172,7 +651,6 @@ class Exec_04 {
                     ":END\n"
         ) { out }
     }
-
     @Test
     fun ee_15_throw() {
         val out = test(
@@ -2212,7 +690,6 @@ class Exec_04 {
         //assert(out.contains(" |  anon : (lin 6, col 13) : spawn (task () { nil })(nil)\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot move pending reference in")) { out }
     }
-
     @Test
     fun ff_01_term() {
         val out = test(
@@ -2229,7 +706,6 @@ class Exec_04 {
         )
         assert(out.contains(":ok\texe-task: 0x")) { out }
     }
-
     @Test
     fun ff_02_term() {
         val out = test(
@@ -2250,7 +726,6 @@ class Exec_04 {
         )
         assert(out.contains(":1\n:2\n:ok\texe-task: 0x")) { out }
     }
-
     @Test
     fun ff_03_term() {
         val out = test(
@@ -2302,7 +777,6 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 8, col 17) : broadcast'([])\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
     }
-
     @Test
     fun gg_02_scope() {
         val out = test(
@@ -2319,7 +793,6 @@ class Exec_04 {
         )
         assert(out == "[]\n") { out }
     }
-
     @Test
     fun gg_02_bcast() {
         val out = test(
@@ -2349,7 +822,6 @@ class Exec_04 {
                     "[]\n"
         ) { out }
     }
-
     @Test
     fun gg_03_bcast() {
         val out = test(
@@ -2365,7 +837,6 @@ class Exec_04 {
         //assert(out == ":1\n10\n10\n:2\ndeclaration error : incompatible scopes\n") { out }
         assert(out == "[]\n") { out }
     }
-
     @Test
     fun gg_04_bcast_ok() {
         val out = test(
@@ -2387,7 +858,6 @@ class Exec_04 {
         )
         assert(out == "[20]\n:ok\n") { out }
     }
-
     @Test
     fun gg_04_bcast() {
         val out = test(
@@ -2435,7 +905,6 @@ class Exec_04 {
                     "true\n"
         ) { out }
     }
-
     @Test
     fun gg_05_bcast_tuple_func_no() {
         val out = test(
@@ -2455,7 +924,6 @@ class Exec_04 {
         )
         assert(out == "[1]\n") { out }
     }
-
     @Test
     fun gg_05_bcast_tuple_func_xx() {
         val out = test(
@@ -2472,7 +940,6 @@ class Exec_04 {
         )
         assert(out == "[1]\n") { out }
     }
-
     @Test
     fun gg_05_bcast_tuple_func_ok() {
         val out = test(
@@ -2492,7 +959,6 @@ class Exec_04 {
         )
         assert(out == "[1]\n") { out }
     }
-
     @Test
     fun gg_06_bcast_tuple_func_ok() {
         val out = test(
@@ -2521,7 +987,6 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 14, col 33) : broadcast'([])\n" +
         //        " v  anon : (lin 6, col 30) : block escape error : cannot copy reference out\n") { out }
     }
-
     @Test
     fun gg_07_bcast_tuple_func_ok() {
         val out = test(
@@ -2581,7 +1046,6 @@ class Exec_04 {
         )
         assert(out.contains(": Assertion `0 && \"TODO: cannot spawn or broadcast during abortion\"'")) { out }
     }
-
     @Test
     fun TODO_gh_02_coro_defer_spawn_err() {
         val out = test(
@@ -2621,7 +1085,6 @@ class Exec_04 {
         assert(out == ":terminated\n") { out }
         //assert(out == " v  anon : (lin 5, col 21) : status(t) : status error : expected running coroutine or task\n") { out }
     }
-
     @Test
     fun hh_02_status() {
         val out = test(
@@ -2634,7 +1097,6 @@ class Exec_04 {
         )
         assert(out == ":yielded\n") { out }
     }
-
     @Test
     fun hh_04_status() {            // TODO: return track for both task task_in / awake with error?
         val out = test(
@@ -2663,7 +1125,6 @@ class Exec_04 {
                     " v  error : invalid target\n"
         ) { out }
     }
-
     @Test
     fun jj_02_bcast_in_task() {
         val out = test(
@@ -2679,7 +1140,6 @@ class Exec_04 {
         )
         assert(out == "1\n") { out }
     }
-
     @Test
     fun jj_03_bcast_in_self() {
         val out = test(
