@@ -76,6 +76,18 @@ class Exec_04 {
         //assert(out == "anon : (lin 2, col 13) : task error : missing enclosing task") { out }
         assert(out == "anon : (lin 2, col 18) : expected \"(\" : have \".\"\n") { out }
     }
+    @Test
+    fun ll_10_nested() {
+        val out = test(
+            """
+            spawn (task' () :X {
+                set pub.x = nil
+            }) ()
+            println(:ok)
+        """
+        )
+        assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared\n") { out }
+    }
 
     // ALIEN SCOPE
     @Test
@@ -1655,206 +1667,7 @@ class Exec_04 {
         assert(out == "20\n") { out }
     }
 
-    // NESTED
-
-    @Test
-    fun ll_01_nested() {
-        val out = test(
-            """
-            spawn (task' () {
-                val v = 10
-                spawn( task' () {
-                    println(v)
-                }) ()
-                yield(nil) ;;thus { it => nil }
-            }) ()
-        """
-        )
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun ll_02_nested() {
-        val out = test(
-            """
-            val F = func' () {
-                val v = 10
-                val f = func' () {
-                    v
-                }
-                f()
-            }
-            println(F())
-        """
-        )
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun ll_05_nested() {
-        val out = test(
-            """
-            spawn( task' () {
-                val t = []
-                spawn (task' () {
-                    yield(nil) ;;thus { it => nil }
-                    println(t)
-                }) ()
-                yield(nil)
-                nil
-            }) ()
-            coroutine(coro' () { nil })
-            broadcast(nil)
-       """
-        )
-        assert(out == "[]\n") { out }
-    }
-    @Test
-    fun ll_06_upv() {
-        val out = test(
-            """
-            do {
-                val v = 10
-                 spawn (task' () {
-                    println(v)
-                }) ()
-            }
-        """
-        )
-        //assert(out == "anon : (lin 5, col 29) : access error : cannot access local across coro or task\n") { out }
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun ll_07_task_up_task() {
-        val out = test(
-            """
-            spawn (task' () {
-                do {
-                    spawn (task' () {
-                        yield(nil)
-                    }) ()
-                    yield(nil)
-                    nil
-                }
-                broadcast([])
-            })()
-            broadcast(nil)
-            println(:ok)
-        """
-        )
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun ll_10_nested() {
-        val out = test(
-            """
-            spawn (task' () :X {
-                set pub.x = nil
-            }) ()
-            println(:ok)
-        """
-        )
-        assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared\n") { out }
-    }
-    @Test
-    fun ll_11_nested() {
-        val out = test("""
-            spawn (task' () {
-                val fff = func' () {
-                    println(:ok)
-                }
-                val T = task' () {
-                    fff()
-                }
-                yield(nil)
-                spawn T()
-                yield(nil)
-            }) ()
-            broadcast(nil)
-        """)
-        assert(out == ":ok\n") { out }
-    }
-
-    // NESTED / FAKE / BCAST / THROW
-
-    @Test
-    fun lm_01_bcast_err() {
-        val out = test("""
-            broadcast(nil) in :task
-            println(:ok)
-        """)
-        //assert(out == "anon : (lin 2, col 26) : broadcast error : invalid target\n:error\n") { out }
-        assert(out == ":ok\n") { out }
-    }
-
     // ABORTION
-
-    @Test
-    fun mm_00a_abortion() {
-        val out = test(
-            """
-            spawn (task' () {
-                spawn (task' () {
-                    nil
-                } )()
-            } )()
-            println(:ok)
-       """
-        )
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun mm_00b_abortion() {
-        val out = test(
-            """
-            spawn (task' () {
-                spawn (task' () {
-                    defer {
-                        println(:defer)
-                    }
-                } )()
-            } )()
-       """
-        )
-        assert(out == ":defer\n") { out }
-    }
-    @Test
-    fun mm_00c_abortion() {
-        val out = test(
-            """
-            spawn (task' () {
-                spawn (task' () {
-                    defer {
-                        println(:defer)
-                    }
-                    yield(nil)
-                } )()
-                nil
-            } )()
-       """
-        )
-        assert(out == ":defer\n") { out }
-    }
-    @Test
-    fun mm_01_abortion() {
-        val out = test(
-            """
-            spawn (task' () {
-                println(:1)
-                do {
-                    println(:2)
-                    spawn (task' () {
-                        defer {
-                            println(:defer)
-                        }
-                        yield(nil)
-                    } )()
-                    println(:3)
-                }
-                println(:4)
-            } )()
-       """
-        )
-        assert(out == ":1\n:2\n:3\n:defer\n:4\n") { out }
-    }
 
     @Test
     fun mm_02_abortion() {
@@ -1884,7 +1697,6 @@ class Exec_04 {
         )
         assert(out == ":1\n:2\n:3\n:defer\n:2\n:3\n:defer\n:4\n") { out }
     }
-
     @Test
     fun mm_03_self() {
         val out = test(
@@ -1902,7 +1714,6 @@ class Exec_04 {
         )
         assert(out == ":ok\n") { out }
     }
-
     @Test
     fun mm_04_self() {
         val out = test(
@@ -1932,7 +1743,6 @@ class Exec_04 {
         )
         assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
     }
-
     @Test
     fun mm_04a_self() {
         val out = test(
@@ -1962,7 +1772,6 @@ class Exec_04 {
         )
         assert(out == ":ok\n") { out }
     }
-
     @Test
     fun mm_04b_self() {
         val out = test(
@@ -1991,7 +1800,6 @@ class Exec_04 {
         )
         assert(out == ":0\n:1\n:2\n:3\n:4\n:5\n:6\n") { out }
     }
-
     @Test
     fun mm_05_defer() {
         val out = test(
@@ -2006,7 +1814,6 @@ class Exec_04 {
         )
         assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing defer\n") { out }
     }
-
     @Test
     fun mm_06_bcast_term() {
         val out = test(
@@ -2035,7 +1842,6 @@ class Exec_04 {
         )
         assert(out == ":1\n:2\n:3\n:a\n:b\n:ok\n") { out }
     }
-
     @Test
     fun mm_06x_bcast_term() {
         val out = test(
@@ -2059,7 +1865,6 @@ class Exec_04 {
         )
         assert(out == ":ok\n") { out }
     }
-
     @Test
     fun mm_07_bcast_term() {
         val out = test(
@@ -2081,7 +1886,6 @@ class Exec_04 {
         )
         assert(out == ":A\ntrue\n:C\n:ok\n") { out }
     }
-
     @Test
     fun mm_08_defer_loop() {
         val out = test(
