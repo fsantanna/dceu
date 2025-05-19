@@ -31,7 +31,7 @@ class Parser_50 {
     @Test
     fun aa_03_task_err() {
         val l = lexer("""
-            task' :xxx () {}
+            func :xxx () {}
         """.trimIndent())
         val parser = Parser(l)
         //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid task : unexpected \":xxx\"")
@@ -39,10 +39,10 @@ class Parser_50 {
     }
     @Test
     fun aa_04_task() {
-        val l = lexer("task' (a,b) :nested { 10 }")
+        val l = lexer("func (a,b) :nested { 10 }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "(task' (a,b) :nested {\n10;\n})") { e.to_str() }
+        assert(e.to_str() == "(func (a,b) :nested {\n10;\n})") { e.to_str() }
     }
 
 }

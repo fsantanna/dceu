@@ -36,8 +36,8 @@ class Lexer_01 {
         assert(tks.next().let { it is Tk.Nat && it.pos.lin==1 && it.pos.col==1 && it.str==" abc " })
         assert(tks.next().let { it is Tk.Nat && it.pos.lin==2 && it.pos.col==1 && it.str=="{ijk}" })
         assert(tks.next().let { it is Tk.Nat && it.pos.lin==3 && it.pos.col==1 && it.str==" {i\$jk} " })
-        //println(tks.next())
-        assert(trap { tks.next() } == "anon : (lin 4, col 10) : native error : expected \"`\"")
+        //print(tks.next())
+        assert(trap { tks.next() } == "anon : (lin 4, col 10) : native throw : expected \"`\"")
     }
     @Test
     fun ff_03_ops() {
@@ -63,33 +63,33 @@ class Lexer_01 {
     fun gg_02_chr_err() {
         val l = lexer("'x")
         val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 3) : char error : expected '")
+        assert(trap { tks.next() } == "anon : (lin 1, col 3) : char throw : expected '")
     }
     @Test
     fun gg_03_chr_err() {
         val l = lexer("'\\'")
         val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 4) : char error : expected '")
+        assert(trap { tks.next() } == "anon : (lin 1, col 4) : char throw : expected '")
     }
     @Test
     fun gg_04_chr_err() {
         val l = lexer("'\\n")
         val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 4) : char error : expected '")
+        assert(trap { tks.next() } == "anon : (lin 1, col 4) : char throw : expected '")
     }
     @Test
     fun gg_06_chr() {
         val l = lexer("\"\\\\\"")
         val tks = l.lex().iterator()
         assert(tks.next().let { it.str=="#["})
-        println(tks.next().let { it.str=="\\" })
+        print(tks.next().let { it.str=="\\" })
         assert(tks.next().let { it.str=="]"})
     }
     @Test
     fun gg_07_chr() {
         val l = lexer("\"\\\"")
         val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 1) : string error : unterminated \"")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : string throw : unterminated \"")
     }
     @Test
     fun gg_08_chr() {

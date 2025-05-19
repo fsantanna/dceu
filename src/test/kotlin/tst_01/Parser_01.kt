@@ -37,7 +37,7 @@ class Parser_01 {
         """.trimIndent()
         )
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 3, col 1) : native error : expected \"``\"")
+        assert(trap { parser.expr() } == "anon : (lin 3, col 1) : native throw : expected \"``\"")
     }
     @Test
     fun native3_err() {
@@ -48,7 +48,7 @@ class Parser_01 {
         """
         )
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 4, col 9) : native error : expected \"``\"")
+        assert(trap { parser.expr() } == "anon : (lin 4, col 9) : native throw : expected \"``\"")
     }
     @Test
     fun native4_err() {
@@ -58,7 +58,7 @@ class Parser_01 {
         """.trimIndent()
         )
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : tag error : expected identifier")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : tag throw : expected identifier")
     }
     @Test
     fun native5() {
@@ -163,7 +163,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.to_str() == "do {\n1;\n};\nnil;\n") { e.to_str() }
-        //assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : expression error : innocuous expression")
+        //assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : expression throw : innocuous expression")
     }
     @Test
     fun yy_02_innoc() {
@@ -173,12 +173,12 @@ class Parser_01 {
                 set x = [0]
                 x   ;; escape but no access
             }
-            println(1)
+            print(1)
         """)
         val parser = Parser(l)
         val e = parser.exprs()
         //assert(e.tostr() == "do { 1; };\nnil;\n") { e.tostr() }
-        //assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : expression error : innocuous expression")
+        //assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : expression throw : innocuous expression")
     }
     @Test
     fun yy_03_innoc() {
@@ -192,6 +192,6 @@ class Parser_01 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        //assert(trap { parser.exprs() } == "anon : (lin 3, col 17) : expression error : innocuous expression")
+        //assert(trap { parser.exprs() } == "anon : (lin 3, col 17) : expression throw : innocuous expression")
     }
 }

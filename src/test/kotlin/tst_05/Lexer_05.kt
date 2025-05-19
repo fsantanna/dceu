@@ -11,10 +11,10 @@ class Lexer_05 {
     @Test
     fun aa_01_ids() {
         val l =
-            lexer("task' broadcast in as tasks track detrack")
+            lexer("func emit in as tasks track detrack")
         val tks = l.lex().iterator()
-        assert(tks.next().let { it is Tk.Fix && it.str == "task'" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "broadcast" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "func" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "emit" })
         assert(tks.next().let { it is Tk.Fix && it.str == "in" })
         assert(tks.next().let { it is Tk.Id  && it.str == "as" })
         assert(tks.next().let { it is Tk.Fix && it.str == "tasks" })

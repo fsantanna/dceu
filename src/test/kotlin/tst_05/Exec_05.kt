@@ -13,26 +13,26 @@ class Exec_05 {
     @Test
     fun aa_01_tasks() {
         val out = test("""
-            println(tasks())
+            print(tasks())
         """)
         assert(out.contains("tasks: 0x")) { out }
     }
     @Test
     fun aa_02_tasks() {
         val out = test("""
-            println(type(tasks()))
+            print(type(tasks()))
         """)
         assert(out.contains(":tasks")) { out }
     }
     @Test
     fun aa_03_tasks() {
         val out = test("""
-            val T = task' () {
-                println(:in)
+            val T = func () {
+                print(:in)
             }
             val ts = tasks()
             spawn T() in ts
-            println(:out)
+            print(:out)
         """)
         assert(out == ":in\n:out\n") { out }
     }
@@ -40,7 +40,7 @@ class Exec_05 {
     fun aa_03x_tasks() {
         val out = test("""
             tasks()
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -50,76 +50,76 @@ class Exec_05 {
             do {
                 tasks()
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
     @Test
     fun aa_04_tasks() {
         val out = test("""
-            spawn (task' () { println(:in) })() in tasks()
-            println(:out)
+            spawn (func () { print(:in) })() in tasks()
+            print(:out)
         """)
         assert(out == ":in\n:out\n") { out }
     }
     @Test
     fun aa_05_tasks() {
         val out = test("""
-            val T = task' () {
-                yield(nil)
-                println(:in)
+            val T = func () {
+                await(true)
+                print(:in)
             }
             val ts = tasks()
             spawn T() in ts
-            println(:out)
-            broadcast(nil)
+            print(:out)
+            emit(true)
         """)
         assert(out == ":out\n:in\n") { out }
     }
     @Test
     fun aa_06_tasks() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 nil
             }
             val ts = tasks(1)
             val ok1 = spawn T() in ts 
             val ok2 = spawn T() in ts
-            println(ok1, ok2)
+            print(ok1, ok2)
         """)
         assert(out.contains(Regex("exe-task: 0x.*nil\n"))) { out }
     }
     @Test
     fun aa_07_tasks() {
         val out = test("""
-            val T = task' () {
-                yield(nil) ;;thus { it => nil }
+            val T = func () {
+                await(true)
             }
             val ts = tasks()
             val ok = spawn T() in ts
-            println(ok)
+            print(ok)
         """)
         assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun aa_08_tasks() {
         val out = test("""
-            val T = task' () {
-                yield(nil)
+            val T = func () {
+                await(true)
             }
             val ts = tasks(1)
             val t1 = spawn T() in ts
             val t2 = spawn T() in ts
-            println(t1, t2)
+            print(t1, t2)
         """)
         assert(out.contains(Regex("exe-task: 0x.*nil\n"))) { out }
     }
     @Test
     fun aa_09_gc() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 set pub = []
-                yield(nil) ;;thus { it=>nil }
+                await(true) ;;thus { it=>nil }
                 nil
             }
             val ts = tasks(1)
@@ -127,21 +127,21 @@ class Exec_05 {
                 spawn T() in ts
                 spawn T() in ts
                 spawn T() in ts
-                broadcast([])
+                emit([])
                 spawn T() in ts
                 spawn T() in ts
                 spawn T() in ts
-                broadcast([])
+                emit([])
                 spawn T() in ts
                 spawn T() in ts
                 spawn T() in ts
-                broadcast([])
+                emit([])
                 spawn T() in ts
                 spawn T() in ts
                 spawn T() in ts
                 spawn T() in ts
-                broadcast([])
-                println(:ok)
+                emit([])
+                print(:ok)
             }
         """)
         assert(out == ":ok\n") { out }
@@ -149,7 +149,7 @@ class Exec_05 {
     @Test
     fun aa_10_tasks() {
         val out = test("""
-            println(tasks() == nil)
+            print(tasks() == nil)
         """)
         assert(out == "false\n") { out }
     }
@@ -157,7 +157,7 @@ class Exec_05 {
     fun aa_11_spawn() {
         val out = test("""
             $PLUS
-            val T = task' (v) { nil }
+            val T = func (v) { nil }
             val ts = tasks()
             var x = 0
             enclose' :break {
@@ -169,7 +169,7 @@ class Exec_05 {
                     } else {nil}
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
         //assert(out.contains("ceu_gc_inc_dyn: Assertion `dyn->Any.refs < 255'")) { out }
@@ -179,17 +179,17 @@ class Exec_05 {
         val out = test("""
             var ts
             set ts = tasks()
-            println(type(ts))
+            print(type(ts))
             var T
-            set T = task' (v) {
-                println(v)
-                val evt = yield(nil)
-                println(evt)
+            set T = func (v) {
+                print(v)
+                val evt = await(true)
+                print(evt)
             }
             do {
                 spawn T(1) in ts
             }
-             broadcast(2)
+             emit(2)
         """)
         assert(out == ":tasks\n1\n2\n") { out }
     }
@@ -197,15 +197,15 @@ class Exec_05 {
     fun aa_13_pool_leak() {
         val out = test("""
             var T
-            set T = task' () {
+            set T = func () {
                 ;;;do;;; [1,2,3]
-                yield(nil)
+                await(true)
             }
             var ts
             set ts = tasks()
             spawn T(1) in ts
             spawn T(2) in ts
-            println(1)
+            print(1)
         """)
         assert(out == "1\n") { out }
     }
@@ -213,17 +213,17 @@ class Exec_05 {
     fun aa_14_pool_defer() {
         val out = test("""
             var T
-            set T = task' (v) {
+            set T = func (v) {
                 defer {
-                    println(v)
+                    print(v)
                 }
-                yield(nil)
+                await(true)
             }
             var ts
             set ts = tasks()
             spawn T(1) in ts
             spawn T(2) in ts
-            println(0)
+            print(0)
         """)
         assert(out == "0\n1\n2\n") { out }
     }
@@ -234,14 +234,14 @@ class Exec_05 {
                 var ts
                 set ts = tasks()
                 var T
-                set T = task' (v) {
-                    println(v)
-                    val v' = yield(nil)
-                    println(v')
+                set T = func (v) {
+                    print(v)
+                    val v' = await(true)
+                    print(v')
                 }
                 spawn T(1) in ts
             }
-             broadcast(2)
+             emit(2)
         """)
         assert(out == "1\n") { out }
     }
@@ -249,13 +249,13 @@ class Exec_05 {
     fun aa_16_pool_leak() {
         val out = test("""
             var T
-            set T = task' () {
-                yield(nil)
+            set T = func () {
+                await(true)
             }
             var ts
             set ts = tasks()
             spawn T() in ts
-            println(1)
+            print(1)
         """)
         assert(out == "1\n") { out }
     }
@@ -266,11 +266,11 @@ class Exec_05 {
             var ts
             set ts = tasks(2)
             var T
-            set T = task' (v) {
-                println(10)
+            set T = func (v) {
+                print(10)
                 defer {
-                    println(20)
-                    println(30)
+                    print(20)
+                    print(30)
                 }
                 do {
                     var ok1
@@ -280,25 +280,25 @@ class Exec_05 {
                             if ok1 {
                                 escape(:break,nil)
                             } else {nil}
-                            val evt = yield(nil) if type(evt)/=:exe-task { set ok1=true } else { nil } }
+                            val evt = await(true) if type(evt)/=:exe-task { set ok1=true } else { nil } }
                         }
                     }
-                ;;yield(nil)
+                ;;await(true)
                 if v {
                     do { var ok; set ok=false; enclose' :break { loop' { if ok {escape(:break,nil)} else {nil}  ; val evt=yield(nil;) if type(evt)/=:exe-task { set ok=true } else { nil } } } }
-                    ;;yield(nil)
+                    ;;await(true)
                 } else {
                     nil
                 }
             }
-            println(0)
+            print(0)
             spawn T(false) in ts 
             spawn T(true) in ts
-            println(1)
-            broadcast(@[])
-            println(2)
-            broadcast(@[])
-            println(3)
+            print(1)
+            emit(@[])
+            print(2)
+            emit(@[])
+            print(3)
         """
         )
         assert(out == "0\n10\n10\n1\n20\n30\n2\n20\n30\n3\n") { out }
@@ -310,29 +310,29 @@ class Exec_05 {
             var ts
             set ts = tasks(2)
             var T
-            set T = task' (v) {
+            set T = func (v) {
                 defer {
-                    println(v)
+                    print(v)
                 }
                 catch :ok ;;;(err|err==:ok);;; {
-                    spawn task' () {
-                        yield(nil)
+                    spawn func () {
+                        await(true)
                         if v == 1 {
-                            error(:ok)
+                            throw(:ok)
                         } else {
                             nil
                         }
-                        loop' { yield(nil) }
+                        loop' { await(true) }
                     } ()
-                    loop' { yield(nil) }
+                    loop' { await(true) }
                 }
-                println(v)
+                print(v)
             }
             spawn T(1) in ts
             spawn T(2) in ts
-            broadcast(nil)
-            broadcast(nil)
-            println(999)
+            emit(true)
+            emit(true)
+            print(999)
         """
         )
         assert(out == "1\n1\n999\n2\n") { out }
@@ -344,29 +344,29 @@ class Exec_05 {
             var ts
             set ts = tasks(2)
             var T
-            set T = task' (v) {
+            set T = func (v) {
                 defer {
-                    println(v)
+                    print(v)
                 }
                 catch :ok ;;;(err|err==:ok);;; {
-                    spawn task' () {
-                        yield(nil)
+                    spawn func () {
+                        await(true)
                         if v == 2 {
-                            error(:ok)
+                            throw(:ok)
                         } else {
                             nil
                         }
-                        loop' { yield(nil) }
+                        loop' { await(true) }
                     } ()
-                    loop' { yield(nil) }
+                    loop' { await(true) }
                 }
-                println(v)
+                print(v)
             }
             spawn T(1) in ts
             spawn T(2) in ts
-            broadcast(nil)
-            broadcast(nil)
-            println(999)
+            emit(true)
+            emit(true)
+            print(999)
         """
         )
         assert(out == "2\n2\n999\n1\n") { out }
@@ -375,23 +375,23 @@ class Exec_05 {
     fun aa_20_pub_tasks_tup() {
         val out = test("""
             val tup = []
-            val T = task' () {
+            val T = func () {
                 set ;;;task.;;;pub = tup
-                yield(nil)
+                await(true)
             }
             val ts = tasks()
             spawn T() in ts
             spawn T() in ts
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
     @Test
     fun aa_21_pub_pool_err() {
         val out = test("""
-            var T = task' () {
+            var T = func () {
                 set ;;;task.;;;pub = [10]
-                yield(nil)
+                await(true)
             }
             var ts = tasks()
             spawn T() in ts
@@ -403,15 +403,15 @@ class Exec_05 {
                         escape(:break,nil)
                     } else { nil }
                     var x = ;;;detrack;;;(t).pub
-                    broadcast (nil) in ;;;detrack;;;(t)
-                    println(x)
+                    emit (nil) in ;;;detrack;;;(t)
+                    print(x)
                 }
             }
-            println(999)
+            print(999)
         """)
         assert(out == "[10]\n999\n") { out }
-        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
-        //assert(out == "anon : (lin 9, col 17) : declaration error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:throw\n") { out }
+        //assert(out == "anon : (lin 9, col 17) : declaration throw : incompatible scopes\n:throw\n") { out }
     }
 
     // TASKS / lims
@@ -424,7 +424,7 @@ class Exec_05 {
         """
         )
         assert(out == " |  anon : (lin 2, col 13) : tasks(0)\n" +
-                " v  error : expected positive number\n") { out }
+                " v  throw : expected positive number\n") { out }
     }
     @Test
     fun ab_02_pool_max_err() {
@@ -434,20 +434,20 @@ class Exec_05 {
         """
         )
         assert(out == " |  anon : (lin 2, col 13) : tasks(false)\n" +
-                " v  error : expected positive number\n") { out }
+                " v  throw : expected positive number\n") { out }
     }
     @Test
     fun BUG_ab_03_pool_max() {  // remove from ts when terminates?
         val out = test(
             """
             var ts = tasks(1)
-            var T = task' () { yield(nil) }
+            var T = func () { await(true) }
             var ok1 = spawn T() in ts
             var ok2 = spawn T() in ts
-            broadcast(nil)
+            emit(true)
             var ok3 = spawn T() in ts
             var ok4 = spawn T() in ts
-            println(ok1, ok2, ok3, ok4)
+            print(ok1, ok2, ok3, ok4)
         """
         )
         assert(out == "true\tfalse\ttrue\tfalse\n") { out }
@@ -459,13 +459,13 @@ class Exec_05 {
             var ts
             set ts = tasks(1)
             var T
-            set T = task' () { yield(nil) }
+            set T = func () { await(true) }
             var ok1
             set ok1 = spawn T() in ts
-            broadcast(nil)
+            emit(true)
             var ok2
             set ok2 = spawn T() in ts
-            println(status(ok1), ok2)
+            print(status(ok1), ok2)
         """
         )
         assert(out == ":terminated\tTODO\n") { out }
@@ -474,15 +474,15 @@ class Exec_05 {
     fun BUG_ab_05_pool_reuse_awake() {
         val out = test(
             """
-            var T = task' (n) {
+            var T = func (n) {
                 set pub = n
-                var evt = yield(nil)
-                ;;println(:awake, evt, n)
+                var evt = await(true)
+                ;;print(:awake, evt, n)
                 loop' {
                     break if evt == n
-                    set evt = yield(nil)
+                    set evt = await(true)
                 }
-                ;;println(:term, n)
+                ;;print(:term, n)
             }
             var ts = tasks(2)
             spawn T(1) in ts
@@ -491,17 +491,17 @@ class Exec_05 {
             loop' {
                 set t = next-tasks(ts, t)
                 break if (if t { false } else { true })
-                println(:t, ;;;detrack;;;(t).pub)
-                ;;println(:bcast1)
-                broadcast( 2 )        ;; opens hole for 99 below
-                ;;println(:bcast2)
+                print(:t, ;;;detrack;;;(t).pub)
+                ;;print(:bcast1)
+                emit( 2 )        ;; opens hole for 99 below
+                ;;print(:bcast2)
                 var ok = spawn T(99) in ts     ;; must not fill hole b/c ts in the stack
-                println(ok)
+                print(ok)
             }
             ;;;
-            println("-=-=-=-")
+            print("-=-=-=-")
             loop in :tasks ts, x {
-                println(:t, detrack(x).pub)
+                print(:t, detrack(x).pub)
             }
             ;;;
         """
@@ -516,10 +516,10 @@ class Exec_05 {
         DEBUG = true
         val out = test("""
             val ts = tasks()
-            println(`:number CEU_GC.free`)
-            spawn (task' () { nil }) () in ts
+            print(`:number CEU_GC.free`)
+            spawn (func () { nil }) () in ts
             nil
-            println(`:number CEU_GC.free`)
+            print(`:number CEU_GC.free`)
         """)
         assert(out == "0\n2\n") { out }
     }
@@ -531,11 +531,11 @@ class Exec_05 {
         val out = test("""
             val ts = tasks()
             do {
-                spawn(task' () {
+                spawn(func () {
                     nil
                 }) () in ts
             }
-            println(:ok)
+            print(:ok)
        """)
         assert(out == ":ok\n") { out }
     }
@@ -544,15 +544,15 @@ class Exec_05 {
         val out = test("""
             val ts = tasks()
             do {
-                val T = task' () {
+                val T = func () {
                     nil
                 }
                 spawn T() in ts
             }
-            println(:ok)
+            print(:ok)
        """)
-        //assert(out == " v  anon : (lin 7, col 17) : spawn error : cannot copy reference out\n") { out }
-        //assert(out == " v  anon : (lin 7, col 17) : spawn error : task pool outlives task prototype\n") { out }
+        //assert(out == " v  anon : (lin 7, col 17) : spawn throw : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 7, col 17) : spawn throw : task pool outlives task prototype\n") { out }
         assert(out == ":ok\n") { out }
     }
     @Test
@@ -560,26 +560,26 @@ class Exec_05 {
         val out = test("""
             do {
                 val ts = tasks()
-                val T = task' () {
+                val T = func () {
                     nil
                 }
                 spawn T() in ts
             }
-            println(:ok)
+            print(:ok)
        """)
         assert(out == ":ok\n") { out }
     }
     @Test
     fun ab_04_tasks_proto() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 nil
             }
             do {
                 val ts = tasks()
                 spawn T() in ts
             }
-            println(:ok)
+            print(:ok)
        """)
         assert(out == ":ok\n") { out }
     }
@@ -587,32 +587,32 @@ class Exec_05 {
     fun ab_05_tasks_proto() {
         val out = test("""
             val ts = tasks()
-            spawn (task' () {
-                spawn (task' () {    ;; anon task is dropped to ts
+            spawn (func () {
+                spawn (func () {    ;; anon task is dropped to ts
                     nil
                 }) () in ts
                 nil
             })()
-            println(:ok)
+            print(:ok)
        """)
         assert(out == ":ok\n") { out }
     }
     @Test
     fun ab_06_tasks_prim() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 defer {
-                    println(:task)
+                    print(:task)
                 }
                 loop' {
-                    yield(nil)
+                    await(true)
                 }
             }
             val f = tasks
             do {
                 spawn T() in f()
             }
-            println(:ok)
+            print(:ok)
        """)
         assert(out == "anon : (lin 11, col 13) : expected \"(\" : have \"do\"\n") { out }
         //assert(out == ":ok\n") { out }
@@ -625,32 +625,32 @@ class Exec_05 {
         val out = test("""
             track(nil)
         """)
-        //assert(out == " v  anon : (lin 2, col 13) : track(nil) : track error : expected task\n") { out }
-        assert(out == "anon : (lin 2, col 13) : access error : variable \"track\" is not declared\n") { out }
+        //assert(out == " v  anon : (lin 2, col 13) : track(nil) : track throw : expected task\n") { out }
+        assert(out == "anon : (lin 2, col 13) : access throw : variable \"track\" is not declared\n") { out }
     }
     @Test
     fun bb_02_track_err() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 nil
             }
             val t = spawn T()
             val x = ;;;track;;;(t)
-            println(t, x)
+            print(t, x)
         """)
         assert(out.contains(Regex("exe-task: 0x.*exe-task: 0x"))) { out }
-        //assert(out == " v  anon : (lin 6, col 21) : track(t) : track error : expected unterminated task\n") { out }
-        //assert(out == " v  anon : (lin 6, col 21) : track(t) : track error : expected task\n") { out }
+        //assert(out == " v  anon : (lin 6, col 21) : track(t) : track throw : expected unterminated task\n") { out }
+        //assert(out == " v  anon : (lin 6, col 21) : track(t) : track throw : expected task\n") { out }
     }
     @Test
     fun bb_03_track() {
         val out = test("""
-            val T = task' () {
-                yield(nil) ;;thus { it => nil }
+            val T = func () {
+                await(true)
             }
             val t = spawn T()
             val x = ;;;track;;;(t)
-            println(x)
+            print(x)
         """)
         //assert(out.contains("track: 0x")) { out }
         assert(out.contains("exe-task: 0x")) { out }
@@ -658,12 +658,12 @@ class Exec_05 {
     @Test
     fun bb_04_track() {
         val out = test("""
-            val T = task' () { yield(nil);nil }
+            val T = func () { await(true);nil }
             val t = spawn T ()
             val x = ;;;track;;;(t)
             val y = ;;;track;;;(t)
             var z = y
-            println(x==y, y==z)
+            print(x==y, y==z)
         """)
         //assert(out == ("false\ttrue\n")) { out }
         assert(out == ("true\ttrue\n")) { out }
@@ -671,48 +671,48 @@ class Exec_05 {
     @Test
     fun bb_05_bcast_in_task_err() {
         val out = test("""
-            val T = task' (v) {
+            val T = func (v) {
                 ${AWAIT()}
-                ;;yield(nil)
-                println(v)
+                ;;await(true)
+                print(v)
             }
             val t1 = spawn T (1)
             val x1 = ;;;track;;;(t1)
             val t2 = spawn T (2)
-            broadcast (nil) in x1
+            emit (nil) in x1
         """)
-        //assert(out == " v  anon : (lin 10, col 13) : broadcast'(nil,x1) : invalid target\n") { out }
+        //assert(out == " v  anon : (lin 10, col 13) : emit'(nil,x1) : invalid target\n") { out }
         assert(out == "1\n") { out }
     }
     @Test
     fun bb_05_bcast_in_task_ok() {
         val out = test("""
-            val T = task' (v) {
+            val T = func (v) {
                 ${AWAIT()}
-                ;;yield(nil)
-                println(v)
+                ;;await(true)
+                print(v)
             }
             val t1 = spawn T (1)
             val x1 = ;;;track;;;(t1)
             val t2 = spawn T (2)
-            ;;detrack(x1) { it => broadcast (nil) in it }
-            broadcast (nil) in x1
+            ;;detrack(x1) { it => emit (nil) in it }
+            emit (nil) in x1
         """)
         assert(out == "1\n") { out }
     }
     @Test
     fun bb_05_bcast_in_task() {
         val out = test("""
-            val T = task' (v) {
+            val T = func (v) {
                 ${AWAIT()}
-                ;;yield(nil)
-                println(v)
+                ;;await(true)
+                print(v)
             }
             val t1 = spawn T (1)
             val x1 = ;;;track;;;(t1)
             val t2 = spawn T (2)
             ;;detrack(x1) { y1 =>
-                broadcast (nil) in x1 ;;y1
+                emit (nil) in x1 ;;y1
             ;;}
         """)
         assert(out == "1\n") { out }
@@ -721,11 +721,11 @@ class Exec_05 {
     fun bb_06_track_up() {
         DEBUG = true
         val out = test("""
-            val T = task' () { yield(nil);yield(nil) }
-            spawn (task' () {
+            val T = func () { await(true);await(true) }
+            spawn (func () {
                 val ts = tasks()
-                spawn (task' () {
-                    spawn (task' () {
+                spawn (func () {
+                    spawn (func () {
                         spawn T() in ts
                     }) ()
                     nil
@@ -734,13 +734,13 @@ class Exec_05 {
                     val t = next-tasks(ts)
                     do {
                         ;;dump(t)
-                        broadcast(nil) in :global
+                        emit(true) in :global
                         ;;dump(t)                    
                     }
-                    println(;;;detrack;;;status(t))
+                    print(;;;detrack;;;status(t))
                 }
             }) ()
-            println(:ok)
+            print(:ok)
         """)
         assert(out == (":terminated\n:ok\n")) { out }
     }
@@ -751,77 +751,77 @@ class Exec_05 {
     fun bd_01_track_err() {
         val out = test("""
             var T
-            set T = task' () { yield(nil) }
+            set T = func () { await(true) }
             var x
             do {
                 val t = spawn (T) ()
-                set x = ;;;track;;;(t)         ;; error scope
+                set x = ;;;track;;;(t)         ;; throw scope
             }
-            println(status(;;;detrack;;;(x)))
-            println(x)
+            print(status(;;;detrack;;;(x)))
+            print(x)
         """)
         assert(out.contains("terminated\nexe-task: 0x")) { out }
-        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        //assert(out == (" v  anon : (lin 7, col 21) : set error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == "anon : (lin 7, col 21) : set throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
+        //assert(out == (" v  anon : (lin 7, col 21) : set throw : cannot expose track outside its task scope\n")) { out }
     }
     @Test
     fun bd_02_track_err() {
         val out = test("""
             var T
-            set T = task' () { yield(nil) }
+            set T = func () { await(true) }
             val x = do {
                 val t = spawn (T) ()
-                ;;;track;;;(t)         ;; error scope
+                ;;;track;;;(t)         ;; throw scope
             }
-            println(status(;;;detrack;;;(x)))
-            println(x)
+            print(status(;;;detrack;;;(x)))
+            print(x)
         """)
         assert(out.contains("terminated\nexe-task: 0x")) { out }
         //assert(out.contains("terminated\nx-track: 0x")) { out }
-        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        //assert(out == (" v  anon : (lin 4, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == "anon : (lin 7, col 21) : set throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
+        //assert(out == (" v  anon : (lin 4, col 21) : block escape throw : cannot expose track outside its task scope\n")) { out }
     }
     @Test
     fun bd_03_track_err() {
         val out = test("""
             var T
-            set T = task' () { yield(nil) }
+            set T = func () { await(true) }
             val t1 = spawn T()
             do {
                 val t2 = spawn T()
-                set t1.pub = ;;;track;;;(t2)         ;; error scope
+                set t1.pub = ;;;track;;;(t2)         ;; throw scope
                 nil
             }
-            println(;;;detrack;;;(t1.pub))
+            print(;;;detrack;;;(t1.pub))
         """)
         assert(out.contains("exe-task: 0x")) { out }
         //assert(out.contains("terminated\nx-track: 0x")) { out }
-        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        //assert(out == (" v  anon : (lin 5, col 13) : block escape error : reference has immutable scope\n")) { out }
-        //assert(out == (" v  anon : (lin 5, col 13) : block escape error : cannot expose track outside its task scope\n")) { out }
-        //assert(out == (" v  anon : (lin 8, col 21) : set error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == "anon : (lin 7, col 21) : set throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
+        //assert(out == (" v  anon : (lin 5, col 13) : block escape throw : reference has immutable scope\n")) { out }
+        //assert(out == (" v  anon : (lin 5, col 13) : block escape throw : cannot expose track outside its task scope\n")) { out }
+        //assert(out == (" v  anon : (lin 8, col 21) : set throw : cannot expose track outside its task scope\n")) { out }
     }
     @Test
     fun bd_04_track_err() {
         val out = test("""
             var T
-            set T = task' () { yield(nil) }
+            set T = func () { await(true) }
             var x =
             do {
                 val t = spawn (T) ()
                 val x' = ;;;track;;;(t)
-                x'         ;; error scope
+                x'         ;; throw scope
             }
-            println(status(;;;detrack;;;(x)))
-            println(x)
+            print(status(;;;detrack;;;(x)))
+            print(x)
         """)
         assert(out.contains("terminated\nexe-task: 0x")) { out }
-        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        //assert(out == (" v  anon : (lin 5, col 13) : block escape error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == "anon : (lin 7, col 21) : set throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
+        //assert(out == (" v  anon : (lin 5, col 13) : block escape throw : cannot expose track outside its task scope\n")) { out }
     }
 
     // TRACK / DROP
@@ -829,13 +829,13 @@ class Exec_05 {
     @Test
     fun bc_01_track_drop() {
         val out = test("""
-            val T = task' () { yield(nil) }
+            val T = func () { await(true) }
             val t = spawn T ()
             val y = do {
                 val x = ;;;track;;;(t)
                 ;;;drop;;;(x)
             }
-            println(y)
+            print(y)
         """)
         //assert(out.contains("track: 0x")) { out }
         assert(out.contains("exe-task: 0x")) { out }
@@ -843,41 +843,41 @@ class Exec_05 {
     @Test
     fun bc_02_track_drop_err() {
         val out = test("""
-            val T = task' () { yield(nil) }
+            val T = func () { await(true) }
             val y = do {
                 val t = spawn T ()
                 ;;;track;;;(t)
             }
-            println(y)
+            print(y)
         """)
-        //assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == (" v  anon : (lin 3, col 21) : block escape throw : cannot expose track outside its task scope\n")) { out }
         assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun bc_02x_track_drop_err() {
         val out = test("""
-            val T = task' () { yield(nil) }
+            val T = func () { await(true) }
             val y = do {
                 val t = spawn T ()
                 val x = ;;;track;;;(t)
                 ;;;drop;;;(x)
             }
-            println(y)
+            print(y)
         """)
-        //assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == (" v  anon : (lin 3, col 21) : block escape throw : cannot expose track outside its task scope\n")) { out }
         assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun bc_03_track_drop() {
         val out = test("""
-            val T = task' () { yield(nil) }
+            val T = func () { await(true) }
             val ts = tasks()
             val y = do {
                 spawn T () in ts
-                println()
+                print()
                 ;;;drop;;;(next-tasks(ts))
             }
-            println(y)
+            print(y)
         """)
         //assert(out.contains("track: 0x")) { out }
         assert(out.contains("exe-task: 0x")) { out }
@@ -885,26 +885,26 @@ class Exec_05 {
     @Test
     fun bc_04_track_drop() {
         val out = test("""
-            val T = task' () { yield(nil) }
+            val T = func () { await(true) }
             val y = do {
                 val ts = tasks()
                 spawn T () in ts
                 ;;;drop;;;(next-tasks(ts))
             }
-            println(y)
+            print(y)
         """)
-        //assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == (" v  anon : (lin 3, col 21) : block escape throw : cannot expose track outside its task scope\n")) { out }
         assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun bc_05_track_drop() {
         val out = test("""
-            val T = task' () { yield(nil) }
+            val T = func () { await(true) }
             val t = spawn T ()
             val y = do {
                 ;;;track;;;(t)
             }
-            println(y)
+            print(y)
         """)
         //assert(out.contains("track: 0x")) { out }
         assert(out.contains("exe-task: 0x")) { out }
@@ -912,12 +912,12 @@ class Exec_05 {
     @Test
     fun bc_06_track_drop() {
         val out = test("""
-            val T = task' () { yield(nil) }
+            val T = func () { await(true) }
             val t = spawn T ()
             val y = do {
                 ;;;drop;;;(;;;track;;;(t))
             }
-            println(y)
+            print(y)
         """)
         //assert(out.contains("track: 0x")) { out }
         assert(out.contains("exe-task: 0x")) { out }
@@ -932,15 +932,15 @@ class Exec_05 {
             detrack(nil)
         """)
         //assert(out == " |  anon : (lin 3, col 13) : detrack''(nil)\n" +
-        //        " v  anon : (lin 2, col 58) : detrack'(trk) : detrack error : expected track value\n") { out }
-        assert(out == "anon : (lin 3, col 13) : access error : variable \"detrack\" is not declared\n") { out }
+        //        " v  anon : (lin 2, col 58) : detrack'(trk) : detrack throw : expected track value\n") { out }
+        assert(out == "anon : (lin 3, col 13) : access throw : variable \"detrack\" is not declared\n") { out }
     }
     @Test
     fun cc_01_detrack() {
         val out = test("""
             detrack(nil) { it => nil }
         """)
-        //assert(out == " v  anon : (lin 3, col 13) : detrack'(nil) : detrack error : expected track value\n") { out }
+        //assert(out == " v  anon : (lin 3, col 13) : detrack'(nil) : detrack throw : expected track value\n") { out }
         assert(out == "anon : (lin 3, col 26) : expected expression : have \"{\"\n") { out }
     }
     @Test
@@ -949,32 +949,32 @@ class Exec_05 {
             val x
             detrack(nil) { x => nil }
         """)
-        //assert(out == "anon : (lin 3, col 28) : declaration error : variable \"x\" is already declared\n") { out }
+        //assert(out == "anon : (lin 3, col 28) : declaration throw : variable \"x\" is already declared\n") { out }
         assert(out == "anon : (lin 3, col 26) : expected expression : have \"{\"\n") { out }
     }
      */
     @Test
     fun cc_03_detrack() {
         val out = test("""
-            val T = task' () { nil }
+            val T = func () { nil }
             val t = spawn T()
             val x = ;;;track;;;(t)
             val v = 10 ;;detrack(t) { it => 10 }
-            println(v)
+            print(v)
         """)
-        //assert(out == (" v  anon : (lin 4, col 21) : track(t) : track error : expected unterminated task\n")) { out }
-        //assert(out == (" v  anon : (lin 4, col 21) : track(t) : track error : expected task\n")) { out }
+        //assert(out == (" v  anon : (lin 4, col 21) : track(t) : track throw : expected unterminated task\n")) { out }
+        //assert(out == (" v  anon : (lin 4, col 21) : track(t) : track throw : expected task\n")) { out }
         assert(out == "10\n") { out }
     }
     @Test
     fun cc_04_detrack() {
         val out = test("""
-            val T = task' () { yield(nil) ; nil }
+            val T = func () { await(true) ; nil }
             val t = spawn T()
             val x = ;;;track;;;(t)
-            broadcast(nil)
+            emit(true)
             val v = 10 ;;detrack(x) { it => 10 }
-            println(v)
+            print(v)
         """)
         //assert(out == ("nil\n")) { out }
         assert(out == ("10\n")) { out }
@@ -982,69 +982,69 @@ class Exec_05 {
     @Test
     fun cc_05_detrack() {
         val out = test("""
-            val T = task' () { yield(nil) ; nil }
+            val T = func () { await(true) ; nil }
             val t = spawn T()
             val x = ;;;track;;;(t)
             val v = 10 ;;detrack(x) { it => 10 }
-            println(v)
+            print(v)
         """)
         assert(out == ("10\n")) { out }
     }
     @Test
     fun cc_06_detrack_err() {
         val out = test("""
-            detrack(nil) { it => broadcast(nil) }
+            detrack(nil) { it => emit(true) }
         """)
-        //assert(out == ("anon : (lin 2, col 37) : broadcast error : unexpected enclosing detrack\n")) { out }
-        //assert(out == (" v  anon : (lin 2, col 13) : detrack'(nil) : detrack error : expected track value\n")) { out }
+        //assert(out == ("anon : (lin 2, col 37) : emit throw : unexpected enclosing detrack\n")) { out }
+        //assert(out == (" v  anon : (lin 2, col 13) : detrack'(nil) : detrack throw : expected track value\n")) { out }
         assert(out == ("anon : (lin 2, col 26) : expected expression : have \"{\"\n")) { out }
     }
     @Test
     fun cc_07_detrack_err() {
         val out = test("""
-            task' () {
+            func () {
                 detrack(nil) { it => func'(it) { nil } (yield(nil)) }
             }
         """)
-        //assert(out == ("anon : (lin 3, col 43) : declaration error : variable \"it\" is already declared\n")) { out }
+        //assert(out == ("anon : (lin 3, col 43) : declaration throw : variable \"it\" is already declared\n")) { out }
         assert(out == ("anon : (lin 3, col 30) : expected expression : have \"{\"\n")) { out }
     }
     @Test
     fun cc_07_detrack_err2() {
         val out = test("""
-            task' () {
-                detrack(nil) { yy => yield(nil) ; nil }
+            func () {
+                detrack(nil) { yy => await(true) ; nil }
             }
-            println(:ok)
+            print(:ok)
         """)
-        //assert(out == ("anon : (lin 3, col 38) : yield error : unexpected enclosing func\n")) { out }
+        //assert(out == ("anon : (lin 3, col 38) : yield throw : unexpected enclosing func\n")) { out }
         //assert(out == (":ok\n")) { out }
         assert(out == ("anon : (lin 3, col 30) : expected expression : have \"{\"\n")) { out }
     }
     @Test
     fun cc_08_detrack() {
         val out = test("""
-            val T = task' () { yield(nil) ; nil }
+            val T = func () { await(true) ; nil }
             val t = spawn T()
             val x = ;;;track;;;(t)
             val v = 10 ;;detrack(x) { it => set it = 10 }
-            println(v)
+            print(v)
         """)
-        //assert(out == ("anon : (lin 5, col 40) : set error : destination is immutable\n")) { out }
+        //assert(out == ("anon : (lin 5, col 40) : set throw : destination is immutable\n")) { out }
         assert(out == ("10\n")) { out }
     }
     @Test
     fun cc_09_detrack() {
         val out = test("""
-            val T = task' (v) {
-                yield(nil) ; nil
+            val T = func (v) {
+                await(true) ; nil
             }
             val ts = tasks()
             spawn T() in ts
             val x = next-tasks(ts)
             ;;dump(x)
-            broadcast(nil)
-            println(;;;detrack;;;(x))
+            emit(true)
+            print(;;;detrack;;;(x))
         """
         )
         //assert(out == "false\n") { out }
@@ -1053,13 +1053,13 @@ class Exec_05 {
     @Test
     fun cc_10_detrack() {
         val out = test("""
-            val T = task' (v) {
+            val T = func (v) {
                 ${AWAIT("it == v")}
             }
             val t = spawn T()
             val x = ;;;track;;;(t)
-            broadcast(nil)
-            println(;;;detrack;;;(x))
+            emit(true)
+            print(;;;detrack;;;(x))
             ;;dump(x)
         """
         )
@@ -1072,18 +1072,18 @@ class Exec_05 {
     @Test
     fun dd_01_detrack() {
         val out = test("""
-            val T = task' () { yield(nil) ; nil }
+            val T = func () { await(true) ; nil }
             val t = spawn T()
             val x = ;;;track;;;(t)
             val v = do { ;;detrack(x) { it =>
                 val it = x
-                println(:1, x)
-                println(:2, t)
-                println(:3, it)
-                println(:4, `:bool ${D}it.type == CEU_VALUE_EXE_TASK`)
-                println(:5, it == t)
+                print(:1, x)
+                print(:2, t)
+                print(:3, it)
+                print(:4, `:bool ${D}it.type == CEU_VALUE_EXE_TASK`)
+                print(:5, it == t)
             }
-            println(:6, v)
+            print(:6, v)
         """)
         //assert(out.contains(":1\ttrack: 0x")) { out }
         assert(out.contains(":1\texe-task: 0x")) { out }
@@ -1096,30 +1096,30 @@ class Exec_05 {
     @Test
     fun dd_02_detrack() {
         val out = test("""
-            val T = task' () { yield(nil) ; nil }
+            val T = func () { await(true) ; nil }
             val t = spawn T()
             val x = ;;;track;;;(t)
             val v = ;;;detrack;;;(x) ;;{ it=>it }
-            println(status(v))
+            print(status(v))
         """)
         assert(out.contains(":yielded\n")) { out }
     }
     @Test
     fun dd_03a_detrack_err() {
         val out = test("""
-            val T = task' () {
-                yield(nil)
+            val T = func () {
+                await(true)
             }
             val ts = tasks()
             spawn T() in ts
             val x = next-tasks(ts)
             ;;detrack(x) { it =>
                 val it = x
-                println(it)
-                broadcast(nil)              ;; aborts it
-                println(:xxx, status(it))   ;; dangling
+                print(it)
+                emit(true)              ;; aborts it
+                print(:xxx, status(it))   ;; dangling
             ;;}
-            println(:ok)
+            print(:ok)
         """)
         assert(out.contains("exe-task: 0x")) { out }
         //assert(!out.contains(":xxx")) { out }
@@ -1129,22 +1129,22 @@ class Exec_05 {
     @Test
     fun dd_03b_detrack_err() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 ${AWAIT()}
             }
             val ts = tasks()
             spawn T() in ts
             val f = func' () {
-                broadcast(nil)
+                emit(true)
             }
             val x = next-tasks(ts)
             ;;detrack(x) { it =>
                 val it = x
-                println(it)
+                print(it)
                 f()
-                println(:xxx, status(it))
+                print(:xxx, status(it))
             ;;}
-            println(:ok)
+            print(:ok)
         """)
         assert(out.contains("exe-task: 0x")) { out }
         //assert(!out.contains(":xxx")) { out }
@@ -1154,13 +1154,13 @@ class Exec_05 {
     @Test
     fun dd_04_detrack_eq() {
         val out = test("""
-            val T = task' () { yield(nil) ; nil }
+            val T = func () { await(true) ; nil }
             val t = spawn T()
             val x = ;;;track;;;(t)
             ;;detrack(x) { v =>
                 val v = x
-                println(v == v)
-                println(v == x)
+                print(v == v)
+                print(v == x)
             ;;}
         """)
         //assert(out == ("true\nfalse\n")) { out }
@@ -1169,12 +1169,12 @@ class Exec_05 {
     @Test
     fun dd_05_detrack_print() {
         val out = test("""
-            val T = task' () { yield(nil) ; nil }
+            val T = func () { await(true) ; nil }
             val t = spawn T()
             val x = ;;;track;;;(t)
             ;;detrack(x) { v =>
                 val v = x
-                println(v)
+                print(v)
             ;;}
         """)
         assert(out.contains("exe-task: 0x")) { out }
@@ -1182,29 +1182,29 @@ class Exec_05 {
     @Test
     fun dd_06_detrack_drop_err() {
         val out = test("""
-            val T = task' () { yield(nil) ; nil }
+            val T = func () { await(true) ; nil }
             val t = spawn T()
             val x = ;;;track;;;(t)
             val v = do { ;;detrack(x) { it =>
                 val it = x
                 ;;;drop;;;(it)
             }
-            println(v)
+            print(v)
         """)
         assert(out.contains("exe-task: 0x")) { out }
-        //assert(out == " v  anon : (lin 6, col 22) : drop error : value is not movable\n") { out }
+        //assert(out == " v  anon : (lin 6, col 22) : drop throw : value is not movable\n") { out }
         //assert(out == " |  anon : (lin 5, col 32) : (func (it) { if it { ```                     ...)\n" +
-        //        " v  anon : (lin 6, col 22) : drop error : value contains multiple references\n") { out }
+        //        " v  anon : (lin 6, col 22) : drop throw : value contains multiple references\n") { out }
     }
     @Test
     fun dd_07_detrack_nested() {
         val out = test("""
-            spawn (task' () {
-                val T = task' () { yield(nil) ; nil }
+            spawn (func () {
+                val T = func () { await(true) ; nil }
                 val t = spawn T()
                 val x = ;;;track;;;(t)
-                ;;detrack(x) { it => println(it) }
-                println(x)
+                ;;detrack(x) { it => print(it) }
+                print(x)
             }) ()
         """)
         assert(out.contains("exe-task: 0x")) { out }
@@ -1212,13 +1212,13 @@ class Exec_05 {
     @Test
     fun dd_08_detrack_nested() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 val z = 10
-                val T = task' () { yield(nil) ; nil }
+                val T = func () { await(true) ; nil }
                 val t = spawn T()
                 val x = ;;;track;;;(t)
-                ;;detrack(x) { it => println(z, it) }
-                println(z, x)
+                ;;detrack(x) { it => print(z, it) }
+                print(z, x)
             }) ()
         """)
         assert(out.contains("exe-task: 0x")) { out }
@@ -1226,15 +1226,15 @@ class Exec_05 {
     @Test
     fun dd_09_detrack_nested() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 val z = 10
-                val T = task' () { yield(nil) ; nil }
+                val T = func () { await(true) ; nil }
                 val t = spawn T()
                 val x = ;;;track;;;(t)
                 ;;detrack(x) { it1 =>
                     ;;detrack(x) { it2 =>
-                        ;;println(z, it1, it2)
-                        println(z, x, x)
+                        ;;print(z, it1, it2)
+                        print(z, x, x)
                     ;;}
                 ;;}
             }) ()
@@ -1247,28 +1247,28 @@ class Exec_05 {
     @Test
     fun ee_01_pub() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 set pub = 10
-                yield(nil) ;;thus { it => nil }
+                await(true)
             }
             val t = spawn T()
-            println(t.pub)
+            print(t.pub)
         """)
         assert(out.contains("10\n")) { out }
     }
     @Test
     fun ee_02_pub() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 set pub = 10
-                yield(nil) ;;thus { it => nil }
+                await(true)
             }
             val t = spawn T()
             val x = ;;;track;;;(t)
             ;;detrack(x) { v =>
                 val v = x
                 val y = v.pub
-                println(y)
+                print(y)
             ;;}
         """)
         assert(out == ("10\n")) { out }
@@ -1276,27 +1276,27 @@ class Exec_05 {
     @Test
     fun ee_03_pub() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 set pub = []
-                yield(nil) ;;thus { it => nil }
+                await(true)
             }
             val t = spawn T()
-            println(t.pub)
+            print(t.pub)
         """)
         assert(out.contains("[]\n")) { out }
     }
     @Test
     fun ee_04_pub() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 set pub = [10]
-                yield(nil) ;;thus { it => nil }
+                await(true)
             }
             val ts = tasks()
             spawn T() in ts
             val t = next-tasks(ts)
-            ;;detrack(t) { it => println(it.pub) }
-                println(t.pub)
+            ;;detrack(t) { it => print(it.pub) }
+                print(t.pub)
         """)
         assert(out.contains("[10]\n")) { out }
     }
@@ -1305,15 +1305,15 @@ class Exec_05 {
         val out = test("""
             data :T = [x,y]
             var ts = tasks()
-            spawn (task' () {
+            spawn (func () {
                 set ;;;task.;;;pub = [10,20]
-                yield(nil)
+                await(true)
             }) () in ts
             var xxx :T = nil
             loop' {
                 set xxx = next-tasks(ts, xxx)
                 break if (if xxx { false } else { true })
-                println(;;;detrack;;;(xxx).pub.y)   // TODO: detrack needs to return to grammar
+                print(;;;detrack;;;(xxx).pub.y)   // TODO: detrack needs to return to grammar
             }
         """, true)
         assert(out == "20\n") { out }
@@ -1324,39 +1324,39 @@ class Exec_05 {
     @Test
     fun ee_01_throw() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 defer {
-                    println(:ok)
+                    print(:ok)
                 }
-                spawn( task' () {
-                    yield(nil) ;;thus { it => nil }
-                    error(:error)
+                spawn( func () {
+                    await(true)
+                    throw(:throw)
                 })()
-                yield(nil) ;;thus { it => nil }
+                await(true)
             }
             spawn T() in tasks()
-            broadcast(nil)
+            emit(true)
         """)
         assert(out == ":ok\n" +
-                " |  anon : (lin 13, col 13) : broadcast'(:task,nil)\n" +
-                " |  anon : (lin 8, col 21) : error(:error)\n" +
-                " v  error : :error\n") { out }
+                " |  anon : (lin 13, col 13) : emit'(:task,nil)\n" +
+                " |  anon : (lin 8, col 21) : throw(:throw)\n" +
+                " v  throw : :throw\n") { out }
     }
     @Test
     fun ee_02_pool_throw() {
         val out = test(
             """
-            spawn (task' () {
+            spawn (func () {
                 catch :ok ;;;(err| err==:ok);;; {
-                    spawn task' () {
-                        yield(nil)
-                        error(:ok)
+                    spawn func () {
+                        await(true)
+                        throw(:ok)
                     } ()
-                    loop' { yield(nil) }
+                    loop' { await(true) }
                 }
             })()
-            broadcast(nil)
-            println(999)
+            emit(true)
+            print(999)
         """
         )
         assert(out == "999\n") { out }
@@ -1366,18 +1366,18 @@ class Exec_05 {
         val out = test(
             """
             var T
-            set T = task' () {
-                yield(nil)
-                error(nil)
+            set T = func () {
+                await(true)
+                throw(nil)
             }
             spawn T()
             spawn T()
-            broadcast( @[] )
+            emit( @[] )
         """
         )
-        assert(out == " |  anon : (lin 9, col 13) : broadcast'(:task,@[])\n" +
-                " |  anon : (lin 5, col 17) : error(nil)\n" +
-                " v  error : nil\n") { out }
+        assert(out == " |  anon : (lin 9, col 13) : emit'(:task,@[])\n" +
+                " |  anon : (lin 5, col 17) : throw(nil)\n" +
+                " v  throw : nil\n") { out }
     }
 
     // SCOPE
@@ -1385,43 +1385,43 @@ class Exec_05 {
     @Test
     fun ff_01_scope() {
         val out = test("""
-            val T = task' () { yield(nil) }
+            val T = func () { await(true) }
             var x
             do {
                 val t = spawn T()
                 set x = ;;;track;;;(t)
             }
-            println(:ok)
+            print(:ok)
         """)
-        //assert(out == " v  anon : (lin 6, col 21) : set error : cannot expose track outside its task scope\n") { out }
+        //assert(out == " v  anon : (lin 6, col 21) : set throw : cannot expose track outside its task scope\n") { out }
         assert(out == ":ok\n") { out }
     }
     @Test
     fun ff_02_detrack_err() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 ${AWAIT()}
             }
             val ts = tasks()
             spawn T() in ts
             val x = next-tasks(ts)
             val t = ;;;detrack;;;(x) ;;{ it=>it }   ;; err: cannot escape here
-            println(type(t))
-            broadcast(nil)
-            println(status(t))
+            print(type(t))
+            emit(true)
+            print(status(t))
         """)
-        //assert(out == " v  anon : (lin 9, col 24) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == " v  anon : (lin 10, col 21) : status(t) : status error : expected running coroutine or task\n") { out }
-        //assert(out == " v  anon : (lin 8, col 13) : declaration error : cannot expose task-in-pool reference\n") { out }
+        //assert(out == " v  anon : (lin 9, col 24) : block escape throw : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 10, col 21) : status(t) : status throw : expected running coroutine or task\n") { out }
+        //assert(out == " v  anon : (lin 8, col 13) : declaration throw : cannot expose task-in-pool reference\n") { out }
         //assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
-        //        " v  anon : (lin 8, col 32) : block escape error : cannot expose task in pool to outer scope\n") { out }
+        //        " v  anon : (lin 8, col 32) : block escape throw : cannot expose task in pool to outer scope\n") { out }
         assert(out == ":exe-task\n" +
                 ":terminated\n") { out }
     }
     @Test
     fun ff_02x_detrack_err() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 ${AWAIT()}
             }
             val ts = tasks()
@@ -1432,65 +1432,65 @@ class Exec_05 {
                 set y = x ;;it  ;; ERR: cannot expose it
                 ;;;do;;; nil
             ;;}
-            broadcast(nil)
-            println(status(t))
+            emit(true)
+            print(status(t))
         """)
-        //assert(out == " v  anon : (lin 9, col 24) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == " v  anon : (lin 10, col 21) : status(t) : status error : expected running coroutine or task\n") { out }
-        //assert(out == " v  anon : (lin 8, col 13) : declaration error : cannot expose task-in-pool reference\n") { out }
+        //assert(out == " v  anon : (lin 9, col 24) : block escape throw : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 10, col 21) : status(t) : status throw : expected running coroutine or task\n") { out }
+        //assert(out == " v  anon : (lin 8, col 13) : declaration throw : cannot expose task-in-pool reference\n") { out }
         //assert(out == " |  anon : (lin 9, col 32) : (func (it) { if it { ```                     ...)\n" +
-        //        " v  anon : (lin 10, col 21) : set error : cannot expose task in pool to outer scope\n") { out }
+        //        " v  anon : (lin 10, col 21) : set throw : cannot expose task in pool to outer scope\n") { out }
         assert(out == ":terminated\n") { out }
     }
     @Test
     fun ff_02y_detrack_err() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 ${AWAIT()}
             }
             val ts = tasks()
             spawn T() in ts
             val x = next-tasks(ts)
-            spawn (task' () {
+            spawn (func () {
                 ;;detrack(x) { it =>
                     set pub = x ;;it  ;; ERR: cannot expose it
                     ;;;do;;; nil
                 ;;}
-                broadcast(nil) in :global
-                println(status(pub))
+                emit(true) in :global
+                print(status(pub))
             }) ()
-            println(:nooo)
+            print(:nooo)
         """)
         assert(out == ":terminated\n:nooo\n") { out }
-        //assert(out == " v  anon : (lin 9, col 24) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == " v  anon : (lin 10, col 21) : status(t) : status error : expected running coroutine or task\n") { out }
-        //assert(out == " v  anon : (lin 8, col 13) : declaration error : cannot expose task-in-pool reference\n") { out }
+        //assert(out == " v  anon : (lin 9, col 24) : block escape throw : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 10, col 21) : status(t) : status throw : expected running coroutine or task\n") { out }
+        //assert(out == " v  anon : (lin 8, col 13) : declaration throw : cannot expose task-in-pool reference\n") { out }
         //assert(out == " |  anon : (lin 8, col 13) : (spawn (task () { (detrack(x) { it => (set pu...)\n" +
         //        " |  anon : (lin 9, col 28) : (func (it) { if it { ```                     ...)\n" +
-        //        " v  anon : (lin 10, col 25) : set error : cannot expose task in pool to outer scope\n") { out }
+        //        " v  anon : (lin 10, col 25) : set throw : cannot expose task in pool to outer scope\n") { out }
     }
     @Test
     fun ff_03_detrack_err() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 ${AWAIT()}
             }
             val t = spawn T()
             val x = ;;;track;;;(t)
-            println(;;;detrack;;;(x) ;;;{it=>it};;;)
+            print(;;;detrack;;;(x) ;;;{it=>it};;;)
         """)
-        //assert(out == " v  anon : (lin 7, col 32) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 7, col 32) : block escape throw : cannot copy reference out\n") { out }
         assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun ff_04_detrack_ok() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 ${AWAIT()}
             }
             val t = spawn T()
             val x = ;;;track;;;(t)
-            println(do { ;;detrack(x) { it =>
+            print(do { ;;detrack(x) { it =>
                 val z = x ;;it
                 10
             })
@@ -1500,22 +1500,22 @@ class Exec_05 {
     @Test
     fun ff_05_track_err() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 ${AWAIT()}
             }
             val x = do {
                 val t = spawn T()
                 ;;;track;;;(t)
             }
-            println(status(x))
+            print(status(x))
         """)
-        //assert(out == " v  anon : (lin 5, col 21) : block escape error : cannot expose track outside its task scope\n") { out }
+        //assert(out == " v  anon : (lin 5, col 21) : block escape throw : cannot expose track outside its task scope\n") { out }
         assert(out == ":terminated\n") { out }
     }
     @Test
     fun ff_06_track_err() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 ${AWAIT()}
             }
             val x = do {
@@ -1523,14 +1523,14 @@ class Exec_05 {
                 spawn T() in ts 
                 next-tasks(ts)
             }
-            println(x)
+            print(x)
         """)
         assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun ff_07_track_err() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 ${AWAIT()}
             }
             val ts = tasks()
@@ -1538,8 +1538,8 @@ class Exec_05 {
                 spawn T() in ts
                 next-tasks(ts)
             }
-            ;;detrack(x) { it => println(it) }
-            println(x)
+            ;;detrack(x) { it => print(it) }
+            print(x)
         """)
         assert(out.contains("exe-task: 0x")) { out }
     }
@@ -1548,7 +1548,7 @@ class Exec_05 {
         val out = test("""
             do {
                 val t = [tasks(), tasks()]
-                println(#t)
+                print(#t)
             }
         """)
         assert(out == "2\n") { out }
@@ -1559,67 +1559,67 @@ class Exec_05 {
     @Test
     fun fg_01_detrack_pub() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 set pub = [10]
-                yield(nil) ; nil
+                await(true) ; nil
             }
             var t = spawn T()
             var x = ;;;track;;;(t)
-            ;;println(detrack(x) { it => it.pub })
-            println(x.pub)
+            ;;print(detrack(x) { it => it.pub })
+            print(x.pub)
         """)
         //assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
         assert(out == "[10]\n") { out }
         //assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
-        //        " v  anon : (lin 8, col 32) : block escape error : cannot copy reference out\n") { out }
+        //        " v  anon : (lin 8, col 32) : block escape throw : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
-        //        " v  anon : (lin 8, col 32) : block escape error : reference has immutable scope\n") { out }
+        //        " v  anon : (lin 8, col 32) : block escape throw : reference has immutable scope\n") { out }
     }
     @Test
     fun fg_02_detrack_pub() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 set pub = [10]
-                yield(nil) ; nil
+                await(true) ; nil
             }
             var t = spawn T()
             var x = ;;;track;;;(t)
-            broadcast(nil)
-            ;;println(detrack(x) { it => it.pub }) ;; expose (ok, global func)
-            println((x).pub) ;; expose (ok, global func)
+            emit(true)
+            ;;print(detrack(x) { it => it.pub }) ;; expose (ok, global func)
+            print((x).pub) ;; expose (ok, global func)
         """)
         assert(out == "nil\n") { out }
-        //assert(out == " v  anon : (lin 9, col 49) : pub error : expected task\n") { out }
+        //assert(out == " v  anon : (lin 9, col 49) : pub throw : expected task\n") { out }
     }
     @Test
     fun fg_03_detrack_pub() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 set pub = [10]
-                yield(nil) ; nil
+                await(true) ; nil
             }
             var t = spawn T()
             var x = ;;;track;;;(t)
             ;;val v = ;;;detrack;;;(x) ;;;{ it => it;;;.pub ;;}
             val v = (x).pub
-            broadcast(nil)
-            println(v)
+            emit(true)
+            print(v)
         """)
         assert(out == "[10]\n") { out }
         //assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
-        //        " v  anon : (lin 8, col 32) : block escape error : cannot copy reference out\n") { out }
+        //        " v  anon : (lin 8, col 32) : block escape throw : cannot copy reference out\n") { out }
         //assert(out == "[10]\n") { out }
         //assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
-        //        " v  anon : (lin 8, col 32) : block escape error : reference has immutable scope\n") { out }
+        //        " v  anon : (lin 8, col 32) : block escape throw : reference has immutable scope\n") { out }
     }
     @Test
     fun fg_04_expose_err() {
         val out = test("""
             val x = do {
                 val ts = tasks()
-                var T = task' () {
+                var T = func () {
                     set pub = []
-                    yield(nil) ;; nil
+                    await(true) ;; nil
                     nil
                 }
                 spawn (T) () in ts
@@ -1627,54 +1627,54 @@ class Exec_05 {
                 val p = ;;;detrack;;;(trk) ;;{ it => it }
                 p
             }
-            println(status(x))
+            print(status(x))
         """)
         assert(out == ":terminated\n") { out }
         //assert(out == ":pub\t[]\n" +
-        //        " v  anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == " v  anon : (lin 11, col 17) : declaration error : cannot expose task-in-pool reference\n") { out }
+        //        " v  anon : (lin 2, col 21) : block escape throw : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 11, col 17) : declaration throw : cannot expose task-in-pool reference\n") { out }
         //assert(out == " |  anon : (lin 11, col 38) : (func (it) { if it { ```                     ...)\n" +
-        //        " v  anon : (lin 11, col 38) : block escape error : cannot expose task in pool to outer scope\n") { out }
+        //        " v  anon : (lin 11, col 38) : block escape throw : cannot expose task in pool to outer scope\n") { out }
     }
     @Test
     fun fg_05_expose() {
         val out = test("""
-            var T = task' (t) {
+            var T = func (t) {
                 set pub = []
                 if t {
                     val p = ;;;detrack;;;(t) .pub ;;{ it => pub(it) }
                 } else {
                     nil
                 }
-                yield(nil) ;; nil
+                await(true) ;; nil
                 nil
             }
             val t = spawn T ()
             spawn T (;;;track;;;(t))
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
         //assert(out == " |  anon : (lin 13, col 13) : (spawn T(track(t)))\n" +
         //        " |  anon : (lin 5, col 40) : (func (it) { if it { ```                     ...)\n" +
-        //        " v  anon : (lin 5, col 40) : block escape error : cannot copy reference out\n") { out }
+        //        " v  anon : (lin 5, col 40) : block escape throw : cannot copy reference out\n") { out }
         //assert(out == "anon : (lin 13, col 19) : T(track(t))\n" +
-        //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
+        //        "anon : (lin 5, col 21) : declaration throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
         //assert(out == " |  anon : (lin 13, col 13) : (spawn T(track(t)))\n" +
         //        " |  anon : (lin 5, col 40) : (func (it) { if it { ```                     ...)\n" +
-        //        " v  anon : (lin 5, col 40) : block escape error : reference has immutable scope\n") { out }
+        //        " v  anon : (lin 5, col 40) : block escape throw : reference has immutable scope\n") { out }
         //assert(out == " |  anon : (lin 13, col 13) : (spawn T(track(t)))\n" +
-        //        " v  anon : (lin 5, col 21) : declaration error : cannot hold alien reference\n") { out }
+        //        " v  anon : (lin 5, col 21) : declaration throw : cannot hold alien reference\n") { out }
     }
     @Test
     fun fg_06_expose() {
         val out = test("""
             val f = func' (t) {
-                println(t)
+                print(t)
             }
-            val T = task' () {
+            val T = func () {
                 set pub = []
-                yield(nil) ; nil
+                await(true) ; nil
             }
             val ts = tasks()
             do {
@@ -1691,7 +1691,7 @@ class Exec_05 {
                 ;;detrack(xx1) { it => f(it.pub) }
                 f(xx1.pub)
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == "[]\n:ok\n") { out }
     }
@@ -1699,80 +1699,80 @@ class Exec_05 {
     fun fg_06_expose_xxx() {
         val out = test("""
             val f = func' (t) {
-                println(t)
+                print(t)
             }
-            val T = task' () {
+            val T = func () {
                 set pub = []
-                yield(nil) ;; nil
+                await(true) ;; nil
             }
             val ts = tasks()
             spawn T() in ts
             val x = next-tasks(ts)
             ;;detrack(x) { t => f(pub(t)) }
             f(x.pub)
-            println(:ok)
+            print(:ok)
         """)
         assert(out == "[]\n:ok\n") { out }
     }
     @Test
     fun fg_07_throw_track() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 set pub = 10
-                yield(nil) ; nil
+                await(true) ; nil
             }
             val ts = tasks()
             val t = catch ;;;( it|true);;; {
                 spawn T() in ts
                 do {
                     val u = next-tasks(ts)
-                    error(:x,;;;drop;;;(u))
+                    throw(:x,;;;drop;;;(u))
                 }
             }
-            ;;detrack(t) { it => println(it.pub) }
-            println(t.pub)
+            ;;detrack(t) { it => print(it.pub) }
+            print(t.pub)
         """)
         //assert(out == ":ok\n") { out }
         assert(out == "10\n") { out }
-        //assert(out.contains("TODO: error inside throw")) { out }
+        //assert(out.contains("TODO: throw inside throw")) { out }
     }
     @Test
     fun fg_08_throw_track() {
         val out = test("""
-            val T = task' () {
-                yield(nil) ; nil
+            val T = func () {
+                await(true) ; nil
             }
             val x = do {
                 val ts = tasks()
                 spawn T() in ts
                 do {
                     val t = next-tasks(ts)
-                    error(:x,;;;drop;;;(t))
+                    throw(:x,;;;drop;;;(t))
                     nil
                 }
             }
-            println(status(x))
+            print(status(x))
         """)
-        assert(out.contains(" |  anon : (lin 10, col 21) : error(:x,t)\n" +
-                " v  error : exe-task: 0x")) { out }
-        //assert(out.contains("TODO: error inside throw")) { out }
-        //assert(out == (" v  anon : (lin 5, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+        assert(out.contains(" |  anon : (lin 10, col 21) : throw(:x,t)\n" +
+                " v  throw : exe-task: 0x")) { out }
+        //assert(out.contains("TODO: throw inside throw")) { out }
+        //assert(out == (" v  anon : (lin 5, col 21) : block escape throw : cannot expose track outside its task scope\n")) { out }
     }
     @Test
     fun fg_09_throw_track() {
         val out = test("""
-            val T = task' () {
-                yield(nil) ; nil
+            val T = func () {
+                await(true) ; nil
             }
             val ts = tasks()
             catch ;;;( it|true);;; {
                 spawn T() in ts
                 do {
                     val t = next-tasks(ts)
-                    error(:x,;;;drop;;;(t))
+                    throw(:x,;;;drop;;;(t))
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -1782,12 +1782,12 @@ class Exec_05 {
     @Test
     fun hh_00_next() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 nil
             }
             val ts = tasks()
             spawn T() in ts
-            println(next-tasks(ts))
+            print(next-tasks(ts))
         """
         )
         assert(out == "nil\n") { out }
@@ -1795,13 +1795,13 @@ class Exec_05 {
     @Test
     fun hh_00x_next() {
         val out = test("""
-            val T = task' () {
-                yield(nil)
+            val T = func () {
+                await(true)
             }
             val ts = tasks()
             val t = spawn T() in ts
-            println(next-tasks(ts))
-            println(next-tasks(ts,t))
+            print(next-tasks(ts))
+            print(next-tasks(ts,t))
         """
         )
         assert(out.contains(Regex("exe-task: 0x.*\nnil\n"))) { out }
@@ -1809,28 +1809,28 @@ class Exec_05 {
     @Test
     fun hh_01_next() {
         val out = test("""
-            val T = task' () {
-                yield(nil)
+            val T = func () {
+                await(true)
             }
             val ts = tasks()
-            println(next-tasks(ts))
-            println(next-tasks(ts, nil))
-            println(next-tasks(ts, :err))
+            print(next-tasks(ts))
+            print(next-tasks(ts, nil))
+            print(next-tasks(ts, :err))
         """
         )
         //assert(out == "nil\n" +
         //        "nil\n" +
-        //        " v  anon : (lin 8, col 21) : next-tasks(ts,:err) : next-tasks error : expected task-in-pool track\n") { out }
+        //        " v  anon : (lin 8, col 21) : next-tasks(ts,:err) : next-tasks throw : expected task-in-pool track\n") { out }
         assert(out == "nil\n" +
                 "nil\n" +
                 " |  anon : (lin 8, col 21) : next-tasks(ts,:err)\n" +
-                " v  error : expected task\n") { out }
+                " v  throw : expected task\n") { out }
     }
     @Test
     fun hh_02_next() {
         val out = test("""
-            val T = task' () {
-                yield(nil)
+            val T = func () {
+                await(true)
             }
             val ts = tasks()
             spawn T() in ts
@@ -1838,11 +1838,11 @@ class Exec_05 {
             val x1 = next-tasks(ts)
             val x2 = next-tasks(ts, x1)
             val x3 = next-tasks(ts, x2)
-            println(x1 /= nil)
-            println(x2 /= nil)
-            println(x1 /= x2)
-            println(x3 == nil)
-            println(x2)
+            print(x1 /= nil)
+            print(x2 /= nil)
+            print(x1 /= x2)
+            print(x3 == nil)
+            print(x2)
         """
         )
         assert(out.contains("true\ntrue\ntrue\ntrue\nexe-task: 0x")) { out }
@@ -1850,23 +1850,23 @@ class Exec_05 {
     @Test
     fun hh_03_next() {
         val out = test("""
-            val T = task' () {
-                yield(nil) ;;thus { it => nil }
+            val T = func () {
+                await(true)
             }
             val ts = tasks()
             spawn T() in ts
             val x = next-tasks(ts)
-            broadcast(nil)
-            println(next-tasks(ts, x))
+            emit(true)
+            print(next-tasks(ts, x))
         """
         )
-        //assert(out == " v  anon : (lin 9, col 13) : next-tasks(ts,x) : next-tasks error : expected task-in-pool track\n") { out }
+        //assert(out == " v  anon : (lin 9, col 13) : next-tasks(ts,x) : next-tasks throw : expected task-in-pool track\n") { out }
         assert(out == "nil\n") { out }
     }
     @Test
     fun hh_04_next() {
         val out = test("""
-            val T = task' (v) {
+            val T = func (v) {
                 ${AWAIT("it == v")}
             }
             val ts = tasks()
@@ -1874,35 +1874,35 @@ class Exec_05 {
             spawn T(2) in ts
             val x1 = next-tasks(ts)
             val x2 = next-tasks(ts, x1)
-            broadcast(1)
-            println(next-tasks(ts, x1) == x2)
+            emit(1)
+            print(next-tasks(ts, x1) == x2)
         """
         )
-        //assert(out == " v  anon : (lin 11, col 13) : next-tasks(ts,x1) : next-tasks error : expected task-in-pool track\n") { out }
+        //assert(out == " v  anon : (lin 11, col 13) : next-tasks(ts,x1) : next-tasks throw : expected task-in-pool track\n") { out }
         assert(out == "true\n") { out }
     }
     @Test
     fun hh_05_next() {
         val out = test("""
-            val T = task' (v) {
+            val T = func (v) {
                 set pub = [v]
-                yield(nil)
+                await(true)
             }
             val ts = tasks()
             spawn T(10) in ts
             val x1 = next-tasks(ts)
-            ;;val v = detrack(x1) { it => println(it.pub) ; it.pub }
+            ;;val v = detrack(x1) { it => print(it.pub) ; it.pub }
             val v = (x1).pub
-            println(v)
+            print(v)
         """
         )
         assert(out == "[10]\n") { out }
         //assert(out == "[10]\n" +
         //        " |  anon : (lin 9, col 33) : (func (it) { if it { ```                     ...)\n" +
-        //        " v  anon : (lin 9, col 33) : block escape error : cannot copy reference out\n") { out }
+        //        " v  anon : (lin 9, col 33) : block escape throw : cannot copy reference out\n") { out }
         //assert(out == "[10]\n" +
         //        " |  anon : (lin 9, col 33) : (func (it) { if it { ```                     ...)\n" +
-        //        " v  anon : (lin 9, col 33) : block escape error : reference has immutable scope\n") { out }
+        //        " v  anon : (lin 9, col 33) : block escape throw : reference has immutable scope\n") { out }
     }
     @Test
     fun hh_06_pool_terminate() {
@@ -1911,8 +1911,8 @@ class Exec_05 {
                 var ts
                 set ts = tasks()
                 var T
-                set T = task' (v) {
-                    println(v)
+                set T = func (v) {
+                    print(v)
                 }
                 spawn T(1) in ts
                 enclose' :break {
@@ -1921,27 +1921,27 @@ class Exec_05 {
                         if (if t { false } else { true }) {
                             escape(:break,nil)
                         } else {nil}
-                        error(1)    ;; never reached
+                        throw(1)    ;; never reached
                     }
                 }
             }
-            broadcast(2)
+            emit(2)
         """)
         assert(out == "1\n") { out }
     }
     @Test
     fun hh_07_pool_err() {
         val out = test("""
-            println(next-tasks(nil))
+            print(next-tasks(nil))
         """)
         assert(out == " |  anon : (lin 2, col 21) : next-tasks(nil)\n" +
-                " v  error : expected tasks\n") { out }
+                " v  throw : expected tasks\n") { out }
     }
     @Test
     fun hh_08_pool_term() {
         val out = test("""
-            var T = task' () {
-                yield(nil)
+            var T = func () {
+                await(true)
             }
             var ts = tasks()
             spawn T() in ts
@@ -1955,11 +1955,11 @@ class Exec_05 {
                     if (if xxx { false } else { true }) {
                         escape(:break,nil)
                     } else {nil}
-                    println(1)
-                    broadcast (1)
+                    print(1)
+                    emit (1)
                 }
             }
-            println(2)
+            print(2)
         """)
         assert(out == "1\n2\n") { out }
     }
@@ -1967,9 +1967,9 @@ class Exec_05 {
     fun hh_09_pool_term() {
         val out = test("""
             var T
-            set T = task' () {
-                yield(nil)
-                yield(nil)
+            set T = func () {
+                await(true)
+                await(true)
             }
             var ts = tasks()
             spawn T() in ts
@@ -1980,8 +1980,8 @@ class Exec_05 {
                     if (if xxx { false } else { true }) {
                         escape(:break,nil)
                     } else {nil}
-                    println(1)
-                    broadcast(1)
+                    print(1)
+                    emit(1)
                     var yyy = nil
                     enclose' :break {
                         loop' {
@@ -1989,19 +1989,19 @@ class Exec_05 {
                             if (if yyy { false } else { true }) {
                                 escape(:break,nil)
                             } else {nil}
-                            println(2)
+                            print(2)
                         }
                     }
                 }
             }
-            println(3)
+            print(3)
         """)
         assert(out == "1\n2\n3\n") { out }
     }
     @Test
     fun hh_10_pool_plain() {
         val out = test("""
-            var T = task' () { yield(nil) }
+            var T = func () { await(true) }
             var ts = tasks()
             spawn T() in ts
             var yyy
@@ -2015,16 +2015,16 @@ class Exec_05 {
                     set yyy = xxx
                 }
             }
-            println(status(;;;detrack;;;(yyy)))
+            print(status(;;;detrack;;;(yyy)))
         """)
-        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 9, col 21) : set throw : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : set throw : incompatible scopes\n:throw\n") { out }
         assert(out == ":yielded\n") { out }
     }
     @Test
     fun hh_11_pool_move() {
         val out = test("""
-            var T = task' () { yield(nil) }
+            var T = func () { await(true) }
             var ts = tasks()
             spawn T() in ts
             var yyy
@@ -2038,23 +2038,23 @@ class Exec_05 {
                     set yyy = ;;;move;;;(xxx)
                 }
             }
-            println(status(;;;detrack;;;(yyy)))
+            print(status(;;;detrack;;;(yyy)))
         """)
-        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 9, col 21) : set throw : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 9, col 21) : set throw : incompatible scopes\n:throw\n") { out }
         assert(out == ":yielded\n") { out }
     }
     @Test
     fun TODO_hh_12_pool_check() {   // copy task
         val out = test("""
-            var T = task' () { yield(nil) }
+            var T = func () { await(true) }
             var ts = tasks()
             spawn T() in ts
             var xxx = nil
             loop ;;;in :tasks ts, xxx;;; {
                 set xxx = next-tasks(ts, xxx)
                 break if (if xxx { false } else { true })
-                println(;;;detrack;;;(xxx) == ;;;detrack;;;(xxx))
+                print(;;;detrack;;;(xxx) == ;;;detrack;;;(xxx))
             }
         """)
         assert(out == "true\n") { out }
@@ -2063,7 +2063,7 @@ class Exec_05 {
     fun TODO_hh_13_pool_err_scope() {   // copy task
         val out = test("""
             var T
-            set T = task' () { yield(nil) }
+            set T = func () { await(true) }
             var ts
             set ts = tasks()
             spawn T() in ts
@@ -2074,17 +2074,17 @@ class Exec_05 {
                 break if (if xxx { false } else { true })
                 set yyy = copy(xxx)
             }
-            broadcast(nil)
-            println(;;;detrack;;;(yyy))
+            emit(true)
+            print(;;;detrack;;;(yyy))
         """, true)
-        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 9, col 21) : set throw : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 9, col 21) : set throw : incompatible scopes\n:throw\n") { out }
         assert(out == "nil\n") { out }
     }
     @Test
     fun hh_14_pool_bcast() {
         val out = test("""
-            var T = task' () { yield(nil); println(:ok) }
+            var T = func () { await(true); print(:ok) }
             var ts = tasks()
             spawn T() in ts
             var xxx = nil
@@ -2094,7 +2094,7 @@ class Exec_05 {
                     if (if xxx { false } else { true }) {
                         escape(:break,nil)
                     } else {nil}
-                    broadcast(nil) in ;;;detrack;;;(xxx)
+                    emit(true) in ;;;detrack;;;(xxx)
                 }
             }
         """)
@@ -2105,7 +2105,7 @@ class Exec_05 {
         val out = test(
             """
             var T
-            set T = task' () { yield(nil) }
+            set T = func () { await(true) }
             var ts
             set ts = tasks()
             spawn T() in ts
@@ -2125,17 +2125,17 @@ class Exec_05 {
                                 escape(:break,nil)
                             } else {nil}
                             set yyy = ;;;copy;;;(zzz)
-                            println(status(;;;detrack;;;(yyy)))
+                            print(status(;;;detrack;;;(yyy)))
                         }
                     }
-                    println(status(;;;detrack;;;(yyy)))
+                    print(status(;;;detrack;;;(yyy)))
                     set yyy = xxx
                 }
             }
         """
         )
-        //assert(out == "anon : (lin 10, col 25) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 10, col 25) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 10, col 25) : set throw : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 10, col 25) : set throw : incompatible scopes\n:throw\n") { out }
         assert(out == ":yielded\n:yielded\n") { out }
     }
     @Test
@@ -2143,7 +2143,7 @@ class Exec_05 {
         val out = test(
             """
             var T
-            set T = task' () { yield(nil) }
+            set T = func () { await(true) }
             var ts
             set ts = tasks()
             spawn T() in ts
@@ -2169,7 +2169,7 @@ class Exec_05 {
                     ;;pass nil ;; otherwise scope err for yyy/xxx
                 }
             }
-            println(1)
+            print(1)
         """
         )
         assert(out == "1\n") { out }
@@ -2179,7 +2179,7 @@ class Exec_05 {
         val out = test(
             """
             var T
-            set T = task' () { yield(nil) }
+            set T = func () { await(true) }
             var ts
             set ts = tasks()
             spawn T() in ts
@@ -2193,10 +2193,10 @@ class Exec_05 {
                     ;;;do;;; xxx
                 }
             }
-            println(1)
+            print(1)
         """
         )
-        //assert(out == "anon : (lin 7, col 13) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 7, col 13) : set throw : incompatible scopes\n:throw\n") { out }
         assert(out == "1\n") { out }
     }
     @Test
@@ -2204,11 +2204,11 @@ class Exec_05 {
         val out = test("""
             var ts
             set ts = tasks()
-            println(type(ts))
+            print(type(ts))
             var T
-            set T = task' (v) {
+            set T = func (v) {
                 set pub = v
-                val v' = yield(nil)
+                val v' = await(true)
             }
             spawn T(1) in ts
             spawn T(2) in ts
@@ -2227,12 +2227,12 @@ class Exec_05 {
                             if (if t2 { false } else { true }) {
                                 escape(:break,nil)
                             } else {nil}
-                            println(;;;detrack;;;(t1).pub, ;;;detrack;;;(t2).pub)
+                            print(;;;detrack;;;(t1).pub, ;;;detrack;;;(t2).pub)
                         }
                     }
                 }
             }
-            broadcast( 2 )
+            emit( 2 )
         """)
         assert(out == ":tasks\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
     }
@@ -2240,9 +2240,9 @@ class Exec_05 {
     fun hh_19_pub_pool() {
         val out = test("""
             var T
-            set T = task' () {
+            set T = func () {
                 set pub = [10]
-                yield(nil)
+                await(true)
             }
             var ts
             set ts = tasks()
@@ -2254,7 +2254,7 @@ class Exec_05 {
                     if (if t { false } else { true }) {
                         escape(:break,nil)
                     } else {nil}
-                    println(;;;detrack;;;(t).pub[0])
+                    print(;;;detrack;;;(t).pub[0])
                 }
             }
         """)
@@ -2263,16 +2263,16 @@ class Exec_05 {
     @Test
     fun hh_20_pool_term() {
         val out = test("""
-            var T = task' () {
-                spawn task' () {
-                    yield(nil)
+            var T = func () {
+                spawn func () {
+                    await(true)
                 }()
-                yield(nil)
+                await(true)
             }
             var ts = tasks()
             spawn T() in ts 
             spawn T() in ts
-            spawn task' () {
+            spawn func () {
                 var xxx = nil
                 enclose' :break {
                     loop' ;;;in :tasks ts, xxx;;; {
@@ -2280,12 +2280,12 @@ class Exec_05 {
                         if (if xxx { false } else { true }) {
                             escape(:break,nil)
                         } else {nil}
-                        println(1)
-                        broadcast (1)
+                        print(1)
+                        emit (1)
                     }
                 }
             } ()
-            println(2)
+            print(2)
         """)
         //assert(out == "1\n2\n") { out }
         assert(out == "1\n1\n2\n") { out }
@@ -2293,8 +2293,8 @@ class Exec_05 {
     @Test
     fun hh_21_pool_val() {
         val out = test("""
-            val T = task' () {
-                yield(nil)
+            val T = func () {
+                await(true)
             }
             var ts = tasks()
             spawn T() in ts
@@ -2306,20 +2306,20 @@ class Exec_05 {
                         escape(:break,nil)
                     } else {nil}
                     val tsk = ;;;detrack;;;(xxx)
-                    broadcast (nil)
+                    emit (nil)
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
-        //assert(out == "anon : (lin 8, col 17) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
+        //assert(out == "anon : (lin 8, col 17) : declaration throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
         assert(out == ":ok\n") { out }
     }
     @Test
     fun hh_22_ff_pool_val() {
         val out = test("""
-            val T = task' () {
-                yield(nil)
+            val T = func () {
+                await(true)
             }
             var ts = tasks()
             spawn T() in ts
@@ -2334,16 +2334,16 @@ class Exec_05 {
                     val ;;;:tmp;;; tsk2 = ;;;detrack;;;(trk)
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
-        //assert(out == "anon : (lin 8, col 17) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
+        //assert(out == "anon : (lin 8, col 17) : declaration throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
     }
     @Test
     fun hh_23_pool_scope() {
         val out = test("""
-            var T = task' () { yield(nil) }
+            var T = func () { await(true) }
             var ts = tasks()
             spawn T() in ts
             var xxx = nil
@@ -2359,7 +2359,7 @@ class Exec_05 {
                     }
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -2367,9 +2367,9 @@ class Exec_05 {
     fun hh_24_pub_pool_err() {
         val out = test("""
             var T
-            set T = task' () {
+            set T = func () {
                 set pub = [10]
-                yield(nil)
+                await(true)
             }
             var ts
             set ts = tasks()
@@ -2385,18 +2385,18 @@ class Exec_05 {
                     set x = ;;;detrack;;;(t).pub   ;; TODO: incompatible scope
                 }
             }
-            println(999)
+            print(999)
         """)
         assert(out == "999\n") { out }
-        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
-        //assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:throw\n") { out }
+        //assert(out == "anon : (lin 12, col 21) : set throw : incompatible scopes\n:throw\n") { out }
     }
     @Test
     fun hh_25_pub_pool_err() {
         val out = test("""
-            var T = task' () {
+            var T = func () {
                 set ;;;task.;;;pub = [10]
-                yield(nil)
+                await(true)
             }
             var ts = tasks()
             spawn T() in ts
@@ -2408,22 +2408,22 @@ class Exec_05 {
                         escape(:break,nil)
                     } else {nil}
                     var x = ;;;detrack;;;(xxx).pub
-                    broadcast( nil )in ;;;detrack;;;(xxx)
-                    println(x)
+                    emit( nil )in ;;;detrack;;;(xxx)
+                    print(x)
                 }
             }
-            println(999)
+            print(999)
         """)
         assert(out == "[10]\n999\n") { out }
-        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
-        //assert(out == "anon : (lin 9, col 17) : declaration error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:throw\n") { out }
+        //assert(out == "anon : (lin 9, col 17) : declaration throw : incompatible scopes\n:throw\n") { out }
     }
     @Test
     fun hh_26_pub_pool_err() {
         val out = test("""
-            var T = task' () {
+            var T = func () {
                 set ;;;task.;;;pub = [10]
-                yield(nil)
+                await(true)
             }
             var ts = tasks()
             spawn T() in ts
@@ -2436,25 +2436,25 @@ class Exec_05 {
                     } else {nil}
                     var f = func' (tt) {
                         var x = ;;;detrack;;;(tt).pub
-                        broadcast(nil) in ;;;detrack;;;(tt)
-                        println(x)
+                        emit(true) in ;;;detrack;;;(tt)
+                        print(x)
                     }
                     f(xxx)
                 }
             }
-            println(999)
+            print(999)
         """)
         assert(out == "[10]\n999\n") { out }
-        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:throw\n") { out }
         //assert(out == "anon : (lin 14, col 17) : f(t)\n" +
-        //        "anon : (lin 10, col 21) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
+        //        "anon : (lin 10, col 21) : declaration throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
     }
     @Test
     fun hh_27_pool_scope() {
         val out = test("""
-            var T = task' () {
-                yield(nil)
+            var T = func () {
+                await(true)
             }
             do {
                 var ts = tasks()
@@ -2463,7 +2463,7 @@ class Exec_05 {
                     dump(t)
                     t
                 }
-                println(x)
+                print(x)
             }
         """)
         assert(out.contains("exe-task: 0x")) { out }
@@ -2474,43 +2474,43 @@ class Exec_05 {
     @Test
     fun ii_01_self() {
         val out = test("""
-            spawn( task' () {
-                val t = spawn (task' () {
-                    yield(nil) ; nil ;;thus { it => nil }
+            spawn( func () {
+                val t = spawn (func () {
+                    await(true) ; nil ;;thus { it => nil }
                 } )()
                 yield (nil) ; nil ;;thus { it => nil }
             }) ()
-            broadcast(nil)
-            println(:ok)
+            emit(true)
+            print(:ok)
        """)
         assert(out == ":ok\n") { out }
     }
     @Test
     fun ii_02a_self() {
         val out = test("""
-            spawn (task' () {
-                val t = spawn( task' () {
-                    yield(nil) ; nil ;;thus { it => nil }
+            spawn (func () {
+                val t = spawn( func () {
+                    await(true) ; nil ;;thus { it => nil }
                 }) () in tasks()
                 yield (nil) ; nil ;;thus { it => nil }
             } )()
-            broadcast(nil)
-            println(:ok)
+            emit(true)
+            print(:ok)
        """)
         assert(out == ":ok\n") { out }
     }
     @Test
     fun ii_02b_self() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 val ts = tasks()
-                val t = spawn( task' () {
-                    yield(nil) ; nil ;;thus { it => nil }
+                val t = spawn( func () {
+                    await(true) ; nil ;;thus { it => nil }
                 }) () in ts
                 yield (nil) ; nil ;;thus { it => nil }
             } )()
-            broadcast(nil)
-            println(:ok)
+            emit(true)
+            print(:ok)
        """)
         assert(out == ":ok\n") { out }
     }
@@ -2518,31 +2518,31 @@ class Exec_05 {
     fun ii_02c_self() {
         val out = test("""
             val ts = tasks()
-            spawn (task' () {
-                val t = spawn( task' () {
-                    yield(nil) ; nil ;;thus { it => nil }
+            spawn (func () {
+                val t = spawn( func () {
+                    await(true) ; nil ;;thus { it => nil }
                 }) () in ts
                 yield (nil) ; nil ;;thus { it => nil }
             } )()
-            broadcast(nil)
-            println(:ok)
+            emit(true)
+            print(:ok)
        """)
         assert(out == ":ok\n") { out }
     }
     @Test
     fun ii_03_self() {
         val out = test("""
-            val T = task' () {
-                spawn (task' () {
-                    yield(nil)
+            val T = func () {
+                spawn (func () {
+                    await(true)
                 }) ()
-                yield(nil)
+                await(true)
                 nil
             }
             val ts = tasks()
             spawn T() in ts
-            broadcast(nil)
-            println(:ok)
+            emit(true)
+            print(:ok)
        """)
         assert(out == ":ok\n") { out }
     }
@@ -2552,13 +2552,13 @@ class Exec_05 {
     @Test
     fun jj_01_tracks() {
         val out = test("""
-            val T = task' () { yield(nil) ; nil }
+            val T = func () { await(true) ; nil }
             val ts = tasks()
             spawn T() in ts
             val vec = #[]
             val t = next-tasks(ts,nil)
             set vec[#vec] = t
-            println(vec)
+            print(vec)
         """)
         //assert(out.contains("#[track: 0x")) { out }
         assert(out.contains("#[exe-task: 0x")) { out }
@@ -2567,10 +2567,10 @@ class Exec_05 {
     fun jj_02_tracks() {
         val out = test("""
             val f = func' (trk) {
-                ;;println(detrack(trk) { it => status(it) })
-                println(status(trk))
+                ;;print(detrack(trk) { it => status(it) })
+                print(status(trk))
             }
-            val T = task' () { yield(nil) ; nil }
+            val T = func () { await(true) ; nil }
             val x' = do {
                 val ts = tasks()
                 spawn T() in ts
@@ -2583,14 +2583,14 @@ class Exec_05 {
         """)
         assert(out==(":yielded\n:terminated\n")) { out }
         //assert(out.contains(":yielded\n" +
-        //        " v  anon : (lin 7, col 22) : block escape error : reference has immutable scope\n")) { out }
+        //        " v  anon : (lin 7, col 22) : block escape throw : reference has immutable scope\n")) { out }
         //assert(out.contains(":yielded\n" +
-        //        " v  anon : (lin 7, col 22) : block escape error : cannot expose track outside its task scope\n")) { out }
+        //        " v  anon : (lin 7, col 22) : block escape throw : cannot expose track outside its task scope\n")) { out }
     }
     @Test
     fun jj_03_tracks() {
         val out = test("""
-            val T = task' () { yield(nil) ; nil }
+            val T = func () { await(true) ; nil }
             do {
                 val ts = tasks()
                 spawn T() in ts
@@ -2606,15 +2606,15 @@ class Exec_05 {
                             set vec[#vec] = t
                         }
                     }
-                    println(vec)
+                    print(vec)
                 }
             }
         """)
-        //assert(out == "anon : (lin 9, col 29) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
+        //assert(out == "anon : (lin 9, col 29) : set throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
         //assert(out.contains("#[track: 0x")) { out }
         assert(out.contains("#[exe-task: 0x")) { out }
-        //assert(out == (" v  anon : (lin 12, col 29) : store error : cannot hold reference to track or task in pool\n")) { out }
+        //assert(out == (" v  anon : (lin 12, col 29) : store throw : cannot hold reference to track or task in pool\n")) { out }
     }
 
     // TASKS / POOL / SIZE / MEM
@@ -2622,10 +2622,10 @@ class Exec_05 {
     @Test
     fun kk_01_pool() {
         val out = test("""
-            val T = task' () {
-                println(:1)
-                yield(nil)
-                println(:2)
+            val T = func () {
+                print(:1)
+                await(true)
+                print(:2)
             }
             val ts = tasks(1)
             var ok = false
@@ -2633,8 +2633,8 @@ class Exec_05 {
                 loop' {
                     spawn T() in ts
                     val t = next-tasks(ts)
-                    ;;println(t)
-                    broadcast(nil)
+                    ;;print(t)
+                    emit(true)
                     if ok {
                         escape(:break,nil)
                     } else {nil}
@@ -2647,11 +2647,11 @@ class Exec_05 {
     @Test
     fun kk_02_pool() {
         val out = test("""
-            val T = task' (v) {
-                println(:ok)
+            val T = func (v) {
+                print(:ok)
                 enclose' :break {
                     loop' {
-                        val it = yield(nil)
+                        val it = await(true)
                         if {{==}}(it,:FIN) {
                             escape(:break,nil)
                         } else {nil}
@@ -2660,11 +2660,11 @@ class Exec_05 {
             }
             val ts = tasks(1)
             spawn T() in ts
-            spawn (task' () {
+            spawn (func () {
                 loop' {
                     enclose' :break {
                         loop' {
-                            val it = yield(nil)
+                            val it = await(true)
                             if it==:CHK {
                                 escape(:break,nil)
                             } else {nil}
@@ -2674,8 +2674,8 @@ class Exec_05 {
                 }
             }) ()
             spawn T() in ts
-            broadcast(:CHK)
-            broadcast(:FIN)
+            emit(:CHK)
+            emit(:FIN)
             spawn T() in ts
         """)
         assert(out.contains(":ok\n:ok\n")) { out }
@@ -2686,8 +2686,8 @@ class Exec_05 {
     @Test
     fun oo_02_track_err() {
         val out = test("""
-            var T = task' (v) {
-                yield(nil) ; nil
+            var T = func (v) {
+                await(true) ; nil
             }
             var x
             var ts = tasks()
@@ -2696,18 +2696,18 @@ class Exec_05 {
                 val t = next-tasks(ts)
                 set x = ;;;track;;;(t)
             }
-            println(:ok)
+            print(:ok)
         """)
-        //assert(out == " v  anon : (lin 10, col 25) : track(t) : track error : expected task\n") { out }
+        //assert(out == " v  anon : (lin 10, col 25) : track(t) : track throw : expected task\n") { out }
         assert(out == ":ok\n") { out }
     }
     @Test
     fun oo_03_track_err() {
         val out = test("""
             var T
-            set T = task' (v) {
+            set T = func (v) {
                 set pub = [v]
-                yield(nil) ; nil
+                await(true) ; nil
             }
             var x
             do {
@@ -2719,18 +2719,18 @@ class Exec_05 {
                     set x = t       ;; err: escope 
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
-        //assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n:error\n") { out }
-        //assert(out == " v  anon : (lin 14, col 25) : set error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 13, col 25) : set throw : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 13, col 25) : set throw : incompatible scopes\n:throw\n") { out }
+        //assert(out == " v  anon : (lin 14, col 25) : set throw : cannot assign reference to outer scope\n") { out }
         assert(out == ":ok\n") { out }
     }
     @Test
     fun BUG_oo_04_track() {
         val out = test("""
-            var T = task' (v) {
-                yield(nil) ; nil
+            var T = func (v) {
+                await(true) ; nil
             }
             var ts = tasks()
             spawn T(1) in ts
@@ -2739,32 +2739,32 @@ class Exec_05 {
                 ;;detrack(t) { it => it } ;; ERR: cannot expose
                 nil
             }
-            println(x)
+            print(x)
         """)
-        //assert(out == " v  anon : (lin 7, col 13) : declaration error : cannot expose task-in-pool reference\n") { out }
+        //assert(out == " v  anon : (lin 7, col 13) : declaration throw : cannot expose task-in-pool reference\n") { out }
         //assert(out.contains("exe-task: 0x")) { out }
         //assert(out == (" |  anon : (lin 9, col 28) : (func (it) { if it { ```                     ...)\n" +
-        //        " v  anon : (lin 9, col 28) : block escape error : cannot expose reference to task in pool\n")) { out }
+        //        " v  anon : (lin 9, col 28) : block escape throw : cannot expose reference to task in pool\n")) { out }
         assert(out == "nil\n") { out }
     }
     @Test
     fun oo_05_xceu() {
         val out = test("""
             var T
-            set T = task' (pos) {
-                yield(nil)
-                println(pos)
+            set T = func (pos) {
+                await(true)
+                print(pos)
             }
-            spawn (task' () {
+            spawn (func () {
                 var ts
                 set ts = tasks()
                 do {
                     spawn T([]) in ts  ;; pass [] to ts
                 }
-                yield(nil)
-                yield(nil)
+                await(true)
+                await(true)
             })()
-            broadcast (nil)
+            emit (nil)
         """)
         assert(out == "[]\n") { out }
     }
@@ -2775,15 +2775,15 @@ class Exec_05 {
     fun op_00_track() {
         val out = test("""
             var T
-            set T = task' () {
+            set T = func () {
                 set pub = [10]
-                yield(nil) ; nil
+                await(true) ; nil
             }
             var t = spawn T ()
             var x = ;;;track;;;(t)
-            println(;;;detrack;;;(x))
-            broadcast( nil )
-            println(;;;detrack;;;(x))
+            print(;;;detrack;;;(x))
+            emit( nil )
+            print(;;;detrack;;;(x))
         """)
         //assert(out == "true\nfalse\n") { out }
         assert(out.contains(Regex("exe-task: 0x.*\nexe-task: 0x.*\n"))) { out }
@@ -2791,18 +2791,18 @@ class Exec_05 {
     @Test
     fun op_01_track() {
         val out = test("""
-            val T = task' () {
-                yield(nil) ;; nil
+            val T = func () {
+                await(true) ;; nil
                 set pub = 10
-                yield(nil) ; nil
+                await(true) ; nil
             }
             var t = spawn T()
             var x = ;;;track;;;(t)
-            ;;detrack(x) { it => println(it.pub) } 
-            println(x.pub) 
-            broadcast(nil)
-            ;;detrack(x) { it => println(it.pub) } 
-            println(x.pub) 
+            ;;detrack(x) { it => print(it.pub) } 
+            print(x.pub) 
+            emit(true)
+            ;;detrack(x) { it => print(it.pub) } 
+            print(x.pub) 
         """)
         assert(out == "nil\n10\n") { out }
     }
@@ -2810,19 +2810,19 @@ class Exec_05 {
     fun op_02_track() {
         val out = test("""
             var T
-            set T = task' () {
+            set T = func () {
                 set pub = [10]
-                yield(nil) ; nil
+                await(true) ; nil
             }
             var t = spawn T ()
             var x = ;;;track;;;(t)
-            ;;detrack(x) { it => println(pub(it)[0]) }
-            println(x.pub[0])
-            println(status(x))
-            ;;println(detrack(x))
-            broadcast( nil )
-            ;;println(detrack(x) { it => 999 })
-            println(status(x))
+            ;;detrack(x) { it => print(pub(it)[0]) }
+            print(x.pub[0])
+            print(status(x))
+            ;;print(detrack(x))
+            emit( nil )
+            ;;print(detrack(x) { it => 999 })
+            print(status(x))
         """)
         //assert(out == "10\ntrue\nnil\n") { out }
         assert(out == "10\n:yielded\n:terminated\n") { out }
@@ -2830,16 +2830,16 @@ class Exec_05 {
     @Test
     fun op_02x_track() {
         val out = test("""
-            val T = task' () {
-                yield(nil)
+            val T = func () {
+                await(true)
             }
             var t = spawn T ()
             val x = ;;;track;;;(t)
-            println(status(x))
-            ;;println(detrack''(x))
+            print(status(x))
+            ;;print(detrack''(x))
             ;;detrack(x) { it => nil }
-            ;;println(detrack''(x))
-            println(status(x))
+            ;;print(detrack''(x))
+            print(status(x))
         """)
         //assert(out == "true\ntrue\n") { out }
         assert(out == ":yielded\n:yielded\n") { out }
@@ -2848,155 +2848,155 @@ class Exec_05 {
     fun op_03_track_err() {
         val out = test("""
             var T
-            set T = task' () {
+            set T = func () {
                 set pub = [10]
-                yield(nil) ; nil
+                await(true) ; nil
             }
             var x
             do {
                 var t = spawn (T) ()
                 set x = ;;;track;;;(t)         ;; scope x < t
-                ;;println(detrack(x).pub[0])
+                ;;print(detrack(x).pub[0])
             }
-            ;;println(status(detrack(x)))
-            ;;println(x)
-            println(:ok)
+            ;;print(status(detrack(x)))
+            ;;print(x)
+            print(:ok)
         """)
         //assert(out.contains("10\n:terminated\nx-track: 0x")) { out }
-        //assert(out == "anon : (lin 10, col 21) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        //assert(out == (" v  anon : (lin 10, col 21) : set error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == "anon : (lin 10, col 21) : set throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
+        //assert(out == (" v  anon : (lin 10, col 21) : set throw : cannot expose track outside its task scope\n")) { out }
         assert(out == (":ok\n")) { out }
     }
     @Test
     fun op_04_track() {
         val out = test("""
-            var T = task' () {
+            var T = func () {
                 set pub = [10]
                 ${AWAIT("it == :evt")}
             }
             var t = spawn T()
             var x = ;;;track;;;(t)
-            spawn( task' () {
+            spawn( func () {
                 catch :par-or ;;;( err|err==:par-or );;; {
-                    spawn( task' () {
-                        yield(nil) ;;thus { it => it==t }
-                        error(:par-or)
+                    spawn( func () {
+                        await(true) ;;thus { it => it==t }
+                        throw(:par-or)
                     }) ()
-                    ;;println(detrack(x) { it => it.pub[0] })
-                    println((x).pub[0])
-                    broadcast(nil) in t
-                    ;;println(detrack(x) { it => it.pub[0] })
-                    println((x).pub[0])
-                    broadcast(:evt) in t
-                    println(999)
+                    ;;print(detrack(x) { it => it.pub[0] })
+                    print((x).pub[0])
+                    emit(true) in t
+                    ;;print(detrack(x) { it => it.pub[0] })
+                    print((x).pub[0])
+                    emit(:evt) in t
+                    print(999)
                 }
-                ;;println(detrack(x) { it => if it {999} else {nil} })
-                println(status(x))
+                ;;print(detrack(x) { it => if it {999} else {nil} })
+                print(status(x))
                 nil
             })()
-            println(:ok)
+            print(:ok)
         """)
         assert(out == "10\n10\n:terminated\n:ok\n") { out }
     }
     @Test
     fun op_05_detrack_err() {
         val out = test("""
-            val T = task' () {
-                yield(nil) ; nil
+            val T = func () {
+                await(true) ; nil
             }
             val t1 = spawn T()
             val r1 = ;;;track;;;(t1)
             ;;detrack(r1) { x1 =>
                 val x1 = r1
-                ;;println(t1, r1, x1, status(t1))
-                println(status(t1))
-                broadcast( nil )
-                ;;println(t1, r1, x1, status(t1))
-                println(status(t1)) ;; never reached
+                ;;print(t1, r1, x1, status(t1))
+                print(status(t1))
+                emit( nil )
+                ;;print(t1, r1, x1, status(t1))
+                print(status(t1)) ;; never reached
             ;;}
-            println(:ok)
+            print(:ok)
         """)
         //assert(out == ":yielded\n:ok\n") { out }
         assert(out == ":yielded\n:terminated\n:ok\n") { out }
-        //assert(out == "anon : (lin 7, col 13) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        //assert(out == " v  anon : (lin 7, col 34) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 7, col 13) : declaration throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
+        //assert(out == " v  anon : (lin 7, col 34) : block escape throw : cannot copy reference out\n") { out }
     }
     @Test
     fun op_06_track_scope() {
         val out = test("""
-            val T = task' () {
-                yield(nil) ; nil
+            val T = func () {
+                await(true) ; nil
             }
             val t = spawn T()
             val y = do {
                 val x = ;;;track;;;(t)
                 x
             }
-            println(y)
+            print(y)
         """)
-        //assert(out == " v  anon : (lin 6, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 6, col 21) : block escape throw : cannot copy reference out\n") { out }
         //assert(out.contains("track: 0x")) { out }
         assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun op_07_track_scope() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 set pub = 1
-                yield(nil) ; nil
+                await(true) ; nil
             }
             val t = spawn T()
             val y = do {
                 ;;;track;;;(t)
             }
-            ;;detrack(y) { it => println(pub(it)) }
-            println(y.pub)
+            ;;detrack(y) { it => print(pub(it)) }
+            print(y.pub)
         """)
         assert(out == "1\n") { out }
     }
     @Test
     fun op_08_track_scope() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 set pub = 1
-                yield(nil) ; nil
+                await(true) ; nil
             }
             val y = do {
                 val t = spawn T()
                 ;;;track;;;(t)
             }
-            ;;detrack(y) { it => println(it.pub) }
-            println(y.pub)
+            ;;detrack(y) { it => print(it.pub) }
+            print(y.pub)
         """)
         assert(out == "1\n") { out }
-        //assert(out == " v  anon : (lin 6, col 21) : block escape error : cannot expose track outside its task scope\n") { out }
+        //assert(out == " v  anon : (lin 6, col 21) : block escape throw : cannot expose track outside its task scope\n") { out }
     }
     @Test
     fun BUG_op_09_track_throw() {
         // aborted trask in pool does not bcast itself to clear track
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 defer {
-                    println(:ok)
+                    print(:ok)
                 }
-                spawn( task' () {
-                    yield(nil) ; nil
-                    println(:before-throw)
-                    throw(:error)               ;; 2. kill task
+                spawn( func () {
+                    await(true) ; nil
+                    print(:before-throw)
+                    throw(:throw)               ;; 2. kill task
                 })()
-                yield(nil) ; nil
+                await(true) ; nil
             }
             val ts = tasks()
             spawn T() in ts
             val t = next-tasks(ts)
             catch (it=>true) {
-                broadcast(nil)                  ;; 1. awake task
+                emit(true)                  ;; 1. awake task
             }
             ;;`ceu_gc_collect();`
             detrack(t) { it =>
-                println(:it, it, status(it))    ;; 3. should not execute
+                print(:it, it, status(it))    ;; 3. should not execute
             }
         """)
         assert(!out.contains(":it")) { out }
@@ -3004,9 +3004,9 @@ class Exec_05 {
     @Test
     fun op_10_track() {
         val out = test("""
-            var T = task' (v) {
+            var T = func (v) {
                 set pub = [v]
-                yield(nil) ;;{ as it => nil }
+                await(true) ;;{ as it => nil }
             }
             var x
             var ts = tasks()
@@ -3022,9 +3022,9 @@ class Exec_05 {
                     set x = ;;;copy;;;(t)
                 }
             }
-            println(;;;detrack;;;(x).pub[0])   ;; 2
-            broadcast (nil)
-            println(;;;detrack;;;status(x))   ;; nil
+            print(;;;detrack;;;(x).pub[0])   ;; 2
+            emit (nil)
+            print(;;;detrack;;;status(x))   ;; nil
         """)
         //assert(out == "2\nnil\n") { out }
         assert(out == "2\n:terminated\n") { out }
@@ -3033,9 +3033,9 @@ class Exec_05 {
     fun op_11_track() {
         val out = test("""
             var T
-            set T = task' (v) {
+            set T = func (v) {
                 set ;;;task.;;;pub = [v]
-                yield(nil)
+                await(true)
             }
             var x
             var ts
@@ -3053,20 +3053,20 @@ class Exec_05 {
                         set x = ;;;copy;;;(t)    ;; track(t) up_hold in
                     }
                 }
-                println(;;;detrack;;;(x).pub[0])   ;; 2
-                broadcast (nil)
-                println(;;;detrack;;;status(x))   ;; nil
+                print(;;;detrack;;;(x).pub[0])   ;; 2
+                emit (nil)
+                print(;;;detrack;;;status(x))   ;; nil
             }
         """)
         assert(out == "2\n:terminated\n") { out }
-        //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 14, col 25) : set throw : incompatible scopes\n") { out }
     }
     @Test
     fun op_12_track_throw() {
         val out = test("""
             var T
-            set T = task' (v) {
-                yield(nil)
+            set T = func (v) {
+                await(true)
             }
             var ts
             set ts = tasks()
@@ -3080,12 +3080,12 @@ class Exec_05 {
                         if (if t { false } else { true }) {
                             escape(:break,nil)
                         } else {nil}
-                        error(:x,;;;copy;;;(t))
+                        throw(:x,;;;copy;;;(t))
                     }
                 }
             }
-            broadcast (nil)
-            println(;;;detrack;;;status(x))   ;; nil
+            emit (nil)
+            print(;;;detrack;;;status(x))   ;; nil
         """)
         //assert(out == "nil\n") { out }
         assert(out == ":terminated\n") { out }
@@ -3094,9 +3094,9 @@ class Exec_05 {
     fun op_13_track_throw() {
         val out = test("""
             var T
-            set T = task' (v) {
+            set T = func (v) {
                 set ;;;task.;;;pub = [v]
-                yield(nil)
+                await(true)
             }
             var ts
             set ts = tasks()
@@ -3111,14 +3111,14 @@ class Exec_05 {
                         if (if t { false } else { true }) {
                             escape(:break,nil)
                         } else {nil}
-                        error(:ok,;;;copy;;;(t))
+                        throw(:ok,;;;copy;;;(t))
                     }
                 }
             }
-            println(;;;detrack;;;(x).pub[0])   ;; 1
-            println(status(;;;detrack;;;(x)))   ;; :yielded
-            broadcast (nil)
-            println(;;;detrack;;;status(x))   ;; nil
+            print(;;;detrack;;;(x).pub[0])   ;; 1
+            print(status(;;;detrack;;;(x)))   ;; :yielded
+            emit (nil)
+            print(;;;detrack;;;status(x))   ;; nil
         """)
         //assert(out == "1\n:yielded\nnil\n") { out }
         assert(out == "1\n:yielded\n:terminated\n") { out }
@@ -3126,8 +3126,8 @@ class Exec_05 {
     @Test
     fun op_14_track_simplify() {
         val out = test("""
-            var T = task' (v) {
-                yield(nil)
+            var T = func (v) {
+                await(true)
             }
             var ts = tasks()
             spawn T(1) in ts
@@ -3143,8 +3143,8 @@ class Exec_05 {
                     set x = ;;;copy;;;(t)
                 }
             }
-            broadcast( nil )
-            println(;;;detrack;;;status(x))   ;; nil
+            emit( nil )
+            print(;;;detrack;;;status(x))   ;; nil
         """)
         //assert(out == "nil\n") { out }
         assert(out == ":terminated\n") { out }
@@ -3155,19 +3155,19 @@ class Exec_05 {
     @Test
     fun zz_01_all() {
         val out = test("""
-            val T = task' () {
-                yield(nil) ;;thus { it => nil }
+            val T = func () {
+                await(true)
             }
-            spawn (task' () {
+            spawn (func () {
                 val ts = tasks(5)
                 do {
                     spawn T() in ts
                 }
-                yield(nil) ;;thus { it =>
-                    println(nil)
+                await(true) ;;thus { it =>
+                    print(nil)
                 ;;}
             }) ()
-            broadcast(nil)
+            emit(true)
        """)
         assert(out == "nil\n") { out }
     }
@@ -3178,8 +3178,8 @@ class Exec_05 {
                 set itr[2] = next-tasks(itr[1],itr[2])
                 itr[2]
             }
-            val T = task' () {
-                yield(nil)
+            val T = func () {
+                await(true)
             }
             val ts = tasks()
             spawn T(nil) in ts
@@ -3196,7 +3196,7 @@ class Exec_05 {
                     }
                 }
             }
-            println(x)
+            print(x)
        """)
         //assert(out == "nil\n") { out }
         assert(out.contains("exe-task: 0x")) { out }
@@ -3215,7 +3215,7 @@ class Exec_05 {
                     escape(:break,(t)) ;;if true
                 }
             }
-            println(x)
+            print(x)
        """)
         assert(out == "@[]\n") { out }
     }
@@ -3223,43 +3223,43 @@ class Exec_05 {
     fun zz_df_03_bcast_throw() {
         DEBUG = true
         val out = test("""
-            spawn (task' () {
-                spawn (task' () {
-                    yield(nil)
-                    yield(nil)
-                    println(:ok)
-                    error(:XXX)
+            spawn (func () {
+                spawn (func () {
+                    await(true)
+                    await(true)
+                    print(:ok)
+                    throw(:XXX)
                 }) ()
-                spawn (task' () {
-                    yield(nil)
-                    broadcast (nil) in :global
+                spawn (func () {
+                    await(true)
+                    emit (nil) in :global
                 }) ()
                 loop' {
-                    yield(nil)
+                    await(true)
                 }
             }) ()            
-            broadcast(nil)
+            emit(true)
         """)
         assert(out == ":ok\n" +
-                " |  anon : (lin 17, col 13) : broadcast'(:task,nil)\n" +
-                " |  anon : (lin 11, col 21) : broadcast'(:global,nil)\n" +
-                " |  anon : (lin 7, col 21) : error(:XXX)\n" +
-                " v  error : :XXX\n") { out }
+                " |  anon : (lin 17, col 13) : emit'(:task,nil)\n" +
+                " |  anon : (lin 11, col 21) : emit'(:global,nil)\n" +
+                " |  anon : (lin 7, col 21) : throw(:XXX)\n" +
+                " v  throw : :XXX\n") { out }
     }
     @Test
     fun zz_05_99() {
         val out = test("""
-            (spawn (task' () {
+            (spawn (func () {
                 do {
-                    spawn (task' () {
-                        yield(nil)
+                    spawn (func () {
+                        await(true)
                     }) ()
                     loop' {
-                        yield(nil)
+                        await(true)
                     }
                 }
             })())
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }

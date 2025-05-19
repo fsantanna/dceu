@@ -48,7 +48,7 @@ class Parser_03 {
             resume a
         """)
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 2, col 20) : resume error : expected call")
+        assert(trap { parser.expr() } == "anon : (lin 2, col 20) : resume throw : expected call")
     }
     @Test
     fun bb_04_yield_err() {
@@ -58,7 +58,7 @@ class Parser_03 {
         """.trimIndent())
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 2, col 1) : expected \"(\" : have \"1\"")
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield throw : line break before expression")
     }
     @Test
     fun bb_06_resume() {
@@ -108,7 +108,7 @@ class Parser_03 {
         """)
         val parser = Parser(l)
         //val e = parser.expr()
-        //assert(e.tostr() == "yield(nil)") { e.tostr() }
+        //assert(e.tostr() == "await(true)") { e.tostr() }
         assert(trap { parser.expr() } == "anon : (lin 2, col 19) : expected expression : have \")\"")
     }
 }

@@ -446,7 +446,7 @@ class Parser_99 {
                 "nil;\n" +
                 "};\n" +
                 "}") { e.to_str() }
-        //assert(trap { parser.expr() } == "anon : (lin 3, col 17) : case error : expected ifs condition")
+        //assert(trap { parser.expr() } == "anon : (lin 3, col 17) : case throw : expected ifs condition")
     }
     @Test
     fun ee_08x_ifs_nocnd() {
@@ -466,12 +466,12 @@ class Parser_99 {
                     == 20 => true   ;; err: no ifs expr
                 }
             }
-            println(x)
+            print(x)
         """)
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.to_str().contains("{{==}}(it,true)")) { e.to_str() }
-        //assert(trap { parser.expr() } == "anon : (lin 4, col 21) : case error : expected ifs condition")
+        //assert(trap { parser.expr() } == "anon : (lin 4, col 21) : case throw : expected ifs condition")
     }
     @Test
     fun ee_10_ifs() {
@@ -510,7 +510,7 @@ class Parser_99 {
         val l = lexer("match (1,...) { (1,2) => 10 }")
         val parser = Parser(l)
         //val e = parser.expr()
-        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : match error : unexpected \"...\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : match throw : unexpected \"...\"")
     }
      */
     @Test
@@ -687,7 +687,7 @@ class Parser_99 {
         )
         val parser = Parser(l)
         val e = parser.expr()
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield throw : line break before expression")
         //assert(e.tostr() == "((yield(1)) thus { it =>\nnil\n})") { e.tostr() }
         assert(e.to_str() == "do {\n" +
                 "(val' it = yield(1));\n" +
@@ -709,7 +709,7 @@ class Parser_99 {
         )
         val parser = Parser(l)
         val e = parser.exprs()
-        //println(e.size)
+        //print(e.size)
         assert(e.to_str() == "(set t = (coro' (v) {\n" +
                 "enclose' :return {\n" +
                 "(set v = yield(1));\n" +
@@ -832,7 +832,7 @@ class Parser_99 {
         val l = lexer("yield()")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "yield(nil)") { e.to_str() }
+        assert(e.to_str() == "await(true)") { e.to_str() }
     }
     @Test
     fun ff_02_yield() {
@@ -886,8 +886,8 @@ class Parser_99 {
         val parser = Parser(l)
         //parser.expr()
         assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected \"{\" : have \":s\"")
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expression error : innocuous expression")
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch error : invalid condition")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expression throw : innocuous expression")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch throw : invalid condition")
         //assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected \"{\" : have \":s\"")
     }
     /*
@@ -899,15 +899,15 @@ class Parser_99 {
         assert(e.tostr() == "catch (x :s | is'(x,:s)) {\n" +
                 "\n" +
                 "}") { e.tostr() }
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch error : invalid condition")
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch error : innocuous identifier")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch throw : invalid condition")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch throw : innocuous identifier")
     }
     @Test
     fun fg_01_catch() {
         val l = lexer("catch () {}")
         val parser = Parser(l)
         //assert(trap { parser.expr() } == "anon : (lin 1, col 8) : expected expression : have \")\"")
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 8) : pattern error : unexpected \")\"")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 8) : pattern throw : unexpected \")\"")
         val e = parser.expr()
         assert(e.tostr() == "catch (it | true) {\n" + "\n" + "}") { e.tostr() }
     }
@@ -944,7 +944,7 @@ class Parser_99 {
         assert(e.tostr() == "catch (x :X | is'(x,:X)) {\n" +
                 "\n" +
                 "}") { e.tostr() }
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 8) : catch error : innocuous identifier")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 8) : catch throw : innocuous identifier")
     }
     @Test
     fun fg_05_catch() {
@@ -985,7 +985,7 @@ class Parser_99 {
         val l = lexer("catch (|x) {}")
         val parser = Parser(l)
         //assert(trap { parser.expr() } == "anon : (lin 1, col 9) : invalid pattern : expected \",\"")
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch error : innocuous identifier")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch throw : innocuous identifier")
         val e = parser.expr()
         assert(e.tostr() == "catch (it | x) {\n" +
                 "\n" +
@@ -1008,13 +1008,13 @@ class Parser_99 {
     fun gg_01_resume_yield_all_err() {
         val l = lexer("resume-yield-all f")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 18) : resume-yield-all error : expected call")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 18) : resume-yield-all throw : expected call")
     }
     @Test
     fun gg_02_resume_yield_all_err() {
         val l = lexer("resume-yield-all f(1,2)")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 18) : resume-yield-all error : invalid number of arguments")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 18) : resume-yield-all throw : invalid number of arguments")
     }
     @Test
     fun gg_03_resume_yield_all() {
@@ -1029,7 +1029,7 @@ class Parser_99 {
             resume-yield-all nil(1,2)
         """)
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 2, col 30) : resume-yield-all error : invalid number of arguments")
+        assert(trap { parser.expr() } == "anon : (lin 2, col 30) : resume-yield-all throw : invalid number of arguments")
     }
 
     // SPAWN
@@ -1039,7 +1039,7 @@ class Parser_99 {
         val l = lexer("spawn {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "(spawn (task' :fake () {\n" +
+        assert(e.to_str() == "(spawn (func :fake () {\n" +
                 "enclose' :return {\n" +
                 "nil;\n" +
                 "};\n" +
@@ -1059,14 +1059,14 @@ class Parser_99 {
     fun hh_03_bcast_in() {
         val l = lexer("""
             spawn {
-                broadcast(nil) in nil
+                emit(true) in nil
             }
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "(spawn (task' :fake () {\n" +
+        assert(e.to_str() == "(spawn (func :fake () {\n" +
                 "enclose' :return {\n" +
-                "broadcast'(nil,nil);\n" +
+                "emit'(nil,nil);\n" +
                 "};\n" +
                 "})())") { e.to_str() }
     }
@@ -1079,12 +1079,12 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.to_str() == "do {\n" +
-                "(spawn (task' :fake () {\n" +
+                "(spawn (func :fake () {\n" +
                 "enclose' :return {\n" +
                 "nil;\n" +
                 "};\n" +
                 "})());\n" +
-                "(spawn (task' :fake () {\n" +
+                "(spawn (func :fake () {\n" +
                 "enclose' :return {\n" +
                 "nil;\n" +
                 "};\n" +
@@ -1092,7 +1092,7 @@ class Parser_99 {
                 "enclose' :break {\n" +
                 "loop' {\n" +
                 "enclose' :skip {\n" +
-                "yield(nil);\n" +
+                "await(true);\n" +
                 "};\n" +
                 "};\n" +
                 "};\n" +
@@ -1133,7 +1133,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.to_str().contains("if {{/=}}(status(ceu_spw_15),:terminated)")) { e.to_str() }
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : await error : expected non-pool spawn")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : await throw : expected non-pool spawn")
     }
     @Test
     fun ja_06_task() {
@@ -1305,7 +1305,7 @@ class Parser_99 {
             10->10
         """)
         assert(out == " |  anon : (lin 2, col 17) : 10(10)\n" +
-                " v  error : expected function\n") { out }
+                " v  throw : expected function\n") { out }
     }
 
     // PIPE / WHERE
@@ -1340,7 +1340,7 @@ class Parser_99 {
                 "nil;\n" +
                 "f({{+}}(10,1));\n" +
                 "}") { e.to_str() }
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 12) : sufix operation error : expected surrounding parentheses")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 12) : sufix operation throw : expected surrounding parentheses")
     }
     @Test
     fun todo_op_05_where() {    // export (not do)
@@ -1357,7 +1357,7 @@ class Parser_99 {
         val l = lexer("spawn T(v) where {nil}")
         val parser = Parser(l)
         //val e = parser.expr()
-        assert(trap { parser.expr() } == "anon : (lin 1, col XX) : spawn error : expected call")
+        assert(trap { parser.expr() } == "anon : (lin 1, col XX) : spawn throw : expected call")
     }
     @Test
     fun op_07_pipe() {
@@ -1422,7 +1422,7 @@ class Parser_99 {
         val l = lexer("{\\v :X}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.to_str() == "anon : (lin X, col Y) : expression error : innocuous expression\n") { e.to_str() }
+        assert(e.to_str() == "anon : (lin X, col Y) : expression throw : innocuous expression\n") { e.to_str() }
     }
 
     // TUPLE DOT
@@ -1441,7 +1441,7 @@ class Parser_99 {
         val parser = Parser(l)
         //val e = parser.expr()
         //assert(e.tostr() == "x.1.2") { e.tostr() }
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 3) : index error : ambiguous dot : use brackets")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 3) : index throw : ambiguous dot : use brackets")
         assert(trap { parser.expr() } == "anon : (lin 1, col 3) : expected identifier : have \"1.2\"")
     }
     @Test
@@ -1475,7 +1475,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.to_str() == ":T;\n2;\n") { e.to_str() }
-        //assert(trap { parser.exprs() } == "anon : (lin 1, col 1) : expression error : innocuous expression")
+        //assert(trap { parser.exprs() } == "anon : (lin 1, col 1) : expression throw : innocuous expression")
     }
     @Test
     fun uu_03_tags() {
@@ -1562,7 +1562,7 @@ class Parser_99 {
     fun vv_04_ppp() {
         val l = lexer("set x[0][-] = 1")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : set error : expected assignable destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : set throw : expected assignable destination")
     }
     @Test
     fun vv_05_ppp() {

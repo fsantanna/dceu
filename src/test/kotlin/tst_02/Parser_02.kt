@@ -18,8 +18,8 @@ class Parser_02 {
 
     @Test
     fun bb_01_throw_catch() {
-        val l = lexer("catch :x { error(1) }")
-        //val l = lexer("catch ( it|1) { error(1) }")
+        val l = lexer("catch :x { throw(1) }")
+        //val l = lexer("catch ( it|1) { throw(1) }")
         val parser = Parser(l)
         val e = parser.exprs()
         /*
@@ -27,11 +27,11 @@ class Parser_02 {
                 "(val it = ```:ceu  *(ceu_acc.Dyn->Error.val)```);\n" +
                 "1;\n" +
                 "}) {\n" +
-                "error(1);\n" +
+                "throw(1);\n" +
                 "};\n") { e.tostr() }
          */
         assert(e.to_str() == "catch :x {\n" +
-                "error(1);\n" +
+                "throw(1);\n" +
                 "};\n") { e.to_str() }
     }
     @Test
@@ -97,7 +97,7 @@ class Parser_02 {
     fun cc_06_as() {
         val out = test("""
             catch ( x| 1 ) {nil}
-            println(:ok)
+            print(:ok)
         """)
         //assert(out == "anon : (lin 2, col 27) : expected \"in\" : have \"{\"\n") { out }
         assert(out == "anon : (lin 2, col 21) : expected tag : have \"x\"\n") { out }

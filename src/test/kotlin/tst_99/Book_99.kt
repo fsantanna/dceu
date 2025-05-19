@@ -15,7 +15,7 @@ class Book_99 {
             val square = func (x) {
                 x * x
             }
-            println(square(5))
+            print(square(5))
         """, true)
         assert(out == "25\n") { out }
     }
@@ -25,9 +25,9 @@ class Book_99 {
             val smaller = func (x,y) {
                 if x < y { x } else { y }
             }
-            println(smaller(1,2))
-            println(smaller(1,1))
-            println(smaller(2,1))
+            print(smaller(1,2))
+            print(smaller(1,1))
+            print(smaller(2,1))
         """, true)
         assert(out == "1\n1\n1\n") { out }
     }
@@ -40,7 +40,7 @@ class Book_99 {
             func smaller (x,y) {
                 ((x < y) and x) or y
             }
-            println(square(smaller(3,5)))
+            print(square(smaller(3,5)))
         """, true)
         assert(out == "9\n") { out }
     }
@@ -53,7 +53,7 @@ class Book_99 {
             func smaller (x,y) {
                 if (x < y) => x => y
             }
-            println(square(smaller(3,5)))
+            print(square(smaller(3,5)))
         """, true)
         assert(out == "9\n") { out }
     }
@@ -63,7 +63,7 @@ class Book_99 {
             func delta (a,b,c) {
                 ((b**2) - (4*(a*c))) // 2
             }
-            println(delta(4.2,7,2.3))
+            print(delta(4.2,7,2.3))
         """, true)
         assert(out == "3.2187\n") { out }
     }
@@ -89,8 +89,8 @@ class Book_99 {
                     x+y
                 }
             }
-            println(smallerc(3)(5))
-            println(plusc(3)(5))
+            print(smallerc(3)(5))
+            print(plusc(3)(5))
         """, true)
         assert(out == "3\n8\n") { out }
     }
@@ -106,7 +106,7 @@ class Book_99 {
             func quad (x) {
                 twice(square,x)
             }
-            println(twice(square, 2), quad(2))
+            print(twice(square, 2), quad(2))
         """, true)
         assert(out == "16\t16\n") { out }
     }
@@ -122,7 +122,7 @@ class Book_99 {
                 }
             }
             val quad = twicec(square)
-            println(quad(2))""", true
+            print(quad(2))""", true
         )
         assert(out == "16\n") { out }
     }
@@ -139,7 +139,7 @@ class Book_99 {
             val plusc = curry({{+}})
             val b = plusc(1)
             val c = b(2)
-            println((plusc(1))(-4))
+            print((plusc(1))(-4))
         """, true)
         assert(out == "-3\n") { out }
     }
@@ -156,14 +156,14 @@ class Book_99 {
                     f(x)(y)
                 }            
             }
-            println(uncurry(plusc)(1,-4))
+            print(uncurry(plusc)(1,-4))
         """, true)
         assert(out == "-3\n") { out }
     }
     @Test
     fun pg_13_ops() {
         val out = test("""
-            println({{*}}(1 + 3, 4))
+            print({{*}}(1 + 3, 4))
         """, true)
         assert(out == "16\n") { out }
     }
@@ -179,7 +179,7 @@ class Book_99 {
                 x**2
             }
             val quad = compose(square,square)
-            println(quad(2))
+            print(quad(2))
         """, true)
         assert(out == "16\n") { out }
     }
@@ -196,7 +196,7 @@ class Book_99 {
                     else => 0
                 }
             }
-            println(signum(10), signum(-9), signum(0))
+            print(signum(10), signum(-9), signum(0))
         """, true)
         assert(out == "1\t-1\t0\n") { out }
     }
@@ -210,7 +210,7 @@ class Book_99 {
                     x * fact(x - 1)
                 }
             }
-            println(fact(5))
+            print(fact(5))
         """, true)
         assert(out == "120\n") { out }
     }
@@ -221,22 +221,22 @@ class Book_99 {
     fun TODO_poly_mult() {
         val out = test("""
             poly val mult
-            println(10 {mult} 20)
-            println([1,2] {mult} 2)
-            println(2 {mult} [1,2])
+            print(10 {mult} 20)
+            print([1,2] {mult} 2)
+            print(2 {mult} [1,2])
             func fact (x) {
                 ifs {
-                    x < 0  => throw(:error)
+                    x < 0  => throw(:throw)
                     x == 0 => 1
                     else => x * fact(x - 1)
                 }
             }
-            println(fact(-1))
+            print(fact(-1))
         """, true)
         assert(out == "anon : (lin 9, col 21) : fact({{-}}(1))\n" +
-                "anon : (lin 4, col 31) : throw(:error)\n" +
-                "throw error : uncaught exception\n" +
-                ":error\n") { out }
+                "anon : (lin 4, col 31) : throw(:throw)\n" +
+                "throw throw : uncaught exception\n" +
+                ":throw\n") { out }
     }
 
     // CHAPTER 1.7: Specifications
@@ -251,22 +251,22 @@ class Book_99 {
         val out = test("""
             func fact (x) {
                 ifs {
-                    x < 0  => error(:error)
+                    x < 0  => throw(:throw)
                     x == 0 => 1
                     else => x * fact(x - 1)
                 }
             }
-            println(fact(-1))
+            print(fact(-1))
         """, true)
         assert(out == " |  anon : (lin 9, col 21) : fact({{-}}(1))\n" +
-                " |  anon : (lin 4, col 31) : error(:error)\n" +
-                " v  error : :error\n") { out }
+                " |  anon : (lin 4, col 31) : throw(:throw)\n" +
+                " v  throw : :throw\n") { out }
     }
     @Test
     fun pg_31_short() {
         val out = test("""
-            println((false and error(:error)) or true)
-            println(true or error(:error))
+            print((false and throw(:throw)) or true)
+            print(true or throw(:throw))
         """, true)
         assert(out == "true\ntrue\n") { out }
     }
@@ -288,8 +288,8 @@ class Book_99 {
                     (y % 4) == 0
                 }
             }
-            println(leapyear?(1980))
-            println(leapyear?(1979))
+            print(leapyear?(1980))
+            print(leapyear?(1979))
         """, true)
         assert(out == "true\nfalse\n") { out }
     }
@@ -299,8 +299,8 @@ class Book_99 {
             func leapyear? (y) {
                 (((y % 100) == 0) and ((y % 400) == 0)) or ((y % 4) == 0)
             }
-            println(leapyear?(1980))
-            println(leapyear?(1979))
+            print(leapyear?(1980))
+            print(leapyear?(1979))
         """, true)
         assert(out == "true\nfalse\n") { out }
     }
@@ -322,10 +322,10 @@ class Book_99 {
                     else       => :Tri.Sca
                 }
              }
-            println(analyse(10,20,30))
-            println(analyse(10,20,25))
-            println(analyse(10,20,20))
-            println(analyse(10,10,10))
+            print(analyse(10,20,30))
+            print(analyse(10,20,25))
+            print(analyse(10,20,20))
+            print(analyse(10,10,10))
         """, true)
         assert(out == ":Tri.Err\n:Tri.Sca\n:Tri.Iso\n:Tri.Equ\n") { out }
     }

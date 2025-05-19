@@ -8,16 +8,16 @@ class Parser_04 {
 
     @Test
     fun aa_01_task() {
-        val l = lexer("task' (a,b) { 10 }")
+        val l = lexer("func (a,b) { 10 }")
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Proto && e.pars.size==2)
-        assert(e.to_str() == "(task' (a,b) {\n10;\n})") { e.to_str() }
+        assert(e.to_str() == "(func (a,b) {\n10;\n})") { e.to_str() }
     }
     @Test
     fun aa_02_task() {
         val l = lexer("""
-            set t = task' (v) {
+            set t = func (v) {
                 set v = yield((1)) ;;thus { it => nil }
                 yield((2)) ;;thus { it => nil }
             }
@@ -28,7 +28,7 @@ class Parser_04 {
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.to_str() == """
-            (set t = (task' (v) {
+            (set t = (func (v) {
             (set v = yield(1));
             yield(2);
             }));
@@ -55,7 +55,7 @@ class Parser_04 {
             spawn nil
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : spawn error : expected call")
+        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : spawn throw : expected call")
     }
     @Test
     fun bb_03_spawn() {
@@ -69,23 +69,23 @@ class Parser_04 {
     @Test
     fun bb_04_spawn_err() {
         val l = lexer("""
-            spawn task' () { nil } ()
+            spawn func () { nil } ()
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.to_str() == "(spawn (task' () {\n" +
+        assert(e.to_str() == "(spawn (func () {\n" +
                 "nil;\n" +
                 "})());\n") { e.to_str() }
-        //assert(trap { parser.exprs() } == "anon : (lin 2, col 19) : spawn error : unexpected \"task\"")
+        //assert(trap { parser.exprs() } == "anon : (lin 2, col 19) : spawn throw : unexpected \"task\"")
     }
     @Test
     fun bb_05_spawn() {
         val l = lexer("""
-            spawn (task' () { nil }) ()
+            spawn (func () { nil }) ()
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.to_str() == "(spawn (task' () {\n" +
+        assert(e.to_str() == "(spawn (func () {\n" +
                 "nil;\n" +
                 "})());\n") { e.to_str() }
     }
@@ -95,7 +95,7 @@ class Parser_04 {
             spawn T(...)
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 19) : spawn error : \"...\" is not allowed")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 19) : spawn throw : \"...\" is not allowed")
     }
 
     // DELAY
@@ -115,7 +115,7 @@ class Parser_04 {
     @Test
     fun cc_01_bcast_err() {
         val l = lexer("""
-            broadcast 1
+            emit 1
         """)
         val parser = Parser(l)
         //assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected expression : have end of file")
@@ -125,7 +125,7 @@ class Parser_04 {
     @Test
     fun cc_02_bcast_err() {
         val l = lexer("""
-            broadcast
+            emit
         """)
         val parser = Parser(l)
         //assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected expression : have end of file")
@@ -135,7 +135,7 @@ class Parser_04 {
     @Test
     fun cc_03_bcast_err() {
         val l = lexer("""
-            broadcast (nil) in
+            emit (nil) in
         """)
         val parser = Parser(l)
         assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected expression : have end of file")
@@ -143,7 +143,7 @@ class Parser_04 {
     @Test
     fun cc_04_bcast_err() {
         val l = lexer("""
-            broadcast in nil
+            emit in nil
         """)
         val parser = Parser(l)
         //assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \",\" : have end of file")
@@ -152,7 +152,7 @@ class Parser_04 {
     @Test
     fun cc_0X_bcast_err() {
         val l = lexer("""
-            broadcast (nil) in nil,
+            emit (nil) in nil,
         """)
         val parser = Parser(l)
         assert(trap { parser.exprs() } == "anon : (lin 2, col 35) : expected expression : have \",\"")
@@ -160,20 +160,20 @@ class Parser_04 {
     @Test
     fun cc_05_bcast_err() {
         val l = lexer("""
-            broadcast ([]) in nil
+            emit ([]) in nil
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.to_str() == "broadcast'(nil,[]);\n") { e.to_str() }
+        assert(e.to_str() == "emit'(nil,[]);\n") { e.to_str() }
     }
     @Test
     fun cc_06_bcast() {
         val l = lexer("""
-            broadcast(nil) in t
+            emit(true) in t
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.to_str() == "broadcast'(t,nil);\n") { e.to_str() }
+        assert(e.to_str() == "emit'(t,nil);\n") { e.to_str() }
     }
 
     // PUB
@@ -227,13 +227,13 @@ class Parser_04 {
     @Test
     fun dd_03_pub_tag() {
         val l = lexer("""
-            task' () :X {
+            func () :X {
                 nil
             }
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.to_str() == "(task' () :X {\nnil;\n});\n") { e.to_str() }
+        assert(e.to_str() == "(func () :X {\nnil;\n});\n") { e.to_str() }
     }
     @Test
     fun dd_04_pub() {
@@ -250,7 +250,7 @@ class Parser_04 {
             set pub() = 10
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : set error : expected assignable destination")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : set throw : expected assignable destination")
     }
     @Test
     fun dd_06_pub() {

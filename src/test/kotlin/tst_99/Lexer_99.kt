@@ -92,7 +92,7 @@ class Lexer_99 {
         val l = lexer("1s10k")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Num && it.str == "1s10k" })
-        //println(tks.next())
+        //print(tks.next())
         //assert(trap { tks.next() } == "anon : (lin 1, col 1) : invalid time constant")
     }
 }

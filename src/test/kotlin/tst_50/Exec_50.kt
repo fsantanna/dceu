@@ -17,7 +17,7 @@ class Exec_50 {
                 nil
             }
             val t2 = []
-            println(`:number ${D}t1.Dyn->Any.lex.depth`, `:number ${D}t2.Dyn->Any.lex.depth`)
+            print(`:number ${D}t1.Dyn->Any.lex.depth`, `:number ${D}t2.Dyn->Any.lex.depth`)
         """)
         assert(out == "1\t1\n") { out }
     }
@@ -27,7 +27,7 @@ class Exec_50 {
             val t1 = []
             (func' () { nil })()
             val t2 = []
-            println(`:number ${D}t1.Dyn->Any.lex.depth`, `:number ${D}t2.Dyn->Any.lex.depth`)
+            print(`:number ${D}t1.Dyn->Any.lex.depth`, `:number ${D}t2.Dyn->Any.lex.depth`)
         """)
         assert(out == "1\t1\n") { out }
     }
@@ -37,7 +37,7 @@ class Exec_50 {
             val t1 = []
             resume (coroutine(coro' () { nil })) ()
             val t2 = []
-            println(`:number ${D}t1.Dyn->Any.lex.depth`, `:number ${D}t2.Dyn->Any.lex.depth`)
+            print(`:number ${D}t1.Dyn->Any.lex.depth`, `:number ${D}t2.Dyn->Any.lex.depth`)
         """)
         assert(out == "1\t1\n") { out }
     }
@@ -51,7 +51,7 @@ class Exec_50 {
                 }
             }
             val t2 = []
-            println(`:number ${D}t1.Dyn->Any.lex.depth`, `:number ${D}t2.Dyn->Any.lex.depth`)
+            print(`:number ${D}t1.Dyn->Any.lex.depth`, `:number ${D}t2.Dyn->Any.lex.depth`)
         """)
         assert(out == "1\t1\n") { out }
     }
@@ -64,11 +64,11 @@ class Exec_50 {
             val t1 = []
             val t2 = t1
             val f = func' (v) {
-                println(`:number ${D}v.Dyn->Any.lex.type`, `:number ${D}v.Dyn->Any.lex.depth`)
+                print(`:number ${D}v.Dyn->Any.lex.type`, `:number ${D}v.Dyn->Any.lex.depth`)
             }
-            println(`:number ${D}t1.Dyn->Any.lex.type`, `:number ${D}t1.Dyn->Any.lex.depth`)
+            print(`:number ${D}t1.Dyn->Any.lex.type`, `:number ${D}t1.Dyn->Any.lex.depth`)
             f(drop(t1))
-            println(t1, t2)
+            print(t1, t2)
         """)
         assert(out == "2\t1\n" +
                 "1\t1\n" +
@@ -82,7 +82,7 @@ class Exec_50 {
                 y
                 drop(y)
             }
-            println(x)
+            print(x)
         """)
         assert(out == "[]\n") { out }
     }
@@ -97,7 +97,7 @@ class Exec_50 {
                 y
                 f(drop(y))
             }
-            println(x)
+            print(x)
         """)
         assert(out == "[]\n") { out }
     }
@@ -111,10 +111,10 @@ class Exec_50 {
                 ;;dump(a)
             }
             ;;dump(a)
-            println(a)
+            print(a)
         """)
         //assert(out == " |  anon : (lin 5, col 17) : (val b = a)\n" +
-        //        " v  error : dropped value has pending outer reference\n") { out }
+        //        " v  throw : dropped value has pending outer reference\n") { out }
         assert(out == "[]\n") { out }
     }
     @Test
@@ -127,18 +127,18 @@ class Exec_50 {
                 loop' {
                     val c
                     if i==2 {
-                        error(:X, [drop(str)])
+                        throw(:X, [drop(str)])
                     } else {
                         set str[#str] = i
                         set i = i + 1
                     }
                 }
-                println(str)
+                print(str)
             } ()
         """)
         assert(out == " |  anon : (lin 3, col 13) : (func' () { (val str = #[]); (var i = 0); ...\n" +
-                " |  anon : (lin 9, col 25) : error(:X,[drop(str)])\n" +
-                " v  error : [#[0,1]]\n") { out }
+                " |  anon : (lin 9, col 25) : throw(:X,[drop(str)])\n" +
+                " v  throw : [#[0,1]]\n") { out }
     }
 
     // COLLECTIONS
@@ -148,7 +148,7 @@ class Exec_50 {
         val out = test("""
             val t = [[10]]
             val x = drop(t[0])
-            println(t, x)
+            print(t, x)
         """)
         assert(out == "[nil]\t[10]\n") { out }
     }
@@ -160,7 +160,7 @@ class Exec_50 {
                 val' x = drop(t[0])
                 x
             }
-            println(y)
+            print(y)
         """)
         assert(out == "[10]\n") { out }
     }
@@ -171,7 +171,7 @@ class Exec_50 {
                 val t = [[10]]
                 drop(t[0])
             }
-            println(x)
+            print(x)
         """)
         assert(out == "[10]\n") { out }
     }
@@ -182,10 +182,10 @@ class Exec_50 {
                 val t = [[10]]
                 t[0]
             }
-            println(y)
+            print(y)
         """)
         assert(out == " |  anon : (lin 2, col 13) : (val y = do { (val t = [[10]]); t[0]; })\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun cc_05_col() {
@@ -196,7 +196,7 @@ class Exec_50 {
             }
             val v = []
             val t = f([v])
-            println(v == t[0])
+            print(v == t[0])
         """)
         assert(out == "true\n") { out }
     }
@@ -213,7 +213,7 @@ class Exec_50 {
                     nil
                 }
                 val t = copy([f])
-                println(f == t[0])
+                print(f == t[0])
             } ()
         """)
         assert(out == "true\n") { out }
@@ -228,7 +228,7 @@ class Exec_50 {
                 t
             }
             val v = f([nil], [])
-            println(v)
+            print(v)
         """)
         assert(out == "[[]]\n") { out }
     }
@@ -238,9 +238,9 @@ class Exec_50 {
     @Test
     fun cd_01_tasks() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 set pub = []
-                yield(nil)
+                await(true)
             }
             val ts = tasks()
             spawn T() in ts
@@ -251,14 +251,14 @@ class Exec_50 {
     @Test
     fun cc_02_task() {
         val out = test("""
-            val T = task' (x) {
+            val T = func (x) {
                 set pub = x
-                yield(nil)
+                await(true)
             }
             do {
                 val x = [10]
                 val t = spawn T(x)
-                println(t.pub)
+                print(t.pub)
             }
         """)
         assert(out == "[10]\n") { out }
@@ -267,31 +267,31 @@ class Exec_50 {
     fun cc_03_tasks() {
         val out = test("""
             val ts = tasks()
-            val T = task' (x) {
+            val T = func (x) {
                 set pub = x
-                yield(nil)
+                await(true)
             }
             do {
                 val x = [10]
                 val t = spawn T(x) in ts
-                println(t.pub)
+                print(t.pub)
             }
         """)
         assert(out == " |  anon : (lin 9, col 25) : (spawn T(x) in ts)\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun cc_04_tasks() {
         val out = test("""
             val ts = tasks()
-            val T = task' (x) {
+            val T = func (x) {
                 set pub = x
-                yield(nil)
+                await(true)
             }
             do {
                 val x = [10]
                 val t = spawn T(drop(x)) in ts
-                println(t.pub)
+                print(t.pub)
             }
         """)
         assert(out == "[10]\n") { out }
@@ -300,15 +300,15 @@ class Exec_50 {
     fun cc_05_tasks() {
         val out = test("""
             val ts = tasks()
-            val T = task' (x) {
+            val T = func (x) {
                 set pub = x
-                yield(nil)
+                await(true)
             }
-            spawn (task' () {
+            spawn (func () {
                 val x = [10]
                 val t = spawn T(drop(x)) in ts
-                println(t.pub)
-                yield(nil)
+                print(t.pub)
+                await(true)
             }) ()
         """)
         assert(out == "[10]\n") { out }
@@ -335,7 +335,7 @@ class Exec_50 {
                     print(v)
                 }
             }
-            println()
+            print()
         """)
         assert(out == "[1,2][3,4]\n") { out }
     }
@@ -352,7 +352,7 @@ class Exec_50 {
                 val CO = F(drop(x))
                 val co = coroutine(CO)
                 val t = resume co()
-                println(t)
+                print(t)
             ;;}
         """)
         assert(out == "[]\n") { out }
@@ -365,7 +365,7 @@ class Exec_50 {
                     yield(drop(x))  ;; x is an upval
                 }
             }
-            println(do {
+            print(do {
                 val x = []
                 val CO = F(drop(x))
                 val co = coroutine(CO)
@@ -374,7 +374,7 @@ class Exec_50 {
         """)
         assert(out == " |  anon : (lin 11, col 17) : (resume (co)())\n" +
                 " |  anon : (lin 4, col 21) : yield(drop(x))\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun hh_04_func_upval() {
@@ -387,7 +387,7 @@ class Exec_50 {
             do {
                 val x = []
                 val f = F(drop(x))
-                println(f())
+                print(f())
             }
         """)
         assert(out == "[]\n") { out }
@@ -402,7 +402,7 @@ class Exec_50 {
             }
             val f = F([])
             val t = f()
-            println(t)
+            print(t)
         """)
         assert(out == "[]\n") { out }
     }
@@ -417,7 +417,7 @@ class Exec_50 {
             }
             val co = coroutine(CO)
             val x = resume co()
-            println(x)
+            print(x)
         """)
         assert(out == "[99]\n") { out }
     }
@@ -438,18 +438,18 @@ class Exec_50 {
                     set x = y
                 }
             }
-            println(resume (f(CO1, coroutine(CO2))) ())
+            print(resume (f(CO1, coroutine(CO2))) ())
         """)
         assert(out == " |  anon : (lin 16, col 29) : f(CO1,coroutine(CO2))\n" +
                 " |  anon : (lin 4, col 17) : (resume (xco1)())\n" +
                 " |  anon : (lin 13, col 25) : x\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun hh_07_coro_depth() {
         val out = test("""
             val CO = coro' (x) {
-                println(x)
+                print(x)
             }
             val co = coroutine(CO)
             do {    ;; block optimized out
@@ -465,7 +465,7 @@ class Exec_50 {
     fun hh_07x_coro_depth() {
         val out = test("""
             val CO = coro' (x) {
-                println(x)
+                print(x)
             }
             val co = coroutine(CO)
             do {
@@ -477,13 +477,13 @@ class Exec_50 {
             }
         """)
         assert(out == " |  anon : (lin 9, col 21) : (resume (co)(drop(t)))\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun hh_08_coro_depth() {
         val out = test("""
             val CO = coro' (x) {
-                println(x)
+                print(x)
             }
             val co = coroutine(CO)
             do {
@@ -501,9 +501,9 @@ class Exec_50 {
     @Test
     fun nn_01_nested() {
         val out = test("""
-            spawn (task' () {
-                val t1 = spawn (task' :nested () {
-                    println(:ok)
+            spawn (func () {
+                val t1 = spawn (func :nested () {
+                    print(:ok)
                 }) ()
                 nil
             }) ()
@@ -519,24 +519,24 @@ class Exec_50 {
                 }
                 val x
             }
-            println(:no)
+            print(:no)
         """)
-        //assert(out == "anon : (lin 3, col 17) : :nested error : expected enclosing prototype\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : :nested throw : expected enclosing prototype\n") { out }
         //assert(out == ":ok\n") { out }
         assert(out == " |  anon : (lin 2, col 13) : (val f = do { (func' :nested () { nil; });...\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun nn_02x_nested() {
         val out = test("""
             val f = do {            ;; optim block?
-                func' :nested () {  ;; no error
+                func' :nested () {  ;; no throw
                     nil
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
-        //assert(out == "anon : (lin 3, col 17) : :nested error : expected enclosing prototype\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : :nested throw : expected enclosing prototype\n") { out }
         //assert(out == ":ok\n") { out }
         assert(out == ":ok\n") { out }
     }
@@ -549,7 +549,7 @@ class Exec_50 {
                     set x = 100
                 }
                 g()
-                println(x)
+                print(x)
             ;;}
         """
         )
@@ -565,7 +565,7 @@ class Exec_50 {
                     set x = 100
                 }
                 g()
-                println(x)
+                print(x)
             }
             f()
         """
@@ -578,7 +578,7 @@ class Exec_50 {
         val out = test("""
             val f = func' (x) { 
                 val g = func' :nested () {
-                    println(x)
+                    print(x)
                 }
                 g()
             }
@@ -591,17 +591,17 @@ class Exec_50 {
     @Test
     fun nn_06_nested() {
         val out = test("""
-            spawn (task' () {
-                val T = task' :nested () {
+            spawn (func () {
+                val T = func :nested () {
                     set pub = [99]
-                    println(:A, pub)
-                    spawn (task' :fake () {
-                        println(:B, pub)
+                    print(:A, pub)
+                    spawn (func :fake () {
+                        print(:B, pub)
                     }) ()
-                    yield(nil)
+                    await(true)
                 }
                 val t = spawn T()
-                println(:C, t.pub)
+                print(:C, t.pub)
             }) ()
         """
         )
@@ -612,12 +612,12 @@ class Exec_50 {
     @Test
     fun nn_07_nested() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 val t = 10
-                val S = task' :nested () {
-                    println(t)
+                val S = func :nested () {
+                    print(t)
                 }
-                spawn (task' :nested () {
+                spawn (func :nested () {
                     spawn S()
                 }) ()
             }
@@ -631,7 +631,7 @@ class Exec_50 {
             val T = func' () {
                 val t = 10
                 val S = func' :nested () {
-                    println(t)
+                    print(t)
                 }
                 (func' :nested () {
                     S()
@@ -647,7 +647,7 @@ class Exec_50 {
             val T = coro' () {
                 val t = 10
                 val S = coro' :nested () {
-                    println(t)
+                    print(t)
                 }
                 resume coroutine(coro' :nested () {
                     resume coroutine(S)()
@@ -660,15 +660,15 @@ class Exec_50 {
     @Test
     fun nn_10_nested() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 set pub = 10
-                val S = task' :fake () {
-                    println(pub)
+                val S = func :fake () {
+                    print(pub)
                 }
-                spawn (task' :fake () {
+                spawn (func :fake () {
                     spawn S()
                 }) ()
-                spawn (task' () {
+                spawn (func () {
                     spawn S()
                 }) ()
             }
@@ -679,11 +679,11 @@ class Exec_50 {
     @Test
     fun nn_11_nested() {
         val out = test("""
-            spawn (task' () {
-                val T = task' () {
+            spawn (func () {
+                val T = func () {
                     set pub = [10]
-                    spawn (task' :fake () {
-                        println(pub[0])
+                    spawn (func :fake () {
+                        print(pub[0])
                     }) ()
                 }
                 spawn T()
@@ -694,11 +694,11 @@ class Exec_50 {
     @Test
     fun nn_12_nested() {
         val out = test("""
-            spawn (task' :fake () {
-                val T = task' :nested () {
+            spawn (func :fake () {
+                val T = func :nested () {
                     set pub = [10]
-                    spawn (task' :fake () {
-                        println(pub[0])
+                    spawn (func :fake () {
+                        print(pub[0])
                     }) ()
                 }
                 spawn T()
@@ -709,62 +709,62 @@ class Exec_50 {
     @Test
     fun TODO_nn_13_nest_yield_func() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 val f = func' :nested () {
                     nil
                 }
-                yield(nil)
+                await(true)
                 f()
             }) ()
-            broadcast(nil)
-            println(:ok)
+            emit(true)
+            print(:ok)
         """)
         assert(out == "anon : (lin 3, col 25) : TODO - nested function with enclosing coro/task\n") { out }
     }
     @Test
     fun TODO_nn_14_nest_task_func() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 val f = func' :nested () {
                     set pub = :pub
                 }
-                yield(nil)
+                await(true)
                 f()
-                println(pub)
+                print(pub)
             }) ()
-            broadcast(nil)
+            emit(true)
         """)
         assert(out == "anon : (lin 3, col 25) : TODO - nested function with enclosing coro/task\n") { out }
     }
     @Test
     fun TODO_nn_15_nest_task_func() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 val x = :x
                 val f = func' :nested () {
-                    println(x)
+                    print(x)
                 }
-                yield(nil)
+                await(true)
                 f()
             }) ()
-            broadcast(nil)
+            emit(true)
         """)
         assert(out == "anon : (lin 4, col 25) : TODO - nested function with enclosing coro/task\n") { out }
     }
     @Test
     fun nn_16_nest_task_func() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 val x = :x
                 val f = func' :nested () {
-                    println(:ok)
+                    print(:ok)
                 }
-                yield(nil)
+                await(true)
                 f()
             }) ()
-            broadcast(nil)
+            emit(true)
         """)
-        //assert(out == "anon : (lin 4, col 25) : func :nested error : unexpected enclosing task\n") { out }
+        //assert(out == "anon : (lin 4, col 25) : func :nested throw : unexpected enclosing task\n") { out }
         assert(out == ":ok\n") { out }
     }
     @Test
@@ -773,9 +773,9 @@ class Exec_50 {
             $PLUS
             do {
                 val f = func' :nested (v) {
-                    ;;println(:F, f)      ;; f is upval which is assigned nil
+                    ;;print(:F, f)      ;; f is upval which is assigned nil
                     if v /= 0 {
-                        println(v)
+                        print(v)
                         f(v - 1)
                     } else {
                         nil
@@ -789,34 +789,34 @@ class Exec_50 {
     @Test
     fun nn_18_nest_rec() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 val f = func' :nested () {
                     nil
                 }
-                yield(nil)
+                await(true)
                 f()
             }) ()
-            broadcast(nil)
-            println(:ok)
+            emit(true)
+            print(:ok)
         """)
-        //assert(out == "anon : (lin 3, col 25) : func :nested error : unexpected enclosing task\n") { out }
+        //assert(out == "anon : (lin 3, col 25) : func :nested throw : unexpected enclosing task\n") { out }
         assert(out == ":ok\n") { out }
     }
     @Test
     fun nn_19_nested() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 val fff = func' :nested () {
-                    println(:ok)
+                    print(:ok)
                 }
-                val T = task' () {
+                val T = func () {
                     fff()
                 }
-                yield(nil)
+                await(true)
                 spawn T()
-                yield(nil)
+                await(true)
             }) ()
-            broadcast(nil)
+            emit(true)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -826,13 +826,13 @@ class Exec_50 {
     @Test
     fun lm_02_fake() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 set pub = 10
                 val x = [99]
-                spawn (task' :fake () {
+                spawn (func :fake () {
                     set x[0] = pub
                 }) ()
-                println(x)
+                print(x)
             }) ()
         """)
         assert(out == "[10]\n") { out }
@@ -840,12 +840,12 @@ class Exec_50 {
     @Test
     fun lm_03_fake() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 val t = 10
-                val S = task' :fake () {
-                    println(t)
+                val S = func :fake () {
+                    print(t)
                 }
-                spawn (task' :fake () {
+                spawn (func :fake () {
                     spawn S()
                 }) ()
             }
@@ -856,11 +856,11 @@ class Exec_50 {
     @Test
     fun lm_04_fake() {
         val out = test("""
-            spawn (task' () {
-                val T = task' () {
+            spawn (func () {
+                val T = func () {
                     set pub = [10]
-                    spawn (task' :fake () {
-                        println(pub[0])
+                    spawn (func :fake () {
+                        print(pub[0])
                     }) ()
                 }
                 spawn T()
@@ -875,12 +875,12 @@ class Exec_50 {
     fun zna_01_set() {
         val out = test(
             """
-            spawn( task' () {
+            spawn( func () {
                 var t = [1]
-                spawn( task' :nested () {
+                spawn( func :nested () {
                     set t = [2]
                 }) ()
-                println(t)
+                print(t)
             } )()
         """
         )
@@ -890,16 +890,16 @@ class Exec_50 {
     fun zna_02_set() {
         val out = test(
             """
-            spawn( task' () {
+            spawn( func () {
                 var t = [1]
-                spawn (task' :nested () {
-                    yield(nil) ;;thus { it => nil }
+                spawn (func :nested () {
+                    await(true)
                     set t = [2]
                 } )()
-                yield(nil) ;;thus { it => nil }
-                println(t)
+                await(true)
+                print(t)
             }) ()
-            broadcast(nil)
+            emit(true)
         """
         )
         assert(out == "[2]\n") { out }
@@ -908,12 +908,12 @@ class Exec_50 {
     fun zna_03_set() {
         val out = test(
             """
-            spawn( task' () {
+            spawn( func () {
                 val t = [1]
                 ;;func' () {
                     set t[0] = 2
                 ;;} ()
-                println(t)
+                print(t)
             }) ()
         """
         )
@@ -923,35 +923,35 @@ class Exec_50 {
     fun TODO_zna_04_set() {
         val out = test(
             """
-            spawn (task' () {
+            spawn (func () {
                 var t = [1]
-                spawn( task' :nested () {
+                spawn( func :nested () {
                     func' (it) {
                         set t = copy(it)    ;; TODO: func -> nested -> task
                     } (yield(nil))
                 }) ()
-                yield(nil) ;;thus { it => nil }
-                println(t)
+                await(true)
+                print(t)
             }) ()
-            broadcast ([1])
+            emit ([1])
         """, true
         )
         //assert(out == "[1]\n") { out }
-        assert(out == "anon : (lin 6, col 29) : access error : outer variable \"t\" must be immutable\n") { out }
+        assert(out == "anon : (lin 6, col 29) : access throw : outer variable \"t\" must be immutable\n") { out }
     }
     @Test
     fun zna_05_set() {
         val out = test(
             """
-            spawn (task' () {
+            spawn (func () {
                 var t = [1]
-                spawn( task' :nested () {
+                spawn( func :nested () {
                     set t = copy(yield(nil))
                 }) ()
-                yield(nil) ;;thus { it => nil }
-                println(t)
+                await(true)
+                print(t)
             } )()
-            broadcast ([1])
+            emit ([1])
         """, true
         )
         assert(out == "[1]\n") { out }
@@ -967,22 +967,22 @@ class Exec_50 {
                     ang
                 }
             }
-            println(:ok)
+            print(:ok)
         """
         )
         assert(out == ":ok\n") { out }
-        //assert(out == "anon : (lin 4, col 17) : loop error : innocuous last expression\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : loop throw : innocuous last expression\n") { out }
     }
     @Test
     fun zna_07_nst() {
         val out = test(
             """
-            val T = task' (t) {
+            val T = func (t) {
                 var ang = 0
-                spawn (task' :nested () {
+                spawn (func :nested () {
                     set ang = 10
                 })()
-                println(ang)
+                print(ang)
             }
             spawn T()
         """
@@ -992,17 +992,17 @@ class Exec_50 {
     @Test
     fun zna_08_escape() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 val v = enclose' :X {
-                    spawn (task' :fake () {
+                    spawn (func :fake () {
                         escape(:X,:ok)
                     })()
                     loop' {
-                        yield(nil)
+                        await(true)
                     }
                     nil
                 }
-                println(v)
+                print(v)
             }) ()
         """)
         assert(out == ":ok\n") { out }
@@ -1010,16 +1010,16 @@ class Exec_50 {
     @Test
     fun zna_09_escape() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 val v = enclose' :X {
-                    spawn (task' :fake () {
+                    spawn (func :fake () {
                         defer {
-                            println(:def)
+                            print(:def)
                         }
                         escape(:X,:ok)
                     })()
                 }
-                println(v)
+                print(v)
             }) ()
         """)
         assert(out == ":def\n:ok\n") { out }
@@ -1027,16 +1027,16 @@ class Exec_50 {
     @Test
     fun zna_10_escape() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 val v = catch :X {
-                    spawn (task' :nested () {
+                    spawn (func :nested () {
                         defer {
-                            println(:def)
+                            print(:def)
                         }
-                        error(:X,:ok)
+                        throw(:X,:ok)
                     })()
                 }
-                println(v)
+                print(v)
             }) ()
         """)
         assert(out == ":def\n:ok\n") { out }
@@ -1044,17 +1044,17 @@ class Exec_50 {
     @Test
     fun zna_11_escape() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 val v = enclose' :X {
-                    spawn (task' :fake () {
-                        yield(nil)
+                    spawn (func :fake () {
+                        await(true)
                         escape(:X,:ok)
                     })()
-                    yield(nil)
+                    await(true)
                 }
-                println(v)
+                print(v)
             }) ()
-            broadcast(nil)
+            emit(true)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -1063,45 +1063,45 @@ class Exec_50 {
     fun znb_01_pub_err() {
         val out = test(
             """
-            task' :nested () {
+            func :nested () {
                 pub
             }
-            println(:ok)
+            print(:ok)
         """
         )
         assert(out == ":ok\n") { out }
-        //assert(out == " v  anon : (lin 2, col 13) : pub() : pub error : expected task\n") { out }
-        //assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task\n") { out }
-        //assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing task\n") { out }
+        //assert(out == " v  anon : (lin 2, col 13) : pub() : pub throw : expected task\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : pub throw : expected enclosing task\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : task :nested throw : expected enclosing task\n") { out }
     }
 
     @Test
     fun znc_01_nested() {
         val out = test(
             """
-            task' :nested () {
+            func :nested () {
                 nil
             }
-            println(:ok)
+            print(:ok)
         """
         )
-        //assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing spawn\n") { out }
-        //assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing task\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : task :nested throw : expected enclosing spawn\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : task :nested throw : expected enclosing task\n") { out }
         assert(out == ":ok\n") { out }
     }
     @Test
     fun znc_02_nested() {
         val out = test(
             """
-            spawn (task' () {
+            spawn (func () {
                 var xxx = 1
-                yield(nil)
-                spawn(task' :nested () {
+                await(true)
+                spawn(func :nested () {
                     set xxx = 10
                 }) ()
-                println(xxx)
+                print(xxx)
             } )()
-            broadcast(nil)
+            emit(true)
         """
         )
         assert(out == "10\n") { out }
@@ -1110,16 +1110,16 @@ class Exec_50 {
     fun znc_03_nested() {
         val out = test(
             """
-            spawn (task' () {
+            spawn (func () {
                 var xxx = 1
-                yield(nil)
-                spawn( task' :nested () {
+                await(true)
+                spawn( func :nested () {
                     set xxx = 10
                 }) ()
-                println(xxx)
+                print(xxx)
             } )()
             do {
-                broadcast(nil)
+                emit(true)
             }
         """
         )
@@ -1129,33 +1129,33 @@ class Exec_50 {
     fun znc_04_nested_err() {
         val out = test(
             """
-            spawn (task' () {
+            spawn (func () {
                 var xxx = 1
-                yield(nil)
-                spawn(task' () {     ;; ERROR: crosses non :nested
-                    spawn(task' :nested () {
+                await(true)
+                spawn(func () {     ;; ERROR: crosses non :nested
+                    spawn(func :nested () {
                         set xxx = 10
                     }) ()
                 }) ()
-                println(xxx)
+                print(xxx)
             } )()
-            broadcast(nil)
+            emit(true)
         """
         )
         //assert(out == "ERROR\n") { out }
-        assert(out == "anon : (lin 7, col 29) : access error : outer variable \"xxx\" must be immutable\n") { out }
+        assert(out == "anon : (lin 7, col 29) : access throw : outer variable \"xxx\" must be immutable\n") { out }
     }
     @Test
     fun znc_05_nested_err() {
         val out = test(
             """
-            spawn (task' :nested () {
+            spawn (func :nested () {
                 nil
             } )()
-            println(:ok)
+            print(:ok)
         """
         )
-        //assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
+        //assert(out == "anon : (lin 2, col 20) : task :nested throw : expected enclosing task\n") { out }
         assert(out == ":ok\n") { out }
     }
     @Test
@@ -1163,22 +1163,22 @@ class Exec_50 {
         val out = test(
             """
             var T
-            set T = task' (v) {
-                spawn (task' :nested () {
-                    val evt = yield(nil)
-                    println(v, evt)
+            set T = func (v) {
+                spawn (func :nested () {
+                    val evt = await(true)
+                    print(v, evt)
                 }) ()
-                spawn (task' :nested () {
+                spawn (func :nested () {
                     do {
-                        broadcast(:ok) in :task
+                        emit(:ok) in :task
                     }
                 }) ()
-                yield(nil)
-                println(:err)
+                await(true)
+                print(:err)
             }
-            spawn (task' () {
-                yield(nil)
-                println(:err)
+            spawn (func () {
+                await(true)
+                print(:err)
             }) ()
             spawn T (1)
             spawn T (2)
@@ -1189,10 +1189,10 @@ class Exec_50 {
     @Test
     fun znc_07_pub_fake_task() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 set pub = 1
-                spawn (task' :fake () {
-                    println(pub)
+                spawn (func :fake () {
+                    print(pub)
                 }) ()
                 nil
             }) ()
@@ -1202,34 +1202,34 @@ class Exec_50 {
     @Test
     fun znc_08_pub_fake_task_err() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 set pub = []
                 var x
-                spawn (task' :fake () {
+                spawn (func :fake () {
                     set x = pub
                 }) ()
-                println(x)
+                print(x)
             }) ()
         """)
         assert(out == "[]\n") { out }
         //assert(out == "anon : (lin 2, col 20) : task () { set task.pub = [] var x spa...)\n" +
         //        "anon : (lin 5, col 24) : task () :fake { set x = task.pub }()\n" +
-        //        "anon : (lin 6, col 34) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        //        "anon : (lin 6, col 34) : invalid pub : cannot expose dynamic \"pub\" field\n:throw\n") { out }
         //assert(out == "anon : (lin 2, col 20) : task () { set task.pub = [] var x spawn task ...)\n" +
         //        "anon : (lin 5, col 24) : task () :fake { set x = task.pub }()\n" +
-        //        "anon : (lin 6, col 25) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
+        //        "anon : (lin 6, col 25) : set throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
     }
     @Test
     fun znc_09_pub_fake_task() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 set pub = [10]
                 var x
-                spawn (task' :fake () {
+                spawn (func :fake () {
                     set x = pub[0]
                 }) ()
-                println(x)
+                print(x)
             }) ()
         """, true)
         assert(out == "10\n") { out }
@@ -1237,59 +1237,59 @@ class Exec_50 {
     @Test
     fun znc_10_pub_fake_err() {
         val out = test("""
-            spawn (task' :nested () {
-                println(pub)
+            spawn (func :nested () {
+                print(pub)
             }) ()
         """)
         assert(out == "nil\n") { out }
-        //assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task\n") { out }
-        //assert(out == "anon : (lin 3, col 17) : task error : missing enclosing task") { out }
-        //assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : pub throw : expected enclosing task\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : task throw : missing enclosing task") { out }
+        //assert(out == "anon : (lin 2, col 20) : task :nested throw : expected enclosing task\n") { out }
     }
     @Test
     fun znc_11_xceu3() {
         val out = test("""
-            spawn task' () {
-                var evt = yield(nil)
-                println(evt)
-                spawn (task' :nested () {
+            spawn func () {
+                var evt = await(true)
+                print(evt)
+                spawn (func :nested () {
                     loop' {
-                        println(evt)    ;; kept reference
-                        set evt = yield(nil)
+                        print(evt)    ;; kept reference
+                        set evt = await(true)
                     }
                 }) ()
-                set evt = yield(nil)
+                set evt = await(true)
             }()
-            broadcast (10)
-            broadcast (20)
+            emit (10)
+            emit (20)
         """)
         assert(out == "10\n10\n20\n") { out }
-        //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 14, col 25) : set throw : incompatible scopes\n") { out }
     }
 
     @Test
     fun znd_01_bcast_err() {
         val out = test("""
-            spawn (task' :nested () {
-                broadcast(nil) in :task
+            spawn (func :nested () {
+                emit(true) in :task
             }) ()
-            println(:ok)
+            print(:ok)
         """)
-        //assert(out == "anon : (lin 2, col 20) : (task () :fake { broadcast in :task, nil })()\n" +
-        //        "anon : (lin 3, col 30) : broadcast error : invalid target\n:error\n") { out }
+        //assert(out == "anon : (lin 2, col 20) : (task () :fake { emit in :task, nil })()\n" +
+        //        "anon : (lin 3, col 30) : emit throw : invalid target\n:throw\n") { out }
         assert(out == ":ok\n") { out }
-        //assert(out == "anon : (lin 2, col 20) : task :nested error : expected enclosing task\n") { out }
+        //assert(out == "anon : (lin 2, col 20) : task :nested throw : expected enclosing task\n") { out }
     }
     @Test
     fun znd_02_throw_fake() {
         val out = test("""
-            spawn (task' () {
+            spawn (func () {
                 catch :err ;;;(err|err==:err);;; {
-                    spawn (task' :nested () {
-                        error(:err)
+                    spawn (func :nested () {
+                        throw(:err)
                     }) ()
                 }
-                println(10)
+                print(10)
             }) ()
         """)
         assert(out == "10\n") { out }
@@ -1297,17 +1297,17 @@ class Exec_50 {
     @Test
     fun znd_03_throw_fake() {
         val out = test("""
-            spawn task' () { 
+            spawn func () { 
                 catch :err ;;;(err|{{==}}(err,:err));;; {
-                    spawn (task' :nested () {
-                        yield(nil)
-                        error(:err)
+                    spawn (func :nested () {
+                        await(true)
+                        throw(:err)
                     })()
-                    yield(nil)
+                    await(true)
                 }
             }() 
-            broadcast(nil)
-            println(10)
+            emit(true)
+            print(10)
         """)
         assert(out == "10\n") { out }
     }
@@ -1316,16 +1316,16 @@ class Exec_50 {
     fun zne_01_anon() {
         val out = test(
             """
-            spawn (task' () {
+            spawn (func () {
                 do {
-                    println(:xxx, pub)
-                    spawn (task' :nested () {
-                        println(:yyy, pub)
-                        yield(nil) ;;thus { it => nil }
+                    print(:xxx, pub)
+                    spawn (func :nested () {
+                        print(:yyy, pub)
+                        await(true)
                     }) ()
-                    yield(nil) ;;thus { it => nil }
+                    await(true)
                 }
-                yield(nil) ;;thus { it => nil }
+                await(true)
             }) ()
        """
         )
@@ -1336,9 +1336,9 @@ class Exec_50 {
         val out = test(
             """
             var T
-            set T = task' () {
-                spawn (task' :nested () {
-                    println(1)
+            set T = func () {
+                spawn (func :nested () {
+                    print(1)
                     nil
                 }) ()
                 nil
@@ -1348,77 +1348,77 @@ class Exec_50 {
         )
         assert(out == "1\n") { out }
         //assert(out == "anon : (lin 8, col 19) : T()\n" +
-        //        "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+        //        "anon : (lin 3, col 29) : set throw : incompatible scopes\n:throw\n") { out }
         //assert(out == "anon : (lin 9, col 19) : T()\n" +
-        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n" +
+        //        "anon : (lin 3, col 29) : block escape throw : incompatible scopes\n" +
         //        "1\n" +
-        //        ":error\n") { out }
+        //        ":throw\n") { out }
     }
     @Test
     fun zne_03_anon() {
         val out = test(
             """
             var T
-            set T = task' () {
-                spawn (task' :nested () {
+            set T = func () {
+                spawn (func :nested () {
                     (999)
                 })()
                 nil
             }
             spawn T()
-            println(1)
+            print(1)
         """
         )
         assert(out == "1\n") { out }
         //assert(out == "anon : (lin 8, col 19) : T()\n" +
-        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
+        //        "anon : (lin 3, col 29) : block escape throw : incompatible scopes\n:throw\n") { out }
     }
 
     @Test
     fun znf_01_99() {
         val out = test("""
-            spawn (task' (v) {
-                spawn (task' :nested () {
-                    println(v)
+            spawn (func (v) {
+                spawn (func :nested () {
+                    print(v)
                 }) ()
             }) (100)
-            println(:ok)
+            print(:ok)
         """)
         assert(out == "100\n:ok\n") { out }
     }
     @Test
     fun znf_02_hh_pub_task() {
         val out = test("""
-        spawn task' () { 
+        spawn func () { 
             var y
             set y = do {     
                 var ceu_spw_54     
-                set ceu_spw_54 = spawn task' :nested () {         
-                    yield(nil)         
+                set ceu_spw_54 = spawn func :nested () {         
+                    await(true)         
                     [2]             
                 }()        
-                yield(nil)     
-                ;;println(ceu_spw_54.pub)     
+                await(true)     
+                ;;print(ceu_spw_54.pub)     
                 ceu_spw_54.pub        
             }     
-            println(y) 
+            print(y) 
         }()
-        broadcast( nil )
+        emit( nil )
         """)
         assert(out == "[2]\n") { out }
-        //assert(out == "anon : (lin 16, col 9) : broadcast nil\n" +
-        //        "anon : (lin 12, col 28) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        //assert(out == "anon : (lin 16, col 9) : emit nil\n" +
+        //        "anon : (lin 12, col 28) : invalid pub : cannot expose dynamic \"pub\" field\n:throw\n") { out }
     }
     @Test
     fun znf_03_anon() {
         val out = test(
             """
             data :X = [x]
-            val T = task' () :X {
+            val T = func () :X {
                 set pub = [10]
-                spawn (task' :fake () {
-                    ;;println(pub)
-                    println(pub.x)
+                spawn (func :fake () {
+                    ;;print(pub)
+                    print(pub.x)
                 }) ()
                 nil
             }
@@ -1431,12 +1431,12 @@ class Exec_50 {
     fun znf_04_xceu () {
         val out = test("""
             data :X = [x]
-            task' () :X {
-                task' :nested () {
+            func () :X {
+                func :nested () {
                     ;;;task.;;;pub.x
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -1450,16 +1450,16 @@ class Exec_50 {
                 var x
                 if v > 0 {
                     set x = f(v - 1)
-                    [x]     ;; set error: cannot return "var x" from this scope
+                    [x]     ;; set throw: cannot return "var x" from this scope
                 } else {
                     0
                 }
             }
-            println(f(3))
+            print(f(3))
         """, true)
         assert(out == " |  anon : (lin 11, col 21) : f(3)\n |  anon : (lin 5, col 25) : x\n" +
-                " v  error : cannot copy reference out\n") { out }
-        //assert(out == "anon : (lin 3, col 30) : block escape error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 3, col 30) : block escape throw : cannot copy reference out\n") { out }
         //assert(out == "[[[0]]]\n") { out }
     }
     @Test
@@ -1474,12 +1474,12 @@ class Exec_50 {
                     0
                 }
             }
-            println(f(3))
+            print(f(3))
         """, true
         )
-        //assert(out == "anon : (lin 4, col 26) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 4, col 26) : block escape throw : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 10, col 21) : f(3)\n |  anon : (lin 4, col 21) : (val x = f({{-}}(v,1)))\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == "[[[0]]]\n") { out }
     }
     @Test
@@ -1490,7 +1490,7 @@ class Exec_50 {
                 val ins = [1,2,3]
                 drop(ins)
             }
-            println(out)
+            print(out)
         """
         )
         assert(out == "[1,2,3]\n") { out }
@@ -1506,7 +1506,7 @@ class Exec_50 {
                 }
                 drop(v)
             }
-            println(g)
+            print(g)
         """
         )
         assert(out == "[0,a]\n") { out }
@@ -1522,7 +1522,7 @@ class Exec_50 {
                 drop(co)
             }
             val x = g()
-            println(x)
+            print(x)
         """)
         assert(out.contains("[func: 0x")) { out }
     }
@@ -1532,12 +1532,12 @@ class Exec_50 {
             val e = func' () {nil}
             val g = func' () {
                 val co = [e]
-                println(:e,e)
+                print(:e,e)
                 ;;dump(co)
                 drop(co)
             }
             val x = g()
-            println(x)
+            print(x)
         """)
         assert(out.contains("[func: 0x")) { out }
     }
@@ -1549,9 +1549,9 @@ class Exec_50 {
                 val t2 = t1
                 drop(t1)        ;; ~ERR~: `t1` has multiple references
             }                   ;; not a problem b/c gc_dec does not chk current block
-            println(x)
+            print(x)
         """)
-        //assert(out == " |  anon : (lin 5, col 17) : drop(t1)\n v  error : value has multiple references\n") { out }
+        //assert(out == " |  anon : (lin 5, col 17) : drop(t1)\n v  throw : value has multiple references\n") { out }
         assert(out == "[1,2,3]\n") { out }
     }
     @Test
@@ -1563,14 +1563,14 @@ class Exec_50 {
                     val x = t[1]
                     drop(x)
                 }
-                println(y)
+                print(y)
             }
             ;;`ceu_gc_collect();`
-            println(t)
+            print(t)
         """)
         //assert(out == " |  anon : (lin 4, col 17) : (val y = do { (val x = t[1]); drop(x); })\n" +
-        //        " v  error : dropped value has pending outer reference\n") { out }
-        //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
+        //        " v  throw : dropped value has pending outer reference\n") { out }
+        //assert(out == "anon : (lin 4, col 25) : block escape throw : cannot move pending reference in\n") { out }
         assert(out == "[99]\n" +
                 "[1,[99],3]\n") { out }
     }
@@ -1586,15 +1586,15 @@ class Exec_50 {
                     drop(z)         ;; 1. [99] is dropped
                 }
                 ;;dump(y)
-                println(y)
+                print(y)
             }
             ;;`ceu_gc_collect();`
-            println(x)
+            print(x)
         """)
         //assert(out == " |  anon : (lin 6, col 17) : (val y = do { (val z = x[0]); drop(z); })\n" +
-        //        " v  error : dropped value has pending outer reference\n") { out }
-        //assert(out == " |  anon : (lin 6, col 21) : drop(x)\n v  error : value has multiple references\n") { out }
-        //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
+        //        " v  throw : dropped value has pending outer reference\n") { out }
+        //assert(out == " |  anon : (lin 6, col 21) : drop(x)\n v  throw : value has multiple references\n") { out }
+        //assert(out == "anon : (lin 4, col 25) : block escape throw : cannot move pending reference in\n") { out }
         assert(out == "[99]\n" +
                 "[[99]]\n") { out }
     }
@@ -1607,15 +1607,15 @@ class Exec_50 {
                     val x = t
                     drop(x)
                 }
-                println(y)
+                print(y)
             }
             ;;`ceu_gc_collect();`
-            println(t)
+            print(t)
         """)
         //assert(out == " |  anon : (lin 4, col 17) : (val y = do { (val x = t); drop(x); })\n" +
-        //        " v  error : dropped value has pending outer reference\n") { out }
-        //assert(out == " |  anon : (lin 6, col 21) : drop(x)\n v  error : value has multiple references\n") { out }
-        //assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
+        //        " v  throw : dropped value has pending outer reference\n") { out }
+        //assert(out == " |  anon : (lin 6, col 21) : drop(x)\n v  throw : value has multiple references\n") { out }
+        //assert(out == "anon : (lin 4, col 25) : block escape throw : cannot move pending reference in\n") { out }
         assert(out == "[99]\n" +
                 "[99]\n") { out }
     }
@@ -1629,10 +1629,10 @@ class Exec_50 {
                 set x[0] = y
                 drop(x)
             }
-            println(z[0][0] == z)
+            print(z[0][0] == z)
         """
         )
-        //assert(out == " |  anon : (lin 6, col 17) : drop(x)\n v  error : value has multiple references\n") { out }
+        //assert(out == " |  anon : (lin 6, col 17) : drop(x)\n v  throw : value has multiple references\n") { out }
         assert(out == "true\n") { out }
     }
     @Test
@@ -1645,12 +1645,12 @@ class Exec_50 {
                 set x[0] = y
                 drop(x)
             }
-            println(z[0][0] == z)
+            print(z[0][0] == z)
         """
         )
         assert(out == "true\n") { out }
         //assert(out == " |  anon : (lin 6, col 17) : drop(x)\n" +
-        //        " v  error : value has multiple references\n") { out }
+        //        " v  throw : value has multiple references\n") { out }
     }
     @Test
     fun cc_14_drop_cycle() {
@@ -1663,11 +1663,11 @@ class Exec_50 {
                 drop(x)
                 y
             }
-            println(z[0][0] == z)
+            print(z[0][0] == z)
         """
         )
         //assert(out == " |  anon : (lin 6, col 17) : drop(x)\n" +
-        //        " v  error : value has multiple references\n") { out }
+        //        " v  throw : value has multiple references\n") { out }
         assert(out == "true\n") { out }
     }
 
@@ -1681,10 +1681,10 @@ class Exec_50 {
                 val y = [99]
                 set x = y
             }
-            println(x)
+            print(x)
         """)
         assert(out == " |  anon : (lin 5, col 21) : x\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun cd_02_val_prime_err() {
@@ -1694,14 +1694,14 @@ class Exec_50 {
                 val' y = [99]
                 set x = y
             }
-            println(x)
+            print(x)
         """)
         assert(out == "[99]\n") { out }
     }
     @Test
     fun cd_03_val_prime() {
         val out = test("""
-            println(do {
+            print(do {
                 (val' xxx = true);
                 xxx
             });
@@ -1711,7 +1711,7 @@ class Exec_50 {
     @Test
     fun cd_04_val_prime() {
         val out = test("""
-            println(do {
+            print(do {
                 (val' xxx = true);
             });
         """)
@@ -1727,13 +1727,13 @@ class Exec_50 {
                 val k = []
                 set v[k] = true
             }
-            println(v)
+            print(v)
         """
         )
-        //assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : store throw : cannot assign reference to outer scope\n") { out }
         //assert(out == "@[([],true)]\n") { out }
         assert(out == " |  anon : (lin 5, col 21) : v[k]\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
 
     @Test
@@ -1746,15 +1746,15 @@ class Exec_50 {
                 set a = [1,2,3]
                 set x = a           ;; err: x<a
             }
-            println(x)
+            print(x)
         """
         )
-        //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 3, col 13) : set throw : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 6, col 21) : set throw : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 6, col 21) : set throw : cannot assign reference to outer scope\n") { out }
         //assert(out == "[1,2,3]\n") { out }
         assert(out == " |  anon : (lin 6, col 21) : x\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun scope5_err() {
@@ -1766,12 +1766,12 @@ class Exec_50 {
                 set y = [10,20,30]
                 set x[2] = y
             }
-            println(x)
+            print(x)
         """)
         assert(out == " |  anon : (lin 7, col 21) : x[2]\n" +
-                " v  error : cannot copy reference out\n") { out }
-        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 7, col 21) : store error : cannot assign reference to outer scope\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : set throw : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : store throw : cannot assign reference to outer scope\n") { out }
         //assert(out == "[1,2,[10,20,30]]\n") { out }
     }
     @Test
@@ -1784,13 +1784,13 @@ class Exec_50 {
                 set a = @[(1,[])]
                 set x = a
             }
-            println(x)
+            print(x)
         """
         )
         assert(out == " |  anon : (lin 6, col 21) : x\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == "@[(1,[])]\n") { out }
-        //assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 6, col 21) : set throw : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope10x() {
@@ -1804,13 +1804,13 @@ class Exec_50 {
                 ;;dump(x)
                 set out = [x]   ;; err
             }
-            println(1)
+            print(1)
         """
         )
         assert(out == " |  anon : (lin 7, col 21) : out\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 7, col 21) : set error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : set throw : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope10_err() {
@@ -1820,11 +1820,11 @@ class Exec_50 {
                 val x = []
                 set out = [x]   ;; err
             }
-            println(1)
+            print(1)
         """)
         assert(out == " |  anon : (lin 5, col 21) : out\n" +
-                " v  error : cannot copy reference out\n") { out }
-        //assert(out == "anon : (lin 5, col 21) : set error : cannot assign reference to outer scope\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : set throw : cannot assign reference to outer scope\n") { out }
         //assert(out == "1\n") { out }
     }
     @Test
@@ -1837,12 +1837,12 @@ class Exec_50 {
                 set x = []
                 set out = #[x]
             }
-            println(1)
+            print(1)
         """
         )
         assert(out == " |  anon : (lin 6, col 21) : out\n" +
-                " v  error : cannot copy reference out\n") { out }
-        //assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 6, col 21) : set throw : cannot assign reference to outer scope\n") { out }
         //assert(out == "1\n") { out }
     }
     @Test
@@ -1855,12 +1855,12 @@ class Exec_50 {
                 set x = []
                 set out = @[(1,x)]
             }
-            println(1)
+            print(1)
         """
         )
         assert(out == " |  anon : (lin 6, col 21) : out\n" +
-                " v  error : cannot copy reference out\n") { out }
-        //assert(out == "anon : (lin 6, col 21) : set error : cannot assign reference to outer scope\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 6, col 21) : set throw : cannot assign reference to outer scope\n") { out }
         //assert(out == "1\n") { out }
     }
     @Test
@@ -1871,12 +1871,12 @@ class Exec_50 {
                 val x = []
                 [x]         ;; invalid return
             }
-            println(v)
+            print(v)
         """
         )
         assert(out == " |  anon : (lin 2, col 13) : (val v = do { (val x = []); [x]; })\n" +
-                " v  error : cannot copy reference out\n") { out }
-        //assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : block escape throw : cannot copy reference out\n") { out }
         //assert(out == "[[]]\n") { out }
     }
     @Test
@@ -1889,13 +1889,13 @@ class Exec_50 {
                 set d[0] = t2
                 nil
             }
-            println(1)
+            print(1)
         """
         )
-        //assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : store throw : cannot assign reference to outer scope\n") { out }
         //assert(out == "1\n") { out }
         assert(out == " |  anon : (lin 5, col 21) : d[0]\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22b_vec() {
@@ -1907,13 +1907,13 @@ class Exec_50 {
                 set d[0] = t2
                 nil
             }
-            println(1)
+            print(1)
         """
         )
-        //assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : store throw : cannot assign reference to outer scope\n") { out }
         //assert(out == "1\n") { out }
         assert(out == " |  anon : (lin 5, col 21) : d[0]\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22c_dic() {
@@ -1925,13 +1925,13 @@ class Exec_50 {
                 set d[t2] = 10
                 nil
             }
-            println(1)
+            print(1)
         """
         )
-        //assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : store throw : cannot assign reference to outer scope\n") { out }
         //assert(out == "1\n") { out }
         assert(out == " |  anon : (lin 5, col 21) : d[t2]\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22d_dic() {
@@ -1943,13 +1943,13 @@ class Exec_50 {
                 set d[10] = t2
                 nil
             }
-            println(1)
+            print(1)
         """
         )
         assert(out == " |  anon : (lin 5, col 21) : d[10]\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 5, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : store throw : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope22x_dict() {
@@ -1964,13 +1964,13 @@ class Exec_50 {
                     nil
                 }
             }
-            println(:ok)
+            print(:ok)
         """
         )
-        //assert(out == "anon : (lin 7, col 25) : store error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 7, col 25) : store throw : cannot assign reference to outer scope\n") { out }
         //assert(out == ":ok\n") { out }
         assert(out == " |  anon : (lin 7, col 25) : d[t2]\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22y_dict() {
@@ -1983,13 +1983,13 @@ class Exec_50 {
                 set d[:x] = t2
                 nil
             }
-            println(:ok)
+            print(:ok)
         """
         )
         assert(out == " |  anon : (lin 6, col 21) : d[:x]\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == ":ok\n") { out }
-        //assert(out == "anon : (lin 6, col 21) : store error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 6, col 21) : store throw : cannot assign reference to outer scope\n") { out }
     }
     @Test
     fun scope26x_args_err() {
@@ -2003,12 +2003,12 @@ class Exec_50 {
                 val x = f(v)
                 x
             }
-            println(y)
+            print(y)
         """
         )
         assert(out == " |  anon : (lin 5, col 13) : (val y = do { (val v = [1]); (val x = f(v)...\n" +
-                " v  error : cannot copy reference out\n") { out }
-        //assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : block escape throw : cannot copy reference out\n") { out }
         //assert(out == "[[1],[2]]\n") { out }
     }
     @Test
@@ -2022,12 +2022,12 @@ class Exec_50 {
                 val t = [1]
                 f(t)
             }
-            println(g)
+            print(g)
         """
         )
-        //assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : block escape throw : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 5, col 13) : (var g = do { (val t = [1]); f(t); })\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == "[[1]]\n") { out }
     }
     @Test
@@ -2043,12 +2043,12 @@ class Exec_50 {
                 var c = cycle([a,b,[3],nil])
                 drop(c)
             }
-            ;;println(d)  ;; OK: [[1],[2],[3],*]
-            println(:ok)
+            ;;print(d)  ;; OK: [[1],[2],[3],*]
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
         //assert(out == " |  anon : (lin 10, col 17) : drop(c)\n" +
-        //        " v  error : value has multiple references\n") { out }
+        //        " v  throw : value has multiple references\n") { out }
     }
     @Test
     fun scope30x_cyc() {
@@ -2063,12 +2063,12 @@ class Exec_50 {
                 var c = cycle([a,b,[3],nil])
                 drop(c)
             }
-            ;;println(d)  ;; OK: [[1],[2],[3],*]
-            println(:ok)
+            ;;print(d)  ;; OK: [[1],[2],[3],*]
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
         //assert(out == " |  anon : (lin 10, col 17) : drop(c)\n" +
-        //        " v  error : value has multiple references\n") { out }
+        //        " v  throw : value has multiple references\n") { out }
     }
     @Test
     fun scope31_xxx() {
@@ -2094,7 +2094,7 @@ class Exec_50 {
                 };
                 ceu_ret_8;
             });
-            println(x);
+            print(x);
         """)
         assert(out == "[]\n") { out }
     }
@@ -2105,10 +2105,10 @@ class Exec_50 {
                 val y = []
                 y
             }
-            println(x)
+            print(x)
         """)
         assert(out == " |  anon : (lin 2, col 13) : (val' x = do { (val y = []); y; })\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
 
     @Test
@@ -2118,10 +2118,10 @@ class Exec_50 {
                 val x = []
                 if x { x } else { [] }
             }
-            println(v)
+            print(v)
         """)
         assert(out == " |  anon : (lin 2, col 13) : (val v = do { (val x = []); if x { x; } el...\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == "[]\n") { out }
     }
 
@@ -2130,19 +2130,19 @@ class Exec_50 {
         val out = test("""
             val f = do {
                 val x = []
-                ;;println(x)
+                ;;print(x)
                 func' () {   ;; block_set(1)
                     x       ;; because of x
                 }           ;; err: scope on return
             }
-            println(f())
+            print(f())
         """
         )
-        //assert(out == "anon : (lin 3, col 21) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == "anon : (lin 3, col 21) : block escape error : reference has immutable scope\n") { out }
+        //assert(out == "anon : (lin 3, col 21) : block escape throw : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 3, col 21) : block escape throw : reference has immutable scope\n") { out }
         //assert(out == "[]\n") { out }
         assert(out == " |  anon : (lin 2, col 13) : (val f = do { (val x = []); (func' () { x;...\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun clo21_err() {
@@ -2157,12 +2157,12 @@ class Exec_50 {
                 val t = [1]
                 f(t)
             }
-            println(g())
+            print(g())
         """
         )
-        //assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : block escape throw : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 7, col 13) : (var g = do { (val t = [1]); f(t); })\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == "[1]\n") { out }
     }
     @Test
@@ -2179,12 +2179,12 @@ class Exec_50 {
                 val x = drop(f(t))  ;; drop stops at fleet func (not at non-fleet a=[1])
                 x
             }
-            println(g())
+            print(g())
         """
         )
-        //assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : block escape throw : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 7, col 13) : (var g = do { (var t = [1]); (val x = drop...\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == "[1]\n") { out }
     }
     @Test
@@ -2198,13 +2198,13 @@ class Exec_50 {
                 var t = [1]
                 drop(f(t))
             }
-            println(g)
+            print(g)
         """
         )
-        //assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : block escape throw : cannot copy reference out\n") { out }
         assert(out == "[[1]]\n") { out }
         //assert(out == " |  anon : (lin 5, col 13) : (var g = do { (var t = [1]); drop(f(t)); })\n" +
-        //        " v  error : cannot copy reference out\n") { out }
+        //        " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun clo23x() {
@@ -2219,7 +2219,7 @@ class Exec_50 {
                 var t = [1]
                 drop(f(drop(t)))
             }
-            println(g())
+            print(g())
         """
         )
         assert(out == "[1]\n") { out }
@@ -2235,9 +2235,9 @@ class Exec_50 {
                     val ins = [1,2,3]
                     drop(ins)
                 }   ;; gc'd by block
-                println(`:number CEU_GC.free`, `:number CEU_GC.free`)
+                print(`:number CEU_GC.free`, `:number CEU_GC.free`)
             }
-            println(`:number CEU_GC.free`, `:number CEU_GC.free`)
+            print(`:number CEU_GC.free`, `:number CEU_GC.free`)
         """
         )
         assert(out == "0\t0\n1\t1\n") { out }
@@ -2253,12 +2253,12 @@ class Exec_50 {
                 set ins = [1,2,3]
                 ins
             }
-            println(out)
+            print(out)
         """
         )
         assert(out == " |  anon : (lin 3, col 17) : out\n" +
-                " v  error : cannot copy reference out\n") { out }
-        //assert(out == "anon : (lin 3, col 23) : error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 3, col 23) : throw : cannot copy reference out\n") { out }
         //assert(out == "[1,2,3]\n") { out }
     }
     @Test
@@ -2271,13 +2271,13 @@ class Exec_50 {
                     set x = y
                 }
             }
-            println(x)
+            print(x)
         """, true)
         assert(out == " |  anon : (lin 6, col 25) : x\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == "[1,2,3]\n") { out }
-        //assert(out == "anon : (lin 6, col 25) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
+        //assert(out == "anon : (lin 6, col 25) : set throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
     }
 
     @Test
@@ -2289,13 +2289,13 @@ class Exec_50 {
         val C = coro' () {
             var t = []
             yield(drop(t)) ;;thus { it => nil }
-            println(:in, t)
+            print(:in, t)
         }
         do {
             val co = coroutine(C)
             do {
                 val v = f(co)
-                println(:out, v)
+                print(:out, v)
             }
             f(co)
         }
@@ -2308,17 +2308,17 @@ class Exec_50 {
         val out = test("""
             val y = do {
                 val x = coroutine(coro' () {
-                    println(:1)
-                    yield(nil)
-                    println(:2)
+                    print(:1)
+                    await(true)
+                    print(:2)
                 })
                 resume x()
                 drop(x)
             }
             resume y()
         """)
-        //assert(out == "anon : (lin 9, col 22) : move error : value is not movable\n" +
-        //        ":error\n") { out }
+        //assert(out == "anon : (lin 9, col 22) : move throw : value is not movable\n" +
+        //        ":throw\n") { out }
         assert(out == (":1\n:2\n"))
     }
     @Test
@@ -2327,8 +2327,8 @@ class Exec_50 {
             val tup = [nil]
             val co = do {
                 var x = coroutine (coro' () {
-                    yield(nil)
-                    println(:ok)
+                    await(true)
+                    print(:ok)
                 })
                 resume x()
                 drop(x)
@@ -2342,7 +2342,7 @@ class Exec_50 {
         val out = test("""
             val F = func' (x) {
                 val y = (coroutine (coro' () {
-                    yield(nil)
+                    await(true)
                     x
                 }))
                 resume y()
@@ -2351,7 +2351,7 @@ class Exec_50 {
             do {
                 val x = []
                 val co = F(x)
-                println(resume co())
+                print(resume co())
             }
         """)
         assert(out == "[]\n") { out }
@@ -2362,16 +2362,16 @@ class Exec_50 {
             val CO = coro' () {
                 val a = [:a]
                 do {
-                    yield(nil)
+                    await(true)
                     val b = [:b]
                     do {
-                        yield(nil)
+                        await(true)
                         val c = [:c]
                         val xa = `:number ${D}a.Dyn->Any.lex.depth`
                         val xb = `:number ${D}b.Dyn->Any.lex.depth`
                         val xc = `:number ${D}c.Dyn->Any.lex.depth`
-                        println(a,b,c)
-                        println(xa,xb,xc)
+                        print(a,b,c)
+                        print(xa,xb,xc)
                     }
                 }
             }
@@ -2387,8 +2387,8 @@ class Exec_50 {
     fun gg_02_scope() {
         val out = test("""
             val T = coro' (v) {
-                yield(nil) ;;thus { it => nil }
-                println(v)                
+                await(true)
+                print(v)                
             }
             val t = coroutine(T)
             do {
@@ -2405,9 +2405,9 @@ class Exec_50 {
             resume t()
         """)
         //assert(out == " |  anon : (lin 9, col 24) : t(v)\n" +
-        //        " v  anon : (lin 2, col 30) : resume error : incompatible scopes\n") { out }
+        //        " v  anon : (lin 2, col 30) : resume throw : incompatible scopes\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
-        //        " v  anon : (lin 2, col 27) : argument error : cannot hold alien reference\n") { out }
+        //        " v  anon : (lin 2, col 27) : argument throw : cannot hold alien reference\n") { out }
         assert(out == "[]\n") { out }
     }
     @Test
@@ -2417,10 +2417,10 @@ class Exec_50 {
                 val v = func' (x) {
                     x
                 } (
-                    yield(nil)
+                    await(true)
                 )
-                yield(nil) ;;thus { it => nil }
-                println(v)                
+                await(true)
+                print(v)                
             }
             val t = coroutine(T)
             resume t()
@@ -2435,25 +2435,25 @@ class Exec_50 {
             resume t()
         """)
         //assert(out == " |  anon : (lin 11, col 24) : t(v)\n" +
-        //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
+        //        " v  anon : (lin 3, col 25) : resume throw : cannot receive assigned reference\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
-        //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
+        //        " v  anon : (lin 3, col 36) : block escape throw : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
-        //        " v  anon : (lin 3, col 34) : block escape error : cannot copy reference out\n") { out }
+        //        " v  anon : (lin 3, col 34) : block escape throw : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
         //        " |  anon : (lin 3, col 25) : (func (x) { x })(yield(nil))\n" +
-        //        " v  anon : (lin 3, col 34) : block escape error : cannot copy reference out\n") { out }
+        //        " v  anon : (lin 3, col 34) : block escape throw : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
-        //        " v  anon : (lin 3, col 41) : resume error : cannot receive alien reference\n") { out }
+        //        " v  anon : (lin 3, col 41) : resume throw : cannot receive alien reference\n") { out }
         assert(out == "[]\n") { out }
     }
     @Test
     fun gg_03x_scope() {
         val out = test("""
             val T = coro' () {
-                val v = yield(nil)
-                yield(nil)
-                println(v)                
+                val v = await(true)
+                await(true)
+                print(v)                
             }
             val t = coroutine(T)
             resume t()
@@ -2464,17 +2464,17 @@ class Exec_50 {
             resume t()
         """)
         assert(out == " |  anon : (lin 11, col 17) : (resume (t)(v))\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == "[]\n") { out }
         //assert(out == " |  anon : (lin 11, col 17) : (resume (t)(v))\n" +
-        //        " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
+        //        " v  anon : (lin 3, col 25) : resume throw : cannot receive alien reference\n") { out }
     }
     @Test
     fun gg_03y_scope() {
         val out = test("""
             val T = coro' (v) {
-                yield(nil)
-                println(v)                
+                await(true)
+                print(v)                
             }
             val t = coroutine(T)
             do {
@@ -2485,7 +2485,7 @@ class Exec_50 {
         """)
         assert(out == "[]\n") { out }
         //assert(out == " |  anon : (lin 9, col 17) : (resume (t)(v))\n" +
-        //        " v  anon : (lin 2, col 27) : argument error : cannot hold alien reference\n") { out }
+        //        " v  anon : (lin 2, col 27) : argument throw : cannot hold alien reference\n") { out }
     }
     @Test
     fun gg_05_scope() {
@@ -2494,9 +2494,9 @@ class Exec_50 {
                 do {
                     val x = []
                     yield(x) ;;thus { it => nil }    ;; err
-                    println(:in, x)
+                    print(:in, x)
                 }
-                yield(nil) ;;thus { it => nil }
+                await(true)
             }
             val t = coroutine(T)
             do {
@@ -2506,20 +2506,20 @@ class Exec_50 {
                     do {
                         val x = resume t()
                         resume t()
-                        println(:out, x)
+                        print(:out, x)
                     }
                 }
             }
             resume t()
         """)
         //assert(out == " |  anon : (lin 16, col 25) : (val x = (resume (t)()))\n" +
-        //        " v  error : cannot copy reference out\n") { out }
+        //        " v  throw : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 16, col 33) : (resume (t)())\n" +
                 " |  anon : (lin 5, col 21) : yield(x)\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == ":in\t[]\n:out\t[]\n") { out }
         //assert(out == " |  anon : (lin 16, col 33) : (resume (t)(nil))\n" +
-        //        " v  anon : (lin 5, col 21) : yield error : cannot return pending reference\n") { out }
+        //        " v  anon : (lin 5, col 21) : yield throw : cannot return pending reference\n") { out }
     }
     @Test
     fun gg_06_scope() {
@@ -2527,12 +2527,12 @@ class Exec_50 {
             val T = coro' () {
                 val x = []
                 yield(drop(x)) ;;thus { it => nil }    ;; err
-                println(:in, x)
+                print(:in, x)
             }
             val t = coroutine(T)
             do {
                 val x = resume t()
-                println(:out, x)
+                print(:out, x)
             }
             resume t()
         """)
@@ -2546,7 +2546,7 @@ class Exec_50 {
             val T = coro' () {
                 val t = []
                 yield(t)
-                println(t)                
+                print(t)                
             }
             val t = coroutine(T)
             do {
@@ -2556,10 +2556,10 @@ class Exec_50 {
         """)
         assert(out == " |  anon : (lin 9, col 17) : (resume (t)())\n" +
                 " |  anon : (lin 4, col 17) : yield(t)\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == "[]\n") { out }
         //assert(out == " |  anon : (lin 9, col 17) : (resume (t)(nil))\n" +
-        //        " v  anon : (lin 4, col 17) : yield error : cannot return pending reference\n") { out }
+        //        " v  anon : (lin 4, col 17) : yield throw : cannot return pending reference\n") { out }
     }
 
     @Test
@@ -2567,26 +2567,26 @@ class Exec_50 {
         val out = test("""
             val CO = coro' () {
                 catch :x ;;;( it | do {
-                    yield(nil)
+                    await(true)
                 } );;;
                 {
-                    error(:e1)
+                    throw(:e1)
                 }
             }
             resume (coroutine(CO)) ()
         """)
         assert(out == " |  anon : (lin 10, col 13) : (resume (coroutine(CO))())\n" +
-                " |  anon : (lin 7, col 21) : error(:e1)\n" +
-                " v  error : :e1\n") { out }
-        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
+                " |  anon : (lin 7, col 21) : throw(:e1)\n" +
+                " v  throw : :e1\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : yield throw : unexpected enclosing catch\n") { out }
     }
 
     @Test
     fun oo_04_tmp_tuple() {
         val out = test("""
             val CO = coro' () {
-                val t = [yield(nil),yield(nil),yield(nil)]
-                yield(nil)
+                val t = [await(true),await(true),await(true)]
+                await(true)
                 drop(t)
             }
             val co = coroutine(CO)
@@ -2595,7 +2595,7 @@ class Exec_50 {
             resume co(2)
             resume co(3)
             val t = resume co()
-            println(t)
+            print(t)
         """)
         assert(out == "[1,2,3]\n") { out }
     }
@@ -2603,8 +2603,8 @@ class Exec_50 {
     fun oo_05_tmp_vector() {
         val out = test("""
             val CO = coro' () {
-                val t = #[yield(nil),yield(nil),yield(nil)]
-                yield(nil)
+                val t = #[await(true),await(true),await(true)]
+                await(true)
                 drop(t)
             }
             val co = coroutine(CO)
@@ -2613,7 +2613,7 @@ class Exec_50 {
             resume co(2)
             resume co(3)
             val t = resume co()
-            println(t)
+            print(t)
         """)
         assert(out == "#[1,2,3]\n") { out }
     }
@@ -2621,8 +2621,8 @@ class Exec_50 {
     fun oo_06_tmp_dict() {
         val out = test("""
             val CO = coro' () {
-                val t = @[(1,yield(nil)),(yield(nil),20)]
-                yield(nil)
+                val t = @[(1,yield(nil)),(await(true),20)]
+                await(true)
                 drop(t)
             }
             val co = coroutine(CO)
@@ -2630,7 +2630,7 @@ class Exec_50 {
             resume co(10)
             resume co(2)
             val t = resume co()
-            println(t)
+            print(t)
         """)
         assert(out == "@[(1,10),(2,20)]\n") { out }
     }
@@ -2639,68 +2639,68 @@ class Exec_50 {
     fun cd_01_every() {
         val out = test(
             """
-            spawn (task' () {
-                val it = yield(nil)
-                println(it;;;, evt;;;)
-                yield(nil)
+            spawn (func () {
+                val it = await(true)
+                print(it;;;, evt;;;)
+                await(true)
             }) (nil)
             do {
                 val e = []
-                broadcast'(:task,e)
+                emit'(:task,e)
             }
-            println(:ok)
+            print(:ok)
         """
         )
-        //assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing thus\n") { out }
-        assert(out == " |  anon : (lin 9, col 17) : broadcast'(:task,e)\n" +
-                " v  error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : yield throw : unexpected enclosing thus\n") { out }
+        assert(out == " |  anon : (lin 9, col 17) : emit'(:task,e)\n" +
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == "[]\n:ok\n") { out }
-        //assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
+        //assert(out == " |  anon : (lin 9, col 17) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration throw : cannot hold alien reference\n") { out }
     }
     @Test
     fun cd_02_bcast_spawn_arg() {
         val out = test(
             """
-            val T = task' () {
-                val x = yield(nil)
+            val T = func () {
+                val x = await(true)
             }
             spawn T() 
             do {
                 val e = []
-                broadcast(drop(e))
+                emit(drop(e))
             }
-            println(:ok)
+            print(:ok)
         """
         )
-        //assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
-        //assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
+        //assert(out == " |  anon : (lin 8, col 17) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration throw : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 8, col 17) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration throw : cannot hold alien reference\n") { out }
         assert(out == ":ok\n") { out }
     }
     @Test
     fun cd_03_bcast_pub_arg() {
         val out = test(
             """
-            val T = task' () {
-                val evt = yield(nil)
+            val T = func () {
+                val evt = await(true)
                 set pub = evt
-                println(:in, pub)
+                print(:in, pub)
                 :ok
             }
             val t = spawn T() 
             do {
                 val e = []
-                broadcast(drop(e))
+                emit(drop(e))
             }
-            println(:out, t.pub)
+            print(:out, t.pub)
         """
         )
-        //assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
-        //assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 4, col 21) : set error : cannot hold alien reference\n") { out }
+        //assert(out == " |  anon : (lin 8, col 17) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration throw : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 10, col 17) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 21) : set throw : cannot hold alien reference\n") { out }
         assert(out == ":in\t[]\n:out\t:ok\n") { out }
     }
 
@@ -2709,183 +2709,183 @@ class Exec_50 {
         val out = test("""
             val ts = tasks()
             do {
-                val T = task' () {
+                val T = func () {
                     nil
                 }
                 spawn T() in ts
             }
-            println(:ok)
+            print(:ok)
        """)
-        //assert(out == " v  anon : (lin 7, col 17) : spawn error : cannot copy reference out\n") { out }
-        //assert(out == " v  anon : (lin 7, col 17) : spawn error : task pool outlives task prototype\n") { out }
+        //assert(out == " v  anon : (lin 7, col 17) : spawn throw : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 7, col 17) : spawn throw : task pool outlives task prototype\n") { out }
         //assert(out == ":ok\n") { out }
         assert(out == " |  anon : (lin 7, col 17) : (spawn T() in ts)\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
 
     @Test
     fun bd_01_track_err() {
         val out = test("""
             var T
-            set T = task' () { yield(nil) }
+            set T = func () { await(true) }
             var x
             do {
                 val t = spawn (T) ()
-                set x = ;;;track;;;(t)         ;; error scope
+                set x = ;;;track;;;(t)         ;; throw scope
             }
-            println(status(;;;detrack;;;(x)))
-            println(x)
+            print(status(;;;detrack;;;(x)))
+            print(x)
         """)
         //assert(out.contains("terminated\nexe-task: 0x")) { out }
-        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        //assert(out == (" v  anon : (lin 7, col 21) : set error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == "anon : (lin 7, col 21) : set throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
+        //assert(out == (" v  anon : (lin 7, col 21) : set throw : cannot expose track outside its task scope\n")) { out }
         assert(out == (" |  anon : (lin 7, col 21) : x\n" +
-                " v  error : cannot copy reference out\n")) { out }
+                " v  throw : cannot copy reference out\n")) { out }
     }
     @Test
     fun bd_02_track_err() {
         val out = test("""
             var T
-            set T = task' () { yield(nil) }
+            set T = func () { await(true) }
             val x = do {
                 val t = spawn (T) ()
-                ;;;track;;;(t)         ;; error scope
+                ;;;track;;;(t)         ;; throw scope
             }
-            println(status(;;;detrack;;;(x)))
-            println(x)
+            print(status(;;;detrack;;;(x)))
+            print(x)
         """)
         //assert(out.contains("terminated\nexe-task: 0x")) { out }
         //assert(out.contains("terminated\nx-track: 0x")) { out }
-        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        //assert(out == (" v  anon : (lin 4, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == "anon : (lin 7, col 21) : set throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
+        //assert(out == (" v  anon : (lin 4, col 21) : block escape throw : cannot expose track outside its task scope\n")) { out }
         assert(out == (" |  anon : (lin 4, col 13) : (val x = do { (val t = (spawn T())); t; })\n" +
-                " v  error : cannot copy reference out\n")) { out }
+                " v  throw : cannot copy reference out\n")) { out }
     }
     @Test
     fun bd_04_track_err() {
         val out = test("""
             var T
-            set T = task' () { yield(nil) }
+            set T = func () { await(true) }
             var x =
             do {
                 val t = spawn (T) ()
                 val x' = ;;;track;;;(t)
-                x'         ;; error scope
+                x'         ;; throw scope
             }
-            println(status(;;;detrack;;;(x)))
-            println(x)
+            print(status(;;;detrack;;;(x)))
+            print(x)
         """)
         //assert(out.contains("terminated\nexe-task: 0x")) { out }
-        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        //assert(out == (" v  anon : (lin 5, col 13) : block escape error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == "anon : (lin 7, col 21) : set throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
+        //assert(out == (" v  anon : (lin 5, col 13) : block escape throw : cannot expose track outside its task scope\n")) { out }
         assert(out == (" |  anon : (lin 4, col 13) : (var x = do { (val t = (spawn T())); (val ...\n" +
-                " v  error : cannot copy reference out\n")) { out }
+                " v  throw : cannot copy reference out\n")) { out }
     }
     @Test
     fun bc_02_track_drop_err() {
         val out = test("""
-            val T = task' () { yield(nil) }
+            val T = func () { await(true) }
             val y = do {
                 val t = spawn T ()
                 ;;;track;;;(t)
             }
-            println(y)
+            print(y)
         """)
         assert(out == (" |  anon : (lin 3, col 13) : (val y = do { (val t = (spawn T())); t; })\n" +
-                " v  error : cannot copy reference out\n")) { out }
-        //assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+                " v  throw : cannot copy reference out\n")) { out }
+        //assert(out == (" v  anon : (lin 3, col 21) : block escape throw : cannot expose track outside its task scope\n")) { out }
         //assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun bc_02x_track_drop_err() {
         val out = test("""
-            val T = task' () { yield(nil) }
+            val T = func () { await(true) }
             val y = do {
                 val t = spawn T ()
                 val x = ;;;track;;;(t)
                 drop(t)
             }
-            println(y)
+            print(y)
         """)
-        //assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == (" v  anon : (lin 3, col 21) : block escape throw : cannot expose track outside its task scope\n")) { out }
         //assert(out.contains("exe-task: 0x")) { out }
         assert(out.contains(" |  anon : (lin 6, col 17) : drop(t)\n" +
-                " v  error : value is not droppable\n")) { out }
+                " v  throw : value is not droppable\n")) { out }
     }
     @Test
     fun bc_02y_track_drop_err() {
         val out = test("""
-            val T = task' () { yield(nil) }
+            val T = func () { await(true) }
             val y = do {
                 val t = spawn T ()
                 ;;val x = ;;;track;;;(t)
                 drop(t)
             }
-            println(y)
+            print(y)
         """)
-        //assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == (" v  anon : (lin 3, col 21) : block escape throw : cannot expose track outside its task scope\n")) { out }
         //assert(out.contains("exe-task: 0x")) { out }
         assert(out.contains(" |  anon : (lin 6, col 17) : drop(t)\n" +
-                " v  error : value is not droppable\n")) { out }
+                " v  throw : value is not droppable\n")) { out }
     }
     @Test
     fun bc_04_track_drop() {
         val out = test("""
-            val T = task' () { yield(nil) }
+            val T = func () { await(true) }
             val y = do {
                 val ts = tasks()
                 spawn T () in ts
                 drop(next-tasks(ts))
             }
-            println(y)
+            print(y)
         """)
         assert(out == ("TODO - o drop tem que ser em lval")) { out }
-        //assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == (" v  anon : (lin 3, col 21) : block escape throw : cannot expose track outside its task scope\n")) { out }
         //assert(out.contains("exe-task: 0x")) { out }
         //assert(out.contains(" |  anon : (lin 3, col 21) : do { (val ts = tasks(nil)); (spawn T() in ...\n" +
-        //        " v  error : value has multiple references")) { out }
+        //        " v  throw : value has multiple references")) { out }
     }
 
     @Test
     fun ff_01_scope() {
         val out = test("""
-            val T = task' () { yield(nil) }
+            val T = func () { await(true) }
             var x
             do {
                 val t = spawn T()
                 set x = ;;;track;;;(t)
             }
-            println(:ok)
+            print(:ok)
         """)
-        //assert(out == " v  anon : (lin 6, col 21) : set error : cannot expose track outside its task scope\n") { out }
+        //assert(out == " v  anon : (lin 6, col 21) : set throw : cannot expose track outside its task scope\n") { out }
         //assert(out == ":ok\n") { out }
         assert(out == " |  anon : (lin 6, col 21) : x\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun ff_05_track_err() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 ${AWAIT()}
             }
             val x = do {
                 val t = spawn T()
                 ;;;track;;;(t)
             }
-            println(status(x))
+            print(status(x))
         """)
-        //assert(out == " v  anon : (lin 5, col 21) : block escape error : cannot expose track outside its task scope\n") { out }
+        //assert(out == " v  anon : (lin 5, col 21) : block escape throw : cannot expose track outside its task scope\n") { out }
         //assert(out == ":terminated\n") { out }
         assert(out == " |  anon : (lin 5, col 13) : (val x = do { (val t = (spawn T())); t; })\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun ff_06_track_err() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 ${AWAIT()}
             }
             val x = do {
@@ -2893,20 +2893,20 @@ class Exec_50 {
                 spawn T() in ts 
                 next-tasks(ts)
             }
-            println(x)
+            print(x)
         """)
         //assert(out.contains("exe-task: 0x")) { out }
         assert(out == " |  anon : (lin 5, col 13) : (val x = do { (val ts = tasks(nil)); (spaw...\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun fg_04_expose_err() {
         val out = test("""
             val x = do {
                 val ts = tasks()
-                var T = task' () {
+                var T = func () {
                     set pub = []
-                    yield(nil) ;; nil
+                    await(true) ;; nil
                     nil
                 }
                 spawn (T) () in ts
@@ -2914,16 +2914,16 @@ class Exec_50 {
                 val p = ;;;detrack;;;(trk) ;;{ it => it }
                 p
             }
-            println(status(x))
+            print(status(x))
         """)
         assert(out == " |  anon : (lin 2, col 13) : (val x = do { (val ts = tasks(nil)); (var ...\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == ":terminated\n") { out }
         //assert(out == ":pub\t[]\n" +
-        //        " v  anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == " v  anon : (lin 11, col 17) : declaration error : cannot expose task-in-pool reference\n") { out }
+        //        " v  anon : (lin 2, col 21) : block escape throw : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 11, col 17) : declaration throw : cannot expose task-in-pool reference\n") { out }
         //assert(out == " |  anon : (lin 11, col 38) : (func (it) { if it { ```                     ...)\n" +
-        //        " v  anon : (lin 11, col 38) : block escape error : cannot expose task in pool to outer scope\n") { out }
+        //        " v  anon : (lin 11, col 38) : block escape throw : cannot expose task in pool to outer scope\n") { out }
     }
 
     // IT
@@ -2933,12 +2933,12 @@ class Exec_50 {
         val out = test("""
             do {
                 val it = 10
-                println(it)
+                print(it)
                 do {
                     val it = 100
-                    println(it)
+                    print(it)
                 }
-                println(it)
+                print(it)
             }
         """)
         assert(out == "10\n100\n10\n") { out }
@@ -2948,12 +2948,12 @@ class Exec_50 {
         val out = test("""
             do {
                 val' it = 10
-                println(it)
+                print(it)
                 do {
                     val' it = 100
-                    println(it)
+                    print(it)
                 }
-                println(it)
+                print(it)
             }
         """)
         assert(out == "10\n100\n10\n") { out }
@@ -2962,9 +2962,9 @@ class Exec_50 {
     fun gg_03_it() {
         val out = test("""
             val' it = 10
-            println(it)
+            print(it)
             val' it = 100
-            println(it)
+            print(it)
         """)
         assert(out == "10\n100\n10\n") { out }
     }
@@ -2974,7 +2974,7 @@ class Exec_50 {
             enclose' :break {
                 (var it = 10);
                 loop' {
-                    println(it);
+                    print(it);
                     do {
                         (val' it = true);
                         escape(:break,it);
@@ -2990,10 +2990,10 @@ class Exec_50 {
     fun jj_02_tracks() {
         val out = test("""
             val f = func' (trk) {
-                ;;println(detrack(trk) { it => status(it) })
-                println(status(trk))
+                ;;print(detrack(trk) { it => status(it) })
+                print(status(trk))
             }
-            val T = task' () { yield(nil) ; nil }
+            val T = func () { await(true) ; nil }
             val x' = do {
                 val ts = tasks()
                 spawn T() in ts
@@ -3006,21 +3006,21 @@ class Exec_50 {
         """)
         assert(out==(":yielded\n" +
                 " |  anon : (lin 7, col 13) : (val x' = do { (val ts = tasks(nil)); (spa...\n" +
-                " v  error : cannot copy reference out\n")) { out }
+                " v  throw : cannot copy reference out\n")) { out }
         //assert(out==(":yielded\n:terminated\n")) { out }
         //assert(out.contains(":yielded\n" +
-        //        " v  anon : (lin 7, col 22) : block escape error : reference has immutable scope\n")) { out }
+        //        " v  anon : (lin 7, col 22) : block escape throw : reference has immutable scope\n")) { out }
         //assert(out.contains(":yielded\n" +
-        //        " v  anon : (lin 7, col 22) : block escape error : cannot expose track outside its task scope\n")) { out }
+        //        " v  anon : (lin 7, col 22) : block escape throw : cannot expose track outside its task scope\n")) { out }
     }
 
     @Test
     fun oo_03_track_err() {
         val out = test("""
             var T
-            set T = task' (v) {
+            set T = func (v) {
                 set pub = [v]
-                yield(nil) ; nil
+                await(true) ; nil
             }
             var x
             do {
@@ -3032,128 +3032,128 @@ class Exec_50 {
                     set x = t       ;; err: escope 
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
-        //assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n:error\n") { out }
-        //assert(out == " v  anon : (lin 14, col 25) : set error : cannot assign reference to outer scope\n") { out }
+        //assert(out == "anon : (lin 13, col 25) : set throw : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 13, col 25) : set throw : incompatible scopes\n:throw\n") { out }
+        //assert(out == " v  anon : (lin 14, col 25) : set throw : cannot assign reference to outer scope\n") { out }
         //assert(out == ":ok\n") { out }
         assert(out == " |  anon : (lin 14, col 25) : x\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun op_03_track_err() {
         val out = test("""
             var T
-            set T = task' () {
+            set T = func () {
                 set pub = [10]
-                yield(nil) ; nil
+                await(true) ; nil
             }
             var x
             do {
                 var t = spawn (T) ()
                 set x = ;;;track;;;(t)         ;; scope x < t
-                ;;println(detrack(x).pub[0])
+                ;;print(detrack(x).pub[0])
             }
-            ;;println(status(detrack(x)))
-            ;;println(x)
-            println(:ok)
+            ;;print(status(detrack(x)))
+            ;;print(x)
+            print(:ok)
         """)
         //assert(out.contains("10\n:terminated\nx-track: 0x")) { out }
-        //assert(out == "anon : (lin 10, col 21) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        //assert(out == (" v  anon : (lin 10, col 21) : set error : cannot expose track outside its task scope\n")) { out }
+        //assert(out == "anon : (lin 10, col 21) : set throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
+        //assert(out == (" v  anon : (lin 10, col 21) : set throw : cannot expose track outside its task scope\n")) { out }
         //assert(out == (":ok\n")) { out }
         assert(out == (" |  anon : (lin 10, col 21) : x\n" +
-                " v  error : cannot copy reference out\n")) { out }
+                " v  throw : cannot copy reference out\n")) { out }
     }
     @Test
     fun op_08_track_scope() {
         val out = test("""
-            val T = task' () {
+            val T = func () {
                 set pub = 1
-                yield(nil) ; nil
+                await(true) ; nil
             }
             val y = do {
                 val t = spawn T()
                 ;;;track;;;(t)
             }
-            ;;detrack(y) { it => println(it.pub) }
-            println(y.pub)
+            ;;detrack(y) { it => print(it.pub) }
+            print(y.pub)
         """)
         assert(out == " |  anon : (lin 6, col 13) : (val y = do { (val t = (spawn T())); t; })\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == "1\n") { out }
-        //assert(out == " v  anon : (lin 6, col 21) : block escape error : cannot expose track outside its task scope\n") { out }
+        //assert(out == " v  anon : (lin 6, col 21) : block escape throw : cannot expose track outside its task scope\n") { out }
     }
 
     @Test
     fun de_05_evt_err_valgrind() {
         val out = test("""
-            spawn (task' () {
-                var evt = yield(nil)
+            spawn (func () {
+                var evt = await(true)
                 val x = evt
-                println(x)
-                set evt = yield(nil)
-                println(x)
+                print(x)
+                set evt = await(true)
+                print(x)
             }) ()
             do {
                 val e = [10]
-                broadcast(drop(e))
+                emit(drop(e))
             }
-            broadcast(nil)
+            emit(true)
         """)
         assert(out == "[10]\n[10]\n") { out }
-        //assert(out == " |  anon : (lin 11, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 4, col 17) : declaration error : cannot hold alien reference\n") { out }
+        //assert(out == " |  anon : (lin 11, col 17) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 17) : declaration throw : cannot hold alien reference\n") { out }
     }
     @Test
     fun de_07_evt_err() {
         val out = test("""
-            spawn (task' () {
-                val evt = yield(nil)
+            spawn (func () {
+                val evt = await(true)
                 val x = evt[0]
-                println(x)
+                print(x)
             }) ()
             do {
                 val e = [[10]]
-                broadcast(drop(e))
+                emit(drop(e))
             }
         """)
         assert(out == "[10]\n") { out }
-        //assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 4, col 17) : declaration error : cannot hold alien reference\n") { out }
+        //assert(out == " |  anon : (lin 9, col 17) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 17) : declaration throw : cannot hold alien reference\n") { out }
     }
 
     @Test
     fun ee_10_bcast_err2() {
         val out = test(
             """
-            val T = task' (v) {
-                val e = yield(nil)
-                println(v,e)                
+            val T = func (v) {
+                val e = await(true)
+                print(v,e)                
             }
             spawn T(10)
             do {
                 val e = []
-                broadcast (drop(e))
+                emit (drop(e))
             }
         """
         )
         assert(out == "10\t[]\n") { out }
-        //assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
-        //assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
+        //assert(out == " |  anon : (lin 9, col 17) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration throw : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 9, col 17) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration throw : cannot hold alien reference\n") { out }
     }
 
     @Test
     fun zz_15_bcast_err() {
         val out = test(
             """
-            var T = task' () {
-                var v = yield(nil)
-                println(v)
+            var T = func () {
+                var v = await(true)
+                print(v)
             }
             var t = spawn T()
             do {
@@ -3162,37 +3162,37 @@ class Exec_50 {
                     val b
                     do {
                         var e = []
-                        broadcast (drop(e))
+                        emit (drop(e))
                     }
                 }
             }
             """
         )
         assert(out == "[]\n") { out }
-        //assert(out == "anon : (lin 10, col 35) : broadcast error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        //assert(out == " |  anon : (lin 9, col 13) : broadcast e\n" +
-        //        " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
-        //assert(out == " |  anon : (lin 9, col 17) : broadcast e\n" +
-        //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
-        //assert(out == " |  anon : (lin 13, col 25) : broadcast'(e)\n" +
-        //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == " |  anon : (lin 13, col 25) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
-        //assert(out == " |  anon : (lin 13, col 25) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
+        //assert(out == "anon : (lin 10, col 35) : emit throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
+        //assert(out == " |  anon : (lin 9, col 13) : emit e\n" +
+        //        " v  anon : (lin 3, col 25) : resume throw : incompatible scopes\n") { out }
+        //assert(out == " |  anon : (lin 9, col 17) : emit e\n" +
+        //        " v  anon : (lin 3, col 25) : resume throw : cannot receive assigned reference\n") { out }
+        //assert(out == " |  anon : (lin 13, col 25) : emit'(e)\n" +
+        //        " v  anon : (lin 3, col 36) : block escape throw : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 13, col 25) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration throw : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 13, col 25) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration throw : cannot hold alien reference\n") { out }
     }
     @Test
     fun zz_15_bcast_okr() {
         val out = test(
             """
-            var T = task' () {
-                println(yield(nil))
+            var T = func () {
+                print(yield(nil))
             }
             var t = spawn T()
             do {
                 var e = []
-                broadcast (drop(e))
+                emit (drop(e))
             }
             """
         )
@@ -3202,36 +3202,36 @@ class Exec_50 {
     fun zz_16_bcast_err() {
         val out = test(
             """
-            var T = task' () {
+            var T = func () {
                 var v =
                     func' (it) {it} (yield(nil))
-                println(v)
+                print(v)
             }
             var t = spawn T()
-            ;;println(:1111)
+            ;;print(:1111)
             do {
                 val a
                 do {
                     val b
                     var e = []
-                    broadcast (drop(e))
+                    emit (drop(e))
                 }
             }
-            ;;println(:2222)
+            ;;print(:2222)
             """
         )
         assert(out == "[]\n") { out }
-        //assert(out == " |  anon : (lin 11, col 17) : broadcast e\n" +
-        //        " v  anon : (lin 4, col 17) : resume error : cannot receive assigned reference\n") { out }
-        //assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 4, col 28) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
+        //assert(out == " |  anon : (lin 11, col 17) : emit e\n" +
+        //        " v  anon : (lin 4, col 17) : resume throw : cannot receive assigned reference\n") { out }
+        //assert(out == "anon : (lin 11, col 39) : emit throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
+        //assert(out == " |  anon : (lin 14, col 21) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 28) : block escape throw : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 14, col 21) : emit'(e,:task)\n" +
         //        " |  anon : (lin 4, col 17) : (func (it) { it })(yield(nil))\n" +
-        //        " v  anon : (lin 4, col 27) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 3, col 17) : declaration error : cannot hold alien reference\n") { out }
+        //        " v  anon : (lin 4, col 27) : block escape throw : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 14, col 21) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 3, col 17) : declaration throw : cannot hold alien reference\n") { out }
     }
     @Test
     fun zz_17_it() {
@@ -3257,8 +3257,8 @@ class Exec_50 {
         val out = test("""
             do {
                 val x = 10
-                spawn (task' :fake () {
-                    println(x)
+                spawn (func :fake () {
+                    print(x)
                 }) ()
             }
         """, true)

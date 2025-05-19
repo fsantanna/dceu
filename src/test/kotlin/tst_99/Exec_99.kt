@@ -19,14 +19,14 @@ class Exec_99 {
     fun aa_01_if() {
         val out = test("""
             val x = if (true) { 1 }
-            println(x)
+            print(x)
         """)
         assert(out == "1\n") { out }
     }
     @Test
     fun aa_02_do() {
         val out = test("""
-            println(do {})
+            print(do {})
         """)
         assert(out == "nil\n") { out }
         //assert(out == "\n") { out }
@@ -37,7 +37,7 @@ class Exec_99 {
             var x
             set x = 10
             set x = if false { 1 }
-            println(x)
+            print(x)
         """)
         assert(out == "nil\n") { out }
     }
@@ -47,30 +47,30 @@ class Exec_99 {
             var x
             set x = 10
             set x = if (nil) {} else { 1 }
-            println(x)
+            print(x)
         """)
         assert(out == "1\n") { out }
     }
     @Test
     fun aa_05_if() {
         val out = test("""
-            println(if [] {})
+            print(if [] {})
         """)
-        //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
+        //assert(out == "anon : (lin 1, col 4) : if throw : invalid condition\n") { out }
         assert(out == "nil\n") { out }
         //assert(out == "\n") { out }
     }
     @Test
     fun aa_06_if() {
         val out = test("""
-            println(if false { true })
+            print(if false { true })
         """)
         assert(out == "nil\n") { out }
     }
     @Test
     fun aa_07_func() {
         val out = test("""
-            println(func () {} ())
+            print(func () {} ())
         """)
         assert(out == "nil\n") { out }
         //assert(out == "\n") { out }
@@ -82,7 +82,7 @@ class Exec_99 {
     fun ab_01_yield() {
         val out = test("""
             val x = if (true) { 1 }
-            println(x)
+            print(x)
         """)
         assert(out == "1\n") { out }
     }
@@ -92,10 +92,10 @@ class Exec_99 {
             val v = do :x {
                 do :y {
                     escape(:y, 10)
-                    println(:no)
+                    print(:no)
                 }
             }
-            println(v)
+            print(v)
         """)
         assert(out == "10\n") { out }
     }
@@ -105,56 +105,56 @@ class Exec_99 {
     @Test
     fun bb_01_op_or_and() {
         val out = test("""
-            println(true or println(1))
-            println(false and println(1))
+            print(true or print(1))
+            print(false and print(1))
         """)
         assert(out == "true\nfalse\n") { out }
     }
     @Test
     fun bb_02_op_not() {
         val out = test("""
-            println(true and (not false))
+            print(true and (not false))
         """)
         assert(out == "true\n") { out }
     }
     @Test
     fun bb_02x_op_not() {
         val out = test("""
-            println(not nil and not false)
+            print(not nil and not false)
         """)
         assert(out == "true\n") { out }
     }
     @Test
     fun bb_03_or_and() {
         val out = test("""
-            println(1 or error(5))
-            println(1 and 2)
-            println(nil and 2)
-            println(nil or 2)
+            print(1 or throw(5))
+            print(1 and 2)
+            print(nil and 2)
+            print(nil or 2)
         """)
         assert(out == "1\n2\nnil\n2\n") { out }
     }
     @Test
     fun bb_03_or_and_no() {
         val out = test("""
-            println(1 or error(5))
-            println(nil or 2)
+            print(1 or throw(5))
+            print(nil or 2)
         """)
         assert(out == "1\n2\n") { out }
     }
     @Test
     fun bb_03_or_and_ok() {
         val out = test("""
-            println(
+            print(
                 (1 thus { \ceu_6 =>
                     (if ceu_6 {
                        ceu_6
                     } else {
-                        error(5)
+                        throw(5)
                     })
                 })
             )
-            println((nil thus { \ceu_41 =>
+            print((nil thus { \ceu_41 =>
                 (if ceu_41 {
                     ceu_41
                 } else {
@@ -167,7 +167,7 @@ class Exec_99 {
     @Test
     fun bb_04_or_and() {
         val out = test("""
-            println(true and ([] or []))
+            print(true and ([] or []))
         """)
         assert(out == "[]\n") { out }
     }
@@ -176,7 +176,7 @@ class Exec_99 {
         val out = test("""
             val v = true and
                 true and 10
-            println(v)
+            print(v)
         """)
         assert(out == "10\n") { out }
     }
@@ -186,24 +186,24 @@ class Exec_99 {
             $PLUS
             val v = 5 +
                 5 + 10
-            println(v)
+            print(v)
         """)
         assert(out == "20\n") { out }
     }
     @Test
     fun bb_07_ops() {
         val out = test("""
-            println({{or}}(false, true))
-            println({{not}}(true))
+            print({{or}}(false, true))
+            print({{not}}(true))
         """)
         assert(out == "true\nfalse\n") { out }
     }
     @Test
     fun bb_08_ops() {
         val out = test("""
-            println({{not}}())
+            print({{not}}())
         """)
-        assert(out == "anon : (lin 2, col 21) : operation error : invalid number of arguments\n") { out }
+        assert(out == "anon : (lin 2, col 21) : operation throw : invalid number of arguments\n") { out }
     }
 
     // LEX / PARSER / EXPANSION
@@ -214,7 +214,7 @@ class Exec_99 {
             val x = do {
                 [] or false
             }
-            println(x)
+            print(x)
         """)
         assert(out == "[]\n") { out }
     }
@@ -224,10 +224,10 @@ class Exec_99 {
             val x = do {
                 [] thus { it }
             }
-            println(x)
+            print(x)
         """)
         //assert(out == " |  anon : (lin 2, col 13) : (val x = do { do { (val it = []); it; }; })\n" +
-        //        " v  error : cannot copy reference out\n") { out }
+        //        " v  throw : cannot copy reference out\n") { out }
         assert(out == "[]\n") { out }
     }
     @Test
@@ -236,7 +236,7 @@ class Exec_99 {
             val x = do {
                 [] thus { drop(it) }
             }
-            println(x)
+            print(x)
         """)
         assert(out == "[]\n") { out }
     }
@@ -261,10 +261,10 @@ class Exec_99 {
             func is-not' (v1,v2) {
                 not is'(v1,v2)
             }
-            println([] is? :bool)
-            println([] is? :tuple)
-            println(1 is-not? :tuple)
-            println(1 is-not? :number)
+            print([] is? :bool)
+            print([] is? :tuple)
+            print(1 is-not? :tuple)
+            print(1 is-not? :number)
         """)
         assert(out == "false\ntrue\ntrue\nfalse\n") { out }
     }
@@ -291,10 +291,10 @@ class Exec_99 {
                 not in'(v,xs)
             }
             val t = [1,2,3]
-            println(2 in? t)
-            println(4 in? t)
-            println(2 in-not? t)
-            println(4 in-not? t)
+            print(2 in? t)
+            print(4 in? t)
+            print(2 in-not? t)
+            print(4 in-not? t)
         """)
         assert(out == "true\nfalse\nfalse\ntrue\n") { out }
     }
@@ -303,26 +303,26 @@ class Exec_99 {
         val out = test("""
             val t = []
             tag(:x,t)
-            println(t is? :x)
+            print(t is? :x)
             tag(:y,t)
-            println(t is-not? :y)
+            print(t is-not? :y)
             tag(nil,t)
-            println(t is-not? :x)
+            print(t is-not? :x)
         """, true)
         assert(out == "true\nfalse\ntrue\n") { out }
     }
     @Test
     fun bc_03x_is() {
         val out = test("""
-            println(nil)
+            print(nil)
         """, true)
         assert(out == "nil\n") { out }
     }
     @Test
     fun bc_04_is() {
         val out = test("""
-            println({{is?}}    (4, :nil))
-            println({{is-not?}}(4, :nil))
+            print({{is?}}    (4, :nil))
+            print({{is-not?}}(4, :nil))
         """, true)
         assert(out == "false\ntrue\n") { out }
     }
@@ -335,7 +335,7 @@ class Exec_99 {
             func f (v) {
                 v
             }
-            println(f(10))
+            print(f(10))
         """)
         assert(out == "10\n") { out }
     }
@@ -345,7 +345,7 @@ class Exec_99 {
             $PLUS
             func f (v) {
                 if v /= 0 {
-                    println(v)
+                    print(v)
                     f(v - 1)
                 }
             }
@@ -358,7 +358,7 @@ class Exec_99 {
         val out = test(
             """
             func f (x) {
-                println(x)
+                print(x)
             }
             f(10)
         """
@@ -370,7 +370,7 @@ class Exec_99 {
         val out = test(
             """
             task f (x) {
-                println(x)
+                print(x)
             }
             spawn f (10)
         """
@@ -382,19 +382,19 @@ class Exec_99 {
         val out = test(
             """
             func f {        ;; TODO: implicit it?
-                println(x)
+                print(x)
             }
         """
         )
         assert(out == "anon : (lin 2, col 20) : expected \"(\" : have \"{\"\n") { out }
-        //assert(out == "anon : (lin 3, col 25) : access error : variable \"x\" is not declared") { out }
+        //assert(out == "anon : (lin 3, col 25) : access throw : variable \"x\" is not declared") { out }
     }
     @Test
     fun cc_06_func_it() {
         val out = test(
             """
             func f {        ;; TODO: implicit it?
-                println(it)
+                print(it)
             }
             f(10)
         """
@@ -409,7 +409,7 @@ class Exec_99 {
             do {
                 func f (v) {
                     if v /= 0 {
-                        println(v)
+                        print(v)
                         f(v - 1)
                     }
                 }
@@ -425,17 +425,17 @@ class Exec_99 {
     fun cj_01_if() {
         val out = test("""
             val v = if 1 { it }
-            println(v)
+            print(v)
         """)
         //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 2, col 28) : access error : variable \"it\" is not declared\n") { out }
+        assert(out == "anon : (lin 2, col 28) : access throw : variable \"it\" is not declared\n") { out }
     }
     @Test
     fun cj_02_if() {
         val out = test("""
             data :X = [x]
             val i = if [10] { \v:X => v.x }
-            println(i)
+            print(i)
         """)
         assert(out == "10\n") { out }
     }
@@ -446,7 +446,7 @@ class Exec_99 {
             val i = ifs {
                 [10] { \v:X => v.x }
             }
-            println(i)
+            print(i)
         """)
         assert(out == "10\n") { out }
     }
@@ -457,7 +457,7 @@ class Exec_99 {
             val i = match nil {
                 |[10] { \v:X => v.x }
             }
-            println(i)
+            print(i)
         """)
         assert(out == "10\n") { out }
     }
@@ -465,7 +465,7 @@ class Exec_99 {
     fun cj_05_ifs() {
         val out = test("""
             match nil {
-                |10 { \v => println(v) }
+                |10 { \v => print(v) }
             }
         """)
         assert(out == "10\n") { out }
@@ -476,28 +476,28 @@ class Exec_99 {
     @Test
     fun dd_01_if() {
         val out = test("""
-            println(if false => 1 => 2)
+            print(if false => 1 => 2)
         """)
         assert(out == "2\n") { out }
     }
     @Test
     fun dd_02_if() {
         val out = test("""
-            println(if true => 1 => 2)
+            print(if true => 1 => 2)
         """)
         assert(out == "1\n") { out }
     }
     @Test
     fun dd_03_if() {
         val out = test("""
-            println(if true => if true => 1 => 99 => 99)
+            print(if true => if true => 1 => 99 => 99)
         """)
         assert(out == "1\n") { out }
     }
     @Test
     fun TODO_dd_04_if_assign() {
         val out = test("""
-            println(if x=10 => x => 99)
+            print(if x=10 => x => 99)
         """)
         assert(out == "10\n") { out }
     }
@@ -510,7 +510,7 @@ class Exec_99 {
             val it
             do {
                 val it = 10
-                println(it)     ;; dcl from last to first
+                print(it)     ;; dcl from last to first
             }            
         """)
         assert(out == "10\n") { out }
@@ -519,12 +519,12 @@ class Exec_99 {
     fun ee_02_it() {
         val out = test("""
             val it
-            println(it)
+            print(it)
             do {
                 val it = 10
             }            
         """)
-        //assert(out == "anon : (lin 5, col 21) : declaration error : variable \"it\" is already declared\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : declaration throw : variable \"it\" is already declared\n") { out }
         assert(out == "nil\n") { out }
     }
     @Test
@@ -534,16 +534,16 @@ class Exec_99 {
             do {
                 val it = 10
             }            
-            println(it)
+            print(it)
         """)
         assert(out == "nil\n") { out }
-        //assert(out == "anon : (lin 4, col 21) : declaration error : variable \"it\" is already declared\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : declaration throw : variable \"it\" is already declared\n") { out }
     }
     @Test
     fun ee_04_it() {
         val out = test("""
             val it = 10
-            println(__it)
+            print(__it)
             do {
                 val it = 99
             }            
@@ -564,7 +564,7 @@ class Exec_99 {
                 (5+5)==0 { 99 }
                 else => 10
             }
-            println(x)
+            print(x)
         """)
         assert(out == "10\n") { out }
     }
@@ -572,7 +572,7 @@ class Exec_99 {
     fun ff_02_ifs() {
         val out = test("""
             val x = ifs { true=> `:number 1` }
-            println(x)
+            print(x)
         """)
         assert(out == "1\n") { out }
     }
@@ -584,7 +584,7 @@ class Exec_99 {
                 == 20 => true
                 else  => false
             }
-            println(x)
+            print(x)
         """)
         assert(out == "true\n") { out }
     }
@@ -592,11 +592,11 @@ class Exec_99 {
     fun ff_12_ifs() {
         val out = test("""
             ifs {
-                true => error()
+                true => throw()
             }
         """)
-        assert(out == " |  anon : (lin 3, col 25) : error()\n" +
-                " v  error : nil\n") { out }
+        assert(out == " |  anon : (lin 3, col 25) : throw()\n" +
+                " v  throw : nil\n") { out }
     }
 
     // MATCH
@@ -607,7 +607,7 @@ class Exec_99 {
             val x = match 20 {
                 == 20 => true
             }
-            println(x)
+            print(x)
         """)
         assert(out == "true\n") { out }
     }
@@ -621,7 +621,7 @@ class Exec_99 {
                 == 20 => false
                 else  => false
             }
-            println(x)
+            print(x)
         """)
         assert(out == "true\n") { out }
     }
@@ -633,7 +633,7 @@ class Exec_99 {
                 10 => false
                 else     => true
             }
-            println(x)
+            print(x)
         """)
         assert(out == "true\n") { out }
     }
@@ -647,7 +647,7 @@ class Exec_99 {
                 is? :X   => true
                 else => false
             }
-            println(x)
+            print(x)
         """)
         assert(out == "true\n") { out }
     }
@@ -660,7 +660,7 @@ class Exec_99 {
                 is? 20 => false
                 else  => false
             }
-            println(x)
+            print(x)
         """, true)
         assert(out == "true\n") { out }
     }
@@ -672,9 +672,9 @@ class Exec_99 {
                 (|true) => :T []
                 is? 0 => nil
             }
-            println(x)
+            print(x)
         """)
-        assert(out == "anon : (lin 5, col 21) : access error : variable \"is'\" is not declared\n") { out }
+        assert(out == "anon : (lin 5, col 21) : access throw : variable \"is'\" is not declared\n") { out }
     }
     @Test
     fun ff_09_ifs() {
@@ -683,7 +683,7 @@ class Exec_99 {
                 in? [1,20,1] => true
                 else  => false
             }
-            println(x)
+            print(x)
         """, true)
         assert(out == "true\n") { out }
     }
@@ -696,7 +696,7 @@ class Exec_99 {
                 10  => false
                 20  => true
             }
-            println(x)
+            print(x)
         """)
         assert(out == "true\n") { out }
     }
@@ -705,9 +705,9 @@ class Exec_99 {
         val out = test("""
             $IS ; $COMP
             match 20 {
-                :no => println(:no)
+                :no => print(:no)
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -722,7 +722,7 @@ class Exec_99 {
                 (t2:T| t2.v == 20) => true
                 else      => false
             }
-            println(x)
+            print(x)
         """)
         assert(out == "true\n") { out }
     }
@@ -736,7 +736,7 @@ class Exec_99 {
                 in-not? [1,1] => true
                 else  => false
             }
-            println(x)
+            print(x)
         """, true)
         assert(out == "true\n") { out }
     }
@@ -746,10 +746,10 @@ class Exec_99 {
             val x = match [] {
                 it|true => it
             }
-            println(x)
+            print(x)
         """)
-        //assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n" +
-        //        ":error\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : block escape throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
         assert(out == "[]\n") { out }
     }
     @Test
@@ -758,7 +758,7 @@ class Exec_99 {
             val x = match [] {
                 it|true => drop(it)
             }
-            println(x)
+            print(x)
         """, true)
         assert(out == "[]\n") { out }
     }
@@ -768,9 +768,9 @@ class Exec_99 {
             val x = ifs {
                 true => it
             }
-            println(x)
+            print(x)
         """, true)
-        assert(out == "anon : (lin 3, col 25) : access error : variable \"it\" is not declared\n") { out }
+        assert(out == "anon : (lin 3, col 25) : access throw : variable \"it\" is not declared\n") { out }
     }
     @Test
     fun TODO_fg_05_ifs () {
@@ -778,7 +778,7 @@ class Exec_99 {
             val x = ifs {
                 v=10 => v
             }
-            println(x)
+            print(x)
         """)
         assert(out == "anon : (lin 3, col 18) : expected \"{\" : have \"=\"\n") { out }
         //assert(out == "10\n") { out }
@@ -789,10 +789,10 @@ class Exec_99 {
             val x = match false {
                 and nil => true
             }
-            println(x)
+            print(x)
         """)
         //assert(out == "anon : (lin 3, col 17) : expected expression : have \"{\"") { out }
-        //assert(out == "anon : (lin 3, col 17) : access error : variable \"{{and}}\" is not declared") { out }
+        //assert(out == "anon : (lin 3, col 17) : access throw : variable \"{{and}}\" is not declared") { out }
         assert(out == "nil\n") { out }
     }
     @Test
@@ -802,7 +802,7 @@ class Exec_99 {
                 is? nil => false
                 in? [4] => true
             }
-            println(x)
+            print(x)
         """, true)
         assert(out == "true\n") { out }
     }
@@ -812,7 +812,7 @@ class Exec_99 {
             and nil
         """)
         //assert(out == "anon : (lin 3, col 17) : expected expression : have \"{\"") { out }
-        assert(out == "anon : (lin 2, col 13) : access error : variable \"{{and}}\" is not declared\n") { out }
+        assert(out == "anon : (lin 2, col 13) : access throw : variable \"{{and}}\" is not declared\n") { out }
     }
     @Test
     fun fg_09_ifs () {
@@ -821,7 +821,7 @@ class Exec_99 {
                 {{string?}} { true }
                 else => false
             }
-            println(x)
+            print(x)
         """, true)
         assert(out == "true\n") { out }
     }
@@ -835,7 +835,7 @@ class Exec_99 {
             val x = match [10,20] {
                 [10,20] => :ok
             }
-            println(x)
+            print(x)
             ;;;
             val x:X = v[0]
             if x==10 {
@@ -851,10 +851,10 @@ class Exec_99 {
         val out = test("""
             $IS ; $COMP
             val x = match [10,20] {
-                [30,40] => error(:no)
+                [30,40] => throw(:no)
                 [10,20] => :ok
             }
-            println(x)
+            print(x)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -863,8 +863,8 @@ class Exec_99 {
         val out = test("""
             $IS ; $COMP
             match [10] {
-                [30] => error(:no)
-                [10] => println(:ok)
+                [30] => throw(:no)
+                [10] => print(:ok)
             }
         """)
         assert(out == ":ok\n") { out }
@@ -874,10 +874,10 @@ class Exec_99 {
         val out = test("""
             $IS ; $COMP
             val x = match 1 {
-                [1,2] => error(:no)     ;; 2 compares to nil
+                [1,2] => throw(:no)     ;; 2 compares to nil
                 1 => :ok
             }
-            println(x)
+            print(x)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -887,23 +887,23 @@ class Exec_99 {
             $IS ; $COMP
             val x = match 1 {
                 [1,nil] => (:ok)     ;; 2 compares to nil
-                1 => error(:no)
+                1 => throw(:no)
             }
-            println(x)
+            print(x)
         """)
         //assert(out == ":ok\n") { out }
-        assert(out == " |  anon : (lin 5, col 22) : error(:no)\n" +
-                " v  error : :no\n") { out }
+        assert(out == " |  anon : (lin 5, col 22) : throw(:no)\n" +
+                " v  throw : :no\n") { out }
     }
     @Test
     fun fh_03_ifs () {
         val out = test("""
             $IS ; $COMP
             val x = match [1,2] {
-                1 => error(:no)
+                1 => throw(:no)
                 [1,2] => :ok
             }
-            println(x)
+            print(x)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -916,7 +916,7 @@ class Exec_99 {
             $ASR
             data :T = [v]
             match [10] {
-                do (t :T) => println(t.v)
+                do (t :T) => print(t.v)
             }
         """)
         assert(out == "10\n") { out }
@@ -927,14 +927,14 @@ class Exec_99 {
             $ASR ; $IS ; $COMP
             data :T = [v]
             var x = match [20] {
-                false         => error()
+                false         => throw()
                 ;;(t :T| false) {}
                 do (t :T)
-                (|t.v == 10)  => error()
+                (|t.v == 10)  => throw()
                 (|t.v == 20)  => :ok
-                else          => error()
+                else          => throw()
             }
-            println(x)
+            print(x)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -944,14 +944,14 @@ class Exec_99 {
             $ASR ; $IS ; $COMP
             data :T = [v]
             var x = match [20] {
-                false         => error()
+                false         => throw()
                 ;;(t :T| false) {}
                 do (t :T)
-                (|t.v == 10)  => error()
+                (|t.v == 10)  => throw()
                 (|t.v == 20)  => :ok
-                else          => error()
+                else          => throw()
             }
-            println(x)
+            print(x)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -961,16 +961,16 @@ class Exec_99 {
             $ASR ; $IS ; $COMP
             data :T = [v]
             var x = match [20] {
-                false         => error()
+                false         => throw()
                 ;;(t :T| false) {}
                 do (t :T) {
-                    println(:ok)
+                    print(:ok)
                 }
-                (|t.v == 10)  => error()
+                (|t.v == 10)  => throw()
                 (|t.v == 20)  => :ok
-                else          => error()
+                else          => throw()
             }
-            println(x)
+            print(x)
         """)
         assert(out == ":ok\n:ok\n") { out }
     }
@@ -980,16 +980,16 @@ class Exec_99 {
             $ASR ; $IS ; $COMP
             data :T = [v]
             var x = match :T [20] {
-                false         => error()
+                false         => throw()
                 ;;(t :T| false) {}
                 do (t :T) {
-                    println(:ok)
+                    print(:ok)
                 }
-                (|t.v == 10)  => error()
+                (|t.v == 10)  => throw()
                 (|t.v == 20)  => :ok
-                else          => error()
+                else          => throw()
             }
-            println(x)
+            print(x)
         """)
         assert(out == ":ok\n:ok\n") { out }
     }
@@ -999,9 +999,9 @@ class Exec_99 {
             ifs {
                 do {
                     val v = 10
-                    println(:1)
+                    print(:1)
                 }
-                (v == 10) => println(:2)
+                (v == 10) => print(:2)
             }
         """)
         assert(out == ":1\n:2\n") { out }
@@ -1012,11 +1012,11 @@ class Exec_99 {
             val x = ifs {
                 do {
                     val v = 10
-                    println(:1)
+                    print(:1)
                 }
                 (v == 10) => (:2)
             }
-            println(x)
+            print(x)
         """)
         assert(out == ":1\n:2\n") { out }
     }
@@ -1026,16 +1026,16 @@ class Exec_99 {
             $IS ; $COMP
             data :T = [v]
             var x = ifs {
-                false => error()
+                false => throw()
                 do {
                     val t :T = [20]
-                    println(:ok)
+                    print(:ok)
                 }
-                (t.v == 10)  => error()
+                (t.v == 10)  => throw()
                 (t.v == 20)  => :ok
-                else          => error()
+                else          => throw()
             }
-            println(x)
+            print(x)
         """)
         assert(out == ":ok\n:ok\n") { out }
     }
@@ -1047,7 +1047,7 @@ class Exec_99 {
         val out = test("""
             $COMP
             match [1,2] {
-                [x,y] => println(x,y)
+                [x,y] => print(x,y)
             }
         """)
         assert(out == "1\t2\n") { out }
@@ -1057,10 +1057,10 @@ class Exec_99 {
         val out = test("""
             $COMP
             match [1,2] {
-                [10,x]  => error()
-                [1,2,3] => error()
-                [1,2]   => println(:ok)
-                else    => error()
+                [10,x]  => throw()
+                [1,2,3] => throw()
+                [1,2]   => print(:ok)
+                else    => throw()
             }
         """)
         assert(out == ":ok\n") { out }
@@ -1070,7 +1070,7 @@ class Exec_99 {
         val out = test("""
             $COMP
             match [1,2] {
-                [1] => println(:ok)
+                [1] => print(:ok)
             }
         """)
         assert(out == ":ok\n") { out }
@@ -1080,7 +1080,7 @@ class Exec_99 {
         val out = test("""
             $COMP
             match [1,2] {
-                [x] => println(x)
+                [x] => print(x)
             }
         """)
         assert(out == "1\n") { out }
@@ -1090,8 +1090,8 @@ class Exec_99 {
         val out = test("""
             $COMP
             match [1,2] {
-                [x,|false] => error()
-                [|it==1,y] => println(y)
+                [x,|false] => throw()
+                [|it==1,y] => print(y)
             }
         """)
         assert(out == "2\n") { out }
@@ -1101,9 +1101,9 @@ class Exec_99 {
         val out = test("""
             $IS ; $COMP
             match :X [] {
-                :X [1] => error()
-                :Y []  => error()
-                :X []  => println(:ok)
+                :X [1] => throw()
+                :Y []  => throw()
+                :X []  => print(:ok)
             }
         """)
         assert(out == ":ok\n") { out }
@@ -1113,8 +1113,8 @@ class Exec_99 {
         val out = test("""
             $COMP
             match [1,[:x,:y],2] {
-                [1,xy,3]    => error()
-                [1,[x,y],2] => println(x,y)
+                [1,xy,3]    => throw()
+                [1,[x,y],2] => print(x,y)
             }
         """)
         assert(out == ":x\t:y\n") { out }
@@ -1124,9 +1124,9 @@ class Exec_99 {
         val out = test("""
             $COMP
             match nil {
-                [] => println(:ok)
+                [] => print(:ok)
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -1135,7 +1135,7 @@ class Exec_99 {
         val out = test("""
             $COMP ; $ASR
             val [x,y]
-            println(x,y)
+            print(x,y)
         """)
         assert(out == "nil\tnil\n") { out }
     }
@@ -1144,7 +1144,7 @@ class Exec_99 {
         val out = test("""
             $COMP ; $ASR
             val [x,y] = [1,2]
-            println(x,y)
+            print(x,y)
         """)
         assert(out == "1\t2\n") { out }
     }
@@ -1152,9 +1152,9 @@ class Exec_99 {
     fun fj_10_val() {
         val out = test("""
             match [10,[20]] {
-                do [x,[y]] => println(x,y)
+                do [x,[y]] => print(x,y)
             }
-            println(:ok)
+            print(:ok)
         """, true)
         assert(out == "10\t20\n:ok\n") { out }
     }
@@ -1164,7 +1164,7 @@ class Exec_99 {
             val v = match 10 {
                 |it+1 { \it => it }
             }
-            println(v)
+            print(v)
         """, true)
         assert(out == "11\n") { out }
     }
@@ -1173,20 +1173,20 @@ class Exec_99 {
         val out = test("""
             $COMP ; $ASR
             val [x,1] = [1,2]
-            println(x,y)
+            print(x,y)
         """)
-        assert(out == "anon : (lin 4, col 23) : access error : variable \"y\" is not declared\n") { out }
+        assert(out == "anon : (lin 4, col 23) : access throw : variable \"y\" is not declared\n") { out }
     }
     @Test
     fun fj_13_val_err() {
         val out = test("""
             $COMP ; $ASR
             val [x,1] = [1,2]
-            println(x)
+            print(x)
         """)
         assert(out == " |  anon : (lin 3, col 19) : assert({{==}}(ceu_patt,1),:Patt)\n" +
-                " |  anon : (lin 2, col 597) : error(msg)\n" +
-                " v  error : :Patt\n") { out }
+                " |  anon : (lin 2, col 597) : throw(msg)\n" +
+                " v  throw : :Patt\n") { out }
     }
 
     // CATCH
@@ -1196,13 +1196,13 @@ class Exec_99 {
         val out = test("""
             var x
             set x = catch :x {
-                error(:z, [])
-                println(9)
+                throw(:z, [])
+                print(9)
             }[0]
-            println(x)
+            print(x)
         """, true)
-        assert(out == " |  anon : (lin 4, col 17) : error(:z,[])\n" +
-                " v  error : []\n") { out }
+        assert(out == " |  anon : (lin 4, col 17) : throw(:z,[])\n" +
+                " v  throw : []\n") { out }
     }
     @Test
     fun gg_02_catch() {
@@ -1212,14 +1212,14 @@ class Exec_99 {
             }
             catch :z ;;;|false;;; {
                 catch :z ;;;err|f(err);;; {
-                    error(:x, [])
+                    throw(:x, [])
                 }
             }
-            println(`:number CEU_GC.free`)
-            println(:ok)
+            print(`:number CEU_GC.free`)
+            print(:ok)
         """)
-        assert(out == " |  anon : (lin 7, col 21) : error(:x,[])\n" +
-                " v  error : []\n") { out }
+        assert(out == " |  anon : (lin 7, col 21) : throw(:x,[])\n" +
+                " v  throw : []\n") { out }
     }
     @Test
     fun gg_03_catch() {
@@ -1227,13 +1227,13 @@ class Exec_99 {
             var x
             set x = catch :x {
                 catch :2 {
-                    error(:x, tag(:x, [10]))
-                    println(9)
+                    throw(:x, tag(:x, [10]))
+                    print(9)
                 }
-                println(9)
+                print(9)
             }[0]
-            println(:gc, `:number CEU_GC.free`) ;; TODO: not checked
-            println(:x, x)
+            print(:gc, `:number CEU_GC.free`) ;; TODO: not checked
+            print(:x, x)
         """, true)
         assert(out == ":gc\t1\n:x\t10\n") { out }
     }
@@ -1243,26 +1243,26 @@ class Exec_99 {
             catch :x ;;;err|err==[];;; {
                 var x
                 set x = []
-                error(:z,x)
-                println(9)
+                throw(:z,x)
+                print(9)
             }
-            println(1)
+            print(1)
         """, true)
-        //assert(out == "anon : (lin 5, col 28) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 2, col 27) : block escape error : incompatible scopes\n" +
-        //        "anon : (lin 5, col 17) : error(x)\n" +
-        //        "error error : uncaught exception\n" +
-        //        ":error\n") { out }
-        assert(out == " |  anon : (lin 5, col 17) : error(:z,x)\n" +
-                " v  error : []\n") { out }
+        //assert(out == "anon : (lin 5, col 28) : set throw : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 2, col 27) : block escape throw : incompatible scopes\n" +
+        //        "anon : (lin 5, col 17) : throw(x)\n" +
+        //        "throw throw : uncaught exception\n" +
+        //        ":throw\n") { out }
+        assert(out == " |  anon : (lin 5, col 17) : throw(:z,x)\n" +
+                " v  throw : []\n") { out }
     }
     @Test
     fun gg_05_catch() {
         val out = test("""
             do {
-                println(catch :x {
-                    error(:x, tag(:x,[10]))
-                    println(9)
+                print(catch :x {
+                    throw(:x, tag(:x,[10]))
+                    print(9)
                 })
             }
         """, true)
@@ -1273,10 +1273,10 @@ class Exec_99 {
         val out = test("""
             catch :y ;;;|false;;; {
                 catch {
-                    error(:x, [10])
+                    throw(:x, [10])
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -1287,46 +1287,46 @@ class Exec_99 {
             set x = catch :x {
                 var y
                 set y = catch ;;;|true;;; {
-                    error(:z, [10])
-                    println(9)
+                    throw(:z, [10])
+                    print(9)
                 }
-                ;;println(1)
+                ;;print(1)
                 y
             }
-            println(x)
+            print(x)
         """.trimIndent(), true)
         assert(out == " |  anon : (lin 2, col 5) : x\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == "[10]\n") { out }
     }
     @Test
     fun gg_08_loop_() {
         val out = test("""
-            println(catch :x { loop { error(:x, tag(:x,[1])) }}[0])
+            print(catch :x { loop { throw(:x, tag(:x,[1])) }}[0])
         """, true)
         assert(out == "1\n") { out }
     }
     @Test
     fun gg_09_loop() {
         val out = test("""
-            println(catch :x { loop { error(:x,tag(:x,[1])) }}[0])
+            print(catch :x { loop { throw(:x,tag(:x,[1])) }}[0])
         """, true)
         assert(out == "1\n") { out }
     }
     @Test
     fun gg_10_loop_() {
         val out = test("""
-            println(catch :2 { loop { error(:2,tag(:2,[1])) }})
+            print(catch :2 { loop { throw(:2,tag(:2,[1])) }})
         """, true)
         assert(out == ":2 [1]\n") { out }
     }
     @Test
     fun gg_11_loop() {
         val out = test("""
-            println(catch :x { loop {
+            print(catch :x { loop {
                 var x
                 set x = [1] ;; memory released
-                error(:x, tag(:x,[1]))
+                throw(:x, tag(:x,[1]))
             }}[0])
         """, true)
         assert(out == "1\n") { out }
@@ -1334,27 +1334,27 @@ class Exec_99 {
     @Test
     fun gg_12_loop_err() {
         val out = test("""
-            println(catch :x { loop {
+            print(catch :x { loop {
                 var x
                 set x = [1]
-                error(:x, tag(:x,x))
+                throw(:x, tag(:x,x))
             }})
         """, true)
         assert(out == ":x [1]\n") { out }
-        //assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 1, col 33) : block escape error : incompatible scopes\n" +
-        //        "anon : (lin 4, col 5) : error(tag(x,:x,true))\n" +
-        //        "error error : uncaught exception\n" +
-        //        ":error\n") { out }
+        //assert(out == "anon : (lin 4, col 14) : set throw : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 1, col 33) : block escape throw : incompatible scopes\n" +
+        //        "anon : (lin 4, col 5) : throw(tag(x,:x,true))\n" +
+        //        "throw throw : uncaught exception\n" +
+        //        ":throw\n") { out }
     }
     @Test
     fun gg_13_catch() {
         val out = test("""
             catch :x ;;;err|err===[];;; {
-                error(:x,[])
-                println(9)
+                throw(:x,[])
+                print(9)
             }
-            println(1)
+            print(1)
         """, true)
         assert(out == "1\n") { out }
     }
@@ -1366,7 +1366,7 @@ class Exec_99 {
         val out = test("""
             val x  = tag(:X,[])
             val xy = tag(:Y, tag(:X,[]))
-            println(x, xy)
+            print(x, xy)
         """)
         //assert(out == ":X []\t[:Y,:X] []\n") { out }
         assert(out == ":X []\t:Y []\n") { out }
@@ -1376,7 +1376,7 @@ class Exec_99 {
         val out = test("""
             data :T = [x]
             val x = :T [1]
-            println(x, tag(x))
+            print(x, tag(x))
         """)
         assert(out == ":T [1]\t:T\n") { out }
     }
@@ -1386,7 +1386,7 @@ class Exec_99 {
             data :T = [x]
             val x = :T [1]
             val y = x.(:T).x
-            println(y)
+            print(y)
         """)
         assert(out == "1\n") { out }
     }
@@ -1395,7 +1395,7 @@ class Exec_99 {
         val out = test("""
             data :T = [x]
             val x = :T [1]
-            println(x.x, tag(x))
+            print(x.x, tag(x))
         """)
         assert(out == "1\t:T\n") { out }
     }
@@ -1405,7 +1405,7 @@ class Exec_99 {
             $ASR
             data :T = [x]
             val [a:T,b:T] = [:T [1], :T [2]]
-            println(a.x, b.x)
+            print(a.x, b.x)
         """)
         assert(out == "1\t2\n") { out }
     }
@@ -1418,7 +1418,7 @@ class Exec_99 {
                 yield()
             }
             val t :T = spawn T()
-            println(t.pub.x)
+            print(t.pub.x)
         """)
         assert(out == "10\n") { out }
     }
@@ -1431,7 +1431,7 @@ class Exec_99 {
                 yield()
             }
             val t = spawn T()
-            println(t.(:T).pub)
+            print(t.(:T).pub)
         """)
         assert(out == "[10]\n") { out }
     }
@@ -1447,7 +1447,7 @@ class Exec_99 {
             val p = do {
                 t.pub
             }
-            println(p)
+            print(p)
         """)
         assert(out == "[10]\n") { out }
     }
@@ -1455,12 +1455,12 @@ class Exec_99 {
     fun hi_08_tags_ops() {
         val out = test("""
             :x :y
-            println(:y - 1)
-            println(1 + :x)
-            println(:x <= :y)
-            println(:x > :y)
-            println(:y - :x)
-            println(:x + :y)
+            print(:y - 1)
+            print(1 + :x)
+            print(:x <= :y)
+            print(:x > :y)
+            print(:y - :x)
+            print(:x + :y)
         """, true)
         assert(out == ":x\n" +
                 ":y\n" +
@@ -1468,8 +1468,8 @@ class Exec_99 {
                 "false\n" +
                 "1\n" +
                 " |  anon : (lin 8, col 24) : {{+}}(:x,:y)\n" +
-                " |  build/prelude-x.ceu : (lin 8, col 17) : error(:error)\n" +
-                " v  error : :error\n") { out }
+                " |  build/prelude-x.ceu : (lin 8, col 17) : throw(:throw)\n" +
+                " v  throw : :throw\n") { out }
     }
 
     // DATA / HIER / TEMPLATE
@@ -1482,8 +1482,8 @@ class Exec_99 {
             val t :T = :T []
             var s :T.S
             set s = :T.S []
-            println(t is? :T, t is? :T.S)
-            println(s is? :T, s is? :T.S)
+            print(t is? :T, t is? :T.S)
+            print(s is? :T, s is? :T.S)
         """, true)
         assert(out == "true\tfalse\ntrue\ttrue\n") { out }
     }
@@ -1495,9 +1495,9 @@ class Exec_99 {
             data :T.S = [z:U]
             var s :T.S
             set s = :T.S [1,2,:U[3]]
-            println(s is? :T, s.z is? :U)
+            print(s is? :T, s.z is? :U)
             set s.z = :U [10]
-            println(s is? :T.S, s.z is? :U)
+            print(s is? :T.S, s.z is? :U)
         """, true)
         assert(out == "true\ttrue\ntrue\ttrue\n") { out }
     }
@@ -1520,8 +1520,8 @@ class Exec_99 {
             val a :T.A   = :T.A [10,20]
             val b :T     = :T.B [30]
             val c :T.C.Q = :T.C.Q.Y [40,50]
-            println(a.a, b.t, c.q)
-            println(a is? :T, b is? :T.C, c is? :T.C.Q.Y)
+            print(a.a, b.t, c.q)
+            print(a is? :T, b is? :T.C, c is? :T.C.Q.Y)
         """, true)
         assert(out == "20\t30\t50\ntrue\tfalse\ttrue\n") { out }
     }
@@ -1531,7 +1531,7 @@ class Exec_99 {
             data :T = [x,y]
             val t :T = [x=1,y=2]    ;; TODO: syntax sugar
             set t.x = 3
-            println(t)      ;; [x=3,y=2]
+            print(t)      ;; [x=3,y=2]
         """, true)
         assert(out == "1\t2\n") { out }
     }
@@ -1541,18 +1541,18 @@ class Exec_99 {
             data :T = [v]
             data :U = [t:T,X]
             var u :U = [[10]]
-            println(u.X.v)
+            print(u.X.v)
         """, true)
-        //assert(out == "anon : (lin 5, col 25) : index error : field \"X\" is not a data") { out }
+        //assert(out == "anon : (lin 5, col 25) : index throw : field \"X\" is not a data") { out }
         assert(out == " |  anon : (lin 5, col 21) : u[:X]\n" +
-                " v  error : out of bounds\n") { out }
+                " v  throw : out of bounds\n") { out }
     }
     @Test
     fun hj_06_tplate_tup() {
         val out = test("""
             data :T = [v]
             val t :T = [[1,2,3]]
-            println(t.v[1])
+            print(t.v[1])
         """, true)
         assert(out == "2\n") { out }
     }
@@ -1565,9 +1565,9 @@ class Exec_99 {
                 }
             }
             val x :T.A.x = :T.A.x [10]
-            println(x)
-            println(x.v)
-            println(to-tag-string(":T.A.z"))
+            print(x)
+            print(x.v)
+            print(to-tag-string(":T.A.z"))
         """, true)
         assert(out == "20\t30\t50\ntrue\tfalse\ttrue\n") { out }
     }
@@ -1578,7 +1578,7 @@ class Exec_99 {
             val v = ifs {
                 t :T = [10] => t.v
             }
-            println(v)
+            print(v)
         """)
         //assert(out == "10\n") { out }
         assert(out == "anon : (lin 4, col 19) : expected \"{\" : have \":T\"\n") { out }
@@ -1588,7 +1588,7 @@ class Exec_99 {
         val out = test("""
             data :X = [v, t=[a,b]]
             val x :X = [10, [1,2]]
-            println(x.v, x.t.a, x.t.b)
+            print(x.v, x.t.a, x.t.b)
         """)
         assert(out == "10\t1\t2\n") { out }
     }
@@ -1597,7 +1597,7 @@ class Exec_99 {
         val out = test("""
             data :X = [v, t=[a,z=[i,j]]]
             val x :X = [10, [:a,[1,2]]]
-            println(x.v, x.t.a, x.t.z.j)
+            print(x.v, x.t.a, x.t.z.j)
         """)
         assert(out == "10\t:a\t2\n") { out }
     }
@@ -1607,7 +1607,7 @@ class Exec_99 {
             data :X = [v, t :T=[a,b]]
             val x :X = [10, [1,2]]
             val t :T = x.t
-            println(t.a, t.b)
+            print(t.a, t.b)
         """)
         assert(out == "1\t2\n") { out }
     }
@@ -1632,7 +1632,7 @@ class Exec_99 {
             }
             ;;;do;;; :depois
             val n = to.number(:antes)
-            println (
+            print (
                 to.number(:antes) - n,
                 to.number(:x) - n,
                 to.number(:y) - n,
@@ -1659,7 +1659,7 @@ class Exec_99 {
                 ;;:x = `1000`,
                 ;;:y = `1000`,
             }
-            println(:tag, to.number(:X)<to.number(:X-a), :X-a, :X-b)
+            print(:tag, to.number(:X)<to.number(:X-a), :X-a, :X-b)
         """, true)
         assert(out == ":tag\ttrue\t:X-a\t:X-b\n") { out }
         //assert(out == ":tag\t:y\t:1000\t:y\n") { out }
@@ -1671,17 +1671,17 @@ class Exec_99 {
             enum {
                 :x.y
             }
-            println(:tag, :x, :1000, :y)
+            print(:tag, :x, :1000, :y)
         """
         )
-        assert(out == "anon : (lin 3, col 17) : enum error : enum tag cannot contain '.'\n") { out }
+        assert(out == "anon : (lin 3, col 17) : enum throw : enum tag cannot contain '.'\n") { out }
     }
     @Test
     fun ii_04_enum() {
         val out = test(
             """
             enum { :x, :y }
-            println(:ok)
+            print(:ok)
         """
         )
         assert(out == ":ok\n") { out }
@@ -1706,7 +1706,7 @@ class Exec_99 {
             loop [i,v] in to.iter(t, [:idx,:val]) {
                 set t[i] = to.number(v)
             }
-            println(t)
+            print(t)
         """, true)
         assert(out == "[46,47,48,49,50,51,52,53,40,54,55]\n") { out }
         //assert(out == "[42,1000,1001,1002,10,11,12,43,36,101,44]\n") { out }
@@ -1719,26 +1719,26 @@ class Exec_99 {
         val out = test("""
             break()
         """)
-        assert(out == "anon : (lin 2, col 13) : escape error : expected matching enclosing block\n") { out }
+        assert(out == "anon : (lin 2, col 13) : escape throw : expected matching enclosing block\n") { out }
     }
     @Test
     fun ja_02_skip_err() {
         val out = test("""
             skip()
         """)
-        assert(out == "anon : (lin 2, col 13) : escape error : expected matching enclosing block\n") { out }
+        assert(out == "anon : (lin 2, col 13) : escape throw : expected matching enclosing block\n") { out }
     }
     @Test
     fun ja_03_return_err() {
         val out = test("""
             return()
         """)
-        assert(out == "anon : (lin 2, col 13) : escape error : expected matching enclosing block\n") { out }
+        assert(out == "anon : (lin 2, col 13) : escape throw : expected matching enclosing block\n") { out }
     }
     @Test
     fun ja_04_break() {
         val out = test("""
-            println(loop { break(10) })
+            print(loop { break(10) })
         """)
         assert(out == "10\n") { out }
     }
@@ -1750,7 +1750,7 @@ class Exec_99 {
                     return(10)
                 }
             }
-            println(f())
+            print(f())
         """)
         assert(out == "10\n") { out }
     }
@@ -1766,7 +1766,7 @@ class Exec_99 {
                 continue;
                 ```
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -1780,7 +1780,7 @@ class Exec_99 {
                 continue;
                 ```
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out.contains("main: Assertion `CEU_ESCAPE == CEU_ESCAPE_NONE' failed.\n")) { out }
     }
@@ -1793,7 +1793,7 @@ class Exec_99 {
                 continue;
                 ```
             } ()
-            println(:ok)
+            print(:ok)
         """)
         assert(out.contains(": Assertion `CEU_ESCAPE == CEU_ESCAPE_NONE' failed.\n")) { out }
     }
@@ -1806,7 +1806,7 @@ class Exec_99 {
                     break(nil)
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -1819,10 +1819,10 @@ class Exec_99 {
                     skip()
                 }
             }
-            println(:out)
+            print(:out)
         """)
         assert(out == ":out\n") { out }
-        //assert(out == "anon : (lin 4, col 21) : skip error : expected immediate parent loop\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : skip throw : expected immediate parent loop\n") { out }
     }
     @Test
     fun jj_03_skip() {
@@ -1835,7 +1835,7 @@ class Exec_99 {
                 set ok = true
                 skip()
             }
-            println(:out)
+            print(:out)
         """)
         assert(out == ":out\n") { out }
     }
@@ -1844,13 +1844,13 @@ class Exec_99 {
         val out = test("""
             do {
                 loop {
-                    println(:in)
+                    print(:in)
                     if true {
                         break(nil)
                     }
                 }
             }
-            println(:out)
+            print(:out)
         """
         )
         assert(out == ":in\n:out\n") { out }
@@ -1864,9 +1864,9 @@ class Exec_99 {
                 }
             }
         """)
-        //assert(out == "anon : (lin 4, col 21) : break error : expected immediate parent loop\n") { out }
-        //assert(out == "anon : (lin 4, col 21) : break error : expected parent loop\n") { out }
-        assert(out == "anon : (lin 4, col 21) : escape error : expected matching enclosing block\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : break throw : expected immediate parent loop\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : break throw : expected parent loop\n") { out }
+        assert(out == "anon : (lin 4, col 21) : escape throw : expected matching enclosing block\n") { out }
     }
     @Test
     fun jj_06_break_sum() {
@@ -1883,7 +1883,7 @@ class Exec_99 {
                     set i = i - 1                                                           
                 }                                                                           
             }                                                                               
-            println(sum(5))                                                                
+            print(sum(5))                                                                
         """)
         assert(out == "15\n") { out }
     }
@@ -1893,18 +1893,18 @@ class Exec_99 {
     @Test
     fun kk_01_error() {
         val out = test("""
-            error(:X [:x])
+            throw(:X [:x])
         """)
-        assert(out == " |  anon : (lin 2, col 13) : error(tag(:X,[:x]))\n" +
-                " v  error : :X [:x]\n") { out }
+        assert(out == " |  anon : (lin 2, col 13) : throw(tag(:X,[:x]))\n" +
+                " v  throw : :X [:x]\n") { out }
     }
     @Test
     fun kk_02_error() {
         val out = test("""
             catch {
-                error(:X [:x])
+                throw(:X [:x])
             } thus {
-                println(it)
+                print(it)
             }
         """)
         assert(out == ":X [:x]\n") { out }
@@ -1915,8 +1915,8 @@ class Exec_99 {
             assert(false, 10)
         """, true)
         assert(out == " |  anon : (lin 2, col 13) : assert(false,10)\n" +
-                " |  build/prelude-x.ceu : (lin 42, col 30) : error(:error,msg)\n" +
-                " v  error : 10\n") { out }
+                " |  build/prelude-x.ceu : (lin 42, col 30) : throw(:throw,msg)\n" +
+                " v  throw : 10\n") { out }
     }
     @Test
     fun za_10_assert() {
@@ -1924,8 +1924,8 @@ class Exec_99 {
             assert(false, :type [])
         """, true)
         assert(out == " |  anon : (lin 2, col 13) : assert(false,tag(:type,[]))\n" +
-                " |  build/prelude-x.ceu : (lin 41, col 30) : error(msg)\n" +
-                " v  error : :type []\n") { out }
+                " |  build/prelude-x.ceu : (lin 41, col 30) : throw(msg)\n" +
+                " v  throw : :type []\n") { out }
     }
     @Test
     fun za_11_assert() {
@@ -1933,7 +1933,7 @@ class Exec_99 {
             val v = catch :X {
                 assert(false, :X [:x])
             }
-            println(v)
+            print(v)
         """, true)
         assert(out == ":X [:x]\n") { out }
     }
@@ -1950,13 +1950,13 @@ class Exec_99 {
                     set x = a
                 }
             }
-            println(x)
+            print(x)
         """
         )
         assert(out == "[1,2,3]\n") { out }
-        //assert(out == " v  anon : (lin 5, col 25) : set error : cannot assign reference to outer scope\n") { out }
+        //assert(out == " v  anon : (lin 5, col 25) : set throw : cannot assign reference to outer scope\n") { out }
         //assert(out == " |  anon : (lin 5, col 25) : x\n" +
-        //        " v  error : cannot copy reference out\n") { out }
+        //        " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun mm_01_tmp_err() {
@@ -1968,11 +1968,11 @@ class Exec_99 {
                     set x = drop(a)
                 }
             }
-            println(x)
+            print(x)
         """
         )
         assert(out == "[1,2,3]\n") { out }
-        //assert(out == "anon : (lin 5, col 34) : drop error : value is not movable\n") { out }
+        //assert(out == "anon : (lin 5, col 34) : drop throw : value is not movable\n") { out }
     }
     @Test
     fun mm_01_tmp_ok() {
@@ -1983,11 +1983,11 @@ class Exec_99 {
                     drop(a)
                 }
             }
-            println(x)
+            print(x)
         """
         )
         assert(out == "[1,2,3]\n") { out }
-        //assert(out == "anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 5, col 25) : set throw : cannot copy reference out\n") { out }
     }
     @Test
     fun mm_02_thus_err() {
@@ -1996,9 +1996,9 @@ class Exec_99 {
             nil thus { \it =>
                 set x = 10  ;; err
             }
-            println(x)
+            print(x)
         """)
-        //assert(out == "anon : (lin 4, col 17) : set error : destination across thus\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : set throw : destination across thus\n") { out }
         assert(out == "10\n") { out }
     }
     @Test
@@ -2007,10 +2007,10 @@ class Exec_99 {
             var x
             nil thus { \it =>
                 set x = it  ;; err
-                println(x)
+                print(x)
             }
         """)
-        //assert(out == "anon : (lin 4, col 17) : set error : destination across thus\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : set throw : destination across thus\n") { out }
         assert(out == "nil\n") { out }
     }
     @Test
@@ -2019,7 +2019,7 @@ class Exec_99 {
             """
             [0] thus { \x =>
                 set x[0] = []
-                println(x)
+                print(x)
             }
         """
         )
@@ -2033,10 +2033,10 @@ class Exec_99 {
                     if x { x } else { [] }
                 }
             }
-            println(v)
+            print(v)
         """)
         //assert(out == " |  anon : (lin 2, col 13) : (val v = do { do { (val x = []); if x { x;...\n" +
-        //        " v  error : cannot copy reference out\n") { out }
+        //        " v  throw : cannot copy reference out\n") { out }
         assert(out == "[]\n") { out }
     }
     @Test
@@ -2047,10 +2047,10 @@ class Exec_99 {
                     if x { drop(x) } else { [] }
                 }
             }
-            println(v)
+            print(v)
         """)
         assert(out == "[]\n") { out }
-        //assert(out == "anon : (lin 4, col 33) : drop error : value is not movable\n") { out }
+        //assert(out == "anon : (lin 4, col 33) : drop throw : value is not movable\n") { out }
     }
     @Test
     fun mm_06_tmp_err() {
@@ -2059,22 +2059,22 @@ class Exec_99 {
                 val x = []
                 if x { x } else { [] }
             }
-            println(v)
+            print(v)
         """)
-        //assert(out == " v  anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " v  anon : (lin 2, col 21) : block escape throw : cannot copy reference out\n") { out }
         //assert(out == "[]\n") { out }
         assert(out == " |  anon : (lin 2, col 13) : (val v = do { (val x = []); if x { x; } el...\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun mm_07_and_or() {
         val out = test("""
-            val t = func () { println(:t) ; true  }
-            val f = func () { println(:f) ; false }
-            println(${AND("t()", "f()")})
-            println(${OR("t()", "f()")})
-            println(${AND("[]", "false")})
-            println(${OR("false", "[]")})
+            val t = func () { print(:t) ; true  }
+            val f = func () { print(:f) ; false }
+            print(${AND("t()", "f()")})
+            print(${OR("t()", "f()")})
+            print(${AND("[]", "false")})
+            print(${OR("false", "[]")})
         """)
         assert(out == ":t\n:f\nfalse\n:t\ntrue\nfalse\n[]\n") { out }
     }
@@ -2083,7 +2083,7 @@ class Exec_99 {
         val out = test("""
             var f = func (v) {
                 v[0] thus { \it =>
-                    println(it)
+                    print(it)
                 }
             }
             var g = func (v) {
@@ -2098,30 +2098,30 @@ class Exec_99 {
     fun mm_09_yield_err() {
         val out = test("""
             resume (coro () {
-                yield(nil) thus { \it => set it = nil }
+                await(true) thus { \it => set it = nil }
             }) ()
         """)
-        assert(out == "anon : (lin 3, col 42) : set error : destination is immutable\n") { out }
+        assert(out == "anon : (lin 3, col 42) : set throw : destination is immutable\n") { out }
     }
     @Test
     fun mm_10_yield_err() {
         val out = test("""
             resume (coroutine (coro () {
-                yield(nil) thus { \it => yield(nil) thus { \x => nil } }
+                await(true) thus { \it => await(true) thus { \x => nil } }
             })) ()
-            println(:ok)
+            print(:ok)
         """)
-        //assert(out == "anon : (lin 3, col 41) : yield error : unexpected enclosing func\n") { out }
+        //assert(out == "anon : (lin 3, col 41) : yield throw : unexpected enclosing func\n") { out }
         assert(out == ":ok\n") { out }
-        //assert(out == "anon : (lin 3, col 41) : yield error : unexpected enclosing thus\n") { out }
+        //assert(out == "anon : (lin 3, col 41) : yield throw : unexpected enclosing thus\n") { out }
     }
     @Test
     fun mm_11_resume_yield() {
         val out = test("""
             $PLUS
             val CO = coro () {
-                yield(nil) thus {\ it => 
-                    println(it)
+                await(true) thus {\ it => 
+                    print(it)
                 }
             }
             val co = coroutine(CO)
@@ -2139,7 +2139,7 @@ class Exec_99 {
             val co = coroutine(CO)
             val v1 = resume co(10)
             val v2 = resume co(v1)
-            println(v2)
+            print(v2)
         """)
         assert(out == "10\n") { out }
     }
@@ -2147,8 +2147,8 @@ class Exec_99 {
     fun mm_13_tags() {
         val out = test("""
             val CO = coro () {
-                yield(nil) thus { \ it =>
-                    println(sup?(:X,tag(it))) ;; drop(it)
+                await(true) thus { \ it =>
+                    print(sup?(:X,tag(it))) ;; drop(it)
                 }
             }
             val co = coroutine(CO)
@@ -2161,8 +2161,8 @@ class Exec_99 {
     fun mm_14_yield_as() {
         val out = test("""
             val CO = coro () {
-                yield(nil) thus {\ v =>
-                    println(v)
+                await(true) thus {\ v =>
+                    print(v)
                 }
             }
             val co = coroutine(CO)
@@ -2175,22 +2175,22 @@ class Exec_99 {
     fun mm_15_yield_as() {
         val out = test("""
             coro () {
-                yield(nil) thus { \it :T =>
+                await(true) thus { \it :T =>
                     it[0]
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
-        //assert(out == "anon : (lin 3, col 38) : declaration error : data :T is not declared\n") { out }
+        //assert(out == "anon : (lin 3, col 38) : declaration throw : data :T is not declared\n") { out }
         assert(out == ":ok\n") { out }
     }
     @Test
     fun mm_16_scope() {
         val out = test("""
             val T = coro () {
-                val v = yield(nil) thus { \x => x }
-                yield(nil) ;;thus { \it => nil }
-                println(v)                
+                val v = await(true) thus { \x => x }
+                await(true) ;;thus { \it => nil }
+                print(v)                
             }
             val t = coroutine(T)
             resume t()
@@ -2206,30 +2206,30 @@ class Exec_99 {
         """)
         //assert(out == "[]\n") { out }
         assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
-        //        " v  anon : (lin 3, col 41) : block escape error : cannot copy reference out\n") { out }
+        //        " v  anon : (lin 3, col 41) : block escape throw : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
         //        " |  anon : (lin 3, col 41) : (func (x) { x })(yield(nil))\n" +
-        //        " v  anon : (lin 3, col 41) : block escape error : cannot copy reference out\n") { out }
+        //        " v  anon : (lin 3, col 41) : block escape throw : cannot copy reference out\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
-        //        " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
+        //        " v  anon : (lin 3, col 25) : resume throw : cannot receive alien reference\n") { out }
     }
     @Test
     fun mm_17_catch_yield_err() {
         val out = test("""
             coro () {
                 catch ;;;(it| do {
-                    yield(nil) thus {\ it => nil }
+                    await(true) thus {\ it => nil }
                 } );;;
                 {
-                    error(:e1)
+                    throw(:e1)
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
-        //assert(out == "anon : (lin 4, col 39) : declaration error : variable \"it\" is already declared\n") { out }
-        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
+        //assert(out == "anon : (lin 4, col 39) : declaration throw : variable \"it\" is already declared\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : yield throw : unexpected enclosing catch\n") { out }
         assert(out == ":ok\n") { out }
     }
     @Test
@@ -2238,24 +2238,24 @@ class Exec_99 {
             coro () {
                 catch ;;;;(it| do {
                     ;;;do;;; it
-                    yield(nil) thus { \it => nil }
+                    await(true) thus { \it => nil }
                 } );;;;
                 {
-                    error(:e1)
+                    throw(:e1)
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
-        //assert(out == "anon : (lin 5, col 39) : declaration error : variable \"it\" is already declared\n") { out }
-        //assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing catch\n") { out }
+        //assert(out == "anon : (lin 5, col 39) : declaration throw : variable \"it\" is already declared\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : yield throw : unexpected enclosing catch\n") { out }
         assert(out == ":ok\n") { out }
     }
     @Test
     fun mm_18_it() {
         val out = test("""
             val CO = coro () {
-                yield(nil) thus { \it =>
-                    println(:it, it)
+                await(true) thus { \it =>
+                    print(:it, it)
                 }
             }
             val co = coroutine(CO)
@@ -2268,8 +2268,8 @@ class Exec_99 {
     fun mm_19_it() {
         val out = test("""
             val CO = coro () {
-                yield(nil) thus { \x =>
-                    println(:it, x)
+                await(true) thus { \x =>
+                    print(:it, x)
                 }
             }
             val co = coroutine(CO)
@@ -2282,23 +2282,23 @@ class Exec_99 {
     fun mm_20_it_err() {
         val out = test("""
             val CO = coro (x) {
-                yield(nil) thus {\ x =>
-                    println(:it, x)
+                await(true) thus {\ x =>
+                    print(:it, x)
                 }
             }
             val co = coroutine(CO)
             resume co()
             resume co([])
         """,)
-        assert(out == "anon : (lin 3, col 36) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == "anon : (lin 3, col 36) : declaration throw : variable \"x\" is already declared\n") { out }
     }
     @Test
     fun mm_21_it_data() {
         val out = test("""
             data :X = [x]
             val CO = coro () {
-                yield(nil) thus { \x :X =>
-                    println(:it, x.x)
+                await(true) thus { \x :X =>
+                    print(:it, x.x)
                 }
             }
             val co = coroutine(CO)
@@ -2311,26 +2311,26 @@ class Exec_99 {
     fun mm_22_it_it_err() {
         val out = test("""
             val CO = coro () {
-                yield(nil) thus { \x =>
-                    yield(nil) thus { \x =>
+                await(true) thus { \x =>
+                    await(true) thus { \x =>
                         x
                     }
                 }
             }
         """,)
-        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing yield\n") thus { out }
-        assert(out == "anon : (lin 4, col 40) : declaration error : variable \"x\" is already declared\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : yield throw : unexpected enclosing yield\n") thus { out }
+        assert(out == "anon : (lin 4, col 40) : declaration throw : variable \"x\" is already declared\n") { out }
     }
     @Test
     fun mm_23_scope() {
         val out = test("""
             val T = coro () {
-                val v = yield(nil) thus { \it => 
-                    println(it)
+                val v = await(true) thus { \it => 
+                    print(it)
                     10
                 }
-                yield(nil) ;;thus {\ it => nil }
-                println(v)                
+                await(true) ;;thus {\ it => nil }
+                print(v)                
             }
             val t = coroutine(T)
             resume t()
@@ -2342,58 +2342,58 @@ class Exec_99 {
         """)
         assert(out == "[]\n10\n") { out }
         //assert(out == " |  anon : (lin 14, col 17) : (resume (t)(v))\n" +
-        //        " v  anon : (lin 3, col 25) : resume error : cannot receive alien reference\n") { out }
+        //        " v  anon : (lin 3, col 25) : resume throw : cannot receive alien reference\n") { out }
     }
     @Test
     fun mm_24_yield() {
         val out = test("""
             coro () {
-                yield(nil) thus {\ x =>
-                    yield(nil) thus { \y => nil }
+                await(true) thus {\ x =>
+                    await(true) thus { \y => nil }
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
-        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing func\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : yield throw : unexpected enclosing func\n") { out }
         assert(out == ":ok\n") { out }
-        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing thus\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : yield throw : unexpected enclosing thus\n") { out }
     }
     @Test
     fun mm_25_gc_bcast() {
         DEBUG = true
         val out = test("""
             var tk = task () {
-                yield(nil) thus {\ it =>
+                await(true) thus {\ it =>
                     do {
                         val xxx = it
                         nil
                     }
                 }
                 nil
-                ;;println(:out)
+                ;;print(:out)
             }
             var co = spawn tk ()
-            broadcast ([])
-            println(`:number CEU_GC.free`)
+            emit ([])
+            print(`:number CEU_GC.free`)
         """)
         //assert(out == "0\n") { out }
         assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
-        //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
+        //assert(out == "anon : (lin 11, col 13) : emit []\n" +
+        //        "anon : (lin 5, col 21) : declaration throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
     }
     @Test
     fun mm_26_term() {
         val out = test("""
             spawn( task () {
                 val t = spawn (task () {
-                    yield(nil) ;;thus { \it => nil }
+                    await(true) ;;thus { \it => nil }
                     10
                 } )()
-                yield (nil) thus {\ it => println(it.pub) }
+                yield (nil) thus {\ it => print(it.pub) }
             } )()
-            broadcast(nil)
-            println(:ok)
+            emit(true)
+            print(:ok)
        """)
         assert(out == "10\n:ok\n") { out }
     }
@@ -2403,45 +2403,45 @@ class Exec_99 {
             """
             var T = task () {
                 var v =
-                yield(nil) thus { \it => it}
-                println(v)
+                await(true) thus { \it => it}
+                print(v)
             }
             var t = spawn T()
-            ;;println(:1111)
+            ;;print(:1111)
             do {
                 val a
                 do {
                     val b
                     var e = []
-                    broadcast (drop(e))
+                    emit (drop(e))
                 }
             }
-            ;;println(:2222)
+            ;;print(:2222)
             """
         )
         assert(out == "[]\n") { out }
-        //assert(out == " |  anon : (lin 11, col 17) : broadcast e\n" +
-        //        " v  anon : (lin 4, col 17) : resume error : cannot receive assigned reference\n") { out }
-        //assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
+        //assert(out == " |  anon : (lin 11, col 17) : emit e\n" +
+        //        " v  anon : (lin 4, col 17) : resume throw : cannot receive assigned reference\n") { out }
+        //assert(out == "anon : (lin 11, col 39) : emit throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
+        //assert(out == " |  anon : (lin 14, col 21) : emit'(e,:task)\n" +
         //        " |  anon : (lin 4, col 33) : (func (it) { it })(yield(nil))\n" +
-        //        " v  anon : (lin 4, col 33) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 4, col 33) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 4, col 35) : declaration error : cannot hold alien reference\n") { out }
+        //        " v  anon : (lin 4, col 33) : block escape throw : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 14, col 21) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 33) : block escape throw : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 14, col 21) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 35) : declaration throw : cannot hold alien reference\n") { out }
     }
     @Test
     fun mm_28_data_await() {
         val out = test("""
             data :E = [x,y]
             spawn (task () {
-                yield(nil) thus {\ it :E =>
-                    println(it.x)
+                await(true) thus {\ it :E =>
+                    print(it.x)
                 }
             } )()
-            broadcast (tag(:E, [10,20]))
+            emit (tag(:E, [10,20]))
         """)
         assert(out == "10\n") { out }
     }
@@ -2451,15 +2451,15 @@ class Exec_99 {
             data :E = [x,y]
             data :F = [i,j]
             spawn (task () {
-                yield(nil) thus { \it :E =>
-                    println(it.x)
+                await(true) thus { \it :E =>
+                    print(it.x)
                 }
-                yield(nil) thus { \it :F =>
-                    println(it.j)
+                await(true) thus { \it :F =>
+                    print(it.j)
                 }
             } )()
-            broadcast (tag(:E, [10,20]))
-            broadcast (tag(:F, [10,20]))
+            emit (tag(:E, [10,20]))
+            emit (tag(:F, [10,20]))
         """)
         assert(out == "10\n20\n") { out }
     }
@@ -2475,7 +2475,7 @@ class Exec_99 {
             })
             resume co ()
             val v = resume co()
-            println(v)
+            print(v)
         """)
         assert(out == "1\n") { out }
     }
@@ -2483,10 +2483,10 @@ class Exec_99 {
     fun mm_31_bcast_nil() {
         val out = test("""
             spawn (task () {
-                println(yield(nil))
-                println(:ok)
+                print(yield(nil))
+                print(:ok)
             } )()
-            broadcast()
+            emit()
         """)
         assert(out == "nil\n:ok\n") { out }
     }
@@ -2510,7 +2510,7 @@ class Exec_99 {
             val it = :Iterator [f, 0, 5]
             loop v in it {
                 until not v
-                println(v)
+                print(v)
             }
         """)
         assert(out == "1\n2\n3\n4\n5\n") { out }
@@ -2532,7 +2532,7 @@ class Exec_99 {
             val it = [f, 0, 5]
             loop v in it {
                 until not v
-                println(v)
+                print(v)
                 break() ;; if true
             }
         """)
@@ -2547,7 +2547,7 @@ class Exec_99 {
             val ts = tasks()
             spawn T() in ts
             loop t in ts {
-                println(t)
+                print(t)
             }
         """, true)
         //assert(out.contains("track: 0x")) { out }
@@ -2557,7 +2557,7 @@ class Exec_99 {
     fun fh_02_num() {
         val out = test("""
             loop i in {0 => 1} {
-                println(i)
+                print(i)
             }
         """, true)
         assert(out == "0\n1\n") { out }
@@ -2567,7 +2567,7 @@ class Exec_99 {
         val out = test("""
             val t = @[x=1, y=2, z=3]
             loop k in to-iter(t,:key) {
-                println(k)
+                print(k)
             }
         """, true)
         assert(out == ":x\n:y\n:z\n") { out }
@@ -2577,7 +2577,7 @@ class Exec_99 {
         val out = test("""
             val t = @[x=1, y=2, z=3]
             loop v in to-iter(t,:val) {
-                println(v)
+                print(v)
             }
         """, true)
         assert(out == "1\n2\n3\n") { out }
@@ -2587,7 +2587,7 @@ class Exec_99 {
         val out = test("""
             val t = @[x=1, y=2, z=3]
             loop k in to-iter(t,:key) {
-                println(k)
+                print(k)
             }
         """, true)
         assert(out == ":x\n:y\n:z\n") { out }
@@ -2597,7 +2597,7 @@ class Exec_99 {
         val out = test("""
             val t = @[x=1, y=2, z=3]
             loop [v,k] in to-iter(t,[:val,:key]) {
-                println(k,v)
+                print(k,v)
             }
         """, true)
         assert(out == ":x\t1\n:y\t2\n:z\t3\n") { out }
@@ -2607,7 +2607,7 @@ class Exec_99 {
         val out = test("""
             val t = @[x=1, y=2, z=3]
             loop [k,v] in to-iter(t) {
-                println(k,v)
+                print(k,v)
             }
         """, true)
         assert(out == ":x\t1\n:y\t2\n:z\t3\n") { out }
@@ -2619,7 +2619,7 @@ class Exec_99 {
                 match 0 {
                     |true => []
                 }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -2627,7 +2627,7 @@ class Exec_99 {
     fun fg_10_vect_iter_nil() {
         val out = test("""
             loop v in #[10, 20, 30] {
-                println(v)
+                print(v)
             }
         """, true)
         assert(out == "10\n20\n30\n") { out }
@@ -2637,7 +2637,7 @@ class Exec_99 {
         val out = test("""
             val t = #[10, 20, 30]
             loop i in to-iter(t,:idx) {
-                println(i)
+                print(i)
             }
         """, true)
         assert(out == "0\n1\n2\n") { out }
@@ -2646,7 +2646,7 @@ class Exec_99 {
     fun fg_12_vect_iter_all() {
         val out = test("""
             loop [v,i] in to-iter(#[10, 20, 30], [:val,:idx]) {
-                println(i,v)
+                print(i,v)
             }
         """, true)
         assert(out == "0\t10\n1\t20\n2\t30\n") { out }
@@ -2656,7 +2656,7 @@ class Exec_99 {
         val out = test("""
             val t = #[1, 2, 3]
             loop v in to-iter(t,:idx) {
-                println(v)
+                print(v)
             }
         """, true)
         assert(out == "0\n1\n2\n") { out }
@@ -2666,7 +2666,7 @@ class Exec_99 {
         val out = test("""
             val t = #[1, 2, 3]
             loop [i in to-iter(t) {
-                println(i, v)
+                print(i, v)
             }
         """, true)
         //assert(out == "anon : (lin 3, col 36) : expected \",\" : have \"{\"") { out }
@@ -2679,7 +2679,7 @@ class Exec_99 {
         val out = test("""
             val t = @[x=1, y=2, z=3]
             loop [v,k] in to-iter(t,[:val,:key]) {
-                println(k, v)
+                print(k, v)
             }
         """, true)
         assert(out == ":x\t1\n:y\t2\n:z\t3\n") { out }
@@ -2689,16 +2689,16 @@ class Exec_99 {
         val out = test("""
             $PLUS ; $COMP
             func f (v1, v2) {
-                ;;println(:X, v1, v2)
+                ;;print(:X, v1, v2)
                 loop i in {0 => #v2{ {
-                    ;;println(i, v2[i])
+                    ;;print(i, v2[i])
                     set v1[+] = v2[i]
                 }
                 v1
             }
             val s = #[]
             val t = #[1]
-            println(f(s,t))
+            print(f(s,t))
         """)
         assert(out == "#[1]\n") { out }
     }
@@ -2706,11 +2706,11 @@ class Exec_99 {
     fun fg_16x_string_concat() {
         val out = test("""
             val s = #[]
-            ;;println(#['9'])
+            ;;print(#['9'])
             s <++ #['1']
             s <++ #['2']
             s <++ #['3']
-            println(s)
+            print(s)
         """, true)
         assert(out == "123\n") { out }
     }
@@ -2724,7 +2724,7 @@ class Exec_99 {
             func g () {
                 f(#[])
             }
-            println(g())
+            print(g())
         """, true)
         assert(out == "#[1]\n") { out }
     }
@@ -2732,7 +2732,7 @@ class Exec_99 {
     fun fg_18_string() {
         val out = test("""
             val v = ""
-            println(v)
+            print(v)
             `printf(">%s<\n", ${D}v.Dyn->Vector.buf);`
         """)
         assert(out == "#[]\n><\n") { out }
@@ -2741,7 +2741,7 @@ class Exec_99 {
     fun fg_19_tuple_size() {
         val out = test("""
             val t = [1, 2, 3]
-            println(#t)
+            print(#t)
         """)
         assert(out == "3\n") { out }
     }
@@ -2750,7 +2750,7 @@ class Exec_99 {
         val out = test("""
             val t = [1, 2, 3]
             loop [v,k] in to-iter(t,[:val,:key]) {
-                println([k,v])
+                print([k,v])
             }
         """, true)
         assert(out == "[0,1]\n[1,2]\n[2,3]\n") { out }
@@ -2759,7 +2759,7 @@ class Exec_99 {
     fun fg_21_dict_iter_it() {
         val out = test("""
             loop in @[x=1, y=2, z=3] {
-                println(it)
+                print(it)
             }
         """, true)
         //assert(out == ":x\n:y\n:z\n") { out }
@@ -2772,7 +2772,7 @@ class Exec_99 {
             data :T = [v]
             val t = [[1], [2], [3]]
             loop v:T in to-iter(t) {
-                println(v.v)
+                print(v.v)
             }
         """, true)
         assert(out == "1\n2\n3\n") { out }
@@ -2781,7 +2781,7 @@ class Exec_99 {
     fun fg_23_loop_num() {
         val out = test("""
             loop i {
-                println(i)
+                print(i)
                 until i == 3
             }
         """, true)
@@ -2790,31 +2790,31 @@ class Exec_99 {
     @Test
     fun fg_24_loop_num() {
         val out = test("""
-            println(:0)
+            print(:0)
             loop a in }0 => 1} {
-                println(a)
+                print(a)
             }
-            println(:1)
+            print(:1)
             loop b in }0 => 3{ {
-                println(b)
+                print(b)
             }
-            println(:2)
+            print(:2)
             loop c in {0 => 4} :step +2 {
-                println(c)
+                print(c)
             }
-            println(:3)
+            print(:3)
             loop d in }2 => 0} :step -1 {
-                println(d)
+                print(d)
             }
-            println(:4)
+            print(:4)
             loop in {0 => -2{ :step -1 {
-                println(:x)
+                print(:x)
             }
-            println(:5)
+            print(:5)
             loop in {1 => 2} {
-                println(:y)
+                print(:y)
             }
-            println(:6)
+            print(:6)
         """, true)
         assert(out == ":0\n1\n:1\n1\n2\n:2\n0\n2\n4\n:3\n1\n0\n:4\n:x\n:x\n:5\n:y\n:y\n:6\n") { out }
     }
@@ -2822,7 +2822,7 @@ class Exec_99 {
     fun fg_25_loop_num_it() {
         val out = test("""
             loop in {0 => 1} {
-                println(it)
+                print(it)
             }
         """, true)
         assert(out == "0\n1\n") { out }
@@ -2837,7 +2837,7 @@ class Exec_99 {
             loop in {1 => 2} {
                 nil
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -2857,7 +2857,7 @@ class Exec_99 {
                 }
             }
             loop v in f {
-                println(v)
+                print(v)
             }
         """, true)
         assert(out == "0\n1\n2\n3\n4\n") { out }
@@ -2866,20 +2866,20 @@ class Exec_99 {
     fun fx_02_iter_err() {
         val out = test("""
             loop v in nil {
-                println(v)
+                print(v)
             }
         """, true)
-        //assert(out.contains("assertion error : expected :Iterator")) { out }
+        //assert(out.contains("assertion throw : expected :Iterator")) { out }
         assert(out.contains(" |  anon : (lin 2, col 23) : to-iter(nil)\n" +
-                " |  build/prelude-x.ceu : (lin 199, col 28) : error(:error,#['i','n','v','a','l','i','d'...\n" +
-                " v  error : invalid collection\n")) { out }
+                " |  build/prelude-x.ceu : (lin 199, col 28) : throw(:throw,#['i','n','v','a','l','i','d'...\n" +
+                " v  throw : invalid collection\n")) { out }
     }
     @Test
     fun fx_03_iter() {
         val out = test("""
             val y = loop x in to-iter([1,2,3]) {
             until x == 2 }
-            println(y)
+            print(y)
         """, true)
         assert(out == "true\n") { out }
     }
@@ -2888,7 +2888,7 @@ class Exec_99 {
         val out = test("""
             val y = loop x in [1,2,3] {
             until x == 4 }
-            println(y)
+            print(y)
         """, true)
         assert(out == "false\n") { out }
         //assert(out == "nil\n") { out }
@@ -2898,7 +2898,7 @@ class Exec_99 {
         val out = test("""
             val y = loop in to-iter([1,2,3]) {
             until it == 4 }
-            println(y)
+            print(y)
         """, true)
         assert(out == "false\n") { out }
         //assert(out == "nil\n") { out }
@@ -2919,11 +2919,11 @@ class Exec_99 {
             loop in f {   ;; assigns f to local which confronts cur
                 until true
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
-        //assert(out == "anon : (lin 13, col 33) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
+        //assert(out == "anon : (lin 13, col 33) : set throw : incompatible scopes\n" +
+        //        ":throw\n") { out }
     }
     @Test
     fun TODO_fx_07_drop_prime() {
@@ -2940,7 +2940,7 @@ class Exec_99 {
             do {
                 val x = []
                 val itr :Iterator = F(drop(x))
-                println(itr.f(itr))
+                print(itr.f(itr))
             }
         """, true)
         assert(out == "[]\n") { out }
@@ -2963,7 +2963,7 @@ class Exec_99 {
                 x.f(x) --> { }
                 x.f(x)
             }
-            println(:ok)
+            print(:ok)
         """, true)
         assert(out == ":ok\n") { out }
     }
@@ -2972,7 +2972,7 @@ class Exec_99 {
         val out = test("""
             val t = [1,nil,3]
             loop v in t {
-                println(v)
+                print(v)
             }
         """, true)
         //assert(out == "1\nnil\n3\n") { out }
@@ -2983,7 +2983,7 @@ class Exec_99 {
         val out = test("""
             val t1 = [1,nil,3]
             val t2 = [1,nil,4]
-            println(t1 === t2)
+            print(t1 === t2)
         """, true)
         assert(out == "false\n") { out }
     }
@@ -3001,7 +3001,7 @@ class Exec_99 {
             val it = :Iterator [f, 0, 5]
             loop v in it {
                 until not v
-                println(v)
+                print(v)
             }
         """, true)
         assert(out == "1\n2\n3\n4\n5\n") { out }
@@ -3017,12 +3017,12 @@ class Exec_99 {
             loop i in {0 => #t1{ {
                 set t2[+] = ;;;drop;;;(t1[i])
             }
-            println(t2)
+            print(t2)
             val t3 = #[]
             loop v in to-iter(t2) {
                 set t3[+] = v
             }
-            println(t3)
+            print(t3)
         """, true)
         assert(out == "#[[1],[2],[3]]\n" +
                 "#[[1],[2],[3]]\n") { out }
@@ -3035,7 +3035,7 @@ class Exec_99 {
             loop v in to-iter(t2) {
                 set t3[+] = v
             }
-            println(t3)
+            print(t3)
         """, true)
         assert(out == "#[[1],[2],[3]]\n") { out }
     }
@@ -3045,10 +3045,10 @@ class Exec_99 {
             val t2 = [1,2,3]
             val t3 = #[]
             loop [v,i] in to-iter(t2,[:val,:idx]) {
-                ;;println(i, v)
+                ;;print(i, v)
                 set t3[+] = v
             }
-            println(t3)
+            print(t3)
         """, true)
         assert(out == "#[1,2,3]\n") { out }
     }
@@ -3071,10 +3071,10 @@ class Exec_99 {
             val t3 = #[]
             data :Iterator = [f,s,i]
             loop [i,v] in [iter-tuple, t2, 0, [:idx,:val]] {
-                ;;println(i, v)
+                ;;print(i, v)
                 set t3[+] = v
             }
-            println(t3)
+            print(t3)
         """)
         assert(out == "#[1,2,3]\n") { out }
     }
@@ -3088,7 +3088,7 @@ class Exec_99 {
                 yield(drop(v2))
             }
             loop v in genFunc {
-                println(v)
+                print(v)
             }
         """, true)
         assert(out == "[0,a]\n[1,b]\n") { out }
@@ -3107,7 +3107,7 @@ class Exec_99 {
             f(drop(co))
         }
         val x = g()
-        println(x)
+        print(x)
         """, true)
         assert(out.contains("[func: 0x")) { out }
     }
@@ -3116,7 +3116,7 @@ class Exec_99 {
         val out = test("""
             val F = func (x) {
                 val co = coroutine (coro () {
-                    yield(nil)
+                    await(true)
                     x
                 })
                 resume co()
@@ -3125,7 +3125,7 @@ class Exec_99 {
             do {
                 val x = []
                 val co = F(x)
-                println(resume co())
+                print(resume co())
             }
         """)
         assert(out == "[]\n") { out }
@@ -3137,10 +3137,10 @@ class Exec_99 {
     fun TODO_multi_fi_01_iter_next() {
         val out = test("""
             val itr :Iterator = to-iter([1,2,3,4])
-            println(itr[0](itr))
-            println(itr.f(itr))
-            println(next(itr))
-            println(itr->next())
+            print(itr[0](itr))
+            print(itr.f(itr))
+            print(next(itr))
+            print(itr->next())
         """, true)
         assert(out == "1\n2\n3\n4\n") { out }
     }
@@ -3152,9 +3152,9 @@ class Exec_99 {
                 val v3 = yield(v2)
                 v3
             }
-            println(co->next(1))
-            println(co->next(2))
-            println(co->next(3))
+            print(co->next(1))
+            print(co->next(2))
+            print(co->next(3))
         """, true)
         assert(out == "1\n2\n3\n") { out }
     }
@@ -3164,7 +3164,7 @@ class Exec_99 {
     @Test
     fun fi_01_ret() {
         val out = test("""
-            println(loop i in {0 => 1} {
+            print(loop i in {0 => 1} {
                 ;;;do;;; nil
             })
         """, true)
@@ -3173,7 +3173,7 @@ class Exec_99 {
     @Test
     fun fi_02_ret() {
         val out = test("""
-            println(loop i in {0 => 1} {
+            print(loop i in {0 => 1} {
                 until 10
             })
         """, true)
@@ -3184,7 +3184,7 @@ class Exec_99 {
         val out = test("""
             val ts = tasks()
             spawn ((task(){yield()})()) in ts
-            println(loop i in ts {
+            print(loop i in ts {
                 ;;;do;;; nil
             })
         """, true)
@@ -3196,7 +3196,7 @@ class Exec_99 {
         val out = test("""
             val ts = tasks()
             spawn ((task(){yield()})()) in ts
-            println(loop i in ts {
+            print(loop i in ts {
                 until true
             })
         """, true)
@@ -3207,7 +3207,7 @@ class Exec_99 {
         val out = test("""
             $PLUS
             loop it {
-                println(it)
+                print(it)
                 until true
             }
         """)
@@ -3219,14 +3219,14 @@ class Exec_99 {
             loop {
                 until true
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
     @Test
     fun fi_07_until() {
         val out = test("""
-            println(loop {
+            print(loop {
             until 10 })
         """)
         assert(out == "10\n") { out }
@@ -3237,10 +3237,10 @@ class Exec_99 {
             var x = 0
             loop {
                 set x = x + 1
-                println(x)
+                print(x)
             until x == 3
             }
-            println(99)
+            print(99)
         """, true)
         assert(out == "1\n2\n3\n99\n") { out }
     }
@@ -3250,58 +3250,58 @@ class Exec_99 {
             var x = 0
             val v = loop {
                 set x = x + 1
-                println(x)
+                print(x)
                 until x == 3
                 until false
             }
-            println(v)
+            print(v)
         """, true)
         assert(out == "1\n2\n3\ntrue\n") { out }
     }
     @Test
     fun fi_10_until() {
         val out = test("""
-            println(0)
+            print(0)
             loop {
-                println(1)
+                print(1)
                 until true
-                println(2)
+                print(2)
             }
-            println(3)
+            print(3)
         """)
         assert(out == "0\n1\n3\n") { out }
     }
     @Test
     fun fi_11_until() {
         val out = test("""
-            println(0)
+            print(0)
             var x = false
             loop {
-                println(1)
+                print(1)
                 until x
                 set x = true
-                println(2)
+                print(2)
             }
-            println(3)
+            print(3)
         """)
         assert(out == "0\n1\n2\n1\n3\n") { out }
     }
     @Test
     fun fi_12_until() {
         val out = test("""
-            println(0)
+            print(0)
             var x = false
             loop {
-                println(1)
+                print(1)
                 until x
                 set x = true
-                println(2)
+                print(2)
                 until x
-                println(3)
+                print(3)
                 until x
-                println(4)
+                print(4)
             }
-            println(5)
+            print(5)
         """)
         assert(out == "0\n1\n2\n5\n") { out }
     }
@@ -3311,11 +3311,11 @@ class Exec_99 {
             var x = 0
             loop {
                 set x = x + 1
-                println(x)
+                print(x)
                 until v = (x == 3)  ;; TODO: declare var on until?
-                println(v)
+                print(v)
             }
-            println(99)
+            print(99)
         """, true)
         //assert(out == "1\nfalse\n2\nfalse\n3\n99\n") { out }
         assert(out == "anon : (lin 6, col 25) : expected expression : have \"=\"\n") { out }
@@ -3330,9 +3330,9 @@ class Exec_99 {
             }
             loop {
                 while v1=f()  ;; TODO: declare var on while?
-                println(v1)
+                print(v1)
                 while v2=f()  ;; TODO: declare var on while?
-                println(v2)
+                print(v2)
             }
         """, true)
         assert(out == "anon : (lin 8, col 25) : expected expression : have \"=\"\n") { out }
@@ -3343,7 +3343,7 @@ class Exec_99 {
         val out = test("""
             val v = loop in {1=>10} {
             }
-            println(v)
+            print(v)
         """, true)
         //assert(out == "nil\n") { out }
         assert(out == "false\n") { out }
@@ -3352,7 +3352,7 @@ class Exec_99 {
     fun fi_16_while() {
         val out = test("""
             val v = loop { while false ;;;do;;; nil }
-            println(v)
+            print(v)
         """)
         assert(out == "true\n") { out }
     }
@@ -3370,9 +3370,9 @@ class Exec_99 {
             val x = loop t in ts {
                 break(;;;drop;;;(t)) ;;if true
             }
-            println(x)
+            print(x)
         """, true)
-        //assert(out == (" v  anon : (lin 7, col 13) : declaration error : cannot copy reference out\n")) { out }
+        //assert(out == (" v  anon : (lin 7, col 13) : declaration throw : cannot copy reference out\n")) { out }
         //assert(out.contains("track: 0x")) { out }
         assert(out.contains("exe-task: 0x")) { out }
     }
@@ -3387,7 +3387,7 @@ class Exec_99 {
             val x = loop t in ts {
                 break(copy(t)) ;;if true
             }
-            println(x)
+            print(x)
         """, true)
         assert(out.contains("track: 0x")) { out }
     }
@@ -3404,7 +3404,7 @@ class Exec_99 {
                 ;;nil
             }
             loop v in (T) {
-                println(v)
+                print(v)
             }
         """, true)
         assert(out == "1\n2\n3\n") { out }
@@ -3419,8 +3419,8 @@ class Exec_99 {
             }
             catch :x {
                 loop i in coroutine(T) {
-                    println(i)
-                    error(:x)
+                    print(i)
+                    throw(:x)
                 }
             }
         """, true)
@@ -3435,7 +3435,7 @@ class Exec_99 {
                 yield(3)
             }
             loop i in T {
-                println(i)
+                print(i)
             }
         """, true)
         assert(out == "1\n2\n3\n") { out }
@@ -3449,10 +3449,10 @@ class Exec_99 {
                 3
             }
             loop i in coroutine(T) {
-                println(i)
+                print(i)
             }
         """, true)
-        //assert(out == "anon : (lin 12, col 57) : resume error : expected yielded task\n1\n2\n3\n:error\n") { out }
+        //assert(out == "anon : (lin 12, col 57) : resume throw : expected yielded task\n1\n2\n3\n:throw\n") { out }
         assert(out == "1\n2\n") { out }
     }
     @Test
@@ -3464,7 +3464,7 @@ class Exec_99 {
                 nil
             }
             loop i in to-iter(coroutine(T)) {
-                println(i)
+                print(i)
             }
         """, true)
         assert(out == "1\n2\n") { out }
@@ -3477,7 +3477,7 @@ class Exec_99 {
                 yield(2)
                 yield(3)
             }
-            println(to.vector(coroutine(T)))
+            print(to.vector(coroutine(T)))
         """, true)
         assert(out == "#[1,2,3]\n") { out }
     }
@@ -3491,7 +3491,7 @@ class Exec_99 {
                 }
                 drop(ret)
             }
-            println(fff([1]))
+            print(fff([1]))
         """, true)
         //tst_99.Exec_99#fg_07_ifs
         assert(out == "#[1]\n") { out }
@@ -3505,17 +3505,17 @@ class Exec_99 {
                 3
             }
             val co = coroutine(T)
-            println(resume co())
-            println(resume co())
-            println(resume co())
-            println(resume co())
+            print(resume co())
+            print(resume co())
+            print(resume co())
+            print(resume co())
         """, true)
-        //assert(out == "anon : (lin 11, col 21) : resume error : expected yielded coro\n1\n2\n3\n:error\n") { out }
+        //assert(out == "anon : (lin 11, col 21) : resume throw : expected yielded coro\n1\n2\n3\n:throw\n") { out }
         assert(out == "1\n" +
                 "2\n" +
                 "3\n" +
                 " |  anon : (lin 11, col 21) : (resume (co)())\n" +
-                " v  error : expected yielded coro\n") { out }
+                " v  throw : expected yielded coro\n") { out }
     }
 
     // AS / YIELD / CATCH / DETRACK / THUS
@@ -3525,7 +3525,7 @@ class Exec_99 {
         val out = test("""
             val CO = coro () {
                 yield() thus {
-                    println(it)
+                    print(it)
                 }
             }
             val co1 = coroutine(CO)
@@ -3542,11 +3542,11 @@ class Exec_99 {
         val out = test("""
             val T = task (v) {
                 yield()
-                println(v)
+                print(v)
             }
             val t1 = spawn T(1)
             val t2 = spawn T(2)
-            broadcast(nil)
+            emit(true)
         """)
         assert(out == "1\n2\n") { out }
     }
@@ -3555,7 +3555,7 @@ class Exec_99 {
         val out = test("""
             val CO = coro () {
                 val x = yield()
-                println(x)
+                print(x)
             }
             val co1 = coroutine(CO)
             val co2 = coroutine(CO)
@@ -3571,7 +3571,7 @@ class Exec_99 {
         val out = test("""
             val CO = coro () {
                 ;;;do;;; nil
-                yield() thus { \it => println(it);it }
+                yield() thus { \it => print(it);it }
                 ;;;do;;; nil
                 nil
             }
@@ -3585,7 +3585,7 @@ class Exec_99 {
             }}}
         """)
         //assert(out == " |  anon : (lin 13, col 13) : resume (co1)([])\n" +
-        //        " v  anon : (lin 5, col 17) : block escape error : cannot move pending reference in\n") { out }
+        //        " v  anon : (lin 5, col 17) : block escape throw : cannot move pending reference in\n") { out }
         assert(out == "[]\n[]\n")
     }
     @Test
@@ -3602,7 +3602,7 @@ class Exec_99 {
             resume co2()
             resume co1([])
             resume co2([])
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -3611,15 +3611,15 @@ class Exec_99 {
         val out = test("""
             val T = task () {
                 set pub = [10]
-                yield(nil)
+                await(true)
             }
             var t = spawn T ()
             ;;var x = track(t)
-            ;;;detrack(x);;; do { println(:1) }
-            broadcast( nil )
-            ;;detrack(x) { println(999) }
-            println(status(t))
-            println(:2)
+            ;;;detrack(x);;; do { print(:1) }
+            emit( nil )
+            ;;detrack(x) { print(999) }
+            print(status(t))
+            print(:2)
         """)
         assert(out == ":1\n:terminated\n:2\n") { out }
     }
@@ -3646,7 +3646,7 @@ class Exec_99 {
                 }
                 print(v)
             }
-            println()
+            print()
         """)
         assert(out == "xaby\n") { out }
     }
@@ -3662,22 +3662,22 @@ class Exec_99 {
             coro bar (x1) {
                 val x3 = yield(x1+1)
                 val x8 = resume-yield-all coroutine(foo) (x3+1)
-                ;;println(:x8, x8, x8+1)
+                ;;print(:x8, x8, x8+1)
                 val x10 = yield(x8+1)
                 nil
             }
             val co = coroutine(bar)
             val x2 = resume co(1)
-            ;;println(:x2, x2)
+            ;;print(:x2, x2)
             val x5 = resume co(x2+1)
-            ;;println(:x5, x5)
+            ;;print(:x5, x5)
             val x7 = resume co(x5+1)
-            ;;println(:x7, x7)
+            ;;print(:x7, x7)
             val x9 = resume co(x7+1)
-            ;;println(:x9, x9)
+            ;;print(:x9, x9)
             val xN = resume co(x9+1)
-            ;;println(:xN, xN)
-            println(x2, x5, x7, x9, xN)
+            ;;print(:xN, xN)
+            print(x2, x5, x7, x9, xN)
         """)
         assert(out == "2\t5\t7\t9\tnil\n") { out }
     }
@@ -3701,7 +3701,7 @@ class Exec_99 {
                 }
                 print(v)
             }
-            println()
+            print()
         """)
         assert(out == "xaby\n") { out }
     }
@@ -3712,12 +3712,12 @@ class Exec_99 {
     fun ii_01_spawn_task() {
         val out = test("""
             spawn {
-                println(1)
+                print(1)
                 yield()
-                println(3)
+                print(3)
             }
-            println(2)
-            broadcast(nil)
+            print(2)
+            emit(true)
         """)
         assert(out == "1\n2\n3\n") { out }
     }
@@ -3725,12 +3725,12 @@ class Exec_99 {
     fun TODO_ii_02_spawn_coro() {
         val out = test("""
             val co = coroutine (coro () {   ;; spawn coro
-                println(1)
+                print(1)
                 yield()
-                println(3)
+                print(3)
             })
             resume co()
-            println(2)
+            print(2)
             resume co()
         """)
         assert(out == "1\n2\n3\n") { out }
@@ -3739,12 +3739,12 @@ class Exec_99 {
     fun ii_03_spawn_coro() {
         val out = test("""
             val co = coroutine(coro () {   ;; spawn coro
-                println(1)
+                print(1)
                 yield()
-                println(3)
+                print(3)
             })
             resume co()
-            println(2)
+            print(2)
             resume co()
         """)
         assert(out == "1\n2\n3\n") { out }
@@ -3754,7 +3754,7 @@ class Exec_99 {
         val out = test("""
             spawn {
                 spawn {
-                    println(1)
+                    print(1)
                 }
                 nil
             }
@@ -3765,9 +3765,9 @@ class Exec_99 {
     fun ii_05_spawn_coro() {
         val out = test("""
             val co = coroutine (coro () {   ;; spawn coro
-                println(1)
+                print(1)
                 val v = yield()
-                println(v)
+                print(v)
             })
             resume co()
             resume co(10)
@@ -3781,19 +3781,19 @@ class Exec_99 {
                 do {
                     val t1 = spawn {
                         ${AWAIT()}
-                        println(1)
+                        print(1)
                     }
                     spawn {
-                        defer { println(3) }
+                        defer { print(3) }
                         ${AWAIT()}
-                        println(2)
+                        print(2)
                     }
                     ${AWAIT("it==t1")}
                     nil
                 }
-                println(:ok)
+                print(:ok)
             }
-            broadcast( nil)
+            emit( nil)
         """)
         assert(out == "1\n3\n:ok\n") { out }
     }
@@ -3803,12 +3803,12 @@ class Exec_99 {
             spawn {
                 spawn {
                     yield ()
-                    println(1)
+                    print(1)
                 }
                 yield ()
-                println(2)
+                print(2)
             }
-            broadcast (nil)
+            emit (nil)
         """)
         assert(out == "1\n2\n") { out }
     }
@@ -3820,25 +3820,25 @@ class Exec_99 {
                     do { var ok1; set ok1=true;
                         loop {
                             until not ok1
-                            val evt = yield(nil);
+                            val evt = await(true);
                             if type(evt)/=:exe-task {
                                 set ok1=false
                             } else { nil }
                         } 
                     }
                     ;;yield()
-                    do { var ok2; set ok2=true; loop { until not ok2 ; val evt=yield(nil); if type(evt)/=:exe-task { set ok2=false } else { nil } } }
+                    do { var ok2; set ok2=true; loop { until not ok2 ; val evt=await(true); if type(evt)/=:exe-task { set ok2=false } else { nil } } }
                     ;;yield()
-                    println(1)
+                    print(1)
                 } with {
-                    do { var ok3; set ok3=true; loop { until not ok3 ; val evt=yield(nil); if type(evt)/=:exe-task { set ok3=false } else { nil } } }
+                    do { var ok3; set ok3=true; loop { until not ok3 ; val evt=await(true); if type(evt)/=:exe-task { set ok3=false } else { nil } } }
                     ;;yield()
-                    println(2)
+                    print(2)
                 } with {
-                    println(3)
+                    print(3)
                 }
             } ()
-            broadcast( nil )
+            emit( nil )
         """, true)
         assert(out == "3\n2\n") { out }
     }
@@ -3849,7 +3849,7 @@ class Exec_99 {
             (spawn T() in ts) where {
             }
         """)
-        assert(out == "anon : (lin 3, col 27) : access error : variable \"ts\" is not declared\n") { out }
+        assert(out == "anon : (lin 3, col 27) : access throw : variable \"ts\" is not declared\n") { out }
     }
 
     // SPAWN / NESTED
@@ -3860,9 +3860,9 @@ class Exec_99 {
             task :nested () {
                 nil
             }
-            println(:ok)
+            print(:ok)
         """)
-        //assert(out == "anon : (lin 2, col 13) : task :nested error : expected enclosing spawn\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : task :nested throw : expected enclosing spawn\n") { out }
         assert(out == ":ok\n") { out }
     }
     @Test
@@ -3871,9 +3871,9 @@ class Exec_99 {
             val t = spawn (task :nested () {
                 nil
             })()
-            println(type(t))
+            print(type(t))
         """)
-        //assert(out == "anon : (lin 2, col 21) : spawn task :nested error : expected immediate enclosing block\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : spawn task :nested throw : expected immediate enclosing block\n") { out }
         assert(out == ":exe-task\n") { out }
     }
     @Test
@@ -3885,14 +3885,14 @@ class Exec_99 {
                 })()
             }
         """)
-        assert(out == "anon : (lin 3, col 17) : spawn task :nested error : cannot escape enclosing block\n") { out }
+        assert(out == "anon : (lin 3, col 17) : spawn task :nested throw : cannot escape enclosing block\n") { out }
     }
     @Test
     fun ij_04_nested() {
         val out = test("""
             ;;do {
                 spawn (task :nested () {
-                    println(:ok)
+                    print(:ok)
                 })()
                 nil
             ;;}
@@ -3904,15 +3904,15 @@ class Exec_99 {
         val out = test("""
             task T () {
                 set ;;;task.;;;pub = 10
-                println(;;;task.;;;pub)
+                print(;;;task.;;;pub)
                 spawn {
-                    println(;;;task.;;;pub)
+                    print(;;;task.;;;pub)
                     await (|false)
                 }
                 nil
             }
             spawn T()
-            broadcast (nil) in :global
+            emit (nil) in :global
         """)
         assert(out == "10\n10\n") { out }
     }
@@ -3924,7 +3924,7 @@ class Exec_99 {
                 task T () :T {
                     set pub = [10]
                     spawn {
-                        println(pub.x)
+                        print(pub.x)
                     }
                 }
                 spawn T()
@@ -3939,24 +3939,24 @@ class Exec_99 {
     fun jj_01_par_err() {
         val out = test("""
             par {
-                println(1)
+                print(1)
             } with {
-                println(2)
+                print(2)
             }
         """)
-        //assert(out == "anon : (lin 5, col 29) : :nested error : expected enclosing prototype\n") { out }
-        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro or task\n") { out }
+        //assert(out == "anon : (lin 5, col 29) : :nested throw : expected enclosing prototype\n") { out }
+        assert(out == "anon : (lin 2, col 13) : yield throw : expected enclosing coro or task\n") { out }
     }
     @Test
     fun jj_02_par() {
         val out = test("""
             spawn {
                 par {
-                    println(1)
+                    print(1)
                 } with {
-                    println(2)
+                    print(2)
                 }
-                println(999)
+                print(999)
             }
         """)
         assert(out == "1\n2\n") { out }
@@ -3968,15 +3968,15 @@ class Exec_99 {
                 par-or {
                     yield()
                     yield()
-                    println(1)
+                    print(1)
                 } with {
-                    println(2)
+                    print(2)
                 } with {
                     yield()
                     yield()
-                    println(3)
+                    print(3)
                 }
-                println(:ok)
+                print(:ok)
             }
         """)
         assert(out == "2\n:ok\n") { out }
@@ -3991,7 +3991,7 @@ class Exec_99 {
                     } with {
                         2
                     }
-                println(v)
+                print(v)
             }
         """)
         assert(out == "1\n") { out }
@@ -4001,11 +4001,11 @@ class Exec_99 {
         val out = test("""
             spawn {
                 par-and {
-                    println(1)
+                    print(1)
                 } with {
-                    println(2)
+                    print(2)
                 }
-                println(:ok)
+                print(:ok)
             }
         """)
         assert(out == "1\n2\n:ok\n") { out }
@@ -4020,7 +4020,7 @@ class Exec_99 {
                     } with {
                         2
                     }
-                println(v)
+                print(v)
             }
         """)
         assert(out == "true\n") { out }
@@ -4033,18 +4033,18 @@ class Exec_99 {
                     yield()
                     yield()
                     yield()
-                    println(1)
+                    print(1)
                 } with {
                     yield()
-                    println(2)
+                    print(2)
                 } with {
                     yield()
                     yield()
-                    println(3)
+                    print(3)
                 }
-                println(:ok)
+                print(:ok)
             }
-            broadcast(nil)
+            emit(true)
         """)
         assert(out == "2\n:ok\n") { out }
     }
@@ -4056,20 +4056,20 @@ class Exec_99 {
                     yield()
                     yield()
                     yield()
-                    println(1)
+                    print(1)
                 } with {
                     yield()
-                    println(2)
+                    print(2)
                 } with {
                     yield()
                     yield()
-                    println(3)
+                    print(3)
                 }
-                println(:ok)
+                print(:ok)
             }
-            broadcast(nil)
-            broadcast(nil)
-            broadcast(nil)
+            emit(true)
+            emit(true)
+            emit(true)
         """)
         assert(out == "2\n3\n1\n:ok\n") { out }
         //assert(out == "2\n1\n3\n:ok\n") { out }
@@ -4082,20 +4082,20 @@ class Exec_99 {
                     yield()
                     yield()
                     yield()
-                    println(1)
+                    print(1)
                 } with {
                     yield()
-                    println(2)
+                    print(2)
                 } with {
                     yield()
                     yield()
-                    println(3)
+                    print(3)
                 }
-                println(:ok)
+                print(:ok)
             }
-            broadcast(nil)
-            broadcast(nil)
-            broadcast(nil)
+            emit(true)
+            emit(true)
+            emit(true)
         """)
         assert(out == "2\n3\n1\n:ok\n") { out }
     }
@@ -4105,15 +4105,15 @@ class Exec_99 {
             spawn {
                 par-or {
                     ${AWAIT()}
-                    println(1)
+                    print(1)
                 } with {
-                    defer { println(3) }
+                    defer { print(3) }
                     ${AWAIT()}
-                    println(2)
+                    print(2)
                 }
-                println(:ok)
+                print(:ok)
             }
-            broadcast(nil)
+            emit(true)
         """)
         assert(out == "1\n3\n:ok\n") { out }
     }
@@ -4122,15 +4122,15 @@ class Exec_99 {
         val out = test("""
             spawn {
                 par-or {
-                    defer { println(3) }
+                    defer { print(3) }
                     ${AWAIT()}
-                    println(999)
+                    print(999)
                 } with {
-                    println(2)
+                    print(2)
                 }
-                println(:ok)
+                print(:ok)
             }
-            broadcast (nil)
+            emit (nil)
         """)
         assert(out == "2\n3\n:ok\n") { out }
     }
@@ -4142,13 +4142,13 @@ class Exec_99 {
                     func (it) {
                         false
                     } (yield(nil))
-                    println(999)
+                    print(999)
                 } with {
                     nil
                 }
                 nil
             }
-            broadcast (nil)
+            emit (nil)
         """)
         assert(out == "999\n") { out }
     }
@@ -4157,22 +4157,22 @@ class Exec_99 {
         val out = test("""
             spawn {
                 par-or {
-                    defer { println(1) }
+                    defer { print(1) }
                     ${AWAIT()}
                     ${AWAIT()}
-                    println(999)
+                    print(999)
                 } with {
                     ${AWAIT()}
-                    println(2)
+                    print(2)
                 } with {
-                    defer { println(3) }
+                    defer { print(3) }
                     ${AWAIT()}
                     ${AWAIT()}
-                    println(999)
+                    print(999)
                 }
-                println(999)
+                print(999)
             }
-            broadcast (nil)
+            emit (nil)
         """)
         assert(out == "2\n1\n3\n999\n") { out }
     }
@@ -4182,16 +4182,16 @@ class Exec_99 {
             spawn {
                 par-and {
                     yield()
-                    println(1)
+                    print(1)
                 } with {
-                    println(2)
+                    print(2)
                 } with {
                     yield()
-                    println(3)
+                    print(3)
                 }
-                println(:ok)
+                print(:ok)
             }
-            broadcast (nil)
+            emit (nil)
         """)
         assert(out == "2\n1\n3\n:ok\n") { out }
     }
@@ -4200,23 +4200,23 @@ class Exec_99 {
         val out = test("""
             spawn {
                 par-and {
-                    defer { println(1) }
+                    defer { print(1) }
                     ${AWAIT()}
                     ${AWAIT()}
-                    println(1)
+                    print(1)
                 } with {
                     ${AWAIT()}
-                    println(2)
+                    print(2)
                 } with {
-                    defer { println(3) }
+                    defer { print(3) }
                     ${AWAIT()}
                     ${AWAIT()}
-                    println(3)
+                    print(3)
                 }
-                println(:ok)
+                print(:ok)
             }
-            broadcast (nil)
-            broadcast (nil)
+            emit (nil)
+            emit (nil)
         """)
         assert(out == "2\n1\n1\n3\n3\n:ok\n") { out }
     }
@@ -4234,9 +4234,9 @@ class Exec_99 {
             }
             do {
                 val now
-                broadcast([])
+                emit([])
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -4250,7 +4250,7 @@ class Exec_99 {
                     yield()
                 }
             }) ()
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -4266,9 +4266,9 @@ class Exec_99 {
             }
             do {
                 val now
-                broadcast([])
+                emit([])
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -4278,12 +4278,12 @@ class Exec_99 {
             spawn {
                 par-or {
                     val e = yield()
-                    println(e)
+                    print(e)
                 } with {
-                    broadcast(:1)
+                    emit(:1)
                 }
             }
-            println(:2)
+            print(:2)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -4291,12 +4291,12 @@ class Exec_99 {
     fun jj_17_par_tasks() {
         val out = test("""
             spawn task () {
-                ^[9,29]yield(nil)                                          
+                ^[9,29]await(true)                                          
             }()                                                       
             spawn task () {                                           
-                ^[9,29]yield(nil)                       
+                ^[9,29]await(true)                       
             }()
-            println(1)
+            print(1)
         """)
         assert(out == "1\n") { out }
     }
@@ -4309,7 +4309,7 @@ class Exec_99 {
                 } with {
                     2
                 }
-                println(x)
+                print(x)
             }
         """, true)
         assert(out == "1\n") { out }
@@ -4323,7 +4323,7 @@ class Exec_99 {
                 } with {
                     2
                 }
-                println(x)
+                print(x)
             }
         """, true)
         assert(out == "2\n") { out }
@@ -4340,7 +4340,7 @@ class Exec_99 {
                     }
                 }
                 val x = await spawn f()
-                println(x)
+                print(x)
             }
         """, true)
         assert(out == "1\n") { out }
@@ -4358,8 +4358,8 @@ class Exec_99 {
                     await spawn T()
                 }
             }
-            broadcast (:x) in :global
-            println(1)
+            emit (:x) in :global
+            print(1)
         """, true)
         assert(out == "1\n") { out }
     }
@@ -4373,8 +4373,8 @@ class Exec_99 {
                     await(| true)
                 }
             }
-            broadcast (true) in :global
-            println(1)
+            emit (true) in :global
+            print(1)
         """, true)
         assert(out == "1\n") { out }
     }
@@ -4389,10 +4389,10 @@ class Exec_99 {
                 }
             }
             do {
-                broadcast (tag(:frame, [40])) in :global 
-                broadcast (tag(:draw, [])) in :global
+                emit (tag(:frame, [40])) in :global 
+                emit (tag(:draw, [])) in :global
             }
-            println(1)
+            print(1)
         """, true)
         assert(out == "1\n") { out }
     }
@@ -4401,11 +4401,11 @@ class Exec_99 {
         val out = test("""
             spawn task () {
                 par-and {
-                    println(1)
+                    print(1)
                 } with {
-                    println(2)
+                    print(2)
                 }
-                println(999)
+                print(999)
             } ()
         """, true)
         assert(out == "1\n2\n999\n") { out }
@@ -4415,17 +4415,17 @@ class Exec_99 {
         val out = test("""
             spawn {
                 par-or {
-                    loop { yield(nil) }
+                    loop { await(true) }
                 } with {
                     par-or {
                         yield()
                     } with {
-                        loop { yield(nil) }
+                        loop { await(true) }
                     }
                 }
             }
-            broadcast (nil) in :global
-            println(1)
+            emit (nil) in :global
+            print(1)
         """, true)
         assert(out == "1\n") { out }
     }
@@ -4439,16 +4439,16 @@ class Exec_99 {
             val x = ;;;track;;;(t)
             spawn {
                 par-and {
-                    println(:0)
+                    print(:0)
                     await (|it==x)
-                    println(:2)
+                    print(:2)
                 } with {
-                    println(:1)
-                    broadcast (nil) in t
+                    print(:1)
+                    emit (nil) in t
                 }
-                println(:3)
+                print(:3)
             }
-            println(:4)
+            print(:4)
         """, true)
         assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
     }
@@ -4462,16 +4462,16 @@ class Exec_99 {
             val x = ;;;track;;;(t)
             spawn {
                 par-and {
-                    println(:0)
+                    print(:0)
                     await (|it==x)
-                    println(:2)
+                    print(:2)
                 } with {
-                    println(:1)
-                    broadcast (nil) in t
+                    print(:1)
+                    emit (nil) in t
                 }
-                println(:3)
+                print(:3)
             }
-            println(:4)
+            print(:4)
         """, true)
         assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
     }
@@ -4484,11 +4484,11 @@ class Exec_99 {
             $IS
             task T () {
                 await(it| it is? :x)
-                println(1)
+                print(1)
             }
             spawn T()
-            broadcast (tag(:x,[]))
-            println(2)
+            emit (tag(:x,[]))
+            print(2)
         """)
         assert(out == "1\n2\n") { out }
     }
@@ -4497,16 +4497,16 @@ class Exec_99 {
         val out = test("""
             $IS
             spawn {
-                println(0)
+                print(0)
                 await ( |(it/=nil) and (it[:type]==:x) )
-                println(99)
+                print(99)
             }
             do {
-                println(1)
-                broadcast (@[(:type,:y)])
-                println(2)
-                broadcast (@[(:type,:x)])
-                println(3)
+                print(1)
+                emit (@[(:type,:y)])
+                print(2)
+                emit (@[(:type,:x)])
+                print(3)
             }
         """)
         assert(out == "0\n1\n2\n99\n3\n") { out }
@@ -4517,16 +4517,16 @@ class Exec_99 {
             $IS
             data :x = []
             spawn {
-                println(0)
+                print(0)
                 await(:x)
-                println(99)
+                print(99)
             }
             do {
-                println(1)
-                broadcast (tag(:y, []))
-                println(2)
-                broadcast (tag(:x, []))
-                println(3)
+                print(1)
+                emit (tag(:y, []))
+                print(2)
+                emit (tag(:x, []))
+                print(3)
             }
         """)
         assert(out == "0\n1\n2\n99\n3\n") { out }
@@ -4537,16 +4537,16 @@ class Exec_99 {
             $IS
             data :x = []
             spawn {
-                println(0)
+                print(0)
                 await(:x)
-                println(99)
+                print(99)
             }
             do {
-                println(1)
-                broadcast (tag(:y, []))
-                println(2)
-                broadcast (tag(:x, []))
-                println(3)
+                print(1)
+                emit (tag(:y, []))
+                print(2)
+                emit (tag(:x, []))
+                print(3)
             }
         """)
         assert(out == "0\n1\n2\n99\n3\n") { out }
@@ -4557,7 +4557,7 @@ class Exec_99 {
             val f
             await()
         """)
-        assert(out == "anon : (lin 3, col 13) : yield error : expected enclosing coro or task\n") { out }
+        assert(out == "anon : (lin 3, col 13) : yield throw : expected enclosing coro or task\n") { out }
     }
     @Test
     fun kk_06_await() {
@@ -4565,11 +4565,11 @@ class Exec_99 {
             spawn {
                 loop {
                     await (|true) {
-                        println(it)
+                        print(it)
                     }
                 }
             }
-            broadcast (@[])
+            emit (@[])
         """)
         assert(out == "@[]\n") { out }
     }
@@ -4579,11 +4579,11 @@ class Exec_99 {
             spawn {
                 loop {
                     await {
-                        println(it)
+                        print(it)
                     }
                 }
             }
-            broadcast (@[])
+            emit (@[])
         """)
         //assert(out == "anon : (lin 4, col 27) : expected expression : have \"{\"\n") { out }
         assert(out == "@[]\n") { out }
@@ -4593,14 +4593,14 @@ class Exec_99 {
         val out = test("""
             spawn {
                 await (|true) {
-                    println(it)
+                    print(it)
                 }
                 await (|true) {
-                    println(it)
+                    print(it)
                 }
             }
-            broadcast (:1)
-            broadcast (:2)
+            emit (:1)
+            emit (:2)
         """)
         assert(out == ":1\n:2\n") { out }
     }
@@ -4610,12 +4610,12 @@ class Exec_99 {
             $COMP
             spawn {
                 await (2)
-                println(2)
+                print(2)
                 await (==1)
-                println(1)
+                print(1)
             }
-            broadcast (1)
-            broadcast (2)
+            emit (1)
+            emit (2)
         """)
         assert(out == "2\n") { out }
     }
@@ -4627,11 +4627,11 @@ class Exec_99 {
             spawn {
                 await :X {
                     nil thus {
-                        println(it)
+                        print(it)
                     }
                 }
             }
-            broadcast(:X [])
+            emit(:X [])
         """)
         assert(out == "nil\n") { out }
     }
@@ -4640,11 +4640,11 @@ class Exec_99 {
         val out = test("""
             $IS
             spawn {
-                println(await())
+                print(await())
             }
             do {
                 val e = []
-                broadcast(drop(e))
+                emit(drop(e))
             }
         """)
         assert(out == "[]\n") { out }
@@ -4661,13 +4661,13 @@ class Exec_99 {
             }
             do {
                 val e = :X []
-                broadcast(drop(e))
+                emit(drop(e))
             }
-            println(:ok)
+            print(:ok)
         """)
-        //assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 4, col 27) : argument error : cannot copy reference out\n") { out }
-        //assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing func\n") { out }
+        //assert(out == " |  anon : (lin 10, col 17) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 27) : argument throw : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : yield throw : unexpected enclosing func\n") { out }
         assert(out == ":ok\n") { out }
     }
     @Test
@@ -4679,10 +4679,10 @@ class Exec_99 {
             val x = ;;;track;;;(t)
             spawn {
                 await(==x)
-                println(:1)
+                print(:1)
             }
-            broadcast(nil)
-            println(:2)
+            emit(true)
+            print(:2)
         """)
         assert(out == ":1\n:2\n") { out }
     }
@@ -4692,13 +4692,13 @@ class Exec_99 {
             $IS
             spawn {
                 val click = await(:X) {
-                    println(:it, it)
+                    print(:it, it)
                     it
                 }
-                println(:click, click)
+                print(:click, click)
             }            
-            broadcast(:X [1,2])
-            println(nil)
+            emit(:X [1,2])
+            print(nil)
         """)
         assert(out == ":it\t:X [1,2]\n" +
                 ":click\t:X [1,2]\n" +
@@ -4711,10 +4711,10 @@ class Exec_99 {
             data :T = [v]
             spawn {
                 await :T {
-                    println(it.v)
+                    print(it.v)
                 }
             }
-            broadcast(:T [:ok])
+            emit(:T [:ok])
         """)
         assert(out == ":ok\n") { out }
     }
@@ -4727,10 +4727,10 @@ class Exec_99 {
             data :E = [x,y]
             spawn {
                 await :E {
-                    println(it.x)
+                    print(it.x)
                 }
             }
-            broadcast (:E [10,20]) in :global
+            emit (:E [10,20]) in :global
         """, true)
         assert(out == "10\n") { out }
     }
@@ -4740,12 +4740,12 @@ class Exec_99 {
             data :E = [x,y]
             spawn {
                 await :E| it.y==20 {
-                    println(it.x)
+                    print(it.x)
                 }
             }
-            broadcast (:E [10,10]) in :global 
-            println(:mid)
-            broadcast (:E [10,20]) in :global
+            emit (:E [10,10]) in :global 
+            print(:mid)
+            emit (:E [10,20]) in :global
         """, true)
         assert(out == ":mid\n10\n") { out }
     }
@@ -4756,14 +4756,14 @@ class Exec_99 {
             data :F = [i,j]
             spawn {
                 await :E| it.y==20 {
-                    println(it.x)
+                    print(it.x)
                 }
                 await :F| it.i==10 {
-                    println(it.j)
+                    print(it.j)
                 }
             }
-            broadcast(:E [10,20]) in :global 
-            broadcast(:F [10,20]) in :global
+            emit(:E [10,20]) in :global 
+            emit(:F [10,20]) in :global
         """, true)
         assert(out == "10\n20\n") { out }
     }
@@ -4778,7 +4778,7 @@ class Exec_99 {
             }
             spawn {
                 val v = await spawn T(1)
-                println(v)
+                print(v)
             }
         """)
         assert(out == "[1]\n") { out }
@@ -4793,9 +4793,9 @@ class Exec_99 {
                 }
                 spawn {
                     val v = await spawn T(1)
-                    println(v)
+                    print(v)
                 }
-                broadcast(2)
+                emit(2)
             }
         """)
         assert(out == "[2]\n") { out }
@@ -4805,12 +4805,12 @@ class Exec_99 {
         val out = test("""
             spawn {
                 val t = spawn {
-                    println(:1)
+                    print(:1)
                 }
                 await(|it==t)
-                println(:2)
+                print(:2)
             }
-            println(:3)
+            print(:3)
         """, true)
         //assert(out == ":1\n:2\n:3\n") { out }
         assert(out == ":1\n:3\n") { out }
@@ -4824,15 +4824,15 @@ class Exec_99 {
             """
             $IS
             task T () {
-                println(:1)
+                print(:1)
                 every (|true) {
                     until true
-                    error(999)
+                    throw(999)
                 }
-                println(:2)
+                print(:2)
             }
             spawn T()
-            broadcast (nil)
+            emit (nil)
         """)
         assert(out == ":1\n:2\n") { out }
     }
@@ -4842,15 +4842,15 @@ class Exec_99 {
             """
             $IS
             task T () {
-                println(:1)
+                print(:1)
                 every (|true) {
                     until false
-                    println(:xxx)
+                    print(:xxx)
                 }
-                println(:2)
+                print(:2)
             }
             spawn T()
-            broadcast (nil)
+            emit (nil)
         """)
         assert(out == ":1\n:xxx\n") { out }
     }
@@ -4867,7 +4867,7 @@ class Exec_99 {
                     ;;every false { }
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -4882,14 +4882,14 @@ class Exec_99 {
             }
             do {
                 val e = :X []
-                broadcast(drop(e))
+                emit(drop(e))
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
-        //assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing func\n") { out }
-        //assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
-        //        " v  anon : (lin 4, col 28) : argument error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : yield throw : unexpected enclosing func\n") { out }
+        //assert(out == " |  anon : (lin 10, col 17) : emit'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 28) : argument throw : cannot copy reference out\n") { out }
         //assert(out == ":ok\n") { out }
     }
     @Test
@@ -4904,7 +4904,7 @@ class Exec_99 {
                     }
                 }
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -4914,10 +4914,10 @@ class Exec_99 {
             spawn (task () {
                 var rect = []
                 spawn (task :nested () {
-                    println(rect)
+                    print(rect)
                 }) ()
             }) ()
-            println(:ok)
+            print(:ok)
         """)
         assert(out == "[]\n:ok\n") { out }
     }
@@ -4928,10 +4928,10 @@ class Exec_99 {
             data :T = [v]
             spawn {
                 every :T {
-                    println(it.v)
+                    print(it.v)
                 }
             }
-            broadcast(:T [:ok])
+            emit(:T [:ok])
         """)
         assert(out == ":ok\n") { out }
     }
@@ -4939,19 +4939,19 @@ class Exec_99 {
     fun km_07_every() {
         val out = test("""
             spawn {
-                println(0)
+                print(0)
                 every :x {
-                    println(it[0])
+                    print(it[0])
                 }
             }
             do {
-                println(1)
-                broadcast (tag(:x, [10])) in :global 
-                println(2)
-                broadcast (tag(:y, [20])) in :global
-                println(3)
-                broadcast (tag(:x, [30])) in :global
-                println(4)
+                print(1)
+                emit (tag(:x, [10])) in :global 
+                print(2)
+                emit (tag(:y, [20])) in :global
+                print(3)
+                emit (tag(:x, [30])) in :global
+                print(4)
             }
         """, true)
         assert(out == "0\n1\n10\n2\n3\n30\n4\n") { out }
@@ -4961,16 +4961,16 @@ class Exec_99 {
         val out = test("""
             spawn task () {
                 every <10:s> {
-                    println(10)
+                    print(10)
                 }
             }()
-            println(0)
-            broadcast (tag(:Clock, [5000])) in :global 
-            println(1)
-            broadcast (tag(:Clock, [5000]))
-            println(2)
-            broadcast (tag(:Clock, [10000])) in :global 
-            println(3)
+            print(0)
+            emit (tag(:Clock, [5000])) in :global 
+            print(1)
+            emit (tag(:Clock, [5000]))
+            print(2)
+            emit (tag(:Clock, [10000])) in :global 
+            print(3)
         """, true)
         assert(out == "0\n1\n10\n2\n10\n3\n") { out }
     }
@@ -4979,12 +4979,12 @@ class Exec_99 {
         val out = test("""
             spawn task () {
                 every <10:s> {
-                    println(10)
+                    print(10)
                 }
             }()
-            println(0)
-            broadcast in :global, tag(:Clock, [20000])
-            println(1)
+            print(0)
+            emit in :global, tag(:Clock, [20000])
+            print(1)
         """, true)
         assert(out == "0\n10\n10\n1") { out }
     }
@@ -4994,14 +4994,14 @@ class Exec_99 {
             spawn task () {
                 loop {
                     await <10:s>
-                    println(999)
+                    print(999)
                 }
             }()
-            println(0)
-            broadcast (tag(:Clock, [5000])) in :global
-            println(1)
-            broadcast (tag(:Clock, [5000])) in :global 
-            println(2)
+            print(0)
+            emit (tag(:Clock, [5000])) in :global
+            print(1)
+            emit (tag(:Clock, [5000])) in :global 
+            print(2)
         """, true)
         assert(out == "0\n1\n999\n2\n") { out }
     }
@@ -5014,10 +5014,10 @@ class Exec_99 {
                 val v = every (|true) {
                     until :ok
                 }
-                println(v)
+                print(v)
             }
             spawn T()
-            broadcast (nil)
+            emit (nil)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -5031,13 +5031,13 @@ class Exec_99 {
             data :Clock = [ms]
             spawn {
                 await <2:ms>
-                println(:ok)
+                print(:ok)
             }
-            println(:0)
-            broadcast(:Clock [1])
-            println(:1)
-            broadcast(:Clock [1])
-            println(:2)
+            print(:0)
+            emit(:Clock [1])
+            print(:1)
+            emit(:Clock [1])
+            print(:2)
         """)
         assert(out == ":0\n:1\n:ok\n:2\n") { out }
     }
@@ -5049,21 +5049,21 @@ class Exec_99 {
             spawn {
                 var x = 10
                 every <x:ms> {
-                    println(:x, x)
+                    print(:x, x)
                     set x = x - 1
                 }
-                println(:ok)
+                print(:ok)
             }
-            println(:0)
-            broadcast(:Clock [5])
-            broadcast(:Clock [5])
-            println(:1)
-            broadcast(:Clock [5])
-            broadcast(:Clock [5])
-            println(:2)
-            broadcast(:Clock [5])
-            broadcast(:Clock [5])
-            println(:3)
+            print(:0)
+            emit(:Clock [5])
+            emit(:Clock [5])
+            print(:1)
+            emit(:Clock [5])
+            emit(:Clock [5])
+            print(:2)
+            emit(:Clock [5])
+            emit(:Clock [5])
+            print(:3)
         """)
         assert(out == ":0\n:x\t10\n:1\n:x\t9\n:2\n:x\t8\n:3\n") { out }
     }
@@ -5075,9 +5075,9 @@ class Exec_99 {
         val out = test("""
             spawn {
                 await spawn { 1 }
-                println(1)
+                print(1)
             }
-            println(2)
+            print(2)
         """, true)
         assert(out == "1\n2\n") { out }
     }
@@ -5087,14 +5087,14 @@ class Exec_99 {
             spawn {
                 spawn {
                     yield ()
-                    println(1)
-                    broadcast(nil) in :global
-                    println(3)
+                    print(1)
+                    emit(true) in :global
+                    print(3)
                 }
                 yield ()
-                println(2)
+                print(2)
             }
-            broadcast(nil) in :global
+            emit(true) in :global
         """, true)
         assert(out == "1\n2\n") { out }
     }
@@ -5106,9 +5106,9 @@ class Exec_99 {
                     yield ()
                     [2]
                 }
-                println(y)
+                print(y)
             }
-            broadcast (nil) in :global
+            emit (nil) in :global
         """, true)
         assert(out == "[2]\n") { out }
     }
@@ -5121,9 +5121,9 @@ class Exec_99 {
             }
         """)
         //assert(out == "anon : (lin 2, col 27) : expected non-pool spawn : have \"spawn\"") { out }
-        assert(out == " |  anon : (lin 5, col 14) : (spawn (task' :fake () { group { (val ts =...\n" +
+        assert(out == " |  anon : (lin 5, col 14) : (spawn (func :fake () { group { (val ts =...\n" +
                 " |  anon : (lin 4, col 31) : (spawn nil() in ts)\n" +
-                " v  error : expected task\n") { out }
+                " v  throw : expected task\n") { out }
     }
     @Test
     fun kn_05_await_task_rets() {
@@ -5133,14 +5133,14 @@ class Exec_99 {
                     var y = []
                     y
                 }
-                println(x)
+                print(x)
             }
         """, true)
         //assert(out.contains("[]\n")) { out }
-        //assert(out.contains("anon : (lin 3, col 53) : block escape error : incompatible scopes")) { out }
-        assert(out == " |  anon : (lin 8, col 14) : (spawn (task' :fake () { group { (var x = ...\n" +
-                " |  anon : (lin 3, col 17) : (var x = do { (val ceu_spw = (spawn (task'...\n" +
-                " v  error : cannot copy reference out\n") { out }
+        //assert(out.contains("anon : (lin 3, col 53) : block escape throw : incompatible scopes")) { out }
+        assert(out == " |  anon : (lin 8, col 14) : (spawn (func :fake () { group { (var x = ...\n" +
+                " |  anon : (lin 3, col 17) : (var x = do { (val ceu_spw = (spawn (func...\n" +
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun kn_06_await_task_rets_valgrind () {
@@ -5157,9 +5157,9 @@ class Exec_99 {
                     3
                 }
                 var z = await spawn T()
-                println(x,y,z)
+                print(x,y,z)
             }
-            broadcast(nil) in :global
+            emit(true) in :global
         """, true)
         assert(out == "1\t[2]\t3\n") { out }
     }
@@ -5171,9 +5171,9 @@ class Exec_99 {
             }            
             spawn {
                 await spawn Main_Menu ()
-                println(999)
+                print(999)
             }
-            println(1)
+            print(1)
         """, true)
         assert(out == "1\n") { out }
     }
@@ -5181,11 +5181,11 @@ class Exec_99 {
     fun TODO_kn_08_await_now() {    // :check-now removed
         val out = test("""
             spawn {
-                println(1)
+                print(1)
                 await( ;;;:check-now;;;| true)
-                println(2)
+                print(2)
             }
-            println(3)
+            print(3)
         """, true)
         assert(out == "1\n2\n3\n") { out }
     }
@@ -5193,11 +5193,11 @@ class Exec_99 {
     fun kn_09_await_notfalse() {
         val out = test("""
             spawn {
-                println(1)
+                print(1)
                 await (|10)
-                println(2)
+                print(2)
             }
-            broadcast(nil) in :global
+            emit(true) in :global
         """, true)
         assert(out == "1\n2\n") { out }
     }
@@ -5207,13 +5207,13 @@ class Exec_99 {
             spawn {
                 watching evt|evt==:a {
                     every evt|evt==:b {
-                        println(;;;task.;;;pub)    ;; no enclosing task
+                        print(;;;task.;;;pub)    ;; no enclosing task
                     }
                 }
             }
-            println(1)
+            print(1)
         """)
-        //assert(out == "anon : (lin 5, col 33) : task error : missing enclosing task") { out }
+        //assert(out == "anon : (lin 5, col 33) : task throw : missing enclosing task") { out }
         assert(out == "1\n") { out }
     }
     @Test
@@ -5223,14 +5223,14 @@ class Exec_99 {
                 set ;;;task.;;;pub = 1
                 watching evt| evt==:a {
                     every evt| evt==:b {
-                        println(;;;task.;;;pub)
+                        print(;;;task.;;;pub)
                     }
                 }
             }) ()
-             broadcast (:b) in :global
-             broadcast (:b)
-             broadcast (:a)
-             broadcast (:b) in :global
+             emit (:b) in :global
+             emit (:b)
+             emit (:a)
+             emit (:b) in :global
         """, true)
         assert(out == "1\n1\n") { out }
     }
@@ -5239,7 +5239,7 @@ class Exec_99 {
         val out = test("""
             task T () {}
             val ts = [spawn T()]
-            println(status(ts[0]))
+            print(status(ts[0]))
         """)
         assert(out == ":terminated\n") { out }
     }
@@ -5252,20 +5252,20 @@ class Exec_99 {
             $COMP
             spawn {
                 watching 1 {
-                    defer { println(:z) }
-                    println(:x)
+                    defer { print(:z) }
+                    print(:x)
                     ${AWAIT()}
-                    println(:y)
+                    print(:y)
                     ${AWAIT()}
-                    println(999)
+                    print(999)
                 }
-                println(:A)
+                print(:A)
             }
-            println(1)
-            broadcast (nil)
-            println(2)
-            broadcast (1)
-            println(3)
+            print(1)
+            emit (nil)
+            print(2)
+            emit (1)
+            print(3)
         """)
         assert(out == ":x\n1\n:y\n2\n:z\n:A\n3\n") { out }
     }
@@ -5279,24 +5279,24 @@ class Exec_99 {
                 }
             }
         """)
-        assert(out == "anon : (lin 3, col 31) : access error : variable \"{{*}}\" is not declared\n") { out }
+        assert(out == "anon : (lin 3, col 31) : access throw : variable \"{{*}}\" is not declared\n") { out }
     }
     @Test
     fun ll_03_watching_clk() {
         val out = test("""
             spawn {
                 watching <10:s> {
-                    defer { println(10) }
+                    defer { print(10) }
                     await (|false)
-                    println(1)
+                    print(1)
                 }
-                println(999)
+                print(999)
             }
-            println(0)
-            broadcast (tag(:Clock,[5000])) in :global 
-            println(1)
-            broadcast (tag(:Clock, [5000]) )
-            println(2)
+            print(0)
+            emit (tag(:Clock,[5000])) in :global 
+            print(1)
+            emit (tag(:Clock, [5000]) )
+            print(2)
         """, true)
         assert(out == "0\n1\n10\n999\n2\n") { out }
     }
@@ -5311,7 +5311,7 @@ class Exec_99 {
                     }
                 }
             }            
-            println(1)
+            print(1)
         """, true)
         assert(out == "1\n") { out }
     }
@@ -5319,16 +5319,16 @@ class Exec_99 {
     fun ll_05_watching() {
         val out = test("""
             task T () {
-                watching (|error(:error)) {
+                watching (|throw(:throw)) {
                     await (|false)
                 }
             }            
             spawn T() in tasks()
-            broadcast (nil)
+            emit (nil)
         """, true)
-        assert(out == " |  anon : (lin 8, col 13) : broadcast'(:task,nil)\n" +
-                " |  anon : (lin 3, col 28) : error(:error)\n" +
-                " v  error : :error\n") { out }
+        assert(out == " |  anon : (lin 8, col 13) : emit'(:task,nil)\n" +
+                " |  anon : (lin 3, col 28) : throw(:throw)\n" +
+                " v  throw : :throw\n") { out }
     }
     @Test
     fun BUG_ll_06_watching_track() {
@@ -5336,22 +5336,22 @@ class Exec_99 {
             task T () {
                 set ;;;task.;;;pub = [10]
                 await (:evt)
-                println(:end)
+                print(:end)
             }
             val t = spawn(T)()
             val x = ;;;track;;;(t)
             spawn {
                 watching ;;;:check-now;;; |it==x {
-                    println(x.pub[0])
-                    broadcast(nil) in :global
-                    println(x.pub[0])
-                    broadcast(:evt) in :global          ;; BUG: same tick as watching?
-                    println(:nooo)   ;; never printed
+                    print(x.pub[0])
+                    emit(true) in :global
+                    print(x.pub[0])
+                    emit(:evt) in :global          ;; BUG: same tick as watching?
+                    print(:nooo)   ;; never printed
                     await (|false)
                 }
-                println(status(x))
+                print(status(x))
             }
-            println(:ok)
+            print(:ok)
         """, true)
         assert(out == "10\n10\nnil\n:ok\n") { out }
     }
@@ -5365,12 +5365,12 @@ class Exec_99 {
             val t = spawn T()
             spawn {
                 watching |it==t {
-                    broadcast (:evt) in :global
-                    println(:nooo)
+                    emit (:evt) in :global
+                    print(:nooo)
                 }
-                println(status(x))
+                print(status(x))
             }
-            println(:ok)
+            print(:ok)
         """, true)
         assert(out == "nil\n:ok\n") { out }
     }
@@ -5382,7 +5382,7 @@ class Exec_99 {
                     watching :y {
                     }
                 }
-                println(:ok)
+                print(:ok)
             }
         """, true)
         assert(out == ":ok\n") { out }
@@ -5396,20 +5396,20 @@ class Exec_99 {
             task T (v) {
                 set pub = v
                 toggle :Show {
-                    println(pub)
+                    print(pub)
                     every (it| (it is? :dict) and (it.sub==:draw)) {
-                        println(it.v)
+                        print(it.v)
                     }
                 }
             }
             spawn T(0)
-            broadcast(@[(:sub,:draw),(:v,1)])
-            broadcast(:Show [false])
-            broadcast(:Show [false])
-            broadcast(@[(:sub,:draw),(:v,99)])
-            broadcast(:Show [true])
-            broadcast(:Show [true])
-            broadcast(@[(:sub,:draw),(:v,2)])
+            emit(@[(:sub,:draw),(:v,1)])
+            emit(:Show [false])
+            emit(:Show [false])
+            emit(@[(:sub,:draw),(:v,99)])
+            emit(:Show [true])
+            emit(:Show [true])
+            emit(@[(:sub,:draw),(:v,2)])
         """, true)
         assert(out == "0\n1\n2\n") { out }
     }
@@ -5419,20 +5419,20 @@ class Exec_99 {
             task T (v) {
                 set pub = v
                 toggle :Show {
-                    println(pub)
+                    print(pub)
                     every :draw {
-                        println(it[0])
+                        print(it[0])
                     }
                 }
             }
             spawn T (0)
-            broadcast (tag(:draw, [1]))
-            broadcast (tag(:Show, [false]))
-            broadcast (tag(:Show, [false]))
-            broadcast (tag(:draw, [99]))
-            broadcast (tag(:Show, [true]))
-            broadcast (tag(:Show, [true]))
-            broadcast (tag(:draw, [2]))
+            emit (tag(:draw, [1]))
+            emit (tag(:Show, [false]))
+            emit (tag(:Show, [false]))
+            emit (tag(:draw, [99]))
+            emit (tag(:Show, [true]))
+            emit (tag(:Show, [true]))
+            emit (tag(:draw, [2]))
         """, true)
         assert(out == "0\n1\n2\n") { out }
     }
@@ -5444,9 +5444,9 @@ class Exec_99 {
                 val x = toggle :Show {
                     10
                 }
-                println(x)
+                print(x)
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == "10\n:ok\n") { out }
     }
@@ -5458,7 +5458,7 @@ class Exec_99 {
         val out = test("""
             func f (v) { v }
             val v = 10->f()
-            println(v)
+            print(v)
         """)
         assert(out == "10\n") { out }
     }
@@ -5468,7 +5468,7 @@ class Exec_99 {
             func f (v) { 10 }
             func g (v) { v }
             val v = 99->f()->g()
-            println(v)
+            print(v)
         """)
         assert(out == "10\n") { out }
     }
@@ -5478,7 +5478,7 @@ class Exec_99 {
             func f (v) { 10 }
             func g (v) { v }
             val v = 99->f->g
-            println(v)
+            print(v)
         """)
         assert(out == "10\n") { out }
     }
@@ -5488,7 +5488,7 @@ class Exec_99 {
             $PLUS
             func f (v,x) { v - x }
             val v = 10->f(20)
-            println(v)
+            print(v)
         """)
         assert(out == "-10\n") { out }
     }
@@ -5497,7 +5497,7 @@ class Exec_99 {
         val out = test("""
             func f (v) { v }
             val v = f<-20
-            println(v)
+            print(v)
         """)
         assert(out == "20\n") { out }
     }
@@ -5507,7 +5507,7 @@ class Exec_99 {
             $PLUS
             func f (v,x) { v - x }
             val v = f(10)<-20
-            println(v)
+            print(v)
         """)
         assert(out == "-10\n") { out }
     }
@@ -5516,7 +5516,7 @@ class Exec_99 {
         val out = test("""
             func f (v) { v() }
             val v = f <- {10} thus { it }
-            println(v)
+            print(v)
         """)
         assert(out == "10\n") { out }
     }
@@ -5525,7 +5525,7 @@ class Exec_99 {
         val out = test("""
             func f (x,y) { y(x) }
             val v = 10 -> f <- {it} thus { it }
-            println(v)
+            print(v)
         """)
         assert(out == "10\n") { out }
     }
@@ -5538,7 +5538,7 @@ class Exec_99 {
             $PLUS
             func f (v,x) { v+x }
             val v = 10-->f(20)
-            println(v)
+            print(v)
         """)
         assert(out == "30\n") { out }
     }
@@ -5548,7 +5548,7 @@ class Exec_99 {
             func g (v) { v }
             func f (v) { g }
             val v = 10-->f->g
-            println(v)
+            print(v)
         """)
         assert(out == "10\n") { out }
     }
@@ -5559,7 +5559,7 @@ class Exec_99 {
             func g (v) { v+1 }
             func f (v) { -v }
             val v = f<--10->g
-            println(v)
+            print(v)
         """)
         assert(out == "-11\n") { out }
     }
@@ -5570,7 +5570,7 @@ class Exec_99 {
             val x = 1 --> {
                 it
             }
-            println(x)
+            print(x)
         """,true)
         assert(out == "1\n") { out }
     }
@@ -5581,9 +5581,9 @@ class Exec_99 {
             val x = [] --> { \x =>
                 x   ;; TODO: x redeclared
             }
-            println(x)
+            print(x)
         """,true)
-        //assert(out == "anon : (lin 2, col 31) : declaration error : variable \"x\" is already declared\n") { out }
+        //assert(out == "anon : (lin 2, col 31) : declaration throw : variable \"x\" is already declared\n") { out }
         assert(out == "[]\n") { out }
     }
     @Test
@@ -5593,7 +5593,7 @@ class Exec_99 {
             val y = [] --> {\ x =>
                 x
             }
-            println(y)
+            print(y)
         """,true)
         assert(out == "[]\n") { out }
     }
@@ -5604,7 +5604,7 @@ class Exec_99 {
             val x = {
                 it
             } <-- 1
-            println(x)
+            print(x)
         """,true)
         assert(out == "1\n") { out }
     }
@@ -5615,7 +5615,7 @@ class Exec_99 {
             val x = {\y =>
                 y
             } <-- []
-            println(x)
+            print(x)
         """,true)
         assert(out == "[]\n") { out }
     }
@@ -5624,7 +5624,7 @@ class Exec_99 {
         val out = test(
             """
             val x = 2 --> { it + 1 } --> { it * 2 }
-            println(x)
+            print(x)
         """,true)
         assert(out == "6\n") { out }
     }
@@ -5633,7 +5633,7 @@ class Exec_99 {
         val out = test(
             """
             val x = { it + 1 } <-- { it * 2 } <-- 2
-            println(x)
+            print(x)
         """,true)
         assert(out == "5\n") { out }
     }
@@ -5645,7 +5645,7 @@ class Exec_99 {
         val out = test("""
             data :X = [x]
             val t = [[10]]
-            println(t[0].(:X).x)
+            print(t[0].(:X).x)
         """)
         assert(out == "10\n") { out }
     }
@@ -5654,7 +5654,7 @@ class Exec_99 {
         val out = test("""
             data :X = [x]
             val t = [[[10]]]
-            println(t[0].(:X).x)
+            print(t[0].(:X).x)
         """)
         assert(out == "[10]\n") { out }
     }
@@ -5678,7 +5678,7 @@ class Exec_99 {
             data :X = [x]
             val T = task () {
                 set pub = [10]
-                yield(nil)
+                await(true)
             }
             val t = spawn T(nil)
             t.pub thus { ceu_94 :X =>
@@ -5696,13 +5696,13 @@ class Exec_99 {
         val out = test(
             """
                 $PLUS
-            println(x) where {
+            print(x) where {
                 val x = 1
             }
             val z = (y + 10) where {
                 val y = 20
             }
-            println(z)
+            print(z)
         """)
         assert(out == "1\n30\n") { out }
     }
@@ -5711,24 +5711,24 @@ class Exec_99 {
         val out = test(
             """
             task T (v) {
-                println(v)
+                print(v)
             }
             val t = (spawn T(v where { val v = 10 }))
         """)
         assert(out == "10\n") { out }
-        //assert(out == "anon : (lin 5, col 34) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 5, col 34) : set throw : incompatible scopes\n") { out }
     }
     @Test
     fun oq_03_where() {
         val out = test(
             """
             coro T (v) {
-                println(v)
+                print(v)
             }
             (val t = spawn T(v)) where { val v = 10 }
-            println(t)
+            print(t)
         """)
-        assert(out == "anon : (lin 6, col 21) : access error : variable \"t\" is not declared\n") { out }
+        assert(out == "anon : (lin 6, col 21) : access throw : variable \"t\" is not declared\n") { out }
     }
     @Test
     fun op_04_where() {
@@ -5738,9 +5738,9 @@ class Exec_99 {
             val z = y + 10 where {
                 val y = 20
             }
-            println(z)
+            print(z)
         """)
-        //assert(out == "anon : (lin 2, col 21) : access error : variable \"y\" is not declared") { out }
+        //assert(out == "anon : (lin 2, col 21) : access throw : variable \"y\" is not declared") { out }
         assert(out == "30\n") { out }
     }
     @Test
@@ -5750,7 +5750,7 @@ class Exec_99 {
                 where {
                     val y = 10
                 }
-            println(x)
+            print(x)
         """)
         assert(out == "10\n") { out }
     }
@@ -5759,7 +5759,7 @@ class Exec_99 {
         val out = test(
             """
             task T (v) {
-                println(v)
+                print(v)
             }
             val t = (spawn T(v where { val v = 10 }))
         """)
@@ -5770,28 +5770,28 @@ class Exec_99 {
         val out = test(
             """
             task T (v) {
-                println(v)
+                print(v)
             }
             val t = (spawn T(v)) where {
                 val v = 10
             }
-            println(type(t))
+            print(type(t))
         """)
         assert(out == "10\n" +
                 " |  anon : (lin 5, col 13) : (val t = do { (val v = 10); (spawn T(v)); })\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun op_07x_where() {
         val out = test(
             """
             task T (v) {
-                println(v)
+                print(v)
             }
             val t = spawn T(v where {
                 val v = 10
             })
-            println(type(t))
+            print(type(t))
         """)
         assert(out == "10\n:exe-task\n") { out }
     }
@@ -5800,7 +5800,7 @@ class Exec_99 {
         val out = test(
             """
             task T (v) {
-                println(v)
+                print(v)
                 yield()
             }
             val ts = tasks()
@@ -5808,7 +5808,7 @@ class Exec_99 {
                 val v = 10
             }
             loop t in ts {
-                println(type(t))
+                print(type(t))
             }
         """, true)
         assert(out == "10\n:exe-task\n") { out }
@@ -5819,7 +5819,7 @@ class Exec_99 {
     @Test
     fun pp_01_lambda () {
         val out = test("""
-            println({ it })
+            print({ it })
         """)
         assert(out.contains("func: 0x")) { out }
     }
@@ -5827,14 +5827,14 @@ class Exec_99 {
     fun pp_02_lambda () {
         val out = test("""
             $PLUS
-            println({\x=>x+x}(2))
+            print({\x=>x+x}(2))
         """)
         assert(out.contains("4\n")) { out }
     }
     @Test
     fun pp_03_lambda () {
         val out = test("""
-            println({\x=>x}(1))
+            print({\x=>x}(1))
         """)
         assert(out.contains("1\n")) { out }
     }
@@ -5842,7 +5842,7 @@ class Exec_99 {
     fun pp_04_lambda () {
         val out = test(
             """
-            println({ it }(10))
+            print({ it }(10))
         """)
         assert(out == "10\n") { out }
     }
@@ -5853,7 +5853,7 @@ class Exec_99 {
             func f (g) {
                 g(10)
             }
-            println(f <- { it })
+            print(f <- { it })
         """)
         assert(out == "10\n") { out }
     }
@@ -5862,7 +5862,7 @@ class Exec_99 {
         val out = test(
             """
             val x = { { it }(10) }()    ;; it1/it2
-            println(x)
+            print(x)
         """)
         assert(out == "10\n") { out }
     }
@@ -5873,7 +5873,7 @@ class Exec_99 {
                 g(v)
             }
             val v = f(5) <- { it }
-            println(v)
+            print(v)
         """)
         assert(out == "5\n") { out }
     }
@@ -5884,14 +5884,14 @@ class Exec_99 {
                 g()
             }
             val v = f( { 10 } )
-            println(v)
+            print(v)
         """)
         assert(out == "10\n") { out }
     }
     @Test
     fun pp_09_lambda_call () {
         val out = test("""
-            println({\ x => x }(10))
+            print({\ x => x }(10))
         """)
         assert(out == "10\n") { out }
     }
@@ -5899,7 +5899,7 @@ class Exec_99 {
     fun pp_10_lambda_call () {
         val out = test("""
             $PLUS
-            println({\x,y => x+y }(10,30))
+            print({\x,y => x+y }(10,30))
         """)
         assert(out == "40\n") { out }
     }
@@ -5910,16 +5910,16 @@ class Exec_99 {
     fun qq_01_test () {
         val out = test("""
             do {
-                println(:1)
+                print(:1)
             }
             test {
-                println(:2)
+                print(:2)
             }
             do {
                 test {
-                    println(:3)
+                    print(:3)
                 }
-                println(:4)
+                print(:4)
             }
         """)
         assert(out == ":1\n:4\n") { out }
@@ -5929,16 +5929,16 @@ class Exec_99 {
         TEST = true
         val out = test("""
             do {
-                println(:1)
+                print(:1)
             }
             test {
-                println(:2)
+                print(:2)
             }
             do {
                 test {
-                    println(:3)
+                    print(:3)
                 }
-                println(:4)
+                print(:4)
             }
         """)
         assert(out == ":1\n:2\n:3\n:4\n") { out }
@@ -5951,7 +5951,7 @@ class Exec_99 {
         val out = test(
             """
             val x = [nil,[10]]
-            println(x, x[1], x[1][0])
+            print(x, x[1], x[1][0])
         """
         )
         assert(out == "[nil,[10]]\t[10]\t10\n") { out }
@@ -5960,7 +5960,7 @@ class Exec_99 {
     fun TODO_tt_02_index_tuple() {
         val out = test("""
             val t = [1,2,3]
-            println(t.a, t.c)
+            print(t.a, t.c)
         """)
         assert(out == "1\t3\n") { out }
     }
@@ -5968,7 +5968,7 @@ class Exec_99 {
     fun tt_03_index_dict() {
         val out = test("""
             val t = @[ (:x,1), (:y,2) ]
-            println(t.x, t.y)
+            print(t.x, t.y)
         """)
         assert(out == "1\t2\n") { out }
     }
@@ -5978,7 +5978,7 @@ class Exec_99 {
             var v = "abc"
             set v[#v] = 'a'
             set v[2] = 'b'
-            println(v[0])
+            print(v[0])
             `puts(${D}v.Dyn->Vector.buf);`
         """)
         assert(out == "a\nabba\n") { out }
@@ -5986,10 +5986,10 @@ class Exec_99 {
     @Test
     fun tt_05_string() {
         val out = test("""
-            println("")
-            println("a\tb")
-            println("a\nb")
-            println("a'\"b")
+            print("")
+            print("a\tb")
+            print("a\nb")
+            print("a'\"b")
         """)
         assert(out == "#[]\na\tb\na\nb\na'\"b\n") { out }
     }
@@ -5997,7 +5997,7 @@ class Exec_99 {
     fun tt_06_dict_init_err() {
         val out = test("""
             var t = @[x,y]
-            println(t.x, t.y)
+            print(t.x, t.y)
         """)
         assert(out == "anon : (lin 2, col 24) : expected \"=\" : have \",\"\n") { out }
     }
@@ -6005,7 +6005,7 @@ class Exec_99 {
     fun tt_07_dict_init() {
         val out = test("""
             var t = @[x=1, y=2]
-            println(t.x, t.y)
+            print(t.x, t.y)
         """)
         assert(out == "1\t2\n") { out }
     }
@@ -6019,7 +6019,7 @@ class Exec_99 {
                     set v[#v] = 10
                 }
             }
-            println(v)
+            print(v)
         """)
         assert(out == "#[10]\n") { out }
     }
@@ -6030,7 +6030,7 @@ class Exec_99 {
             set v1 = #[1,2,3]
             var v2
             set v2 = #[4,5,6]
-            println(v1 ++ v2)
+            print(v1 ++ v2)
         """, true)
         assert(out == "#[1,2,3,4,5,6]\n") { out }
     }
@@ -6039,7 +6039,7 @@ class Exec_99 {
 
     @Test
     fun uu_01_cons() {
-        val out = test("println(:T [])")
+        val out = test("print(:T [])")
         assert(out == ":T []\n") { out }
     }
     @Test
@@ -6047,7 +6047,7 @@ class Exec_99 {
         val out = test("""
             data :T = [v]
             val t = :T [10]
-            println(t.v, t)
+            print(t.v, t)
         """)
         assert(out == "10\t:T [10]\n") { out }
     }
@@ -6060,7 +6060,7 @@ class Exec_99 {
             $PLUS
             val v = #[1]
             set v[=] = 10
-            println(v)
+            print(v)
         """)
         assert(out == "#[10]\n") { out }
     }
@@ -6069,7 +6069,7 @@ class Exec_99 {
         val out = test("""
             $PLUS
             val v = #[10]
-            println(v[=])
+            print(v[=])
         """)
         assert(out == "10\n") { out }
     }
@@ -6079,7 +6079,7 @@ class Exec_99 {
             $PLUS
             val v = #[]
             set v[+] = 1
-            println(v)
+            print(v)
         """)
         assert(out == "#[1]\n") { out }
     }
@@ -6090,8 +6090,8 @@ class Exec_99 {
             val v = #[]
             v[+]
         """,)
-        assert(out == "anon : (lin 4, col 41) : index error : out of bounds\n" +
-                ":error\n") { out }
+        assert(out == "anon : (lin 4, col 41) : index throw : out of bounds\n" +
+                ":throw\n") { out }
     }
     @Test
     fun vv_05_ppp_pop() {
@@ -6099,7 +6099,7 @@ class Exec_99 {
             $PLUS
             var v = #[1]
             var x = v[-]
-            println(#v, x)
+            print(#v, x)
         """)
         assert(out == "0\t1\n") { out }
     }
@@ -6109,9 +6109,9 @@ class Exec_99 {
             $PLUS
             val v = #[1]
             set v[-] = 10   ;; cannot set v[-]
-            println(v)
+            print(v)
         """)
-        assert(out == ("anon : (lin 4, col 13) : set error : expected assignable destination\n")) { out }
+        assert(out == ("anon : (lin 4, col 13) : set throw : expected assignable destination\n")) { out }
     }
     @Test
     fun vv_07_ppp() {
@@ -6123,9 +6123,9 @@ class Exec_99 {
             set v[+] = 2
             set v[=] = 20
             set v[+] = 3
-            println(#v, v[=])
+            print(#v, v[=])
             val x = v[-]
-            println(#v, v[=], x)
+            print(#v, v[=], x)
         """)
         assert(out == "3\t3\n2\t20\t3\n") { out }
     }
@@ -6135,7 +6135,7 @@ class Exec_99 {
             $PLUS
             var v
             set v = #[10]
-            println(v[#v - 1])
+            print(v[#v - 1])
         """)
         assert(out == "10\n") { out }
     }
@@ -6145,7 +6145,7 @@ class Exec_99 {
             $PLUS
             var v
             set v = #[10]
-            println(v[-1+1])
+            print(v[-1+1])
         """)
         assert(out == "anon : (lin 5, col 24) : expected \"]\" : have \"1\"\n") { out }
     }
@@ -6155,7 +6155,7 @@ class Exec_99 {
             $PLUS
             val stk = [1]
             stk[-]
-            println(stk, #stk)
+            print(stk, #stk)
         """)
         assert(out == "[nil]\t1\n") { out }
     }
@@ -6163,12 +6163,12 @@ class Exec_99 {
     fun vv_11_vector_size() {
         val out = test("""
             val v = #[]
-            println(#v, v)
+            print(#v, v)
             set v[+] = 1
             set v[+] = 2
-            println(#v, v)
+            print(#v, v)
             val top = v[-]
-            println(#v, v, v[=], top)
+            print(#v, v, v[=], top)
         """, true)
         assert(out == "0\t#[]\n2\t#[1,2]\n1\t#[1]\t1\t2\n") { out }
     }
@@ -6183,7 +6183,7 @@ class Exec_99 {
                     :C = []
                 }
             }
-            println(to-tag-string(":A"), to-tag-string(":A.B"), to-tag-string(":A.B.C"))
+            print(to-tag-string(":A"), to-tag-string(":A.B"), to-tag-string(":A.B.C"))
         """, true)
         assert(out == ":A\t:A.B\t:A.B.C\n") { out }
     }
@@ -6192,7 +6192,7 @@ class Exec_99 {
         val out = test("""
             data :T = [t=[a,b]]
             val t :T = [[1,10]]
-            println(t.t, t.t.b)
+            print(t.t, t.t.b)
         """)
         assert(out == "[1,10]\t10\n") { out }
     }
@@ -6201,7 +6201,7 @@ class Exec_99 {
         val out = test("""
             data :Lim = [p1=[l,c], p2=[l,c]]
             val v :Lim = [[1,1],[2,2]]
-            println(v, v.p2.l)
+            print(v, v.p2.l)
         """)
         assert(out == "[[1,1],[2,2]]\t2\n") { out }
     }
@@ -6212,7 +6212,7 @@ class Exec_99 {
     fun xa_00_eqeqeq_tup() {
         val out = test(
             """
-            println(do {
+            print(do {
                 val' it = [1]
                 do {
                     var v = it
@@ -6226,7 +6226,7 @@ class Exec_99 {
     fun xa_01_eqeqeq_tup() {
         val out = test(
             """
-            println([1] === [1])
+            print([1] === [1])
         """, true)
         assert(out == "true\n") { out }
     }
@@ -6234,11 +6234,11 @@ class Exec_99 {
     fun xa_02_op_eqeqeq_tup() {
         val out = test(
             """
-            println([1] === [1])
-            println([ ] === [1])
-            println([1] =/= [1])
-            println([1,[],[1,2,3]] === [1,[],[1,2,3]])
-            println([nil,[[1,1],1]] === [nil,[[1,1],1]])
+            print([1] === [1])
+            print([ ] === [1])
+            print([1] =/= [1])
+            print([1,[],[1,2,3]] === [1,[],[1,2,3]])
+            print([nil,[[1,1],1]] === [nil,[[1,1],1]])
         """, true)
         assert(out == "true\nfalse\nfalse\ntrue\ntrue\n") { out }
     }
@@ -6246,7 +6246,7 @@ class Exec_99 {
     fun xa_03_op_eqeqeq_tup() {
         val out = test(
             """
-            println([1,[1],1] === [1,[1],1])
+            print([1,[1],1] === [1,[1],1])
         """, true)
         assert(out == "true\n") { out }
     }
@@ -6254,10 +6254,10 @@ class Exec_99 {
     fun xb_04_op_eqs_dic() {
         val out = test(
             """
-            println(@[] ==  @[])
-            println(@[] === @[])
-            println(@[] /=  @[])
-            println(@[] =/= @[])
+            print(@[] ==  @[])
+            print(@[] === @[])
+            print(@[] /=  @[])
+            print(@[] =/= @[])
         """, true)
         assert(out == "false\ntrue\ntrue\nfalse\n") { out }
     }
@@ -6265,10 +6265,10 @@ class Exec_99 {
     fun xb_05_op_eqs_vec() {
         val out = test(
             """
-            println(#[]  ==  #[])
-            println(#[1] === #[1])
-            println(#[1] /=  #[1])
-            println(#[]  =/= #[])
+            print(#[]  ==  #[])
+            print(#[1] === #[1])
+            print(#[1] /=  #[1])
+            print(#[]  =/= #[])
         """, true)
         assert(out == "false\ntrue\ntrue\nfalse\n") { out }
     }
@@ -6276,7 +6276,7 @@ class Exec_99 {
     fun xb_06_op_eqs_vec_dic_tup() {
         val out = test(
             """
-            println(@[(:y,false)] === @[(:x,true)])
+            print(@[(:y,false)] === @[(:x,true)])
         """, true)
         assert(out == "false\n") { out }
     }
@@ -6284,10 +6284,10 @@ class Exec_99 {
     fun xb_07_op_eqs_vec_dic_tup() {
         val out = test(
             """
-            println([#[],@[]] ==  [#[],@[]])
-            println([#[],@[]] /=  [#[],@[]])
-            println([#[1],@[(:y,false),(:x,true)]] === [#[1],@[(:x,true),(:y,false)]])
-            println([#[],@[]] =/= [#[],@[]])
+            print([#[],@[]] ==  [#[],@[]])
+            print([#[],@[]] /=  [#[],@[]])
+            print([#[1],@[(:y,false),(:x,true)]] === [#[1],@[(:x,true),(:y,false)]])
+            print([#[],@[]] =/= [#[],@[]])
         """, true)
         assert(out == "false\ntrue\ntrue\nfalse\n") { out }
     }
@@ -6300,7 +6300,7 @@ class Exec_99 {
                     do {
                         do {
                             val x
-                            println(x)
+                            print(x)
                             do {
                                 nil
                             }
@@ -6316,13 +6316,13 @@ class Exec_99 {
         assert(out == "nil\n" +
                 " |  anon : (lin 17, col 17) : f(@[(:y,false)])\n" +
                 " |  anon : (lin 11, col 37) : x[0]\n" +
-                " v  error : expected collection\n") { out }
+                " v  throw : expected collection\n") { out }
     }
     @Test
     fun xb_09_xxx() {
         val out = test(
             """
-            println([@[]] === [@[]])
+            print([@[]] === [@[]])
         """, true)
         assert(out == "true\n") { out }
     }
@@ -6330,7 +6330,7 @@ class Exec_99 {
     fun xb_10_eqs() {
         val out = test("""
             func g (v1', v2') {
-                ;;println(:XXX)
+                ;;print(:XXX)
                 ;;dump(v1') ; dump(v1'[0])
                 ;;dump(v2') ; dump(v2'[0])
                 not (
@@ -6343,7 +6343,7 @@ class Exec_99 {
                 g(v1,v2) and g(v2,v1)
             }
             val d1 = [[10]]
-            println(f(d1, [[10]]))
+            print(f(d1, [[10]]))
         """, true)
         assert(out == "true\n") { out }
     }
@@ -6359,7 +6359,7 @@ class Exec_99 {
             val f = func (v) {
                 g(v) and g(v)
             }
-            println(f([[10]]))
+            print(f([[10]]))
         """)
         assert(out == "true\n") { out }
     }
@@ -6370,7 +6370,7 @@ class Exec_99 {
     fun xc_01_tostring() {
         val out = test("""
             val s = to.string(10)
-            println(type(s), s)
+            print(type(s), s)
         """, true)
         assert(out == ":vector\t10\n") { out }
     }
@@ -6378,7 +6378,7 @@ class Exec_99 {
     fun xc_02_tonumber() {
         val out = test("""
             val n = to.number("10")
-            println(type(n), n)
+            print(type(n), n)
         """, true)
         assert(out == ":number\t10\n") { out }
     }
@@ -6386,7 +6386,7 @@ class Exec_99 {
     fun xc_03_tonumber_tostring() {
         val out = test("""
             val s = to.string(to.number("10"))
-            println(type(s), s)
+            print(type(s), s)
         """, true)
         assert(out == ":vector\t10\n") { out }
     }
@@ -6398,7 +6398,7 @@ class Exec_99 {
             }
             val t = coroutine(T)
             val v = to.vector(t)
-            println(v)
+            print(v)
         """, true)
         assert(out == "#[[1]]\n") { out }
     }
@@ -6409,7 +6409,7 @@ class Exec_99 {
                 val t = [[1],[2],[3]]
                 to.vector(drop(t))
             }
-            println(v)
+            print(v)
         """, true)
         assert(out == "#[[1],[2],[3]]\n") { out }
     }
@@ -6420,31 +6420,31 @@ class Exec_99 {
                 val t = [[1],[2],[3]]
                 drop(to.vector(t))
             }
-            println(v)
+            print(v)
         """, true)
         assert(out == " |  anon : (lin 2, col 13) : (val v = do { (val t = [[1],[2],[3]]); dro...\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun xc_06_string_to_tag() {
         val out = test("""
             ;;;do;;; :xyz
-            println(to-tag-string(":x"))
-            println(to-tag-string(":xyz"))
-            println(to-tag-string("xyz"))
+            print(to-tag-string(":x"))
+            print(to-tag-string(":xyz"))
+            print(to-tag-string("xyz"))
         """, true)
         assert(out == "nil\n:xyz\nnil\n") { out }
     }
     @Test
     fun xc_07_to_char() {
         val out = test("""
-            println(to.char('a'))
-            println(to.char(65))
-            println(to.char("x"))
-            println(to.char(""))
-            println(to.char("ab"))
-            println(to.char("\\n"))
-            println(:ok)
+            print(to.char('a'))
+            print(to.char(65))
+            print(to.char("x"))
+            print(to.char(""))
+            print(to.char("ab"))
+            print(to.char("\\n"))
+            print(:ok)
         """, true)
         assert(out == "a\nA\nx\nnil\nnil\n\n\n:ok\n") { out }
     }
@@ -6452,7 +6452,7 @@ class Exec_99 {
     fun xc_07x_to_char() {
         val out = test("""
             val v = [1,2]
-            println(:v, v, #v, v[0])
+            print(:v, v, #v, v[0])
             ifs {
                 (#v /= 2) => nil
                 (v[0] /= '\\') => nil
@@ -6463,16 +6463,16 @@ class Exec_99 {
     @Test
     fun xc_08_totuple() {
         val out = test("""
-            println(to.tuple([]))
-            println(to.tuple(#[1,2]))
+            print(to.tuple([]))
+            print(to.tuple(#[1,2]))
         """, true)
         assert(out == "[]\n[1,2]\n") { out }
     }
     @Test
     fun xc_08_todict() {
         val out = test("""
-            println(to.dict([[:x,1],[:y,2]]))
-            println(to.dict(#[[:x,1],[:y,2]]))
+            print(to.dict([[:x,1],[:y,2]]))
+            print(to.dict(#[[:x,1],[:y,2]]))
         """, true)
         assert(out == "@[(:x,1),(:y,2)]\n" +
                 "@[(:x,1),(:y,2)]\n") { out }
@@ -6480,8 +6480,8 @@ class Exec_99 {
     @Test
     fun xc_09_todict() {
         val out = test("""
-            println(to.dict([:x,:y]))
-            println(to.dict([]))
+            print(to.dict([:x,:y]))
+            print(to.dict([]))
         """, true)
         assert(out == "@[(:x,0),(:y,1)]\n" +
                 "@[]\n") { out }
@@ -6492,7 +6492,7 @@ class Exec_99 {
     @Test
     fun za_01_ok() {
         val out = test("""
-            println(:ok)
+            print(:ok)
         """, true)
         assert(out == ":ok\n") { out }
     }
@@ -6504,15 +6504,15 @@ class Exec_99 {
                 ;;dump(ts)
                 ;;;do;;; [ts]
             }
-            println(:ok)
+            print(:ok)
         """, true)
         assert(out == ":ok\n") { out }
     }
     @Test
     fun TODO_za_03_in() {
         val out = test("""
-            println(10 in? [1,2,3])
-            println(10 in? [1,10,3])
+            print(10 in? [1,2,3])
+            print(10 in? [1,10,3])
         """, true)
         assert(out == "false\ntrue\n") { out }
     }
@@ -6525,27 +6525,27 @@ class Exec_99 {
                 }
                 nil
             }
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
     @Test
     fun za_05_assert() {
         val out = test("""
-            println(assert(10))
+            print(assert(10))
             assert(nil)
         """, true)
         assert(out == "10\n" +
                 " |  anon : (lin 3, col 13) : assert(nil)\n" +
-                " |  build/prelude-x.ceu : (lin 40, col 30) : error(:error,#['a','s','s','e','r','t','i'...\n" +
-                " v  error : assertion error\n") { out }
+                " |  build/prelude-x.ceu : (lin 40, col 30) : throw(:throw,#['a','s','s','e','r','t','i'...\n" +
+                " v  throw : assertion throw\n") { out }
     }
     @Test
     fun za_06_copy() {
         val out = test("""
-            println(copy([1,2,3]))
-            println(copy(#[1,2,3]))
-            println(copy(@[(:k1,[1,2,3]), (1,#[])]))
+            print(copy([1,2,3]))
+            print(copy(#[1,2,3]))
+            print(copy(@[(:k1,[1,2,3]), (1,#[])]))
         """, true)
         assert(out == "[1,2,3]\n#[1,2,3]\n@[(:k1,[1,2,3]),(1,#[])]\n") { out }
     }
@@ -6558,8 +6558,8 @@ class Exec_99 {
             assert(1 is-not? :number)
         """, true)
         assert(out.contains(" |  anon : (lin 3, col 17) : assert(is'([],:bool),#['o','k'])\n" +
-                " |  build/prelude-x.ceu : (lin 39, col 30) : error(:error,xx-cat-move(xx-cat-move(#[],#...\n" +
-                " v  error : assertion error : ok\n")) { out }
+                " |  build/prelude-x.ceu : (lin 39, col 30) : throw(:throw,xx-cat-move(xx-cat-move(#[],#...\n" +
+                " v  throw : assertion throw : ok\n")) { out }
     }
     @Test
     fun TODO_za_08_comp() {     // fp.*
@@ -6568,7 +6568,7 @@ class Exec_99 {
                 x**2
             }
             val quad = square <|< square
-            println(quad(3))
+            print(quad(3))
         """, true)
         assert(out == "81\n") { out }
     }
@@ -6586,7 +6586,7 @@ class Exec_99 {
             }
             val it = [g, coroutine(bar)]
             resume it[1]()
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -6607,7 +6607,7 @@ class Exec_99 {
                 [to-iter-coro, v]
             }
             bar(coroutine(coro () {}))
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -6624,7 +6624,7 @@ class Exec_99 {
                 nil
             }
             x()
-            println(:ok)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -6633,7 +6633,7 @@ class Exec_99 {
         val out = test("""
             task T (pos) {
                 await (|true)
-                println(pos)
+                print(pos)
             }
             spawn {
                 val ts = tasks()
@@ -6642,7 +6642,7 @@ class Exec_99 {
                 }
                 await (|false)
             }
-            broadcast(nil) in :global
+            emit(true) in :global
         """, true)
         assert(out == "[]\n") { out }
     }
@@ -6654,7 +6654,7 @@ class Exec_99 {
                 await (false)
             }
             val t = spawn T ([1,2])
-            println(t.pub())
+            print(t.pub())
         """, true)
         assert(out == "[1,2]\n") { out }
     }
@@ -6668,14 +6668,14 @@ class Exec_99 {
                 }
             }
             spawn T ()
-            println(:ok)
+            print(:ok)
         """)
         assert(out == " |  anon : (lin 8, col 13) : (spawn T())\n" +
                 " |  anon : (lin 5, col 37) : pub\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
         //assert(out == ":ok\n") { out }
         //assert(out == "anon : (lin 8, col 19) : T()\n" +
-        //        "anon : (lin 5, col 30) : set error : incompatible scopes\n:error\n") { out }
+        //        "anon : (lin 5, col 30) : set throw : incompatible scopes\n:throw\n") { out }
     }
     @Test
     fun zb_07_all() {
@@ -6686,14 +6686,14 @@ class Exec_99 {
                 }
             }
             task T (u) {
-                println(u.pub)
+                print(u.pub)
             }
             spawn T (spawn U())
         """, true)
         //assert(out == "10\n") { out }
         assert(out == "nil\n") { out }
         //assert(out == "anon : (lin 10, col 28) : U()\n" +
-        //        "anon : (lin 2, col 23) : block escape error : incompatible scopes\n:error\n") { out }
+        //        "anon : (lin 2, col 23) : block escape throw : incompatible scopes\n:throw\n") { out }
     }
     @Test
     fun BUG_zb_08_all_valgrind() {
@@ -6705,7 +6705,7 @@ class Exec_99 {
                 await(|false)
             }
             task T (u) {
-                println(u.pub())
+                print(u.pub())
                 nil
             }
             spawn T (spawn U())
@@ -6719,7 +6719,7 @@ class Exec_99 {
                 yield()
             }
             task T (u) {
-                println(u)
+                print(u)
             }
             spawn T (spawn U())
         """)
@@ -6732,7 +6732,7 @@ class Exec_99 {
             spawn {
                 f() where {}
             }
-            println(1)
+            print(1)
         """)
         assert(out == "1\n") { out }
     }
@@ -6742,16 +6742,16 @@ class Exec_99 {
             spawn {
                 loop {
                     await (10)
-                    broadcast(tag(:pause, [])) in :global 
+                    emit(tag(:pause, [])) in :global 
                     watching 10 {
                         await(|false)
                     }
-                    broadcast(tag(:resume, [])) in :global 
+                    emit(tag(:resume, [])) in :global 
                 }
             }
-            broadcast (10) in :global
-            broadcast (10) in :global
-            println(:ok)
+            emit (10) in :global
+            emit (10) in :global
+            print(:ok)
         """, true)
         assert(out == ":ok\n") { out }
     }
@@ -6761,18 +6761,18 @@ class Exec_99 {
             spawn {
                 loop {
                     await (10)
-                    broadcast (tag(:pause, [])) in :global
+                    emit (tag(:pause, [])) in :global
                     watching 10 {
                         await(|false)
                     }
-                    broadcast (tag(:resume, [])) in :global
+                    emit (tag(:resume, [])) in :global
                     await (|true)
                 }
             }
-            broadcast (10) in :global
-            broadcast (10) in :global
-            broadcast (10) in :global
-            println(:ok)
+            emit (10) in :global
+            emit (10) in :global
+            emit (10) in :global
+            print(:ok)
         """, true)
         assert(out == ":ok\n") { out }
     }
@@ -6782,15 +6782,15 @@ class Exec_99 {
             spawn {
                 loop {
                     await(10)
-                    println(:1)
+                    print(:1)
                     watching 10 {
                         await(| false)
                     }
-                    println(:2)
+                    print(:2)
                 }
             }
-            broadcast (10) in :global    ;; :1
-            broadcast (10) in :global    ;; :2 (not :1 again)
+            emit (10) in :global    ;; :1
+            emit (10) in :global    ;; :2 (not :1 again)
         """, true)
         assert(out == ":1\n:2\n") { out }
     }
@@ -6798,27 +6798,27 @@ class Exec_99 {
     fun zb_14_all_term_coro () {
         val out = test("""
             task T () {
-                println(:1)
+                print(:1)
                 watching (|false) {
                     await (|true)
                 }
-                println(:2)
-                ;;println(:t)
+                print(:2)
+                ;;print(:t)
             }
             spawn {
                 val ts = tasks()
                 spawn T() in ts
-                ;;println(:every)
+                ;;print(:every)
                 every :e {
-                    ;;println(:while)
+                    ;;print(:while)
                     loop t in ts {
-                        ;;println(t, detrack(t), status(detrack(t)))
+                        ;;print(t, detrack(t), status(detrack(t)))
                         assert(status(;;;detrack;;;(t)) /= :terminated)
                     }
                 }
             }
-            ;;println(:bcast)
-            broadcast(:e) in :global
+            ;;print(:bcast)
+            emit(:e) in :global
         """, true)
         assert(out == ":1\n:2\n") { out }
     }
@@ -6830,34 +6830,34 @@ class Exec_99 {
                 is? :number => 1
             }
         """)
-        assert(out == "anon : (lin 2, col 19) : access error : variable \"v\" is not declared\n") { out }
+        assert(out == "anon : (lin 2, col 19) : access throw : variable \"v\" is not declared\n") { out }
     }
     @Test
     fun zb_16_self_kill () {
         val out = test("""
             spawn {
                 loop {
-                    println(:10)
+                    print(:10)
                     spawn {
-                        println(:a)
+                        print(:a)
                         await (:E)
                         do {
-                            println(:b)
-                            broadcast(:E) in :global
-                            println(:c)
+                            print(:b)
+                            emit(:E) in :global
+                            print(:c)
                         }
-                        println(:d)
+                        print(:d)
                     }
-                    println(:20)
+                    print(:20)
                     await (:E)
-                    println(:30)
+                    print(:30)
                 }
             }
-            println(:1)
-            broadcast (nil) in :global
-            println(:2)
-            broadcast (:E) in :global
-            println(:3)
+            print(:1)
+            emit (nil) in :global
+            print(:2)
+            emit (:E) in :global
+            print(:3)
         """, true)
         assert(out == ":10\n:a\n:20\n:1\n:2\n:b\n:30\n:10\n:a\n:20\n:3\n") { out }
     }
@@ -6866,21 +6866,21 @@ class Exec_99 {
         val out = test("""
             var ts
             set ts = tasks()
-            println(type(ts))
+            print(type(ts))
             var T
             set T = task (v) {
                 set ;;;task.;;;pub = v
-                val v' = yield(nil)
+                val v' = await(true)
             }
             spawn T(1) in ts
             spawn T(2) in ts
             
             loop t1 in ts {
                 loop in ts {
-                    println(;;;detrack;;;(t1).pub, ;;;detrack;;;(it).pub)
+                    print(;;;detrack;;;(t1).pub, ;;;detrack;;;(it).pub)
                 }
             }
-             broadcast (2) in :global
+             emit (2) in :global
         """, true)
         assert(out == ":tasks\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
     }
@@ -6889,11 +6889,11 @@ class Exec_99 {
         val out = test("""
             coro F () {
                 defer {
-                    println(:x)
+                    print(:x)
                 }
                 yield()
                 defer {
-                    println(:y)
+                    print(:y)
                 }
                 yield()
             }
@@ -6915,8 +6915,8 @@ class Exec_99 {
                 }
             }
         """)
-        //assert(out == "anon : (lin 3, col 51) : access error : variable \"is'\" is not declared\n") { out }
-        assert(out == "anon : (lin 4, col 27) : access error : variable \"is'\" is not declared\n") { out }
+        //assert(out == "anon : (lin 3, col 51) : access throw : variable \"is'\" is not declared\n") { out }
+        assert(out == "anon : (lin 4, col 27) : access throw : variable \"is'\" is not declared\n") { out }
     }
     @Test
     fun zb_20_all_line() {
@@ -6934,7 +6934,7 @@ class Exec_99 {
             resume co()
             loop {
                 val v = f(co)
-                println(v)
+                print(v)
                 until true
             }
         }
@@ -6955,7 +6955,7 @@ class Exec_99 {
             loop {
                 while line
                 set line = yield()
-                println(line)
+                print(line)
             }
         }
         coro Send (co, nxt) {
@@ -6991,7 +6991,7 @@ class Exec_99 {
                     x and true and true and f(x.pub, x.pub)
                 }
             }
-            println(:ok)
+            print(:ok)
         """, true)
         assert(out == ":ok\n") { out }
     }
@@ -7007,16 +7007,16 @@ class Exec_99 {
                 await (|true)
                 catch ;;;|true;;; {
                     loop b in ts {
-                        error(:x,;;;drop;;;(b))
+                        throw(:x,;;;drop;;;(b))
                     }
                 }
                 nil
             }
             loop {
-                broadcast (:X []) in :global
+                emit (:X []) in :global
                 until true
             }
-            println(:ok)
+            print(:ok)
         """, true)
         assert(out == ":ok\n") { out }
     }
@@ -7026,41 +7026,41 @@ class Exec_99 {
     @Test
     fun zc_01_min() {
         val out = test("""
-            println(math.min(10,20), math.min(20,10))
+            print(math.min(10,20), math.min(20,10))
         """, true)
         assert(out == "10\t10\n") { out }
     }
     @Test
     fun zc_02_max() {
         val out = test("""
-            println(math.max(10,20), math.max(20,10))
+            print(math.max(10,20), math.max(20,10))
         """, true)
         assert(out == "20\t20\n") { out }
     }
     @Test
     fun zc_03_between() {
         val out = test("""
-            println(math.between(10, 1, 20))
-            println(math.between(10, 100, 20))
-            println(math.between(10, 15, 20 ))
+            print(math.between(10, 1, 20))
+            print(math.between(10, 100, 20))
+            print(math.between(10, 15, 20 ))
         """, true)
         assert(out == "10\n20\n15\n") { out }
     }
     @Test
     fun zc_04_pi() {
         val out = test("""
-            println(math.PI)
-            println(math.sin(math.PI/2))
-            println(math.cos(math.PI))
+            print(math.PI)
+            print(math.sin(math.PI/2))
+            print(math.cos(math.PI))
         """, true)
         assert(out == "3.14159\n1\n-1\n") { out }
     }
     @Test
     fun zc_05_floor() {
         val out = test("""
-            println(math.floor(1.7))
-            println(math.ceil(1.1))
-            println(math.round(1.51))
+            print(math.floor(1.7))
+            print(math.ceil(1.1))
+            print(math.round(1.51))
         """, true)
         assert(out == "1\n2\n2\n") { out }
     }
@@ -7071,7 +7071,7 @@ class Exec_99 {
     fun zd_01_random() {
         val out = test("""
             random.seed(0)
-            println(random.next() % 100, random.next() % 100)
+            print(random.next() % 100, random.next() % 100)
         """, true)
         assert(out == "83\t86\n") { out }
     }
@@ -7081,14 +7081,14 @@ class Exec_99 {
     @Test
     fun zz_01_type() {
         val out = test("""
-            println(static?(:number))
-            println(static?(type([])))
-            println(dynamic?(type(nil)))
-            println(dynamic?(:vector))
-            println(string?("oi"))
-            println(string?(#[]))
-            ;;println(type.nil?(nil))
-            ;;println(type.dict?(nil))
+            print(static?(:number))
+            print(static?(type([])))
+            print(dynamic?(type(nil)))
+            print(dynamic?(:vector))
+            print(string?("oi"))
+            print(string?(#[]))
+            ;;print(type.nil?(nil))
+            ;;print(type.dict?(nil))
         """, true)
         assert(out == "true\nfalse\nfalse\ntrue\ntrue\nfalse\n") { out }
     }
@@ -7098,13 +7098,13 @@ class Exec_99 {
         val out = test("""
             $IS
             val B = task () {
-                yield(nil)
+                await(true)
             }
             val bs = tasks(5)
             spawn B() in bs
             func () {
                 val b = next-tasks(bs,nil)
-                broadcast(nil) in b
+                emit(true) in b
                 next-tasks(bs,b)
             } ()
         """)
@@ -7116,7 +7116,7 @@ class Exec_99 {
         val out = test("""
             spawn {
                 loop {
-            println(false)
+            print(false)
                     val t = spawn {
                         await(:X)
                     }
@@ -7126,11 +7126,11 @@ class Exec_99 {
                         }
                     }
                     await(t)
-            println(true)
+            print(true)
                     await(:X)
                 }
             }
-            broadcast(true)
+            emit(true)
         """)
         assert(out == "true\nfalse\nfalse\ntrue\n") { out }
     }
@@ -7147,8 +7147,8 @@ class Exec_99 {
                 }
             }
             spawn T(100)
-            broadcast(:X)
-            println(:ok)
+            emit(:X)
+            print(:ok)
         """)
         assert(out == ":ok\n") { out }
     }
@@ -7156,7 +7156,7 @@ class Exec_99 {
     fun zz_05_mem() {
         val out = test("""
             task T (v) {
-                println(:ok)
+                print(:ok)
                 await(|it==:FIN)
             }
             val ts = tasks(1)
@@ -7171,8 +7171,8 @@ class Exec_99 {
                 }
             }
             spawn T() in ts
-            broadcast(:CHK)
-            broadcast(:FIN)
+            emit(:CHK)
+            emit(:FIN)
             spawn T() in ts
         """)
         assert(out == ":ok\n:ok\n") { out }
@@ -7183,12 +7183,12 @@ class Exec_99 {
             task T () {
                 val t = 10
                 task S () {
-                    println(t)
+                    print(t)
                 }
                 spawn {
-                    println(:1)
+                    print(:1)
                     await spawn S ()
-                    println(:2)
+                    print(:2)
                 }
                 await(|false)
             }
@@ -7202,7 +7202,7 @@ class Exec_99 {
             task T () {
                 val t = 10
                 task S () {
-                    println(t)
+                    print(t)
                 }
                 spawn {
                     spawn S()
@@ -7219,7 +7219,7 @@ class Exec_99 {
                 task T () {
                     set pub = [10]
                     spawn {
-                        println(pub[0])
+                        print(pub[0])
                     }
                 }
                 spawn T()
@@ -7244,12 +7244,12 @@ class Exec_99 {
                     set x = y
                 }
             }
-            println(resume (f(CO1, coroutine(CO2))) ())
+            print(resume (f(CO1, coroutine(CO2))) ())
         """)
         assert(out == " |  anon : (lin 16, col 29) : f(CO1,coroutine(CO2))\n" +
                 " |  anon : (lin 4, col 17) : (resume (xco1)())\n" +
                 " |  anon : (lin 13, col 25) : x\n" +
-                " v  error : cannot copy reference out\n") { out }
+                " v  throw : cannot copy reference out\n") { out }
     }
     @Test
     fun zz_11_js_x_03() {
@@ -7259,7 +7259,7 @@ class Exec_99 {
             loop i in {1 => 2} {
                 val' x = v
             }
-            println(v)
+            print(v)
         """)
         assert(out == "#[]\n") { out }
     }
