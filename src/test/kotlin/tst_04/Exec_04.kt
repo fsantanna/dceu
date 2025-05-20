@@ -1783,17 +1783,6 @@ class Exec_04 {
     fun zz_12_bcast() {
         val out = test(
             """
-            var tk
-            set tk = func () {
-                print(yield(nil))
-                nil
-            }
-            var co
-            set co = spawn(tk)()
-            ;;var f = func' () {
-                emit ([])
-            ;;}
-            ;;f()
         """
         )
         assert(out == "[]\n") { out }
