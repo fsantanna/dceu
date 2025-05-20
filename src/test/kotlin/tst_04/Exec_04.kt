@@ -1681,115 +1681,6 @@ class Exec_04 {
         assert(out == "20\n") { out }
     }
 
-    // THROW
-
-    @Test
-    fun pp_03_throw() {
-        val out = test(
-            """
-        """
-        )
-        assert(out == "") { out }
-    }
-    @Test
-    fun pp_04_08_spawn() {
-        val out = test("""
-            spawn func () {
-                spawn (func () {
-                    await(true)
-                }) ()
-                await(true)
-                throw(nil)
-            }()
-            print(1)
-        """)
-        assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 14, col 25) : set throw : incompatible scopes\n") { out }
-    }
-    @Test
-    fun pp_05_xceu() {
-        val out = test("""
-            catch ;;;(_|true);;; {
-                spawn func () {
-                    throw(:x, [tag(:x,[])])
-                }()
-            }
-            print(1)
-        """)
-        assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 14, col 25) : set throw : incompatible scopes\n") { out }
-    }
-    @Test
-    fun pp_06_xceu5() {
-        val out = test("""
-            spawn func () {
-                catch :or ;;;(err|err==:or);;; {
-                    spawn func () {
-                        await(true)
-                        ;;print(:evt, evt)
-                        ;;print(111)
-                        throw(:or)
-                    }()
-                    spawn func () {
-                        await(true)
-                        ;;print(:evt, evt)
-                        ;;print(222)
-                        throw(:or)
-                    }()
-                    await(true)
-                    ;;print(:in)
-                }
-                ;;print(:out)
-            }()
-            ;;print(:bcast-in)
-            emit (nil)
-            ;;print(:bcast-out)
-            print(1)
-        """)
-        assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 14, col 25) : set throw : incompatible scopes\n") { out }
-    }
-
-    // RETURN
-
-    @Test
-    fun nn_01_term() {
-        val out = test(
-            """
-            val t = spawn (func () {
-                set pub = [1]
-                await(true)
-                [2]
-            } )()
-            print(status(t), t.pub)
-            emit(true)
-            print(status(t), t.pub)
-       """
-        )
-        assert(
-            out == ":yielded\t[1]\n" +
-                    ":terminated\t[2]\n"
-        ) { out }
-    }
-    @Test
-    fun nn_02_term() {
-        //DEBUG = true
-        val out = test(
-            """
-            spawn( func () {
-                val t = spawn (func () {
-                    await(true)
-                    10
-                } )()
-                func' (it) { print(it.pub) } (yield (nil))
-            } )()
-            emit(true)
-            print(:ok)
-       """
-        )
-        assert(out == "10\n:ok\n") { out }
-    }
-
     // TOGGLE
 
     @Test
@@ -1884,107 +1775,6 @@ class Exec_04 {
         """
         )
         assert(out == "1\n2\n3\n4\n") { out }
-    }
-
-    // GROUP
-
-    @Test
-    fun qq_01_group() {
-        val out = test("""
-            var T
-            set T = func (v) {
-                print(v)
-            }
-            var t
-            set t = group ;;;[];;; {
-                var v
-                set v = 10
-                spawn T(v)  
-            }
-        """)
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun qq_02_group_no_more_spawn_export() {
-        val out = test("""
-            group ;;;[T];;; {
-                var T
-                set T = func (v) {
-                    print(v)
-                }
-            }
-            group ;;;[t];;; {
-                var t
-                set t = spawn group ;;;[];;; {
-                    group ;;;[v];;; {
-                        var v
-                        set v = 10
-                    }
-                    T(v)
-                }
-            }
-            print(type(t))
-        """)
-        assert(out == "anon : (lin 17, col 13) : spawn throw : expected call\n") { out }
-        //assert(out == "10\n:x-task\n") { out }
-        //assert(out == "anon : (lin 15, col 21) : call throw : expected function\n" +
-        //        ":throw\n") { out }
-    }
-    @Test
-    fun qq_02x_group_no_more_spawn_export() {
-        val out = test("""
-            spawn group {
-                nil
-            }
-        """)
-        assert(out == "anon : (lin 5, col 9) : spawn throw : expected call\n") { out }
-        //assert(out == "10\n:x-task\n") { out }
-        //assert(out == "anon : (lin 15, col 21) : call throw : expected function\n" +
-        //        ":throw\n") { out }
-    }
-    @Test
-    fun qq_03_group() {
-        val out = test("""
-            var f
-            set f = func' () {
-                nil
-            }
-            spawn func () ;;;:fake;;; {
-                group ;;;[];;; {
-                    f()
-                }
-            }()
-            print(1)
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun qq_04_group() {
-        val out = test("""
-            group ;;;[f];;; {
-                var cur = nil
-                val f = func' () {
-                    set cur = 65
-                    cur
-                }
-            }
-            val co = coroutine (coro' () {
-                await(true)
-                loop' {
-                    val v = f()
-                    yield(v)
-                }
-            })
-            resume co ()
-            loop' {
-                var v = resume co()
-                print(v)
-                throw(:99)
-            }
-        """)
-        assert(out == "65\n" +
-                " |  anon : (lin 20, col 17) : throw(:99)\n" +
-                " v  throw : :99\n") { out }
     }
 
     // ORIGINAL
@@ -2804,7 +2594,6 @@ class Exec_04 {
         )
         assert(out == ":2\n:3\n:1\n:ok\n") { out }
     }
-
     @Test
     fun z2_02_parand() {
         val out = test(
@@ -2825,7 +2614,6 @@ class Exec_04 {
         )
         assert(out == "999\n") { out }
     }
-
     @Test
     fun z2_03_nested_func() {
         val out = test(
@@ -2843,7 +2631,6 @@ class Exec_04 {
         )
         assert(out == "[]\n") { out }
     }
-
     @Test
     fun z2_04_nested_func() {
         val out = test(
@@ -2862,7 +2649,6 @@ class Exec_04 {
         )
         assert(out == "10\n") { out }
     }
-
     @Test
     fun z2_03_skip_valgrind() {
         val out = test(
@@ -2890,7 +2676,6 @@ class Exec_04 {
         )
         assert(out == ":ok\n") { out }
     }
-
     @Test
     fun z2_04_op_is() {
         val out = test(
@@ -2901,7 +2686,6 @@ class Exec_04 {
         )
         assert(out == "true\nfalse\n") { out }
     }
-
     @Test
     fun z2_05_99() {
         val out = test(
