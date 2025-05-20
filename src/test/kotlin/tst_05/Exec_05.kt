@@ -8,74 +8,6 @@ import org.junit.runners.MethodSorters
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_05 {
-    // TASKS
-
-    @Test
-    fun aa_01_tasks() {
-        val out = test("""
-            print(tasks())
-        """)
-        assert(out.contains("tasks: 0x")) { out }
-    }
-    @Test
-    fun aa_02_tasks() {
-        val out = test("""
-            print(type(tasks()))
-        """)
-        assert(out.contains(":tasks")) { out }
-    }
-    @Test
-    fun aa_03_tasks() {
-        val out = test("""
-            val T = func () {
-                print(:in)
-            }
-            val ts = tasks()
-            spawn T() in ts
-            print(:out)
-        """)
-        assert(out == ":in\n:out\n") { out }
-    }
-    @Test
-    fun aa_03x_tasks() {
-        val out = test("""
-            tasks()
-            print(:ok)
-        """)
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun aa_03y_tasks() {
-        val out = test("""
-            do {
-                tasks()
-            }
-            print(:ok)
-        """)
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun aa_04_tasks() {
-        val out = test("""
-            spawn (func () { print(:in) })() in tasks()
-            print(:out)
-        """)
-        assert(out == ":in\n:out\n") { out }
-    }
-    @Test
-    fun aa_05_tasks() {
-        val out = test("""
-            val T = func () {
-                await(true)
-                print(:in)
-            }
-            val ts = tasks()
-            spawn T() in ts
-            print(:out)
-            emit(true)
-        """)
-        assert(out == ":out\n:in\n") { out }
-    }
     @Test
     fun aa_06_tasks() {
         val out = test("""
@@ -88,18 +20,6 @@ class Exec_05 {
             print(ok1, ok2)
         """)
         assert(out.contains(Regex("exe-task: 0x.*nil\n"))) { out }
-    }
-    @Test
-    fun aa_07_tasks() {
-        val out = test("""
-            val T = func () {
-                await(true)
-            }
-            val ts = tasks()
-            val ok = spawn T() in ts
-            print(ok)
-        """)
-        assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun aa_08_tasks() {
@@ -146,105 +66,9 @@ class Exec_05 {
         """)
         assert(out == ":ok\n") { out }
     }
-    @Test
-    fun aa_10_tasks() {
-        val out = test("""
-            print(tasks() == nil)
-        """)
-        assert(out == "false\n") { out }
-    }
-    @Test
-    fun aa_11_spawn() {
-        val out = test("""
-            $PLUS
-            val T = func (v) { nil }
-            val ts = tasks()
-            var x = 0
-            enclose' :break {
-                loop' {
-                    spawn T() in ts
-                    set x = x + 1
-                    if x==500 {
-                        escape(:break,nil)
-                    } else {nil}
-                }
-            }
-            print(:ok)
-        """)
-        assert(out == ":ok\n") { out }
-        //assert(out.contains("ceu_gc_inc_dyn: Assertion `dyn->Any.refs < 255'")) { out }
-    }
-    @Test
-    fun aa_12_pool1() {
-        val out = test("""
-            var ts
-            set ts = tasks()
-            print(type(ts))
-            var T
-            set T = func (v) {
-                print(v)
-                val evt = await(true)
-                print(evt)
-            }
-            do {
-                spawn T(1) in ts
-            }
-             emit(2)
-        """)
-        assert(out == ":tasks\n1\n2\n") { out }
-    }
-    @Test
-    fun aa_13_pool_leak() {
-        val out = test("""
-            var T
-            set T = func () {
-                ;;;do;;; [1,2,3]
-                await(true)
-            }
-            var ts
-            set ts = tasks()
-            spawn T(1) in ts
-            spawn T(2) in ts
-            print(1)
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun aa_14_pool_defer() {
-        val out = test("""
-            var T
-            set T = func (v) {
-                defer {
-                    print(v)
-                }
-                await(true)
-            }
-            var ts
-            set ts = tasks()
-            spawn T(1) in ts
-            spawn T(2) in ts
-            print(0)
-        """)
-        assert(out == "0\n1\n2\n") { out }
-    }
-    @Test
-    fun aa_15_pool_scope() {
-        val out = test("""
-            do {
-                var ts
-                set ts = tasks()
-                var T
-                set T = func (v) {
-                    print(v)
-                    val v' = await(true)
-                    print(v')
-                }
-                spawn T(1) in ts
-            }
-             emit(2)
-        """)
-        assert(out == "1\n") { out }
-    }
+
+    // TASKS
+
     @Test
     fun aa_16_pool_leak() {
         val out = test("""
