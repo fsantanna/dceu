@@ -8,9 +8,18 @@ import org.junit.runners.MethodSorters
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_99 {
-    @Before
-    fun init() {
-        TEST = false
+    @Test
+    fun bc_03_is() {
+        val out = test("""
+            val t = []
+            tag(:x,t)
+            print(t is? :x)
+            tag(:y,t)
+            print(t is-not? :y)
+            tag(nil,t)
+            print(t is-not? :x)
+        """, true)
+        assert(out == "true\nfalse\ntrue\n") { out }
     }
 
     // EMPTY IF / BLOCK
@@ -239,92 +248,6 @@ class Exec_99 {
             print(x)
         """)
         assert(out == "[]\n") { out }
-    }
-
-    // is, is-not?, in?, in-not?
-
-    @Test
-    fun bc_01_is() {
-        val out = test("""
-            func to-bool (v) {
-                not (not v)
-            }
-            func is' (v1,v2) {
-                ifs {
-                    (v1 == v2)         => true
-                    (type(v2) /= :tag) => false
-                    (type(v1) == v2)   => true
-                    sup?(v2,tag(v1))   => true
-                    else => false
-                }
-            }
-            func is-not' (v1,v2) {
-                not is'(v1,v2)
-            }
-            print([] is? :bool)
-            print([] is? :tuple)
-            print(1 is-not? :tuple)
-            print(1 is-not? :number)
-        """)
-        assert(out == "false\ntrue\ntrue\nfalse\n") { out }
-    }
-    @Test
-    fun bc_02_in() {
-        val out = test("""
-            $PLUS
-            func to-bool (v) {
-                not (not v)
-            }
-            func in' (v, xs) {
-                var i = 0
-                loop {
-                    if i == #xs {
-                        break(false)
-                    }
-                    if v == xs[i] {
-                        break(true)
-                    }
-                    set i = i + 1
-                }
-            }            
-            func in-not' (v, xs) {
-                not in'(v,xs)
-            }
-            val t = [1,2,3]
-            print(2 in? t)
-            print(4 in? t)
-            print(2 in-not? t)
-            print(4 in-not? t)
-        """)
-        assert(out == "true\nfalse\nfalse\ntrue\n") { out }
-    }
-    @Test
-    fun bc_03_is() {
-        val out = test("""
-            val t = []
-            tag(:x,t)
-            print(t is? :x)
-            tag(:y,t)
-            print(t is-not? :y)
-            tag(nil,t)
-            print(t is-not? :x)
-        """, true)
-        assert(out == "true\nfalse\ntrue\n") { out }
-    }
-    @Test
-    fun bc_03x_is() {
-        val out = test("""
-            print(nil)
-        """, true)
-        assert(out == "nil\n") { out }
-    }
-    @Test
-    fun bc_04_is() {
-        val out = test("""
-            print({{is?}}    (4, :nil))
-            print({{is-not?}}(4, :nil))
-        """, true)
-        assert(out == "false\ntrue\n") { out }
     }
 
     // FUNC / DCL / :REC

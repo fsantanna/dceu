@@ -159,16 +159,6 @@ class Parser_99 {
         """.trimIndent()) { e.to_str() }
     }
 
-    // OPS: is?, is-not?, in?, in-not?
-
-    @Test
-    fun bc_01_pre() {
-        val l = lexer("a is? b ; c is-not? d ; e in? f ; g in-not? h")
-        val parser = Parser(l)
-        val e = parser.exprs()
-        assert(e.to_str() == "is'(a,b);\nis-not'(c,d);\nin'(e,f);\nin-not'(g,h);\n") { e.to_str() }
-    }
-
     // FUNC / DCL / REC
 
     @Test

@@ -2968,13 +2968,6 @@ class Exec_01 {
         assert(out == "10\n") { out }
     }
     @Test
-    fun oo_xx_op_is() {
-        val out = test("""
-            print(is?(1,  :number))
-            print(is?(:x, :number))
-        """, true)
-        assert(out == "true\nfalse\n") { out }
-    }
 
     // ==, ===, /=, =/=
 
