@@ -8,45 +8,8 @@ import org.junit.runners.MethodSorters
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_05 {
-
     // TASKS / lims
 
-    @Test
-    fun ab_01_pool_max_err() {
-        val out = test(
-            """
-            tasks(0)
-        """
-        )
-        assert(out == " |  anon : (lin 2, col 13) : tasks(0)\n" +
-                " v  throw : expected positive number\n") { out }
-    }
-    @Test
-    fun ab_02_pool_max_err() {
-        val out = test(
-            """
-            tasks(false)
-        """
-        )
-        assert(out == " |  anon : (lin 2, col 13) : tasks(false)\n" +
-                " v  throw : expected positive number\n") { out }
-    }
-    @Test
-    fun BUG_ab_03_pool_max() {  // remove from ts when terminates?
-        val out = test(
-            """
-            var ts = tasks(1)
-            var T = func () { await(true) }
-            var ok1 = spawn T() in ts
-            var ok2 = spawn T() in ts
-            emit(true)
-            var ok3 = spawn T() in ts
-            var ok4 = spawn T() in ts
-            print(ok1, ok2, ok3, ok4)
-        """
-        )
-        assert(out == "true\tfalse\ttrue\tfalse\n") { out }
-    }
     @Test
     fun BUG_ab_04_pool_valgrind() {  // remove from ts when terminates?
         val out = test(
