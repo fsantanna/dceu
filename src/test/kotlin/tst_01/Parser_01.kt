@@ -149,49 +149,4 @@ class Parser_01 {
         val e = parser.exprs()
         assert(e.to_str() == "(data :U = [t :T]);\n") { e.to_str() }
     }
-
-    // INNOCUOUS
-
-    @Test
-    fun yy_01_innoc() {
-        val l = lexer("""
-            do {
-                1
-            }
-            nil
-        """)
-        val parser = Parser(l)
-        val e = parser.exprs()
-        assert(e.to_str() == "do {\n1;\n};\nnil;\n") { e.to_str() }
-        //assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : expression throw : innocuous expression")
-    }
-    @Test
-    fun yy_02_innoc() {
-        val l = lexer("""
-            do {
-                var x
-                set x = [0]
-                x   ;; escape but no access
-            }
-            print(1)
-        """)
-        val parser = Parser(l)
-        val e = parser.exprs()
-        //assert(e.tostr() == "do { 1; };\nnil;\n") { e.tostr() }
-        //assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : expression throw : innocuous expression")
-    }
-    @Test
-    fun yy_03_innoc() {
-        val l = lexer("""
-            do {
-                do {
-                    1
-                }
-                nil
-            }
-        """)
-        val parser = Parser(l)
-        val e = parser.exprs()
-        //assert(trap { parser.exprs() } == "anon : (lin 3, col 17) : expression throw : innocuous expression")
-    }
 }

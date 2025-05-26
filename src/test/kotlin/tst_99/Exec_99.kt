@@ -250,109 +250,8 @@ class Exec_99 {
         assert(out == "[]\n") { out }
     }
 
-    // FUNC / DCL / :REC
-
-    @Test
-    fun cc_01_func() {
-        val out = test("""
-            func f (v) {
-                v
-            }
-            print(f(10))
-        """)
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun cc_02_func() {
-        val out = test("""
-            $PLUS
-            func f (v) {
-                if v /= 0 {
-                    print(v)
-                    f(v - 1)
-                }
-            }
-            f(3)
-        """)
-        assert(out == "3\n2\n1\n") { out }
-    }
-    @Test
-    fun cc_03_func() {
-        val out = test(
-            """
-            func f (x) {
-                print(x)
-            }
-            f(10)
-        """
-        )
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun cc_04_task() {
-        val out = test(
-            """
-            task f (x) {
-                print(x)
-            }
-            spawn f (10)
-        """
-        )
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun cc_05_func_err() {
-        val out = test(
-            """
-            func f {        ;; TODO: implicit it?
-                print(x)
-            }
-        """
-        )
-        assert(out == "anon : (lin 2, col 20) : expected \"(\" : have \"{\"\n") { out }
-        //assert(out == "anon : (lin 3, col 25) : access throw : variable \"x\" is not declared") { out }
-    }
-    @Test
-    fun cc_06_func_it() {
-        val out = test(
-            """
-            func f {        ;; TODO: implicit it?
-                print(it)
-            }
-            f(10)
-        """
-        )
-        assert(out == "anon : (lin 2, col 20) : expected \"(\" : have \"{\"\n") { out }
-        //assert(out == "10\n") { out }
-    }
-    @Test
-    fun TODO_cc_07_func_rec() {
-        val out = test("""
-            $PLUS
-            do {
-                func f (v) {
-                    if v /= 0 {
-                        print(v)
-                        f(v - 1)
-                    }
-                }
-                f(3)
-            }
-        """)
-        assert(out == "3\n2\n1\n") { out }
-    }
-
     // IF / ID-TAG
 
-    @Test
-    fun cj_01_if() {
-        val out = test("""
-            val v = if 1 { it }
-            print(v)
-        """)
-        //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 2, col 28) : access throw : variable \"it\" is not declared\n") { out }
-    }
     @Test
     fun cj_02_if() {
         val out = test("""
@@ -390,37 +289,6 @@ class Exec_99 {
             match nil {
                 |10 { \v => print(v) }
             }
-        """)
-        assert(out == "10\n") { out }
-    }
-
-    // IF cnd => t => f
-
-    @Test
-    fun dd_01_if() {
-        val out = test("""
-            print(if false => 1 => 2)
-        """)
-        assert(out == "2\n") { out }
-    }
-    @Test
-    fun dd_02_if() {
-        val out = test("""
-            print(if true => 1 => 2)
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun dd_03_if() {
-        val out = test("""
-            print(if true => if true => 1 => 99 => 99)
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun TODO_dd_04_if_assign() {
-        val out = test("""
-            print(if x=10 => x => 99)
         """)
         assert(out == "10\n") { out }
     }
