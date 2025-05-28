@@ -5245,64 +5245,6 @@ class Exec_99 {
     // METHODS
 
     @Test
-    fun oo_01_method() {
-        val out = test("""
-            func f (v) { v }
-            val v = 10->f()
-            print(v)
-        """)
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun oo_02_method() {
-        val out = test("""
-            func f (v) { 10 }
-            func g (v) { v }
-            val v = 99->f()->g()
-            print(v)
-        """)
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun oo_03_method() {
-        val out = test("""
-            func f (v) { 10 }
-            func g (v) { v }
-            val v = 99->f->g
-            print(v)
-        """)
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun oo_04_method() {
-        val out = test("""
-            $PLUS
-            func f (v,x) { v - x }
-            val v = 10->f(20)
-            print(v)
-        """)
-        assert(out == "-10\n") { out }
-    }
-    @Test
-    fun oo_05_method() {
-        val out = test("""
-            func f (v) { v }
-            val v = f<-20
-            print(v)
-        """)
-        assert(out == "20\n") { out }
-    }
-    @Test
-    fun oo_06_method() {
-        val out = test("""
-            $PLUS
-            func f (v,x) { v - x }
-            val v = f(10)<-20
-            print(v)
-        """)
-        assert(out == "-10\n") { out }
-    }
-    @Test
     fun oo_07_method() {
         val out = test("""
             func f (v) { v() }

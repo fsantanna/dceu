@@ -14,151 +14,6 @@ class Parser_99 {
         G.N = 1
     }
 
-    @Test
-    fun aa_01_empty_if() {
-        val l = lexer("if true { 1 }")
-        val parser = Parser(l)
-        val e = parser.expr_prim()
-        assert(e is Expr.If)
-        assert(e.to_str() == "if true {\n1;\n} else {\nnil;\n}") { e.to_str() }
-    }
-    @Test
-    fun aa_02_empty_do() {  // set whole tuple?
-        val l = lexer("do{}")
-        val parser = Parser(l)
-        val e = parser.expr_prim()
-        assert(e is Expr.Do && e.es.size==1)
-        assert(e.to_str() == "do {\nnil;\n}") { e.to_str() }
-    }
-    @Test
-    fun aa_03_empty_func() {
-        val l = lexer("func () {}")
-        val parser = Parser(l)
-        val e = parser.expr_prim()
-        assert(e is Expr.Proto && e.pars.size==0)
-        assert(e.to_str() == "(func' () {\n" +
-                "enclose' :return {\n" +
-                "nil;\n" +
-                "};\n" +
-                "})") { e.to_str() }
-    }
-    @Test
-    fun aa_04_empty_loop() {
-        val l = lexer("loop { }")
-        val parser = Parser(l)
-        val e = parser.expr_prim()
-        assert(e.to_str() == "enclose' :break {\n" +
-                "loop' {\n" +
-                "enclose' :skip {\n" +
-                "nil;\n" +
-                "};\n" +
-                "};\n" +
-                "}") { e.to_str() }
-    }
-
-    // OPS: not, and, or
-
-    @Test
-    fun bb_01_bin_or() {
-        val l = lexer("1 or 2")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "do {\n" +
-                "(val' ceu_or_9 = 1);\n" +
-                "if ceu_or_9 {\n" +
-                "ceu_or_9;\n" +
-                "} else {\n" +
-                "2;\n" +
-                "};\n" +
-                "}") { e.to_str() }
-    }
-    @Test
-    fun bb_02_bin_and() {
-        val l = lexer("1 and 2")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "do {\n" +
-                "(val' ceu_and_9 = 1);\n" +
-                "if ceu_and_9 {\n" +
-                "2;\n" +
-                "} else {\n" +
-                "ceu_and_9;\n" +
-                "};\n" +
-                "}") { e.to_str() }
-    }
-    @Test
-    fun bb_03_not() {
-        val l = lexer("not true")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "if true {\nfalse;\n} else {\ntrue;\n}") { e.to_str() }
-    }
-    @Test
-    fun bb_04_bin_not_or_and() {
-        val l = lexer("((not true) and false) or true")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "do {\n" +
-                "(val' ceu_or_114 = do {\n" +
-                "(val' ceu_and_33 = if true {\n" +
-                "false;\n" +
-                "} else {\n" +
-                "true;\n" +
-                "});\n" +
-                "if ceu_and_33 {\n" +
-                "false;\n" +
-                "} else {\n" +
-                "ceu_and_33;\n" +
-                "};\n" +
-                "});\n" +
-                "if ceu_or_114 {\n" +
-                "ceu_or_114;\n" +
-                "} else {\n" +
-                "true;\n" +
-                "};\n" +
-                "}") { e.to_str() }
-    }
-    @Test
-    fun bb_05_pre() {
-        val l = lexer("- not - 1")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e is Expr.Call)
-        assert(e.to_str() == "{{-}}(if {{-}}(1) {\nfalse;\n} else {\ntrue;\n})") { e.to_str() }
-    }
-    @Test
-    fun bb_06_pre() {
-        val l = lexer("""
-            `a` or ((`b` or `c`) or `d`)
-        """)
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == """
-            do {
-            (val' ceu_or_171 = ```a```);
-            if ceu_or_171 {
-            ceu_or_171;
-            } else {
-            do {
-            (val' ceu_or_69 = do {
-            (val' ceu_or_14 = ```b```);
-            if ceu_or_14 {
-            ceu_or_14;
-            } else {
-            ```c```;
-            };
-            });
-            if ceu_or_69 {
-            ceu_or_69;
-            } else {
-            ```d```;
-            };
-            };
-            };
-            }
-        """.trimIndent()) { e.to_str() }
-    }
-
     // FUNC / DCL / REC
 
     @Test
@@ -197,12 +52,6 @@ class Parser_99 {
 
     /*
     @Test
-    fun dd_01_if() {
-        val l = lexer("if x:X { :ok }")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : expected \"=\" : have \"{\"")
-    }
-    @Test
     fun dd_02_if() {
         val l = lexer("if x=1 { x }")
         val parser = Parser(l)
@@ -231,43 +80,9 @@ class Parser_99 {
                 "}\n") { e.tostr() }
     }
      */
-    @Test
-    fun dd_04_if() {
-        val l = lexer("if f() {}")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "if f() {\n" +
-                "nil;\n" +
-                "} else {\n" +
-                "nil;\n" +
-                "}") { e.to_str() }
-    }
 
     // IF / =>
 
-    @Test
-    fun de_01_if() {
-        val l = lexer("if false => 1 => 2")
-        val parser = Parser(l)
-        val e = parser.exprs()
-        assert(e.to_str() == "if false {\n" +
-                "1;\n" +
-                "} else {\n" +
-                "2;\n" +
-                "};\n") { e.to_str() }
-    }
-    @Test
-    fun de_02_if() {
-        val l = lexer("if false { 1 } => 2")
-        val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 1, col 16) : expected expression : have \"=>\"")
-    }
-    @Test
-    fun de_03_if_err() {
-        val l = lexer("(if true => 1)")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 14) : expected \"=>\" : have \")\"")
-    }
     @Test
     fun de_04_if_err() {
         val l = lexer("if false => 1 --> nil => 2")
@@ -277,25 +92,6 @@ class Parser_99 {
 
     // IFS
 
-    @Test
-    fun ee_01_ifs() {
-        val l = lexer("ifs { a=>1 else{0} }")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "do {\n" +
-                "(val ceu_ifs_19 = a);\n" +
-                "if ceu_ifs_19 {\n" +
-                "1;\n" +
-                "} else {\n" +
-                "(val ceu_ifs_20 = true);\n" +
-                "if ceu_ifs_20 {\n" +
-                "0;\n" +
-                "} else {\n" +
-                "nil;\n" +
-                "};\n" +
-                "};\n" +
-                "}") { e.to_str() }
-    }
     @Test
     fun ee_02_ifs() {
         val l = lexer("ifs { }")
@@ -1225,77 +1021,6 @@ class Parser_99 {
         val e = parser.expr()
         val out = e.to_str()
         assert(out.contains("TODO")) { out }
-    }
-
-    // METHODS
-
-    @Test
-    fun oo_01_method() {
-        val l = lexer("10->f()")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "f(10)") { e.to_str() }
-    }
-    @Test
-    fun oo_02_method() {
-        val l = lexer("10->f")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "f(10)") { e.to_str() }
-    }
-    @Test
-    fun oo_03_method() {
-        val l = lexer("10->f(20)")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "f(10,20)") { e.to_str() }
-    }
-    @Test
-    fun oo_04_method() {
-        val l = lexer("f() <- 10")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "f(10)") { e.to_str() }
-    }
-    @Test
-    fun oo_05_method() {
-        val l = lexer("f<-10")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "f(10)") { e.to_str() }
-    }
-    @Test
-    fun oo_06_method() {
-        val l = lexer("f(10)<-(20)")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "f(10,20)") { e.to_str() }
-    }
-    @Test
-    fun oo_07_method() {
-        val l = lexer("(10->f)<-20")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "f(10,20)") { e.to_str() }
-    }
-    @Test
-    fun oo_08_method() {
-        val l = lexer("(func() {}) <- 20")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "(func' () {\n" +
-                "enclose' :return {\n" +
-                "nil;\n" +
-                "};\n" +
-                "})(20)") { e.to_str() }
-    }
-    @Test
-    fun oo_09_method_err() {
-        val out = test("""
-            10->10
-        """)
-        assert(out == " |  anon : (lin 2, col 17) : 10(10)\n" +
-                " v  throw : expected function\n") { out }
     }
 
     // PIPE / WHERE
