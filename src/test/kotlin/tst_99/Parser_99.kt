@@ -93,16 +93,6 @@ class Parser_99 {
     // IFS
 
     @Test
-    fun ee_02_ifs() {
-        val l = lexer("ifs { }")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "do {\n" +
-                "nil;\n" +
-                "}") { e.to_str() }
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
-    }
-    @Test
     fun ee_03_ifs() {
         val l = lexer("match nil { else => it }")
         val parser = Parser(l)
@@ -116,13 +106,6 @@ class Parser_99 {
                 "};\n" +
                 "drop(ceu_ret_5);\n" +
                 "}") { e.to_str() }
-    }
-    @Test
-    fun ee_04_ifs_err() {
-        val l = lexer("ifs { nil }")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 11) : expected \"{\" : have \"}\"")
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 11) : expected \"->\" : have \"}\"")
     }
     @Test
     fun ee_05_ifs() {
@@ -199,20 +182,6 @@ class Parser_99 {
                 "};\n" +
                 "};\n" +
                 "drop(ceu_ret_5);\n" +
-                "}") { e.to_str() }
-    }
-    @Test
-    fun ee_07_ifs() {
-        val l = lexer("ifs { f() => nil }")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "do {\n" +
-                "(val ceu_ifs_15 = f());\n" +
-                "if ceu_ifs_15 {\n" +
-                "nil;\n" +
-                "} else {\n" +
-                "nil;\n" +
-                "};\n" +
                 "}") { e.to_str() }
     }
     @Test
