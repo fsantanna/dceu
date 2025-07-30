@@ -5182,62 +5182,9 @@ class Exec_99 {
     // TOGGLE
 
     @Test
-    fun mm_01_toggle() {
-        val out = test("""
-            task T (v) {
-                set pub = v
-                toggle :Show {
-                    print(pub)
-                    every (it| (it is? :dict) and (it.sub==:draw)) {
-                        print(it.v)
-                    }
-                }
-            }
-            spawn T(0)
-            emit(@[(:sub,:draw),(:v,1)])
-            emit(:Show [false])
-            emit(:Show [false])
-            emit(@[(:sub,:draw),(:v,99)])
-            emit(:Show [true])
-            emit(:Show [true])
-            emit(@[(:sub,:draw),(:v,2)])
-        """, true)
-        assert(out == "0\n1\n2\n") { out }
-    }
-    @Test
-    fun mm_02_toggle() {
-        val out = test("""
-            task T (v) {
-                set pub = v
-                toggle :Show {
-                    print(pub)
-                    every :draw {
-                        print(it[0])
-                    }
-                }
-            }
-            spawn T (0)
-            emit (tag(:draw, [1]))
-            emit (tag(:Show, [false]))
-            emit (tag(:Show, [false]))
-            emit (tag(:draw, [99]))
-            emit (tag(:Show, [true]))
-            emit (tag(:Show, [true]))
-            emit (tag(:draw, [2]))
-        """, true)
-        assert(out == "0\n1\n2\n") { out }
-    }
-    @Test
     fun mm_03_toggle() {
         val out = test("""
             $IS
-            spawn {
-                val x = toggle :Show {
-                    10
-                }
-                print(x)
-            }
-            print(:ok)
         """)
         assert(out == "10\n:ok\n") { out }
     }

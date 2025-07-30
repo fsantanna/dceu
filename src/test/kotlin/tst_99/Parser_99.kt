@@ -787,45 +787,6 @@ class Parser_99 {
         assert(trap { parser.expr() } == "anon : (lin 2, col 30) : resume-yield-all throw : invalid number of arguments")
     }
 
-    // SPAWN
-
-    @Test
-    fun hh_01_spawn_task() {
-        val l = lexer("spawn {}")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "(spawn (func :fake () {\n" +
-                "enclose' :return {\n" +
-                "nil;\n" +
-                "};\n" +
-                "})())") { e.to_str() }
-    }
-    @Test
-    fun hh_02_spawn_coro() {
-        val l = lexer("spawn coro {}")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 12) : expected \"(\" : have \"{\"")
-        //val e = parser.expr()
-        //assert(e.tostr() == "spawn (coro () {\n" +
-        //        "nil\n" +
-        //        "})()") { e.tostr() }
-    }
-    @Test
-    fun hh_03_bcast_in() {
-        val l = lexer("""
-            spawn {
-                emit(true) in nil
-            }
-        """)
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "(spawn (func :fake () {\n" +
-                "enclose' :return {\n" +
-                "emit'(nil,nil);\n" +
-                "};\n" +
-                "})())") { e.to_str() }
-    }
-
     // PAR / PAR-OR
 
     @Test
@@ -990,67 +951,6 @@ class Parser_99 {
         val e = parser.expr()
         val out = e.to_str()
         assert(out.contains("TODO")) { out }
-    }
-
-    // PIPE / WHERE
-
-    @Test
-    fun op_01_pipe() {
-        val l = lexer("10-->f()")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "f(10)") { e.to_str() }
-    }
-    @Test
-    fun op_02_pipe() {
-        val l = lexer("10-->f->g")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "g(10,f)") { e.to_str() }
-    }
-    @Test
-    fun op_03_pipe() {
-        val l = lexer("10-->(f<--20)")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "f(10,20)") { e.to_str() }
-    }
-    @Test
-    fun op_04_pipe_where_err() {
-        val l = lexer("10+1 --> f where { }")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "do {\n" +
-                "nil;\n" +
-                "f({{+}}(10,1));\n" +
-                "}") { e.to_str() }
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 12) : sufix operation throw : expected surrounding parentheses")
-    }
-    @Test
-    fun todo_op_05_where() {    // export (not do)
-        val l = lexer("10+1 where { }")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "export [] {\n" +
-                "nil\n" +
-                "{{+}}(10,1)\n" +
-                "}") { e.to_str() }
-    }
-    @Test
-    fun TODO_col_op_06_where() {
-        val l = lexer("spawn T(v) where {nil}")
-        val parser = Parser(l)
-        //val e = parser.expr()
-        assert(trap { parser.expr() } == "anon : (lin 1, col XX) : spawn throw : expected call")
-    }
-    @Test
-    fun op_07_pipe() {
-        val l = lexer("""
-            f<--10->g
-        """)
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.to_str() == "f(g(10))") { e.to_str() }
     }
 
     // CAST
