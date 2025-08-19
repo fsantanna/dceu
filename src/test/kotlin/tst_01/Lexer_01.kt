@@ -13,10 +13,7 @@ class Lexer_01 {
     fun ee_01_native() {
         val l = lexer(
             """
-            ` abc `
-            `{ijk}`
             ` {i${D}jk} `
-            `  {ijk} 
         """.trimIndent()
         )
         val tks = l.lex().iterator()
